@@ -57,9 +57,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         ):
             self._update_details_based_on_position(list_rows, short_details,
                                                    detail_rows, long_details)
-        elif toggles.ICDS.enabled(self.app.domain):
-            self._partial_upload(list_rows, short_details)
-            self._partial_upload(detail_rows, long_details)
         else:
             if len(short_details) != len(list_rows):
                 expected_list = short_details
@@ -256,21 +253,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             ))
 
     def _update_id_mappings(self, rows, detail, langs=None):
-        if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(self.app.domain):
-            for row, mapping in zip(rows, detail.enum):
-                self._update_translation(row, mapping.value)
-        else:
-            # Not all of the id mappings are described.
-            # If we can identify by key, we can proceed.
-            mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
-            if len(detail.enum) != len(mappings_by_prop):
-                self.msgs.append((
-                    messages.error,
-                    _("You must provide all ID mappings for property '{}'").format(detail.field)))
-            else:
-                for row in rows:
-                    if row['id'] in mappings_by_prop:
-                        self._update_translation(row, mappings_by_prop[row['id']].value)
+        for row, mapping in zip(rows, detail.enum):
+            self._update_translation(row, mapping.value)
 
     def _update_detail(self, row, detail):
         self._update_translation(row, detail.header)
@@ -309,32 +293,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                             'app translation download. No translations updated for this row.').format(
                                 index=self.module.id + 1,
                                 field=row.get('case_property', ""))
-                self.msgs.append((messages.error, message))
-                continue
-            self._update_detail(row, detail)
-
-    def _partial_upload(self, rows, details):
-        expected_fields = [detail.field for detail in details]
-        received_fields = [row['id'] for row in rows]
-        expected_field_counter = Counter(expected_fields)
-        received_field_counter = Counter(received_fields)
-        for detail, row in zip_with_gaps(details, rows,
-                                         lambda detail: detail.field,
-                                         lambda row: row['id']):
-            field = row['id']
-            if (
-                received_field_counter[field] > 1 and
-                received_field_counter[field] != expected_field_counter[field]
-            ):
-                message = _(
-                    'There is more than one translation for case property '
-                    '"{field}" for menu {index}, but some translations are '
-                    'missing. Unable to determine which translation(s) to '
-                    'use. Skipping this case property.'
-                ).format(
-                    index=self.module.id + 1,
-                    field=row.get('case_property', '')
-                )
                 self.msgs.append((messages.error, message))
                 continue
             self._update_detail(row, detail)

@@ -311,10 +311,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 msg.set_system_error(SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
                 return False
 
-        if not msg.text:
-            msg.set_system_error(SMS.ERROR_MESSAGE_BLANK)
-            return False
-
         if not backend:
             backend = msg.outbound_backend
 

@@ -47,15 +47,19 @@ This should contain:
 
   - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file and also a new management command.
 
-  - Add the generated models code to your models file. Note if there are any TODOs marked in the code. Notes on this code:
+    - The reason to run on production is that it will examine existing documents to help determine things like ``max_length``. This also means it can take a while. If you have reasonable data locally, running it locally is fine - but since the sql class will often have stricter data validation than couch, it's good to run it on prod at some point.
 
-    - The new class will start with "SQL" but specify ``db_table`` so that prefix can be easily removed later and ``db_table`` removed. It's a headache to rename models via django migrations, especially submodels.
+    - If the script encounters any list or dict properties, it'll ask you if they're submodels. If you say no, it'll create them as json columns. If you say yes, it'll skip them, because it doesn't currently handle submodels. For the same reason, it'll skip SchemaProperty and SchemaListProperty attributes. More on this subject below.
 
-    - The new class will include a column for the corresponding couch document id.
+  - Add the generated models code to your models file. Edit as needed. Note the TODOs marked in the code:
 
-    - The generated code does not include submodel classes (SchemaProperty or SchemaListProperty attributes). See `the first CustomDataFieldsDefinition PR <https://github.com/dimagi/commcare-hq/pull/27276>`_ for an example that uses submodels.
+    - The new class's name will start with "SQL" but specify  table name ``db_table`` that does not include "sql." This is so that the class can later be renamed back to the original couch class's name by just removing the ``db_table``. This avoids renaming the table in a django migration, which can be a headache when submodels are involved.
 
-    - The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_. If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``.
+    - The new class will include a column for couch document id.
+
+    - The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_.  If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``. If you add overrides, definitely add tests for them. Sync bugs are one of the easiest ways for this to go terribly wrong.
+
+      - For an example of overriding the sync code for submodels, see the `CommtrackConfig migration <https://github.com/dimagi/commcare-hq/pull/27597/>`_, or the `CustomDataFields migration <https://github.com/dimagi/commcare-hq/pull/27276/>`_ which is simpler but includes a P1-level bug fixed `here <https://github.com/dimagi/commcare-hq/pull/28001/>`_.
 
       - Beware that the sync mixins capture exceptions thrown while syncing in favor of calling ``notify_exception``. If you're overwriting the sync code, this makes bugs easy to miss. The branch ``jls/sync-mixins-hard-fail`` is included on staging to instead make syncing fail hard; you might consider doing the same while testing locally.
 
@@ -67,7 +71,9 @@ This should contain:
 
   - Add the generated migration command. Notes on this code:
 
-    - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.  - This command should populate the sql models based on the json from couch alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping.
+    - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
+
+    - This command's ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`_ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_.
 
     - The command will include a ``commit_adding_migration`` method to let third parties know which commit to deploy if they need to run the migration manually. This needs to be updated **after** this PR is merged, to add the hash of the commit that merged this PR into master.
 
@@ -84,11 +90,14 @@ To test this step locally:
 - With master checked out, make sure you have at least one couch document that will get migrated.
 - Check out your branch and run the populate command. Verify it creates as many objects as expected.
 - Test editing the pre-existing object. In a shell, verify your changes appear in both couch and sql.
-- Test creating a new object. In a shell, verify your changes appear in both couoch and sql.
+- Test creating a new object. In a shell, verify your changes appear in both couch and sql.
 
-Automated tests are also a good idea. `Example of tests for sync and migration code <https://github.com/dimagi/commcare-hq/pull/28042/files#diff-a1ef9cf2695fb1e0498e49c9f2643c3a>`_.
+Automated tests are also a good idea. Automated tests are definitely necessary if you overrode any parts of the
+sync mixins. `Example of tests for sync and migration code <https://github.com/dimagi/commcare-hq/pull/28042/files#diff-a1ef9cf2695fb1e0498e49c9f2643c3a>`_.
 
-Once this PR is deployed, run the migration command in any environments where it's likely to take more than a trivial amount of time.
+The migration command has a ``--verify`` option that will find any differences in the couch data vs the sql data.
+
+Once this PR is deployed - later, after the whole shebang has been QAed - you'll run the migration command in any environments where it's likely to take more than a trivial amount of time.
 
 PR 2: Verify migration and read from SQL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,11 +111,11 @@ This should contain:
 
 * Replacements of all code that reads from the couch document to instead read from SQL. This is the hard part: finding **all** usages of the couch model and updating them as needed to work with the sql model. Some patterns are:
 
-  * `Replacing couch queries with SQL queries <https://github.com/dimagi/commcare-hq/pull/26400/commits/e270e5c1fb932c850b6a356208f1ff6ae0e06299>`_
+  * `Replacing couch queries with SQL queries <https://github.com/dimagi/commcare-hq/pull/26399/commits/e270e5c1fb932c850b6a356208f1ff6ae0e06299#diff-d87e129c5e1224e4b046b4872e35bf2c041788a14c74cf1cedfe0fa7ba920bc6>`_.
 
-  * `Unpacking code that takes advantage of couch docs being json <https://github.com/dimagi/commcare-hq/pull/26400/commits/f04afe870f92293074fb1f6127c716330dabdc36>`_.
+  * `Unpacking code that takes advantage of couch docs being json <https://github.com/dimagi/commcare-hq/pull/26399/commits/f04afe870f92293074fb1f6127c716330dabdc36>`_.
 
-  * Replacing ``get_id`` with ``id`` - including in HTML templates - and ``MyModel.get(ID)`` with ``SQLMyModel.objects.get(id=ID)``.
+  * Replacing ``get_id`` with ``id`` - including in HTML templates, which don't typically need changes - and ``MyModel.get(ID)`` with ``SQLMyModel.objects.get(id=ID)``.
 
 For models with many references, it may make sense to do this work incrementally, with a first PR that includes the verification migration and then subsequent PRs that each update a subset of reads. Throughout this phase, all data should continue to be saved to both couch and sql.
 
@@ -123,11 +132,11 @@ PR 3: Cleanup
 ^^^^^^^^^^^^^
 This is the cleanup PR. Wait a few weeks after the previous PR to merge this one; there's no rush. Clean up:
 
-* If your sql model uses a ``couch_id``, remove it. `Sample commit for HqDeploy <https://github.com/dimagi/commcare-hq/pull/26442/commits/3fa10a6a511b0b592979cc4183d84d3a4e36f200>`_.
+* If your sql model uses a ``couch_id``, remove it. `Sample commit for HqDeploy <https://github.com/dimagi/commcare-hq/pull/26442/commits/79a1c49013fb09fb47690ebcd0a51bc85fb1d560>`_
 * Remove the old couch model, which at this point should have no references. This includes removing any syncing code.
-* Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this should include removing the sql model's ``Meta`` class and adding a small django migration. `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26557/commits/beb9d10f6d8d0906524912ef94a8d049f06c38e8>`_.
-* Add the couch class to ``DELETABLE_COUCH_DOC_TYPES``. `Sample commit for Dhis2Connection <https://github.com/dimagi/commcare-hq/pull/26400/commits/2a6e93e19ab689cfaf0b4cdc89c9039cbee33139>`_.
-* Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_
+* Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this is just removing that and running ``makemigrations``.
+* Add the couch class to ``DELETABLE_COUCH_DOC_TYPES``. `Blame deletable_doc_types.py <https://github.com/dimagi/commcare-hq/blame/74bc31910f692126f03c46a350ab8ae5700f87dd/corehq/apps/cleanup/deletable_doc_types.py>`_ for examples.
+* Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_.
 
 Current State of Migration
 ##########################

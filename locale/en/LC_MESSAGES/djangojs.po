@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-21 21:50+0000\n"
+"POT-Creation-Date: 2021-04-28 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -184,6 +184,40 @@ msgstr ""
 msgid ""
 "Something went wrong refreshing your form properties. Please refresh the "
 "page and try again"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:112
+msgid "Mobile UCR Options"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:113
+msgid "Mobile UCR Report"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:114
+msgid "Select a Report..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:115
+msgid "Advanced Mobile UCR Options"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
+msgid "Lookup Table Options"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
+msgid "Lookup Table"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:124
+msgid "Select a Lookup Table..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:125
+msgid "Advanced Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
@@ -474,11 +508,6 @@ msgstr ""
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-msgid "Lookup Table"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:94
 msgid "User Properties"
 msgstr ""
@@ -695,7 +724,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:49
 #: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js:14
-#: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:134
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:287
 msgid "There was an error saving"
@@ -760,10 +788,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:480
 msgid "Settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:7
-msgid "You have unsaved changes to your whitelist"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/password_setter.jquery.js:8
@@ -2772,7 +2796,7 @@ msgid ""
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:392
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:419
 msgid "Page <%-num%>"
 msgstr ""
 
@@ -2787,31 +2811,31 @@ msgstr ""
 msgid "Clear"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:41
 msgid "Delete incomplete form?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:33
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:42
 msgid "Are you sure you want to delete '"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:34
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:43
 msgid "Yes"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:35
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:44
 msgid "No"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:47
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:55
 msgid "Log in as "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:51
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:59
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:117
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:130
 msgid "Page <%- num %>"
 msgstr ""
 
