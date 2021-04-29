@@ -4,12 +4,6 @@ import logging
 from django.conf import settings
 from memoized import memoized
 
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    Document,
-    StringProperty,
-)
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 
