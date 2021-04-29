@@ -9,6 +9,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from django.db import models
+from django.contrib.postgres.fields import JSONField
 
 from corehq.apps.domain.models import Domain
 
@@ -64,3 +65,19 @@ class RegistrationRequest(models.Model):
     @classmethod
     def get_request_for_username(cls, username):
         return RegistrationRequest.objects.filter(new_user_username=username).first()
+
+
+class AsyncSignupRequest(models.Model):
+    """
+    Use this model to store information from signup or invitation forms when
+    the user is redirected to login elsewhere (like SSO) but the signup/invitation
+    process must resume when they return.
+    """
+    username = models.CharField(max_length=255, db_index=True)
+    invitation = models.ForeignKey('users.Invitation', null=True, blank=True, on_delete=models.PROTECT)
+    phone_number = models.CharField(max_length=126, null=True, blank=True)
+    project_name = models.CharField(max_length=255, null=True, blank=True)
+    atypical_user = models.BooleanField(default=False)
+    persona = models.CharField(max_length=128, null=True, blank=True)
+    persona_other = models.TextField(null=True, blank=True)
+    additional_hubspot_data = JSONField(null=True, blank=True)
