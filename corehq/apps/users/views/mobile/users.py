@@ -1031,6 +1031,7 @@ class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
+    is_web_upload = False
 
     @method_decorator(require_can_edit_commcare_users)
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
@@ -1044,49 +1045,7 @@ class UploadCommCareUsers(BaseUploadUser):
                                        "mobile workers")
 
     def post(self, request, *args, **kwargs):
-        super(UploadCommCareUsers, self).post(request, *args, **kwargs)
-        try:
-            check_headers(self.user_specs, self.domain)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        if PARALLEL_USER_IMPORTS.enabled(self.domain):
-            if list(self.group_specs):
-                messages.error(
-                    request,
-                    _("Groups are not allowed with parallel user import. Please upload them separately")
-                )
-                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-            task = parallel_user_import.delay(
-                self.domain,
-                list(self.user_specs),
-                request.couch_user
-            )
-        else:
-            upload_record = UserUploadRecord(
-                domain=self.domain,
-                user_id=request.couch_user.user_id
-            )
-            upload_record.save()
-
-            task = import_users_and_groups.delay(
-                self.domain,
-                list(self.user_specs),
-                list(self.group_specs),
-                request.couch_user,
-                upload_record.pk,
-                False
-            )
-        task_ref.set_task(task)
-        return HttpResponseRedirect(
-            reverse(
-                UserUploadStatusView.urlname,
-                args=[self.domain, task_ref.download_id]
-            )
-        )
+        return super(UploadCommCareUsers, self).post(request, *args, **kwargs)
 
 
 class UserUploadStatusView(BaseManageCommCareUserView):
