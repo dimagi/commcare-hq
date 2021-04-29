@@ -90,7 +90,15 @@ COUCH_DATABASES = {
     },
 }
 
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+redis_cache = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
+}
+
+CACHES = {
+    'default': redis_cache,
+    'redis': redis_cache,
+}
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
