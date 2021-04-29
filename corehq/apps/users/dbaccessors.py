@@ -66,7 +66,7 @@ def get_all_web_users_by_domain(domain):
 
 
 def get_mobile_usernames_by_filters(domain, user_filters):
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, MOBILE_USER_TYPE, user_filters)
     return query.values_list('base_username', flat=True)
 
 
