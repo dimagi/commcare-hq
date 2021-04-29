@@ -6,12 +6,12 @@ from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.registration.forms import RegisterWebUserForm
+from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.sso.tests.generator import create_request_session
 from corehq.apps.sso.utils.session_helpers import (
     prepare_session_with_new_sso_user_data,
-    prepare_session_for_sso_invitation,
 )
 from corehq.apps.users.models import WebUser, Invitation, UserRole
 
@@ -264,7 +264,7 @@ class TestSsoBackend(TestCase):
             role=admin_role.get_qualified_id(),
         )
         invitation.save()
-        prepare_session_for_sso_invitation(self.request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
         generator.store_full_name_in_saml_user_data(
             self.request,
             'Isa',
@@ -300,7 +300,7 @@ class TestSsoBackend(TestCase):
             invited_on=datetime.datetime.utcnow() - relativedelta(months=2),
         )
         invitation.save()
-        prepare_session_for_sso_invitation(self.request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
         generator.store_full_name_in_saml_user_data(
             self.request,
             'Zee',

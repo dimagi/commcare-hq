@@ -16,6 +16,7 @@ from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.sso.decorators import (
     identity_provider_required,
@@ -28,7 +29,6 @@ from corehq.apps.sso.utils.session_helpers import (
     get_sso_username_from_session,
     prepare_session_with_sso_username,
     get_new_sso_user_project_name_from_session,
-    prepare_session_for_sso_invitation,
     clear_sso_registration_data_from_session,
 )
 from corehq.apps.users.models import Invitation
@@ -247,6 +247,6 @@ def sso_test_create_user(request, idp_slug):
     invitation_uuid = request.GET.get('invitation')
     invitation = Invitation.objects.get(uuid=invitation_uuid)
     if invitation:
-        prepare_session_for_sso_invitation(request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
 
     return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
