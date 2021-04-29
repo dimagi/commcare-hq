@@ -113,8 +113,9 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.pillows.utils import WEB_USER_TYPE
+from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
 from corehq.util.workbook_json.excel import (
@@ -1053,12 +1054,63 @@ class BaseUploadUser(BaseUserSettingsView):
             self.group_specs = self.workbook.get_worksheet(title='groups')
         except WorksheetNotFound:
             self.group_specs = []
+        try:
+            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+        except UserUploadError as e:
+            messages.error(request, _(str(e)))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
+            if list(self.group_specs):
+                messages.error(
+                    request,
+                    _("Groups are not allowed with parallel user import. Please upload them separately")
+                )
+                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+            task = parallel_user_import.delay(
+                self.domain,
+                list(self.user_specs),
+                request.couch_user
+            )
+        else:
+            upload_record = UserUploadRecord(
+                domain=self.domain,
+                user_id=request.couch_user.user_id
+            )
+            upload_record.save()
+            task = import_users_and_groups.delay(
+                self.domain,
+                list(self.user_specs),
+                list(self.group_specs),
+                request.couch_user,
+                upload_record.pk,
+                self.is_web_upload
+            )
+        task_ref.set_task(task)
+        if self.is_web_upload:
+            return HttpResponseRedirect(
+                reverse(
+                    WebUserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+        else:
+            from corehq.apps.users.views.mobile import UserUploadStatusView
+            return HttpResponseRedirect(
+                reverse(
+                    UserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
 
 
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_web_users'
     page_title = ugettext_noop("Bulk Upload Web Users")
+    is_web_upload = True
 
     @method_decorator(always_allow_project_access)
     @method_decorator(require_can_edit_web_users)
@@ -1073,36 +1125,8 @@ class UploadWebUsers(BaseUploadUser):
         return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
 
     def post(self, request, *args, **kwargs):
-        super(UploadWebUsers, self).post(request, *args, **kwargs)
         track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
-        try:
-            check_headers(self.user_specs, self.domain, is_web_upload=True)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadWebUsers.urlname, args=[self.domain]))
-
-        upload_record = UserUploadRecord(
-            domain=self.domain,
-            user_id=request.couch_user.user_id
-        )
-        upload_record.save()
-
-        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task = import_users_and_groups.delay(
-            self.domain,
-            list(self.user_specs),
-            list(self.group_specs),
-            request.couch_user,
-            upload_record.pk,
-            True
-        )
-        task_ref.set_task(task)
-        return HttpResponseRedirect(
-            reverse(
-                WebUserUploadStatusView.urlname,
-                args=[self.domain, task_ref.download_id]
-            )
-        )
+        return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
 class WebUserUploadStatusView(BaseManageWebUserView):
@@ -1147,10 +1171,8 @@ class UserUploadJobPollView(BaseManageWebUserView):
 
 class WebUserUploadJobPollView(UserUploadJobPollView):
     urlname = "web_user_upload_job_poll"
-
-    def __init__(self):
-        self.on_complete_long = 'Web Worker upload has finished'
-        self.user_type = 'web users'
+    on_complete_long = 'Web Worker upload has finished'
+    user_type = 'web users'
 
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):

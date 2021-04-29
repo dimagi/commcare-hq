@@ -1030,6 +1030,7 @@ class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
+    is_web_upload = False
 
     @method_decorator(require_can_edit_commcare_users)
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
@@ -1112,10 +1113,8 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 
 class CommcareUserUploadJobPollView(UserUploadJobPollView):
     urlname = "commcare_user_upload_job_poll"
-
-    def __init__(self):
-        self.on_complete_long = 'Mobile Worker upload has finished'
-        self.user_type = 'mobile users'
+    on_complete_long = 'Mobile Worker upload has finished'
+    user_type = 'mobile users'
 
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
