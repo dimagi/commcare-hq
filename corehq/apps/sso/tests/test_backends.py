@@ -56,6 +56,7 @@ class TestSsoBackend(TestCase):
             'isa@vaultwax.com',
             'zee@vaultwax.com',
             'exist@vaultwax.com',
+            'aart@vaultwax.com',
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
@@ -366,6 +367,36 @@ class TestSsoBackend(TestCase):
             self.request.sso_new_user_messages['success'],
             [
                 f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_new_user_with_no_async_signup_request_creates_new_user(self):
+        """
+        There is a use case where brand new users can click on the CommCare HQ
+        App icon right from their Active Directory home screen. In this case,
+        we want to create the user's account and then present them with any
+        project invitations once they have logged in.
+        """
+        username = 'aart@vaultwax.com'
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Aart',
+            'Janssen'
+        )
+        user = auth.authenticate(
+            request=self.request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Aart')
+        self.assertEqual(user.last_name, 'Janssen')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {username} created.',
             ]
         )
 
