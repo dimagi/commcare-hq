@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from couchdbkit.ext.django.loading import get_db
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import notify_exception
 
@@ -42,14 +43,15 @@ def copy_events_to_sql(limit=1000):
         start_date.second,
         start_date.microsecond,
     ]
-    for doc in [r["doc"] for r in db.view(
+    ids = [r["id"] for r in db.view(
         "auditcare/all_events",
         startkey=startkey,
         reduce=False,
-        include_docs=True,
+        include_docs=False,
         descending=True,
         limit=limit,
-    )]:
+    )]
+    for doc in iter_docs(db, ids, chunksize=1000):
         try:
             kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
                                  "headers", "status_code", "user_agent"])
