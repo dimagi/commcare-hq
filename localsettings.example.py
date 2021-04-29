@@ -100,11 +100,3 @@ LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []
 }
-
-####### API throttling #####
-
-CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
-                                  # Use a lower value in production. This is set
-                                  # to 200 to prevent AssertionError: 429 != 200
-                                  # test failures in development environsments.
-CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
