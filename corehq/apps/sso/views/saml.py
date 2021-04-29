@@ -245,7 +245,7 @@ def sso_test_create_user(request, idp_slug):
         prepare_session_with_sso_username(request, username)
 
     invitation_uuid = request.GET.get('invitation')
-    invitation = Invitation.objects.get(uuid=invitation_uuid)
+    invitation = Invitation.objects.get(uuid=invitation_uuid) if invitation_uuid else None
     if invitation:
         AsyncSignupRequest.create_from_invitation(invitation)
 
