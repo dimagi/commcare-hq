@@ -1,4 +1,4 @@
-FROM python:3.6-jessie
+FROM ubuntu:18.04
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
