@@ -381,11 +381,9 @@ def user_is_superuser(user):
     is_superuser = user.is_superuser
     try:
         user.is_superuser = True
-        user.save()
         yield
     finally:
         user.is_superuser = is_superuser
-        user.save()
 
 
 def _setup_cases(owner_id):
