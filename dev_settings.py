@@ -73,7 +73,10 @@ DATABASES = {
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
     }
 }
 
@@ -81,13 +84,21 @@ COUCH_DATABASES = {
     'default': {
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'localhost:5984',
-        'COUCH_USERNAME': 'commcarehq',
-        'COUCH_PASSWORD': 'commcarehq',
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
         'COUCH_DATABASE_NAME': 'commcarehq'
     },
 }
 
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+redis_cache = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
+}
+
+CACHES = {
+    'default': redis_cache,
+    'redis': redis_cache,
+}
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
