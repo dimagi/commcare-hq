@@ -1147,10 +1147,8 @@ class UserUploadJobPollView(BaseManageWebUserView):
 
 class WebUserUploadJobPollView(UserUploadJobPollView):
     urlname = "web_user_upload_job_poll"
-
-    def __init__(self):
-        self.on_complete_long = 'Web Worker upload has finished'
-        self.user_type = 'web users'
+    on_complete_long = 'Web Worker upload has finished'
+    user_type = 'web users'
 
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
