@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from celery.schedules import crontab
@@ -11,11 +12,16 @@ from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 from corehq.apps.auditcare.utils.export import get_sql_start_date
 from corehq.util.soft_assert import soft_assert
 
+log = logging.getLogger(__name__)
+
 
 @periodic_task(run_every=crontab(minute="30"), queue='background_queue')
 def copy_events_to_sql():
     db = get_db("auditcare")
-    startkey = _date_key(get_sql_start_date())
+    start_date = get_sql_start_date()
+    log.info(f"Initial start date: {start_date}")
+
+    startkey = [start_date.year, start_date.month, start_date.day]
     for doc in [r["doc"] for r in db.view(
         "auditcare/all_events",
         startkey=startkey,
