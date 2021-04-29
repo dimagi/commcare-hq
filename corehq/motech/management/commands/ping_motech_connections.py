@@ -1,15 +1,17 @@
 import csv
 
 from django.core.management.base import BaseCommand
+from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 from requests import RequestException, HTTPError
 
 from corehq.motech.models import ConnectionSettings
 from corehq.util.log import with_progress_bar
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 class Command(BaseCommand):
-    help = "Make an HTTP HEAD request to all configured MOTECH connections to test the connectivity" \
-           "and SSL validation (if connection setting has not disabled SSL validation)."
+    help = "Make an HTTP HEAD request to all configured MOTECH connections " \
+           "to test the connectivity of each URL."
 
     def handle(self, *args, **options):
         failures = []
@@ -21,7 +23,7 @@ class Command(BaseCommand):
             except HTTPError as e:
                 if e.response.status_code != 405:  # ignore method not allowed
                     failures.append((connection, e.__class__.__name__, str(e)))
-            except RequestException as e:
+            except (CannotResolveHost, OAuth2Error, RequestException) as e:
                 failures.append((connection, e.__class__.__name__, str(e)))
 
         if not failures:
