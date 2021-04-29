@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from memoized import memoized
 
@@ -12,6 +13,8 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 
 from corehq.apps.domain.models import Domain
+
+log = logging.getLogger(__name__)
 
 
 class RegistrationRequest(models.Model):
@@ -81,3 +84,19 @@ class AsyncSignupRequest(models.Model):
     persona = models.CharField(max_length=128, null=True, blank=True)
     persona_other = models.TextField(null=True, blank=True)
     additional_hubspot_data = JSONField(null=True, blank=True)
+
+    @classmethod
+    def get_by_username(cls, username):
+        try:
+            return cls.objects.get(username=username)
+        except cls.MultipleObjectsReturned:
+            # this would have to be a weird edge case where an error occurred
+            # during the signup process. We should log and then triage.
+            log.error(
+                f"Fetched multiple AsyncSignupRequests for {username}. "
+                f"Please check for errors in any auth backends that might "
+                f"be interrupting the sign up workflows."
+            )
+            return cls.objects.first(username=username)
+        except cls.DoesNotExist:
+            return None
