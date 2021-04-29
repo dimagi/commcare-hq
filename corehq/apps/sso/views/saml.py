@@ -28,7 +28,6 @@ from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
     prepare_session_with_sso_username,
-    get_new_sso_user_project_name_from_session,
     clear_sso_registration_data_from_session,
 )
 from corehq.apps.users.models import Invitation
@@ -98,10 +97,10 @@ def sso_saml_acs(request, idp_slug):
             auth.login(request, user)
 
             # activate new project if needed
-            project_name = get_new_sso_user_project_name_from_session(request)
-            if project_name:
+            async_signup = AsyncSignupRequest.get_by_username(user.username)
+            if async_signup and async_signup.project_name:
                 try:
-                    request_new_domain(request, project_name, is_new_user=True)
+                    request_new_domain(request, async_signup.project_name, is_new_user=True)
                 except NameUnavailableException:
                     # this should never happen, but in the off chance it does
                     # we don't want to throw a 500 on this view
