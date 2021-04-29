@@ -119,7 +119,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         else:
             for display_row, prop in itertools.chain(zip(displays, properties)):
                 if display_row.get('case_property') != prop.name:
-                    message = _('A row for menu {index} has an unexpected case search property "{field}". '
+                    message = _('A display row for menu {index} has an unexpected case search property "{field}". '
                                 'Case properties must appear in the same order as they do in the bulk '
                                 'app translation download. No translations updated for this row.').format(
                                     index=self.module.id + 1,
@@ -129,7 +129,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self._update_translation(display_row, prop.label)
             for hint_row, prop in itertools.chain(zip(hints, properties)):
                 if hint_row.get('case_property') != prop.name:
-                    message = _('A row for menu {index} has an unexpected case search property "{field}". '
+                    message = _('A hint row for menu {index} has an unexpected case search property "{field}". '
                                 'Case properties must appear in the same order as they do in the bulk '
                                 'app translation download. No translations updated for this row.').format(
                                     index=self.module.id + 1,
