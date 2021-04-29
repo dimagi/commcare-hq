@@ -74,7 +74,6 @@ branches:
     - mk/form-mm-exports-filters-2 # MK April 16
     - fr/smart-metadata-urls       # Farid April 28
     - fr/smart-oauth-views # Farid April 7
-    - ce/index-deletion
     - gh/remove-filters-from-saved-ucrs # Graham Apr 9
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - sr/sort-cs # Sravan April 19
