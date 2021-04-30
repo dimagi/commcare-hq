@@ -79,6 +79,7 @@ class AsyncSignupRequest(models.Model):
     persona = models.CharField(max_length=128, null=True, blank=True)
     persona_other = models.TextField(null=True, blank=True)
     additional_hubspot_data = JSONField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def get_by_username(cls, username):
