@@ -206,11 +206,9 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         logs = log.get_output()
         self.assertIn("couch case test-case has wrong domain: wrong", logs)
 
-    def test_ledger_dup_transaction_diff(self):
+    def test_patch_ledger_with_duplicate_transaction(self):
         product_id = self.create_form_with_duplicate_stock_transaction()
         self.do_migration(case_diff='none')
-        self.compare_diffs(ignore_fail=True)
-        clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
         self.compare_diffs(changes=[Diff(
             f"test-case/things/{product_id}",
@@ -221,6 +219,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             new=1,
             kind="stock state",
         )])
+        self.do_migration(forms="missing", case_diff="patch")
 
     def test_patch_known_properties(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
@@ -243,6 +242,20 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
         self.assertEqual(self._get_case("case-1").opened_on, open_date)
+
+    def test_patch_case_with_non_ascii_name(self):
+        self.submit_form(make_test_form("form1", case_name="ऊषा"))
+        self.do_migration(case_diff="none")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.augmented_couch_case("test-case") as case:
+            case.type = "old-type"
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('test-case', 'diff', ['type'], old='old-type', new='testing'),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+        self.assertEqual(self._get_case("test-case").name, "ऊषा")
 
     def test_unpatchable_properties(self):
         date1 = "2018-07-13T11:20:11.381000Z"
