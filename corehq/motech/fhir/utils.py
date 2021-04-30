@@ -1,8 +1,5 @@
-
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.util.view_utils import absolute_reverse
-
-from .const import CAPABILITY_STATEMENT_PUBLISHED_DATE
 
 
 def resource_url(domain, fhir_version_name, resource_type, case_id):
@@ -56,51 +53,3 @@ def update_fhir_resource_property(case_property, fhir_resource_type, fhir_resour
                                                       resource_type=fhir_resource_type)
         fhir_resource_prop.jsonpath = fhir_resource_prop_path
         fhir_resource_prop.save()
-
-
-def build_capability_statement(domain, fhir_version):
-    """
-    Builds the FHIR capability statement including the OAuth URL extensions for SMART
-    https://hl7.org/fhir/smart-app-launch/conformance/index.html
-    """
-    return {
-        "rest": [
-            {
-                "security": {
-                    "extension": [
-                        {
-                            "url": "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
-                            "extension": [
-                                {
-                                    "url": "token",
-                                    "valueUri": absolute_reverse("oauth2_provider:token"),
-                                },
-                                {
-                                    "url": "authorize",
-                                    "valueUri": absolute_reverse("oauth2_provider:authorize"),
-                                }
-                            ]
-                        }
-                    ],
-                    "service": [
-                        {
-                            "coding": [
-                                {
-                                    "system": "http://hl7.org/fhir/restful-security-service",
-                                    "code": "SMART-on-FHIR"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "mode": "server"
-            }
-        ],
-        "format": [
-            "json"
-        ],
-        "status": "active",
-        "kind": "instance",
-        "fhirVersion": fhir_version,
-        "date": CAPABILITY_STATEMENT_PUBLISHED_DATE,
-    }
