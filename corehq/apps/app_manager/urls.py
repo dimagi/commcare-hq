@@ -30,7 +30,7 @@ from corehq.apps.app_manager.views import (
     direct_ccz,
     download_file,
     download_index,
-    drop_user_case,
+    drop_usercase,
     edit_add_ons,
     edit_advanced_form_actions,
     edit_app_attr,
@@ -78,7 +78,6 @@ from corehq.apps.app_manager.views import (
     undo_delete_form,
     undo_delete_module,
     update_build_comment,
-    update_linked_whitelist,
     upgrade_shadow_module,
     validate_form_for_build,
     validate_module_for_build,
@@ -90,7 +89,6 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
-from corehq.apps.hqmedia.views import copy_multimedia
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -170,11 +168,10 @@ urlpatterns = [
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         new_form, name='new_form'),
-    url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
+    url(r'^drop_usercase/(?P<app_id>[\w-]+)/$', drop_usercase, name='drop_usercase'),
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
     url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
         name='pull_missing_multimedia'),
-    url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
@@ -215,7 +212,6 @@ urlpatterns = [
 
     # multimedia stuff
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
-    url(r'^copy_multimedia/(?P<app_id>[\w-]+)/$', copy_multimedia, name='copy_multimedia'),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',

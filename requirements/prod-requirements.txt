@@ -65,7 +65,7 @@ concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.4.6
+cryptography==3.4.7
     # via
     #   -r prod-requirements.in
     #   jwcrypto
@@ -158,7 +158,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.19
+django==2.2.20
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -390,7 +390,7 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in

@@ -748,21 +748,10 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_VIEWS = [
-    'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.users.AuthenticateAs',
-]
-
-AUDIT_MODULES = [
-    'corehq.apps.reports',
-    'corehq.apps.userreports',
-    'corehq.apps.data',
-    'corehq.apps.registration',
-    'corehq.apps.hqadmin',
-    'corehq.apps.accounting',
-    'corehq.apps.cloudcare',
-    'tastypie',
-]
+AUDIT_ALL_VIEWS = False
+AUDIT_VIEWS = []
+AUDIT_MODULES = []
+AUDIT_ADMIN_VIEWS = False
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -839,7 +828,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 1
+ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -1231,7 +1220,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(task_name)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'formplayer_timing': {
             'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
@@ -1253,8 +1242,11 @@ LOGGING = {
         },
     },
     'filters': {
-        'hqcontext': {
+        'hqrequest': {
             '()': 'corehq.util.log.HQRequestFilter',
+        },
+        'celerytask': {
+            '()': 'corehq.util.log.CeleryTaskFilter',
         },
         'exclude_static': {
             '()': 'corehq.util.log.SuppressStaticLogs',
@@ -1283,7 +1275,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'couch-request-formatter',
-            'filters': ['hqcontext'],
+            'filters': ['hqrequest', 'celerytask'],
             'filename': COUCH_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs

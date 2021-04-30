@@ -79,7 +79,7 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
-cryptography==3.4.6
+cryptography==3.4.7
     # via
     #   jwcrypto
     #   pyopenssl
@@ -175,7 +175,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.19
+django==2.2.20
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -207,6 +207,7 @@ docutils==0.16
     #   -r dev-requirements.in
     #   recommonmark
     #   sphinx
+    #   sphinx-rtd-theme
 dropbox==9.3.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
@@ -233,7 +234,7 @@ flake8==3.8.4
     # via -r dev-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
-freezegun==0.3.15
+freezegun==1.1.0
     # via -r test-requirements.in
 gevent==1.4.0
     # via
@@ -247,6 +248,10 @@ gipc==1.1.0
     # via -r base-requirements.in
 git-build-branch==0.1.10
     # via -r dev-requirements.in
+gitdb==4.0.7
+    # via gitpython
+gitpython==3.1.14
+    # via transifex-client
 gnureadline==8.0.0
     # via -r dev-requirements.in
 graphviz==0.16
@@ -274,6 +279,7 @@ importlib-metadata==2.0.0
     # via
     #   flake8
     #   jsonschema
+    #   pep517
 intervaltree==3.1.0
     # via ddtrace
 ipython-genutils==0.2.0
@@ -368,6 +374,8 @@ parso==0.7.1
     # via jedi
 pbr==5.5.0
     # via mock
+pep517==0.10.0
+    # via pip-tools
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.10
@@ -380,7 +388,7 @@ pillow==8.1.2
     #   cairosvg
     #   django-simple-captcha
     #   reportlab
-pip-tools==5.5.0
+pip-tools==6.1.0
     # via -r test-requirements.in
 ply==3.11
     # via
@@ -454,12 +462,14 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
+python-slugify==4.0.1
+    # via transifex-client
 python-termstyle==0.1.10
     # via sniffer
 python3-saml==1.9.0
@@ -485,7 +495,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.0.6
     # via django-compressor
-recommonmark==0.6.0
+recommonmark==0.7.1
     # via -r dev-requirements.in
 redis==3.5.3
     # via
@@ -512,6 +522,7 @@ requests==2.24.0
     #   sphinx
     #   stripe
     #   tinys3
+    #   transifex-client
     #   twilio
 rjsmin==1.1.0
     # via django-compressor
@@ -545,7 +556,6 @@ six==1.15.0
     #   ethiopian-date-converter
     #   eulxml
     #   fixture
-    #   freezegun
     #   ghdiff
     #   html5lib
     #   isodate
@@ -571,6 +581,8 @@ six==1.15.0
     #   unittest2
 smartypants==2.0.1
     # via pycco
+smmap==4.0.0
+    # via gitdb
 sniffer==0.4.1
     # via -r dev-requirements.in
 snowballstemmer==2.0.0
@@ -581,9 +593,9 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx-rtd-theme==0.5.1
+sphinx-rtd-theme==0.5.2
     # via -r dev-requirements.in
-sphinx==2.2.2
+sphinx==3.5.4
     # via
     #   -r dev-requirements.in
     #   recommonmark
@@ -626,6 +638,7 @@ text-unidecode==1.3
     # via
     #   -r base-requirements.in
     #   faker
+    #   python-slugify
 tinycss2==1.0.2
     # via
     #   cairosvg
@@ -633,11 +646,13 @@ tinycss2==1.0.2
     #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
+toml==0.10.2
+    # via pep517
 traceback2==1.4.0
     # via unittest2
 traitlets==4.3.3
     # via ipython
-transifex-client==0.12.4
+transifex-client==0.14.2
     # via -r dev-requirements.in
 tropo-webapi-python==0.1.3
     # via -r base-requirements.in
@@ -684,10 +699,12 @@ xlwt==1.3.0
     # via -r base-requirements.in
 xmlsec==1.3.9
     # via python3-saml
-yapf==0.30.0
+yapf==0.31.0
     # via -r dev-requirements.in
 zipp==3.2.0
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.0.1

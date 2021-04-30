@@ -68,8 +68,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         showDetail: function (caseId, detailTabIndex, isPersistent) {
             menusController.selectDetail(caseId, detailTabIndex, isPersistent);
         },
-        listSessions: function () {
-            sessionsController.listSessions();
+        listSessions: function (pageNumber, pageSize) {
+            sessionsController.listSessions(pageNumber, pageSize);
         },
         getSession: function (sessionId) {
             FormplayerFrontend.getChannel().request("getSession", sessionId);
@@ -210,9 +210,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.showDetail(caseId, detailTabIndex, isPersistent);
     });
 
-    FormplayerFrontend.on("sessions", function () {
-        FormplayerFrontend.navigate("/sessions");
-        API.listSessions();
+    FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
+        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {

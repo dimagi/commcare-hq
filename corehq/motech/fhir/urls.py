@@ -13,7 +13,6 @@ urlpatterns = [
     url(r'^fhir/(?P<fhir_version_name>\w+)/(?P<resource_type>\w+)/$', search_view, name="fhir_search"),
     url(r'^fhir/(?P<fhir_version_name>\w+)/(?P<resource_type>\w+)/(?P<resource_id>[\w\-]+)/$', get_view,
         name="fhir_get_view"),
-
     url(
         r'^fhir/(?P<fhir_version_name>\w+)/.well-known/smart-configuration',
         smart_configuration_view,

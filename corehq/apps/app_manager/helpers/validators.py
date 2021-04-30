@@ -32,7 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     PracticeUserException,
     SuiteValidationError,
-    UserCaseXPathValidationError,
+    UsercaseXPathValidationError,
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
@@ -42,7 +42,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     split_path,
     xpath_references_case,
-    xpath_references_user_case,
+    xpath_references_usercase,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -79,7 +79,7 @@ class ApplicationBaseValidator(object):
                 'module': cve.module,
                 'form': cve.form,
             })
-        except UserCaseXPathValidationError as ucve:
+        except UsercaseXPathValidationError as ucve:
             errors.append({
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
@@ -284,7 +284,7 @@ class ApplicationValidator(ApplicationBaseValidator):
             return any(m.uses_usercase() for m in app.get_modules())
 
         errors = []
-        if app_uses_usercase(self.app) and not domain_has_privilege(self.domain, privileges.USER_CASE):
+        if app_uses_usercase(self.app) and not domain_has_privilege(self.domain, privileges.USERCASE):
             errors.append({
                 'type': 'subscription',
                 'message': _('Your application is using User Properties and your current subscription does not '
@@ -756,7 +756,7 @@ class FormBaseValidator(object):
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
-            if module.root_module.put_in_root:
+            elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
@@ -967,7 +967,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
             form_filter_references_case = (
                 xpath_references_case(interpolated_form_filter) or
-                xpath_references_user_case(interpolated_form_filter)
+                xpath_references_usercase(interpolated_form_filter)
             )
 
             if form_filter_references_case:

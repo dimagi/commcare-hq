@@ -5,15 +5,12 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
     DefaultProjectUserSettingsView,
     DomainPermissionsMirrorView,
-    DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
     ListRolesView,
     ListWebUsersView,
-    accept_invitation,
     add_domain_membership,
     change_password,
-    delete_invitation,
     delete_phone_number,
     delete_request,
     check_sso_trust,
@@ -23,7 +20,6 @@ from .views import (
     paginate_web_users,
     post_user_role,
     register_fcm_device_token,
-    reinvite_web_user,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
@@ -32,6 +28,12 @@ from .views import (
     create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+)
+from .views.web import (
+    accept_invitation,
+    delete_invitation,
+    DomainRequestView,
+    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (

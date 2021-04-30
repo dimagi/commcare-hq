@@ -15,7 +15,7 @@ from corehq.apps.app_manager.views.apps import (
     copy_app,
     default_new_app,
     delete_app,
-    drop_user_case,
+    drop_usercase,
     edit_add_ons,
     edit_app_attr,
     edit_app_langs,
@@ -26,7 +26,6 @@ from corehq.apps.app_manager.views.apps import (
     pull_master_app,
     rearrange,
     undo_delete_app,
-    update_linked_whitelist,
     view_app,
 )
 from corehq.apps.app_manager.views.cli import direct_ccz, list_apps

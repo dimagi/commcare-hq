@@ -465,15 +465,20 @@ def toggles_dict(username=None, domain=None):
                                                     t.enabled(domain, NAMESPACE_DOMAIN))}
 
 
-def toggle_values_by_name(username=None, domain=None):
+def toggle_values_by_name(username=None, domain=None, include_disabled=True):
     """
-    Loads all toggles into a dictionary for use in JS
+    Loads all toggles into a dictionary for use in JS & Formplayer
+    """
+    all_by_name = {
+        toggle_name: (toggle.enabled(username, NAMESPACE_USER) or toggle.enabled(domain, NAMESPACE_DOMAIN))
+        for toggle_name, toggle in all_toggles_by_name().items()
+    }
+    if include_disabled:
+        return all_by_name
 
-    all toggles (including those not enabled) are included
-    """
-    return {toggle_name: (toggle.enabled(username, NAMESPACE_USER) or
-                          toggle.enabled(domain, NAMESPACE_DOMAIN))
-            for toggle_name, toggle in all_toggles_by_name().items()}
+    return {
+        name: value for name, value in all_by_name.items() if value
+    }
 
 
 def _ensure_valid_namespaces(namespaces):
@@ -762,11 +767,12 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 )
 
 
-CASE_CLAIM_AUTOLAUNCH = StaticToggle(
+USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     '''
-        Support several different case search/claim workflows in web apps:
-        "search first", "see more", and "skip to default case search results"
+        USH Specific toggle to support several different case search/claim workflows in web apps:
+        "search first", "see more", and "skip to default case search results", Geocoder
+        and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
@@ -833,13 +839,6 @@ CASE_API_V0_6 = StaticToggle(
     'case_api_v0_6',
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-LIVEQUERY_SYNC = StaticToggle(
-    'livequery_sync',
-    'Enable livequery sync algorithm',
-    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1093,14 +1092,6 @@ OPENCLINICA = StaticToggle(
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
-    'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 OPENMRS_INTEGRATION = StaticToggle(
@@ -2031,13 +2022,31 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
     'COVID: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
 )
-
 
 FHIR_INTEGRATION = StaticToggle(
     'fhir_integration',
     'FHIR: Enable setting up FHIR integration',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
+)
+
+ERM_DEVELOPMENT = StaticToggle(
+    'erm_development',
+    'Flag to put enterprise release management work behind',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
+    'fixtures_in_case_restore',
+    'Allow limited fixtures to be available in case restore for SMS workflows. '
+    'WARNING: To be used only for small templates since the performance implication has not been evaluated. '
+    'Do not enable on your own.',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

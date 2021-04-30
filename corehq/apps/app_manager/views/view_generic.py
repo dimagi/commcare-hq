@@ -256,10 +256,8 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     context.update({
         'domain_names': sorted(domain_names),
     })
-    linked_domains_enabled = toggles.LINKED_DOMAINS.enabled(domain)
     context.update({
         'copy_app_form': copy_app_form,
-        'linked_domains_enabled': linked_domains_enabled,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
@@ -279,7 +277,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             for slug in uploader_slugs
         ]
         context.update({
-            "sessionid": request.COOKIES.get('sessionid'),
             "uploaders": uploaders,
             "uploaders_js": [u.js_options for u in uploaders],
             "refs": {

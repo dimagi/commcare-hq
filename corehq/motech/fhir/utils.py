@@ -3,8 +3,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
 from corehq.util.view_utils import absolute_reverse
 
-from .const import CAPABILITY_STATEMENT_PUBLISHED_DATE
-
 
 def resource_url(domain, fhir_version_name, resource_type, case_id):
     from corehq.motech.fhir.views import get_view

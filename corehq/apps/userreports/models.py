@@ -655,6 +655,10 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     report_meta = SchemaProperty(ReportMeta)
     custom_query_provider = StringProperty(required=False)
 
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     def __str__(self):
         return '{} - {}'.format(self.domain, self.title)
 

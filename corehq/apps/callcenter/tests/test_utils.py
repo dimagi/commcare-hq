@@ -13,7 +13,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.callcenter.sync_user_case import (
+from corehq.apps.callcenter.sync_usercase import (
     sync_call_center_user_case,
     sync_usercase,
 )
@@ -227,10 +227,10 @@ class CallCenterUtilsTestsSQL(CallCenterUtilsTests):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-class CallCenterUtilsUserCaseTests(TestCase):
+class CallCenterUtilsUsercaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(CallCenterUtilsUserCaseTests, cls).setUpClass()
+        super().setUpClass()
         cls.domain = create_domain(TEST_DOMAIN)
         cls.domain.usercase_enabled = True
         cls.domain.save()
@@ -245,7 +245,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
     def tearDownClass(cls):
         delete_all_cases()
         cls.domain.delete()
-        super(CallCenterUtilsUserCaseTests, cls).tearDownClass()
+        super().tearDownClass()
 
     def test_sync_usercase_custom_user_data_on_create(self):
         """
@@ -407,7 +407,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsUserCaseTestsSQL(CallCenterUtilsUserCaseTests):
+class CallCenterUtilsUsercaseTestsSQL(CallCenterUtilsUsercaseTests):
     pass
 
 
