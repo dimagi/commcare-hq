@@ -1,13 +1,22 @@
 import uuid
 
-from django.test.testcases import TestCase
+from django.test.testcases import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.linked_domain.const import (
+    MODEL_FLAGS,
+    MODEL_LOCATION_DATA,
+    MODEL_PRODUCT_DATA,
+    MODEL_ROLES,
+    MODEL_USER_DATA,
+)
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.view_helpers import (
     build_app_view_model,
+    build_domain_level_view_models,
+    build_feature_flag_view_models,
     build_fixture_view_model,
     build_keyword_view_model,
     build_report_view_model,
@@ -23,6 +32,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
     ReportMeta,
 )
+from corehq.util.test_utils import flag_enabled
 
 
 def _create_report(domain, title="report", upstream_id=None, should_save=True):
@@ -383,3 +393,152 @@ class TestBuildIndividualViewModels(TestCase):
 
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
+
+
+class TestBuildFeatureFlagViewModels(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestBuildFeatureFlagViewModels, cls).setUpClass()
+        cls.domain_obj = create_domain('test-build-ff-view-models')
+        cls.domain = cls.domain_obj.name
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(TestBuildFeatureFlagViewModels, cls).tearDownClass()
+
+    def test_build_feature_flag_view_models_returns_empty(self):
+        expected_view_models = []
+
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
+    def test_build_feature_flag_view_models_returns_case_search(self):
+        expected_view_models = [
+            {
+                'type': 'case_search_data',
+                'name': 'Case Search Settings',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('DATA_DICTIONARY')
+    def test_build_feature_flag_view_models_returns_data_dictionary(self):
+        expected_view_models = [
+            {
+                'type': 'data_dictionary',
+                'name': 'Data Dictionary',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('WIDGET_DIALER')
+    def test_build_feature_flag_view_models_returns_dialer_settings(self):
+        expected_view_models = [
+            {
+                'type': 'dialer_settings',
+                'name': 'Dialer Settings',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('GAEN_OTP_SERVER')
+    def test_build_feature_flag_view_models_returns_otp_settings(self):
+        expected_view_models = [
+            {
+                'type': 'otp_settings',
+                'name': 'OTP Pass-through Settings',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('HMAC_CALLOUT')
+    def test_build_feature_flag_view_models_returns_hmac_callout(self):
+        expected_view_models = [
+            {
+                'type': 'hmac_callout_settings',
+                'name': 'Signed Callout',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+
+class TestBuildDomainLevelViewModels(SimpleTestCase):
+
+    def test_build_domain_level_view_models_returns_all(self):
+        expected_view_models = [
+            {
+                'type': 'custom_user_data',
+                'name': 'Custom User Data Fields',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+            {
+                'type': 'custom_product_data',
+                'name': 'Custom Product Data Fields',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+            {
+                'type': 'custom_location_data',
+                'name': 'Custom Location Data Fields',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+            {
+                'type': 'roles',
+                'name': 'User Roles',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+            {
+                'type': 'toggles',
+                'name': 'Feature Flags and Previews',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+        ]
+
+        view_models = build_domain_level_view_models()
+        self.assertEqual(expected_view_models, view_models)
+
+    def test_build_domain_level_view_models_ignores_models(self):
+        expected_view_models = []
+        ignore_models = [MODEL_USER_DATA, MODEL_PRODUCT_DATA, MODEL_LOCATION_DATA, MODEL_ROLES, MODEL_FLAGS]
+
+        view_models = build_domain_level_view_models(ignore_models=ignore_models)
+
+        self.assertEqual(expected_view_models, view_models)

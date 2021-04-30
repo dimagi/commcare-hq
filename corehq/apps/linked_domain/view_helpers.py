@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.fixtures.dbaccessors import (
@@ -8,16 +7,13 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.apps.linked_domain.const import (
-    LINKED_MODELS,
+    DOMAIN_LEVEL_DATA_MODELS,
+    FEATURE_FLAG_DATA_MODEL_TOGGLES,
+    FEATURE_FLAG_DATA_MODELS,
     LINKED_MODELS_MAP,
     MODEL_APP,
-    MODEL_CASE_SEARCH,
-    MODEL_DATA_DICTIONARY,
-    MODEL_DIALER_SETTINGS,
     MODEL_FIXTURE,
-    MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_KEYWORD,
-    MODEL_OTP_SETTINGS,
     MODEL_REPORT,
 )
 from corehq.apps.linked_domain.dbaccessors import (
@@ -167,20 +163,29 @@ def build_keyword_view_model(keyword, last_update=None):
     return view_model
 
 
-def build_other_view_models(domain, ignore_models=None):
+def build_feature_flag_view_models(domain):
+    view_models = []
+
+    for model, name in FEATURE_FLAG_DATA_MODELS:
+        if FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
+            view_models.append(
+                build_linked_data_view_model(
+                    model_type=model,
+                    name=name,
+                    detail=None,
+                    last_update=_('Never')
+                )
+            )
+
+    return view_models
+
+
+def build_domain_level_view_models(ignore_models=None):
     ignore_models = ignore_models or []
     view_models = []
 
-    for model, name in LINKED_MODELS:
-        if (
-            model not in ignore_models
-            and model not in (MODEL_APP, MODEL_FIXTURE, MODEL_REPORT, MODEL_KEYWORD)
-            and (model != MODEL_CASE_SEARCH or toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain))
-            and (model != MODEL_DATA_DICTIONARY or toggles.DATA_DICTIONARY.enabled(domain))
-            and (model != MODEL_DIALER_SETTINGS or toggles.WIDGET_DIALER.enabled(domain))
-            and (model != MODEL_OTP_SETTINGS or toggles.GAEN_OTP_SERVER.enabled(domain))
-            and (model != MODEL_HMAC_CALLOUT_SETTINGS or toggles.HMAC_CALLOUT.enabled(domain))
-        ):
+    for model, name in DOMAIN_LEVEL_DATA_MODELS:
+        if model not in ignore_models:
             view_models.append(
                 build_linked_data_view_model(
                     model_type=model,
@@ -210,8 +215,11 @@ def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords
     """
     view_models = []
 
-    other_view_models = build_other_view_models(domain, ignore_models=ignore_models)
-    view_models.extend(other_view_models)
+    domain_level_view_models = build_domain_level_view_models(ignore_models=ignore_models)
+    view_models.extend(domain_level_view_models)
+
+    feature_flag_view_models = build_feature_flag_view_models(domain)
+    view_models.extend(feature_flag_view_models)
 
     for app in apps:
         app_view_model = build_app_view_model(app)
