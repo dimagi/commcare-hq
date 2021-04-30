@@ -461,23 +461,44 @@ def toggles_dict(username=None, domain=None):
 
     (only enabled toggles are included)
     """
-    return {t.slug: True for t in all_toggles() if (t.enabled(username, NAMESPACE_USER) or
-                                                    t.enabled(domain, NAMESPACE_DOMAIN))}
+    by_name = all_toggles_by_name()
+    enabled = set()
+    if username:
+        enabled |= toggles_enabled_for_user(username)
+    if domain:
+        enabled |= toggles_enabled_for_domain(domain)
+    return {by_name[name].slug: True for name in enabled if name in by_name}
 
 
-def toggle_values_by_name(username=None, domain=None, include_disabled=True):
+def toggle_values_by_name(username, domain):
     """
-    Loads all toggles into a dictionary for use in JS & Formplayer
+    Loads all toggles into a dictionary for use in JS
     """
-    all_by_name = {
-        toggle_name: (toggle.enabled(username, NAMESPACE_USER) or toggle.enabled(domain, NAMESPACE_DOMAIN))
-        for toggle_name, toggle in all_toggles_by_name().items()
-    }
-    if include_disabled:
-        return all_by_name
+    all_enabled = toggles_enabled_for_user(username) | toggles_enabled_for_domain(domain)
 
     return {
-        name: value for name, value in all_by_name.items() if value
+        toggle_name: toggle_name in all_enabled
+        for toggle_name in all_toggles_by_name().keys()
+    }
+
+
+@quickcache(["domain"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def toggles_enabled_for_domain(domain):
+    """Return set of toggle names that are enabled for the given domain"""
+    return {
+        toggle_name
+        for toggle_name, toggle in all_toggles_by_name().items()
+        if toggle.enabled(domain, NAMESPACE_DOMAIN)
+    }
+
+
+@quickcache(["username"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def toggles_enabled_for_user(username):
+    """Return set of toggle names that are enabled for the given user"""
+    return {
+        toggle_name
+        for toggle_name, toggle in all_toggles_by_name().items()
+        if toggle.enabled(username, NAMESPACE_USER)
     }
 
 
