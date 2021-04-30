@@ -94,8 +94,6 @@ LOCAL_MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
-ELASTICSEARCH_MAJOR_VERSION = 2
-
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []
