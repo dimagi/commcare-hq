@@ -370,6 +370,7 @@ def is_ledger_patchable(diff):
 
 
 UNPATCHABLE_LEDGER_PATHS = {
+    ("last_modified",),
     ("last_modified_form_id",),
 }
 

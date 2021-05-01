@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from uuid import uuid4
 from xml.sax.saxutils import unescape
 
 from mock import patch
@@ -219,6 +220,21 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             new=1,
             kind="stock state",
         )])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_with_out_of_order_transactions(self):
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", delta=0)
+        self.update_stock(product, "2020-09-27", "2020-09-25T00:00:01.000Z", delta=0)
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["last_modified"], kind="stock state"),
+            Diff(ref_id, type="diff", path=["last_modified_form_id"], kind="stock state"),
+        ])
         self.do_migration(forms="missing", case_diff="patch")
 
     def test_patch_known_properties(self):
@@ -580,15 +596,30 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
 
     def create_form_with_duplicate_stock_transaction(self):
-        from corehq.apps.commtrack.helpers import make_product
         from corehq.apps.commtrack.processing import process_stock
-        thing1 = make_product(self.domain_name, 'thing-1', 'thing-1')
-        self.submit_form(LEDGER_FORM.replace("thing-1", thing1._id))
-        stock_result = process_stock([self._get_form("ledger-form")])
+        product = self.make_product()
+        form = self.update_stock(product)
+        stock_result = process_stock([form])  # create duplicate transaction
         stock_result.populate_models()
         for model in stock_result.models_to_save:
             model.save()
-        return thing1._id
+        return product._id
+
+    def make_product(self, name="thing-1"):
+        from corehq.apps.commtrack.helpers import make_product
+        return make_product(self.domain_name, name, name)
+
+    def update_stock(self, product, reported="2014-08-04", submitted=None, delta=1):
+        submission_date = "2014-08-04T18:25:56.656Z"
+        return self.submit_form(
+            LEDGER_FORM
+            .replace('thing-1', product._id)
+            .replace('ledger-form', uuid4().hex)
+            .replace('date="2014-08-04"', f'date="{reported}"')
+            .replace(submission_date, submitted or submission_date)
+            .replace('quantity="1"', f'quantity="{delta}"'),
+            received_on=submitted,
+        )
 
     def do_migration(self, *args, **kw):
         if kw.get("case_diff") != "patch":
