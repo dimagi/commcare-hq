@@ -237,6 +237,23 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
+    def test_patch_ledger_with_incorrect_balance(self):
+        from corehq.apps.commtrack.models import StockState
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", delta=0)
+        stock = StockState.objects.get(case_id="test-case", section_id="things", product_id=product._id)
+        stock.stock_on_hand = 2
+        stock.save()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["balance"], kind="stock state"),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
     def test_patch_known_properties(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")

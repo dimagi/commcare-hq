@@ -444,6 +444,7 @@ class LedgerPatches:
         form_diff = unpatched.get(form_key)
         if form_diff and form_diff.new_value == form.form_id:
             unpatched.pop(form_key)
+            unpatched.pop(("last_modified",), None)
         if unpatched:
             discard_expected_diffs(patch_diffs, unpatched)
 
