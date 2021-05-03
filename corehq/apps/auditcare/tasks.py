@@ -61,9 +61,11 @@ def copy_events_to_sql(limit=1000):
             if doc["doc_type"] == "NavigationEventAudit":
                 if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
                     continue
-                kwargs.update(_pick(doc, ["params", "headers", "status_code", "view", "view_kwargs"]))
+                kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
+                path, _, params = doc.get("request_path", "").partition("?")
                 kwargs.update({
-                    "path": doc.get("request_path"),
+                    "path": path,
+                    "params": params,
                 })
                 NavigationEventAudit(**kwargs).save()
             elif doc["doc_type"] == "AccessAudit":
