@@ -149,8 +149,8 @@ hqDefine("reports/js/report_config_models", [
                 self.initialLoad = false;
                 update_filters();
             } else {
-                window.location.href = "?config_id=" + config._id();
                 update_filters();
+                window.location.href = "?config_id=" + config._id();
             }
         };
 
