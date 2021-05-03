@@ -54,14 +54,21 @@ def copy_events_to_sql(limit=1000):
         try:
             kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
                                  "headers", "status_code", "user_agent"])
-            kwargs["event_date"] = force_to_datetime(doc.get("event_date"))
+            kwargs.update({
+                "event_date": force_to_datetime(doc.get("event_date")),
+                "couch_id": doc["_id"],
+            })
             if doc["doc_type"] == "NavigationEventAudit":
+                if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
+                    continue
                 kwargs.update(_pick(doc, ["params", "headers", "status_code", "view", "view_kwargs"]))
                 kwargs.update({
                     "path": doc.get("request_path"),
                 })
                 NavigationEventAudit(**kwargs).save()
             elif doc["doc_type"] == "AccessAudit":
+                if AccessAudit.objects.filter(couch_id=doc["_id"]).exists():
+                    continue
                 kwargs.update(_pick(doc, ["http_accept", "trace_id"]))
                 kwargs.update({
                     "access_type": ACCESS_LOOKUP.get(doc.get("access_type")),
