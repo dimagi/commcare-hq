@@ -71,7 +71,6 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - fr/consumer-user             # Farid March 17
     - sr/jumptoErrors # Sravan April 6
-    - mk/form-mm-exports-filters-2 # MK April 16
     - fr/smart-metadata-urls       # Farid April 28
     - fr/smart-oauth-views # Farid April 7
     - gh/remove-filters-from-saved-ucrs # Graham Apr 9
