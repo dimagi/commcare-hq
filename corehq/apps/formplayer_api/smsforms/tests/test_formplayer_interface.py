@@ -1,32 +1,33 @@
-import uuid
-
 import requests_mock
-from django.conf import settings
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.formplayer_api.utils import get_formplayer_url
-from corehq.util.hmac_request import get_hmac_digest
+
+SESSION_ID = "SESSION_ID"
+DOMAIN = "smsforms_domain"
+USER_ID = "USER_ID"
 
 
-class TestFormplayerInterface(TestCase):
-    def setUp(self):
-        super().setUp()
-        self.session_id = uuid.uuid4().hex
-        self.domain = uuid.uuid4().hex
-        self.user_id = uuid.uuid4().hex
-        self.interface = FormplayerInterface(self.session_id, self.domain, self.user_id)
+class FormplayerInterfaceTests(SimpleTestCase):
+    interface = FormplayerInterface(SESSION_ID, DOMAIN, USER_ID)
 
     def test_get_raw_instance(self):
+        with MockFormplayerRequest("get-instance", {}) as mocker:
+            self.interface.get_raw_instance()
+
+        mocker.assert_exactly_one_request()
+        request = mocker.get_last_request()
+
         expected_request_data = {
             'action': 'get-instance',
-            'session-id': self.session_id,
-            'session_id': self.session_id,
-            'domain': self.domain,
+            'session-id': SESSION_ID,
+            'session_id': SESSION_ID,
+            'domain': DOMAIN,
             'oneQuestionPerScreen': True,
             'nav_mode': 'prompt',
         }
-        self._test_request("get-instance", self.interface.get_raw_instance, expected_request_data, {})
+        self.validate_request(request, expected_request_data)
 
     def test_answer_question(self):
         mock_response = {"event": {
@@ -40,28 +41,46 @@ class TestFormplayerInterface(TestCase):
             "help": None
         }}
 
+        with MockFormplayerRequest("answer", mock_response) as mocker:
+            self.interface.answer_question("answer1")
+
+        mocker.assert_exactly_one_request()
+        request = mocker.get_last_request()
+
         expected_request_data = {
             'action': 'answer',
             'answer': 'answer1',
-            'session-id': self.session_id,
-            'session_id': self.session_id,
-            'domain': self.domain,
+            'session-id': SESSION_ID,
+            'session_id': SESSION_ID,
+            'domain': DOMAIN,
             'oneQuestionPerScreen': True,
             'nav_mode': 'prompt',
         }
+        self.validate_request(request, expected_request_data)
 
-        def request_callable():
-            self.interface.answer_question("answer1")
+    def validate_request(self, request, expected_request_data):
+        self.assertEqual(request.json(), expected_request_data)
+        headers = request.headers
+        self.assertEqual(headers["X-FORMPLAYER-SESSION"], USER_ID)
+        self.assertNotEqual(headers["X-MAC-DIGEST"], "")
 
-        self._test_request("answer", request_callable, expected_request_data, mock_response)
 
-    def _test_request(self, action, request_callable, expected_request_data, mock_response):
-        with requests_mock.Mocker() as m:
-            m.post(f"{get_formplayer_url()}/{action}", json=mock_response)
-            request_callable()
-            request = m.request_history[0]
-            self.assertEqual(request.json(), expected_request_data)
-            headers = request.headers
-            self.assertEqual(headers["X-FORMPLAYER-SESSION"], self.user_id)
-            digest = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, request.text)
-            self.assertEqual(headers["X-MAC-DIGEST"], digest)
+class MockFormplayerRequest:
+    def __init__(self, action, mock_response):
+        self.action = action
+        self.mock_response = mock_response
+        self.mocker = requests_mock.Mocker()
+
+    def __enter__(self):
+        self.mocker.__enter__()
+        self.mocker.post(f"{get_formplayer_url()}/{self.action}", json=self.mock_response)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.mocker.__exit__(exc_type, exc_val, exc_tb)
+
+    def assert_exactly_one_request(self):
+        assert len(self.mocker.request_history) == 1
+
+    def get_last_request(self):
+        return self.mocker.request_history[-1]
