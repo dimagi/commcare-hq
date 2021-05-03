@@ -55,9 +55,7 @@ def copy_events_to_sql(limit=1000):
         try:
             kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
                                  "headers", "status_code", "user_agent"])
-            kwargs.update({
-                "event_date": force_to_datetime(doc.get("event_date")),
-            })
+            kwargs["event_date"] = force_to_datetime(doc.get("event_date"))
             if doc["doc_type"] == "NavigationEventAudit":
                 kwargs.update(_pick(doc, ["params", "headers", "status_code", "view", "view_kwargs"]))
                 kwargs.update({
