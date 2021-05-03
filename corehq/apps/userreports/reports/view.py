@@ -254,7 +254,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_context(self):
-        params = self.saved_report_config.filters if self.saved_report_config else self.request_dict
+        params = self.request_dict
+        if self.saved_report_config:
+            params.update(self.saved_report_config.serialized_filters)
         return {
             report_filter.css_id: report_filter.context(params, self.request_user, self.lang)
             for report_filter in self.filters

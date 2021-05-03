@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 from collections import defaultdict, namedtuple
-from datetime import datetime
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -240,6 +240,22 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             params.update(self.get_date_range())
 
         return urlencode(params, True)
+
+    @property
+    @memoized
+    def serialized_filters(self):
+        """
+        converts any filter values that are objects to strings
+        """
+        serialized_filters = {}
+        for key, value in self.filters.items():
+            value_to_add = value
+            if isinstance(value, date):
+                value_to_add = value.isoformat()
+
+            serialized_filters[key] = value_to_add
+
+        return serialized_filters
 
     @property
     @memoized
