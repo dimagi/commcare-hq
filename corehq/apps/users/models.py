@@ -317,6 +317,12 @@ class UserRolePresets(object):
             return None
         return preset_map[preset]()
 
+    @classmethod
+    def get_role_name_with_matching_permissions(cls, permissions):
+        for name, factory in UserRolePresets.get_preset_map().items():
+            if factory() == permissions:
+                return name
+
 
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
@@ -372,9 +378,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         def get_name():
             if name:
                 return name
-            preset_match = [x for x in UserRolePresets.get_preset_map().items() if x[1]() == permissions]
-            if preset_match:
-                return preset_match[0][0]
+            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
         role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
