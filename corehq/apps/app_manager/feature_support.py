@@ -180,3 +180,10 @@ class CommCareFeatureSupportMixin(object):
             self._require_minimum_version('2.51')
             and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
         )
+
+    @property
+    def supports_session_endpoints(self):
+        return (
+            toggles.SESSION_ENDPOINTS.enabled(self.domain)
+            and self._require_minimum_version('2.51')
+        )
