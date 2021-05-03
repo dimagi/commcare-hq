@@ -1575,6 +1575,15 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SESSION_ENDPOINTS = StaticToggle(
+    'session_endpoints',
+    'Enable session endpoints',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    description='Support external Android apps calling in to an endpoint in a '
+                'CommCare app. (Used by the Reminders App)',
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
