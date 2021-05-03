@@ -69,11 +69,6 @@ class TestCopyEventsToSQL(AuditcareTest):
         delete_couch_docs(cls.couch_ids)
         super().tearDownClass()
 
-    def tearDown(self):
-        AccessAudit.objects.all().delete()
-        NavigationEventAudit.objects.all().delete()
-        super().tearDown()
-
     def test_copy(self):
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
         copy_events_to_sql()
