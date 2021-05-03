@@ -189,7 +189,7 @@ def get_case_hierarchy(case, type_info):
         seen.add(case.case_id)
         children = [
             get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
-            if i.referenced_id not in seen
+            if i.referenced_id and i.referenced_id not in seen
         ]
 
         children = [c for c in children if c is not None]

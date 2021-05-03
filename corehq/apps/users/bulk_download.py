@@ -18,7 +18,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_commcare_users_by_filters,
     get_mobile_usernames_by_filters,
     get_all_user_rows,

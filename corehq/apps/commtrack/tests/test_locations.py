@@ -6,7 +6,7 @@ from corehq.apps.commtrack.tests.util import (
     make_loc,
 )
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.tests.utils import run_with_all_backends

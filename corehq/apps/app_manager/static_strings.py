@@ -253,4 +253,6 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('disabled'),
     ugettext_noop('Enable Text To Speech'),
     ugettext_noop('Adds a text to speech button for all questions to read out the question text aloud.'),
+    ugettext_noop('Enable asterisk on required question'),
+    ugettext_noop('Adds a red asterisk to denote mandatory questions in a form. This setting only works in mobile.'),
 ]
