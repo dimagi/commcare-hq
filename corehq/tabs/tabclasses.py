@@ -29,6 +29,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.bulk_actions.views import ListBulkActionsView
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
@@ -413,6 +414,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/bulk_actions/',
     )
 
     @property
@@ -793,6 +795,11 @@ class ProjectDataTab(UITab):
             from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
             edit_section = EditDataInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain)
+            bulk_action_view = {
+                'title': _(ListBulkActionsView.page_title),
+                'url': reverse(ListBulkActionsView.urlname, args=[self.domain])
+            }
+            edit_section[0][1].append(bulk_action_view)
 
             if self.can_use_data_cleanup:
                 from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
