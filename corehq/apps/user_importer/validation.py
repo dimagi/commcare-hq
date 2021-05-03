@@ -21,32 +21,39 @@ from corehq.util.workbook_json.excel import (
 )
 
 
-def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None,
+def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowed_groups=None, allowed_roles=None,
                                allowed_profiles=None, upload_domain=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
-    return [
+
+    validators = [
         UsernameTypeValidator(domain),
-        UsernameValidator(domain),
-        BooleanColumnValidator(domain, 'is_active'),
-        BooleanColumnValidator(domain, 'is_account_confirmed'),
-        BooleanColumnValidator(domain, 'send_confirmation_email'),
-        RequiredFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
-        DuplicateValidator(domain, 'user_id', all_specs),
-        DuplicateValidator(domain, 'password', all_specs, is_password) if validate_passwords else noop,
         UsernameLengthValidator(domain),
-        NewUserPasswordValidator(domain),
-        PasswordValidator(domain) if validate_passwords else noop,
         CustomDataValidator(domain),
-        EmailValidator(domain),
-        GroupValidator(domain, allowed_groups),
+        EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
-        ProfileValidator(domain, allowed_profiles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain)
     ]
+    if is_web_user_import:
+        return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
+                             EmailValidator(domain, 'username')]
+    else:
+        return validators + [
+            UsernameValidator(domain),
+            BooleanColumnValidator(domain, 'is_active'),
+            BooleanColumnValidator(domain, 'is_account_confirmed'),
+            BooleanColumnValidator(domain, 'send_confirmation_email'),
+            RequiredFieldsValidator(domain),
+            DuplicateValidator(domain, 'user_id', all_specs),
+            DuplicateValidator(domain, 'password', all_specs, is_password) if validate_passwords else noop,
+            NewUserPasswordValidator(domain),
+            PasswordValidator(domain) if validate_passwords else noop,
+            GroupValidator(domain, allowed_groups),
+            ProfileValidator(domain, allowed_profiles),
+        ]
 
 
 class ImportValidator(metaclass=ABCMeta):
@@ -111,6 +118,16 @@ class RequiredFieldsValidator(ImportValidator):
         user_id = spec.get('user_id')
         username = spec.get('username')
         if not user_id and not username:
+            return self.error_message
+
+
+class RequiredWebFieldsValidator(ImportValidator):
+    error_message = _("Upload of web users requires 'username' and 'role' for each user")
+
+    def validate_spec(self, spec):
+        username = spec.get('username')
+        role = spec.get('role')
+        if not username or not role:
             return self.error_message
 
 
@@ -217,15 +234,19 @@ class CustomDataValidator(ImportValidator):
 
 
 class EmailValidator(ImportValidator):
-    error_message = _("User has an invalid email address")
+    error_message = _("User has an invalid email address for their {}")
+
+    def __init__(self, domain, column_id):
+        super().__init__(domain)
+        self.column_id = column_id
 
     def validate_spec(self, spec):
-        email = spec.get('email')
+        email = spec.get(self.column_id)
         if email:
             try:
                 validate_email(email)
             except ValidationError:
-                return self.error_message
+                return self.error_message.format(self.column_id)
 
 
 class RoleValidator(ImportValidator):
