@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import date, datetime, time
+from datetime import datetime, time
 
 from django.conf import settings
 from django.urls import reverse
