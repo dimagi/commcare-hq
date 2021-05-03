@@ -221,22 +221,22 @@ def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords
     feature_flag_view_models = build_feature_flag_view_models(domain)
     view_models.extend(feature_flag_view_models)
 
-    for app in apps:
+    for app in apps.values():
         app_view_model = build_app_view_model(app)
         if app_view_model:
             view_models.append(app_view_model)
 
-    for fixture in fixtures:
+    for fixture in fixtures.values():
         fixture_view_model = build_fixture_view_model(fixture)
         if fixture_view_model:
             view_models.append(fixture_view_model)
 
-    for report in reports:
+    for report in reports.values():
         report_view_model = build_report_view_model(report)
         if report_view_model:
             view_models.append(report_view_model)
 
-    for keyword in keywords:
+    for keyword in keywords.values():
         keyword_view_model = build_keyword_view_model(keyword)
         if keyword_view_model:
             view_models.append(keyword_view_model)
