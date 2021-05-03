@@ -195,6 +195,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway can't reach the destination number."),
         ERROR_MESSAGE_TOO_LONG:
             ugettext_noop("The gateway could not process the message because it was too long."),
+        'MESSAGE_BLANK':
+            ugettext_noop("The message was blank."),
         ERROR_CONTACT_IS_INACTIVE:
             ugettext_noop("The recipient has been deactivated."),
         ERROR_TRIAL_SMS_EXCEEDED:

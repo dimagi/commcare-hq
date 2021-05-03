@@ -7,6 +7,7 @@ from corehq.apps.sso.views.saml import (
     sso_debug_user_data,
     sso_saml_sls,
     sso_saml_logout,
+    sso_test_create_user,
 )
 
 saml_urls = [
@@ -16,6 +17,7 @@ saml_urls = [
     url(r'^sls/$', sso_saml_sls, name='sso_saml_sls'),
     url(r'^logout/$', sso_saml_logout, name='sso_saml_logout'),
     url(r'^login/$', sso_saml_login, name='sso_saml_login'),
+    url(r'^create/$', sso_test_create_user, name='sso_test_create_user'),
 ]
 
 urlpatterns = [

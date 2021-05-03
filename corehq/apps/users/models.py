@@ -1747,7 +1747,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return profile
 
     def _is_demo_user_cached_value_is_stale(self):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
         if cached_demo_users is not Ellipsis:
             cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
@@ -1756,7 +1756,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return False
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
         get_loadtest_factor_for_user.clear(self.domain, self.user_id)
 
@@ -2722,7 +2722,7 @@ class Invitation(models.Model):
     def get_role_name(self):
         if self.role:
             if self.role == 'admin':
-                return self.role
+                return _('Admin')
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
@@ -2731,6 +2731,45 @@ class Invitation(models.Model):
                     return _('Unknown Role')
         else:
             return None
+
+    def _send_confirmation_email(self):
+        """
+        This sends the confirmation email to the invited_by user that their
+        invitation was accepted.
+        :return:
+        """
+        invited_user = self.email
+        subject = _('{} accepted your invitation to CommCare HQ').format(invited_user)
+        recipient = WebUser.get_by_user_id(self.invited_by).get_email()
+        context = {
+            'invited_user': invited_user,
+        }
+        html_content = render_to_string('domain/email/invite_confirmation.html',
+                                        context)
+        text_content = render_to_string('domain/email/invite_confirmation.txt',
+                                        context)
+        send_html_email_async.delay(
+            subject,
+            recipient,
+            html_content,
+            text_content=text_content
+        )
+
+    def accept_invitation_and_join_domain(self, web_user):
+        """
+        Call this method to confirm that a user has accepted the invite to
+        a domain and add them as a member to the domain in the invitation.
+        :param web_user: WebUser
+        """
+        web_user.add_as_web_user(
+            self.domain,
+            role=self.role,
+            location_id=self.supply_point,
+            program_id=self.program,
+        )
+        self.is_accepted = True
+        self.save()
+        self._send_confirmation_email()
 
 
 class DomainRemovalRecord(DeleteRecord):

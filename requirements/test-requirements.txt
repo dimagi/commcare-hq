@@ -206,7 +206,7 @@ faker==5.0.2
     # via -r base-requirements.in
 flaky==3.7.0
     # via -r test-requirements.in
-freezegun==0.3.15
+freezegun==1.1.0
     # via -r test-requirements.in
 gevent==1.4.0
     # via
@@ -384,7 +384,7 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -465,7 +465,6 @@ six==1.15.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   freezegun
     #   ghdiff
     #   html5lib
     #   isodate

@@ -26,7 +26,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     UserChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new

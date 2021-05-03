@@ -4,7 +4,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
     ScheduleError,
-    UserCaseXPathValidationError,
+    UsercaseXPathValidationError,
 )
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
@@ -237,7 +237,7 @@ class MenuContributor(SuiteContributorByModule):
                     raise CaseXPathValidationError(module=module, form=form)
 
                 if xpath_references_usercase(interpolated_xpath) and not domain_uses_usercase():
-                    raise UserCaseXPathValidationError(module=module, form=form)
+                    raise UsercaseXPathValidationError(module=module, form=form)
 
                 command.relevant = interpolated_xpath
 

@@ -328,6 +328,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
+    use_livequery = BooleanProperty(default=False)
     use_sql_backend = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
@@ -647,6 +648,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
+                use_livequery=True,
                 use_sql_backend=use_sql_backend,
             )
             new_domain.save(**get_safe_write_kwargs())
