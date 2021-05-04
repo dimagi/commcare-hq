@@ -339,7 +339,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     upstream_id = StringProperty()
 
     @classmethod
-    def by_domain(cls, domain, is_archived=False):
+    def by_domain(cls, domain, include_archived=False):
         # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
@@ -348,7 +348,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        if include_archived:
+            return list(all_roles)
+        return [x for x in all_roles if not x.is_archived]
 
     @classmethod
     def by_domain_and_name(cls, domain, name, is_archived=False):
@@ -409,10 +411,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def unarchive_roles_for_domain(cls, domain):
-        archived_roles = cls.by_domain(domain, is_archived=True)
+        archived_roles = cls.by_domain(domain, include_archived=True)
         for role in archived_roles:
-            role.is_archived = False
-            role.save()
+            if role.is_archived:
+                role.is_archived = False
+                role.save()
 
     @classmethod
     def init_domain_with_presets(cls, domain):
