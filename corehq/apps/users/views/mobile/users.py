@@ -85,9 +85,11 @@ from corehq.apps.users.dbaccessors import (
     user_exists,
 )
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
     require_can_edit_web_users,
+    require_can_use_filtered_user_download,
 )
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.forms import (
@@ -664,7 +666,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
-        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
+        if can_use_filtered_user_download(self.domain):
             bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
@@ -1180,7 +1182,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
         )
 
 
-@method_decorator([toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
+@method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
@@ -1191,7 +1193,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload):
         return super().get(request, domain, *args, **kwargs)
 
 
-@method_decorator([toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()], name='dispatch')
+@method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload):
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
@@ -1361,13 +1363,13 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 
 @require_can_edit_commcare_users
-@toggles.FILTERED_BULK_USER_DOWNLOAD.required_decorator()
+@require_can_use_filtered_user_download
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
 
 @require_can_edit_web_users
-@toggles.DOMAIN_PERMISSIONS_MIRROR.required_decorator()
+@require_can_use_filtered_user_download
 def count_web_users(request, domain):
     return _count_users(request, domain, WEB_USER_TYPE)
 
