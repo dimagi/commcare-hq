@@ -1794,7 +1794,10 @@ class DetailTab(IndexedSchema):
     # A tab may be associated with a nodeset, resulting in a detail that
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
-    nodeset = StringProperty()
+    nodeset_type = StringProperty(choices=['subcase', 'custom'], default='custom')  # TODO: it's child case, not subcase
+    nodeset_identifier = StringProperty()
+    nodeset_xpath = StringProperty()
+    nodeset = StringProperty()  # TODO: deprecate, migrate, blah blah blah
     relevant = StringProperty()
 
 
