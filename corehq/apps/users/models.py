@@ -338,9 +338,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     is_archived = BooleanProperty(default=False)
     upstream_id = StringProperty()
 
-    def get_qualified_id(self):
-        return 'user-role:%s' % self.get_id
-
     @classmethod
     def by_domain(cls, domain, is_archived=False):
         # todo change this view to show is_archived status or move to PRBAC UserRole
@@ -427,22 +424,23 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
-    @property
-    def has_users_assigned(self):
-        from corehq.apps.es.users import UserES
-        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
-
     @classmethod
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
 
     @classmethod
     def preset_and_domain_role_names(cls, domain_name):
-        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
+        presets = set(UserRolePresets.NAME_ID_MAP.keys())
+        custom = set([role.name for role in cls.by_domain(domain_name)])
+        return presets | custom
 
-    @classmethod
-    def preset_permissions_names(cls):
-        return set(UserRolePresets.NAME_ID_MAP.keys())
+    @property
+    def has_users_assigned(self):
+        from corehq.apps.es.users import UserES
+        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
+
+    def get_qualified_id(self):
+        return 'user-role:%s' % self.get_id
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
