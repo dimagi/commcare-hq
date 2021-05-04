@@ -79,6 +79,7 @@ branches:
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
     - sk/case-search-expression  # SK April 29
     - bmb/sso-async-signup-create  # Biyeun April 29
+    - bmb/sso-async-signup-create-session-retest  # Biyeun May 4
     - gh/refactor-release-content-logic # Graham April 30
     - rp/query_multiple_domains #Rynhard May 4
 submodules: { }
