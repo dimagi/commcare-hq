@@ -70,17 +70,27 @@ class TestCopyEventsToSQL(AuditcareTest):
         super().tearDownClass()
 
     def test_copy(self):
+
+        def _assert():
+            self.assertEqual(NavigationEventAudit.objects.count(), 2)
+            self.assertEqual(
+                [e.path for e in NavigationEventAudit.objects.order_by("-event_date").all()],
+                ["just/a/checkpoint", "/a/delmar/phone/restore/"]
+            )
+            self.assertEqual(
+                [e.params for e in NavigationEventAudit.objects.order_by("-event_date").all()],
+                ["", "version=2.0&since=..."]
+            )
+            self.assertEqual(AccessAudit.objects.count(), 1)
+            self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
+
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
         copy_events_to_sql()
+        _assert()
 
-        self.assertEqual(NavigationEventAudit.objects.count(), 2)
-        self.assertEqual(
-            [e.path for e in NavigationEventAudit.objects.order_by("-event_date").all()],
-            ["just/a/checkpoint", "/a/delmar/phone/restore/?version=2.0&since=..."]
-        )
-
-        self.assertEqual(AccessAudit.objects.count(), 1)
-        self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
+        # Re-copying should have no effect
+        copy_events_to_sql()
+        _assert()
 
     def test_limit(self):
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
