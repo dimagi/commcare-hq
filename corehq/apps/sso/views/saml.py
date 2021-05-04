@@ -277,6 +277,6 @@ def sso_test_create_user(request, idp_slug):
 @use_saml2_auth
 def test_session_stuff(request, idp_slug):
     request.session['ssoInviteTest'] = 'TEST INVITE DID WERK?'
-    request.modified = True
+    request.session.modified = True
 
     return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
