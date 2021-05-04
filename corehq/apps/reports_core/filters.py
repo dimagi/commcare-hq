@@ -133,6 +133,9 @@ class DatespanFilter(BaseFilter):
 
     @memoized
     def value(self, **kwargs):
+        if self.startdate_param_name not in kwargs or self.enddate_param_name not in kwargs:
+            return None
+
         startdate = kwargs[self.startdate_param_name]
         enddate = kwargs[self.enddate_param_name]
         date_range_inclusive = kwargs.get('date_range_inclusive', True)
