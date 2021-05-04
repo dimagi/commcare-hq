@@ -38,7 +38,7 @@ class TestMessagingEventResource(APIResourceTest):
             "recipient_type_display": None,
             "resource_uri": "",
             "source": MessagingEvent.SOURCE_OTHER,
-            # "source_display": 'Other',
+            "source_display": 'Other',
             "source_id": None,
             "status": MessagingEvent.STATUS_COMPLETED,
             "status_display": 'Completed',
