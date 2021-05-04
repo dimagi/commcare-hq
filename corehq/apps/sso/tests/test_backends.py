@@ -13,7 +13,7 @@ from corehq.apps.sso.utils.session_helpers import (
     prepare_session_with_new_sso_user_data,
     prepare_session_for_sso_invitation,
 )
-from corehq.apps.users.models import WebUser, Invitation, AdminUserRole
+from corehq.apps.users.models import WebUser, Invitation, UserRole
 
 
 class TestSsoBackend(TestCase):
@@ -255,7 +255,7 @@ class TestSsoBackend(TestCase):
         invitation should add the user to the invited project
         space and accept the invitation
         """
-        admin_role = AdminUserRole(domain=self.domain.name)
+        admin_role = UserRole.admin_role(self.domain.name)
         invitation = Invitation(
             domain=self.domain.name,
             email='isa@vaultwax.com',

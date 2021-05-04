@@ -434,6 +434,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
         custom = set([role.name for role in cls.by_domain(domain_name)])
         return presets | custom
 
+    @classmethod
+    def admin_role(cls, domain):
+        return AdminUserRole(domain=domain)
+
     @property
     def has_users_assigned(self):
         from corehq.apps.es.users import UserES
@@ -519,7 +523,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return AdminUserRole(self.domain)
+            return UserRole.admin_role(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -713,7 +717,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
+            return UserRole.admin_role(domain)
         if self.is_member_of(domain, allow_mirroring):
             return self.get_domain_membership(domain, allow_mirroring).role
         else:
