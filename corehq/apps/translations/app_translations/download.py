@@ -176,7 +176,7 @@ def get_module_rows(langs, module, domain):
         get_module_case_list_menu_item_rows(langs, module) + \
         get_module_search_command_rows(langs, module, domain) + \
         get_module_detail_rows(langs, module) + \
-        get_case_search_rows(langs, module)
+        get_case_search_rows(langs, module, domain)
 
 
 def get_module_report_rows(langs, module):
@@ -227,8 +227,8 @@ def get_module_search_command_rows(langs, module, domain):
     ]
 
 
-def get_case_search_rows(langs, module):
-    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(module.get_app().domain):
+def get_case_search_rows(langs, module, domain):
+    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         return []
 
     ret = []
