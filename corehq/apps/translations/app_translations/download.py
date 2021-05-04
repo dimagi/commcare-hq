@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from django.utils.encoding import force_text
 
+from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import module_offers_search
@@ -166,6 +167,7 @@ def get_question_row(question_label_name_media, sheet_name):
         ['']  # unique_id
     )
 
+
 def get_module_rows(langs, module):
     if isinstance(module, ReportModule):
         return get_module_report_rows(langs, module)
@@ -226,6 +228,9 @@ def get_module_search_command_rows(langs, module):
 
 
 def get_case_search_rows(langs, module):
+    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(module.get_app().domain):
+        return []
+
     ret = []
     for prop in module.search_config.properties:
         ret.append((
