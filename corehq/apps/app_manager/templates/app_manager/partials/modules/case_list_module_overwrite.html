@@ -56,7 +56,22 @@
                   <label for="print_template">
                     <input type="checkbox" name="print_template" id="print_template"/>
                     {% trans "Print template" %}
-                  </label>
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
+                  {# prefix these with 'search_' to make it easier to filter on the backend #}
+                  <label for="search_properties">
+                    <input type="checkbox" name="search_properties" id="search_properties"/>
+                    {% trans "Search properties" %}
+                  </label><br>
+                  <label for="search_default_properties">
+                    <input type="checkbox" name="search_default_properties" id="search_default_properties"/>
+                    {% trans "Default search properties" %}
+                  </label><br>
+                  <label for="search_claim_options">
+                    <input type="checkbox" name="search_claim_options" id="search_claim_options"/>
+                    {% trans "Search and claim options" %}
+                  </label><br>
                 {% endif %}
             </div>
           </div>
