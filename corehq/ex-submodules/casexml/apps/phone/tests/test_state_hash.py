@@ -8,7 +8,7 @@ from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.tests.utils import use_sql_backend
 
 

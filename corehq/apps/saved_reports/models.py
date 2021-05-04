@@ -738,9 +738,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         mock_request.bypass_two_factor = True
 
                         mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                        if report_config.is_configurable_report:
-                            mock_query_string_parts.append(urlencode(report_config.filters, True))
-                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
                         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
                         request_data = vars(mock_request)
                         request_data['couch_user'] = mock_request.couch_user.userID

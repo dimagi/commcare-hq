@@ -2,7 +2,7 @@ import logging
 import os
 
 from django.core.management.base import BaseCommand
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
@@ -39,10 +39,11 @@ class Command(BaseCommand):
 
     FIELD_TYPE_BOOL = 'models.BooleanField'
     FIELD_TYPE_INTEGER = 'models.IntegerField'
+    FIELD_TYPE_DATE = 'models.DateField'
     FIELD_TYPE_DATETIME = 'models.DateTimeField'
     FIELD_TYPE_DECIMAL = 'models.DecimalField'
     FIELD_TYPE_STRING = 'models.CharField'
-    FIELD_TYPE_JSON = 'JsonField'
+    FIELD_TYPE_JSON = 'JSONField'
     FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
     FIELD_TYPE_UNKNOWN = ''
@@ -114,7 +115,9 @@ class Command(BaseCommand):
                 if isinstance(value, bool):
                     self.init_field(key, self.FIELD_TYPE_BOOL)
                 elif isinstance(value, str):
-                    if parse_datetime(value):
+                    if parse_date(value):
+                        self.init_field(key, self.FIELD_TYPE_DATE)
+                    elif parse_datetime(value):
                         self.init_field(key, self.FIELD_TYPE_DATETIME)
                     else:
                         self.init_field(key, self.FIELD_TYPE_STRING)
@@ -134,7 +137,7 @@ class Command(BaseCommand):
                 continue
 
             if self.field_type(key) == self.FIELD_TYPE_INTEGER:
-                if int(value) != value:
+                if value is not None and int(value) != value:
                     self.update_field_type(key, self.FIELD_TYPE_DECIMAL)
 
             self.update_field_max_length(key, len(str(value)))
@@ -246,7 +249,9 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
         for key, field_type in self.field_types.items():
             if self.is_submodel_key(key):
                 continue
-            if field_type == self.FIELD_TYPE_DATETIME:
+            if field_type == self.FIELD_TYPE_DATE:
+                suggested_updates.append(f'"{key}": force_to_date(doc.get("{key}")),')
+            elif field_type == self.FIELD_TYPE_DATETIME:
                 suggested_updates.append(f'"{key}": force_to_datetime(doc.get("{key}")),')
             else:
                 suggested_updates.append(f'"{key}": doc.get("{key}"),')
@@ -257,12 +262,18 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
         if db_slug_with_quotes:
             db_slug_with_quotes = f'"{db_slug_with_quotes}"'
 
-        datetime_import = ""
+        date_conversions = []
+        if self.FIELD_TYPE_DATE in self.field_types.values():
+            date_conversions.append("force_to_date")
         if self.FIELD_TYPE_DATETIME in self.field_types.values():
-            datetime_import = "from dimagi.utils.dates import force_to_datetime\n\n"
+            date_conversions.append("force_to_datetime")
+        if date_conversions:
+            dates_import = f"from dimagi.utils.dates import {','.join(date_conversions)}\n\n"
+        else:
+            dates_import = ""
 
         return f"""
-{datetime_import}from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+{dates_import}from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
 
 class Command(PopulateSQLCommand):

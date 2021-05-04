@@ -3,8 +3,10 @@ Feature Previews are built on top of toggle, so if you migrate a toggle to
 a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
+from memoized import memoized
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.util.quickcache import quickcache
@@ -60,19 +62,36 @@ def all_previews():
     return list(all_previews_by_name().values())
 
 
-@quickcache([])
+@memoized
 def all_previews_by_name():
     return all_toggles_by_name_in_scope(globals(), toggle_class=FeaturePreview)
 
 
-@quickcache(['domain'])
 def previews_dict(domain):
-    return {t.slug: True for t in all_previews() if t.enabled(domain)}
+    by_name = all_previews_by_name()
+    enabled = previews_enabled_for_domain(domain)
+    return {by_name[name].slug: True for name in enabled if name in by_name}
 
 
 def preview_values_by_name(domain):
-    return {toggle_name: toggle.enabled(domain)
-            for toggle_name, toggle in all_previews_by_name().items()}
+    """
+    Loads all feature previews into a dictionary for use in JS
+    """
+    enabled_previews = previews_enabled_for_domain(domain)
+    return {
+        name: name in enabled_previews
+        for name in all_previews_by_name().keys()
+    }
+
+
+@quickcache(["domain"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def previews_enabled_for_domain(domain):
+    """Return set of preview names that are enabled for the given domain"""
+    return {
+        name
+        for name, preview in all_previews_by_name().items()
+        if preview.enabled(domain)
+    }
 
 
 CALC_XPATHS = FeaturePreview(

@@ -132,7 +132,7 @@ def login_and_domain_required(view_func):
                 )
             return call_view()
         elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
-            from corehq.apps.users.views import DomainRequestView
+            from corehq.apps.users.views.web import DomainRequestView
             return DomainRequestView.as_view()(req, *args, **kwargs)
         else:
             raise Http404

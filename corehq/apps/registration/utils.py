@@ -104,7 +104,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, form, is_new_user=True):
+def request_new_domain(request, project_name, is_new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -114,7 +114,6 @@ def request_new_domain(request, form, is_new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    project_name = form.cleaned_data.get('hr_name') or form.cleaned_data.get('project_name')
     name = name_to_url(project_name, "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
@@ -131,9 +130,6 @@ def request_new_domain(request, form, is_new_user=True):
 
         # Avoid projects created by dimagi.com staff members as self started
         new_domain.internal.self_started = not current_user.is_dimagi
-
-        if form.cleaned_data.get('domain_timezone'):
-            new_domain.default_timezone = form.cleaned_data['domain_timezone']
 
         if not is_new_user:
             new_domain.is_active = True

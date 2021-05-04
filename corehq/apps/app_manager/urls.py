@@ -78,7 +78,6 @@ from corehq.apps.app_manager.views import (
     undo_delete_form,
     undo_delete_module,
     update_build_comment,
-    update_linked_whitelist,
     upgrade_shadow_module,
     validate_form_for_build,
     validate_module_for_build,
@@ -173,7 +172,6 @@ urlpatterns = [
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
     url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
         name='pull_missing_multimedia'),
-    url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',

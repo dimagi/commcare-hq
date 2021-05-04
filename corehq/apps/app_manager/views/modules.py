@@ -92,6 +92,8 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     handle_custom_icon_edits,
     handle_shadow_child_modules,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -100,7 +102,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -135,7 +137,7 @@ def get_module_view_context(request, app, module, lang=None):
         'show_search_workflow': (
             app.cloudcare_enabled
             and has_privilege(request, privileges.CLOUDCARE)
-            and toggles.CASE_CLAIM_AUTOLAUNCH.enabled(app.domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
         ),
     }
     module_brief = {
@@ -188,17 +190,24 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
+    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
-            'has_geocoder_privs': domain_has_privilege(request.domain, privileges.GEOCODER),
-            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
+            'has_geocoder_privs': (
+                domain_has_privilege(app.domain, privileges.GEOCODER)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+            ),
+            'item_lists': item_lists,
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
@@ -540,6 +549,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
         "use_default_audio_for_all": None,
+        "session_endpoint_id": None,
     }
 
     if attr not in attributes:
@@ -679,6 +689,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(module, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return HttpResponseBadRequest(str(e))
+
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
     if hasattr(module, 'case_list'):
@@ -813,20 +830,20 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    attrs_dict = {
-        'columns': request.POST.get('display_properties') == 'on',
-        'filter': request.POST.get('case_list_filter') == 'on',
-        'sort_elements': request.POST.get('sort_configuration') == 'on',
-        'sort_nodeset_columns': request.POST.get('nodeset_sorting') == 'on',
-        'custom_variables': request.POST.get('custom_variables') == 'on',
-        'custom_xml': request.POST.get('custom_case_list_xml') == 'on',
-        'case_tile_configuration': request.POST.get('case_tile_configuration') == 'on',
-        'print_template': request.POST.get('print_template') == 'on',
-    }
+    all_attrs = [
+        'columns',
+        'filter',
+        'sort_elements',
+        'custom_variables',
+        'custom_xml',
+        'case_tile_configuration',
+        'print_template',
+    ]
+    short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
 
-    error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, attrs_dict)
+    error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
         for err in error_list:
             messages.error(
@@ -839,20 +856,15 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
-        if not hasattr(dest_module, 'case_details'):
+        if dest_module.case_type != src_module.case_type:
             messages.error(
                 request,
-                _("Sorry, couldn't find case list configuration for module {}. "
-                "Please report an issue if you believe this is a mistake.").format(dest_module.default_name()))
-        elif dest_module.case_type != src_module.case_type:
-            messages.error(
-                request,
-                _("Please choose a module with the same case type as the current one ({}).").format(
+                _("Please choose a menu with the same case type as the current one ({}).").format(
                     src_module.case_type)
             )
         else:
             try:
-                _update_module_case_list(detail_type, src_module, dest_module, attrs_dict)
+                _update_module_detail(detail_type, src_module, dest_module, short_attrs)
                 updated_modules.append(dest_module.default_name())
             except Exception:
                 notify_exception(
@@ -875,27 +887,25 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
-def _validate_overwrite_request(request, detail_type, dest_modules, attrs_dict):
+def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs):
     assert detail_type in ['short', 'long']
     error_list = []
 
     if not dest_modules:
         error_list.append(_("Please choose at least one menu to overwrite."))
     if detail_type == 'short':
-        if not any(attrs_dict.values()):
+        if not short_attrs:
             error_list.append(_("Please choose at least one option to overwrite."))
     return error_list
 
 
-def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
+def _update_module_detail(detail_type, src_module, dest_module, short_attrs):
     if detail_type == 'long':
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
-        src_module_detail_type = getattr(src_module.case_details, detail_type)
-        dest_module_detail_type = getattr(dest_module.case_details, detail_type)
-
-        # begin overwrite
-        dest_module_detail_type.overwrite_from_module_detail(src_module_detail_type, attrs_dict)
+        src_detail = getattr(src_module.case_details, detail_type)
+        dest_detail = getattr(dest_module.case_details, detail_type)
+        dest_detail.overwrite_attrs(src_detail, short_attrs)
 
 
 def _update_search_properties(module, search_properties, lang='en'):

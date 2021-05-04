@@ -827,6 +827,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
         if (calendarLanguage === 'en') {
             $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions['']);
+        } else {
+            $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions[calendarLanguage]);
         }
 
         self._formatDateForAnswer = function (newDate) {

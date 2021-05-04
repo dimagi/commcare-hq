@@ -65,11 +65,9 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.linked_domain_obj = create_domain('domain-2')
         cls.linked_domain = cls.linked_domain_obj.name
         cls.master1 = Application.new_app(cls.domain, "First Master Application")
-        cls.master1.linked_whitelist = [cls.linked_domain]
         cls.master1.save()
 
         cls.master2 = Application.new_app(cls.domain, "Second Master Application")
-        cls.master2.linked_whitelist = [cls.linked_domain]
         cls.master2.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
@@ -468,7 +466,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_update_from_specific_build(self, *args):
         master_app = Application.new_app(self.domain, "Master Application")
-        master_app.linked_whitelist = [self.linked_domain]
         master_app.save()
         self.addCleanup(master_app.delete)
 

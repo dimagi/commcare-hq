@@ -43,7 +43,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
-      $ sudo apt install python3-dev python3-pip python3-venv
+      $ sudo apt install python3.6-dev python3-pip python3-venv
 
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
@@ -154,7 +154,7 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/requirements.txt
 
-(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
+(If this fails you may need to [install the prerequisite system dependencies](#prerequisites).)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
@@ -232,7 +232,9 @@ following should cover the needs of most developers.
     # Or, omit the '-d' option to keep the containers attached in the foreground
     $ ./scripts/docker up
     # Optionally, bring up only specific containers (add '-d' to detach)
-    $ ./scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio formplayer
+    # Note that elasticsearch2 is for ES2, whereas elasticsearch is for ES7.
+    # Which container you use should match the version set with ELASTICSEARCH_MAJOR_VERSION
+    $ ./scripts/docker up postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
     ```
 
 1. If you are planning on running Formplayer from source, stop the formplayer

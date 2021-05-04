@@ -35,7 +35,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.tasks import create_usercases
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.app_manager.xpath import UsercaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -55,7 +55,7 @@ CASE_XPATH_SUBSTRING_MATCHES = [
 
 USERCASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
-    UserCaseXPath().case(),
+    UsercaseXPath().case(),
 ]
 
 
@@ -510,14 +510,14 @@ def purge_report_from_mobile_ucr(report_config):
 SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
 
 
-def get_sort_and_sort_only_columns(detail, sort_elements):
+def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     """
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
     sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
     sort_columns = {}
-    for column in detail.get_columns():
+    for column in detail_columns:
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)

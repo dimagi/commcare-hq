@@ -17,7 +17,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -190,7 +190,8 @@ class RetireUserTestCase(TestCase):
 
         # check that the index is removed via a new form
         child = CaseAccessors(self.domain).get_case(child_id)
-        self.assertEqual(0, len(child.indices))
+        self.assertEqual(1, len(child.indices))
+        self.assertEqual('', child.indices[0].referenced_id)
         self.assertEqual(2, len(child.xform_ids))
 
     @run_with_all_backends
