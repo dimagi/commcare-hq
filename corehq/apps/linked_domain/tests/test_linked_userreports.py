@@ -141,14 +141,20 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
         api_key, _ = HQApiKey.objects.get_or_create(user=django_user)
         auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % api_key.key}
-        self.domain_link.save()
+
+        # mark domain link to be remote
+        self.domain_link.remote_base_url = "http://find/my/app"
 
         url = reverse('linked_domain:ucr_config', args=[self.domain, self.report.get_id])
         headers = auth_headers.copy()
         headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
         resp = self.client.get(url, **headers)
 
-        fake_ucr_getter.return_value = json.loads(resp.content)
+        response_json = resp.json()
+        fake_ucr_getter.return_value = {
+            "report": ReportConfiguration.wrap(response_json["report"]),
+            "datasource": DataSourceConfiguration.wrap(response_json["datasource"]),
+        }
 
         # Create
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
