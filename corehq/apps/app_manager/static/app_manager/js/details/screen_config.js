@@ -408,31 +408,34 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     var nodesetUiElement = function (options) {
                         var self = {};
 
-                        // TODO: make UI react when option is selected
+                        self.nodesetXpath = ko.observable(options.nodesetXpath);
+
+                        self.dropdownOptions = _.map(_.sortBy(options.caseTypes), function (t) {
+                            return {name: gettext("Child cases: ") + t, value: t};
+                        }).concat([{name: gettext("Custom Nodeset"), value: ""}]);
+
+                        self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
+                            return o.value === options.nodesetIdentifier;
+                        }));
+
+                        self.showXpath = ko.computed(function () {
+                            return !self.dropdownValue().value;
+                        });
+
                         self.ui = $(
                             '<div>' +
-                            '<select class="form-control">' +
-                            _.map(_.sortBy(options.caseTypes), function (t) {
-                                return "<option value='" + t + "'>" + gettext("Child cases: ") + t + "</option>";
-                            }) +
-                            '<option value="">' + gettext("Custom Nodeset")  + '</option>' +
-                            '</select>' +
-                            '<textarea type="text" class="form-control" /></textarea>' +
+                            '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>' +
+                            '<textarea type="text" class="form-control" data-bind="value: nodesetXpath, visible: showXpath" style="margin-top: 5px" /></textarea>' +
                             '</div>'
                         );
-                        if (options.nodesetType === "subcase") {
-                            self.ui.find("select").val(options.nodesetIdentifier);
-                        } else {
-                            self.ui.find("select").val("");
-                        }
-                        self.ui.find("textarea").val(options.nodesetXpath);
-                        self.ui.find("textarea").attr("placeholder", gettext("Nodeset"));
+
+                        self.ui.koApplyBindings(self);
 
                         return self;
                     };
                     self.nodeset_extra = nodesetUiElement(_.extend({
                         caseTypes: ['point'],  // TODO: get actual case types
-                    }, _.pick(self.original, ['nodesetType', 'nodesetIdentifier', 'nodesetXpath'])));
+                    }, _.pick(self.original, ['nodesetType', 'nodesetIdentifier', 'nodesetXpath'])));   // TODO: remove nodesetType?
 
                     self.relevant = uiElement.input().val(self.original.relevant);
                     if (self.isTab) {
