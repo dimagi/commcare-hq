@@ -355,6 +355,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             report_map.update({
                 c.report_meta.master_id: c._id
                 for c in get_report_configs_for_domain(app.domain)
+                if c.report_meta.master_id
             })
 
         try:
