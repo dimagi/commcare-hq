@@ -58,6 +58,10 @@ DHIS2_PROGRAM_STATUSES = (
 
 LOCATION_DHIS_ID = 'dhis_id'
 
+DHIS2_UID_RE = r'^[a-zA-Z][a-zA-Z0-9]{10}$'
+DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
+                      'long, and starts with a letter.')
+
 # XMLNS to indicate that a case was updated with data from DHIS2.
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
