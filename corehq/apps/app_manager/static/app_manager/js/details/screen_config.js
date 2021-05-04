@@ -350,7 +350,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 var tabDefaults = {
                     isTab: false,
                     hasNodeset: false,
-                    nodeset: "",
+                    nodeset: "",        // TODO: remove
+                    nodesetType: null,
+                    nodesetIdentifier: "",
+                    nodesetXpath: "",
                     relevant: "",
                 };
                 _.each(_.keys(tabDefaults), function (key) {
@@ -385,8 +388,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                 (function () {
                     var i, lang, visibleVal = "",
-                        invisibleVal = "",
-                        nodesetVal;
+                        invisibleVal = "";
                     if (self.original.header && self.original.header[self.lang]) {
                         visibleVal = invisibleVal = self.original.header[self.lang];
                     } else {
@@ -403,19 +405,22 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.header = uiElement.input().val(invisibleVal);
                     self.header.setVisibleValue(visibleVal);
 
-                    self.nodeset = uiElement.input().val(self.original.nodeset);
+                    // TODO: make more complicated UI, populate with multiple properties
+                    self.nodeset_extra = uiElement.input().val(self.original.nodeset);
+
                     self.relevant = uiElement.input().val(self.original.relevant);
                     if (self.isTab) {
                         self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
-                        self.nodeset.ui.find("input[type='text']").attr("placeholder", gettext("Nodeset"));
+                        //self.nodeset.ui.find("input[type='text']").attr("placeholder", gettext("Nodeset"));   // TODO: make sure this still works
                         self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
 
                         // Observe nodeset values for the sake of validation
                         if (self.hasNodeset) {
-                            self.nodeset.observableVal = ko.observable(self.original.nodeset);
+                            // TODO: make sure this still works
+                            /*self.nodeset.observableVal = ko.observable(self.original.nodeset);
                             self.nodeset.on("change", function () {
                                 self.nodeset.observableVal(self.nodeset.val());
-                            });
+                            });*/
                         }
 
                         if (self.original.relevant) {
@@ -436,7 +441,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     }
                     if (self.isTab) {
                         // Data tab missing its nodeset
-                        return self.hasNodeset && !self.nodeset.observableVal();
+                        // TODO: make sure this still works
+                        //return self.hasNodeset && !self.nodeset.observableVal();
+                        return false;
                     }
                     // Invalid property name
                     return (self.field.observableVal() || self.saveAttempted()) && !detailScreenConfig.field_val_re.test(self.field.observableVal());
@@ -560,7 +567,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     'model',
                     'field',
                     'header',
-                    'nodeset',
+                    'nodeset_extra',
                     'relevant',
                     'format',
                     'date_extra',
@@ -639,8 +646,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     var column = self.original;
                     column.field = self.field.val();
                     column.header[self.lang] = self.header.val();
-                    column.nodeset = self.nodeset.val();
-                    column.relevant = self.relevant.val();
+                    //column.nodeset = self.nodeset.val();  // TODO: support saving new properties
+                    column.relevant = self.relevant.val();  // TODO: this can move into the self.isTab block below, no?
                     column.format = self.format.val();
                     column.date_format = self.date_extra.val();
                     column.enum = self.enum_extra.getItems();
@@ -653,10 +660,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.case_tile_field = self.case_tile_field();
                     if (self.isTab) {
                         // Note: starting_index is added by screenModel.serialize
-                        return _.extend({
+                        // TODO: support saving new properties
+                        /*return _.extend({
                             starting_index: self.starting_index,
                             has_nodeset: column.hasNodeset,
-                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
+                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));*/
                     }
                     return column;
                 };
@@ -787,6 +795,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     columns.splice(
                         tabs[i].starting_index + i,
                         0,
+                        // TODO: add new tab properties here
                         _.extend({
                             hasNodeset: tabs[i].has_nodeset,
                         }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
@@ -794,6 +803,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }
                 if (self.columnKey === 'long') {
                     self.addTab = function (hasNodeset) {
+                        // TODO: this is fine without changes, right? Since tabDefaults is updated?
                         var col = self.initColumnAsColumn(columnModel.init({
                             isTab: true,
                             hasNodeset: hasNodeset,
