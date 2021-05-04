@@ -428,8 +428,15 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             '<textarea type="text" class="form-control" data-bind="value: nodesetXpath, visible: showXpath" style="margin-top: 5px" /></textarea>' +
                             '</div>'
                         );
-
                         self.ui.koApplyBindings(self);
+
+                        hqImport("hqwebapp/js/main").eventize(self);
+                        self.nodesetXpath.subscribe(function () {
+                            self.fire('change');
+                        });
+                        self.dropdownValue.subscribe(function () {
+                            self.fire('change');
+                        });
 
                         return self;
                     };
@@ -595,7 +602,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     'model',
                     'field',
                     'header',
-                    //'nodeset_extra',  // TODO: put this back, not working now because it isn't a uiElement, probably just need to eventize it
+                    'nodeset_extra',
                     'relevant',
                     'format',
                     'date_extra',
