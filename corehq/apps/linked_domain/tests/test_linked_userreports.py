@@ -167,4 +167,4 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
         update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
-        self.assertEqual("Another new title", report.title)
+        self.assertEqual("CommBugz", report.title)
