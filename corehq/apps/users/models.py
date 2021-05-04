@@ -273,6 +273,26 @@ class UserRolePresets(object):
         BILLING_ADMIN
     )
 
+    ID_NAME_MAP = {
+        'read-only-no-reports': READ_ONLY_NO_REPORTS,
+        'no-permissions': READ_ONLY,
+        'read-only': READ_ONLY,
+        'field-implementer': FIELD_IMPLEMENTER,
+        'edit-apps': APP_EDITOR,
+        'billing-admin': BILLING_ADMIN
+    }
+
+    # skip legacy duplicate ('no-permissions')
+    NAME_ID_MAP = {name: id for id, name in ID_NAME_MAP.items() if id != 'no-permissions'}
+
+    @classmethod
+    def get_preset_role_id(cls, name):
+        return cls.NAME_ID_MAP.get(name, None)
+
+    @classmethod
+    def get_preset_role_name(cls, role_id):
+        return cls.ID_NAME_MAP.get(role_id, None)
+
     @classmethod
     def get_preset_map(cls):
         return {
@@ -296,6 +316,12 @@ class UserRolePresets(object):
         if preset not in preset_map:
             return None
         return preset_map[preset]()
+
+    @classmethod
+    def get_role_name_with_matching_permissions(cls, permissions):
+        for name, factory in UserRolePresets.get_preset_map().items():
+            if factory() == permissions:
+                return name
 
 
 class UserRole(QuickCachedDocumentMixin, Document):
@@ -352,9 +378,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         def get_name():
             if name:
                 return name
-            preset_match = [x for x in UserRolePresets.get_preset_map().items() if x[1]() == permissions]
-            if preset_match:
-                return preset_match[0][0]
+            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
         role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
@@ -410,8 +434,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in PERMISSIONS_PRESETS.items() if v['name'] == name}
-        return matches.pop() if matches else None
+        return UserRolePresets.get_preset_role_id(name)
 
     @classmethod
     def preset_and_domain_role_names(cls, domain_name):
@@ -419,47 +442,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def preset_permissions_names(cls):
-        return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+        return set(UserRolePresets.NAME_ID_MAP.keys())
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
-
-
-PERMISSIONS_PRESETS = {
-    'edit-apps': {
-        'name': 'App Editor',
-        'permissions': Permissions(
-            edit_apps=True,
-            view_apps=True,
-            view_reports=True,
-        ),
-    },
-    'field-implementer': {
-        'name': 'Field Implementer',
-        'permissions': Permissions(
-            edit_commcare_users=True,
-            view_commcare_users=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_locations=True,
-            view_locations=True,
-            edit_shared_exports=True,
-            view_reports=True,
-        ),
-    },
-    'read-only': {
-        'name': 'Read Only',
-        'permissions': Permissions(
-            view_reports=True,
-        ),
-    },
-    'no-permissions': {
-        'name': 'Read Only',
-        'permissions': Permissions(
-            view_reports=True,
-        ),
-    },
-}
 
 
 class AdminUserRole(UserRole):
@@ -746,9 +732,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
             dm.role_id = None
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
-        elif role_qualified_id in PERMISSIONS_PRESETS:
-            preset = PERMISSIONS_PRESETS[role_qualified_id]
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
+        elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
+            role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
+            permissions = UserRolePresets.get_permissions(role_name)
+            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
