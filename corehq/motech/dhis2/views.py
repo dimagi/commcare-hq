@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -194,12 +194,17 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
         )
 
 
-class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView):
+class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
+                           CRUDPaginatedViewMixin):
     urlname = 'dataset_map_update_view'
     page_title = _('DataSet Map')
-    template_name = 'dhis2/dataset_map_update.html'  # TODO: ...
+    template_name = 'dhis2/dataset_map_update.html'
     model = SQLDataSetMap
-    # form_class = DataSetMapForm  # TODO: ...
+    form_class = DataSetMapForm
+
+    limit_text = _('DataValue Maps per page')
+    empty_notification = _('This DataSet Map has no DataValue Maps')
+    loading_message = _('Loading DataValue Maps')
 
     @method_decorator(require_permission(Permissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
@@ -224,6 +229,63 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
+
+    def post(self, request, *args, **kwargs):
+        post_response = super().post(request, *args, **kwargs)
+        try:
+            return self.paginate_crud_response
+        except Http404:
+            # POST was a DataSetMapForm, not a CRUD action
+            # See CRUDPaginatedViewMixin.allowed_actions
+            # **NOTE:** This means that DataSetMapForm cannot have a
+            #           field named "action"
+            pass
+        return post_response
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def base_query(self):
+        return self.object.datavalue_maps
+
+    @property
+    def page_context(self):
+        return {
+            'dataset_map_id': self.kwargs['pk'],
+            **self.pagination_context,
+        }
+
+    @property
+    def paginated_list(self):
+        start, end = self.skip, self.skip + self.limit
+        for datavalue_map in self.base_query.all()[start:end]:
+            yield {
+                "itemData": self._get_item_data(datavalue_map),
+                "template": "datavalue-map-template",
+            }
+
+    def refresh_item(self, item_id):
+        pass
+
+    @property
+    def column_names(self):
+        return [
+            _('Column'),
+            _('DataElementID'),
+            _('CategoryOptionComboID'),
+            _('Comment'),
+        ]
+
+    def _get_item_data(self, datavalue_map):
+        return {
+            'id': datavalue_map.id,
+            'column': datavalue_map.column,
+            'dataElementId': datavalue_map.data_element_id,
+            'categoryOptionComboId': datavalue_map.category_option_combo_id,
+            'comment': datavalue_map.comment,
+        }
 
 
 @require_POST

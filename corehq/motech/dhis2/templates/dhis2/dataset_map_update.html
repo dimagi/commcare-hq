@@ -1,0 +1,33 @@
+{% extends "hqwebapp/base_paginated_crud.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main "dhis2/js/dataset_map_update" %}
+
+{% block pagination_header %}
+  {% registerurl "send_dataset_now" domain dataset_map_id %}
+
+  <h2>{% trans "Edit DataSet Map" %}</h2>
+
+  <fieldset>
+    <legend>{% trans "DataValue Maps" %}</legend>
+{% endblock %}
+
+{% block pagination_footer %}
+  </fieldset>
+  <div class="spacer"></div>
+
+  {% crispy form %}
+  <div class="spacer"></div>
+{% endblock %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="datavalue-map-template">
+    <td data-bind="text: column"></td>
+    <td data-bind="text: dataElementId"></td>
+    <td data-bind="text: categoryOptionComboId"></td>
+    <td data-bind="text: comment"></td>
+
+  </script>
+{% endblock %}
