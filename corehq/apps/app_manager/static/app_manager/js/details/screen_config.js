@@ -405,13 +405,35 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.header = uiElement.input().val(invisibleVal);
                     self.header.setVisibleValue(visibleVal);
 
-                    // TODO: make more complicated UI, populate with multiple properties
-                    self.nodeset_extra = uiElement.input().val(self.original.nodeset);
+                    // TODO: move this somewhere else
+                    var nodesetUiElement = function (options) {
+                        var self = {};
+
+                        // TODO: select correct option from dropdown based on initial value
+                        // TODO: make UI react when option is selected
+                        self.ui = $(
+                            '<select class="form-control">' +
+                            _.map(_.sortBy(options.caseTypes), function (t) {
+                                return "<option value='" + t + "'>" + gettext("Child cases: ") + t + "</option>";
+                            }) +
+                            '<option>' + gettext("Custom Nodeset")  + '</option>' +
+                            '</select>' +
+                            '<textarea type="text" class="form-control" /></textarea>'
+                        );
+                        self.ui.val(options.nodeset);
+                        self.ui.attr("placeholder", gettext("Nodeset"));
+
+                        return self;
+                    };
+                    self.nodeset_extra = nodesetUiElement({
+                        caseTypes: ['point'],  // TODO: get actual case types
+                        nodeset: self.original.nodeset,
+                        // TODO: pass initial case type, if any
+                    });
 
                     self.relevant = uiElement.input().val(self.original.relevant);
                     if (self.isTab) {
                         self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
-                        //self.nodeset.ui.find("input[type='text']").attr("placeholder", gettext("Nodeset"));   // TODO: make sure this still works
                         self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
 
                         // Observe nodeset values for the sake of validation
@@ -567,7 +589,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     'model',
                     'field',
                     'header',
-                    'nodeset_extra',
+                    //'nodeset_extra',  // TODO: put this back, not working now because it isn't a uiElement, probably just need to eventize it
                     'relevant',
                     'format',
                     'date_extra',
