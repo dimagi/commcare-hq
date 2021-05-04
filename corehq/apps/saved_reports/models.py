@@ -8,6 +8,7 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
@@ -30,6 +31,10 @@ from sqlalchemy.util import immutabledict
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.migration import (
+    SyncCouchToSQLMixin,
+    SyncSQLToCouchMixin,
+)
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
@@ -792,3 +797,108 @@ class ScheduledReportsCheckpoint(models.Model):
             return cls.objects.order_by('-end_datetime')[0]
         except IndexError:
             return None
+
+class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
+    domain = models.CharField(max_length=32, null=False, db_index=True)
+    report_type = models.CharField(max_length=32, null=False)
+    report_slug = models.CharField(max_length=32, null=False)
+    subreport_slug = models.CharField(max_length=64, null=True)
+    name = models.CharField(max_length=128, null=False)
+    description = models.CharField(max_length=1000, null=True)
+    owner_id = models.CharField(max_length=64, null=False)
+    filters = JSONField(null=False, default=dict)
+    date_range = models.CharField(max_length=12, null=True)
+    days = models.IntegerField(null=True)
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    datespan_slug = models.CharField(max_length=64, null=True)
+    update_seq = models.CharField(max_length=1000, null=False)
+    purge_seq = models.IntegerField(null=False)
+    compact_running = models.BooleanField(null=False, default='TODO')
+    db_name = models.CharField(max_length=12, null=False)
+    doc_del_count = models.IntegerField(null=False)
+    instance_start_time = models.CharField(max_length=1, null=False)
+    disk_size = models.IntegerField(null=False)
+    sizes = JSONField(null=False, default=dict)
+    doc_count = models.IntegerField(null=False)
+    disk_format_version = models.IntegerField(null=False)
+    other = JSONField(null=False, default=dict)
+    cluster = JSONField(null=False, default=dict)
+    data_size = models.IntegerField(null=False)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        db_table = "saved_reports_reportconfig"
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "report_type",
+            "report_slug",
+            "subreport_slug",
+            "name",
+            "description",
+            "owner_id",
+            "filters",
+            "date_range",
+            "days",
+            "start_date",
+            "end_date",
+            "datespan_slug",
+            "update_seq",
+            "purge_seq",
+            "compact_running",
+            "db_name",
+            "doc_del_count",
+            "instance_start_time",
+            "disk_size",
+            "sizes",
+            "doc_count",
+            "disk_format_version",
+            "other",
+            "cluster",
+            "data_size",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ReportConfig
+
+
+# TODO: Add SyncCouchToSQLMixin and the following methods to ReportConfig
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "report_type",
+            "report_slug",
+            "subreport_slug",
+            "name",
+            "description",
+            "owner_id",
+            "filters",
+            "date_range",
+            "days",
+            "start_date",
+            "end_date",
+            "datespan_slug",
+            "update_seq",
+            "purge_seq",
+            "compact_running",
+            "db_name",
+            "doc_del_count",
+            "instance_start_time",
+            "disk_size",
+            "sizes",
+            "doc_count",
+            "disk_format_version",
+            "other",
+            "cluster",
+            "data_size",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLReportConfig
+ 
