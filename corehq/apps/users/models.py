@@ -433,7 +433,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     @classmethod
-    def get_preset_permission_by_name(cls, name):
+    def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
 
     @classmethod
