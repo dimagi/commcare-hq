@@ -68,7 +68,14 @@ def sso_saml_acs(request, idp_slug):
 
     if request.session.get('ssoInviteTest'):
         messages.success(
+            request,
             "GOT INVITE TEST at marker 1: {}".format(request.session.get('ssoInviteTest'))
+        )
+    else:
+
+        messages.error(
+            request,
+           "NO INVITE AT MARKER ONE"
         )
 
     request_id = request.session.get('AuthNRequestID')
@@ -84,7 +91,14 @@ def sso_saml_acs(request, idp_slug):
 
         if request.session.get('ssoInviteTest'):
             messages.success(
+                request,
                 "GOT INVITE TEST at marker 2: {}".format(request.session.get('ssoInviteTest'))
+            )
+        else:
+
+            messages.error(
+                request,
+                "NO INVITE AT MARKER TWO"
             )
 
         user = auth.authenticate(
@@ -264,3 +278,5 @@ def sso_test_create_user(request, idp_slug):
 def test_session_stuff(request, idp_slug):
     request.session['ssoInviteTest'] = 'TEST INVITE DID WERK?'
     request.modified = True
+
+    return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
