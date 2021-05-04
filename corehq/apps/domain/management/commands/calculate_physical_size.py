@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'domain',
+            'domains',
         )
         parser.add_argument(
             '--sample_size',
@@ -39,35 +39,57 @@ class Command(BaseCommand):
             help="show only case stats",
         )
 
-    def handle(self, domain, **options):
+    def handle(self, domains, **options):
+        final_num_forms = 0
+        final_num_cases = 0
+        final_size_forms = 0
+        final_size_cases = 0
+
+        domains_list = domains.split()
+
         sample_size = int(options['sample_size'] or 10)
         use_case_search = options.get('use_case_search', False)
         show_only_forms = options.get('only_forms', False)
         show_only_cases = options.get('only_cases', False)
 
-        if not show_only_cases:
-            self.stdout.write(f"\n\nCalculating size of forms with a sample "
-                              f"size of {sample_size} per XMLNS...")
-            num_forms, size_of_forms = _get_form_size_stats(domain, sample_size)
+        for domain in domains_list:
+            if not show_only_cases:
+                self.stdout.write(f"\n\nCalculating size of forms with a sample "
+                                f"size of {sample_size} per XMLNS...")
+                num_forms, size_of_forms = _get_form_size_stats(domain, sample_size)
+                final_num_forms += num_forms
+                final_size_forms += size_of_forms
 
-            self.stdout.write(f"\n{domain} has {num_forms} forms, "
-                              f"taking up approximately {size_of_forms} bytes "
-                              f"({_get_human_bytes(size_of_forms)}) of "
-                              f"physical space.")
+                self.stdout.write(f"\n{domain} has {num_forms} forms, "
+                                f"taking up approximately {size_of_forms} bytes "
+                                f"({_get_human_bytes(size_of_forms)}) of "
+                                f"physical space.")
+
+            if not show_only_forms:
+                self.stdout.write(f"\n\nCalculating size of cases with a sample "
+                                f"size of {sample_size} per Case Type...")
+                if use_case_search:
+                    self.stdout.write("The Case search index is being used.")
+                num_cases, size_of_cases = _get_case_size_stats(
+                    domain, sample_size, use_case_search
+                )
+                final_num_cases += num_cases
+                final_size_cases += size_of_cases
+
+                self.stdout.write(f"\n{domain} has {num_cases} cases, "
+                                f"taking up approximately {size_of_cases} bytes "
+                                f"({_get_human_bytes(size_of_cases)}) of "
+                                f"physical space.")
+
+        if not show_only_cases:
+            self.stdout.write(f"\n These domains have a total of {final_num_forms} forms, "
+                            f"taking up approximately {final_size_forms} bytes "
+                            f"({_get_human_bytes(final_size_forms)}) of physical space.")
 
         if not show_only_forms:
-            self.stdout.write(f"\n\nCalculating size of cases with a sample "
-                              f"size of {sample_size} per Case Type...")
-            if use_case_search:
-                self.stdout.write("The Case search index is being used.")
-            num_cases, size_of_cases = _get_case_size_stats(
-                domain, sample_size, use_case_search
-            )
-
-            self.stdout.write(f"\n{domain} has {num_cases} cases, "
-                              f"taking up approximately {size_of_cases} bytes "
-                              f"({_get_human_bytes(size_of_cases)}) of "
-                              f"physical space.")
+            self.stdout.write(f"\n These domains have a total of {final_num_cases} cases, "
+                            f"taking up approximately {final_size_cases} bytes "
+                            f"({_get_human_bytes(final_size_cases)}) of physical space.")
 
         self.stdout.write("\n\nDone.\n\n")
 
