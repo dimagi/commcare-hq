@@ -300,7 +300,7 @@ class Command(PopulateSQLCommand):
             defaults={{
                 {updates_list}
             }})
-        return (model, created)
+        return model, created
         """
 
     def is_submodel_key(self, key):

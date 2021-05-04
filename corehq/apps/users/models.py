@@ -45,6 +45,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -88,6 +89,7 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
+from .models_sql import SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy  # noqa
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -290,7 +292,7 @@ class UserRolePresets(object):
                 return name
 
 
-class UserRole(QuickCachedDocumentMixin, Document):
+class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     default_landing_page = StringProperty(
@@ -415,6 +417,27 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "name",
+            "default_landing_page",
+            "is_non_admin_editable",
+            "is_archived",
+            "upstream_id",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.users.models_sql import SQLUserRole
+        return SQLUserRole
+
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        # TODO: permissions
+        # TODO: assignable_by
+        pass
 
 
 class AdminUserRole(UserRole):
