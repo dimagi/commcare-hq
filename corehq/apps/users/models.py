@@ -411,8 +411,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def unarchive_roles_for_domain(cls, domain):
-        archived_roles = cls.by_domain(domain, include_archived=True)
-        for role in archived_roles:
+        all_roles = cls.by_domain(domain, include_archived=True)
+        for role in all_roles:
             if role.is_archived:
                 role.is_archived = False
                 role.save()
