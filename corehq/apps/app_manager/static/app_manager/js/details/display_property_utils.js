@@ -40,6 +40,13 @@ hqDefine("app_manager/js/details/display_property_utils", function () {
         return regex.test(name);
     };
 
+    module.TIME_AGO = {
+        year: 365.25,
+        month: 365.25 / 12,
+        week: 7,
+        day: 1,
+    };
+
     module.toTitleCase = function (str) {
         return (str
             .replace(/[_\/-]/g, ' ')

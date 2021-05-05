@@ -251,7 +251,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         columnModel = (function () {
             var columnModelFunc = function (col, screen) {
                 /*
-                    column properites: model, field, header, format
+                    column properties: model, field, header, format
                     column extras: enum, late_flag
                 */
                 var self = {};
@@ -259,6 +259,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.original = JSON.parse(JSON.stringify(col));
 
                 // Set defaults for normal (non-tab) column attributes
+                var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
                 var defaults = {
                     calc_xpath: ".",
                     enum: [],
@@ -270,7 +271,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     header: {},
                     model: screen.model,
                     date_format: "",
-                    time_ago_interval: detailScreenConfig.TIME_AGO.year,
+                    time_ago_interval: PropertyUtils.TIME_AGO.year,
                 };
                 _.each(_.keys(defaults), function (key) {
                     self.original[key] = self.original[key] || defaults[key];
@@ -463,27 +464,28 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
                 self.calc_xpath_extra.ui.prepend($('<div/>'));
 
+                var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
                 self.time_ago_extra = uiElement.select([{
                     label: gettext('Years since date'),
-                    value: detailScreenConfig.TIME_AGO.year,
+                    value: PropertyUtils.TIME_AGO.year,
                 }, {
                     label: gettext('Months since date'),
-                    value: detailScreenConfig.TIME_AGO.month,
+                    value: PropertyUtils.TIME_AGO.month,
                 }, {
                     label: gettext('Weeks since date'),
-                    value: detailScreenConfig.TIME_AGO.week,
+                    value: PropertyUtils.TIME_AGO.week,
                 }, {
                     label: gettext('Days since date'),
-                    value: detailScreenConfig.TIME_AGO.day,
+                    value: PropertyUtils.TIME_AGO.day,
                 }, {
                     label: gettext('Days until date'),
-                    value: -detailScreenConfig.TIME_AGO.day,
+                    value: -PropertyUtils.TIME_AGO.day,
                 }, {
                     label: gettext('Weeks until date'),
-                    value: -detailScreenConfig.TIME_AGO.week,
+                    value: -PropertyUtils.TIME_AGO.week,
                 }, {
                     label: gettext('Months until date'),
-                    value: -detailScreenConfig.TIME_AGO.month,
+                    value: -PropertyUtils.TIME_AGO.month,
                 }]).val(self.original.time_ago_interval.toString());
                 self.time_ago_extra.ui.prepend($('<div/>').text(gettext(' Measuring ')));
 
@@ -617,7 +619,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         }());
         screenModel = (function () {
             /**
-             * The screenModel "Class" is in charge inserting a table into the DOM that
+             * The screenModel "Class" is in charge of inserting a table into the DOM that
              * contains rows for each case DetailColumn. It also handles the
              * reordering of these columns through drag and drop as well as
              * saving them on the server.
@@ -1129,13 +1131,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
             };
             return detailScreenConfigFunc;
         }());
-
-        detailScreenConfig.TIME_AGO = {
-            year: 365.25,
-            month: 365.25 / 12,
-            week: 7,
-            day: 1,
-        };
 
         detailScreenConfig.MENU_OPTIONS = [{
             value: "plain",
