@@ -118,10 +118,12 @@ hqDefine("app_manager/js/details/screen", function () {
             columns.splice(
                 tabs[i].starting_index + i,
                 0,
-                // TODO: add new tab properties here
                 _.extend({
                     hasNodeset: tabs[i].has_nodeset,
-                }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
+                    nodesetType: tabs[i].nodeset_type,
+                    nodesetIdentifier: tabs[i].nodeset_identifier,
+                    nodesetXpath: tabs[i].nodeset_xpath,
+                }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
             );
         }
         if (self.columnKey === 'long') {

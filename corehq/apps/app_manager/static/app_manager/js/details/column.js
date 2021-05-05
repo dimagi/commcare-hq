@@ -49,8 +49,7 @@ hqDefine("app_manager/js/details/column", function () {
         var tabDefaults = {
             isTab: false,
             hasNodeset: false,
-            nodeset: "",        // TODO: remove
-            nodesetType: null,
+            nodesetType: "",
             nodesetIdentifier: "",
             nodesetXpath: "",
             relevant: "",
@@ -109,27 +108,31 @@ hqDefine("app_manager/js/details/column", function () {
             var nodesetUiElement = function (options) {
                 var self = {};
 
-                // TODO: select correct option from dropdown based on initial value
                 // TODO: make UI react when option is selected
                 self.ui = $(
+                    '<div>' +
                     '<select class="form-control">' +
                     _.map(_.sortBy(options.caseTypes), function (t) {
                         return "<option value='" + t + "'>" + gettext("Child cases: ") + t + "</option>";
                     }) +
-                    '<option>' + gettext("Custom Nodeset")  + '</option>' +
+                    '<option value="">' + gettext("Custom Nodeset")  + '</option>' +
                     '</select>' +
-                    '<textarea type="text" class="form-control" /></textarea>'
+                    '<textarea type="text" class="form-control" /></textarea>' +
+                    '</div>'
                 );
-                self.ui.val(options.nodeset);
-                self.ui.attr("placeholder", gettext("Nodeset"));
+                if (options.nodesetType === "subcase") {
+                    self.ui.find("select").val(options.nodesetIdentifier);
+                } else {
+                    self.ui.find("select").val("");
+                }
+                self.ui.find("textarea").val(options.nodesetXpath);
+                self.ui.find("textarea").attr("placeholder", gettext("Nodeset"));
 
                 return self;
             };
-            self.nodeset_extra = nodesetUiElement({
+            self.nodeset_extra = nodesetUiElement(_.extend({
                 caseTypes: ['point'],  // TODO: get actual case types
-                nodeset: self.original.nodeset,
-                // TODO: pass initial case type, if any
-            });
+            }, _.pick(self.original, ['nodesetType', 'nodesetIdentifier', 'nodesetXpath'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
