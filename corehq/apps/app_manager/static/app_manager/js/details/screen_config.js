@@ -347,10 +347,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.case_tile_field = ko.observable(self.original.case_tile_field);
 
                 // Set up tab attributes
+                // TODO: default to the first option in the dropdown, not to custom expression
                 var tabDefaults = {
                     isTab: false,
                     hasNodeset: false,
-                    nodesetType: "",    // TODO: are these really necessary to add?
+                    nodesetType: "",
                     nodesetIdentifier: "",
                     nodesetXpath: "",
                     relevant: "",
@@ -830,7 +831,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }
                 if (self.columnKey === 'long') {
                     self.addTab = function (hasNodeset) {
-                        // TODO: this is fine without changes, right? Since tabDefaults is updated?
                         var col = self.initColumnAsColumn(columnModel.init({
                             isTab: true,
                             hasNodeset: hasNodeset,
