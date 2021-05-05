@@ -91,6 +91,16 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
     return link_app(linked_app, master_domain, master_id, remote_details)
 
 
+def get_linked_apps_for_domain(domain):
+    linked_apps = []
+    briefs = get_brief_apps_in_domain(domain, include_remote=False)
+    for brief in briefs:
+        if is_linked_app(brief):
+            linked_apps.append(brief)
+
+    return linked_apps
+
+
 def link_app(linked_app, master_domain, master_id, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
 
