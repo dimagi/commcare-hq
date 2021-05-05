@@ -3,7 +3,7 @@ import unittest
 from django.test import TestCase
 
 from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
-from corehq.apps.commtrack.models import CommtrackConfig, SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.util import generate_code, make_domain_commtrack, unicode_slug
 from corehq.apps.domain.shortcuts import create_domain
 
