@@ -173,20 +173,8 @@ class Permissions(DocumentSchema):
             return True
         return master_app_id in self.view_web_apps_list
 
-    def view_report(self, report, value=None):
-        """Both a getter (when value=None) and setter (when value=True|False)"""
-
-        if value is None:
-            return self.view_reports or report in self.view_report_list
-        else:
-            if value:
-                if report not in self.view_report_list:
-                    self.view_report_list.append(report)
-            else:
-                try:
-                    self.view_report_list.remove(report)
-                except ValueError:
-                    pass
+    def view_report(self, report):
+        return self.view_reports or report in self.view_report_list
 
     def has(self, permission, data=None):
         if data:
