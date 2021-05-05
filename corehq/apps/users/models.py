@@ -331,7 +331,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return [x for x in all_roles if not x.is_archived]
 
     @classmethod
-    def by_domain_and_name(cls, domain, name, is_archived=False):
+    def by_domain_and_name(cls, domain, name):
         # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
@@ -339,7 +339,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        return list(all_roles)
 
     @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
