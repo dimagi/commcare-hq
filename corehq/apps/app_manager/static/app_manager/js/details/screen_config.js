@@ -4,81 +4,15 @@ hqDefine('app_manager/js/details/screen_config', function () {
     var module = {},
         uiElement = hqImport('hqwebapp/js/ui-element');
 
-    module.CC_DETAIL_SCREEN = {
-        getFieldHtml: function (field) {
-            var text = field || '';
-            if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
-                text = text.substring(text.indexOf(":") + 1);
-            }
-            var parts = text.split('/');
-            // wrap all parts but the last in a label style
-            for (var j = 0; j < parts.length - 1; j++) {
-                parts[j] = ('<span class="label label-info">' +
-                    parts[j] + '</span>');
-            }
-            if (parts[j][0] === '#') {
-                parts[j] = ('<span class="label label-info">' +
-                    module.CC_DETAIL_SCREEN.toTitleCase(parts[j]) + '</span>');
-            } else {
-                parts[j] = ('<code style="display: inline-block;">' +
-                    parts[j] + '</code>');
-            }
-            return parts.join('<span style="color: #DDD;">/</span>');
-        },
-        isAttachmentProperty: function (value) {
-            return value && value.indexOf("attachment:") === 0;
-        },
-        toTitleCase: function (str) {
-            return (str
-                .replace(/[_\/-]/g, ' ')
-                .replace(/#/g, '')
-            ).replace(/\w\S*/g, function (txt) {
-                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-            });
-        },
-        /**
-         * Enable autocomplete on the given jquery element with the given autocomplete
-         * options.
-         * @param $elem
-         * @param options: Array of strings.
-         */
-        setUpAutocomplete: function ($elem, options) {
-            if (!_.contains(options, $elem.value)) {
-                options.unshift($elem.value);
-            }
-            $elem.$edit_view.select2({
-                minimumInputLength: 0,
-                width: '100%',
-                tags: true,
-                escapeMarkup: function (m) {
-                    return DOMPurify.sanitize(m);
-                },
-                templateResult: function (result) {
-                    var formatted = result.id;
-                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
-                        formatted = (
-                            '<i class="fa fa-paperclip"></i> ' +
-                            result.id.substring(result.id.indexOf(":") + 1)
-                        );
-                    }
-                    return DOMPurify.sanitize(formatted);
-                },
-            }).on('change', function () {
-                $elem.val($elem.$edit_view.value);
-                $elem.fire('change');
-            });
-            return $elem;
-        },
-
-    };
 
     // saveButton is a required parameter
     var sortRow = function (params) {
-        var self = {};
+        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
+            self = {};
         params = params || {};
 
         self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
-        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.selectField, params.properties);
+        PropertyUtils.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
@@ -89,7 +23,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         self.display.subscribe(function () {
             self.notifyButton();
         });
-        self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
+        self.toTitleCase = PropertyUtils.toTitleCase;
         self.selectField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);
@@ -302,13 +236,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
     module.detailScreenConfig = (function () {
         "use strict";
+        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
 
         function getPropertyTitle(property) {
             // Strip "<prefix>:" before converting to title case.
             // This is aimed at prefixes like ledger: and attachment:
             property = property || '';
             var i = property.indexOf(":");
-            return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
+            return PropertyUtils.toTitleCase(property.substring(i + 1));
         }
 
         var detailScreenConfig, screenModel, columnModel;
@@ -365,8 +300,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     value: "case",
                 }]).val(self.original.model);
 
-                var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(self.original.field) ?
-                    'fa fa-paperclip' : null);
+                var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
+                    icon = PropertyUtils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
                 self.field = undefined;
                 if (self.original.hasAutocomplete) {
                     self.field = uiElement.select();
@@ -775,7 +710,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         column.field.setOptions(options);
                         column.field.val(column.original.field);
                         column.field.observableVal(column.original.field);
-                        module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
+                        hqImport('app_manager/js/details/display_property_utils').setUpAutocomplete(column.field, self.properties);
                     }
                     return column;
                 };
