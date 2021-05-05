@@ -449,15 +449,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
                         self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
 
-                        // Observe nodeset values for the sake of validation
-                        if (self.hasNodeset) {
-                            // TODO: make sure this still works
-                            /*self.nodeset.observableVal = ko.observable(self.original.nodeset);
-                            self.nodeset.on("change", function () {
-                                self.nodeset.observableVal(self.nodeset.val());
-                            });*/
-                        }
-
                         if (self.original.relevant) {
                             self.relevant.observableVal = ko.observable(self.original.relevant);
                             self.relevant.on("change", function () {
@@ -476,9 +467,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     }
                     if (self.isTab) {
                         // Data tab missing its nodeset
-                        // TODO: make sure this still works
-                        //return self.hasNodeset && !self.nodeset.observableVal();
-                        return false;
+                        return self.hasNodeset && !self.nodeset_extra.dropdownValue().value && !self.nodeset_extra.nodesetXpath();
                     }
                     // Invalid property name
                     return (self.field.observableVal() || self.saveAttempted()) && !detailScreenConfig.field_val_re.test(self.field.observableVal());
