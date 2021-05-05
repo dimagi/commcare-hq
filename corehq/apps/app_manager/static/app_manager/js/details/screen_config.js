@@ -442,7 +442,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         return self;
                     };
                     self.nodeset_extra = nodesetUiElement(_.extend({
-                        caseTypes: ['point'],  // TODO: get actual case types
+                        caseTypes: self.screen.otherCaseTypes,
                     }, _.pick(self.original, ['nodesetType', 'nodesetIdentifier', 'nodesetXpath'])));   // TODO: remove nodesetType?
 
                     self.relevant = uiElement.input().val(self.original.relevant);
@@ -739,6 +739,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.langs = options.langs || [];
                 self.properties = options.properties;
                 self.childCaseTypes = options.childCaseTypes;
+                self.otherCaseTypes = options.otherCaseTypes;
                 self.fixtures = options.fixtures;
                 // The column key is used to retrieve the columns from the spec and
                 // as the name of the key in the data object that is sent to the
@@ -1139,6 +1140,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             saveUrl: self.saveUrl,
                             columnKey: columnType,
                             childCaseTypes: spec.childCaseTypes,
+                            otherCaseTypes: spec.otherCaseTypes,
                             fixtures: _.keys(spec.fixture_columns_by_type),
                             containsSortConfiguration: columnType === "short",
                             containsParentConfiguration: columnType === "short",
