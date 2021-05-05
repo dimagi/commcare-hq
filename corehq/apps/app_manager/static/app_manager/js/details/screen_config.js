@@ -650,7 +650,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     });
                 }
                 self.saveUrl = spec.saveUrl;
-                self.contextVariables = spec.contextVariables;
 
                 /**
                  * Add a screenModel to self detailScreenConfig
@@ -767,10 +766,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
         return detailScreenConfig;
     }());
 
-    /* for sharing variables between essentially separate parts of the ui */
-    module.state = {
-        requires_case_details: ko.observable(),
-    };
     return module;
 
 });
