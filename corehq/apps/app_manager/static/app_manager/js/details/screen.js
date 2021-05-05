@@ -15,17 +15,18 @@ hqDefine("app_manager/js/details/screen", function () {
     var Utils = hqImport('app_manager/js/details/utils'),
         ColumnModel = hqImport("app_manager/js/details/column");
 
-    var getPropertyTitle = function(property) {
+    var getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         property = property || '';
         var i = property.indexOf(":");
         return Utils.toTitleCase(property.substring(i + 1));
-    }
+    };
 
-    return function(spec, config, options) {
+    return function (spec, config, options) {
         var self = {};
-        var i, column, model, property, header, columns;
+        var i,
+            columns;
         hqImport("hqwebapp/js/main").eventize(self);
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
@@ -220,8 +221,7 @@ hqDefine("app_manager/js/details/screen", function () {
                     data: self.serialize(),
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager');
-                        app_manager.updateDOM(data.update);
+                        hqImport('app_manager/js/app_manager').updateDOM(data.update);
                     },
                 });
             }
@@ -278,7 +278,7 @@ hqDefine("app_manager/js/details/screen", function () {
 
             if (self.containsParentConfiguration) {
                 var parentSelect;
-                if (self.config.hasOwnProperty('parentSelect')) {
+                if (_.has(self.config, 'parentSelect')) {
                     parentSelect = {
                         module_id: self.config.parentSelect.moduleId(),
                         relationship: self.config.parentSelect.relationship(),
@@ -289,7 +289,7 @@ hqDefine("app_manager/js/details/screen", function () {
             }
             if (self.containsFixtureConfiguration) {
                 var fixtureSelect;
-                if (self.config.hasOwnProperty('fixtureSelect')) {
+                if (_.has(self.config, 'fixtureSelect')) {
                     fixtureSelect = {
                         active: self.config.fixtureSelect.active(),
                         fixture_type: self.config.fixtureSelect.fixtureType(),

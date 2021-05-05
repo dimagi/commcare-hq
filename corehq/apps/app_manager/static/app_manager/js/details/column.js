@@ -10,7 +10,7 @@
  * set of properties that match python's DetailTab model. The screen model
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
- hqDefine("app_manager/js/details/column", function () {
+hqDefine("app_manager/js/details/column", function () {
     var uiElement = hqImport('hqwebapp/js/ui-element');
 
     return function (col, screen) {
@@ -64,8 +64,7 @@
             value: "case",
         }]).val(self.original.model);
 
-        var Utils = hqImport('app_manager/js/details/utils'),
-            icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
+        var icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
             self.field = uiElement.select();
@@ -83,9 +82,10 @@
         });
 
         (function () {
-            var i, lang, visibleVal = "",
-                invisibleVal = "",
-                nodesetVal;
+            var i,
+                lang,
+                visibleVal = "",
+                invisibleVal = "";
             if (self.original.header && self.original.header[self.lang]) {
                 visibleVal = invisibleVal = self.original.header[self.lang];
             } else {
@@ -126,7 +126,6 @@
             }
         }());
 
-        var Utils = hqImport('app_manager/js/details/utils');
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
         self.showWarning = ko.computed(function () {
@@ -228,7 +227,6 @@
         self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
         self.calc_xpath_extra.ui.prepend($('<div/>'));
 
-        var Utils = hqImport('app_manager/js/details/utils');
         self.time_ago_extra = uiElement.select([{
             label: gettext('Years since date'),
             value: Utils.TIME_AGO.year,
@@ -289,9 +287,9 @@
                 self.time_ago_extra.ui.detach();
                 if (this.val() === "date") {
                     self.format.ui.parent().append(self.date_extra.ui);
-                    var select = self.date_extra.ui.find('select');
-                    select.change(function () {
-                        self.date_extra.value = select.val();
+                    var format = self.date_extra.ui.find('select');
+                    format.change(function () {
+                        self.date_extra.value = format.val();
                         fireChange();
                     });
                     self.date_extra.value = select.val();
@@ -313,16 +311,16 @@
                     });
                 } else if (this.val() === 'filter') {
                     self.format.ui.parent().append(self.filter_xpath_extra.ui);
-                    var input = self.filter_xpath_extra.ui.find('input');
-                    input.change(function () {
-                        self.filter_xpath_extra.value = input.val();
+                    var filter = self.filter_xpath_extra.ui.find('input');
+                    filter.change(function () {
+                        self.filter_xpath_extra.value = filter.val();
                         fireChange();
                     });
                 } else if (this.val() === 'time-ago') {
                     self.format.ui.parent().append(self.time_ago_extra.ui);
-                    var select = self.time_ago_extra.ui.find('select');
-                    select.change(function () {
-                        self.time_ago_extra.value = select.val();
+                    var interval = self.time_ago_extra.ui.find('select');
+                    interval.change(function () {
+                        self.time_ago_extra.value = interval.val();
                         fireChange();
                     });
                 }
@@ -374,4 +372,4 @@
 
         return self;
     };
- });
+});

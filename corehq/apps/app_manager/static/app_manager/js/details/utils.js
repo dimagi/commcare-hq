@@ -1,3 +1,4 @@
+/* globals DOMPurify */
 /**
  * Contains a few UI utilities for the Display Properties
  * section of case list/detail configuration.
@@ -108,7 +109,7 @@ hqDefine("app_manager/js/details/utils", function () {
 
     module.toTitleCase = function (str) {
         return (str
-            .replace(/[_\/-]/g, ' ')
+            .replace(/[_/-]/g, ' ')
             .replace(/#/g, '')
         ).replace(/\w\S*/g, function (txt) {
             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();

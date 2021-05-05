@@ -11,7 +11,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         self.langs = spec.langs || [];
         self.multimedia = spec.multimedia || {};
         self.module_id = spec.module_id || '';
-        if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
+        if (_.has(spec, 'parentSelect') && spec.parentSelect) {
             self.parentSelect = hqImport("app_manager/js/details/parent_select")({
                 active: spec.parentSelect.active,
                 moduleId: spec.parentSelect.module_id,
@@ -23,7 +23,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
         }
 
-        if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
+        if (_.has(spec, 'fixtureSelect') && spec.fixtureSelect) {
             self.fixtureSelect = hqImport("app_manager/js/details/fixture_select")({
                 active: spec.fixtureSelect.active,
                 fixtureType: spec.fixtureSelect.fixture_type,
@@ -74,8 +74,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
         if (spec.state.short !== undefined) {
             self.shortScreen = addScreen(spec.state, "short");
             // Set up filter
-            var filter_xpath = spec.state.short.filter;
-            self.filter = hqImport("app_manager/js/details/filter")(filter_xpath ? filter_xpath : null, self.shortScreen.saveButton);
+            var filterXpath = spec.state.short.filter;
+            self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
             self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.properties, self.shortScreen.saveButton);
             if (spec.sortRows) {
@@ -95,12 +95,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML'),
                 xml: ko.observable(spec.state.short.custom_xml || ""),
             };
-            self.customXMLViewModel.xml.subscribe(function (v) {
+            self.customXMLViewModel.xml.subscribe(function () {
                 self.shortScreen.saveButton.fire("change");
             });
-            var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
+            var $caseListLookup = $("#" + spec.state.type + "-list-callout-configuration");
             self.caseListLookup = hqImport("app_manager/js/details/case_list_callout").caseListLookupViewModel(
-                $case_list_lookup_el,
+                $caseListLookup,
                 spec.state.short,
                 spec.lang,
                 self.shortScreen.saveButton

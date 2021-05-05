@@ -43,8 +43,7 @@ hqDefine("app_manager/js/details/parent_select", function () {
             self.active = ko.computed(function () {
                 return (self.selectMode() !== 'none');
             });
-        }
-        else {
+        } else {
             self.active = ko.observable(init.active);
             self.selectMode = ko.computed(function () {
                 return self.active ? 'parent' : 'none';

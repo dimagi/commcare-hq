@@ -11,9 +11,9 @@ hqDefine("app_manager/js/details/fixture_select", function () {
         self.variableColumn = ko.observable(init.variableColumn);
         self.xpath = ko.observable(init.xpath);
         self.fixture_columns = ko.computed(function () {
-            var columns_for_type = init.fixture_columns_by_type[self.fixtureType()],
-                default_option = [gettext("Select One")];
-            return default_option.concat(columns_for_type);
+            var columns = init.fixture_columns_by_type[self.fixtureType()],
+                defaultOption = [gettext("Select One")];
+            return defaultOption.concat(columns);
         });
         return self;
     };
