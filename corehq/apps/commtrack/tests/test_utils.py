@@ -2,7 +2,6 @@ import unittest
 
 from django.test import TestCase
 
-from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.util import generate_code, make_domain_commtrack, unicode_slug
 from corehq.apps.domain.shortcuts import create_domain
@@ -83,8 +82,6 @@ class CommtrackUtilsTest(TestCase):
                 'overstock_threshold': 3,
             }
         })
-        doc = CommtrackConfig.get_db().get(config.couch_id)
-        self.assertIsNone(Command.diff_couch_and_sql(doc, config))
         config.delete()
         domain_obj.delete()
 
