@@ -117,6 +117,9 @@ def get_docs(db, keys, **query_params):
                       headers={'content-type': 'application/json'},
                       params=query_params)
 
+    response_size = len(r.text)
+    print(f'rough size of bulk docs: {response_size}')
+
     try:
         r.raise_for_status()
         return [row.get('doc') for row in r.json()['rows'] if row.get('doc')]

@@ -800,7 +800,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             print(f'processing deletion in db: {db.dbname}')
             # iter_bulk_delete(db, related_doc_ids, chunksize=500)
-            iter_bulk_delete(db, related_doc_ids, chunksize=100)
+            iter_bulk_delete(db, related_doc_ids, chunksize=50)
 
     @property
     @memoized
