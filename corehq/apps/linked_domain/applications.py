@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
-    wrap_app,
+    wrap_app, get_app,
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
 from corehq.apps.app_manager.util import is_linked_app
@@ -118,6 +118,16 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
     return linked_app
 
 
+def unlink_apps_in_domain(domain):
+    linked_apps = get_linked_apps_for_domain(domain)
+    unlinked_apps = []
+    for app in linked_apps:
+        unlinked_app = unlink_app(app)
+        unlinked_apps.append(unlinked_app)
+
+    return unlinked_apps
+
+
 def unlink_app(linked_app):
     if not is_linked_app(linked_app):
         return None
@@ -129,6 +139,7 @@ def unlink_app(linked_app):
     app_copy.save()
 
     # remove linked app
-    linked_app.delete()
+    full_linked_app = get_app(linked_app.domain, linked_app._id)
+    full_linked_app.delete()
 
     return app_copy
