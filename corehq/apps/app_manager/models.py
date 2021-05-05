@@ -5730,7 +5730,7 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
     app.save_attachments(attachments)
 
     try:
-        _update_valid_domains_for_media(domain, app)
+        _update_valid_domains_for_media(app, domain)
     except ReportConfigurationNotFoundError:
         if request:
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
