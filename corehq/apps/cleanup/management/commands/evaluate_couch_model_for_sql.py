@@ -43,7 +43,7 @@ class Command(BaseCommand):
     FIELD_TYPE_DATETIME = 'models.DateTimeField'
     FIELD_TYPE_DECIMAL = 'models.DecimalField'
     FIELD_TYPE_STRING = 'models.CharField'
-    FIELD_TYPE_JSON = 'JsonField'
+    FIELD_TYPE_JSON = 'JSONField'
     FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
     FIELD_TYPE_UNKNOWN = ''

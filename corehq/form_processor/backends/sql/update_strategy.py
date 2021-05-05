@@ -190,17 +190,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         for index_update in action.indices:
             if self.case.has_index(index_update.identifier):
-                if not index_update.referenced_id:
-                    # empty ID = delete
-                    index = self.case.get_index(index_update.identifier)
-                    self.case.track_delete(index)
-                else:
-                    # update
-                    index = self.case.get_index(index_update.identifier)
-                    index.referenced_type = index_update.referenced_type
-                    index.referenced_id = index_update.referenced_id
-                    index.relationship = index_update.relationship
-                    self.case.track_update(index)
+                # update
+                index = self.case.get_index(index_update.identifier)
+                index.referenced_type = index_update.referenced_type
+                index.referenced_id = index_update.referenced_id
+                index.relationship = index_update.relationship
+                self.case.track_update(index)
             else:
                 # no id, no index
                 if index_update.referenced_id:

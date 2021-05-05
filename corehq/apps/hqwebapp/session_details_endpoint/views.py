@@ -1,17 +1,17 @@
-import datetime
 import json
 
-from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
+from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
-from corehq import toggles, feature_previews
+from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -68,6 +68,7 @@ class SessionDetailsView(View):
             mirror_domains = DomainPermissionsMirror.mirror_domains(member_domain)
             domains.update(mirror_domains)
 
+        enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
@@ -75,6 +76,6 @@ class SessionDetailsView(View):
             'authToken': None,
             'domains': list(domains),
             'anonymous': False,
-            'enabled_toggles': list(toggles.toggle_values_by_name(user.username, domain, include_disabled=False)),
-            'enabled_previews': list(feature_previews.preview_values_by_name(domain, include_disabled=False))
+            'enabled_toggles': list(enabled_toggles),
+            'enabled_previews': list(previews_enabled_for_domain(domain))
         })
