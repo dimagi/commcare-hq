@@ -81,4 +81,5 @@ branches:
     - gh/refactor-release-content-logic # Graham April 30
     - rp/query_multiple_domains #Rynhard May 4
     - sk/overwrite-case-search-config  # Simon May 5
+    - jls/refactor-details-js-retry # Jenny May 5
 submodules: { }
