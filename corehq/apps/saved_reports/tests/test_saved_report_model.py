@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.test import TestCase
 
 from corehq.apps.saved_reports.models import ReportConfig
@@ -7,7 +9,6 @@ from corehq.apps.userreports.reports.view import ConfigurableReportView
 class SavedReportModelTest(TestCase):
 
     def test_saved_report_serialized_filters(self):
-        # NOTE:
         report_config = ReportConfig.wrap({
             "domain": 'saved-report-tests',
             "report_slug": "worker_activity",
@@ -20,6 +21,9 @@ class SavedReportModelTest(TestCase):
             }
         })
         report_config._id = 'abc123'
+
+        self.assertEqual(date, type(report_config.filters['date-start']))
+        self.assertEqual(date, type(report_config.filters['date-end']))
 
         filters = report_config.serialized_filters
 

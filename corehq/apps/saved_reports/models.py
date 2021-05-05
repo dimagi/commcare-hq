@@ -245,7 +245,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def serialized_filters(self):
         """
-        converts any filter values that are objects to strings
+        converts date objects to iso formatted strings
         """
         serialized_filters = {}
         for key, value in self.filters.items():
