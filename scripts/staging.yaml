@@ -77,7 +77,7 @@ branches:
     - kev/markdown-case-views # Kevin Apr 9
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
     - sk/case-search-expression  # SK April 29
-    #- bmb/sso-async-signup-create  # Biyeun April 29
+    - bmb/sso-async-signup-create  # Biyeun April 29
     - gh/refactor-release-content-logic # Graham April 30
     - rp/query_multiple_domains #Rynhard May 4
     - sk/overwrite-case-search-config  # Simon May 5
