@@ -409,15 +409,24 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     var nodesetUiElement = function (options) {
                         var self = {};
 
+                        self.nodesetType = ko.observable(options.nodesetType);
                         self.nodesetXpath = ko.observable(options.nodesetXpath);
 
                         self.dropdownOptions = _.map(_.sortBy(options.caseTypes), function (t) {
                             return {name: gettext("Child cases: ") + t, value: t};
-                        }).concat([{name: gettext("Custom Nodeset"), value: ""}]);
+                        }).concat([{name: gettext("Custom Expression"), value: ""}]);
 
                         self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
                             return o.value === options.nodesetIdentifier;
                         }));
+                        self.dropdownValue.subscribe(function (newValue) {
+                            if (newValue.value) {
+                                self.nodesetType("subcase");
+                            } else {
+                                self.nodesetType("custom");
+                                self.nodesetXpath("");
+                            }
+                        });
 
                         self.showXpath = ko.computed(function () {
                             return !self.dropdownValue().value;
@@ -671,13 +680,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     var column = self.original;
                     column.field = self.field.val();
                     column.header[self.lang] = self.header.val();
-                    //column.nodeset = self.nodeset.val();  // TODO: support saving new properties
-                    column.relevant = self.relevant.val();  // TODO: this can move into the self.isTab block below, no?
                     column.format = self.format.val();
                     column.date_format = self.date_extra.val();
                     column.enum = self.enum_extra.getItems();
-                    column.graph_configuration =
-                        self.format.val() === "graph" ? self.graph_extra.val() : null;
+                    column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
                     column.late_flag = parseInt(self.late_flag_extra.val(), 10);
                     column.time_ago_interval = parseFloat(self.time_ago_extra.val());
                     column.filter_xpath = self.filter_xpath_extra.val();
@@ -685,11 +691,21 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.case_tile_field = self.case_tile_field();
                     if (self.isTab) {
                         // Note: starting_index is added by screenModel.serialize
-                        // TODO: support saving new properties
-                        /*return _.extend({
+                        var tab = {
+                            header: column.header,
+                            isTab: true,
                             starting_index: self.starting_index,
+                            relevant: self.relevant.val(),
                             has_nodeset: column.hasNodeset,
-                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));*/
+                        };
+                        if (column.hasNodeset) {
+                            tab = _.extend(tab, {
+                                nodeset_type: self.nodeset_extra.nodesetType(),
+                                nodeset_identifier: self.nodeset_extra.dropdownValue().value,
+                                nodeset_xpath: self.nodeset_extra.nodesetXpath(),
+                            });
+                        };
+                        return tab;
                     }
                     return column;
                 };
