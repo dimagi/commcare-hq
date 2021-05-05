@@ -5,6 +5,8 @@
 hqDefine("app_manager/js/details/display_property_utils", function () {
     var module = {};
 
+    module.fieldFormatWarningMessage = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+
     module.getFieldHtml = function (field) {
         var text = field || '';
         if (module.isAttachmentProperty(text)) {
@@ -28,6 +30,14 @@ hqDefine("app_manager/js/details/display_property_utils", function () {
 
     module.isAttachmentProperty = function (value) {
         return value && value.indexOf("attachment:") === 0;
+    };
+
+    module.isValidPropertyName = function (name) {
+        var word = '[a-zA-Z][\\w_-]*';
+        var regex = new RegExp(
+            '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
+        );
+        return regex.test(name);
     };
 
     module.toTitleCase = function (str) {

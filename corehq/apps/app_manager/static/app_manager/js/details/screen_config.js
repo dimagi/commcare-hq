@@ -17,7 +17,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return module.detailScreenConfig.field_val_re.test(self.selectField.val());
+            return PropertyUtils.isValidPropertyName(self.selectField.val());
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
@@ -247,7 +247,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
         }
 
         var detailScreenConfig, screenModel, columnModel;
-        var word = '[a-zA-Z][\\w_-]*';
 
         columnModel = (function () {
             var columnModelFunc = function (col, screen) {
@@ -363,7 +362,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }());
 
                 self.saveAttempted = ko.observable(false);
-                var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
                 self.useXpathExpression = self.original.useXpathExpression;
                 self.showWarning = ko.computed(function () {
                     if (self.useXpathExpression) {
@@ -374,7 +372,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         return self.hasNodeset && !self.nodeset.observableVal();
                     }
                     // Invalid property name
-                    return (self.field.observableVal() || self.saveAttempted()) && !detailScreenConfig.field_val_re.test(self.field.observableVal());
+                    var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
+                    return (self.field.observableVal() || self.saveAttempted()) && !PropertyUtils.isValidPropertyName(self.field.observableVal());
                 }, self);
 
                 // Add the graphing option if self is a graph so self we can set the value to graph
@@ -1190,12 +1189,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 label: gettext('Conditional ID Mapping'),
             });
         }
-
-        detailScreenConfig.field_format_warning_message = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
-
-        detailScreenConfig.field_val_re = new RegExp(
-            '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
-        );
 
         return detailScreenConfig;
     }());
