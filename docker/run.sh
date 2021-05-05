@@ -54,9 +54,7 @@ function run_tests() {
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-    # [ "$TEST" == "python-sharded-and-javascript" && "$TRAVIS_EVENT_TYPE" == "cron" ] && scripts/report-code-metrics.sh datadog
-    # TODO delete this line and uncomment the above - I'm testing the travis portion
-    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/report-code-metrics.sh datadog
+    [ "$TEST" == "python-sharded-and-javascript" && "$TRAVIS_EVENT_TYPE" == "cron" ] && scripts/report-code-metrics.sh datadog
     [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
     delta=$((`date +%s` - $now))
 
@@ -123,10 +121,9 @@ function _run_tests() {
          echo "grunt test $@"
          grunt test "$@"
 
-         # TODO uncomment the 'if' stuff - I'm testing the travis portion
-         # if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-        ./manage.py report_code_metrics --datadog
-         # fi
+         if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+            ./manage.py report_code_metrics --datadog
+         fi
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "./manage.py test $@ $TESTS"
