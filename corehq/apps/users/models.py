@@ -169,9 +169,7 @@ class Permissions(DocumentSchema):
         return super(Permissions, cls).wrap(data)
 
     def view_web_app(self, master_app_id):
-        if self.view_web_apps:
-            return True
-        return master_app_id in self.view_web_apps_list
+        return self.view_web_apps or master_app_id in self.view_web_apps_list
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
