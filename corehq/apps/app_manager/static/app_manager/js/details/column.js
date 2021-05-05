@@ -292,7 +292,7 @@ hqDefine("app_manager/js/details/column", function () {
                         self.date_extra.value = format.val();
                         fireChange();
                     });
-                    self.date_extra.value = select.val();
+                    self.date_extra.value = format.val();
                 } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
