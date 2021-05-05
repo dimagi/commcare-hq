@@ -838,6 +838,9 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'print_template',
+        'search_properties',
+        'search_default_properties',
+        'search_claim_options',
     ]
     short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
     src_module = app.get_module_by_unique_id(module_unique_id)
@@ -852,6 +855,14 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
+    detail_attrs = []
+    search_attrs = []
+    for attr in short_attrs:
+        if attr.startswith('search_'):
+            search_attrs.append(attr)
+        else:
+            detail_attrs.append(attr)
+
     updated_modules = []
     not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
@@ -864,7 +875,10 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             )
         else:
             try:
-                _update_module_detail(detail_type, src_module, dest_module, short_attrs)
+                if detail_attrs:
+                    _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
+                if search_attrs:
+                    _update_module_search_config(src_module, dest_module, search_attrs)
                 updated_modules.append(dest_module.default_name())
             except Exception:
                 notify_exception(
@@ -899,13 +913,19 @@ def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs)
     return error_list
 
 
-def _update_module_detail(detail_type, src_module, dest_module, short_attrs):
+def _update_module_search_config(src_module, dest_module, search_attrs):
+    src_config = src_module.search_config
+    dest_config = dest_module.search_config
+    dest_config.overwrite_attrs(src_config, search_attrs)
+
+
+def _update_module_detail(detail_type, src_module, dest_module, detail_attrs):
     if detail_type == 'long':
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
         src_detail = getattr(src_module.case_details, detail_type)
         dest_detail = getattr(dest_module.case_details, detail_type)
-        dest_detail.overwrite_attrs(src_detail, short_attrs)
+        dest_detail.overwrite_attrs(src_detail, detail_attrs)
 
 
 def _update_search_properties(module, search_properties, lang='en'):

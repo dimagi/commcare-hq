@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     LoadUpdateAction,
     Module,
     ReportAppConfig,
-    ReportModule,
+    ReportModule, CaseSearch, CaseSearchProperty, DefaultCaseSearchProperty,
 )
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.userreports.models import ReportConfiguration
@@ -204,3 +204,90 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         delattr(self.src_detail, 'columns')
         delattr(dest_detail, 'filter')
         delattr(dest_detail, 'columns')
+
+
+class OverwriteCaseSearchConfigTests(SimpleTestCase):
+    def setUp(self):
+        self.all_attrs = ['search_properties', 'search_default_properties', 'search_claim_options']
+
+        self.app = Application.new_app('domain', "Untitled Application")
+        self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
+        self.case_search_config = CaseSearch(
+            command_label={'en': 'Search Patients Nationally'},
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+            ],
+            auto_launch=True,
+            default_search=True,
+            default_relevant=False,
+            additional_relevant="instance('groups')/groups/group",
+            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
+            search_button_display_condition="false()",
+            blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property='ɨŧsȺŧɍȺᵽ',
+                    defaultValue=("instance('casedb')/case"
+                                  "[@case_id='instance('commcaresession')/session/data/case_id']/ɨŧsȺŧɍȺᵽ")),
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('locations')/locations/location[@id=123]/@type"),
+            ],
+        )
+        self.src_module.search_config = self.case_search_config
+        self.dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+
+    def test_overwrite_all(self):
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, self.all_attrs)
+        self.assertEqual(self.src_module.search_config.to_json(), self.dest_module.search_config.to_json())
+
+    def test_overwrite_properties(self):
+        self.dest_module.search_config = CaseSearch()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_properties"])
+        self.assertEqual(
+            self.src_module.search_config.to_json()["properties"],
+            self.dest_module.search_config.to_json()["properties"]
+        )
+        # ensure that the rest is the same as the default config
+        dest_json = self.dest_module.search_config.to_json()
+        dest_json.pop("properties")
+        blank_json = CaseSearch().to_json()
+        blank_json.pop("properties")
+        self.assertEqual(dest_json, blank_json)
+
+    def test_overwrite_default_properties(self):
+        self.dest_module.search_config = CaseSearch()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_default_properties"])
+        self.assertEqual(
+            self.src_module.search_config.to_json()["default_properties"],
+            self.dest_module.search_config.to_json()["default_properties"]
+        )
+        # ensure that the rest is the same as the default config
+        dest_json = self.dest_module.search_config.to_json()
+        dest_json.pop("default_properties")
+        blank_json = CaseSearch().to_json()
+        blank_json.pop("default_properties")
+        self.assertEqual(dest_json, blank_json)
+
+    def test_overwrite_options(self):
+        self.dest_module.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='age', label={'en': 'Age'})],
+            default_properties=[DefaultCaseSearchProperty(
+                property='location', defaultValue="instance('locations')/locations/location[@id=123]/location_id"
+            )]
+        )
+        original_json = self.dest_module.search_config.to_json()
+        self.dest_module.search_config.overwrite_attrs(self.src_module.search_config, ["search_claim_options"])
+        final_json = self.dest_module.search_config.to_json()
+
+        # properties and default properties should be unchanged
+        self.assertEqual(original_json["properties"], final_json["properties"])
+        self.assertEqual(original_json["default_properties"], final_json["default_properties"])
+
+        # everything else should match the source config
+        src_json = self.src_module.search_config.to_json()
+        for config_dict in (final_json, src_json):
+            config_dict.pop("properties")
+            config_dict.pop("default_properties")
+        self.assertEqual(final_json, src_json)
