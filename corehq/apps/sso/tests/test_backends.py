@@ -13,7 +13,7 @@ from corehq.apps.sso.utils.session_helpers import (
     prepare_session_with_new_sso_user_data,
     prepare_session_for_sso_invitation,
 )
-from corehq.apps.users.models import WebUser, Invitation, AdminUserRole
+from corehq.apps.users.models import WebUser, Invitation, UserRole
 
 
 class TestSsoBackend(TestCase):
@@ -240,7 +240,8 @@ class TestSsoBackend(TestCase):
         self.assertEqual(user.username, 'm@vaultwax.com')
         self.assertEqual(user.first_name, 'Maarten')
         self.assertEqual(user.last_name, 'van der Berg')
-        self.assertEqual(user.phone_numbers[0], '+15555555555')
+        web_user = WebUser.get_by_username(user.username)
+        self.assertEqual(web_user.phone_numbers[0], '+15555555555')
         self.assertEqual(
             self.request.sso_new_user_messages['success'],
             [
@@ -254,7 +255,7 @@ class TestSsoBackend(TestCase):
         invitation should add the user to the invited project
         space and accept the invitation
         """
-        admin_role = AdminUserRole(domain=self.domain.name)
+        admin_role = UserRole.admin_role(self.domain.name)
         invitation = Invitation(
             domain=self.domain.name,
             email='isa@vaultwax.com',

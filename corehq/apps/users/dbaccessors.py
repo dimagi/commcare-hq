@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
@@ -66,7 +66,7 @@ def get_all_web_users_by_domain(domain):
 
 
 def get_mobile_usernames_by_filters(domain, user_filters):
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, MOBILE_USER_TYPE, user_filters)
     return query.values_list('base_username', flat=True)
 
 
@@ -146,12 +146,20 @@ def get_invitations_by_filters(domain, user_filters):
 
 def _get_invitations_by_filters(domain, user_filters, count_only=False):
     """
-    Similar to _get_users_by_filters, but applites to invitations,
-    and only looks at the 'search_string' filter, which is applies
-    to the invitations' emails.
+    Similar to _get_users_by_filters, but applites to invitations.
+
+    Applies "search_string" filter to the invitations' emails. This does not
+    support ES search syntax, it's just a case-insensitive substring search.
+    Ignores location filter.
     """
+    filters = {}
     search_string = user_filters.get("search_string", None)
-    filters = {"email__icontains": search_string} if search_string else {}
+    if search_string:
+        filters["email__icontains"] = search_string
+    role_id = user_filters.get("role_id", None)
+    if role_id:
+        filters["role"] = role_id
+
     invitations = Invitation.by_domain(domain, **filters)
     if count_only:
         return invitations.count()
@@ -352,3 +360,12 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
+
+
+def get_all_role_ids():
+    roles = UserRole.view(
+        'users/roles_by_domain',
+        include_docs=False,
+        reduce=False
+    ).all()
+    return [r['id'] for r in roles]

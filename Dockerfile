@@ -1,4 +1,4 @@
-FROM python:3.6-jessie
+FROM python:3.6
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
@@ -12,24 +12,31 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+     default-jdk \
+     wget \
+     libxml2-dev \
+     libxmlsec1-dev \
+     libxmlsec1-openssl
+
 # Install latest chrome dev package and fonts to support major
 # charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version
 # of Chromium that Puppeteer installs, work.
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-     openjdk-7-jdk \
-     wget \
-     libxml2-dev \
-     libxmlsec1-dev \
-     libxmlsec1-openssl \
-  && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
   && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
   && apt-get update \
-  && apt-get install -y google-chrome-unstable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst ttf-freefont \
-    --no-install-recommends \
-  # this line deletes all package sources, so don't apt-get install anything after this:
-  && rm -rf /var/lib/apt/lists/* /src/*.deb
+  && apt-get install -y --no-install-recommends \
+     google-chrome-unstable \
+     fonts-ipafont-gothic \
+     fonts-wqy-zenhei \
+     fonts-thai-tlwg \
+     fonts-kacst \
+     fonts-freefont-ttf
+
+# Deletes all package sources, so don't apt-get install anything after this:
+RUN rm -rf /var/lib/apt/lists/* /src/*.deb
 
 COPY requirements/test-requirements.txt package.json /vendor/
 

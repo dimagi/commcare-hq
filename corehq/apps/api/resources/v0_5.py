@@ -121,9 +121,9 @@ def _set_role_for_bundle(kwargs, bundle):
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        preset_role_id = UserRole.get_preset_role_id(bundle.data.get('role'))
+        if preset_role_id:
+            bundle.obj.set_role(kwargs['domain'], preset_role_id)
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):

@@ -80,6 +80,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
@@ -88,7 +89,6 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    DomainRequestForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
@@ -96,7 +96,6 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.apps.users.models import (
-    AdminUserRole,
     CommCareUser,
     CouchUser,
     DomainMembershipError,
@@ -504,7 +503,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @property
     @memoized
     def user_roles(self):
-        user_roles = [AdminUserRole(domain=self.domain)]
+        user_roles = [UserRole.admin_role(self.domain)]
         user_roles.extend(sorted(
             UserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
@@ -570,7 +569,7 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     def page_context(self):
         from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-        if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(self.domain):
+        if can_use_filtered_user_download(self.domain):
             bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_web_users", args=[self.domain])

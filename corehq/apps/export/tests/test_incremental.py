@@ -103,7 +103,7 @@ class TestIncrementalExport(TestCase):
             name='test_export',
             export_instance_id=self.export_instance.get_id,
             connection_settings=ConnectionSettings.objects.create(
-                domain=self.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
+                domain=self.domain, name='test conn', url='http://commcarehq.org', auth_type=BASIC_AUTH,
             )
         )
 
@@ -169,7 +169,7 @@ class TestIncrementalExport(TestCase):
     def _test_sending(self, status_code, expected_status):
         checkpoint = self.test_initial()
         with requests_mock.Mocker() as m:
-            m.post('http://somewhere/', status_code=status_code)
+            m.post('http://commcarehq.org/', status_code=status_code)
             _send_incremental_export(self.incremental_export, checkpoint)
 
             checkpoint.refresh_from_db()
