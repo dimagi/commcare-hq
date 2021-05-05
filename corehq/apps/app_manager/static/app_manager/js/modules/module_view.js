@@ -12,12 +12,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
-
             var details = initial_page_data('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var detailScreenConfig = DetailScreenConfig.init({
+                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")({
                     module_id: moduleBrief.id,
                     moduleUniqueId: moduleBrief.unique_id,
                     state: {
