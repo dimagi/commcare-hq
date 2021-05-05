@@ -422,12 +422,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             return !self.dropdownValue().value;
                         });
 
-                        self.ui = $(
-                            '<div>' +
-                            '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>' +
-                            '<textarea type="text" class="form-control" data-bind="value: nodesetXpath, visible: showXpath" style="margin-top: 5px" /></textarea>' +
-                            '</div>'
-                        );
+                        var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>';
+                        ui += '<textarea type="text" class="form-control" data-bind="value: nodesetXpath, visible: showXpath" style="margin-top: 5px" /></textarea>'
+                        if (hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')) {
+                            ui += '<p data-bind="visible: showXpath() && nodesetXpath()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
+                        }
+                        self.ui = $('<div>' + ui + '</div>');
                         self.ui.koApplyBindings(self);
 
                         hqImport("hqwebapp/js/main").eventize(self);
