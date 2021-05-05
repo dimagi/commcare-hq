@@ -12,7 +12,8 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
-    ODATA_FEED_PERMISSION
+    ODATA_FEED_PERMISSION, can_manage_releases
+from corehq.util.test_utils import flag_enabled
 
 
 class PermissionsTest(TestCase):
@@ -50,15 +51,19 @@ class PermissionsHelpersTest(SimpleTestCase):
     def setUpClass(cls):
         super(PermissionsHelpersTest, cls).setUpClass()
         cls.domain = 'export-permissions-test'
-        cls.web_user = WebUser(username='temp@example.com', domains=[cls.domain])
-        cls.web_user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='MYROLE')]
+        cls.admin_domain = 'export-permissions-test-admin'
+        cls.web_user = WebUser(username='temp@example.com', domains=[cls.domain, cls.admin_domain])
+        cls.web_user.domain_memberships = [
+            DomainMembership(domain=cls.domain, role_id='MYROLE'),
+            DomainMembership(domain=cls.admin_domain, is_admin=True)
+        ]
         cls.permissions = Permissions()
 
     def setUp(self):
         super(PermissionsHelpersTest, self).setUp()
         test_self = self
 
-        def get_role(self):
+        def get_role(self, domain=None):
             return UserRole(
                 domain=test_self.domain,
                 permissions=test_self.permissions
@@ -67,6 +72,7 @@ class PermissionsHelpersTest(SimpleTestCase):
         assert hasattr(WebUser.has_permission, "get_cache"), "not memoized?"
         patches = [
             mock.patch.object(DomainMembership, 'role', property(get_role)),
+            mock.patch.object(WebUser, 'get_role', get_role),
             mock.patch.object(WebUser, 'has_permission', WebUser.has_permission.__wrapped__),
         ]
         for patch in patches:
@@ -105,3 +111,23 @@ class PermissionsHelpersTest(SimpleTestCase):
         self.assertFalse(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
         self.permissions = Permissions(view_report_list=[ODATA_FEED_PERMISSION])
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
+
+    @flag_enabled('RESTRICT_APP_RELEASE')
+    def test_can_manage_releases_all(self):
+        self.permissions = Permissions(manage_releases=False)    # manage_releases is True by default
+        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
+        self.permissions = Permissions()
+        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
+
+    @flag_enabled('RESTRICT_APP_RELEASE')
+    def test_can_manage_releases(self):
+        self.permissions = Permissions(manage_releases=False)  # manage_releases is True by default
+        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
+        self.permissions = Permissions(manage_releases=False, manage_releases_list=["app_id"])
+        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
+
+    @flag_enabled('RESTRICT_APP_RELEASE')
+    def test_can_manage_releases_domain_admin(self):
+        self.permissions = Permissions()
+        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
+        self.assertFalse(can_manage_releases(self.web_user, self.admin_domain, "app_id"))
