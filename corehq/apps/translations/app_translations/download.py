@@ -175,7 +175,8 @@ def get_module_rows(langs, module, domain):
     return get_module_case_list_form_rows(langs, module) + \
         get_module_case_list_menu_item_rows(langs, module) + \
         get_module_search_command_rows(langs, module, domain) + \
-        get_module_detail_rows(langs, module)
+        get_module_detail_rows(langs, module) + \
+        get_case_search_rows(langs, module, domain)
 
 
 def get_module_report_rows(langs, module):
@@ -224,6 +225,21 @@ def get_module_search_command_rows(langs, module, domain):
         ('search_again_label', 'list')
         + tuple(module.search_config.again_label.get(lang, '') for lang in langs),
     ]
+
+
+def get_case_search_rows(langs, module, domain):
+    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        return []
+
+    ret = []
+    for prop in module.search_config.properties:
+        ret.append((
+            (prop.name, "case_search_display") + tuple(prop.label.get(lang, "") for lang in langs)
+        ))
+        ret.append((
+            (prop.name, "case_search_hint") + tuple(prop.hint.get(lang, "") for lang in langs)
+        ))
+    return ret
 
 
 def get_module_detail_rows(langs, module):
