@@ -11,6 +11,7 @@ from corehq.apps.app_manager.dbaccessors import (
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.exceptions import MultipleDownstreamAppsError, RemoteRequestError
 from corehq.apps.linked_domain.remote_accessors import (
@@ -105,3 +106,19 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
 
     _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
+
+
+def unlink_app(linked_app):
+    if not is_linked_app(linked_app):
+        return None
+
+    from corehq.apps.app_manager.models import import_app
+    extra_properties = {'name': linked_app.name}
+    app_copy = import_app(linked_app._id, linked_app.domain, extra_properties)
+    app_copy = app_copy.convert_to_application()
+    app_copy.save()
+
+    # remove linked app
+    linked_app.delete()
+
+    return app_copy
