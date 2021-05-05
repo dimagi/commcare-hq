@@ -13,11 +13,13 @@ from couchforms.analytics import (
 
 
 class Command(BaseCommand):
-    help = "Estimates the physical size of a domain's forms and cases."
+    help = "Estimates the physical size of one or more domains' forms and cases."
 
     def add_arguments(self, parser):
         parser.add_argument(
             'domains',
+            help="Enter a list of domains surrounded by quotation marks with only spaces between the domains."
+            "A single domain can also be entered",
         )
         parser.add_argument(
             '--sample_size',
@@ -52,10 +54,18 @@ class Command(BaseCommand):
         show_only_forms = options.get('only_forms', False)
         show_only_cases = options.get('only_cases', False)
 
+        if not show_only_cases:
+            self.stdout.write(f"\n\nCalculating size of forms with a sample "
+                            f"size of {sample_size} per XMLNS...")
+
+        if not show_only_forms:
+            self.stdout.write(f"\n\nCalculating size of cases with a sample "
+                            f"size of {sample_size} per Case Type...")
+            if use_case_search:
+                self.stdout.write("The Case search index is being used.")
+
         for domain in domains_list:
             if not show_only_cases:
-                self.stdout.write(f"\n\nCalculating size of forms with a sample "
-                                f"size of {sample_size} per XMLNS...")
                 num_forms, size_of_forms = _get_form_size_stats(domain, sample_size)
                 final_num_forms += num_forms
                 final_size_forms += size_of_forms
@@ -66,10 +76,6 @@ class Command(BaseCommand):
                                 f"physical space.")
 
             if not show_only_forms:
-                self.stdout.write(f"\n\nCalculating size of cases with a sample "
-                                f"size of {sample_size} per Case Type...")
-                if use_case_search:
-                    self.stdout.write("The Case search index is being used.")
                 num_cases, size_of_cases = _get_case_size_stats(
                     domain, sample_size, use_case_search
                 )
@@ -82,12 +88,12 @@ class Command(BaseCommand):
                                 f"physical space.")
 
         if not show_only_cases:
-            self.stdout.write(f"\n These domains have a total of {final_num_forms} forms, "
+            self.stdout.write(f"\nThese domains have a total of {final_num_forms} forms, "
                             f"taking up approximately {final_size_forms} bytes "
                             f"({_get_human_bytes(final_size_forms)}) of physical space.")
 
         if not show_only_forms:
-            self.stdout.write(f"\n These domains have a total of {final_num_cases} cases, "
+            self.stdout.write(f"\nThese domains have a total of {final_num_cases} cases, "
                             f"taking up approximately {final_size_cases} bytes "
                             f"({_get_human_bytes(final_size_cases)}) of physical space.")
 
