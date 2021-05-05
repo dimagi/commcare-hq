@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
             name='RolePermission',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('allow_all', models.BooleanField(default=True)),
                 ('allowed_items', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=256), blank=True, null=True, size=None)),
             ],
         ),
@@ -38,7 +39,6 @@ class Migration(migrations.Migration):
                 ('is_archived', models.BooleanField(default=False)),
                 ('upstream_id', models.CharField(max_length=32, null=True)),
                 ('couch_id', models.CharField(db_index=True, max_length=126, null=True)),
-                ('permissions', models.ManyToManyField(through='users.RolePermission', to='users.SQLPermission')),
             ],
             options={
                 'db_table': 'users_userrole',

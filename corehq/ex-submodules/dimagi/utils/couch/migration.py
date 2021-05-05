@@ -129,6 +129,7 @@ class SyncCouchToSQLMixin(object):
     def _migration_do_sync(self):
         sql_object = self._migration_get_or_create_sql_object()
         self._migration_sync_to_sql(sql_object)
+        return sql_object
 
     def save(self, *args, **kwargs):
         sync_to_sql = kwargs.pop('sync_to_sql', True)

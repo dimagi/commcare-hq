@@ -1,4 +1,6 @@
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from corehq.apps.users.models import UserRole
+from corehq.apps.users.models_sql import migrate_role_assignable_by_to_sql, migrate_role_permissions_to_sql
 
 
 class Command(PopulateSQLCommand):
@@ -29,6 +31,8 @@ class Command(PopulateSQLCommand):
                 "is_non_admin_editable": doc.get("is_non_admin_editable"),
                 "is_archived": doc.get("is_archived"),
                 "upstream_id": doc.get("upstream_id"),
-                "original_doc": doc.get("original_doc"),
             })
+        couch_role = UserRole.wrap(doc)
+        migrate_role_permissions_to_sql(couch_role, model)
+        migrate_role_assignable_by_to_sql(couch_role, model)
         return model, created

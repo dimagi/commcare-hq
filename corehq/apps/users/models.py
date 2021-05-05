@@ -2,8 +2,10 @@ import hmac
 import json
 import logging
 import re
+from collections import namedtuple
 from datetime import datetime
 from hashlib import sha1
+from typing import List
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -89,7 +91,11 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-from .models_sql import SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy  # noqa
+from .models_sql import (
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,  # noqa
+    migrate_role_permissions_to_sql,
+    migrate_role_assignable_by_to_sql,
+)
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -108,6 +114,15 @@ def _add_to_list(list, obj, default):
 
 def _get_default(list):
     return list[0] if list else None
+
+
+Permission = namedtuple("Permission", "name, allow_all, allowed_items")
+
+PARAMETERIZED_PERMISSIONS = {
+    'view_reports': 'view_report_list',
+    'view_web_apps': 'view_web_apps_list',
+    'manage_releases': 'manage_releases_list',
+}
 
 
 class Permissions(DocumentSchema):
@@ -170,6 +185,39 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
+    @classmethod
+    def from_permission_list(cls, permission_list):
+        """Converts a list of Permission objects into a Permissions object"""
+        permissions = Permissions.min()
+        for perm in permission_list:
+            setattr(permissions, perm.name, perm.allow_all)
+            if perm.name in PARAMETERIZED_PERMISSIONS:
+                setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], perm.allowed_items)
+        return permissions
+
+    @classmethod
+    @memoized
+    def permission_names(cls):
+        """Returns a list of permission names"""
+        return {
+            name for name, value in Permissions.properties().items()
+            if isinstance(value, BooleanProperty)
+        }
+
+    def to_list(self) -> List[Permission]:
+        """Returns a list of Permission objects for those permissions that are enabled."""
+        return list(self._yield_enabled())
+
+    def _yield_enabled(self):
+        for name in Permissions.permission_names():
+            value = getattr(self, name)
+            list_value = None
+            if name in PARAMETERIZED_PERMISSIONS:
+                list_name = PARAMETERIZED_PERMISSIONS[name]
+                list_value = getattr(self, list_name)
+            if value or list_value:
+                yield Permission(name, value, list_value)
+
     def view_web_app(self, master_app_id):
         return self.view_web_apps or master_app_id in self.view_web_apps_list
 
@@ -196,32 +244,18 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions(
-            edit_web_users=True,
-            view_web_users=True,
-            view_roles=True,
-            edit_commcare_users=True,
-            view_commcare_users=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_users_in_groups=True,
-            edit_locations=True,
-            view_locations=True,
-            edit_users_in_locations=True,
-            edit_motech=True,
-            edit_data=True,
-            edit_apps=True,
-            view_apps=True,
-            edit_reports=True,
-            view_reports=True,
-            edit_billing=True,
-            edit_shared_exports=True,
-            view_file_dropzone=True,
-            edit_file_dropzone=True,
-            access_mobile_endpoints=True,
-            access_api=True,
-        )
+        return Permissions._all(True)
 
+    @classmethod
+    def min(cls):
+        return Permissions._all(False)
+
+    @classmethod
+    def _all(cls, value: bool):
+        perms = Permissions()
+        for name in Permissions.permission_names():
+            setattr(perms, name, value)
+        return perms
 
 class UserRolePresets(object):
     # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
@@ -435,9 +469,10 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return SQLUserRole
 
     def _migration_sync_submodels_to_sql(self, sql_object):
-        # TODO: permissions
-        # TODO: assignable_by
-        pass
+        if not sql_object._get_pk_val():
+            sql_object.save(sync_to_couch=False)
+        migrate_role_permissions_to_sql(self, sql_object)
+        migrate_role_assignable_by_to_sql(self, sql_object)
 
 
 class AdminUserRole(UserRole):
