@@ -362,6 +362,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     }
                 }());
 
+                var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
                 self.saveAttempted = ko.observable(false);
                 self.useXpathExpression = self.original.useXpathExpression;
                 self.showWarning = ko.computed(function () {
@@ -373,12 +374,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         return self.hasNodeset && !self.nodeset.observableVal();
                     }
                     // Invalid property name
-                    var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
                     return (self.field.observableVal() || self.saveAttempted()) && !PropertyUtils.isValidPropertyName(self.field.observableVal());
                 }, self);
 
                 // Add the graphing option if self is a graph so self we can set the value to graph
-                var menuOptions = detailScreenConfig.MENU_OPTIONS.slice();
+                var menuOptions = PropertyUtils.getFieldFormats();
                 if (self.original.format === "graph") {
                     menuOptions = menuOptions.concat([{
                         value: "graph",
@@ -1131,59 +1131,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
             };
             return detailScreenConfigFunc;
         }());
-
-        detailScreenConfig.MENU_OPTIONS = [{
-            value: "plain",
-            label: gettext('Plain'),
-        }, {
-            value: "date",
-            label: gettext('Date'),
-        }, {
-            value: "time-ago",
-            label: gettext('Time Since or Until Date'),
-        }, {
-            value: "phone",
-            label: gettext('Phone Number'),
-        }, {
-            value: "enum",
-            label: gettext('ID Mapping'),
-        }, {
-            value: "late-flag",
-            label: gettext('Late Flag'),
-        }, {
-            value: "invisible",
-            label: gettext('Search Only'),
-        }, {
-            value: "address",
-            label: gettext('Address'),
-        }, {
-            value: "distance",
-            label: gettext('Distance from current location'),
-        }];
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
-            detailScreenConfig.MENU_OPTIONS.push({
-                value: "picture",
-                label: gettext('Picture'),
-            }, {
-                value: "audio",
-                label: gettext('Audio'),
-            });
-        }
-
-        var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
-        if (addOns.enum_image) {
-            detailScreenConfig.MENU_OPTIONS.push({
-                value: "enum-image",
-                label: gettext('Icon'),
-            });
-        }
-        if (addOns.conditional_enum) {
-            detailScreenConfig.MENU_OPTIONS.push({
-                value: "conditional-enum",
-                label: gettext('Conditional ID Mapping'),
-            });
-        }
 
         return detailScreenConfig;
     }());

@@ -1,11 +1,70 @@
 /**
  * Contains a few UI utilities for the Display Properties
  * section of case list/detail configuration.
+ *
+ * Depends on `add_ons` being available in initial page data
  */
 hqDefine("app_manager/js/details/display_property_utils", function () {
     var module = {};
 
     module.fieldFormatWarningMessage = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+
+    module.getFieldFormats = function () {
+        var formats = [{
+            value: "plain",
+            label: gettext('Plain'),
+        }, {
+            value: "date",
+            label: gettext('Date'),
+        }, {
+            value: "time-ago",
+            label: gettext('Time Since or Until Date'),
+        }, {
+            value: "phone",
+            label: gettext('Phone Number'),
+        }, {
+            value: "enum",
+            label: gettext('ID Mapping'),
+        }, {
+            value: "late-flag",
+            label: gettext('Late Flag'),
+        }, {
+            value: "invisible",
+            label: gettext('Search Only'),
+        }, {
+            value: "address",
+            label: gettext('Address'),
+        }, {
+            value: "distance",
+            label: gettext('Distance from current location'),
+        }];
+
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
+            formats.push({
+                value: "picture",
+                label: gettext('Picture'),
+            }, {
+                value: "audio",
+                label: gettext('Audio'),
+            });
+        }
+
+        var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+        if (addOns.enum_image) {
+            formats.push({
+                value: "enum-image",
+                label: gettext('Icon'),
+            });
+        }
+        if (addOns.conditional_enum) {
+            formats.push({
+                value: "conditional-enum",
+                label: gettext('Conditional ID Mapping'),
+            });
+        }
+
+        return formats;
+    };
 
     module.getFieldHtml = function (field) {
         var text = field || '';
