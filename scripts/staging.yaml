@@ -60,10 +60,8 @@ branches:
     # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - nh/dhis2/sqldataset_maps  # Norman Dec 18
     - sr/cs-bulk-translations+sr/ush-ff+sr/ucr-cs+nh/reminders
     - sr/cs-bulk-translations # Sravan April 22
-    - nh/reminders  # Norman Jan 26
     - smh/bulk-upload-web-users+jls/cross-domain-web-user-download
     - smh/bulk-upload-web-users # Steph Feb 22
     - jls/cross-domain-web-user-download # Jenny April 24
@@ -71,7 +69,6 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - fr/consumer-user             # Farid March 17
     - sr/jumptoErrors # Sravan April 6
-    - mk/form-mm-exports-filters-2 # MK April 16
     - fr/smart-metadata-urls       # Farid April 28
     - fr/smart-oauth-views # Farid April 7
     - gh/remove-filters-from-saved-ucrs # Graham Apr 9
@@ -79,7 +76,10 @@ branches:
     - sr/sort-cs # Sravan April 19
     - kev/markdown-case-views # Kevin Apr 9
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-    - bmb/sso-data-fixes  # Biyeun 28th April
-    - bmb/sso-create-debug  # Biyeun 28th April
     - sk/case-search-expression  # SK April 29
+    - bmb/sso-async-signup-create  # Biyeun April 29
+    - bmb/sso-async-signup-create-session-retest  # Biyeun May 4
+    - gh/refactor-release-content-logic # Graham April 30
+    - rp/query_multiple_domains #Rynhard May 4
+    - sk/overwrite-case-search-config  # Simon May 5
 submodules: { }

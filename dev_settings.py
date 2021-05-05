@@ -145,3 +145,8 @@ if settingshelper.is_testing():
             "signature_version": "s3"
         },
     }
+
+# substantially increase the API request limits in dev, in part
+# to prevent AssertionError: 429 != 200  test failures
+CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
+CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
