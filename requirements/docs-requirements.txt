@@ -186,6 +186,7 @@ docutils==0.16
     #   -r docs-requirements.in
     #   recommonmark
     #   sphinx
+    #   sphinx-rtd-theme
 dropbox==9.3.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
@@ -366,7 +367,7 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -468,7 +469,7 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx-rtd-theme==0.5.1
+sphinx-rtd-theme==0.5.2
     # via -r docs-requirements.in
 sphinx==3.5.4
     # via

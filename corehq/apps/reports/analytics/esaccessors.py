@@ -591,18 +591,14 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
-def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
-    enddate = datespan.enddate + timedelta(days=1)
-    query = (FormES()
-             .domain(domain)
-             .app(app_id)
-             .xmlns(xmlns)
-             .submitted(gte=datespan.startdate, lte=enddate)
-             .remove_default_filter("has_user")
-             .source(['_id', 'external_blobs']))
+def get_form_ids_with_multimedia(es_query):
+    return {
+        form['_id'] for form in _forms_with_attachments(es_query)
+    }
 
-    if user_types:
-        query = query.user_type(user_types)
+
+def _forms_with_attachments(es_query):
+    query = es_query.source(['_id', 'external_blobs'])
 
     for form in query.scroll():
         try:
@@ -614,15 +610,27 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout. Deprecated by get_form_ids_with_multimedia
 def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=datespan.startdate, lte=enddate)
+             .remove_default_filter("has_user")
+             )
+
+    if user_types:
+        query = query.user_type(user_types)
     return {
-        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+        form['_id'] for form in _forms_with_attachments(query)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def media_export_is_too_big(es_query):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:
