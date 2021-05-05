@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
@@ -720,6 +721,8 @@ def modify_existing_user_in_domain(domain, domain_info, location_codes, membersh
     try:
         current_user.save()
     except ResourceConflict:
+        notify_exception(None, message="ResouceConflict during web user import",
+                         details={'domain': domain, 'username': current_user.username})
         if max_tries > 0:
             current_user.clear_quickcache_for_user()
             updated_user = CouchUser.get_by_username(current_user.username, strict=True)
