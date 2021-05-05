@@ -118,6 +118,7 @@ hqDefine("app_manager/js/details/screen", function () {
             columns.splice(
                 tabs[i].starting_index + i,
                 0,
+                // TODO: add new tab properties here
                 _.extend({
                     hasNodeset: tabs[i].has_nodeset,
                 }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
