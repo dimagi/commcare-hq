@@ -318,7 +318,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_archived=False):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
             startkey=[domain],
@@ -332,7 +331,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_name(cls, domain, name):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
             key=[domain, name],
