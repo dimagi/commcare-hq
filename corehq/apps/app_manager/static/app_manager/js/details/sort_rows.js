@@ -9,23 +9,23 @@ hqDefine("app_manager/js/details/sort_rows", function () {
     var uiElement = hqImport('hqwebapp/js/ui-element');
 
     var sortRow = function (params, saveButton) {
-        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
+        var Utils = hqImport('app_manager/js/details/utils'),
             self = {};
         params = params || {};
 
         self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
-        PropertyUtils.setUpAutocomplete(self.selectField, params.properties);
+        Utils.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return PropertyUtils.isValidPropertyName(self.selectField.val());
+            return Utils.isValidPropertyName(self.selectField.val());
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
             self.notifyButton();
         });
-        self.toTitleCase = PropertyUtils.toTitleCase;
+        self.toTitleCase = Utils.toTitleCase;
         self.selectField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);

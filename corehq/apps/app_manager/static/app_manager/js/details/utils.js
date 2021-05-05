@@ -4,7 +4,7 @@
  *
  * Depends on `add_ons` being available in initial page data
  */
-hqDefine("app_manager/js/details/display_property_utils", function () {
+hqDefine("app_manager/js/details/utils", function () {
     var module = {};
 
     module.fieldFormatWarningMessage = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");

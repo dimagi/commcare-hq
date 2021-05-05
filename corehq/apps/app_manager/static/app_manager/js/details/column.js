@@ -23,7 +23,7 @@
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
+        var Utils = hqImport('app_manager/js/details/utils');
         var defaults = {
             calc_xpath: ".",
             enum: [],
@@ -35,7 +35,7 @@
             header: {},
             model: screen.model,
             date_format: "",
-            time_ago_interval: PropertyUtils.TIME_AGO.year,
+            time_ago_interval: Utils.TIME_AGO.year,
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
@@ -64,8 +64,8 @@
             value: "case",
         }]).val(self.original.model);
 
-        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
-            icon = PropertyUtils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
+        var Utils = hqImport('app_manager/js/details/utils'),
+            icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
             self.field = uiElement.select();
@@ -126,7 +126,7 @@
             }
         }());
 
-        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
+        var Utils = hqImport('app_manager/js/details/utils');
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
         self.showWarning = ko.computed(function () {
@@ -138,11 +138,11 @@
                 return self.hasNodeset && !self.nodeset.observableVal();
             }
             // Invalid property name
-            return (self.field.observableVal() || self.saveAttempted()) && !PropertyUtils.isValidPropertyName(self.field.observableVal());
+            return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
         }, self);
 
         // Add the graphing option if self is a graph so self we can set the value to graph
-        var menuOptions = PropertyUtils.getFieldFormats();
+        var menuOptions = Utils.getFieldFormats();
         if (self.original.format === "graph") {
             menuOptions = menuOptions.concat([{
                 value: "graph",
@@ -228,28 +228,28 @@
         self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
         self.calc_xpath_extra.ui.prepend($('<div/>'));
 
-        var PropertyUtils = hqImport('app_manager/js/details/display_property_utils');
+        var Utils = hqImport('app_manager/js/details/utils');
         self.time_ago_extra = uiElement.select([{
             label: gettext('Years since date'),
-            value: PropertyUtils.TIME_AGO.year,
+            value: Utils.TIME_AGO.year,
         }, {
             label: gettext('Months since date'),
-            value: PropertyUtils.TIME_AGO.month,
+            value: Utils.TIME_AGO.month,
         }, {
             label: gettext('Weeks since date'),
-            value: PropertyUtils.TIME_AGO.week,
+            value: Utils.TIME_AGO.week,
         }, {
             label: gettext('Days since date'),
-            value: PropertyUtils.TIME_AGO.day,
+            value: Utils.TIME_AGO.day,
         }, {
             label: gettext('Days until date'),
-            value: -PropertyUtils.TIME_AGO.day,
+            value: -Utils.TIME_AGO.day,
         }, {
             label: gettext('Weeks until date'),
-            value: -PropertyUtils.TIME_AGO.week,
+            value: -Utils.TIME_AGO.week,
         }, {
             label: gettext('Months until date'),
-            value: -PropertyUtils.TIME_AGO.month,
+            value: -Utils.TIME_AGO.month,
         }]).val(self.original.time_ago_interval.toString());
         self.time_ago_extra.ui.prepend($('<div/>').text(gettext(' Measuring ')));
 

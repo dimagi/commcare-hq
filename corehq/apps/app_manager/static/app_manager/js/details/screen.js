@@ -12,7 +12,7 @@
  * @param options
  */
 hqDefine("app_manager/js/details/screen", function () {
-    var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
+    var Utils = hqImport('app_manager/js/details/utils'),
         ColumnModel = hqImport("app_manager/js/details/column");
 
     var getPropertyTitle = function(property) {
@@ -20,7 +20,7 @@ hqDefine("app_manager/js/details/screen", function () {
         // This is aimed at prefixes like ledger: and attachment:
         property = property || '';
         var i = property.indexOf(":");
-        return PropertyUtils.toTitleCase(property.substring(i + 1));
+        return Utils.toTitleCase(property.substring(i + 1));
     }
 
     return function(spec, config, options) {
@@ -105,7 +105,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 column.field.setOptions(options);
                 column.field.val(column.original.field);
                 column.field.observableVal(column.original.field);
-                hqImport('app_manager/js/details/display_property_utils').setUpAutocomplete(column.field, self.properties);
+                hqImport('app_manager/js/details/utils').setUpAutocomplete(column.field, self.properties);
             }
             return column;
         };
