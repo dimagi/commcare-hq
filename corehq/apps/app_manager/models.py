@@ -5706,15 +5706,15 @@ class LinkedApplication(Application):
             self.create_mapping(mm, ref['path'], save=False)
 
 
-def import_app(app_id_or_source, domain, source_properties=None, request=None, check_all_reports=True):
-    source_app = _get_source_app(app_id_or_source)
+def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
+    source_app = _get_source_app(app_id_or_doc)
     source = source_app.export_json(dump_json=False)
 
     attachments = _get_attachments(source)
     source['_attachments'] = {}
 
-    if source_properties is not None:
-        source.update(source_properties)
+    if extra_properties is not None:
+        source.update(extra_properties)
 
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
@@ -5725,11 +5725,17 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None, c
         app.family_id = source_app.origin_id
 
     report_map = get_static_report_mapping(source_app.domain, domain)
-    _update_report_config_ids(app, report_map, source_app.domain, check_all_reports)
+    _update_report_config_ids(app, report_map, source_app.domain)
 
     app.save_attachments(attachments)
 
-    _update_valid_domains_for_media(domain, app, request)
+    try:
+        _update_valid_domains_for_media(domain, app)
+    except ReportConfigurationNotFoundError:
+        if request:
+            messages.warning(request, _("Copying the application succeeded, but the application will have errors "
+                                        "because your application contains a Mobile Report Module that references "
+                                        "a UCR configured in this project space. Multimedia may be absent."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)
@@ -5737,11 +5743,11 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None, c
     return app
 
 
-def _get_source_app(app_id_or_source):
-    if isinstance(app_id_or_source, str):
-        source_app = get_app(None, app_id_or_source)
+def _get_source_app(app_id_or_doc):
+    if isinstance(app_id_or_doc, str):
+        source_app = get_app(None, app_id_or_doc)
     else:
-        source_app = wrap_app(app_id_or_source)
+        source_app = wrap_app(app_id_or_doc)
     return source_app
 
 
@@ -5764,31 +5770,25 @@ def _create_app_from_source(domain, source):
     return app
 
 
-def _update_report_config_ids(app, report_map, domain, check_all_reports):
+def _update_report_config_ids(app, report_map, domain):
     if report_map:
         for module in app.get_report_modules():
             for config in module.report_configs:
                 try:
                     config.report_id = report_map[config.report_id]
                 except KeyError:
-                    if check_all_reports or config.report(domain).is_static:
+                    if config.report(domain).is_static:
                         raise AppEditingError(
                             "Report {} not found in {}".format(config.report_id, domain)
                         )
 
 
-def _update_valid_domains_for_media(app, domain_to_add, request):
-    try:
-        if not app.is_remote_app():
-            for path, media in app.get_media_objects(remove_unused=True):
-                if domain_to_add not in media.valid_domains:
-                    media.valid_domains.append(domain_to_add)
-                    media.save()
-    except ReportConfigurationNotFoundError:
-        if request:
-            messages.warning(request, _("Copying the application succeeded, but the application will have errors "
-                                        "because your application contains a Mobile Report Module that references "
-                                        "a UCR configured in this project space. Multimedia may be absent."))
+def _update_valid_domains_for_media(app, domain_to_add):
+    if not app.is_remote_app():
+        for path, media in app.get_media_objects(remove_unused=True):
+            if domain_to_add not in media.valid_domains:
+                media.valid_domains.append(domain_to_add)
+                media.save()
 
 
 def enable_usercase_if_necessary(app):
