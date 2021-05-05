@@ -1063,7 +1063,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     def test_module_case_search_rows(self):
         app = AppFactory.case_claim_app_factory().app
-        self.assertEqual(get_case_search_rows(app.langs, app.modules[0]),
+        self.assertEqual(get_case_search_rows(app.langs, app.modules[0], self.app.domain),
                          [('name', 'case_search_display', 'Name of Mother'),
                           ('name', 'case_search_hint', '')])
 
