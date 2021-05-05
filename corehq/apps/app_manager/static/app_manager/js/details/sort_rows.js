@@ -8,8 +8,7 @@
 hqDefine("app_manager/js/details/sort_rows", function () {
     var uiElement = hqImport('hqwebapp/js/ui-element');
 
-    // saveButton is a required parameter
-    var sortRow = function (params) {
+    var sortRow = function (params, saveButton) {
         var PropertyUtils = hqImport('app_manager/js/details/display_property_utils'),
             self = {};
         params = params || {};
@@ -54,7 +53,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
         });
 
         self.notifyButton = function () {
-            params.saveButton.fire('change');
+            saveButton.fire('change');
         };
 
         self.ascendText = ko.computed(function () {
@@ -105,10 +104,9 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 direction: direction,
                 blanks: blanks,
                 display: display,
-                saveButton: saveButton,
                 properties: properties,
                 sortCalculation: sortCalculation,
-            }));
+            }, saveButton));
             if (notify) {
                 saveButton.fire('change');
             }
