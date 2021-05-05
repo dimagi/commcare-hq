@@ -92,7 +92,6 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.apps.users.models import (
-    AdminUserRole,
     CommCareUser,
     CouchUser,
     DomainMembershipError,
@@ -490,7 +489,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @property
     @memoized
     def user_roles(self):
-        user_roles = [AdminUserRole(domain=self.domain)]
+        user_roles = [UserRole.admin_role(self.domain)]
         user_roles.extend(sorted(
             UserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
