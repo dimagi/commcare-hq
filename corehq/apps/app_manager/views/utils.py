@@ -43,6 +43,7 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -351,6 +352,12 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
+        if not app.domain_link.is_remote:
+            report_map.update({
+                c.report_meta.master_id: c._id
+                for c in get_report_configs_for_domain(app.domain)
+                if c.report_meta.master_id
+            })
 
         try:
             app = overwrite_app(app, master_build, report_map)
