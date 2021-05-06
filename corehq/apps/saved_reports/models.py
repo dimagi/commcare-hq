@@ -814,16 +814,12 @@ class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
     datespan_slug = models.CharField(max_length=64, null=True)
     update_seq = models.CharField(max_length=1000, null=False)
     purge_seq = models.IntegerField(null=False)
-    compact_running = models.BooleanField(null=False, default='TODO')
     db_name = models.CharField(max_length=12, null=False)
     doc_del_count = models.IntegerField(null=False)
     instance_start_time = models.CharField(max_length=1, null=False)
     disk_size = models.IntegerField(null=False)
-    sizes = JSONField(null=False, default=dict)
     doc_count = models.IntegerField(null=False)
     disk_format_version = models.IntegerField(null=False)
-    other = JSONField(null=False, default=dict)
-    cluster = JSONField(null=False, default=dict)
     data_size = models.IntegerField(null=False)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
@@ -848,16 +844,12 @@ class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
             "datespan_slug",
             "update_seq",
             "purge_seq",
-            "compact_running",
             "db_name",
             "doc_del_count",
             "instance_start_time",
             "disk_size",
-            "sizes",
             "doc_count",
             "disk_format_version",
-            "other",
-            "cluster",
             "data_size",
         ]
 
@@ -885,16 +877,12 @@ class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
             "datespan_slug",
             "update_seq",
             "purge_seq",
-            "compact_running",
             "db_name",
             "doc_del_count",
             "instance_start_time",
             "disk_size",
-            "sizes",
             "doc_count",
             "disk_format_version",
-            "other",
-            "cluster",
             "data_size",
         ]
 
