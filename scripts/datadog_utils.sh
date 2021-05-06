@@ -11,8 +11,8 @@ function send_metric_to_datadog() {
     currenttime=$(date +%s)
     curl  -X POST \
           -H "Content-type: application/json" \
-          -H "DD-API-KEY: ${DD_API_KEY}" \
-          -H "DD-APP-KEY: ${DD_APP_KEY}" \
+          -H "DD-API-KEY: ${DATADOG_API_KEY}" \
+          -H "DD-APP-KEY: ${DATADOG_APP_KEY}" \
           -d "{ \"series\" :
              [{\"metric\":\"$1\",
               \"points\":[[$currenttime, $2]],
