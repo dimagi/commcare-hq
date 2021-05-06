@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
@@ -47,7 +47,7 @@ from corehq.apps.app_manager.util import (
     get_sort_and_sort_only_columns,
     module_offers_search,
 )
-from corehq.apps.app_manager.xpath import XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
 
 
 class DetailContributor(SectionContributor):
@@ -133,6 +133,18 @@ class DetailContributor(SectionContributor):
                 if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
                     tab_relevant = tab.relevant
 
+                # TODO: add test, extract to function
+                nodeset = None
+                if tab.has_nodeset:
+                    if tab.nodeset_type == "custom":
+                        nodeset = tab.nodeset_xpath
+                    elif tab.nodeset_type == "subcase":
+                        nodeset = CaseTypeXpath(tab.nodeset_identifier).case(instance_name=detail.instance_name)
+                        nodeset = nodeset.select(CaseXPath().parent_id(),
+                                                 CaseXPath("current()").property("@case_id"))
+                        nodeset = nodeset.select("@status", "open")
+                    nodeset = tab.nodeset
+
                 sub_detail = self.build_detail(
                     module,
                     detail_type,
@@ -141,7 +153,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=tab.nodeset if tab.has_nodeset else None,
+                    nodeset=nodeset,
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -358,7 +370,9 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_report_context_tile_detail():
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+            MOBILE_UCR_TILE_DETAIL_ID,
+        )
         return Detail(
             id=MOBILE_UCR_TILE_DETAIL_ID,
             title=Text(),
