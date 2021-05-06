@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
-    wrap_app, get_app,
+    wrap_app, get_app, get_apps_in_domain,
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
 from corehq.apps.app_manager.util import is_linked_app
@@ -93,10 +93,10 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
 
 def get_linked_apps_for_domain(domain):
     linked_apps = []
-    briefs = get_brief_apps_in_domain(domain, include_remote=False)
-    for brief in briefs:
-        if is_linked_app(brief):
-            linked_apps.append(brief)
+    apps = get_apps_in_domain(domain, include_remote=False)
+    for app in apps:
+        if is_linked_app(app):
+            linked_apps.append(app)
 
     return linked_apps
 
@@ -132,14 +132,7 @@ def unlink_app(linked_app):
     if not is_linked_app(linked_app):
         return None
 
-    from corehq.apps.app_manager.models import import_app
-    extra_properties = {'name': linked_app.name}
-    app_copy = import_app(linked_app._id, linked_app.domain, extra_properties)
-    app_copy = app_copy.convert_to_application()
-    app_copy.save()
+    converted_app = linked_app.convert_to_application()
+    converted_app.save()
 
-    # remove linked app
-    full_linked_app = get_app(linked_app.domain, linked_app._id)
-    full_linked_app.delete()
-
-    return app_copy
+    return converted_app
