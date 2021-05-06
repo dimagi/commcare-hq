@@ -2529,7 +2529,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_location.reset_cache(self)
         self.save()
 
-    def unset_location(self, domain, fall_back_to_next=False):
+    def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
         Change primary location to next location from assigned_location_ids,
         if there are no more locations in assigned_location_ids, primary location is cleared
@@ -2544,7 +2544,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             membership.location_id = None
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
@@ -2560,7 +2561,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.get_sql_locations.reset_cache(self)
             self.save()
 
-    def reset_locations(self, domain, location_ids):
+    def reset_locations(self, domain, location_ids, commit=True):
         """
         reset locations to given list of location_ids. Before calling this, primary location
             should be explicitly set/unset via set_location/unset_location
@@ -2570,7 +2571,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     @memoized
     def get_sql_location(self, domain):
@@ -2690,8 +2692,10 @@ class Invitation(models.Model):
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
     @classmethod
-    def by_domain(cls, domain):
-        return Invitation.objects.filter(domain=domain, is_accepted=False)
+    def by_domain(cls, domain, **filters):
+        if 'is_accepted' not in filters:
+            filters['is_accepted'] = False
+        return Invitation.objects.filter(domain=domain, **filters)
 
     @classmethod
     def by_email(cls, email):
