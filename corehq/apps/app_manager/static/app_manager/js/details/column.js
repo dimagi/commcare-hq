@@ -49,9 +49,9 @@ hqDefine("app_manager/js/details/column", function () {
         var tabDefaults = {
             isTab: false,
             hasNodeset: false,
-            nodesetType: "",
-            nodesetIdentifier: screen.otherCaseTypes[0] || "",
-            nodesetXpath: "",
+            nodeset: "",
+            nodesetChildCaseType: "",
+            nodesetChildCaseType: screen.otherCaseTypes[0] || "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -106,7 +106,7 @@ hqDefine("app_manager/js/details/column", function () {
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.otherCaseTypes,
-            }, _.pick(self.original, ['nodesetType', 'nodesetIdentifier', 'nodesetXpath'])));   // TODO: remove nodesetType?
+            }, _.pick(self.original, ['nodeset', 'nodesetChildCaseType'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
@@ -130,7 +130,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
             if (self.isTab) {
                 // Data tab missing its nodeset
-                return self.hasNodeset && !self.nodeset_extra.dropdownValue().value && !self.nodeset_extra.nodesetXpath();
+                return self.hasNodeset && !self.nodeset_extra.dropdownValue().value && !self.nodeset_extra.nodeset();
             }
             // Invalid property name
             return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
@@ -353,9 +353,8 @@ hqDefine("app_manager/js/details/column", function () {
                 };
                 if (column.hasNodeset) {
                     tab = _.extend(tab, {
-                        nodeset_type: self.nodeset_extra.nodesetType(),
-                        nodeset_identifier: self.nodeset_extra.dropdownValue().value,
-                        nodeset_xpath: self.nodeset_extra.nodesetXpath(),
+                        nodeset_child_case_type: self.nodeset_extra.dropdownValue().value,
+                        nodeset: self.nodeset_extra.nodeset(),
                     });
                 }
                 return tab;

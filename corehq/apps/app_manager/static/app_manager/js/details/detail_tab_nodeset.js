@@ -8,22 +8,19 @@
     return function (options) {
         var self = {};
 
-        self.nodesetType = ko.observable(options.nodesetType);
-        self.nodesetXpath = ko.observable(options.nodesetXpath);
+        self.nodeset = ko.observable(options.nodeset);
+        self.nodesetChildCaseType = ko.observable(options.nodesetChildCaseType);
 
         self.dropdownOptions = _.map(options.caseTypes, function (t) {
-            return {name: gettext("Child cases: ") + t, value: t};
-        }).concat([{name: gettext("Custom Expression"), value: ""}]);
+            return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
+        }).concat([{name: gettext("Data Tab: Custom Expression"), value: ""}]);
 
         self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
-            return o.value === options.nodesetIdentifier;
+            return o.value === options.nodesetChildCaseType;
         }));
         self.dropdownValue.subscribe(function (newValue) {
-            if (newValue.value) {
-                self.nodesetType("subcase");
-            } else {
-                self.nodesetType("custom");
-                self.nodesetXpath("");
+            if (!newValue.value) {
+                self.nodeset("");
             }
         });
 
@@ -32,15 +29,15 @@
         });
 
         var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>';
-        ui += '<textarea type="text" class="form-control" data-bind="value: nodesetXpath, visible: showXpath" style="margin-top: 5px" /></textarea>'
+        ui += '<textarea type="text" class="form-control" data-bind="value: nodeset, visible: showXpath" style="margin-top: 5px" /></textarea>'
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')) {
-            ui += '<p data-bind="visible: showXpath() && nodesetXpath()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
+            ui += '<p data-bind="visible: showXpath() && nodeset()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
         }
         self.ui = $('<div>' + ui + '</div>');
         self.ui.koApplyBindings(self);
 
         hqImport("hqwebapp/js/main").eventize(self);
-        self.nodesetXpath.subscribe(function () {
+        self.nodeset.subscribe(function () {
             self.fire('change');
         });
         self.dropdownValue.subscribe(function () {

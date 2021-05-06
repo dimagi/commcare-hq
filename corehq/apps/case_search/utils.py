@@ -208,8 +208,8 @@ def get_child_case_types(app, case_type):
     for module in app.get_modules():
         if module.case_type == case_type and module_offers_search(module):
             for tab in module.search_detail("long").tabs:
-                if tab.has_nodeset and tab.nodeset_type == "subcase":
-                    case_types.add(tab.nodeset_identifier)
+                if tab.has_nodeset and tab.nodeset_child_case_type:
+                    case_types.add(tab.nodeset_child_case_type)
 
     return case_types
 

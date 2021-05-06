@@ -121,9 +121,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 0,
                 _.extend({
                     hasNodeset: tabs[i].has_nodeset,
-                    nodesetType: tabs[i].nodeset_type,
-                    nodesetIdentifier: tabs[i].nodeset_identifier,
-                    nodesetXpath: tabs[i].nodeset_xpath,
+                    nodeset: tabs[i].nodeset,
+                    nodesetChildCaseType: tabs[i].nodeset_child_case_type,
                 }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
             );
         }

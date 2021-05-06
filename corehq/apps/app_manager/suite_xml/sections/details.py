@@ -136,10 +136,11 @@ class DetailContributor(SectionContributor):
                 # TODO: add test, extract to function
                 nodeset = None
                 if tab.has_nodeset:
-                    if tab.nodeset_type == "custom":
-                        nodeset = tab.nodeset_xpath
-                    elif tab.nodeset_type == "subcase":
-                        nodeset = CaseTypeXpath(tab.nodeset_identifier).case(instance_name=detail.instance_name)
+                    if tab.nodeset:
+                        nodeset = tab.nodeset
+                    elif tab.nodeset_child_case_type:
+                        nodeset = CaseTypeXpath(tab.nodeset_child_case_type)
+                        nodeset = nodeset.case(instance_name=detail.instance_name)
                         nodeset = nodeset.select(CaseXPath().parent_id(),
                                                  CaseXPath("current()").property("@case_id"))
                         nodeset = nodeset.select("@status", "open")
