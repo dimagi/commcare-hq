@@ -5708,19 +5708,19 @@ class LinkedApplication(Application):
 
 def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
     source_app = _get_source_app(app_id_or_doc)
-    source = source_app.export_json(dump_json=False)
+    source_doc = source_app.export_json(dump_json=False)
 
-    attachments = _get_attachments(source)
-    source['_attachments'] = {}
+    attachments = _get_attachments(source_doc)
+    source_doc['_attachments'] = {}
 
     if extra_properties is not None:
-        source.update(extra_properties)
+        source_doc.update(extra_properties)
 
     # Allow the wrapper to update to the current default build_spec
-    if 'build_spec' in source:
-        del source['build_spec']
+    if 'build_spec' in source_doc:
+        del source_doc['build_spec']
 
-    app = _create_app_from_source(domain, source)
+    app = _create_app_from_doc(domain, source_doc)
     if source_app.domain == domain:
         app.family_id = source_app.origin_id
 
@@ -5751,18 +5751,18 @@ def _get_source_app(app_id_or_doc):
     return source_app
 
 
-def _get_attachments(source):
+def _get_attachments(doc):
     try:
-        attachments = source['_attachments']
+        attachments = doc['_attachments']
     except KeyError:
         attachments = {}
 
     return attachments
 
 
-def _create_app_from_source(domain, source):
-    app_class = get_correct_app_class(source)
-    app = app_class.from_source(source, domain)
+def _create_app_from_doc(domain, doc):
+    app_class = get_correct_app_class(doc)
+    app = app_class.from_source(doc, domain)
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
