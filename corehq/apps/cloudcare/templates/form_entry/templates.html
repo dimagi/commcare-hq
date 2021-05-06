@@ -147,30 +147,32 @@
           </div>
         </form>
       </div>
-      {% if environment == "web-apps" %}
-        {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
-          <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
-               style="position: fixed; width: 300px; bottom: 65px;"
-               data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
-               role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
-            <p>
-              {% blocktrans %}
-                You can use this button to navigate between questions that are required but missing or that contain errors.
-                You will also see a summary of questions that need attention at the bottom of the form.
-              {% endblocktrans %}
-              <br>
-              <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
-            </p>
-          </div>
+      <div data-bind="visible: erroredQuestions().length > 0">
+        {% if environment == "web-apps" %}
+          {% if True or request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+            <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
+                 style="position: fixed; width: 300px; bottom: 65px;"
+                 data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
+                 role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
+              <p>
+                {% blocktrans %}
+                  You can use this button to navigate between questions that are required but missing or that contain errors.
+                  You will also see a summary of questions that need attention at the bottom of the form.
+                {% endblocktrans %}
+                <br>
+                <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
+              </p>
+            </div>
+          {% endif %}
         {% endif %}
-      {% endif %}
-      <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors, visible: erroredQuestions().length > 0">
-        <i class='fa fa-arrow-down'> </i>
-            {% trans "Next Question" %}
+        <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
+          <i class='fa fa-arrow-down'> </i>
+              {% trans "Next Question" %}
+        </div>
       </div>
     </div>
   </div>
