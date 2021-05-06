@@ -3,6 +3,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 
+from corehq.apps.registration.models import AsyncSignupRequest
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
@@ -14,10 +15,8 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.utils.session_helpers import (
-    get_sso_invitation_from_session,
     get_sso_user_first_name_from_session,
     get_sso_user_last_name_from_session,
-    get_new_sso_user_data_from_session,
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import CouchUser, WebUser
@@ -64,7 +63,7 @@ class SsoBackend(ModelBackend):
             )
             return None
 
-        invitation = get_sso_invitation_from_session(request)
+        async_signup = AsyncSignupRequest.get_by_username(username)
 
         # because the django messages middleware is not yet available...
         request.sso_new_user_messages = {
@@ -77,23 +76,24 @@ class SsoBackend(ModelBackend):
             is_new_user = False
             web_user = WebUser.get_by_username(username)
         except User.DoesNotExist:
-            user, web_user = self._create_new_user(request, username, invitation)
+            user, web_user = self._create_new_user(request, username, async_signup)
             is_new_user = True
 
-        if invitation:
-            self._process_invitation(request, invitation, web_user, is_new_user)
+        if async_signup and async_signup.invitation:
+            self._process_invitation(request, async_signup.invitation, web_user, is_new_user)
 
         request.sso_login_error = None
         return user
 
-    def _create_new_user(self, request, username, invitation):
+    def _create_new_user(self, request, username, async_signup):
         """
         This creates a new user in HQ based on information in the request.
         :param request: HttpRequest
         :param username: String (username)
-        :param invitation: Invitation
+        :param async_signup: AsyncSignupRequest
         :return: User, WebUser
         """
+        invitation = async_signup.invitation if async_signup else None
         created_via = (USER_CHANGE_VIA_SSO_INVITE if invitation
                        else USER_CHANGE_VIA_SSO_NEW_USER)
         created_by = (CouchUser.get_by_user_id(invitation.invited_by) if invitation
@@ -113,24 +113,33 @@ class SsoBackend(ModelBackend):
         request.sso_new_user_messages['success'].append(
             _("User account for {} created.").format(new_web_user.username)
         )
-        self._process_new_user_data(request, new_web_user)
+        self._process_new_user_data(request, new_web_user, async_signup)
         return User.objects.get(username=username), new_web_user
 
     @staticmethod
-    def _process_new_user_data(request, new_web_user):
+    def _process_new_user_data(request, new_web_user, async_signup):
         """
         If available, this makes sure we apply any relevant user data
         :param request: HttpRequest
         :param new_web_user: WebUser
-        :return:
+        :param async_signup: AsyncSignupRequest
         """
-        user_data = get_new_sso_user_data_from_session(request)
-        if not user_data:
+        if not async_signup:
+            if settings.IS_SAAS_ENVIRONMENT:
+                track_workflow(
+                    new_web_user.username,
+                    "Requested New Account via SSO (Bypassed Signup Form)",
+                    {
+                        'environment': settings.SERVER_ENVIRONMENT,
+                    }
+                )
             return
 
-        phone_number = user_data['phone_number']
-        if phone_number:
-            new_web_user.phone_numbers.append(phone_number)
+        if async_signup.invitation:
+            return
+
+        if async_signup.phone_number:
+            new_web_user.phone_numbers.append(async_signup.phone_number)
             new_web_user.save()
 
         if settings.IS_SAAS_ENVIRONMENT:
@@ -141,19 +150,25 @@ class SsoBackend(ModelBackend):
                     'environment': settings.SERVER_ENVIRONMENT,
                 }
             )
-            track_workflow(
-                new_web_user.username,
-                "Persona Field Filled Out via SSO",
-                {
-                    'personachoice': user_data['persona'],
-                    'personaother': user_data['persona_other'],
-                }
-            )
-            track_web_user_registration_hubspot(
-                request,
-                new_web_user,
-                user_data['additional_hubspot_data'],
-            )
+            if async_signup.persona:
+                track_workflow(
+                    new_web_user.username,
+                    "Persona Field Filled Out via SSO",
+                    {
+                        'personachoice': async_signup.persona,
+                        'personaother': async_signup.persona_other,
+                    }
+                )
+                track_web_user_registration_hubspot(
+                    request,
+                    new_web_user,
+                    async_signup.additional_hubspot_data,
+                )
+            else:
+                track_workflow(
+                    new_web_user.username,
+                    "New User created through SSO, but Persona info missing"
+                )
 
     @staticmethod
     def _process_invitation(request, invitation, web_user, is_new_user=False):
@@ -164,7 +179,6 @@ class SsoBackend(ModelBackend):
         :param invitation: Invitation or None
         :param web_user: WebUser
         """
-        request.sso_invitation_status = {}
         if invitation.is_expired:
             request.sso_new_user_messages['error'].append(
                 _("Could not accept invitation because it is expired.")
