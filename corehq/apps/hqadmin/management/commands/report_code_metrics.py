@@ -30,10 +30,10 @@ class Command(BaseCommand):
             return set(cls.__subclasses__()).union([
                 s for c in cls.__subclasses__() for s in all_subclasses(c)
             ])
-        num_remaining = len(all_subclasses(Document))
-        self.stdout.write(f"CouchDB models remaining: {num_remaining}")
+        model_count = len(all_subclasses(Document))
+        self.stdout.write(f"CouchDB models count: {model_count}")
         if self.datadog:
-            metrics_gauge("commcare.gtd.num_couch_models", num_remaining)
+            metrics_gauge("commcare.gtd.num_couch_models", model_count)
 
     def show_custom_modules(self):
         num_custom_modules = len(set(settings.DOMAIN_MODULE_MAP.values()))
