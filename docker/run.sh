@@ -70,12 +70,15 @@ function send_counter_metric_to_datadog() {
 }
 
 function send_metric_to_datadog() {
-    if [ -z "$DATADOG_API_KEY" ]; then
+    if [ -z "$DATADOG_API_KEY" -o -z "$DATADOG_APP_KEY" ]; then
         return
     fi
 
     currenttime=$(date +%s)
-    curl  -X POST -H "Content-type: application/json" \
+    curl  -X POST \
+    -H "Content-type: application/json" \
+    -H "DD-API-KEY: ${DD_API_KEY}" \
+    -H "DD-APP-KEY: ${DD_APP_KEY}" \
     -d "{ \"series\" :
              [{\"metric\":\"$1\",
               \"points\":[[$currenttime, $2]],
@@ -91,7 +94,7 @@ function send_metric_to_datadog() {
               ]}
             ]
         }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
+    "https://app.datadoghq.com/api/v1/series" || true
 }
 
 function _run_tests() {
@@ -122,7 +125,7 @@ function _run_tests() {
 
          if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
              echo "----------> Begin Code Metrics <----------"
-             ./manage.py report_code_metrics --datadog
+             COMMCAREHQ_BOOTSTRAP="yes" ./manage.py report_code_metrics --datadog
              ./scripts/report-code-metrics.sh datadog
              echo "----------> End Code Metrics <----------"
          fi

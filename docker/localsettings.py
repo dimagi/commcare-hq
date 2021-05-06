@@ -237,6 +237,9 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     RESTORE_PAYLOAD_DIR_NAME = 'restore'
     SHARED_TEMP_DIR_NAME = 'temp'
 
+    DATADOG_API_KEY = os.environ.get("DATADOG_API_KEY")
+    DATADOG_APP_KEY = os.environ.get("DATADOG_APP_KEY")
+
 BIGCOUCH = True
 
 REPORTING_DATABASES = {
