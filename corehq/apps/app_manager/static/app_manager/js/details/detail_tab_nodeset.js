@@ -4,7 +4,7 @@
  * It contains a dropdown where to select the type of data,
  * currently either a child case type or a custom xpath expression.
  */
- hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
+hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
     return function (options) {
         var self = {};
 
@@ -29,7 +29,7 @@
         });
 
         var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>';
-        ui += '<textarea type="text" class="form-control" data-bind="value: nodeset, visible: showXpath" style="margin-top: 5px" /></textarea>'
+        ui += '<textarea type="text" class="form-control" data-bind="value: nodeset, visible: showXpath" style="margin-top: 5px" /></textarea>';
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')) {
             ui += '<p data-bind="visible: showXpath() && nodeset()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
         }
