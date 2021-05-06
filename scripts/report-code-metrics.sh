@@ -27,8 +27,8 @@ for GRADE in "C" "D" "E" "F"; do
 done
 
 if [[ "$1" == "datadog" ]]; then
-    send_metric_to_datadog "commcare.gtd.avg_complexity" $COMPLEXITY "gauge"
-    send_metric_to_datadog "commcare.gtd.code_blocks" $TOTAL_BLOCKS "gauge"
+    send_metric_to_datadog "commcare.static_analysis.avg_complexity" $COMPLEXITY "gauge"
+    send_metric_to_datadog "commcare.static_analysis.code_blocks" $TOTAL_BLOCKS "gauge"
 fi
 
 rm $RADON_METRICS_FILENAME

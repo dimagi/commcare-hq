@@ -33,13 +33,13 @@ class Command(BaseCommand):
         model_count = len(all_subclasses(Document))
         self.stdout.write(f"CouchDB models count: {model_count}")
         if self.datadog:
-            metrics_gauge("commcare.gtd.num_couch_models", model_count)
+            metrics_gauge("commcare.static_analysis.couch_model_count", model_count)
 
     def show_custom_modules(self):
-        num_custom_modules = len(set(settings.DOMAIN_MODULE_MAP.values()))
-        num_custom_domains = len(settings.DOMAIN_MODULE_MAP)
-        self.stdout.write(f"Custom modules: {num_custom_modules}")
-        self.stdout.write(f"Domains using custom code: {num_custom_domains}")
+        custom_module_count = len(set(settings.DOMAIN_MODULE_MAP.values()))
+        custom_domain_count = len(settings.DOMAIN_MODULE_MAP)
+        self.stdout.write(f"Custom modules: {custom_module_count}")
+        self.stdout.write(f"Domains using custom code: {custom_domain_count}")
         if self.datadog:
-            metrics_gauge("commcare.gtd.num_custom_modules", num_custom_modules)
-            metrics_gauge("commcare.gtd.num_custom_domains", num_custom_domains)
+            metrics_gauge("commcare.static_analysis.custom_module_count", custom_module_count)
+            metrics_gauge("commcare.static_analysis.custom_domain_count", custom_domain_count)
