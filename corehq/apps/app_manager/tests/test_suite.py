@@ -599,7 +599,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                         </template>
                       </field>
                     </detail>
-                    <detail nodeset="some/data">
+                    <detail nodeset="instance('casedb')/casedb/case[@case_type='show'][index/parent=current()/@case_id][@status='open']">
                       <title>
                         <text>
                           <locale id="m0.case_long.tab.2.title"/>
