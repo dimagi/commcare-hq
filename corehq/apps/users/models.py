@@ -186,18 +186,6 @@ class Permissions(DocumentSchema):
             a = set(a)
         return a
 
-    def _setattr(self, name, value):
-        if isinstance(value, set):
-            value = list(value)
-        setattr(self, name, value)
-
-    def __or__(self, other):
-        permissions = Permissions()
-        for name, value in permissions.properties().items():
-            if isinstance(value, (BooleanProperty, ListProperty)):
-                permissions._setattr(name, self._getattr(name) | other._getattr(name))
-        return permissions
-
     def __eq__(self, other):
         for name in self.properties():
             if self._getattr(name) != other._getattr(name):

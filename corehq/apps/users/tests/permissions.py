@@ -16,33 +16,6 @@ from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission
 from corehq.util.test_utils import flag_enabled
 
 
-class PermissionsTest(TestCase):
-
-    def test_OR(self):
-        p1 = Permissions(
-            edit_web_users=True,
-            view_web_users=True,
-            view_roles=True,
-            view_reports=True,
-            view_report_list=['report1'],
-        )
-        p2 = Permissions(
-            edit_apps=True,
-            view_apps=True,
-            view_reports=True,
-            view_report_list=['report2'],
-        )
-        self.assertEqual(p1 | p2, Permissions(
-            edit_apps=True,
-            view_apps=True,
-            edit_web_users=True,
-            view_web_users=True,
-            view_roles=True,
-            view_reports=True,
-            view_report_list=['report1', 'report2'],
-        ))
-
-
 @mock.patch('corehq.apps.export.views.utils.domain_has_privilege',
             lambda domain, privilege: True)
 class PermissionsHelpersTest(SimpleTestCase):
