@@ -50,8 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
-            nodesetChildCaseType: "",
-            nodesetChildCaseType: screen.otherCaseTypes[0] || "",
+            nodesetCaseType: screen.otherCaseTypes[0] || "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -106,7 +105,7 @@ hqDefine("app_manager/js/details/column", function () {
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.otherCaseTypes,
-            }, _.pick(self.original, ['nodeset', 'nodesetChildCaseType'])));
+            }, _.pick(self.original, ['nodeset', 'nodesetCaseType'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
@@ -353,7 +352,7 @@ hqDefine("app_manager/js/details/column", function () {
                 };
                 if (column.hasNodeset) {
                     tab = _.extend(tab, {
-                        nodeset_child_case_type: self.nodeset_extra.dropdownValue().value,
+                        nodeset_case_type: self.nodeset_extra.dropdownValue().value,
                         nodeset: self.nodeset_extra.nodeset(),
                     });
                 }

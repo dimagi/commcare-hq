@@ -222,8 +222,8 @@ class DetailContributor(SectionContributor):
         if tab.nodeset:
             return tab.nodeset
 
-        if tab.nodeset_child_case_type:
-            nodeset = CaseTypeXpath(tab.nodeset_child_case_type)
+        if tab.nodeset_case_type:
+            nodeset = CaseTypeXpath(tab.nodeset_case_type)
             nodeset = nodeset.case(instance_name=detail.instance_name)
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))

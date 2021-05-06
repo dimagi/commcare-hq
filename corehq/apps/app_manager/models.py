@@ -1795,10 +1795,10 @@ class DetailTab(IndexedSchema):
     # iterates through a set of entities rather than a single entity.
     # A nodeset is represented by one of the two properties:
     #   nodeset: An absolute xpath expression to iterate over
-    #   nodeset_child_case_type: Iterate over all child cases of this type
+    #   nodeset_case_type: Iterate over all child cases of this type
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
-    nodeset_child_case_type = StringProperty()
+    nodeset_case_type = StringProperty()
 
     # Display condition for the tab
     relevant = StringProperty()

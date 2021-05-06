@@ -9,14 +9,14 @@
         var self = {};
 
         self.nodeset = ko.observable(options.nodeset);
-        self.nodesetChildCaseType = ko.observable(options.nodesetChildCaseType);
+        self.nodesetCaseType = ko.observable(options.nodesetCaseType);
 
         self.dropdownOptions = _.map(options.caseTypes, function (t) {
             return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
         }).concat([{name: gettext("Data Tab: Custom Expression"), value: ""}]);
 
         self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
-            return o.value === options.nodesetChildCaseType;
+            return o.value === options.nodesetCaseType;
         }));
         self.dropdownValue.subscribe(function (newValue) {
             if (!newValue.value) {

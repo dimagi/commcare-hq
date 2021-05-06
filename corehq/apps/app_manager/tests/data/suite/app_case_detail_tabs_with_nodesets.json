@@ -619,7 +619,7 @@
                             "doc_type":"DetailTab",
                             "has_nodeset":true,
                             "nodeset":"",
-                            "nodeset_child_case_type":"show",
+                            "nodeset_case_type":"show",
                             "isTab":true,
                             "header":{  
                                 "en":"Data"
