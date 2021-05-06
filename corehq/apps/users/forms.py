@@ -23,8 +23,6 @@ from memoized import memoized
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from dimagi.utils.django.fields import TrimmedCharField
-
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
@@ -43,6 +41,7 @@ from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import UserRole, DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -1167,7 +1166,7 @@ class CommCareUserFormSet(object):
         return self.user_form.update_user()
 
 
-class CommCareUserFilterForm(forms.Form):
+class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
         ('all', ugettext_noop('All')),
@@ -1175,7 +1174,7 @@ class CommCareUserFilterForm(forms.Form):
     )
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
-        label=ugettext_lazy('Search by username'),
+        label=ugettext_lazy('Name or Username'),
         max_length=30,
         required=False
     )
@@ -1193,15 +1192,16 @@ class CommCareUserFilterForm(forms.Form):
         required=False,
         label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add project spaces containing the desired mobile workers'),
     )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
-        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
-        super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+        self.user_type = kwargs.pop('user_type')
+        if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
+            raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
+        super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
@@ -1219,20 +1219,26 @@ class CommCareUserFilterForm(forms.Form):
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
         self.helper.form_class = 'form-horizontal'
-        self.helper.form_action = reverse('download_commcare_users', args=[self.domain])
+        view_name = 'download_commcare_users' if self.user_type == MOBILE_USER_TYPE else 'download_web_users'
+        self.helper.form_action = reverse(view_name, args=[self.domain])
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
+        fields = [
+            crispy.Field('role_id', css_class="hqwebapp-select2"),
+            crispy.Field('search_string'),
+            crispy.Field('location_id'),
+        ]
+        if self.user_type == MOBILE_USER_TYPE:
+            fields += [crispy.Field('columns')]
+        fields += [crispy.Field('domains')]
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Users"),
-                crispy.Field('role_id', css_class="hqwebapp-select2"),
-                crispy.Field('search_string'),
-                crispy.Field('location_id'),
-                crispy.Field('columns'),
-                crispy.Field('domains'),
+                *fields,
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
