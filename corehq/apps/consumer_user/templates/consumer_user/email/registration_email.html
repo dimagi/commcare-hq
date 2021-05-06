@@ -1,0 +1,38 @@
+{% extends 'registration/email/confirm_account.html' %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    You are invited to join the patient portal for {{ domain }} at CommCare HQ!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You're invited to join the patient portal for {{ domain }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ link }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Accept Invitation
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    You have been invited to the patient portal for {{ domain }} on CommCare HQ.
+    This invitation expires in 30 days.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received an invitation request from the "{{ domain }}"
+  {% endblocktrans %}
+{% endblock %}
