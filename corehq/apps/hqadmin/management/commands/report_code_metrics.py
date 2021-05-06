@@ -22,10 +22,10 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         self.datadog = options['datadog']
-        self.show_couch_docs_remaining()
+        self.show_couch_model_count()
         self.show_custom_modules()
 
-    def show_couch_docs_remaining(self):
+    def show_couch_model_count(self):
         def all_subclasses(cls):
             return set(cls.__subclasses__()).union([
                 s for c in cls.__subclasses__() for s in all_subclasses(c)

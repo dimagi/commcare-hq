@@ -54,7 +54,6 @@ function run_tests() {
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-    [ "$TEST" == "python-sharded-and-javascript" && "$TRAVIS_EVENT_TYPE" == "cron" ] && scripts/report-code-metrics.sh datadog
     [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
     delta=$((`date +%s` - $now))
 
@@ -122,8 +121,12 @@ function _run_tests() {
          grunt test "$@"
 
          if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-            ./manage.py report_code_metrics --datadog
+             echo "----------> Begin Code Metrics <----------"
+             ./manage.py report_code_metrics --datadog
+             ./scripts/report-code-metrics.sh datadog
+             echo "----------> End Code Metrics <----------"
          fi
+
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "./manage.py test $@ $TESTS"
