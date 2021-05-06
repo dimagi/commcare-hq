@@ -18,8 +18,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'domains',
-            help="Enter a list of domains surrounded by quotation marks with only spaces between the domains."
-            "A single domain can also be entered",
+            help="a list of domains",
+            nargs='+',
         )
         parser.add_argument(
             '--sample_size',
@@ -47,8 +47,6 @@ class Command(BaseCommand):
         final_size_forms = 0
         final_size_cases = 0
 
-        domains_list = domains.split()
-
         sample_size = int(options['sample_size'] or 10)
         use_case_search = options.get('use_case_search', False)
         show_only_forms = options.get('only_forms', False)
@@ -64,7 +62,7 @@ class Command(BaseCommand):
             if use_case_search:
                 self.stdout.write("The Case search index is being used.")
 
-        for domain in domains_list:
+        for domain in domains:
             if not show_only_cases:
                 num_forms, size_of_forms = _get_form_size_stats(domain, sample_size)
                 final_num_forms += num_forms
