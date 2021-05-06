@@ -1,33 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-CURRENT_TIME=$(date +%s)
-
 # This script calculates code quality metrics.
 # These are evaluated in the daily travis build and reported to datadog.
 # Other metrics are computed in the management command `report_code_metrics`
 
-function send_metric_to_datadog() {
-    if [ -z "$DATADOG_API_KEY" ]; then
-        return
-    fi
-
-    curl  -X POST -H "Content-type: application/json" \
-          -d "{ \"series\" :
-             [{\"metric\":\"$1\",
-              \"points\":[[$CURRENT_TIME, $2]],
-              \"type\":\"$3\",
-              \"host\":\"travis-ci.org\",
-              \"tags\":[
-                \"environment:travis\",
-                \"travis_build:$TRAVIS_BUILD_ID\",
-                \"travis_number:$TRAVIS_BUILD_NUMBER\",
-                \"travis_job_number:$TRAVIS_JOB_NUMBER\"
-              ]}
-             ]
-        }" \
-          "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
-}
+source scripts/datadog_utils.sh  # provides send_metric_to_datadog
 
 RADON_METRICS_FILENAME="radon-code-metrics.txt"
 
