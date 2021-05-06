@@ -31,14 +31,6 @@ services:
     ports:
       - "5984:5984"
 
-  couch3:
-    extends:
-      file: hq-compose.yml
-      service: couch3
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
-    ports:
-      - "5985:5984"
-
   redis:
     extends:
       file: hq-compose.yml
