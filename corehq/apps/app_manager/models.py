@@ -2131,6 +2131,17 @@ class CaseSearch(DocumentSchema):
                 relevant = default_condition
         return relevant
 
+    def overwrite_attrs(self, src_config, slugs):
+        if 'search_properties' in slugs:
+            self.properties = src_config.properties
+        if 'search_default_properties' in slugs:
+            self.default_properties = src_config.default_properties
+        if 'search_claim_options' in slugs:
+            # all options other than 'properties' and 'default_properties'
+            attrs = self.keys() - self.dynamic_properties().keys() - {'properties', 'default_properties'}
+            for attr in attrs:
+                setattr(self, attr, getattr(src_config, attr))
+
 
 class ParentSelect(DocumentSchema):
 

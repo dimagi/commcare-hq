@@ -99,6 +99,10 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     }
                 }
             },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
             "size": CASE_SEARCH_MAX_RESULTS
         }
 
@@ -287,6 +291,10 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                     }
                 }
             },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(

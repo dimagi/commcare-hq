@@ -338,11 +338,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
     is_archived = BooleanProperty(default=False)
     upstream_id = StringProperty()
 
-    def get_qualified_id(self):
-        return 'user-role:%s' % self.get_id
-
     @classmethod
-    def by_domain(cls, domain, is_archived=False):
+    def by_domain(cls, domain, include_archived=False):
         # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
@@ -351,7 +348,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        if include_archived:
+            return list(all_roles)
+        return [x for x in all_roles if not x.is_archived]
 
     @classmethod
     def by_domain_and_name(cls, domain, name, is_archived=False):
@@ -412,10 +411,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def unarchive_roles_for_domain(cls, domain):
-        archived_roles = cls.by_domain(domain, is_archived=True)
-        for role in archived_roles:
-            role.is_archived = False
-            role.save()
+        all_roles = cls.by_domain(domain, include_archived=True)
+        for role in all_roles:
+            if role.is_archived:
+                role.is_archived = False
+                role.save()
 
     @classmethod
     def init_domain_with_presets(cls, domain):
@@ -427,22 +427,27 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
+    @classmethod
+    def get_preset_role_id(cls, name):
+        return UserRolePresets.get_preset_role_id(name)
+
+    @classmethod
+    def preset_and_domain_role_names(cls, domain_name):
+        presets = set(UserRolePresets.NAME_ID_MAP.keys())
+        custom = set([role.name for role in cls.by_domain(domain_name)])
+        return presets | custom
+
+    @classmethod
+    def admin_role(cls, domain):
+        return AdminUserRole(domain=domain)
+
     @property
     def has_users_assigned(self):
         from corehq.apps.es.users import UserES
         return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
-    @classmethod
-    def get_preset_permission_by_name(cls, name):
-        return UserRolePresets.get_preset_role_id(name)
-
-    @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
-
-    @classmethod
-    def preset_permissions_names(cls):
-        return set(UserRolePresets.NAME_ID_MAP.keys())
+    def get_qualified_id(self):
+        return 'user-role:%s' % self.get_id
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
@@ -521,7 +526,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return AdminUserRole(self.domain)
+            return UserRole.admin_role(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -715,7 +720,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
+            return UserRole.admin_role(domain)
         if self.is_member_of(domain, allow_mirroring):
             return self.get_domain_membership(domain, allow_mirroring).role
         else:
