@@ -84,4 +84,5 @@ branches:
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
     - mk/case-search/dynamic-reports # MK May 6
+    - bmb/expanded-checks-delimiter  # Biyeun May 6
 submodules: { }
