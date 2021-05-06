@@ -70,7 +70,7 @@ ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
 
 
-class ReportConfig(CachedCouchDocumentMixin, Document):
+class ReportConfig(CachedCouchDocumentMixin, Document, SyncCouchToSQLMixin):
     """
     This model represents a "Saved Report." That is, a saved set of filters for a given report.
     """
@@ -504,6 +504,38 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'display': _('Choose a date filter...'),
                 'slug': None,
             }] + localized_datespan_filters
+
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "report_type",
+            "report_slug",
+            "subreport_slug",
+            "name",
+            "description",
+            "owner_id",
+            "filters",
+            "date_range",
+            "days",
+            "start_date",
+            "end_date",
+            "datespan_slug",
+            "update_seq",
+            "purge_seq",
+            "db_name",
+            "doc_del_count",
+            "instance_start_time",
+            "disk_size",
+            "doc_count",
+            "disk_format_version",
+            "data_size",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLReportConfig
 
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
