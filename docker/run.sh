@@ -95,12 +95,13 @@ function _run_tests() {
          echo "grunt test $@"
          grunt test "$@"
 
-         if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-             echo "----------> Begin Code Metrics <----------"
-             COMMCAREHQ_BOOTSTRAP="yes" ./manage.py report_code_metrics --datadog
-             ./scripts/report-code-metrics.sh datadog
-             echo "----------> End Code Metrics <----------"
-         fi
+         # Running this again to test
+         # if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+         echo "----------> Begin Code Metrics <----------"
+         COMMCAREHQ_BOOTSTRAP="yes" ./manage.py report_code_metrics --datadog
+         ./scripts/report-code-metrics.sh datadog
+         echo "----------> End Code Metrics <----------"
+         # fi
 
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
