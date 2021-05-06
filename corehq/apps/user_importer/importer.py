@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
@@ -660,33 +661,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 else:
                     membership = user.get_domain_membership(domain)
                     if membership:
-                        def _modify_existing_user_in_domain(current_user, max_tries=3):
-                            if domain_info.can_assign_locations and location_codes is not None:
-                                location_ids = find_location_id(location_codes, domain_info.location_cache)
-                                locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
-                                                                                                 membership.location_id,
-                                                                                                 membership.assigned_location_ids)
-                                if primary_loc_removed:
-                                    current_user.unset_location(domain, commit=False)
-                                if locations_updated:
-                                    current_user.reset_locations(domain, location_ids, commit=False)
-                            user_current_role = current_user.get_role(domain=domain)
-                            role_updated = not (user_current_role
-                                                and user_current_role.get_qualified_id() == role_qualified_id)
-                            if role_updated:
-                                current_user.set_role(domain, role_qualified_id)
-                                log_user_role_update(domain, current_user, upload_user,
-                                                     USER_CHANGE_VIA_BULK_IMPORTER)
-                            try:
-                                current_user.save()
-                            except ResourceConflict:
-                                if max_tries > 0:
-                                    current_user.clear_quickcache_for_user()
-                                    updated_user = CouchUser.get_by_username(username, strict=True)
-                                    _modify_existing_user_in_domain(updated_user, max_tries=max_tries - 1)
-                                else:
-                                    raise
-                        _modify_existing_user_in_domain(user)
+                        modify_existing_user_in_domain(domain, domain_info, location_codes, membership,
+                                                       role_qualified_id, upload_user, user)
                     else:
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                          user.location_id)
@@ -722,6 +698,38 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
         ret["rows"].append(status_row)
 
     return ret
+
+
+def modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
+                                   upload_user, current_user, max_tries=3):
+    if domain_info.can_assign_locations and location_codes is not None:
+        location_ids = find_location_id(location_codes, domain_info.location_cache)
+        locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                         membership.location_id,
+                                                                         membership.assigned_location_ids)
+        if primary_loc_removed:
+            current_user.unset_location(domain, commit=False)
+        if locations_updated:
+            current_user.reset_locations(domain, location_ids, commit=False)
+    user_current_role = current_user.get_role(domain=domain)
+    role_updated = not (user_current_role
+                        and user_current_role.get_qualified_id() == role_qualified_id)
+    if role_updated:
+        current_user.set_role(domain, role_qualified_id)
+        log_user_role_update(domain, current_user, upload_user,
+                             USER_CHANGE_VIA_BULK_IMPORTER)
+    try:
+        current_user.save()
+    except ResourceConflict:
+        notify_exception(None, message="ResouceConflict during web user import",
+                         details={'domain': domain, 'username': current_user.username})
+        if max_tries > 0:
+            current_user.clear_quickcache_for_user()
+            updated_user = CouchUser.get_by_username(current_user.username, strict=True)
+            modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
+                                           upload_user, updated_user, max_tries=max_tries - 1)
+        else:
+            raise
 
 
 def check_user_role(username, role):
