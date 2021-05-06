@@ -9,7 +9,7 @@ from corehq.util.metrics import metrics_gauge
 class Command(BaseCommand):
     help = (
         "Display a variety of code-quality metrics, optionally sending them to datadog. "
-        "Other metrics are computed in scripts/report-code-metrics.sh"
+        "Other metrics are computed in scripts/static-analysis.sh"
     )
 
     def add_arguments(self, parser):

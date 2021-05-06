@@ -3,7 +3,7 @@ set -e
 
 # This script calculates code quality metrics.
 # These are evaluated in the daily travis build and reported to datadog.
-# Other metrics are computed in the management command `report_code_metrics`
+# Other metrics are computed in the management command `static_analysis`
 
 source scripts/datadog_utils.sh  # provides send_metric_to_datadog
 

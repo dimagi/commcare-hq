@@ -97,10 +97,10 @@ function _run_tests() {
 
          # Running this again to test
          # if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-         echo "----------> Begin Code Metrics <----------"
-         COMMCAREHQ_BOOTSTRAP="yes" ./manage.py report_code_metrics --datadog
-         ./scripts/report-code-metrics.sh datadog
-         echo "----------> End Code Metrics <----------"
+         echo "----------> Begin Static Analysis <----------"
+         COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+         ./scripts/static-analysis.sh datadog
+         echo "----------> End Static Analysis <----------"
          # fi
 
     elif [ "$TEST" != "javascript" ]; then
