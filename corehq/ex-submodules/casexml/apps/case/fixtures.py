@@ -49,4 +49,4 @@ class CaseDBFixture(object):
         for case in self.cases:
             element.append(get_casedb_element(case))
 
-        return ElementTree.tostring(element, encoding="utf-8")
+        return ElementTree.tostring(element, encoding='utf-8')

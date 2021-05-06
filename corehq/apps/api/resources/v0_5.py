@@ -19,6 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
+from corehq.apps.sms.models import MessagingEvent
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -72,7 +73,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import (
@@ -120,9 +121,9 @@ def _set_role_for_bundle(kwargs, bundle):
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        preset_role_id = UserRole.get_preset_role_id(bundle.data.get('role'))
+        if preset_role_id:
+            bundle.obj.set_role(kwargs['domain'], preset_role_id)
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -1086,4 +1087,31 @@ class ODataFormResource(BaseODataResource):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
+        ]
+
+
+class MessagingEventResource(HqBaseResource, ModelResource):
+    content_type_display = fields.CharField(attribute='get_content_type_display')
+    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
+    status_display = fields.CharField(attribute='get_status_display')
+    source_display = fields.CharField(attribute='get_source_display')
+
+    class Meta(object):
+        queryset = MessagingEvent.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'messaging-event'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization()
+        paginator_class = NoCountingPaginator
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "source": ('exact',),
+            "content_type": ('exact',),
+            "status": ('exact',),
+        }
+        ordering = [
+            'date',
         ]

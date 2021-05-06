@@ -98,10 +98,10 @@
     <span data-bind="css: getDiffClass('type'), popover: getDiffPopover(changes['type'], 'type')">
       <i data-bind="attr: { 'class': $root.questionIcon($data) }"></i>
       <!-- ko ifnot: $root.readOnly -->
-      <a data-bind="attr: { 'href': $parents[$parents.length - 3].url + hashtagValue }, css: getDiffClass('translations'), text: $root.showIds() ? value :  $root.translateQuestion($data), popover: getDiffPopover(changes['translations'], 'translations')" target="_blank"></a>
-      <!-- /ko  -->
+      <a data-bind="attr: { 'href': $parents[$parents.length - 3].url + hashtagValue }, css: getDiffClass('translations'), text: $root.questionLabel($data), popover: getDiffPopover(changes['translations'], 'translations')" target="_blank"></a>
+      <!-- /ko -->
       <!-- ko if: $root.readOnly -->
-      <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('translations'), popover: getDiffPopover(changes['translations'], 'translations')"></span>
+      <span data-bind="text: $root.questionLabel($data), css: getDiffClass('translations'), popover: getDiffPopover(changes['translations'], 'translations')"></span>
       <!-- /ko -->
       <!-- ko if: required -->
       <sup class="text-muted" data-bind="css: getDiffClass('required'), popover: getDiffPopover(changes['required'], 'required')">{% trans "required" %}</sup>
@@ -174,11 +174,8 @@
     <!-- /ko -->
     <!-- ko if: options.length -->
     <ol data-bind="foreach: options ">
-      <li data-bind="visible: $root.showIds">
-        <span data-bind="text: value, css: $parent.getOptionsDiffClass(value), popover: $parent.getDiffPopover($parent.changes['options'][value], 'options')"></span>
-      </li>
-      <li data-bind="visible: $root.showLabels">
-        <span data-bind="text: $root.translateQuestion($data), css: $parent.getOptionsDiffClass(value), popover: $parent.getDiffPopover($parent.changes['options'][value], 'options')"></span>
+      <li>
+        <span data-bind="text: $root.questionLabel($data), css: $parent.getOptionsDiffClass(value), popover: $parent.getDiffPopover($parent.changes['options'][value], 'options')"></span>
       </li>
     </ol>
     <!-- /ko -->

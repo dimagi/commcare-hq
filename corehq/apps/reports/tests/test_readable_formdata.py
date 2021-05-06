@@ -257,6 +257,55 @@ class ReadableFormdataTest(SimpleTestCase):
             json.dumps([FormQuestionResponse(q).to_json() for q in expected])
         )
 
+    def test_repeat_empty(self):
+        questions_json = [{
+            'tag': 'repeat',
+            'type': 'Repeat',
+            'label': 'Repeat',
+            'value': '/data/question12',
+        }]
+        form_data = {
+            "@uiVersion": "1",
+            "@xmlns": "http://openrosa.org/formdesigner/432B3A7F-6EEE-4033-8740-ACCB0804C4FC",
+            "@name": "Untitled Form",
+            "#type": "data",
+            "question12": [
+                "", ""
+            ],
+            "meta": {
+                "@xmlns": "http://openrosa.org/jr/xforms",
+                "username": "danny",
+                "instanceID": "172981b6-5eeb-4be8-bbc7-ad52f808e803",
+                "userID": "a07d4bd967a9c205287f767509600931",
+                "timeEnd": "2014-04-28T18:27:05Z",
+                "appVersion": {
+                    "@xmlns": "http://commcarehq.org/xforms",
+                    "#text": "CommCare ODK, version \"2.11.0\"(29272). App v8. CommCare Version 2.11. Build 29272, built on: February-14-2014"
+                },
+                "timeStart": "2014-04-28T18:26:38Z",
+                "deviceID": "990004280784863"
+            },
+            "@version": "8"
+        }
+
+        expected = [{
+            'tag': 'repeat',
+            'type': 'Repeat',
+            'label': 'Repeat',
+            'value': '/data/question12',
+            'response': None,
+            'calculate': None,
+            'children': [],
+        }]
+        actual = get_readable_form_data(
+            form_data,
+            [FormQuestionResponse(q) for q in questions_json]
+        )
+        self.assertJSONEqual(
+            json.dumps([q.to_json() for q in actual]),
+            json.dumps([FormQuestionResponse(q).to_json() for q in expected])
+        )
+
     def _test_corpus(self, slug):
         xform_file = os.path.join(
             os.path.dirname(__file__),

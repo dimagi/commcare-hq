@@ -149,7 +149,6 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
         context.update({
             'uploaders': self.upload_controllers,
             'uploaders_js': [u.js_options for u in self.upload_controllers],
-            "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
 
@@ -172,7 +171,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "sessionid": self.request.COOKIES.get('sessionid'),
             "multimedia_state": self.app.check_media_state(),
         })
         return context
@@ -383,27 +381,6 @@ def download_multimedia_paths(request, domain, app_id):
         app_name=app.name,
         app_version=app.version)
     return export_response(temp, Format.XLS_2007, filename)
-
-
-@toggles.MULTI_MASTER_LINKED_DOMAINS.required_decorator()
-@require_can_edit_apps
-@require_POST
-def copy_multimedia(request, domain, app_id):
-    app = get_app(domain, app_id)
-    other_app_id = request.POST.get("app_id")
-    other_app = get_app(domain, other_app_id)
-
-    paths = app.all_media_paths()
-    count = 0
-    for path in paths:
-        if path not in app.multimedia_map:
-            app.multimedia_map[path] = other_app.multimedia_map[path]
-            count += 1
-    if count:
-        app.save()
-
-    messages.success(request, "Copied {} multimedia items.".format(count))
-    return redirect("app_settings", domain=domain, app_id=app_id)
 
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')

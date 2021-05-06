@@ -5,21 +5,23 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 alembic==1.4.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
 architect==0.5.6
-    # via -r requirements.in
+    # via -r base-requirements.in
 attrs==18.2.0
-    # via -r requirements.in
+    # via
+    #   -r base-requirements.in
+    #   jsonschema
 babel==2.8.0
     # via django-phonenumber-field
 billiard==3.5.0.4
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   celery
 boto3==1.15.12
-    # via -r requirements.in
+    # via -r base-requirements.in
 botocore==1.18.12
     # via
     #   boto3
@@ -32,7 +34,7 @@ cairosvg==2.5.1
     # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-celery-results
 certifi==2020.6.20
     # via
@@ -52,102 +54,104 @@ chardet==3.0.4
 cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
-    # via -r requirements.in
+    # via -r base-requirements.in
 concurrent-log-handler==0.9.12
-    # via -r requirements.in
+    # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.3.1
-    # via pyopenssl
+cryptography==3.4.7
+    # via
+    #   jwcrypto
+    #   pyopenssl
 csiphash==0.0.5
-    # via -r requirements.in
+    # via -r base-requirements.in
 cssselect2==0.3.0
     # via
     #   cairosvg
     #   weasyprint
 datadog==0.39.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 ddtrace==0.44.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 decorator==4.0.11
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   datadog
-    #   jsonpath-rw
+    #   jsonpath-ng
 defusedxml==0.5.0
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   cairosvg
     #   python3-saml
 deprecated==1.2.10
     # via pygithub
 diff-match-patch==20200713
-    # via -r requirements.in
+    # via -r base-requirements.in
 dimagi-memoized==1.1.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-angular==2.2.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-appconf==1.0.4
     # via
     #   django-compressor
     #   django-statici18n
 django-braces==1.14.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-bulk-update==2.2.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-celery-results==1.0.4
-    # via -r requirements.in
-django-compressor==2.1
-    # via -r requirements.in
+    # via -r base-requirements.in
+django-compressor==2.4
+    # via -r base-requirements.in
 django-countries==4.6
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-crispy-forms==1.10.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-cte==1.1.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-formtools==2.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-two-factor-auth
 django-logentry-admin==1.0.6
-    # via -r requirements.in
-django-oauth-toolkit==1.3.2
-    # via -r requirements.in
+    # via -r base-requirements.in
+django-oauth-toolkit==1.5.0
+    # via -r base-requirements.in
 django-otp==0.9.4
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-two-factor-auth
 django-partial-index==0.6.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-phonenumber-field==2.3.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-two-factor-auth
 django-prbac==1.0.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-ranged-response==0.2.0
     # via django-simple-captcha
 django-redis-sessions==0.6.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-redis==4.12.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-simple-captcha==0.5.13
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-statici18n==1.9.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-tastypie==0.14.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-transfer==0.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-two-factor-auth==1.12.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-user-agents==0.4.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 django-websocket-redis==0.6.0
-    # via -r requirements.in
-django==2.2.16
+    # via -r base-requirements.in
+django==2.2.20
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-angular
     #   django-appconf
     #   django-braces
@@ -167,171 +171,179 @@ django==2.2.16
     #   djangorestframework
     #   jsonfield
 djangorestframework==3.12.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 dnspython==1.15.0
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   email-validator
 dropbox==9.3.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 elasticsearch2==2.5.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 elasticsearch7==7.9.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 elasticsearch==1.9.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 email_validator==1.1.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 et-xmlfile==1.0.1
     # via openpyxl
 ethiopian-date-converter==0.1.5
-    # via -r requirements.in
+    # via -r base-requirements.in
 eulxml==1.1.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 faker==5.0.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 gevent==1.4.0
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-websocket-redis
     #   gipc
 ghdiff==0.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 gipc==1.1.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 greenlet==0.4.17
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
 gunicorn==20.0.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 hiredis==1.1.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 html5lib==1.1
     # via weasyprint
 httpagentparser==1.9.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 idna==2.10
     # via
     #   email-validator
     #   requests
+importlib-metadata==3.4.0
+    # via jsonschema
 intervaltree==3.1.0
     # via ddtrace
 iso8601==0.1.13
-    # via -r requirements.in
+    # via -r base-requirements.in
 isodate==0.6.0
     # via python3-saml
 jdcal==1.4.1
     # via openpyxl
-jinja2==2.11.2
-    # via -r requirements.in
+jinja2==2.11.3
+    # via -r base-requirements.in
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
 json-delta==2.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 jsonfield==2.1.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-prbac
 jsonobject-couchdbkit==1.0.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 jsonobject==0.9.9
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   jsonobject-couchdbkit
-jsonpath-rw==1.4.0
-    # via -r requirements.in
+https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+    # via -r base-requirements.in
+jsonschema==3.2.0
+    # via -r base-requirements.in
+jwcrypto==0.8
+    # via django-oauth-toolkit
 kafka-python==1.4.7
-    # via -r requirements.in
+    # via -r base-requirements.in
 kombu==4.2.2.post1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   celery
 laboratory==0.2.0
-    # via -r requirements.in
-lxml==4.3.5
+    # via -r base-requirements.in
+lxml==4.6.3
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   eulxml
     #   xmlsec
 mako==1.1.3
     # via alembic
 markdown==2.2.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   pycco
 markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
 mock==2.0.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
-openpyxl==2.6.4
+openpyxl==3.0.6
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   commcaretranslationchecker
 pbr==5.5.0
     # via mock
 phonenumberslite==8.12.10
-    # via -r requirements.in
-pillow==7.2.0
+    # via -r base-requirements.in
+pillow==8.1.2
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   cairosvg
     #   django-simple-captcha
     #   reportlab
 ply==3.11
     # via
     #   eulxml
-    #   jsonpath-rw
+    #   jsonpath-ng
 polib==1.1.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 prometheus-client==0.7.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 protobuf==3.13.0
     # via ddtrace
 psycogreen==1.0.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 psycopg2==2.8.6
-    # via -r requirements.in
+    # via -r base-requirements.in
 py-kissmetrics==1.1.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 pycco==0.5.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
-    # via -r requirements.in
+    # via -r base-requirements.in
 pygithub==1.54.1
-    # via -r requirements.in
-pygments==2.7.1
+    # via -r base-requirements.in
+pygments==2.8.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   pycco
 pygooglechart==0.4.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 pyjwt==1.7.1
     # via
     #   pygithub
     #   twilio
 pyopenssl==20.0.1
-    # via -r requirements.in
+    # via -r sso-requirements.in
 pyphen==0.9.5
     # via weasyprint
+pyrsistent==0.17.3
+    # via jsonschema
 pysocks==1.7.1
     # via twilio
 pystache==0.5.4
     # via pycco
 python-dateutil==2.8.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   alembic
     #   botocore
     #   django-tastypie
@@ -339,47 +351,47 @@ python-dateutil==2.8.1
 python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
-    # via -r requirements.in
-python-levenshtein==0.12.0
-    # via -r requirements.in
-python-magic==0.4.18
-    # via -r requirements.in
+    # via -r base-requirements.in
+python-levenshtein==0.12.2
+    # via -r base-requirements.in
+python-magic==0.4.22
+    # via -r base-requirements.in
 python-mimeparse==1.6.0
     # via django-tastypie
 python3-saml==1.9.0
-    # via -r requirements.in
+    # via -r sso-requirements.in
 pytz==2020.1
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   babel
     #   celery
     #   django
     #   twilio
-pyyaml==5.3.1
-    # via -r requirements.in
+pyyaml==5.4.1
+    # via -r base-requirements.in
 pyzxcvbn==0.8.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 qrcode==4.0.4
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-two-factor-auth
 quickcache==0.5.4
-    # via -r requirements.in
+    # via -r base-requirements.in
 rcssmin==1.0.6
     # via django-compressor
 redis==3.5.3
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
 reportlab==3.5.53
-    # via -r requirements.in
+    # via -r base-requirements.in
 requests-oauthlib==1.3.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 requests==2.24.0
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   cloudant
     #   datadog
     #   django-oauth-toolkit
@@ -389,27 +401,28 @@ requests==2.24.0
     #   stripe
     #   tinys3
     #   twilio
-rjsmin==1.0.12
+rjsmin==1.1.0
     # via django-compressor
 s3transfer==0.3.3
     # via boto3
 schema==0.7.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 sentry-sdk==0.19.5
-    # via -r requirements.in
+    # via -r base-requirements.in
 sh==1.14.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 simpleeval==0.9.10
-    # via -r requirements.in
+    # via -r base-requirements.in
 simplejson==3.17.2
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   django-prbac
 six==1.15.0
     # via
-    #   -r requirements.in
-    #   cryptography
+    #   -r base-requirements.in
     #   django-braces
+    #   django-compressor
+    #   django-oauth-toolkit
     #   django-simple-captcha
     #   django-statici18n
     #   django-transfer
@@ -423,7 +436,8 @@ six==1.15.0
     #   jsonfield
     #   jsonobject
     #   jsonobject-couchdbkit
-    #   jsonpath-rw
+    #   jsonpath-ng
+    #   jsonschema
     #   mock
     #   protobuf
     #   pyopenssl
@@ -436,27 +450,27 @@ six==1.15.0
 smartypants==2.0.1
     # via pycco
 socketpool==0.5.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
 sqlagg==0.17.2
-    # via -r requirements.in
+    # via -r base-requirements.in
 sqlalchemy==1.3.19
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   alembic
     #   sqlagg
 sqlparse==0.3.1
     # via django
 stripe==2.54.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 suds-jurko==0.6
-    # via -r requirements.in
+    # via -r base-requirements.in
 tenacity==6.2.0
     # via ddtrace
 text-unidecode==1.3
     # via
-    #   -r requirements.in
+    #   -r base-requirements.in
     #   faker
 tinycss2==1.0.2
     # via
@@ -464,13 +478,15 @@ tinycss2==1.0.2
     #   cssselect2
     #   weasyprint
 tinys3==0.1.12
-    # via -r requirements.in
+    # via -r base-requirements.in
 tropo-webapi-python==0.1.3
-    # via -r requirements.in
+    # via -r base-requirements.in
 turn-python==0.0.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 twilio==6.5.1
-    # via -r requirements.in
+    # via -r base-requirements.in
+typing-extensions==3.7.4.3
+    # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
 urllib3==1.25.10
@@ -487,22 +503,24 @@ user-agents==2.2.0
 vine==1.3.0
     # via amqp
 weasyprint==51
-    # via -r requirements.in
+    # via -r base-requirements.in
 webencodings==0.5.1
     # via
     #   cssselect2
     #   html5lib
     #   tinycss2
 werkzeug==1.0.1
-    # via -r requirements.in
+    # via -r base-requirements.in
 wrapt==1.12.1
     # via deprecated
 xlrd==1.0.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 xlwt==1.3.0
-    # via -r requirements.in
+    # via -r base-requirements.in
 xmlsec==1.3.9
     # via python3-saml
+zipp==3.4.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==50.3.0
@@ -511,6 +529,7 @@ setuptools==50.3.0
     #   cssselect2
     #   django-websocket-redis
     #   gunicorn
+    #   jsonschema
     #   protobuf
     #   python-levenshtein
     #   tinycss2

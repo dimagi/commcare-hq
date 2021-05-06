@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -19,18 +18,18 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
+    all_project_data_filter,
+    deactivated_case_owners,
     get_case_owners,
-    query_all_project_data,
-    query_deactivated_data,
     query_location_restricted_cases,
 )
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseDisplay, CaseInfo
+from .data_sources import CaseDisplay
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -65,25 +64,31 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and (
-                EMWF.show_all_data(mobile_user_and_group_slugs)
-                or EMWF.no_filters_selected(mobile_user_and_group_slugs)
+        case_owner_filters = []
+
+        if (
+            self.request.can_access_all_locations
+            and EMWF.show_project_data(mobile_user_and_group_slugs)
         ):
-            pass
+            case_owner_filters.append(all_project_data_filter(self.domain, mobile_user_and_group_slugs))
 
-        elif (self.request.can_access_all_locations
-              and EMWF.show_project_data(mobile_user_and_group_slugs)):
-            query = query_all_project_data(
-                query, self.domain, mobile_user_and_group_slugs
-            )
+        if (
+            self.request.can_access_all_locations
+            and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
+        ):
+            case_owner_filters.append(deactivated_case_owners(self.domain))
 
-        elif (self.request.can_access_all_locations
-              and EMWF.show_deactivated_data(mobile_user_and_group_slugs)):
-            query = query_deactivated_data(query, self.domain)
-
-        else:  # Only show explicit matches
+        # Only show explicit matches
+        if (
+            EMWF.selected_user_ids(mobile_user_and_group_slugs)
+            or EMWF.selected_user_types(mobile_user_and_group_slugs)
+            or EMWF.selected_group_ids(mobile_user_and_group_slugs)
+            or EMWF.selected_location_ids(mobile_user_and_group_slugs)
+        ):
             track_es_report_load(self.domain, self.slug, len(self.case_owners))
-            query = query.owner(self.case_owners)
+            case_owner_filters.append(case_es.owner(self.case_owners))
+
+        query = query.OR(*case_owner_filters)
 
         if not self.request.can_access_all_locations:
             query = query_location_restricted_cases(query, self.request)
@@ -148,7 +153,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
             if 'case' in context and context['case'].name:
-                return mark_safe(context['case'].name)
+                return context['case'].name
             else:
                 return _('View Case')
 
@@ -206,33 +211,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             'external_id',
         ]
 
-    def get_data(self):
-        for row in self.es_results['hits'].get('hits', []):
-            case = self.get_case(row)
-            ci = CaseInfo(self, case)
-            data = {
-                '_case': case,
-                'detail_url': ci.case_detail_url,
-            }
-            data.update((prop, getattr(ci, prop)) for prop in (
-                    'case_type', 'case_name', 'case_id', 'external_id',
-                    'is_closed', 'opened_on', 'modified_on', 'closed_on',
-                ))
-
-            creator = ci.creating_user or {}
-            data.update({
-                'creator_id': creator.get('id'),
-                'creator_name': creator.get('name'),
-            })
-            owner = ci.owner
-            data.update({
-                'owner_type': owner[0],
-                'owner_id': owner[1]['id'],
-                'owner_name': owner[1]['name'],
-            })
-
-            yield data
-
     @property
     def headers(self):
         headers = DataTablesHeader(
@@ -249,8 +227,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     @property
     def rows(self):
-        for data in self.get_data():
-            display = CaseDisplay(self, data['_case'])
+        for row in self.es_results['hits'].get('hits', []):
+            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,
@@ -261,10 +239,3 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    def date_to_json(self, date):
-        if date:
-            return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                    .ui_string(SERVER_DATETIME_FORMAT))
-        else:
-            return ''

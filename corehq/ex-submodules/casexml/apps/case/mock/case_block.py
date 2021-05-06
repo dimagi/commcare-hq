@@ -177,7 +177,7 @@ class CaseBlock(object):
         return self.as_bytes().decode('utf-8')
 
     def as_bytes(self):
-        return ElementTree.tostring(self.as_xml())
+        return ElementTree.tostring(self.as_xml(), encoding='utf-8')
 
 
 class CaseBlockError(Exception):

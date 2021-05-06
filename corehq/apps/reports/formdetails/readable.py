@@ -161,7 +161,7 @@ def absolute_path_from_context(path, path_context):
 def _html_interpolate_output_refs(itext_value, context):
     if hasattr(itext_value, 'with_refs'):
         underline_template = '<u>&nbsp;&nbsp;%s&nbsp;&nbsp;</u>'
-        return mark_safe(
+        return mark_safe(  # nosec: output is escaped
             itext_value.with_refs(
                 context,
                 processor=lambda x: underline_template % (
@@ -244,7 +244,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                             absolute_data=absolute_data,
                         ),
                     )
-                    for entry in node
+                    for entry in node if entry or children
                 ],
                 **question_data
             )

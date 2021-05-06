@@ -9,8 +9,6 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
-from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
@@ -18,21 +16,22 @@ from soil.progress import TaskProgressManager
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
+from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.timer import TimingContext
 
 from . import exceptions
 from .const import LookupErrors
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
-CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 ALL_LOCATIONS = 'ALL_LOCATIONS'
 

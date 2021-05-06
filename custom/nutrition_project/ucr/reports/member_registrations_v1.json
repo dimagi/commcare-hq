@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -74,49 +75,45 @@
       {
         "display": "M_temporary_resident",
         "column_id": "M_temporary_resident",
-        "type": "sum_when",
-        "whens": [
-          [
-            "residential_status = 'temp_resident' AND gender = 'M'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_gender_and_resident_type",
+          "binds": ["M", "temp_resident"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temporary_resident",
         "column_id": "F_temporary_resident",
-        "type": "sum_when",
-        "whens": [
-          [
-            "residential_status = 'temp_resident' AND gender = 'F'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_gender_and_resident_type",
+          "binds": ["F", "temp_resident"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_permanent_resident",
         "column_id": "M_permanent_resident",
-        "type": "sum_when",
-        "whens": [
-          [
-            "residential_status = 'permanent_resident' AND gender = 'M'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_gender_and_resident_type",
+          "binds": ["M", "permanent_resident"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident",
         "column_id": "F_permanent_resident",
-        "type": "sum_when",
-        "whens": [
-          [
-            "residential_status = 'permanent_resident' AND gender = 'F'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_gender_and_resident_type",
+          "binds": ["F", "permanent_resident"],
+          "then": 1
+        }],
         "else_": 0
       }
     ]

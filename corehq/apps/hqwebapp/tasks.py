@@ -3,6 +3,7 @@ from smtplib import SMTPDataError
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
+from django.core.management import call_command
 from django.utils.translation import ugettext as _
 
 from celery.exceptions import MaxRetriesExceededError
@@ -10,6 +11,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
+from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.models import TransientBounceEmail
@@ -202,6 +204,23 @@ def process_bounced_emails():
             )
 
 
+@periodic_task(run_every=crontab(minute=0, hour=2), queue='background_queue')
+def alert_bounced_system_emails():
+    bounced_system_emails = get_bounced_system_emails()
+    if bounced_system_emails:
+        bounced_system_emails = ", ".join(bounced_system_emails)
+        mail_admins(
+            "[IMPORTANT] System emails were marked as bounced! Please investigate.",
+            f"These emails have recorded bounces: {bounced_system_emails}. \n"
+            f"Please make sure they are not hard bounced in AWS and follow the "
+            f"steps in Confluence to properly un-bounce them. Thanks! \n"
+            f"HQ will continue to try sending email, but if AWS has them "
+            f"permanently bounced, then these messages will not go "
+            f"through and it will continue to negatively affect our bounce "
+            f"rate percentage. Be swift!"
+        )
+
+
 @periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
 def clean_expired_transient_emails():
     try:
@@ -224,3 +243,9 @@ def get_maintenance_alert_active():
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
                    run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=4))
+def clear_expired_oauth_tokens():
+    # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
+    call_command('cleartokens')

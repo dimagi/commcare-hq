@@ -16,6 +16,7 @@ from unittest import SkipTest, TestCase
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
 import mock
@@ -158,6 +159,18 @@ class flag_enabled(object):
 
 class flag_disabled(flag_enabled):
     enabled = False
+
+
+def privilege_enabled(privilege_name):
+    """Enable an individual privilege for tests"""
+    from django_prbac.utils import has_privilege
+
+    def patched(request, slug, **assignment):
+        if slug == privilege_name:
+            return True
+        return has_privilege(request, slug, **assignment)
+
+    return mock.patch('django_prbac.decorators.has_privilege', new=patched)
 
 
 class DocTestMixin(object):
@@ -460,6 +473,48 @@ def patch_max_test_time(limit):
 patch_max_test_time.__test__ = False
 
 
+def patch_foreign_value_caches():
+    """Patch django.test to clear ForeignValue.get_related LRU caches
+
+    This complements `django.test.TransactionTestCase` and
+    `django.test.TestCase` automatic database cleanup feature. It is
+    necessary because cached foreign value objects become invalid once
+    the transaction in which they were created is rolled back.
+    """
+    from corehq.util.models import ForeignValue
+
+    def wrap(get_related, cache_clear=None):
+        @wraps(get_related)
+        def monitored_get_related(self):
+            value = get_related(self)
+            if cache_clear is None:
+                if self.cache_size:
+                    value = wrap(value, value.cache_clear)
+            else:
+                clear_funcs.add(cache_clear)
+            return value
+
+        if cache_clear is not None:
+            for name in dir(get_related):
+                if not name.startswith("_"):
+                    value = getattr(get_related, name)
+                    setattr(monitored_get_related, name, value)
+
+        return monitored_get_related
+
+    def post_teardown(self):
+        if clear_funcs:
+            for cache_clear in clear_funcs:
+                cache_clear()
+            clear_funcs.clear()
+        django_post_teardown(self)
+
+    clear_funcs = set()
+    ForeignValue.get_related.func = wrap(ForeignValue.get_related.func)
+    django_post_teardown = TransactionTestCase._post_teardown
+    TransactionTestCase._post_teardown = post_teardown
+
+
 def get_form_ready_to_save(metadata, is_db_test=False):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
@@ -516,7 +571,7 @@ def _create_case(domain, **kwargs):
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None, user_id=None):
+        drop_signals=True, owner_id=None, user_id=None, index=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -525,6 +580,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
         'case_id': case_id,
         'case_name': case_name,
         'update': case_properties,
+        'index': index,
     }
 
     if case_type:

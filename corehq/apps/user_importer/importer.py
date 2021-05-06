@@ -40,6 +40,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -47,7 +48,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'web_user', 'remove_web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -55,7 +56,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs):
+def check_headers(user_specs, domain):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -67,6 +68,9 @@ def check_headers(user_specs):
                     old_name=old_name, new_name=new_name
                 ))
             headers.discard(old_name)
+
+    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
     missing_headers = required_headers - headers
@@ -373,11 +377,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
-            location_codes = row.get('location_code') or []
+            location_codes = row.get('location_code', []) if 'location_code' in row else None
             if location_codes and not isinstance(location_codes, list):
                 location_codes = [location_codes]
-            # ignore empty
-            location_codes = [code for code in location_codes if code]
+            if location_codes is not None:
+                # ignore empty
+                location_codes = [code for code in location_codes if code]
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user = row.get('web_user')
@@ -457,10 +462,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if is_active is not None:
                     user.is_active = is_active
 
-                if domain_info.can_assign_locations:
+                if domain_info.can_assign_locations and location_codes is not None:
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
+                    # Do not update location info if the column is not included at all
                     location_ids = []
                     for code in location_codes:
                         loc = get_location_from_site_code(code, domain_info.location_cache)
@@ -528,16 +534,17 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                                     'role': role_qualified_id
                                 },
                             )
-                            if invite_created:
+                            if invite_created and send_account_confirmation_email:
                                 invite.send_activation_email()
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
                             current_user.set_role(domain, role_qualified_id)
-                            if user.location_id:
-                                current_user.set_location(domain, user.location_id)
-                            else:
-                                current_user.unset_location(domain)
+                            if location_codes is not None:
+                                if user.location_id:
+                                    current_user.set_location(domain, user.location_id)
+                                else:
+                                    current_user.unset_location(domain)
                             current_user.save()
 
                 if send_account_confirmation_email and not web_user:

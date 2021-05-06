@@ -47,14 +47,14 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
         FormES(es_instance_alias=es_instance_alias)
         .domain(domain)
         .user_id(user_ids)
-        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
+        .submitted(gte=datespan.startdate.date(), lte=datespan.enddate.date())
         .aggregation(
             TermsAggregation('user_id', 'form.meta.userID').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
-                    'form.meta.timeEnd',
+                    'received_on',
                     is_ascending=False,
-                    include='form.meta.timeEnd',
+                    include='received_on',
                 )
             )
         )
@@ -65,7 +65,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
     for user_id, bucket in buckets_dict.items():
-        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
+        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['received_on'])
     return result
 
 
@@ -591,18 +591,14 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
-def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
-    enddate = datespan.enddate + timedelta(days=1)
-    query = (FormES()
-             .domain(domain)
-             .app(app_id)
-             .xmlns(xmlns)
-             .submitted(gte=datespan.startdate, lte=enddate)
-             .remove_default_filter("has_user")
-             .source(['_id', 'external_blobs']))
+def get_form_ids_with_multimedia(es_query):
+    return {
+        form['_id'] for form in _forms_with_attachments(es_query)
+    }
 
-    if user_types:
-        query = query.user_type(user_types)
+
+def _forms_with_attachments(es_query):
+    query = es_query.source(['_id', 'external_blobs'])
 
     for form in query.scroll():
         try:
@@ -614,15 +610,27 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout. Deprecated by get_form_ids_with_multimedia
 def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=datespan.startdate, lte=enddate)
+             .remove_default_filter("has_user")
+             )
+
+    if user_types:
+        query = query.user_type(user_types)
     return {
-        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+        form['_id'] for form in _forms_with_attachments(query)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def media_export_is_too_big(es_query):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:

@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -74,241 +75,221 @@
       {
         "display": "M_temp_resident_neonatal_death",
         "column_id": "M_temp_resident_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 0 AND 28",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "temp_resident", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_permanent_resident_neonatal_death",
         "column_id": "M_permanent_resident_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 0 AND 28",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "permanent_resident", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_neonatal_death",
         "column_id": "F_temp_resident_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 0 AND 28",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "temp_resident", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_neonatal_death",
         "column_id": "F_permanent_resident_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 0 AND 28",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "permanent_resident", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_temp_resident_post_neonatal_death",
         "column_id": "M_temp_resident_post_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 29 AND 364",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "temp_resident", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_permanent_resident_post_neonatal_death",
         "column_id": "M_permanent_resident_post_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 29 AND 364",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "permanent_resident", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_post_neonatal_death",
         "column_id": "F_temp_resident_post_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 29 AND 364",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "temp_resident", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_post_neonatal_death",
         "column_id": "F_permanent_resident_post_neonatal_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 29 AND 364",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "permanent_resident", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_temp_resident_child_death",
         "column_id": "M_temp_resident_child_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 365 AND 1826",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "temp_resident", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "M_permanent_resident_child_death",
         "column_id": "M_permanent_resident_child_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'M' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 365 AND 1826",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["M", "permanent_resident", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_child_death",
         "column_id": "F_temp_resident_child_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND death_date - dob BETWEEN 365 AND 1826",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "temp_resident", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_child_death",
         "column_id": "F_permanent_resident_child_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND death_date - dob BETWEEN 365 AND 1826",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_child_death",
+          "binds": ["F", "permanent_resident", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_women_death",
         "column_id": "F_temp_resident_women_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND age_at_death_yrs >= 11",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death",
+          "binds": ["temp_resident", 11],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_women_death",
         "column_id": "F_permanent_resident_women_death",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND age_at_death_yrs >= 11",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death",
+          "binds": ["permanent_resident", 11],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_women_death_pregnancy",
         "column_id": "F_permanent_resident_women_death_pregnancy",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND female_death_type = 'pregnancy'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["permanent_resident", "pregnancy"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_women_death_delivery",
         "column_id": "F_permanent_resident_women_death_delivery",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND female_death_type = 'delivery'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["permanent_resident", "delivery"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_permanent_resident_women_death_pnc",
         "column_id": "F_permanent_resident_women_death_pnc",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'permanent_resident' AND female_death_type = 'pnc'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["permanent_resident", "pnc"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_women_death_pregnancy",
         "column_id": "F_temp_resident_women_death_pregnancy",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND female_death_type = 'pregnancy'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["temp_resident", "pregnancy"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_women_death_delivery",
         "column_id": "F_temp_resident_women_death_delivery",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND female_death_type = 'delivery'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["temp_resident", "delivery"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "F_temp_resident_women_death_pnc",
         "column_id": "F_temp_resident_women_death_pnc",
-        "type": "sum_when",
-        "whens": [
-          [
-            "gender = 'F' AND residential_status = 'temp_resident' AND female_death_type = 'pnc'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_woman_death_type",
+          "binds": ["temp_resident", "pnc"],
+          "then": 1
+        }],
         "else_": 0
       }
     ]

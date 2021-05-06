@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -63,6 +64,20 @@
         "type": "field",
         "field": "flw_id",
         "aggregation": "simple"
+      },
+      {
+        "display": "Number of Children (0-3) eligible",
+        "column_id": "number_of_children_0_3",
+        "type": "field",
+        "field": "number_of_children_0_3",
+        "aggregation": "max"
+      },
+      {
+        "display": "Number of PW/LM eligible",
+        "column_id": "number_of_pw_lm",
+        "type": "field",
+        "field": "number_of_pw_lm",
+        "aggregation": "max"
       },
       {
         "display": "Count",

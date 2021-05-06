@@ -11,39 +11,39 @@
 
     </div>
     <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-      <div class="js-incomplete-sessions-item appicon appicon-incomplete">
+      <div class="js-incomplete-sessions-item appicon appicon-incomplete" role="link" tabindex="0" aria-labelledby="grid-template-incomplete-forms-heading">
         <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
         <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
         <div class="appicon-title">
-          <h3>{% trans "Incomplete Forms" %}</h3>
+          <h3 id="grid-template-incomplete-forms-heading">{% trans "Incomplete Forms" %}</h3>
         </div>
       </div>
     </div>
 
     <div class=" grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-      <div class="js-sync-item appicon appicon-sync">
+      <div class="js-sync-item appicon appicon-sync" role="link" tabindex="0" aria-labelledby="grid-template-sync-heading">
         <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
         <div class="appicon-title">
-          <h3>{% trans "Sync" %}</h3>
+          <h3 id="grid-template-sync-heading">{% trans "Sync" %}</h3>
         </div>
       </div>
     </div>
 
     {% if request|can_use_restore_as %}
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-        <div class="js-restore-as-item appicon appicon-restore-as">
+        <div class="js-restore-as-item appicon appicon-restore-as" role="link" tabindex="0" aria-labelledby="grid-template-login-as-heading">
           <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3>{% trans "Login as" %}</h3>
+            <h3 id="grid-template-login-as-heading">{% trans "Login as" %}</h3>
           </div>
         </div>
       </div>
     {% endif %}
     <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-      <div class="js-settings appicon appicon-settings">
+      <div class="js-settings appicon appicon-settings" role="link" tabindex="0" aria-labelledby="grid-template-settings-heading">
         <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
         <div class="appicon-title">
-          <h3>{% trans "Settings" %}</h3>
+          <h3 id="grid-template-settings-heading">{% trans "Settings" %}</h3>
         </div>
       </div>
     </div>
@@ -52,53 +52,53 @@
 
 <script id="single-app-template" type="text/template">
   <ol class="breadcrumb">
-    <li class="breadcrumb-text"><%= appName %></li>
+    <li class="breadcrumb-text"><%- appName %></li>
   </ol>
   <div class="container container-appicons">
     <div class="row">
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-        <div class="js-start-app appicon appicon-start">
+        <div class="js-start-app appicon appicon-start" role="link" tabindex="0" aria-labelledby="single-app-start-heading">
           <i class="ff ff-start-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
           <i class="ff ff-start-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3>{% trans "Start" %}</h3>
+            <h3 id="single-app-start-heading">{% trans "Start" %}</h3>
           </div>
         </div>
       </div>
       <% if (showIncompleteForms()) { %>
       <div class=" grid-item col-xs-6 col-sm-4 formplayer-request">
-        <div class="js-incomplete-sessions-item appicon appicon-incomplete">
+        <div class="js-incomplete-sessions-item appicon appicon-incomplete" role="link" tabindex="0" aria-labelledby="single-app-incomplete-forms-heading">
           <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
           <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3>{% trans "Incomplete Forms" %}</h3>
+            <h3 id="single-app-incomplete-forms-heading">{% trans "Incomplete Forms" %}</h3>
           </div>
         </div>
       </div>
       <% } %>
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-        <div class="js-sync-item appicon appicon-sync">
+        <div class="js-sync-item appicon appicon-sync" role="link" tabindex="0" aria-labelledby="single-app-sync-heading">
           <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3>{% trans "Sync" %}</h3>
+            <h3 id="single-app-sync-heading">{% trans "Sync" %}</h3>
           </div>
         </div>
       </div>
       {% if request|can_use_restore_as %}
         <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-restore-as-item appicon appicon-restore-as">
+          <div class="js-restore-as-item appicon appicon-restore-as" role="link" tabindex="0" aria-labelledby="single-app-login-as-heading">
             <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
             <div class="appicon-title">
-              <h3>{% trans "Login as" %}</h3>
+              <h3 id="single-app-login-as-heading">{% trans "Login as" %}</h3>
             </div>
           </div>
         </div>
       {% endif %}
       <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-        <div class="js-settings appicon appicon-settings">
+        <div class="js-settings appicon appicon-settings" role="link" tabindex="0" aria-labelledby="single-app-settings-heading">
           <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
           <div class="appicon-title">
-            <h3>{% trans "Settings" %}</h3>
+            <h3 id="single-app-settings-heading">{% trans "Settings" %}</h3>
           </div>
         </div>
       </div>
@@ -111,14 +111,14 @@
   <div class="container">
     <div class="spacer"></div>
     <div class="col-xs-6 col-sm-4 col-xs-offset-3 col-sm-offset-4">
-      <div class="appicon appicon-default js-start-app">
+      <div class="appicon appicon-default js-start-app" role="link" tabindex="0" aria-label="<%- appName %>">
         <% if (!imageUrl) { %>
           <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
         <% } else { %>
-          <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
+          <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%- imageUrl %>');" aria-hidden="true"></i>
         <% } %>
         <div class="appicon-title">
-          <h3><%= appName %></h3>
+          <h3><%- appName %></h3>
         </div>
       </div>
     </div>
@@ -127,11 +127,11 @@
 </script>
 
 <script id="row-template" type="text/template">
-  <div class="appicon appicon-default">
+  <div class="appicon appicon-default" role="link" tabindex="0" aria-label="<%- name %>">
     <% if (!imageUrl) { %>
       <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
     <% } else { %>
-      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
+      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%- imageUrl %>');" aria-hidden="true"></i>
     <% } %>
     <div class="appicon-title">
       <h3><%- name %></h3>

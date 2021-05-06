@@ -53,7 +53,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.toggles import (
     ADD_ROW_INDEX_TO_MOBILE_UCRS,
     MOBILE_UCR,
@@ -258,7 +258,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     with mock_datasource_config():
                         fixtures = call_fixture_generator(report_fixture_generator, cls.user)
                         fixture = [f for f in fixtures if f.attrib.get('id') == ReportFixturesProviderV1.id][0]
-        cls.fixture = ElementTree.tostring(fixture)
+        cls.fixture = ElementTree.tostring(fixture, encoding='utf-8')
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""

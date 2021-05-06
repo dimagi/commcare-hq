@@ -19,12 +19,13 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.extensions.interface import disable_extensions
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -760,8 +761,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
-    @patch('corehq.apps.domain.forms.has_custom_clean_password', return_value=False)
-    def test_weak_password(self, _):
+    @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
+    def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
 

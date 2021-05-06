@@ -140,7 +140,7 @@ def get_ota_balance_xml(project, user):
 def extract_balance_xml(xml_payload):
     balance_blocks = etree.fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
-        return [etree.tostring(bb) for bb in balance_blocks]
+        return [etree.tostring(bb, encoding='utf-8') for bb in balance_blocks]
     return []
 
 

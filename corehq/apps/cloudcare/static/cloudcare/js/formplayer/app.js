@@ -5,6 +5,7 @@
  */
 
 hqDefine("cloudcare/js/formplayer/app", function () {
+    Marionette.setRenderer(Marionette.TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
     var showError = hqImport('cloudcare/js/util').showError;
     var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;
@@ -240,16 +241,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 Util.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
-                    if (resp.nextScreen.autolaunch) {
-                        FormplayerFrontend.trigger("clearForm");
-                        urlObject.setSteps(resp.nextScreen.selections.concat([resp.nextScreen.autolaunch]));
-                        Util.setUrlToObject(urlObject);
-                        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu({
-                            appId: urlObject.appId,
-                            steps: urlObject.steps,
-                        });
-                        return;
-                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
@@ -271,6 +262,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
+        var notifications = hqImport('notifications/js/notifications_service_main');
+        notifications.initNotifications();
         $('.menu-scrollable-container').addClass('hide');
     });
 

@@ -3,12 +3,12 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.models import FormExportInstance, CaseExportInstance
+from corehq.apps.export.models import FormExportInstance, CaseExportInstance, CaseIndexExportColumn
 from corehq.apps.userreports import datatypes
 
 PROPERTIES_PREFIX = 'properties.'
 ID_FIELD = 'id'
-FORM_ID_SOURCE = 'form.meta.instanceID'
+FORM_ID_SOURCE = 'id'
 CASE_ID_SOURCE = 'case_id'
 
 # maps Case fields to the API field names used in CommCareCaseResource
@@ -28,7 +28,6 @@ CASE_API_PATH_MAP = {
     'user_id': 'user_id',
 }
 
-
 FORM_API_PATH_MAP = {
     'xmlns': 'form.@xmlns',
 }
@@ -41,6 +40,9 @@ class DefaultDETSchemaHelper(object):
     """
     Helper to do datatype transformations, etc. during schema generation
     """
+    def get_path(self, input_column):
+        return self.transform_path(input_column.item.readable_path)
+
     @staticmethod
     def transform_path(input_path):
         return input_path
@@ -62,9 +64,15 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
     def __init__(self, dd_property_types):
         self.dd_property_types = dd_property_types
 
-    @staticmethod
-    def transform_path(input_path):
-        # either return hard-coded lookup or add prefix
+    def get_path(self, input_column):
+        if isinstance(input_column, CaseIndexExportColumn):
+            # this is an obscure but correct reference to the index reference ID
+            # typically "parent", occasionally "host", rarely miscellaneous other things...
+            # https://github.com/dimagi/commcare-hq/pull/29530/files#r613936070
+            index_ref_id = input_column.item.label.split('.')[0]
+            return f'indices.{index_ref_id}.case_id'
+
+        input_path = input_column.item.readable_path
         return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
 
     def get_map_via(self, export_item):
@@ -214,7 +222,7 @@ def _add_rows_for_table(input_table, output_table, helper=None):
 
 def _get_det_row_for_export_column(column, helper):
     return DETRow(
-        source_field=helper.transform_path(column.item.readable_path),
+        source_field=helper.get_path(column),
         field=column.label,
         map_via=helper.get_map_via(column.item)
     )

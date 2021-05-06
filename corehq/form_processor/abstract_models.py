@@ -148,7 +148,7 @@ class CaseToXMLMixin(object):
                 elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
+        return ElementTree.tostring(elem, encoding='utf-8')
 
 
 class AbstractCommCareCase(CaseToXMLMixin):
@@ -302,7 +302,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
                 elem = get_case_element(self, ('close'), version)
         else:
             elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
+        return ElementTree.tostring(elem, encoding='utf-8')
 
     def get_attachment_server_url(self, name):
         """

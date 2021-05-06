@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -7,12 +8,10 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from dateutil.parser import parse
 from memoized import memoized
 
-from auditcare.models import NavigationEventAudit
-from auditcare.utils.export import navigation_event_ids_by_user
-from dimagi.utils.couch.database import iter_docs
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
+from corehq.apps.auditcare.utils.export import navigation_events_by_user
 from corehq.apps.es import users as user_es
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -47,10 +46,10 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     emailable = False
     default_rows = 10
 
-    _username_fmt = "%(username)s"
-    _device_users_fmt = "%(username)s"
-    _device_id_fmt = "%(device)s"
-    _log_tag_fmt = "<label class='%(classes)s'>%(text)s</label>"
+    _username_fmt = "{username}"
+    _device_users_fmt = "{username}"
+    _device_id_fmt = "{device}"
+    _log_tag_fmt = "<label class='{classes}'>{text}</label>"
 
     @property
     def selected_domain(self):
@@ -186,11 +185,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def rows(self):
         rows = []
-        event_ids = navigation_event_ids_by_user(
+        events = navigation_events_by_user(
             self.selected_user, self.datespan.startdate, self.datespan.enddate
         )
-        for event_doc in iter_docs(NavigationEventAudit.get_db(), event_ids):
-            event = NavigationEventAudit.wrap(event_doc)
+        for event in events:
             if not self.selected_domain or self.selected_domain == event.domain:
                 rows.append([
                     event.event_date, event.user, event.domain or '', event.ip_address, event.request_path
@@ -257,7 +255,11 @@ class UserListReport(GetParamsMixin, AdminReport):
         return self._users_query().count()
 
     def _user_link(self, username):
-        return f'<a href="{self._user_lookup_url}?q={username}">{username}</a>'
+        return format_html(
+            '<a href="{url}?q={username}">{username}</a>',
+            url=self._user_lookup_url,
+            username=username
+        )
 
     @cached_property
     def _user_lookup_url(self):
@@ -314,13 +316,21 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     def _format_date(self, date):
         if date:
-            return f'<div>{naturaltime(date)}</div><div>{date.strftime(SERVER_DATETIME_FORMAT)}</div>'
+            return format_html(
+                '<div>{}</div><div>{}</div>',
+                naturaltime(date),
+                date.strftime(SERVER_DATETIME_FORMAT)
+            )
         return "---"
 
     def _hyperlink_diff_url(self, diff_url):
-        return f'<a href="{diff_url}">Diff with previous</a>'
+        return format_html('<a href="{}">Diff with previous</a>', diff_url)
 
     def _shorten_and_hyperlink_commit(self, commit_sha):
         if commit_sha:
-            return f'<a href="https://github.com/dimagi/commcare-hq/commit/{commit_sha}">{commit_sha[:7]}</a>'
+            return format_html(
+                '<a href="https://github.com/dimagi/commcare-hq/commit/{full_sha}">{abbrev_sha}</a>',
+                full_sha=commit_sha,
+                abbrev_sha=commit_sha[:7]
+            )
         return None

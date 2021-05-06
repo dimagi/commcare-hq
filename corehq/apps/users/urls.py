@@ -5,24 +5,21 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
     DefaultProjectUserSettingsView,
     DomainPermissionsMirrorView,
-    DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
     ListRolesView,
     ListWebUsersView,
-    accept_invitation,
     add_domain_membership,
     change_password,
-    delete_invitation,
     delete_phone_number,
     delete_request,
+    check_sso_trust,
     delete_user_role,
     domain_accounts,
     make_phone_number_default,
     paginate_web_users,
     post_user_role,
     register_fcm_device_token,
-    reinvite_web_user,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
@@ -31,6 +28,12 @@ from .views import (
     create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+)
+from .views.web import (
+    accept_invitation,
+    delete_invitation,
+    DomainRequestView,
+    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -92,6 +95,7 @@ urlpatterns = [
     url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', delete_invitation, name='delete_invitation'),
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
+    url(r'^web/check_sso_trust/$', check_sso_trust, name='check_sso_trust'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^web/download/$', download_web_users, name='download_web_users'),

@@ -10,6 +10,19 @@ By default CommCare will use the `default` Django database for all SQL data.
 
 .. image:: images/django_db_monolith.png
 
+Auditcare Data
+~~~~~~~~~~~~~~
+Auditcare data may be stored in a separate database by specifying a mapping in
+the `LOCAL_CUSTOM_DB_ROUTING` setting. A database with the specified alias must
+also exist in the Django `DATABASES` setting. Example configuration:
+
+.. code-block:: python
+
+    LOCAL_CUSTOM_DB_ROUTING = {"auditcare": "auditcare"}
+
+It is recommended to use a separate database in high-traffic environments when
+auditcare is enabled. Auditcare is enabled for a subset of URLs by default.
+
 Synclog Data
 ~~~~~~~~~~~~
 Synclog data may be stored in a separate database specified by the

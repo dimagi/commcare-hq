@@ -213,10 +213,15 @@ class PracticeUserRestoreResource(AbstractResource):
 
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
-    ORDER = ('text', 'media_image', 'media_audio')
+    ORDER = ('text', 'media_image', 'media_audio', 'hint')
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+    hint = NodeField('hint', 'self')
+
+
+class Hint(Display):
+    ROOT_NAME = 'hint'
 
 
 class Itemset(XmlObject):
@@ -440,6 +445,17 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class Argument(IdNode):
+    ROOT_NAME = 'argument'
+
+
+class SessionEndpoint(IdNode):
+    ROOT_NAME = 'endpoint'
+
+    arguments = NodeListField('argument', Argument)
+    stack = NodeField('stack', Stack)
+
+
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
@@ -507,6 +523,7 @@ class QueryPrompt(DisplayNode):
 
     key = StringField('@key')
     appearance = StringField('@appearance', required=False)
+    receive = StringField('@receive', required=False)
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
 
@@ -842,7 +859,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node)
+                s = etree.tostring(field.template.node, encoding='utf-8')
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
@@ -914,6 +931,7 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    endpoints = NodeListField('endpoint', SessionEndpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)

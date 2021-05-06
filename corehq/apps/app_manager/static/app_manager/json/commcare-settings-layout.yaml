@@ -71,6 +71,7 @@
     - properties.cc-inflation-target-density
     - properties.cc-maps-default-layer
     - properties.cc-enable-tts
+    - properties.cc-label-required-questions-with-asterisk
     - hq.use_grid_menus
     - hq.grid_form_menus
     - hq.target_commcare_flavor

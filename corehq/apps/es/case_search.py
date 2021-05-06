@@ -12,7 +12,6 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
-from django.conf import settings
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -26,7 +25,6 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
 
@@ -36,7 +34,12 @@ class CaseSearchES(CaseES):
 
     @property
     def builtin_filters(self):
-        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
+        return [
+            case_property_filter,
+            blacklist_owner_id,
+            external_id,
+            indexed_on,
+        ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
@@ -91,7 +94,7 @@ class CaseSearchES(CaseES):
         """
         return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
-    def xpath_query(self, domain, xpath):
+    def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
         Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
@@ -101,9 +104,11 @@ class CaseSearchES(CaseES):
         - date ranges: "first_came_online >= '2017-08-12' or died <= '2020-11-15"
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
+
+        If fuzzy is true, all equality checks will be treated as fuzzy.
         """
         from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath))
+        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
@@ -268,6 +273,14 @@ def _base_property_query(case_property_name, query):
 
 def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
+
+
+def external_id(external_id):
+    return filters.term('external_id', external_id)
+
+
+def indexed_on(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('@indexed_on', gt, gte, lt, lte)
 
 
 def flatten_result(hit, include_score=False):

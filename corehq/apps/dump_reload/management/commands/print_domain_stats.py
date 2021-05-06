@@ -17,7 +17,7 @@ from corehq.apps.dump_reload.sql.dump import (
 )
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
@@ -101,7 +101,7 @@ def _get_couchdb_counts(domain):
 
 def _get_sql_counts(domain):
     counter = Counter()
-    for model_class, builder in get_model_iterator_builders_to_dump(domain, []):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain, [], []):
         if model_class in (User, XFormInstanceSQL, CommCareCaseSQL):
             continue  # User is very slow, others we want to break out
         for queryset in builder.querysets():

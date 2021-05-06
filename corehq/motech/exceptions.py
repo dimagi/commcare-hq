@@ -3,6 +3,6 @@ class ConfigurationError(Exception):
 
 
 class JsonpathError(Exception):
-    # jsonpath_rw raises bare exceptions. This class is to re-raise
-    # them, so we can be smarter about catching them.
+    # jsonpath-ng (still) raises bare exceptions. This class is to
+    # re-raise them, so we can be smarter about catching them.
     pass

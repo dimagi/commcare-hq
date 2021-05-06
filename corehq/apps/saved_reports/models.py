@@ -368,9 +368,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
-        if self.is_configurable_report:
-            mock_query_string_parts.append(urlencode(self.filters, True))
-            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
@@ -690,6 +687,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             )
 
             attach_excel = getattr(self, 'attach_excel', False)
+            excel_files = None
             try:
                 report_text, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,
@@ -740,9 +738,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         mock_request.bypass_two_factor = True
 
                         mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                        if report_config.is_configurable_report:
-                            mock_query_string_parts.append(urlencode(report_config.filters, True))
-                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
                         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
                         request_data = vars(mock_request)
                         request_data['couch_user'] = mock_request.couch_user.userID

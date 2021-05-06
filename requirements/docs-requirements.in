@@ -1,0 +1,9 @@
+-r base-requirements.in
+
+django-extensions
+Sphinx~=3.5
+sphinx-rtd-theme~=0.5
+docutils==0.16
+sphinxcontrib-django~=0.3
+recommonmark
+

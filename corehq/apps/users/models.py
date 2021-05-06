@@ -273,6 +273,26 @@ class UserRolePresets(object):
         BILLING_ADMIN
     )
 
+    ID_NAME_MAP = {
+        'read-only-no-reports': READ_ONLY_NO_REPORTS,
+        'no-permissions': READ_ONLY,
+        'read-only': READ_ONLY,
+        'field-implementer': FIELD_IMPLEMENTER,
+        'edit-apps': APP_EDITOR,
+        'billing-admin': BILLING_ADMIN
+    }
+
+    # skip legacy duplicate ('no-permissions')
+    NAME_ID_MAP = {name: id for id, name in ID_NAME_MAP.items() if id != 'no-permissions'}
+
+    @classmethod
+    def get_preset_role_id(cls, name):
+        return cls.NAME_ID_MAP.get(name, None)
+
+    @classmethod
+    def get_preset_role_name(cls, role_id):
+        return cls.ID_NAME_MAP.get(role_id, None)
+
     @classmethod
     def get_preset_map(cls):
         return {
@@ -297,6 +317,12 @@ class UserRolePresets(object):
             return None
         return preset_map[preset]()
 
+    @classmethod
+    def get_role_name_with_matching_permissions(cls, permissions):
+        for name, factory in UserRolePresets.get_preset_map().items():
+            if factory() == permissions:
+                return name
+
 
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
@@ -312,11 +338,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
     is_archived = BooleanProperty(default=False)
     upstream_id = StringProperty()
 
-    def get_qualified_id(self):
-        return 'user-role:%s' % self.get_id
-
     @classmethod
-    def by_domain(cls, domain, is_archived=False):
+    def by_domain(cls, domain, include_archived=False):
         # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
@@ -325,7 +348,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        if include_archived:
+            return list(all_roles)
+        return [x for x in all_roles if not x.is_archived]
 
     @classmethod
     def by_domain_and_name(cls, domain, name, is_archived=False):
@@ -352,9 +377,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         def get_name():
             if name:
                 return name
-            preset_match = [x for x in UserRolePresets.get_preset_map().items() if x[1]() == permissions]
-            if preset_match:
-                return preset_match[0][0]
+            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
         role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
@@ -388,10 +411,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def unarchive_roles_for_domain(cls, domain):
-        archived_roles = cls.by_domain(domain, is_archived=True)
-        for role in archived_roles:
-            role.is_archived = False
-            role.save()
+        all_roles = cls.by_domain(domain, include_archived=True)
+        for role in all_roles:
+            if role.is_archived:
+                role.is_archived = False
+                role.save()
 
     @classmethod
     def init_domain_with_presets(cls, domain):
@@ -403,63 +427,30 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
+    @classmethod
+    def get_preset_role_id(cls, name):
+        return UserRolePresets.get_preset_role_id(name)
+
+    @classmethod
+    def preset_and_domain_role_names(cls, domain_name):
+        presets = set(UserRolePresets.NAME_ID_MAP.keys())
+        custom = set([role.name for role in cls.by_domain(domain_name)])
+        return presets | custom
+
+    @classmethod
+    def admin_role(cls, domain):
+        return AdminUserRole(domain=domain)
+
     @property
     def has_users_assigned(self):
         from corehq.apps.es.users import UserES
         return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
-    @classmethod
-    def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in PERMISSIONS_PRESETS.items() if v['name'] == name}
-        return matches.pop() if matches else None
-
-    @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
-
-    @classmethod
-    def preset_permissions_names(cls):
-        return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+    def get_qualified_id(self):
+        return 'user-role:%s' % self.get_id
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
-
-
-PERMISSIONS_PRESETS = {
-    'edit-apps': {
-        'name': 'App Editor',
-        'permissions': Permissions(
-            edit_apps=True,
-            view_apps=True,
-            view_reports=True,
-        ),
-    },
-    'field-implementer': {
-        'name': 'Field Implementer',
-        'permissions': Permissions(
-            edit_commcare_users=True,
-            view_commcare_users=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_locations=True,
-            view_locations=True,
-            edit_shared_exports=True,
-            view_reports=True,
-        ),
-    },
-    'read-only': {
-        'name': 'Read Only',
-        'permissions': Permissions(
-            view_reports=True,
-        ),
-    },
-    'no-permissions': {
-        'name': 'Read Only',
-        'permissions': Permissions(
-            view_reports=True,
-        ),
-    },
-}
 
 
 class AdminUserRole(UserRole):
@@ -535,7 +526,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return AdminUserRole(self.domain)
+            return UserRole.admin_role(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -717,7 +708,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return False
 
     @memoized
-    def get_role(self, domain=None, checking_global_admin=True):
+    def get_role(self, domain=None, checking_global_admin=True, allow_mirroring=False):
         """
         Get the role object for this user
         """
@@ -729,9 +720,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
-        if self.is_member_of(domain):
-            return self.get_domain_membership(domain).role
+            return UserRole.admin_role(domain)
+        if self.is_member_of(domain, allow_mirroring):
+            return self.get_domain_membership(domain, allow_mirroring).role
         else:
             raise DomainMembershipError()
 
@@ -746,9 +737,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
             dm.role_id = None
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
-        elif role_qualified_id in PERMISSIONS_PRESETS:
-            preset = PERMISSIONS_PRESETS[role_qualified_id]
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
+        elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
+            role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
+            permissions = UserRolePresets.get_permissions(role_name)
+            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
@@ -1747,7 +1739,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return profile
 
     def _is_demo_user_cached_value_is_stale(self):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
         if cached_demo_users is not Ellipsis:
             cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
@@ -1756,7 +1748,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return False
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
         get_loadtest_factor_for_user.clear(self.domain, self.user_id)
 
@@ -1769,12 +1761,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
+            from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_user_cases_if_applicable(self, spawn_task)
+            sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2226,48 +2218,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 "There was no linked supply point for the location."
             )
 
-    def add_location_delegate(self, location):
-        """
-        Add a single location to the delgate case access.
-
-        This will dynamically create a supply point if the supply point isn't found.
-        """
-        # todo: the dynamic supply point creation is bad and should be removed.
-        sp = SupplyInterface(self.domain).get_or_create_by_location(location)
-
-        if not location.location_type_object.administrative:
-            from corehq.apps.commtrack.util import submit_mapping_case_block
-            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
-
     def submit_location_block(self, caseblock, source):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
             ElementTree.tostring(
-                caseblock.as_xml()
+                caseblock.as_xml(), encoding='utf-8'
             ).decode('utf-8'),
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,
         )
-
-    def remove_location_delegate(self, location):
-        """
-        Remove a single location from the case delagate access.
-        """
-
-        sp = SupplyInterface(self.domain).get_by_location(location)
-
-        mapping = self.get_location_map_case()
-
-        if not location.location_type_object.administrative:
-            if mapping and location.location_id in [loc.location_id for loc in self.locations]:
-                caseblock = CaseBlock.deprecated_init(
-                    create=False,
-                    case_id=mapping._id,
-                    index=self.supply_point_index_mapping(sp, True)
-                )
-
-                self.submit_location_block(caseblock, "remove_location_delegate")
 
     def clear_location_delegates(self):
         """
@@ -2508,14 +2468,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
-                yield web_user
-
-    @classmethod
-    def get_users_by_permission(cls, domain, permission):
-        user_ids = cls.ids_by_domain(domain)
-        for user_doc in iter_docs(cls.get_db(), user_ids):
-            web_user = cls.wrap(user_doc)
-            if web_user.has_permission(domain, permission):
                 yield web_user
 
     @classmethod
@@ -2762,7 +2714,7 @@ class Invitation(models.Model):
     def get_role_name(self):
         if self.role:
             if self.role == 'admin':
-                return self.role
+                return _('Admin')
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
@@ -2771,6 +2723,45 @@ class Invitation(models.Model):
                     return _('Unknown Role')
         else:
             return None
+
+    def _send_confirmation_email(self):
+        """
+        This sends the confirmation email to the invited_by user that their
+        invitation was accepted.
+        :return:
+        """
+        invited_user = self.email
+        subject = _('{} accepted your invitation to CommCare HQ').format(invited_user)
+        recipient = WebUser.get_by_user_id(self.invited_by).get_email()
+        context = {
+            'invited_user': invited_user,
+        }
+        html_content = render_to_string('domain/email/invite_confirmation.html',
+                                        context)
+        text_content = render_to_string('domain/email/invite_confirmation.txt',
+                                        context)
+        send_html_email_async.delay(
+            subject,
+            recipient,
+            html_content,
+            text_content=text_content
+        )
+
+    def accept_invitation_and_join_domain(self, web_user):
+        """
+        Call this method to confirm that a user has accepted the invite to
+        a domain and add them as a member to the domain in the invitation.
+        :param web_user: WebUser
+        """
+        web_user.add_as_web_user(
+            self.domain,
+            role=self.role,
+            location_id=self.supply_point,
+            program_id=self.program,
+        )
+        self.is_accepted = True
+        self.save()
+        self._send_confirmation_email()
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -2781,22 +2772,6 @@ class DomainRemovalRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
-
-
-class UserCache(object):
-
-    def __init__(self):
-        self.cache = {}
-
-    def get(self, user_id):
-        if not user_id:
-            return None
-        if user_id in self.cache:
-            return self.cache[user_id]
-        else:
-            user = CouchUser.get_by_user_id(user_id)
-            self.cache[user_id] = user
-            return user
 
 
 class AnonymousCouchUser(object):

@@ -50,19 +50,26 @@ MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
 _soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
+DELETE_CHUNK_SIZE = 5000
+
 
 @periodic_task(
-    run_every=crontab(day_of_month=27),
+    run_every=crontab(hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
-def clean_logs():
+def delete_old_request_logs():
     """
-    Drop MOTECH logs older than 90 days.
-
-    Runs on the 27th of every month.
+    Delete RequestLogs older than 90 days.
     """
-    ninety_days_ago = datetime.now() - timedelta(days=90)
-    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
+    ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+    while True:
+        queryset = (RequestLog.objects
+                    .filter(timestamp__lt=ninety_days_ago)
+                    .values_list('id', flat=True)[:DELETE_CHUNK_SIZE])
+        id_list = list(queryset)
+        deleted, __ = RequestLog.objects.filter(id__in=id_list).delete()
+        if not deleted:
+            return
 
 
 @periodic_task(
@@ -89,14 +96,14 @@ def check_repeaters():
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in iterate_repeat_records(start):
+            for record in iterate_repeat_records(start, chunk_size=5000):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
                     "I've been iterating repeat records for 23 hours. I quit!"
                 ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now()
+                record.attempt_forward_now(is_retry=True)
             else:
                 iterating_time = datetime.utcnow() - start
                 _soft_assert(
@@ -109,6 +116,15 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def retry_process_repeat_record(repeat_record):
+    _process_repeat_record(repeat_record)
+
+
+def _process_repeat_record(repeat_record):
 
     # A RepeatRecord should ideally never get into this state, as the
     # domain_has_privilege check is also triggered in the create_repeat_records
@@ -134,18 +150,16 @@ def process_repeat_record(repeat_record):
         return
 
     try:
-        if repeater.paused:
-            # postpone repeat record by 1 day so that these don't get picked in each cycle and
-            # thus clogging the queue with repeat records with paused repeater
-            repeat_record.postpone_by(MAX_RETRY_WAIT)
-            return
-
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
                 repeat_record.save()
+        elif repeater.paused:
+            # postpone repeat record by MAX_RETRY_WAIT so that these don't get picked in each cycle and
+            # thus clogging the queue with repeat records with paused repeater
+            repeat_record.postpone_by(MAX_RETRY_WAIT)
         elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
-                repeat_record.fire()
+            repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 

@@ -21,7 +21,7 @@ def case_block(case):
         create=False,
         case_id=case['_id'],
         owner_id=case['location_id'],
-    ).as_xml())
+    ).as_xml(), encoding='utf-8')
 
 
 def get_cases(domain):

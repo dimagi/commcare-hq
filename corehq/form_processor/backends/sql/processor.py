@@ -76,7 +76,7 @@ class FormProcessorSQL(object):
     def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):
         from corehq.form_processor.parsers.form import apply_deprecation
 
-        new_xml = etree.tostring(xml)
+        new_xml = etree.tostring(xml, encoding='utf-8')
         form_json = convert_xform_to_json(new_xml)
         new_form = cls.new_xform(form_json)
         new_form.user_id = user_id

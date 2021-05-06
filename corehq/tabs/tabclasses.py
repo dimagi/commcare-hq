@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
-from django.utils.html import escape, strip_tags
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html, strip_tags
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -68,6 +67,7 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -93,7 +93,6 @@ from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
@@ -104,7 +103,6 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from custom.icds_core.view_utils import is_icds_cas_project
 
 
 class ProjectReportsTab(UITab):
@@ -792,10 +790,9 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             edit_section = None
-            if not is_icds_cas_project(self.domain):
-                from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-                edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain)
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
 
             if self.can_use_data_cleanup:
                 from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
@@ -907,10 +904,11 @@ class ApplicationsTab(UITab):
 
     @classmethod
     def make_app_title(cls, app):
-        return mark_safe("%s%s" % (
-            escape(strip_tags(app.name)) or '(Untitled)',
+        return format_html(
+            '{}{}',
+            strip_tags(app.name) or _('(Untitled)'),
             ' (Remote)' if is_remote_app(app) else '',
-        ))
+        )
 
     @property
     def dropdown_items(self):
@@ -1044,11 +1042,6 @@ class MessagingTab(UITab):
             })
 
         return reminders_urls
-
-    @property
-    @memoized
-    def show_dashboard(self):
-        return show_messaging_dashboard(self.domain, self.couch_user)
 
     @property
     @memoized
@@ -1206,12 +1199,11 @@ class MessagingTab(UITab):
     def dropdown_items(self):
         result = []
 
-        if self.show_dashboard:
-            result.append(dropdown_dict(_("Dashboard"), is_header=True))
-            result.append(dropdown_dict(
-                _("Dashboard"),
-                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
-            ))
+        result.append(dropdown_dict(_("Dashboard"), is_header=True))
+        result.append(dropdown_dict(
+            _("Dashboard"),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+        ))
 
         if result:
             result.append(self.divider)
@@ -1229,10 +1221,9 @@ class MessagingTab(UITab):
         if result:
             result.append(self.divider)
 
-        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
             _("View All"),
-            url=reverse(view_all_view, args=[self.domain]),
+            url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
         ))
 
         return result
@@ -1241,14 +1232,13 @@ class MessagingTab(UITab):
     def sidebar_items(self):
         items = []
 
-        if self.show_dashboard:
-            items.append((
-                _("Dashboard"),
-                [{
-                    'title': _("Dashboard"),
-                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
-                }]
-            ))
+        items.append((
+            _("Dashboard"),
+            [{
+                'title': _("Dashboard"),
+                'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+            }]
+        ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
@@ -1311,8 +1301,8 @@ class ProjectUsersTab(UITab):
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
                     if couch_user.is_deleted():
-                        username += " (%s)" % _("Deleted")
-                    return mark_safe(username)
+                        username = format_html('{} ({})', username, _("Deleted"))
+                    return username
                 else:
                     return None
 
@@ -1388,8 +1378,8 @@ class ProjectUsersTab(UITab):
                         not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
                     if couch_user.is_deleted():
-                        username += " (%s)" % _("Deleted")
-                    return mark_safe(username)
+                        username = format_html('{} ({})', username, _('Deleted'))
+                    return username
                 else:
                     return None
 
@@ -1569,6 +1559,22 @@ class EnterpriseSettingsTab(UITab):
             'url': reverse('enterprise_billing_statements',
                            args=[self.domain])
         })
+        if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
+            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
+                from corehq.apps.sso.views.enterprise_admin import (
+                    ManageSSOEnterpriseView,
+                    EditIdentityProviderEnterpriseView,
+                )
+                enterprise_views.append({
+                    'title': _(ManageSSOEnterpriseView.page_title),
+                    'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
+                    'subpages': [
+                        {
+                            'title': _(EditIdentityProviderEnterpriseView.page_title),
+                            'urlname': EditIdentityProviderEnterpriseView.urlname,
+                        },
+                    ],
+                })
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
@@ -1840,7 +1846,8 @@ def _get_integration_section(domain):
             },
             {
                 'title': _('Data Forwarding Records'),
-                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+                'url': reverse('domain_report_dispatcher',
+                               args=[domain, _get_repeat_record_report(domain)])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2134,7 +2141,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw documents'),
@@ -2153,11 +2159,7 @@ class AdminTab(UITab):
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
             ]
-            user_operations = [
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname),
-                 'icon': 'fa fa-user-secret'},
-            ] + user_operations + [
+            user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
@@ -2223,3 +2225,15 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+
+
+def _get_repeat_record_report(domain):
+    from corehq.motech.repeaters.models import are_repeat_records_migrated
+    from corehq.motech.repeaters.views import (
+        DomainForwardingRepeatRecords,
+        SQLRepeatRecordReport,
+    )
+
+    if are_repeat_records_migrated(domain):
+        return SQLRepeatRecordReport.slug
+    return DomainForwardingRepeatRecords.slug

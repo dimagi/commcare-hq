@@ -150,7 +150,7 @@ The form returned in `get_create_form()` should make use of
                 InlineField('breed'),
                 InlineField('dob'),
                 StrictButton(
-                    mark_safe('<i class="fa fa-plus"></i> %s' % "Create Puppy"),
+                    format_html('<i class="fa fa-plus"></i> {}', "Create Puppy"),
                     css_class='btn-primary',
                     type='submit'
                 )

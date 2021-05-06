@@ -26,6 +26,16 @@
     <link rel="stylesheet"
           href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
   {% endcompress %}
+
+  {% if request.use_daterangepicker %}
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+    {% endcompress %}
+  {% endif %}
+
   {% block css %}{% endblock %}
 
   <link rel="stylesheet"
@@ -50,6 +60,14 @@
     <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
     <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
   {% endcompress %}
+
+  {% if request.use_daterangepicker and not requirejs_main %}
+    {% compress js %}
+      <script src="{% static 'moment/moment.js' %}"></script>
+      <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
 
   <style id="list-cell-layout-style"></style>
   <!-- For Formplayer's app preview -->

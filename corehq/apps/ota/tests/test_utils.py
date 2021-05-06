@@ -5,7 +5,7 @@ from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 

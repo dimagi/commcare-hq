@@ -28,7 +28,8 @@ from two_factor.views import (
 )
 
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.toggles import MONITOR_2FA_CHANGES
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -288,9 +289,21 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
     @property
     def page_context(self):
+        is_using_sso = (
+            toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
+            and is_request_using_sso(self.request)
+        )
+        idp_name = None
+        if is_using_sso:
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            idp_name = idp.name
         return {
             'form': self.password_change_form,
             'hide_password_feedback': has_custom_clean_password(),
+            'is_using_sso': is_using_sso,
+            'idp_name': idp_name,
         }
 
     @method_decorator(sensitive_post_parameters())
@@ -310,6 +323,20 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        if not (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
+                and is_request_using_sso(self.request)):
+            return {}
+
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.request.user.username
+        )
+        return {
+            'is_using_sso': True,
+            'idp_name': idp.name,
+        }
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
@@ -339,15 +366,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # todo this bit of code should be replaced with a better event logging system
-        if (request.couch_user.is_commcare_user()
-                and MONITOR_2FA_CHANGES.enabled(request.couch_user.domain)):
-            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
-            monitor_2fa_soft_assert(
-                False,
-                f'2FA was ENABLED for mobile worker {request.couch_user.username} '
-                f'from {request.couch_user.domain}'
-            )
+        # this is only here to add the login_required decorator
         return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
     @property

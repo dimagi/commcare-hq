@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -8,8 +9,8 @@
   "report_id": "static-number_of_days_open_v1",
   "data_source_table": "static-nutrition_delivery_3_6_v1",
   "config": {
-    "title": "No. of days center open (Static)",
-    "description": "Number of days center was open per flw per month",
+    "title": "No. of days center open/closed (Static)",
+    "description": "Number of days center was open/closed per flw per month",
     "visible": true,
     "aggregation_columns": [
       "supervisor_id",
@@ -67,13 +68,23 @@
       {
         "display": "days_open",
         "column_id": "days_open",
-        "type": "sum_when",
-        "whens": [
-          [
-            "nutrition_center_open_today = 'yes'",
-            1
-          ]
-        ],
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_nutrition_center_open_today",
+          "binds": ["yes"],
+          "then": 1
+        }],
+        "else_": 0
+      },
+      {
+        "display": "days_closed",
+        "column_id": "days_closed",
+        "type": "sum_when_template",
+        "whens": [{
+          "type": "india-nutrition-project_nutrition_center_open_today",
+          "binds": ["no"],
+          "then": 1
+        }],
         "else_": 0
       }
     ]

@@ -1,0 +1,316 @@
+{
+  "domains": [
+    "india-nutrition-project",
+    "mh-mis-staging"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "config": {
+    "table_id": "static-suppl_nutrition_hcm_3y_6y_v1",
+    "display_name": "Supplementary Nutrition HCM (for 3 years - 6 years) V1 (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {
+      "type": "property_path",
+      "property_path": [
+        "form",
+        "update_cases_of_attended_children"
+      ]
+    },
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/87149AFE-1EE9-4C80-AE07-FD12FA808D83"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "type": "expression",
+        "column_id": "username",
+        "display_name": "username",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "username"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "userID",
+        "display_name": "userID",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": "flw_id",
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "type": "expression",
+        "column_id": "flw_id"
+      },
+      {
+        "display_name": "supervisor_id",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        },
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "type": "expression",
+        "column_id": "received_on",
+        "display_name": "received_on",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "received_on"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "completed_time",
+        "display_name": "completed_time",
+        "datatype": "datetime",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "nutrition_center_open_today",
+        "display_name": "nutrition_center_open_today",
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "nutrition_center_open_today"
+            ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "child_care_case_id",
+        "display_name": "child_care_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "child_case_id"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "child_case_id",
+        "display_name": "child_case_id",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "current_month_hcm_days_calc",
+        "display_name": "current_month_hcm_days_calc",
+        "datatype": "integer",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "current_month_hcm_days_calc"
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "member_gender",
+        "display_name": "member_gender",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_gender"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "member_residential_status",
+        "display_name": "member_residential_status",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "member_residential_status"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "disability",
+        "display_name": "disability",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "disability"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "family_unit_caste",
+        "display_name": "family_unit_caste",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "family_unit_caste"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "family_unit_religion",
+        "display_name": "family_unit_religion",
+        "datatype": "string",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "family_unit_religion"
+          },
+          "argument_expression": {
+            "type": "named",
+            "name": "member_case"
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
+      "member_case": {
+        "type": "indexed_case",
+        "case_expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "property_path",
+            "property_path": [
+              "child_case_id"
+            ]
+          },
+          "value_expression": {
+            "type": "identity"
+          }
+        },
+        "index": "parent"
+      }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "flw_id"
+        ]
+      }
+    ]
+  }
+}

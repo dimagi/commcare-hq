@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
+from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import jsonfield
@@ -195,6 +196,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway can't reach the destination number."),
         ERROR_MESSAGE_TOO_LONG:
             ugettext_noop("The gateway could not process the message because it was too long."),
+        'MESSAGE_BLANK':
+            ugettext_noop("The message was blank."),
         ERROR_CONTACT_IS_INACTIVE:
             ugettext_noop("The recipient has been deactivated."),
         ERROR_TRIAL_SMS_EXCEEDED:
@@ -1075,6 +1078,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     class Meta(object):
         app_label = 'sms'
+
+    def get_source_display(self):
+        # for some reason source choices aren't set in the field, so manually add this method.
+        # to mimic _get_FIELD_display in django.models.base.Model
+        # https://github.com/django/django/blob/main/django/db/models/base.py#L962-L966
+        return force_str(dict(self.SOURCE_CHOICES).get(self.source, self.source), strings_only=True)
 
     @classmethod
     def get_recipient_type_from_doc_type(cls, recipient_doc_type):

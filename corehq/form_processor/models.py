@@ -32,6 +32,7 @@ from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.models import TruncatingCharField
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext import jsonobject
@@ -53,18 +54,6 @@ LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
-
-
-class TruncatingCharField(models.CharField):
-    """
-    http://stackoverflow.com/a/3460942
-    """
-
-    def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
-        if value:
-            return value[:self.max_length]
-        return value
 
 
 @attr.s
@@ -1010,7 +999,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship_id == relationship]
 
-        return [index.referenced_case for index in indices]
+        return [index.referenced_case for index in indices if index.referenced_id]
 
     @property
     def parent(self):
@@ -1201,7 +1190,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         :return: referenced case
         """
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_case(self.referenced_id)
+        if self.referenced_id:
+            return CaseAccessorSQL.get_case(self.referenced_id)
+        else:
+            return None
 
     @property
     def relationship(self):

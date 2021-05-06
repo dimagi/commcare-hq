@@ -18,7 +18,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_commcare_users_by_filters,
     get_mobile_usernames_by_filters,
     get_all_user_rows,
@@ -56,6 +56,22 @@ def get_devices(user):
     )])
 
 
+def get_location_codes(location_cache, loc_id, assigned_loc_ids):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(loc_id))
+    except SQLLocation.DoesNotExist:
+        pass
+    for location_id in assigned_loc_ids:
+        # skip if primary location_id, as it is already added to the start of list above
+        if location_id != loc_id:
+            try:
+                location_codes.append(location_cache.get(location_id))
+            except SQLLocation.DoesNotExist:
+                pass
+    return location_codes
+
+
 def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
     model_data = {}
     uncategorized_data = {}
@@ -71,18 +87,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
             profile = None
     activity = user.reporting_metadata
 
-    location_codes = []
-    try:
-        location_codes.append(location_cache.get(user.location_id))
-    except SQLLocation.DoesNotExist:
-        pass
-    for location_id in user.assigned_location_ids:
-        # skip if primary location_id, as it is already added to the start of list above
-        if location_id != user.location_id:
-            try:
-                location_codes.append(location_cache.get(location_id))
-            except SQLLocation.DoesNotExist:
-                pass
+    location_codes = get_location_codes(location_cache, user.location_id, user.assigned_location_ids)
 
     def _format_date(date):
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
@@ -123,16 +128,19 @@ def get_user_role_name(domain_membership):
     return role_name
 
 
-def make_web_user_dict(user, domain):
+def make_web_user_dict(user, location_cache, domain):
     user = CouchUser.wrap_correctly(user['doc'])
     domain_membership = user.get_domain_membership(domain)
     role_name = get_user_role_name(domain_membership)
+    location_codes = get_location_codes(location_cache, domain_membership.location_id,
+                                        domain_membership.assigned_location_ids)
     return {
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
         'role': role_name,
+        'location_code': location_codes,
         'status': ugettext('Active User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
@@ -140,13 +148,19 @@ def make_web_user_dict(user, domain):
     }
 
 
-def make_invited_web_user_dict(invite):
+def make_invited_web_user_dict(invite, location_cache):
+    location_codes = []
+    try:
+        location_codes.append(location_cache.get(invite.supply_point))
+    except SQLLocation.DoesNotExist:
+        pass
     return {
         'username': invite.email,
         'first_name': 'N/A',
         'last_name': 'N/A',
         'email': invite.email,
         'role': invite.get_role_name(),
+        'location_code': location_codes,
         'status': ugettext('Invited'),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
@@ -166,7 +180,6 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         domain,
         UserFieldsView.field_type
     )
-    location_cache = LocationIdToSiteCodeCache(domain)
 
     unrecognized_user_data_keys = set()
     user_groups_length = 0
@@ -181,6 +194,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
+        location_cache = LocationIdToSiteCodeCache(current_domain)
         for n, user in enumerate(get_commcare_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
@@ -223,14 +237,17 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 
 def parse_web_users(domain, task=None, total_count=None):
     user_dicts = []
+    max_location_length = 0
+    location_cache = LocationIdToSiteCodeCache(domain)
     for n, user in enumerate(get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
                                                include_inactive=False, include_docs=True)):
-        user_dict = make_web_user_dict(user, domain)
+        user_dict = make_web_user_dict(user, location_cache, domain)
         user_dicts.append(user_dict)
+        max_location_length = max(max_location_length, len(user_dict["location_code"]))
         if task:
             DownloadBase.set_progress(task, n, total_count)
     for m, invite in enumerate(Invitation.by_domain(domain)):
-        user_dict = make_invited_web_user_dict(invite)
+        user_dict = make_invited_web_user_dict(invite, location_cache)
         user_dicts.append(user_dict)
         if task:
             DownloadBase.set_progress(task, n + m, total_count)
@@ -239,6 +256,10 @@ def parse_web_users(domain, task=None, total_count=None):
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
         'last_login (read only)', 'status', 'remove'
     ]
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.extend(json_to_headers(
+            {'location_code': list(range(1, max_location_length + 1))}
+        ))
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 

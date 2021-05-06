@@ -31,6 +31,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
+        self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
@@ -53,6 +54,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 format="calculate",
                 field="whatever",
                 calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+            ))
+        )
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "Parent's Whatever"},
+                model="case",
+                format="plain",
+                field="parent/whatever",
             ))
         )
         self.module.case_details.long.columns.append(
@@ -105,6 +114,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         config.default_relevant = True
         self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
@@ -118,6 +128,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./remote-request[1]"
         )
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -127,6 +138,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
     def test_duplicate_remote_request(self, *args):
         """
@@ -172,6 +184,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_filter(self, *args):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -217,7 +230,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
 
-    @flag_enabled('CASE_CLAIM_AUTOLAUNCH')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_auto_launch(self, *args):
         self.module.search_config.auto_launch = True
         suite = self.app.create_suite()
@@ -273,6 +286,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
+    def test_prompt_hint(self, *args):
+        self.module.search_config.properties[0].hint = {'en': 'Search against name'}
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+              <hint>
+                  <text>
+                    <locale id="search_property.m0.name.hint"/>
+                  </text>
+              </hint>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_default_search(self, *args):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
@@ -312,6 +346,126 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_daterange(self, *args):
+        """Setting the appearance to "daterange"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].input_ = 'daterange'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="daterange">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_address(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].appearance = 'address'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="address">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_address_receiver(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].receiver_expression = 'home-street'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" receive="home-street">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_address_receiver_itemset(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].receiver_expression = 'home-street'
+        self.module.search_config.properties[0].input_ = 'select1'
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id='states',
+            instance_uri="jr://fixture/item-list:states",
+            nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="select1" receive="home-street">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <itemset nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']">
+              <label ref="name"/>
+              <value ref="id"/>
+              <sort ref="id"/>
+            </itemset>
           </prompt>
         </partial>
         """
@@ -357,6 +511,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./remote-request[1]/instance[@id='states']",
         )
 
+    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
         """

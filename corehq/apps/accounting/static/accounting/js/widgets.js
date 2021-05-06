@@ -2,18 +2,21 @@ hqDefine('accounting/js/widgets', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/utils/email',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
-    _
+    _,
+    emailUtils
 ) {
-    var asyncSelect2Handler = function (field, multiple) {
+    var asyncSelect2Handler = function (field, multiple, handlerSlug) {
         'use strict';
         var self = {};
 
         self.fieldName = field;
         self.multiple = !! multiple;
+        self.handlerSlug = handlerSlug || 'select2_billing';
 
         self.init = function (initial) {
             var $field = $('form [name="' + self.fieldName + '"]');
@@ -42,7 +45,7 @@ hqDefine('accounting/js/widgets', [
                         type: 'post',
                         data: function (params) {
                             return {
-                                handler: 'select2_billing',
+                                handler: self.handlerSlug,
                                 action: self.fieldName,
                                 searchString: params.term,
                                 existing: $('form [name="' + self.fieldName + '"]').val(),
@@ -110,11 +113,7 @@ hqDefine('accounting/js/widgets', [
         };
 
         self.utils = {
-            validateEmail: function (email) {
-                // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-                var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
-                return re.test(email);
-            },
+            validateEmail: emailUtils.validateEmail,
         };
 
         return self;

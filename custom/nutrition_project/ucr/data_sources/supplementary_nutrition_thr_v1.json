@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -34,15 +35,6 @@
               "property_value": "http://openrosa.org/formdesigner/116A78AD-E839-4BD4-BA13-A534A4A85B3B"
             }
           ]
-        },
-        {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "property_name",
-            "property_name": "app_id"
-          },
-          "property_value": "b3c758f7c79e47e3a503115894f18503"
         },
         {
           "type": "or",
@@ -165,6 +157,46 @@
             "meta",
             "timeEnd"
           ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_children_0_3",
+        "display_name": "number_of_children_0_3",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_children_0_3"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_pw_lm",
+        "display_name": "number_of_pw_lm",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_pw_lm"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
         }
       }
     ],

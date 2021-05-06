@@ -1,9 +1,11 @@
 import re
 
 from datetime import datetime
+from mock import patch
 
 from django.test import TestCase
 
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -11,12 +13,13 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulk_download import parse_mobile_users
-from corehq.apps.user_importer.importer import GroupMemoizer
 
 
+@patch('corehq.apps.users.bulk_download.domain_has_privilege', lambda x, y: True)
 class TestDownloadMobileWorkers(TestCase):
 
     @classmethod
@@ -27,6 +30,8 @@ class TestDownloadMobileWorkers(TestCase):
         cls.other_domain = 'book'
         cls.domain_obj = create_domain(cls.domain)
         cls.other_domain_obj = create_domain(cls.other_domain)
+        cls.location = make_loc('1', 'loc1', cls.domain)
+        cls.other_location = make_loc('2', 'loc2', cls.other_domain)
 
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain_obj.name,
                                                     field_type=UserFieldsView.field_type)
@@ -61,6 +66,7 @@ class TestDownloadMobileWorkers(TestCase):
             last_name='Wharton',
             metadata={'born': 1862}
         )
+        cls.user1.set_location(cls.location)
         cls.user2 = CommCareUser.create(
             cls.domain_obj.name,
             'george',
@@ -71,6 +77,7 @@ class TestDownloadMobileWorkers(TestCase):
             last_name='Eliot',
             metadata={'born': 1849, PROFILE_SLUG: cls.profile.id},
         )
+        cls.user2.set_location(cls.location)
         cls.user3 = CommCareUser.create(
             cls.other_domain_obj.name,
             'emily',
@@ -80,6 +87,7 @@ class TestDownloadMobileWorkers(TestCase):
             first_name='Emily',
             last_name='Bronte',
         )
+        cls.user3.set_location(cls.other_location)
 
     @classmethod
     def tearDownClass(cls):
@@ -89,11 +97,11 @@ class TestDownloadMobileWorkers(TestCase):
         cls.domain_obj.delete()
         cls.other_domain_obj.delete()
         cls.definition.delete()
+        delete_all_locations()
         super().tearDownClass()
 
     def test_download(self):
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {})
-        self.assertNotIn('user_profile', headers)
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
@@ -106,6 +114,7 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertTrue(spec['registered_on (read only)'].startswith(datetime.today().strftime("%Y-%m-%d")))
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
+        self.assertEqual('1', spec['location_code 1'])
 
     def test_multiple_domain_download(self):
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {'domains': ['bookshelf', 'book']})
@@ -116,3 +125,4 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual('emily', spec['username'])
         self.assertEqual('True', spec['is_active'])
         self.assertEqual('Emily Bronte', spec['name'])
+        self.assertEqual('2', spec['location_code 1'])
