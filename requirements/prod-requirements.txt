@@ -521,7 +521,7 @@ tinycss2==1.0.2
     #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
-tornado==4.5.3
+tornado==6.1
     # via
     #   -r prod-requirements.in
     #   flower
