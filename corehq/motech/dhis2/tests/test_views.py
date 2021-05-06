@@ -21,7 +21,6 @@ class BaseViewTest(TestCase):
                                   created_by=None, created_via=None)
         cls.user.is_superuser = True
         cls.user.save()
-
         cls._create_data()
 
     def setUp(self):
