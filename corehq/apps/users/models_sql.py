@@ -8,7 +8,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 
 class SQLUserRole(SyncSQLToCouchMixin, models.Model):
-    domain = models.CharField(max_length=128, null=True, db_index=True)
+    domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
     default_landing_page = models.CharField(
         max_length=64, choices=[(page.id, page.name) for page in ALL_LANDING_PAGES], null=True
@@ -17,10 +17,14 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     is_non_admin_editable = models.BooleanField(null=False, default=False)
     is_archived = models.BooleanField(null=False, default=False)
     upstream_id = models.CharField(max_length=32, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    couch_id = models.CharField(max_length=126, null=True)
 
     class Meta:
         db_table = "users_userrole"
+        indexes = (
+            models.Index(fields=("domain",)),
+            models.Index(fields=("couch_id",)),
+        )
 
     @classmethod
     def _migration_get_fields(cls):
@@ -94,7 +98,7 @@ class RolePermission(models.Model):
 
 
 class SQLPermission(models.Model):
-    value = models.CharField(max_length=255, db_index=True, unique=True)
+    value = models.CharField(max_length=255, unique=True)
 
     @classmethod
     def create_all(cls):
