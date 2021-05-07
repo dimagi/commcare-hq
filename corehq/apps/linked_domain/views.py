@@ -78,6 +78,7 @@ from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
     push_models,
 )
+from corehq.apps.linked_domain.ucr import unlink_reports_in_domain
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
@@ -502,6 +503,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         if toggles.ERM_DEVELOPMENT.enabled(self.domain):
             _ = unlink_apps_in_domain(linked_domain)
+            _ = unlink_reports_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 
