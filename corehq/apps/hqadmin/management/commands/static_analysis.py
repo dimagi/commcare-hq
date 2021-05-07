@@ -1,9 +1,11 @@
+import os
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from dimagi.ext.couchdbkit import Document
+from datadog import api, initialize
 
-from corehq.util.metrics import metrics_gauge
+from dimagi.ext.couchdbkit import Document
 
 
 class Command(BaseCommand):
@@ -21,7 +23,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        self.datadog = options['datadog']
+        self.logger = DatadogLogger(self.stdout, options['datadog'])
         self.show_couch_model_count()
         self.show_custom_modules()
 
@@ -31,15 +33,39 @@ class Command(BaseCommand):
                 s for c in cls.__subclasses__() for s in all_subclasses(c)
             ])
         model_count = len(all_subclasses(Document))
-        self.stdout.write(f"CouchDB models count: {model_count}")
-        if self.datadog:
-            metrics_gauge("commcare.static_analysis.couch_model_count", model_count)
+        self.logger.log("commcare.static_analysis.couch_model_count", model_count)
 
     def show_custom_modules(self):
         custom_module_count = len(set(settings.DOMAIN_MODULE_MAP.values()))
         custom_domain_count = len(settings.DOMAIN_MODULE_MAP)
-        self.stdout.write(f"Custom modules: {custom_module_count}")
-        self.stdout.write(f"Domains using custom code: {custom_domain_count}")
-        if self.datadog:
-            metrics_gauge("commcare.static_analysis.custom_module_count", custom_module_count)
-            metrics_gauge("commcare.static_analysis.custom_domain_count", custom_domain_count)
+        self.logger.log("commcare.static_analysis.custom_module_count", custom_module_count)
+        self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
+
+
+class DatadogLogger:
+    def __init__(self, stdout, datadog):
+        self.stdout = stdout
+        self.datadog = datadog
+        if datadog:
+            api_key = os.environ.get("DATADOG_API_KEY")
+            app_key = os.environ.get("DATADOG_APP_KEY")
+            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
+            initialize(api_key=api_key, app_key=app_key)
+
+    def log(self, metric, value):
+        self.stdout.write(f"{metric}: {value}")
+        if not self.datadog:
+            return
+
+        api.Metric.send(
+            metric=metric,
+            points=value,
+            type="gauge",
+            host="travis-ci.org",
+            tags=[
+                "environment:travis",
+                f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
+                f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
+                f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
+            ],
+        )
