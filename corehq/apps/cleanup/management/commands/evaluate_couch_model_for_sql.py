@@ -234,8 +234,9 @@ class Command(BaseCommand):
         migration_field_names = []
         submodels = []
         for key, params in self.field_params.items():
-            if self.is_submodel_key(key):
+            if self.is_field_type_submodule(key):
                 submodels.append(key)
+            if self.is_submodel_key(key):
                 continue
             arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
             suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
@@ -266,7 +267,10 @@ class Command(BaseCommand):
 
     def generate_management_command(self):
         suggested_updates = []
+        submodels = []
         for key, field_type in self.field_types.items():
+            if self.is_field_type_submodule(key):
+                submodels.append(key)
             if self.is_submodel_key(key):
                 continue
             if field_type == self.FIELD_TYPE_DATE:
@@ -295,13 +299,15 @@ class Command(BaseCommand):
             models_path=self.models_path,
             db_slug=db_slug,
             dates_import=dates_import,
-            suggested_updates=suggested_updates
+            suggested_updates=suggested_updates,
+            submodels=submodels
         )
 
     def is_submodel_key(self, key):
-        if self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
-            return True
-        return "." in key
+        return "." in key or self.is_field_type_submodule(key)
+
+    def is_field_type_submodule(self, key):
+        return self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT)
 
 
 def render_tempate(template_filename, **kwargs):

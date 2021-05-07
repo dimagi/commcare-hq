@@ -28,4 +28,9 @@ class Command(PopulateSQLCommand):
                 {{ update }}
                 {%- endfor %}
             })
+        {%- if submodels %}
+        {%- for model in submodels %}
+        # add code to migrate {{ class_name }}.{{ model }}
+        {%- endfor %}
+        {%- endif %}
         return model, created

@@ -32,7 +32,7 @@ class SQL{{class_name}}(SyncSQLToCouchMixin, models.Model):
         # If the built in sub-model migration strategy is not suitable then
         # override the `_migration_get_custom_functions` and use custom migration functions.
         {% for model in submodels %}
-        #  TODO: Create SubModelSpec for {{ model }}
+        #  TODO: Create SubModelSpec for {{ class_name }}.{{ model }}
         {%- endfor %}
         pass
     {%- endif %}
