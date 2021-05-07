@@ -8,6 +8,39 @@ from datadog import api, initialize
 from dimagi.ext.couchdbkit import Document
 
 
+class DatadogLogger:
+    def __init__(self, stdout, datadog):
+        self.stdout = stdout
+        self.datadog = datadog
+        if self.datadog:
+            api_key = os.environ.get("DATADOG_API_KEY")
+            app_key = os.environ.get("DATADOG_APP_KEY")
+            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
+            initialize(api_key=api_key, app_key=app_key)
+            self.metrics = []
+
+    def log(self, metric, value, tags=None):
+        self.stdout.write(f"{metric}: {value} {tags or ''}")
+        if self.datadog:
+            self.metrics.append({
+                'metric': metric,
+                'points': value,
+                'type': "gauge",
+                'host': "travis-ci.org",
+                'tags': [
+                    "environment:travis",
+                    f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
+                    f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
+                    f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
+                ] + (tags or []),
+            })
+
+    def send_all(self):
+        if self.datadog:
+            api.Metric.send(self.metrics)
+            self.metrics = []
+
+
 class Command(BaseCommand):
     help = (
         "Display a variety of code-quality metrics, optionally sending them to datadog. "
@@ -26,6 +59,7 @@ class Command(BaseCommand):
         self.logger = DatadogLogger(self.stdout, options['datadog'])
         self.show_couch_model_count()
         self.show_custom_modules()
+        self.logger.send_all()
 
     def show_couch_model_count(self):
         def all_subclasses(cls):
@@ -40,32 +74,3 @@ class Command(BaseCommand):
         custom_domain_count = len(settings.DOMAIN_MODULE_MAP)
         self.logger.log("commcare.static_analysis.custom_module_count", custom_module_count)
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
-
-
-class DatadogLogger:
-    def __init__(self, stdout, datadog):
-        self.stdout = stdout
-        self.datadog = datadog
-        if datadog:
-            api_key = os.environ.get("DATADOG_API_KEY")
-            app_key = os.environ.get("DATADOG_APP_KEY")
-            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY environment variables must both be set"
-            initialize(api_key=api_key, app_key=app_key)
-
-    def log(self, metric, value):
-        self.stdout.write(f"{metric}: {value}")
-        if not self.datadog:
-            return
-
-        api.Metric.send(
-            metric=metric,
-            points=value,
-            type="gauge",
-            host="travis-ci.org",
-            tags=[
-                "environment:travis",
-                f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
-                f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
-                f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
-            ],
-        )
