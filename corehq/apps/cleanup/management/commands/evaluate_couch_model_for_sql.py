@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 from pathlib import Path
@@ -10,6 +9,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.couchdb_management import couch_config
+from dimagi.ext import jsonobject
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
 
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             'class_name',
         )
 
-    COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc'}
+    COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc', '_attachments'}
 
     FIELD_TYPE_BOOL = 'models.BooleanField'
     FIELD_TYPE_INTEGER = 'models.IntegerField'
@@ -72,7 +72,7 @@ class Command(BaseCommand):
             self.evaluate_doc(doc)
 
         self.standardize_max_lengths()
-        self.check_unknown_types()
+        self.correlate_with_couch_schema(self.couch_class)
 
         models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
         sql_model, couch_model_additions = self.generate_models_changes()
@@ -200,28 +200,58 @@ class Command(BaseCommand):
                 if i < len(max_lengths):
                     params['max_length'] = max_lengths[i]
 
-    def check_unknown_types(self):
-        """Final effort to resolve unknown types by looking directly at the Couch model schema"""
-        unknowns = {key for key, type_ in self.field_types.items() if type_ == self.FIELD_TYPE_UNKNOWN}
-        for key in unknowns:
-            couch_type = self.couch_class
-            for field in key.split('.'):
-                if not couch_type:
-                    continue
-                couch_type = getattr(couch_type, field, None)
+    def correlate_with_couch_schema(self, couch_class, prefix=None):
+        """Iterate through the Couch schema to add missing fields and check field types match
+        """
+        for name, field in couch_class.properties().items():
+            if name in self.COUCH_FIELDS:
+                continue
 
-            if couch_type:
-                self.update_field_type(key, self.couch_type_to_sql_type(couch_type))
+            name = f'{prefix}.{name}' if prefix else name
+            schema_type = self.couch_type_to_sql_type(field)
+            data_type = self.field_type(name)
+            if data_type is None:
+                self.init_field(name, schema_type)
+                continue
+
+            if data_type == self.FIELD_TYPE_UNKNOWN:
+                self.update_field_type(name, self.couch_type_to_sql_type(schema_type))
+                continue
+
+            if data_type != schema_type and data_type != self.FIELD_TYPE_JSON:
+                print(f"WARNING: type mismatch for {name}. "
+                      f"Type from data '{data_type}' != type from schema '{schema_type}'")
+
+            if data_type in (self.FIELD_TYPE_SUBMODEL_DICT, self.FIELD_TYPE_SUBMODEL_LIST):
+                if isinstance(field, schema.SchemaProperty):
+                    self.correlate_with_couch_schema(field.item_type, prefix=name)
+                elif isinstance(field, schema.SchemaDictProperty):
+                    self.correlate_with_couch_schema(field._type, prefix=name)
 
     def couch_type_to_sql_type(self, couch_property):
-        return {
+        type_map = {
             schema.StringProperty: self.FIELD_TYPE_STRING,
             schema.BooleanProperty: self.FIELD_TYPE_BOOL,
             schema.DateTimeProperty: self.FIELD_TYPE_DATETIME,
+            jsonobject.DateTimeProperty: self.FIELD_TYPE_DATETIME,
             schema.DateProperty: self.FIELD_TYPE_DATE,
             schema.IntegerProperty: self.FIELD_TYPE_INTEGER,
             schema.DecimalProperty: self.FIELD_TYPE_DECIMAL,
-        }.get(couch_property.__class__, self.FIELD_TYPE_UNKNOWN)
+            schema.SchemaProperty: self.FIELD_TYPE_SUBMODEL_DICT,
+            schema.DictProperty: self.FIELD_TYPE_SUBMODEL_DICT,
+            schema.SchemaDictProperty: self.FIELD_TYPE_SUBMODEL_DICT,
+            schema.ListProperty: self.FIELD_TYPE_SUBMODEL_LIST,
+            schema.SchemaListProperty: self.FIELD_TYPE_SUBMODEL_LIST,
+        }
+        exact_match = type_map.get(couch_property.__class__, None)
+        if exact_match:
+            return exact_match
+
+        for schema_class, type_ in type_map.items():
+            if isinstance(couch_property, schema_class):
+                return type_
+
+        return self.FIELD_TYPE_UNKNOWN
 
     def standardize_nulls(self):
         # null defaults to False
