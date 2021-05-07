@@ -35,6 +35,7 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_f
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
+from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS,
     LINKED_MODELS_MAP,
@@ -498,6 +499,9 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
         link.deleted = True
         link.save()
+
+        if toggles.ERM_DEVELOPMENT.enabled(self.domain):
+            _ = unlink_apps_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 
