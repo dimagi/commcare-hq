@@ -203,8 +203,10 @@ class Command(BaseCommand):
     def generate_models_changes(self):
         suggested_fields = []
         migration_field_names = []
+        submodels = []
         for key, params in self.field_params.items():
             if self.is_submodel_key(key):
+                submodels.append(key)
                 continue
             arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
             suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
@@ -240,6 +242,16 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
         return [
             {field_name_list}
         ]
+        
+    @classmethod
+    def _migration_get_submodels(cls):
+        {'# no sub-models detected. Remove this method' if not submodels else ''}
+
+        # If the built in sub-model migration strategy is not suitable then
+        # override the `_migration_get_custom_functions` and use custom migration functions.
+        {indents[2].join(['#  Create SubModelSpec for ' + model for model in submodels])}
+        pass
+        
 
     @classmethod
     def _migration_get_couch_model_class(cls):
