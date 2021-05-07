@@ -46,13 +46,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return UserRole
 
     def _migration_sync_submodels_to_couch(self, couch_object):
-        self._migrate_permissions_to_couch(couch_object)
-        self._migrate_assignable_by_to_couch(couch_object)
-
-    def _migrate_permissions_to_couch(self, couch_object):
         couch_object.permissions = self.permissions
-
-    def _migrate_assignable_by_to_couch(self, couch_object):
         couch_object.assignable_by = self.assignable_by
 
     @property
