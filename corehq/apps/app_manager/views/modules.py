@@ -993,6 +993,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
         yield ret
 
+
 @waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
