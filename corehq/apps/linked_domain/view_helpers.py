@@ -281,7 +281,10 @@ def pop_keyword_for_action(action, keywords):
         keyword = keywords[keyword_id]
         del keywords[keyword_id]
     except KeyError:
-        keyword = Keyword.objects.get(id=keyword_id)
+        try:
+            keyword = Keyword.objects.get(id=keyword_id)
+        except Keyword.DoesNotExist:
+            keyword = None
 
     return keyword
 
