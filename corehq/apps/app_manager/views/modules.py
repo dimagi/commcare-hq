@@ -446,12 +446,16 @@ def _case_list_form_options(app, module, lang=None):
 
 
 def _get_module_details_context(request, app, module, case_property_builder, messages=messages):
+    other_case_types = app.get_case_types()
+    other_case_types.discard(module.case_type)
+    other_case_types.discard(USERCASE_TYPE)
     subcase_types = list(app.get_subcase_types(module.case_type))
     item = {
         'label': gettext_lazy('Case List'),
         'detail_label': gettext_lazy('Case Detail'),
         'type': 'case',
         'model': 'case',
+        'other_case_types': sorted(list(other_case_types)),
         'subcase_types': subcase_types,
         'sort_elements': module.case_details.short.sort_elements,
         'short': module.case_details.short,
