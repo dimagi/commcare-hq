@@ -1,5 +1,13 @@
 import argparse
+from dataclasses import dataclass
 from datetime import datetime
+
+
+@dataclass
+class Point:
+    x: float
+    y: float
+    z: float = 0.0
 
 
 def utc_timestamp(value):
