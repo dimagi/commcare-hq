@@ -5,7 +5,7 @@ set -e
 # These are evaluated in the daily travis build and reported to datadog.
 # Other metrics are computed in the management command `static_analysis`
 
-source scripts/datadog_utils.sh  # provides send_metric_to_datadog
+source scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
 RADON_METRICS_FILENAME="radon-code-metrics.txt"
 

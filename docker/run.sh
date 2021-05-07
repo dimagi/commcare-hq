@@ -131,7 +131,7 @@ function runserver() {
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
-source /mnt/commcare-hq-ro/scripts/datadog_utils.sh  # provides send_metric_to_datadog
+source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
 export -f setup
 export -f run_tests
