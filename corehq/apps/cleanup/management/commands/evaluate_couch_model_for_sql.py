@@ -75,14 +75,16 @@ class Command(BaseCommand):
         self.check_unknown_types()
 
         models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
-        models_content = self.generate_models_changes()
+        sql_model, couch_model_additions = self.generate_models_changes()
         print(f"################# edit {models_file} #################")
-        print(models_content)
+        print(sql_model)
+        print(f"\n################# update {self.class_name} #################")
+        print(couch_model_additions)
 
         command_file = "populate_" + self.class_name.lower() + ".py"
         command_file = os.path.join("corehq", "apps", self.django_app, "management", "commands", command_file)
         command_content = self.generate_management_command()
-        print(f"################# add {command_file} #################")
+        print(f"\n################# add {command_file} #################")
         print(command_content)
 
     def evaluate_doc(self, doc, prefix=None):
@@ -260,14 +262,7 @@ class Command(BaseCommand):
             class_name=self.class_name
         )
 
-        return inspect.cleandoc(f"""
-            {sql_model}
-            
-            ################# update {self.class_name} #################
-            # Add SyncCouchToSQLMixin and the following methods
-    
-            {couch_model_additions}
-        """)
+        return sql_model, couch_model_additions
 
     def generate_management_command(self):
         suggested_updates = []
