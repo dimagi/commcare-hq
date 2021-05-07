@@ -2048,3 +2048,10 @@ FHIR_INTEGRATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+EMBEDDED_TABLEAU = StaticToggle(
+    'embedded_tableau',
+    'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)

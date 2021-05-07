@@ -99,14 +99,15 @@ def REPORTS(project):
     inspect_reports = _filter_reports(report_set, inspect_reports)
     deployments_reports = _filter_reports(report_set, deployments_reports)
 
-    tableau_reports = tableau.get_reports(project.name)
-
     reports.extend([
         (ugettext_lazy("Monitor Workers"), monitoring_reports),
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
-        (ugettext_lazy("Tableau Views"), tableau_reports),
     ])
+
+    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
+        tableau_reports = tableau.get_reports(project.name)
+        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
 
     if project.commtrack_enabled:
         supply_reports = (
