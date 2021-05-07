@@ -19,6 +19,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     upstream_id = models.CharField(max_length=32, null=True)
     couch_id = models.CharField(max_length=126, null=True)
 
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
     class Meta:
         db_table = "users_userrole"
         indexes = (
