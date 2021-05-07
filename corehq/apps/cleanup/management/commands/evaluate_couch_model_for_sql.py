@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import jinja2
+from couchdbkit.ext.django import schema
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date, parse_datetime
 
@@ -48,7 +49,7 @@ class Command(BaseCommand):
     FIELD_TYPE_JSON = 'JSONField'
     FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
-    FIELD_TYPE_UNKNOWN = ''
+    FIELD_TYPE_UNKNOWN = 'unknown_type'
 
     field_types = {}
     field_params = {}
@@ -71,6 +72,7 @@ class Command(BaseCommand):
             self.evaluate_doc(doc)
 
         self.standardize_max_lengths()
+        self.check_unknown_types()
 
         models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
         models_content = self.generate_models_changes()
@@ -195,6 +197,29 @@ class Command(BaseCommand):
                     i += 1
                 if i < len(max_lengths):
                     params['max_length'] = max_lengths[i]
+
+    def check_unknown_types(self):
+        """Final effort to resolve unknown types by looking directly at the Couch model schema"""
+        unknowns = {key for key, type_ in self.field_types.items() if type_ == self.FIELD_TYPE_UNKNOWN}
+        for key in unknowns:
+            couch_type = self.couch_class
+            for field in key.split('.'):
+                if not couch_type:
+                    continue
+                couch_type = getattr(couch_type, field, None)
+
+            if couch_type:
+                self.update_field_type(key, self.couch_type_to_sql_type(couch_type))
+
+    def couch_type_to_sql_type(self, couch_property):
+        return {
+            schema.StringProperty: self.FIELD_TYPE_STRING,
+            schema.BooleanProperty: self.FIELD_TYPE_BOOL,
+            schema.DateTimeProperty: self.FIELD_TYPE_DATETIME,
+            schema.DateProperty: self.FIELD_TYPE_DATE,
+            schema.IntegerProperty: self.FIELD_TYPE_INTEGER,
+            schema.DecimalProperty: self.FIELD_TYPE_DECIMAL,
+        }.get(couch_property.__class__, self.FIELD_TYPE_UNKNOWN)
 
     def standardize_nulls(self):
         # null defaults to False
