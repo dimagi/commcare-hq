@@ -1,8 +1,9 @@
-/*global Backbone */
+/*global Backbone, DOMPurify */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Util = hqImport("cloudcare/js/formplayer/utils/util"),
+        md = window.markdownit();
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -179,6 +180,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.header = headers[i];
             obj.style = styles[i];
             obj.id = i;
+            if (!obj.style.displayFormat) {
+                obj.html = DOMPurify.sanitize(md.render(details[i]));
+            }
             detailModel.push(obj);
         }
         var detailCollection = new Backbone.Collection();
