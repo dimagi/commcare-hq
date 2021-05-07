@@ -19,6 +19,8 @@ from .utils import resource_url
 def register_patients(
     requests: Requests,
     info_resource_list: List[tuple],
+    registration_enabled: bool,
+    search_enabled: bool,
     repeater_id: str,
 ) -> List[tuple]:
 
@@ -31,11 +33,14 @@ def register_patients(
             # Patient is already registered
             info_resource_list_to_send.append((info, resource))
             continue
-        patient = find_patient(requests, resource)  # Raises DuplicateWarning
+        if search_enabled:
+            patient = find_patient(requests, resource)  # Raises DuplicateWarning
+        else:
+            patient = None
         if patient:
             _set_external_id(info, patient['id'], repeater_id)
             info_resource_list_to_send.append((info, resource))
-        else:
+        elif registration_enabled:
             patient = register_patient(requests, resource)
             _set_external_id(info, patient['id'], repeater_id)
             # Don't append `resource` to `info_resource_list_to_send`
