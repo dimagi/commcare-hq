@@ -106,7 +106,7 @@ class SQLPermission(models.Model):
 class RoleAssignableBy(models.Model):
     role = models.ForeignKey("SQLUserRole", on_delete=models.CASCADE)
     assignable_by_role = models.ForeignKey(
-        "SQLUserRole", on_delete=models.CASCADE,related_name="can_assign_roles"
+        "SQLUserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
     )
 
 
