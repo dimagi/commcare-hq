@@ -50,6 +50,7 @@ class Command(BaseCommand):
 
     field_types = {}
     field_params = {}
+    index_fields = set()
 
     def handle(self, django_app, class_name, **options):
         self.class_name = class_name
@@ -154,7 +155,7 @@ class Command(BaseCommand):
         if field_type == self.FIELD_TYPE_BOOL:
             self.field_params[key]['default'] = "'TODO'"
         if key == 'domain':
-            self.field_params[key]['db_index'] = True
+            self.add_index('domain')
         if 'created' in key:
             self.field_params[key]['auto_now_add'] = True
         if 'modified' in key:
@@ -172,6 +173,13 @@ class Command(BaseCommand):
 
     def update_field_null(self, key, value):
         self.field_params[key]['null'] = self.field_params[key]['null'] or value is None
+
+    def add_index(self, fields):
+        if isinstance(fields, str):
+            fields = (fields,)
+        elif isinstance(fields, list):
+            fields = tuple(fields)
+        self.index_fields.add(fields)
 
     def standardize_max_lengths(self):
         max_lengths = [1, 2, 8, 12, 32, 64, 80, 128, 256, 512, 1000]
@@ -201,10 +209,13 @@ class Command(BaseCommand):
             arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
             suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
             migration_field_names.append(key)
-        suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True, db_index=True)")
+        suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True)")
+        self.add_index('couch_id')
 
-        field_indent = "\n    "
+        tab = "    "
+        indents = ["\n" + tab * i for i in range(4)]
         field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
+        index_list = ['models.Index(fields={}),'.format(fields) for fields in self.index_fields]
         db_table = self.django_app.lower() + "_" + self.class_name.replace("_", "").lower()
         json_import = ""
         if self.FIELD_TYPE_JSON in self.field_types.values():
@@ -216,10 +227,13 @@ from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixi
 
 
 class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
-    {field_indent.join(suggested_fields)}
+    {indents[1].join(suggested_fields)}
 
     class Meta:
         db_table = "{db_table}"
+        indexes = (
+            {indents[3].join(index_list)}
+        )
 
     @classmethod
     def _migration_get_fields(cls):
