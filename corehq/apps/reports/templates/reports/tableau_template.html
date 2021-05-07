@@ -1,3 +1,4 @@
+
 {% extends "reports/standard/base_template.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
@@ -18,7 +19,7 @@
     <p>Target Site {{ target_site }}<p>
     <p>View URL https://{{ server_address }}/trusted/{{ ticket }}/{{ view_url }}</p>
 
-<script src="https://{{ server_address }}/javascripts/api/tableau-2.min.js"></script>
+<script src="https://{{ server_address }}/javascripts/api/tableau-2.5.0.min.js"></script>
 
 <script type="text/javascript">
     function initViz() {

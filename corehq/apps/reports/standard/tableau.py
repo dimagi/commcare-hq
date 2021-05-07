@@ -36,6 +36,8 @@ class TableauReport(ProjectReport):
         context.update({"server_type": self.visualization.server.server_type,
                         "server_address": self.visualization.server.server_name,
                         "target_site": self.visualization.server.target_site,
+                        "allow_domain_username_override": self.visualization.server.allow_domain_username_override,
+                        "domain_username": self.visualization.server.domain_username,
                         "view_url": self.visualization.view_url})
         return context
 
@@ -46,17 +48,20 @@ class TableauReport(ProjectReport):
         else:
             return self.tableau_online_response()
 
+    def get_post_username(self):
+        if self.visualization.server.allow_domain_username_override:
+            tableau_trusted_auth_username = self.request.user.get('tableau_trusted_auth_username')
+            if tableau_trusted_auth_username:
+                return tableau_trusted_auth_username
+        return self.visualization.server.domain_username
+
     def tableau_server_response(self):
-        # Call the Tableau server to get a ticket.
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
-        # The verify argument indicates that we trust the self-signed certificate
-        # which lets SSL connections succeed. It should not be used in production.
-        post_arguments = {'username': self.request.user.username}
+        post_arguments = {'username': self.get_post_username()}
         if self.visualization.server.target_site != 'Default':
             post_arguments.update({'target_site': self.visualization.server.target_site})
         tabserver_response = requests.post(tabserver_url,
-                                           post_arguments,
-                                           verify='corehq/apps/reports/standard/CA_BUNDLE')
+                                           post_arguments)
         if tabserver_response.status_code == 200:
             if tabserver_response.content != b'-1':
                 self.context.update({'ticket': tabserver_response.content.decode('utf-8')})
