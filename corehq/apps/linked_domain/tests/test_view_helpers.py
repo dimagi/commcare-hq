@@ -360,7 +360,7 @@ class TestBuildIndividualViewModels(TestCase):
         expected_view_model = {
             'type': 'keyword',
             'name': 'Keyword (keyword-test)',
-            'detail': {'keyword_id': '100', 'linked_keyword_id': None},
+            'detail': {'keyword_id': '100'},
             'last_update': None,
             'can_update': True
         }

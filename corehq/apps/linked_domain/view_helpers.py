@@ -276,7 +276,7 @@ def pop_report_for_action(action, reports):
 
 
 def pop_keyword_for_action(action, keywords):
-    keyword_id = action.wrapped_detail.linked_keyword_id
+    keyword_id = action.wrapped_detail.keyword_id
     try:
         keyword = keywords[keyword_id]
         del keywords[keyword_id]
