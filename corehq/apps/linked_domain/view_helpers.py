@@ -148,9 +148,9 @@ def build_keyword_view_model(keyword, last_update=None):
     detail = None
 
     if keyword:
+        can_update = True
         name = keyword.keyword
         detail = KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
-        can_update = True
 
     view_model = build_linked_data_view_model(
         model_type=MODEL_KEYWORD,
@@ -210,7 +210,7 @@ def build_linked_data_view_model(model_type, name, detail, last_update=None, can
 
 def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None):
     """
-    Based on the provided data models, build generic
+    Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
     :return: list of view models (dicts) used to render elements on the release content page
     """
     view_models = []
