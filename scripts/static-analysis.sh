@@ -7,6 +7,15 @@ set -e
 
 source scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
+USE_DATADOG="$1"
+
+function log() {
+    echo $1 $2 $3
+    if [[ $USE_DATADOG == "datadog" ]]; then
+        send_metric_to_datadog $1 $2 "gauge" $3
+    fi
+}
+
 RADON_METRICS_FILENAME="radon-code-metrics.txt"
 
 # Run code complexity metrics on ., drop ANSI escape codes, and save to a file
@@ -17,18 +26,12 @@ radon cc . --min=C --total-average --exclude='node_modules/*,staticfiles/*' \
 TOTAL_BLOCKS=$(grep 'blocks.*analyzed' $RADON_METRICS_FILENAME | grep -oE '[0-9]+')
 COMPLEXITY=$(grep 'Average.complexity' $RADON_METRICS_FILENAME | grep -oE '[0-9.]+' | head -c 5)
 
-echo "Average complexity:" $COMPLEXITY
-echo $TOTAL_BLOCKS "blocks analyzed"
-echo "Number of blocks below a 'B' grade:"
+log "commcare.static_analysis.avg_complexity" $COMPLEXITY
+log "commcare.static_analysis.code_blocks" $TOTAL_BLOCKS
 
 for GRADE in "C" "D" "E" "F"; do
     NUM_BLOCKS=$(cat $RADON_METRICS_FILENAME | grep " - $GRADE$" | wc -l)
-    echo " " $GRADE ":" $NUM_BLOCKS
+    log "commcare.static_analysis.complex_block_count" $NUM_BLOCKS "complexity_grade:$GRADE"
 done
-
-if [[ "$1" == "datadog" ]]; then
-    send_metric_to_datadog "commcare.static_analysis.avg_complexity" $COMPLEXITY "gauge"
-    send_metric_to_datadog "commcare.static_analysis.code_blocks" $TOTAL_BLOCKS "gauge"
-fi
 
 rm $RADON_METRICS_FILENAME

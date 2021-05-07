@@ -8,6 +8,11 @@ function send_metric_to_datadog() {
         return
     fi
 
+    EXTRA_TAG=""
+    if [[ "$4" ]]; then
+        EXTRA_TAG="\"$4\","
+    fi
+
     currenttime=$(date +%s)
     curl  -X POST \
           -H "Content-type: application/json" \
@@ -19,6 +24,7 @@ function send_metric_to_datadog() {
                   \"type\":\"$3\",
                   \"host\":\"travis-ci.org\",
                   \"tags\":[
+                    $EXTRA_TAG
                     \"environment:travis\",
                     \"travis_build:$TRAVIS_BUILD_ID\",
                     \"travis_number:$TRAVIS_BUILD_NUMBER\",
