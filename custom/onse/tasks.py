@@ -1,15 +1,12 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
-from time import sleep
 from typing import Iterable, List, Optional, Tuple, Union
-from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
 from celery.task import periodic_task
 from dateutil.relativedelta import relativedelta
-from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -28,6 +25,7 @@ from custom.onse.const import (
     LAST_IMPORTED_PROPERTY,
 )
 from custom.onse.models import iter_mappings
+from corehq.motech.requests import apply_request_backoff
 
 # The production DHIS2 server is on the other side of an
 # interoperability service that changes the URL schema from
@@ -208,6 +206,7 @@ def five_years_ago():
     return datetime.utcnow().date() - relativedelta(years=5)
 
 
+@apply_request_backoff(exponential=True)
 def fetch_data_set(
     dhis2_server: ConnectionSettings,
     data_set_id: str,
@@ -224,9 +223,6 @@ def fetch_data_set(
     .. _DHIS2 data values: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    max_attempts = 3
-    backoff_seconds = 3 * 60
-
     requests = dhis2_server.get_requests()
     endpoint = '/dataValueSets' if DROP_API_PREFIX else '/api/dataValueSets'
     params = {
@@ -234,18 +230,8 @@ def fetch_data_set(
         'dataSet': data_set_id,
         'orgUnit': org_unit_id,
     }
-    attempt = 0
-    while True:
-        attempt += 1
-        try:
-            response = requests.get(endpoint, params, raise_for_status=True)
-        except (RequestException, HTTPError):
-            if attempt < max_attempts:
-                sleep(backoff_seconds * attempt)
-            else:
-                raise
-        else:
-            break
+    response = requests.get(endpoint, params, raise_for_status=True)
+
     return response.json().get('dataValues', None)
 
 

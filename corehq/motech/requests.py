@@ -1,4 +1,9 @@
 import logging
+import math
+
+from requests import RequestException
+from urllib.error import HTTPError
+from time import sleep
 from functools import wraps
 from typing import Callable, Optional
 
@@ -26,9 +31,13 @@ from corehq.util.urlvalidate.urlvalidate import (
 )
 from corehq.util.view_utils import absolute_reverse
 
+MAX_TRIES = 5
+BACKOFF_RETRY_EXPONENT_BASE = 2
+SECONDS_IN_ONE_DAY = 86400
+LINEAR_BACKOFF_PERIOD_SECONDS = 60
+
 
 def log_request(self, func, logger):
-
     @wraps(func)
     def request_wrapper(method, url, *args, **kwargs):
         log_level = logging.INFO
@@ -292,3 +301,30 @@ def validate_user_input_url_for_repeaters(url, domain, src):
                 'reason': e.reason,
             })
             raise
+
+
+def apply_request_backoff(exponential=True):
+    def request_handler(request_function):
+        def make_request_with_backoff(*args):
+            attempts = 0
+
+            while attempts < MAX_TRIES:
+                attempts += 1
+                try:
+                    response = request_function(*args)
+                except (RequestException, HTTPError):
+                    if exponential:
+                        backoff_days = math.pow(BACKOFF_RETRY_EXPONENT_BASE, attempts - 1)
+                        backoff_seconds = backoff_days * SECONDS_IN_ONE_DAY
+                    else:
+                        backoff_seconds = attempts * LINEAR_BACKOFF_PERIOD_SECONDS
+
+                    sleep(backoff_seconds)
+                else:
+                    break
+
+            return response
+
+        return make_request_with_backoff
+
+    return request_handler
