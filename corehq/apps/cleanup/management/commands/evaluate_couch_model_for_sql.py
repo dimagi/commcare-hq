@@ -271,7 +271,7 @@ class Command(BaseCommand):
             arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
             suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
             migration_field_names.append(key)
-        suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True)")
+        suggested_fields.append("couch_id = models.CharField(max_length=126, null=True)")
         self.add_index('couch_id')
 
         index_list = ['models.Index(fields={}),'.format(fields) for fields in self.index_fields]
