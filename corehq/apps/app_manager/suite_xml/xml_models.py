@@ -749,7 +749,7 @@ class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
-    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    auto_launch = StringField("@auto_launch")
     redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
