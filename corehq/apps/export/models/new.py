@@ -404,7 +404,7 @@ class ExportColumn(DocumentSchema):
     def is_deidentifed(self):
         return bool(self.deid_transform)
 
-    def get_headers(self, split_column=False):
+    def get_headers(self, split_column=False, is_odata=False):
         if self.is_deidentifed:
             return [f"{self.label} *sensitive*"]
         else:
@@ -473,13 +473,13 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         """The columns that should be included in the export"""
         return [c for c in self.columns if c.selected]
 
-    def get_headers(self, split_columns=False):
+    def get_headers(self, split_columns=False, is_odata=False):
         """
         Return a list of column headers
         """
         headers = []
         for column in self.selected_columns:
-            headers.extend(column.get_headers(split_column=split_columns))
+            headers.extend(column.get_headers(split_column=split_columns, is_odata=is_odata))
         return headers
 
     def get_rows(self, document, row_number, split_columns=False,
@@ -519,7 +519,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
+                    for index, header in enumerate(col.get_headers(split_column=split_columns, is_odata=True)):
                         if isinstance(val, list):
                             row_data[header] = "{}".format(val[index])
                         else:
@@ -2421,22 +2421,26 @@ class SplitUserDefinedExportColumn(ExportColumn):
         return row
 
     def get_headers(self, **kwargs):
+        is_odata = kwargs.pop('is_odata', False)
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return super(SplitUserDefinedExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else "{name} | {option}"
+        delimiter = "-" if is_odata else "|"
+        header_template = header if '{option}' in header else "{name} {delimiter} {option}"
         headers = []
         for option in self.user_defined_options:
             headers.append(
                 header_template.format(
                     name=header,
-                    option=option
+                    option=option,
+                    delimiter=delimiter,
                 )
             )
         headers.append(
             header_template.format(
                 name=header,
-                option='extra'
+                option='extra',
+                delimiter=delimiter,
             )
         )
         return headers
@@ -2467,7 +2471,7 @@ class MultiMediaExportColumn(ExportColumn):
 class SplitGPSExportColumn(ExportColumn):
     item = SchemaProperty(GeopointItem)
 
-    def get_headers(self, split_column=False):
+    def get_headers(self, split_column=False, is_odata=False):
         if not split_column:
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
@@ -2557,24 +2561,27 @@ class SplitExportColumn(ExportColumn):
             row.append(" ".join(selected))
         return row
 
-    def get_headers(self, split_column=False):
+    def get_headers(self, split_column=False, is_odata=False):
         if not split_column:
             return super(SplitExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else "{name} | {option}"
+        delimiter = "-" if is_odata else "|"
+        header_template = header if '{option}' in header else "{name} {delimiter} {option}"
         headers = []
         for option in self.item.options:
             headers.append(
                 header_template.format(
                     name=header,
-                    option=option.value
+                    option=option.value,
+                    delimiter=delimiter,
                 )
             )
         if not self.ignore_unspecified_options:
             headers.append(
                 header_template.format(
                     name=header,
-                    option='extra'
+                    option='extra',
+                    delimiter=delimiter,
                 )
             )
         return headers
