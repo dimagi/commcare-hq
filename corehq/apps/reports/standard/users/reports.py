@@ -12,6 +12,8 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.reports.util import datespan_from_beginning
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.util.timezones.conversions import ServerTime
 
 
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -37,10 +39,12 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @property
     def headers(self):
-        # ToDo: Add headers
         h = [
+            DataTablesColumn(_("User")),
             DataTablesColumn(_("By User")),
-            DataTablesColumn(_("For User")),
+            DataTablesColumn(_("Action")),
+            DataTablesColumn(_("Change Message")),
+            DataTablesColumn(_("Time")),
         ]
 
         return DataTablesHeader(*h)
@@ -94,8 +98,19 @@ def _user_model_content_type():
 
 
 def _log_entry_display(log_entry):
-    # ToDo: add other columns
     return [
-        log_entry.user.username,
         log_entry.object_repr,
+        log_entry.user.username,
+        _get_action_display(log_entry),
+        log_entry.change_message,
+        ServerTime(log_entry.action_time).ui_string(USER_DATETIME_FORMAT),
     ]
+
+
+def _get_action_display(log_entry):
+    action = ugettext_lazy("Updated")
+    if log_entry.is_addition():
+        action = ugettext_lazy("Added")
+    elif log_entry.is_deletion():
+        action = ugettext_lazy("Deleted")
+    return action
