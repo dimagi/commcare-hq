@@ -1,0 +1,31 @@
+{{dates_import}}
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+
+
+class Command(PopulateSQLCommand):
+    @classmethod
+    def couch_db_slug(cls):
+        return "{{db_slug}}"
+
+    @classmethod
+    def couch_doc_type(self):
+        return '{{class_name}}'
+
+    @classmethod
+    def sql_class(self):
+        from {{models_path}} import SQL{{class_name}}
+        return SQL{{class_name}}
+
+    @classmethod
+    def commit_adding_migration(cls):
+        return "TODO: add once the PR adding this file is merged"
+
+    def update_or_create_sql_object(self, doc):
+        model, created = self.sql_class().objects.update_or_create(
+            couch_id=doc['_id'],
+            defaults={
+                {%- for update in suggested_updates %}
+                {{ update }}
+                {%- endfor %}
+            })
+        return model, created

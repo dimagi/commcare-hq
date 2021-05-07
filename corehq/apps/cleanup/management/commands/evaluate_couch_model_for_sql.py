@@ -1,14 +1,16 @@
+import inspect
 import logging
 import os
+from pathlib import Path
 
+import jinja2
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date, parse_datetime
 
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.modules import to_function
-
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.couchdb_management import couch_config
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.modules import to_function
 
 logger = logging.getLogger(__name__)
 
@@ -214,61 +216,33 @@ class Command(BaseCommand):
         suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True)")
         self.add_index('couch_id')
 
-        tab = "    "
-        indents = ["\n" + tab * i for i in range(4)]
-        field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
         index_list = ['models.Index(fields={}),'.format(fields) for fields in self.index_fields]
         db_table = self.django_app.lower() + "_" + self.class_name.replace("_", "").lower()
-        json_import = ""
-        if self.FIELD_TYPE_JSON in self.field_types.values():
-            json_import = "from django.contrib.postgres.fields import JSONField\n"
-
-        return f"""
-{json_import}from django.db import models
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
-
-
-class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
-    {indents[1].join(suggested_fields)}
-
-    class Meta:
-        db_table = "{db_table}"
-        indexes = (
-            {indents[3].join(index_list)}
+        sql_model = render_tempate(
+            "sql_model.j2",
+            import_json=self.FIELD_TYPE_JSON in self.field_types.values(),
+            class_name=self.class_name,
+            migration_field_names=migration_field_names,
+            suggested_fields=suggested_fields,
+            index_list=index_list,
+            submodels=submodels,
+            db_table=db_table
         )
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            {field_name_list}
-        ]
-        
-    @classmethod
-    def _migration_get_submodels(cls):
-        {'# no sub-models detected. Remove this method' if not submodels else ''}
+        couch_model_additions = render_tempate(
+            "couch_model_additions.j2",
+            migration_field_names=migration_field_names,
+            class_name=self.class_name
+        )
 
-        # If the built in sub-model migration strategy is not suitable then
-        # override the `_migration_get_custom_functions` and use custom migration functions.
-        {indents[2].join(['#  Create SubModelSpec for ' + model for model in submodels])}
-        pass
-        
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return {self.class_name}
-
-
-# TODO: Add SyncCouchToSQLMixin and the following methods to {self.class_name}
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            {field_name_list}
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQL{self.class_name}
-        """
+        return inspect.cleandoc(f"""
+            {sql_model}
+            
+            ################# update {self.class_name} #################
+            # Add SyncCouchToSQLMixin and the following methods
+    
+            {couch_model_additions}
+        """)
 
     def generate_management_command(self):
         suggested_updates = []
@@ -281,55 +255,37 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
                 suggested_updates.append(f'"{key}": force_to_datetime(doc.get("{key}")),')
             else:
                 suggested_updates.append(f'"{key}": doc.get("{key}"),')
-        updates_list = "\n                ".join(suggested_updates)
 
         uri = couch_config.get_db_uri_for_class(self.couch_class)
-        db_slug_with_quotes = {uri: slug for slug, uri in couch_config.all_db_uris_by_slug.items()}[uri]
-        if db_slug_with_quotes:
-            db_slug_with_quotes = f'"{db_slug_with_quotes}"'
+        db_slug = {uri: slug for slug, uri in couch_config.all_db_uris_by_slug.items()}[uri]
 
         date_conversions = []
         if self.FIELD_TYPE_DATE in self.field_types.values():
             date_conversions.append("force_to_date")
         if self.FIELD_TYPE_DATETIME in self.field_types.values():
             date_conversions.append("force_to_datetime")
+
+        dates_import = ""
         if date_conversions:
-            dates_import = f"from dimagi.utils.dates import {','.join(date_conversions)}\n\n"
-        else:
-            dates_import = ""
+            dates_import = f"from dimagi.utils.dates import {','.join(date_conversions)}"
 
-        return f"""
-{dates_import}from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-
-
-class Command(PopulateSQLCommand):
-    @classmethod
-    def couch_db_slug(cls):
-        return {db_slug_with_quotes}
-
-    @classmethod
-    def couch_doc_type(self):
-        return '{self.class_name}'
-
-    @classmethod
-    def sql_class(self):
-        from {self.models_path} import SQL{self.class_name}
-        return SQL{self.class_name}
-
-    @classmethod
-    def commit_adding_migration(cls):
-        return "TODO: add once the PR adding this file is merged"
-
-    def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class().objects.update_or_create(
-            couch_id=doc['_id'],
-            defaults={{
-                {updates_list}
-            }})
-        return (model, created)
-        """
+        return render_tempate(
+            "populate_command.j2",
+            class_name=self.class_name,
+            models_path=self.models_path,
+            db_slug=db_slug,
+            dates_import=dates_import,
+            suggested_updates=suggested_updates
+        )
 
     def is_submodel_key(self, key):
         if self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
             return True
         return "." in key
+
+
+def render_tempate(template_filename, **kwargs):
+    path = Path(__file__).parent.joinpath("templates")
+    templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=path))
+    template = templateEnv.get_template(template_filename)
+    return template.render(**kwargs)
