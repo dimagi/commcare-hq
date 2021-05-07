@@ -269,6 +269,9 @@ def configure_sentry(base_dir, server_env, dsn):
 
 
 def get_release_name(base_dir, server_env):
+    """Return the release name. This should match the name of the release
+    created by commcare-cloud
+    """
     release_dir = base_dir.split('/')[-1]
     if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
         return "{}-{}".format(release_dir, server_env)
