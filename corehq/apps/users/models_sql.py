@@ -70,10 +70,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @property
     def assignable_by(self):
-        return [
-            assignment.assignable_by_role.get_id
-            for assignment in self.get_assignable_by()
-        ]
+        return list(
+            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+        )
 
 
 @foreign_value_init
