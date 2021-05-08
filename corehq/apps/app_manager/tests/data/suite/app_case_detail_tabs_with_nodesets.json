@@ -618,7 +618,8 @@
                         {  
                             "doc_type":"DetailTab",
                             "has_nodeset":true,
-                            "nodeset":"some/data",
+                            "nodeset":"",
+                            "nodeset_case_type":"show",
                             "isTab":true,
                             "header":{  
                                 "en":"Data"
