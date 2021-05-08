@@ -372,8 +372,7 @@ def load_memoizer(domain):
 
 
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
-
-    domains_list = user_filters['domains']
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     users_groups_count = 0
     groups = set()
@@ -406,7 +405,11 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
 
 def dump_web_users(domain, download_id, user_filters, task, owner_id):
-    users_count = count_web_users_by_filters(domain, user_filters)
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    users_count = 0
+    for current_domain in domains_list:
+        users_count += count_web_users_by_filters(current_domain, user_filters)
+
     DownloadBase.set_progress(task, 0, users_count)
 
     user_headers, user_rows = parse_web_users(domain, user_filters, task, users_count)
