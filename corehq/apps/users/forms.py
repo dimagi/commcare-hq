@@ -1205,9 +1205,10 @@ class UserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
+        roles = [UserRole.admin_role(self.domain)] + UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles]
+            (role.get_qualified_id(), role.name or _('(No Name)')) for role in roles
+        ]
 
         self.fields['domains'].choices = [(self.domain, self.domain)]
         if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
