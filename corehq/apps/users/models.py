@@ -169,24 +169,10 @@ class Permissions(DocumentSchema):
         return super(Permissions, cls).wrap(data)
 
     def view_web_app(self, master_app_id):
-        if self.view_web_apps:
-            return True
-        return master_app_id in self.view_web_apps_list
+        return self.view_web_apps or master_app_id in self.view_web_apps_list
 
-    def view_report(self, report, value=None):
-        """Both a getter (when value=None) and setter (when value=True|False)"""
-
-        if value is None:
-            return self.view_reports or report in self.view_report_list
-        else:
-            if value:
-                if report not in self.view_report_list:
-                    self.view_report_list.append(report)
-            else:
-                try:
-                    self.view_report_list.remove(report)
-                except ValueError:
-                    pass
+    def view_report(self, report):
+        return self.view_reports or report in self.view_report_list
 
     def has(self, permission, data=None):
         if data:
@@ -194,31 +180,11 @@ class Permissions(DocumentSchema):
         else:
             return getattr(self, permission)
 
-    def set(self, permission, value, data=None):
-        if self.has(permission, data) == value:
-            return
-        if data:
-            getattr(self, permission)(data, value)
-        else:
-            setattr(self, permission, value)
-
     def _getattr(self, name):
         a = getattr(self, name)
         if isinstance(a, list):
             a = set(a)
         return a
-
-    def _setattr(self, name, value):
-        if isinstance(value, set):
-            value = list(value)
-        setattr(self, name, value)
-
-    def __or__(self, other):
-        permissions = Permissions()
-        for name, value in permissions.properties().items():
-            if isinstance(value, (BooleanProperty, ListProperty)):
-                permissions._setattr(name, self._getattr(name) | other._getattr(name))
-        return permissions
 
     def __eq__(self, other):
         for name in self.properties():
@@ -340,7 +306,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_archived=False):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
             startkey=[domain],
@@ -353,15 +318,14 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return [x for x in all_roles if not x.is_archived]
 
     @classmethod
-    def by_domain_and_name(cls, domain, name, is_archived=False):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
+    def by_domain_and_name(cls, domain, name):
         all_roles = cls.view(
             'users/roles_by_domain',
             key=[domain, name],
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        return list(all_roles)
 
     @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
@@ -2507,7 +2471,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_location.reset_cache(self)
         self.save()
 
-    def unset_location(self, domain, fall_back_to_next=False):
+    def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
         Change primary location to next location from assigned_location_ids,
         if there are no more locations in assigned_location_ids, primary location is cleared
@@ -2522,7 +2486,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             membership.location_id = None
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
@@ -2538,7 +2503,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.get_sql_locations.reset_cache(self)
             self.save()
 
-    def reset_locations(self, domain, location_ids):
+    def reset_locations(self, domain, location_ids, commit=True):
         """
         reset locations to given list of location_ids. Before calling this, primary location
             should be explicitly set/unset via set_location/unset_location
@@ -2548,7 +2513,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     @memoized
     def get_sql_location(self, domain):

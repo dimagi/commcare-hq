@@ -1091,6 +1091,10 @@ class ODataFormResource(BaseODataResource):
 
 
 class MessagingEventResource(HqBaseResource, ModelResource):
+    content_type_display = fields.CharField(attribute='get_content_type_display')
+    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
+    status_display = fields.CharField(attribute='get_status_display')
+    source_display = fields.CharField(attribute='get_source_display')
 
     class Meta(object):
         queryset = MessagingEvent.objects.all()

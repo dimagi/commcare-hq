@@ -1407,6 +1407,10 @@ class ProjectUsersTab(UITab):
                         'title': FilteredWebUserDownload.page_title,
                         'urlname': FilteredWebUserDownload.urlname,
                     },
+                    {
+                        'title': _("Bulk Upload"),
+                        'urlname': 'upload_web_users',
+                    },
                 ],
                 'show_in_dropdown': True,
             })

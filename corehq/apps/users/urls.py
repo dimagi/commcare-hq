@@ -7,6 +7,8 @@ from .views import (
     DomainPermissionsMirrorView,
     EditWebUserView,
     InviteWebUserView,
+    UploadWebUsers,
+    WebUserUploadStatusView,
     ListRolesView,
     ListWebUsersView,
     add_domain_membership,
@@ -28,6 +30,7 @@ from .views import (
     create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+    WebUserUploadJobPollView,
 )
 from .views.web import (
     accept_invitation,
@@ -69,8 +72,9 @@ from .views.mobile.users import (
     toggle_demo_mode,
     update_user_groups,
     user_download_job_poll,
-    user_upload_job_poll,
-    CommCareUserConfirmAccountView, send_confirmation_email)
+    CommCareUserConfirmAccountView,
+    send_confirmation_email,
+    CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
@@ -106,6 +110,11 @@ urlpatterns = [
     url(r'^web/filter_and_download/$', FilteredWebUserDownload.as_view(),
         name=FilteredWebUserDownload.urlname),
     url(r'^web/count_users/$', count_web_users, name='count_web_users'),
+    url(r'^web/upload/$', waf_allow('XSS_BODY')(UploadWebUsers.as_view()), name=UploadWebUsers.urlname),
+    url(r'^web/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
+    url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadJobPollView.as_view(),
+        name=WebUserUploadJobPollView.urlname),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),
@@ -150,7 +159,7 @@ urlpatterns = [
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_upload_job_poll, name='user_upload_job_poll'),
+        CommcareUserUploadJobPollView.as_view(), name=CommcareUserUploadJobPollView.urlname),
     url(r'^commcare/download/$', download_commcare_users, name='download_commcare_users'),
     url(r'^commcare/filter_and_download/$', FilteredCommCareUserDownload.as_view(),
         name=FilteredCommCareUserDownload.urlname),
