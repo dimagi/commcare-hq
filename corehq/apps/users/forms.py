@@ -1230,10 +1230,12 @@ class UserFilterForm(forms.Form):
         fields = [
             crispy.Field('role_id', css_class="hqwebapp-select2"),
             crispy.Field('search_string'),
-            crispy.Field('location_id'),
         ]
         if self.user_type == MOBILE_USER_TYPE:
-            fields += [crispy.Field('columns')]
+            fields += [
+                crispy.Field('location_id'),
+                crispy.Field('columns'),
+            ]
         fields += [crispy.Field('domains')]
 
         self.helper.layout = crispy.Layout(
