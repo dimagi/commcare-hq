@@ -370,10 +370,10 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_target_module_different_datums(self, *args):
         # * Registration
         #   * Register patient form
-        #     * open case (patient), update user_case
+        #     * open case (patient), update usercase
         # * Visits (case type = patient, case list form = 'Register patient')
         #   * Visit form
-        #     * update case, open child case (visit), load from user_case
+        #     * update case, open child case (visit), load from usercase
         #   * Record notes
         #     * update case, open child case (visit)
         #   * Update patient

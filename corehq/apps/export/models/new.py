@@ -2613,7 +2613,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
+        case_ids = [index.get('referenced_id') for index in indices if index.get('referenced_type') == case_type]
         return ' '.join(case_ids)
 
 

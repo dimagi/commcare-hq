@@ -1,9 +1,9 @@
+from django.utils.safestring import SafeString
 from lxml.html import fragment_fromstring
 from django.test import SimpleTestCase
 from ...templatetags.xforms_extras import (
     html_trans,
     html_trans_prefix,
-    html_trans_prefix_delim,
     clean_trans,
     trans,
     html_name,
@@ -23,11 +23,6 @@ class TestTransFilter(SimpleTestCase):
         result = trans(translation_dict)
         self.assertEqual(result, 'English Output [en] ')
 
-    def test_exclude_language_only_outputs_translation(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, include_lang=False)
-        self.assertEqual(result, 'English Output')
-
     def test_primary_language_excludes_indicator(self):
         translation_dict = {'en': 'English Output'}
         langs = ['en']
@@ -40,21 +35,11 @@ class TestTransFilter(SimpleTestCase):
         result = trans(translation_dict, langs=langs)
         self.assertEqual(result, 'English Output [en] ')
 
-    def test_do_not_use_delimiter_includes_html_indicator(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, use_delim=False)
-        self.assertEqual(result,
-            'English Output <span class="btn btn-xs btn-info btn-langcode-preprocessed">en</span> ')
-
-    def test_prefix_puts_indicator_in_front_of_translation(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, prefix=True)
-        self.assertEqual(result, ' [en] English Output')
-
-    def test_strip_tags_removes_tags_from_html_indicator(self):
-        translation_dict = {'en': 'English Output'}
-        result = trans(translation_dict, use_delim=False, strip_tags=True)
-        self.assertEqual(result, 'English Output en ')
+    def test_does_not_escape_output_by_default(self):
+        translation_dict = {'en': '<b>English Output</b>'}
+        result = trans(translation_dict)
+        self.assertEqual(result, '<b>English Output</b> [en] ')
+        self.assertNotIsInstance(result, SafeString)
 
 
 class TestHTMLTransFilter(SimpleTestCase):
@@ -99,6 +84,12 @@ class TestHTMLTransFilter(SimpleTestCase):
         result = html_trans(name_dict, langs)
         self.assertEqual(result, '<span class="label label-info">Empty</span>')
 
+    def test_is_safe(self):
+        name_dict = {'en': 'English Output'}
+        langs = ['en']
+        result = html_trans(name_dict, langs)
+        self.assertIsInstance(result, SafeString)
+
 
 class TestHTMLTransPrefixFilter(SimpleTestCase):
     def test_primary_language_includes_no_indicator(self):
@@ -128,30 +119,11 @@ class TestHTMLTransPrefixFilter(SimpleTestCase):
         result = html_trans_prefix(name_dict, langs)
         self.assertEqual(result, '<span class="label label-info">Empty</span>')
 
-
-class TestHTMLTransPrefixDelimFilter(SimpleTestCase):
-    def test_primary_language_includes_no_indicator(self):
+    def test_is_safe(self):
         name_dict = {'en': 'English Output'}
         langs = ['en']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, 'English Output')
-
-    def test_non_primary_language_includes_prepended_indicator(self):
-        name_dict = {'por': 'Portuguese Output'}
-        langs = ['en', 'por']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, ' [por] Portuguese Output')
-
-    def test_default_language_includes_prepended_indicator(self):
-        name_dict = {'en': 'English Output'}
-        result = html_trans_prefix_delim(name_dict)
-        self.assertEqual(result, ' [en] English Output')
-
-    def test_empty_mapping_returns_empty_span(self):
-        name_dict = {}
-        langs = ['en', 'por']
-        result = html_trans_prefix_delim(name_dict, langs)
-        self.assertEqual(result, '<span class="label label-info">Empty</span>')
+        result = html_trans_prefix(name_dict, langs)
+        self.assertIsInstance(result, SafeString)
 
 
 class TestCleanTransFilter(SimpleTestCase):
@@ -171,6 +143,12 @@ class TestCleanTransFilter(SimpleTestCase):
         name_dict = {'en': 'English Output'}
         result = clean_trans(name_dict)
         self.assertEqual(result, 'English Output')
+
+    def test_does_not_escape_output(self):
+        name_dict = {'en': '<b>English Output</b>'}
+        result = clean_trans(name_dict)
+        self.assertEqual(result, '<b>English Output</b>')
+        self.assertNotIsInstance(result, SafeString)
 
 
 class TestHTMLNameFilter(SimpleTestCase):

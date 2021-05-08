@@ -11,6 +11,7 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.api.decorators import allow_cors
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
@@ -23,6 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.pillows.case_search import domain_needs_search_index
 from corehq.toggles import CASE_API_V0_6
+from corehq.util.view_utils import reverse
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
@@ -81,6 +83,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 
 @waf_allow('XSS_BODY')
 @csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
 @require_can_edit_data
 @CASE_API_V0_6.required_decorator()
@@ -109,10 +112,13 @@ def _handle_individual_get(request, case_id):
 
 def _handle_list_view(request):
     try:
-        cases = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.GET.dict())
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    return JsonResponse(cases)
+
+    if 'next' in res:
+        res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
+    return JsonResponse(res)
 
 
 def _handle_case_update(request, case_id=None):

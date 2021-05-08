@@ -12,7 +12,7 @@ import mock
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.tests.utils import run_with_all_backends

@@ -62,7 +62,7 @@ from corehq.motech.repeaters.repeater_generators import (
 )
 from corehq.motech.repeaters.tasks import (
     check_repeaters,
-    process_repeat_record,
+    _process_repeat_record,
 )
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -331,10 +331,10 @@ class RepeaterTest(BaseRepeaterTest):
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
     @run_with_all_backends
-    def test_process_repeat_record_locking(self):
+    def test_retry_process_repeat_record_locking(self):
         self.assertEqual(len(self.repeat_records()), 2)
 
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
@@ -343,7 +343,7 @@ class RepeaterTest(BaseRepeaterTest):
             record.next_check = datetime.utcnow()
             record.save()
 
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
+        with patch('corehq.motech.repeaters.tasks.retry_process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 2)
 
@@ -1002,7 +1002,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         # not paused
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
-                # calls process_repeat_record():
+                # calls _process_repeat_record():
                 self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 0)
@@ -1012,7 +1012,7 @@ class TestRepeaterPause(BaseRepeaterTest):
                 # re fetch repeat record
                 repeat_record_id = self.repeat_record.get_id
                 self.repeat_record = RepeatRecord.get(repeat_record_id)
-                process_repeat_record(self.repeat_record)
+                _process_repeat_record(self.repeat_record)
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 1)
 
@@ -1021,7 +1021,7 @@ class TestRepeaterPause(BaseRepeaterTest):
                 # re fetch repeat record
                 repeat_record_id = self.repeat_record.get_id
                 self.repeat_record = RepeatRecord.get(repeat_record_id)
-                process_repeat_record(self.repeat_record)
+                _process_repeat_record(self.repeat_record)
                 self.assertEqual(mock_fire.call_count, 2)
                 self.assertEqual(mock_postpone_fire.call_count, 1)
 
@@ -1056,7 +1056,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
-            process_repeat_record(self.repeat_record)
+            _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
 
@@ -1067,7 +1067,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CaseAccessors(self.domain_obj).get_case(CASE_ID))
-            process_repeat_record(self.repeat_record)
+            _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
 

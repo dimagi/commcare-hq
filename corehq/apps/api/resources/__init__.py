@@ -10,6 +10,7 @@ from tastypie.resources import Resource
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.util import get_obj
 
 
@@ -64,10 +65,7 @@ class CorsResourceMixin(object):
 
     def create_response(self, *args, **kwargs):
         response = super(CorsResourceMixin, self).create_response(*args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-
-        return response
+        return add_cors_headers_to_response(response)
 
     def method_check(self, request, allowed=None):
         if allowed is None:
@@ -78,8 +76,7 @@ class CorsResourceMixin(object):
 
         if request_method == 'options':
             response = HttpResponse(allows)
-            response['Access-Control-Allow-Origin'] = '*'
-            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            add_cors_headers_to_response(response)
             response['Allow'] = allows
             raise ImmediateHttpResponse(response=response)
 

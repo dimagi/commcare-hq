@@ -103,7 +103,6 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from custom.icds_core.view_utils import is_icds_cas_project
 
 
 class ProjectReportsTab(UITab):
@@ -791,10 +790,9 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             edit_section = None
-            if not is_icds_cas_project(self.domain):
-                from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-                edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain)
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
 
             if self.can_use_data_cleanup:
                 from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
@@ -1403,6 +1401,10 @@ class ProjectUsersTab(UITab):
                     {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
+                    },
+                    {
+                        'title': _("Bulk Upload"),
+                        'urlname': 'upload_web_users'
                     }
                 ],
                 'show_in_dropdown': True,
@@ -1848,7 +1850,8 @@ def _get_integration_section(domain):
             },
             {
                 'title': _('Data Forwarding Records'),
-                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+                'url': reverse('domain_report_dispatcher',
+                               args=[domain, _get_repeat_record_report(domain)])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2142,7 +2145,6 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
-            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw documents'),
@@ -2161,11 +2163,7 @@ class AdminTab(UITab):
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
             ]
-            user_operations = [
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname),
-                 'icon': 'fa fa-user-secret'},
-            ] + user_operations + [
+            user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
@@ -2231,3 +2229,15 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+
+
+def _get_repeat_record_report(domain):
+    from corehq.motech.repeaters.models import are_repeat_records_migrated
+    from corehq.motech.repeaters.views import (
+        DomainForwardingRepeatRecords,
+        SQLRepeatRecordReport,
+    )
+
+    if are_repeat_records_migrated(domain):
+        return SQLRepeatRecordReport.slug
+    return DomainForwardingRepeatRecords.slug

@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from corehq.apps.users.dbaccessors import get_all_role_ids
 from corehq.apps.users.models import UserRole
 from corehq.util.couch import DocUpdate, iter_update
 from corehq.util.log import with_progress_bar
@@ -20,10 +21,5 @@ class Command(BaseCommand):
     allowed_app_list"""
 
     def handle(self, **options):
-        roles = UserRole.view(
-            'users/roles_by_domain',
-            include_docs=False,
-            reduce=False
-        ).all()
-        role_ids = [role['id'] for role in roles]
+        role_ids = get_all_role_ids()
         iter_update(UserRole.get_db(), _copy_permissions, with_progress_bar(role_ids), chunksize=1)

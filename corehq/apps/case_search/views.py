@@ -62,12 +62,16 @@ class CaseSearchView(BaseDomainView):
             search = search.owner(owner_id)
         for param in search_params:
             value = re.sub(param.get('regex', ''), '', param.get('value'))
-            search = search.case_property_query(
-                param.get('key'),
-                value,
-                clause=param.get('clause'),
-                fuzzy=param.get('fuzzy'),
-            )
+            if '/' in param.get('key'):
+                query = '{} = "{}"'.format(param.get('key'), value)
+                search = search.xpath_query(self.domain, query, fuzzy=param.get('fuzzy'))
+            else:
+                search = search.case_property_query(
+                    param.get('key'),
+                    value,
+                    clause=param.get('clause'),
+                    fuzzy=param.get('fuzzy'),
+                )
 
         if xpath:
             search = search.xpath_query(self.domain, xpath)

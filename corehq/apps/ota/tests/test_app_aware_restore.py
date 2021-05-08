@@ -24,7 +24,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import Permissions, UserRole
 from corehq.util.test_utils import flag_enabled
 

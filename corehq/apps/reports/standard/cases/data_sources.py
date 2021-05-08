@@ -1,10 +1,10 @@
 import datetime
 import json
 
-from django.core import cache
+import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
-from django.utils import html
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 
 import dateutil
@@ -20,19 +20,27 @@ from corehq.apps.case_search.const import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
 
-class CaseInfo(object):
+class CaseDisplay:
+    """This class wraps a raw case from ES to provide simpler access
+    to certain properties as well as formatting for properties for use in
+    the UI"""
 
-    def __init__(self, report, case):
+    date_format = USER_DATETIME_FORMAT_WITH_SEC
+
+    def __init__(self, case, timezone=pytz.UTC, override_user_id=None):
         """
         case is a dict object of the case doc
         """
         self.case = case
-        self.report = report
+        self.timezone = timezone
+        self.override_user_id = override_user_id
 
     @property
     def case_type(self):
@@ -58,7 +66,7 @@ class CaseInfo(object):
     @property
     def case_detail_url(self):
         try:
-            return absolute_reverse('case_data', args=[self.report.domain, self.case_id])
+            return absolute_reverse('case_data', args=[self.case['domain'], self.case_id])
         except NoReverseMatch:
             return None
 
@@ -66,26 +74,8 @@ class CaseInfo(object):
     def is_closed(self):
         return self.case['closed']
 
-    def _dateprop(self, prop, iso=True):
-        val = self.report.date_to_json(self.parse_date(self.case[prop]))
-        if iso:
-            val = 'T'.join(val.split(' ')) if val else None
-        return val
-
     @property
-    def opened_on(self):
-        return self._dateprop('opened_on')
-
-    @property
-    def modified_on(self):
-        return self._dateprop('modified_on')
-
-    @property
-    def closed_on(self):
-        return self._dateprop('closed_on')
-
-    @property
-    def creating_user(self):
+    def _creating_user(self):
         try:
             creator_id = self.case['opened_by']
         except KeyError:
@@ -126,7 +116,7 @@ class CaseInfo(object):
 
     @property
     def user_id(self):
-        return self.report and self.report.individual or self.owner_id
+        return self.override_user_id or self.owner_id
 
     @property
     def owner_id(self):
@@ -170,9 +160,6 @@ class CaseInfo(object):
             except Exception:
                 return date_string
 
-
-class CaseDisplay(CaseInfo):
-
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
@@ -182,30 +169,44 @@ class CaseDisplay(CaseInfo):
     def case_link(self):
         url = self.case_detail_url
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (
-                self.case_detail_url, html.escape(self.case_name_display)))
+            return format_html(
+                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+                self.case_detail_url,
+                self.case_name_display)
         else:
             return "%s (bad ID format)" % self.case_name
 
+    def _dateprop(self, prop):
+        date = self.parse_date(self.case[prop])
+        if date:
+            user_time = PhoneTime(date, self.timezone).user_time(self.timezone)
+            return user_time.ui_string(self.date_format)
+        else:
+            return ''
+
     @property
     def opened_on(self):
-        return self._dateprop('opened_on', False)
+        return self._dateprop('opened_on')
     date_opened = opened_on
 
     @property
     def modified_on(self):
-        return self._dateprop('modified_on', False)
+        return self._dateprop('modified_on')
     last_modified = modified_on
 
     @property
+    def closed_on(self):
+        return self._dateprop('closed_on')
+
+    @property
     def server_last_modified_date(self):
-        return self._dateprop('server_modified_on', False)
+        return self._dateprop('server_modified_on')
 
     @property
     def owner_display(self):
         owner_type, owner = self.owner
         if owner_type == 'group':
-            return '<span class="label label-default">%s</span>' % owner['name']
+            return format_html('<span class="label label-default">{}</span>', owner['name'])
         else:
             return owner['name']
     owner_name = owner_display
@@ -215,7 +216,7 @@ class CaseDisplay(CaseInfo):
 
     @property
     def creating_user(self):
-        user = super(CaseDisplay, self).creating_user
+        user = self._creating_user
         if user is None:
             return _("No data")
         else:
@@ -224,7 +225,7 @@ class CaseDisplay(CaseInfo):
 
     @property
     def opened_by_user_id(self):
-        user = super(CaseDisplay, self).creating_user
+        user = self._creating_user
         if user is None:
             return _("No data")
         else:
@@ -246,9 +247,10 @@ class CaseDisplay(CaseInfo):
 class SafeCaseDisplay(object):
     """Show formatted properties if they are used in XML, otherwise show the property directly from the case
     """
-    def __init__(self, report, case):
+    def __init__(self, case, timezone, override_user_id=None):
         self.case = case
-        self.report = report
+        self.timezone = timezone
+        self.override_user_id = override_user_id
 
     def get(self, name):
         if name == '_link':
@@ -258,16 +260,17 @@ class SafeCaseDisplay(object):
             return json.dumps(self.case.get('indices', []))
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
-            return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
+            return getattr(CaseDisplay(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
 
         return self.case.get(name)
 
     @property
     def _link(self):
         try:
-            link = absolute_reverse('case_data', args=[self.report.domain, self.case.get('_id')])
+            link = absolute_reverse('case_data', args=[self.case.get("domain"), self.case.get('_id')])
         except NoReverseMatch:
             return _("No link found")
-        return html.mark_safe(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("View Case"))
-        )
+        return format_html(
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+            link,
+            _("View Case"))
