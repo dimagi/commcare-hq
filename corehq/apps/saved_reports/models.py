@@ -844,6 +844,8 @@ class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
     datespan_slug = models.CharField(max_length=64, null=True)
+
+    # unknown fields
     update_seq = models.CharField(max_length=1000, null=False)
     purge_seq = models.IntegerField(null=False)
     db_name = models.CharField(max_length=12, null=False)
