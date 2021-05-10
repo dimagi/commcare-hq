@@ -502,8 +502,8 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link.save()
 
         if toggles.ERM_DEVELOPMENT.enabled(self.domain):
-            _ = unlink_apps_in_domain(linked_domain)
-            _ = unlink_reports_in_domain(linked_domain)
+            unlink_apps_in_domain(linked_domain)
+            unlink_reports_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 

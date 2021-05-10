@@ -89,14 +89,17 @@ class UnlinkApplicationsForDomainTests(TestCase):
         self.assertEqual(0, len(unlinked_apps))
 
 
-class UnlinkUCRTest(SimpleTestCase):
+class UnlinkUCRTest(TestCase):
 
     domain = 'unlink-ucr-test'
 
     def test_unlink_ucr_returns_none_if_not_linked(self):
         report = ReportConfiguration()
         report.domain = self.domain
+        report.config_id = '123abd'
         report.report_meta = ReportMeta()
+        report.save()
+        self.addCleanup(report.delete)
 
         unlinked_report = unlink_report(report)
 
@@ -105,7 +108,10 @@ class UnlinkUCRTest(SimpleTestCase):
     def test_unlink_ucr_returns_unlinked_report(self):
         report = ReportConfiguration()
         report.domain = self.domain
+        report.config_id = '123abd'
         report.report_meta = ReportMeta(master_id='abc123')
+        report.save()
+        self.addCleanup(report.delete)
 
         unlinked_report = unlink_report(report)
 
