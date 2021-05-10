@@ -463,6 +463,10 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         from corehq.apps.es.users import UserES
         return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
+    @property
+    def cache_version(self):
+        return self._rev
+
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 

@@ -126,6 +126,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
         )
 
+    @property
+    def cache_version(self):
+        return self.modified_on.isoformat()
 
 @foreign_value_init
 class RolePermission(models.Model):
