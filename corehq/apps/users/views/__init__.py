@@ -10,6 +10,7 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.apps.users.analytics import get_role_user_count
 from corehq.apps.users.models_sql import StaticRole
 from dimagi.utils.web import json_response
 from django.contrib import messages
@@ -502,37 +503,11 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def user_roles(self):
-        user_roles = [UserRole.admin_role(self.domain)]
-        user_roles.extend(sorted(
+    def non_admin_roles(self):
+        return list(sorted(
             UserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
-
-        show_es_issue = False
-        # skip the admin role since it's not editable
-        for role in user_roles[1:]:
-            try:
-                role.hasUsersAssigned = role.has_users_assigned
-            except TypeError:
-                # when query_result['hits'] returns None due to an ES issue
-                show_es_issue = True
-            role.has_unpermitted_location_restriction = (
-                not self.can_restrict_access_by_location
-                and not role.permissions.access_all_locations
-            )
-        if show_es_issue:
-            messages.error(
-                self.request,
-                mark_safe(_(  # nosec: no user input
-                    "We might be experiencing issues fetching the entire list "
-                    "of user roles right now. This issue is likely temporary and "
-                    "nothing to worry about, but if you keep seeing this for "
-                    "more than a day, please <a href='#modalReportIssue' "
-                    "data-toggle='modal'>Report an Issue</a>."
-                ))
-            )
-        return user_roles
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -545,11 +520,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
+        return {
+            r.get_qualified_id(): r.name
+            for r in [UserRole.admin_role(self.domain)] + self.non_admin_roles
+        }
 
     @property
     @memoized
@@ -650,7 +624,7 @@ class ListRolesView(BaseRoleAccessView):
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)):
+                        for role in self.non_admin_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -658,8 +632,8 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
         return {
-            'user_roles': self.user_roles,
-            'non_admin_roles': self.user_roles[1:],
+            'user_roles': self.get_roles_for_display(),
+            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
@@ -679,6 +653,38 @@ class ListRolesView(BaseRoleAccessView):
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
         }
+
+    def get_roles_for_display(self):
+        show_es_issue = False
+        role_view_data = [UserRole.admin_role(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
+            try:
+                user_count = get_role_user_count(role.domain, role.get_id)
+                role_data["hasUsersAssigned"] = bool(user_count)
+            except TypeError:
+                # when query_result['hits'] returns None due to an ES issue
+                show_es_issue = True
+
+            role_data["has_unpermitted_location_restriction"] = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
+
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(  # nosec: no user input
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
+            )
+        return role_view_data
 
 
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
@@ -844,7 +850,8 @@ def post_user_role(request, domain):
 
     role.permissions.normalize()
     role.save()
-    role.__setattr__('hasUsersAssigned', role.has_users_assigned)
+    response_data = role.to_json()
+    response_data['hasUsersAssigned'] = bool(get_role_user_count(role.domain, role.get_id))
     return json_response(role)
 
 

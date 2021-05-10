@@ -61,6 +61,10 @@ def _get_commcare_users_in_domain(active_flag, domain, start_at, limit):
     ).all()
 
 
+def get_role_user_count(domain, role_id):
+    return UserES().is_active().domain(domain).role_id(role_id).count()
+
+
 def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     """
     returns a UserES object

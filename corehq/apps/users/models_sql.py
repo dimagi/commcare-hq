@@ -32,6 +32,10 @@ class StaticRole:
         return self.name.lower() if self.name else None
 
     @property
+    def get_id(self):
+        return None
+
+    @property
     def cache_version(self):
         return self.name
 
