@@ -264,7 +264,7 @@ class Command(BaseCommand):
         migration_field_names = []
         submodels = []
         for key, params in self.field_params.items():
-            if self.is_field_type_submodule(key):
+            if self.is_field_type_submodel(key):
                 submodels.append(key)
             if self.is_submodel_key(key):
                 continue
@@ -299,7 +299,7 @@ class Command(BaseCommand):
         suggested_updates = []
         submodels = []
         for key, field_type in self.field_types.items():
-            if self.is_field_type_submodule(key):
+            if self.is_field_type_submodel(key):
                 submodels.append(key)
             if self.is_submodel_key(key):
                 continue
@@ -334,9 +334,9 @@ class Command(BaseCommand):
         )
 
     def is_submodel_key(self, key):
-        return "." in key or self.is_field_type_submodule(key)
+        return "." in key or self.is_field_type_submodel(key)
 
-    def is_field_type_submodule(self, key):
+    def is_field_type_submodel(self, key):
         return self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT)
 
 
