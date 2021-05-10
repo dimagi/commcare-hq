@@ -16,6 +16,7 @@ from corehq.motech.views import ConnectionSettingsListView
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.view_utils import absolute_reverse
+from corehq.motech.requests import apply_request_backoff
 
 BASE_URL = 'http://www.example.com/2.3.4/'
 USERNAME = 'admin'
@@ -214,7 +215,6 @@ class AuthClassTests(SimpleTestCase):
 
 @skip('This test uses third-party resources.')
 class RequestsOAuth2Tests(TestCase):
-
     base_url = 'https://play.dhis2.org/dev'
     username = 'admin'
     password = 'district'
@@ -286,3 +286,58 @@ def mkpasswd(length):
         string.digits,
     ))
     return ''.join(random.choices(population, k=length))
+
+
+class ApplyRequestBackoffTests(TestCase):
+    max_retries = 2
+    test_base = 1
+    exponential_period = 'seconds'
+
+    def setUp(self) -> None:
+        self.request_attempts = 0
+        self.failed_attempts = 0
+
+    def test_one_failed_attempt_retry(self):
+        fail_up_until_request_number = 2  # Pass on this attempt count
+        response = self._make_mock_request(fail_up_until_request_number)
+
+        # Expectations
+        expected_failed_attempts = 1
+
+        self.assertEqual(self.failed_attempts, expected_failed_attempts)
+        self.assertEqual(self.request_attempts, expected_failed_attempts + 1)
+        self.assertEqual(response.get('was_i_a_good_boy', None), True)
+
+    def test_maxed_out_retries(self):
+        fail_up_until_request_number = 4  # Pass on this attempt count
+        response = self._make_mock_request(fail_up_until_request_number)
+
+        # Expectations
+        expected_failed_attempts = self.max_retries + 1
+
+        self.assertEqual(self.failed_attempts, expected_failed_attempts)
+        self.assertEqual(self.request_attempts, expected_failed_attempts)
+        self.assertEqual(response, None)
+
+    def test_no_backoff(self):
+        fail_up_until_request_number = 1  # Pass on this attempt count
+        response = self._make_mock_request(fail_up_until_request_number)
+
+        self.assertEqual(self.failed_attempts, 0)
+        self.assertEqual(self.request_attempts, 1)
+        self.assertEqual(response.get('was_i_a_good_boy', None), True)
+
+    @apply_request_backoff(
+        max_retries=max_retries,
+        exponential_base=test_base,
+        exponential_period=exponential_period
+    )
+    def _make_mock_request(self, fail_up_until_request_number):
+        from requests import RequestException
+        self.request_attempts += 1
+
+        if self.request_attempts < fail_up_until_request_number:
+            self.failed_attempts += 1
+            raise RequestException
+        else:
+            return {'was_i_a_good_boy': True}

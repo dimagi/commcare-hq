@@ -36,6 +36,9 @@ from corehq.motech.requests import apply_request_backoff
 DROP_API_PREFIX = True
 
 MAX_THREAD_WORKERS = 10
+MAX_RETRIES = 5
+EXPONENTIAL_BASE = 2
+EXPONENTIAL_PERIOD = 'days'
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
@@ -206,7 +209,11 @@ def five_years_ago():
     return datetime.utcnow().date() - relativedelta(years=5)
 
 
-@apply_request_backoff(exponential=True)
+@apply_request_backoff(
+    max_retries=MAX_RETRIES,
+    exponential_base=EXPONENTIAL_BASE,
+    exponential_period=EXPONENTIAL_PERIOD
+)
 def fetch_data_set(
     dhis2_server: ConnectionSettings,
     data_set_id: str,

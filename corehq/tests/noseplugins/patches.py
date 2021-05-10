@@ -16,7 +16,7 @@ class PatchesPlugin(Plugin):
     def begin(self):
         patch_assertItemsEqual()
         patch_testcase_databases()
-        extend_freezegun_ignore_list()
+        # extend_freezegun_ignore_list()
         patch_es_user_signals()
         patch_foreign_value_caches()
 

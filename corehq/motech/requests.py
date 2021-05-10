@@ -31,10 +31,20 @@ from corehq.util.urlvalidate.urlvalidate import (
 )
 from corehq.util.view_utils import absolute_reverse
 
-MAX_TRIES = 5
-BACKOFF_RETRY_EXPONENT_BASE = 2
+MAX_TRIES = 3
+DEFAULT_EXPONENTIAL_PERIOD = 'minutes'
+DEFAULT_BACKOFF_RETRY_EXPONENT_BASE = 2
+SECONDS_IN_ONE_SECOND = 1
+SECONDS_IN_ONE_MINUTE = 60
+SECONDS_IN_ONE_HOUR = 3600
 SECONDS_IN_ONE_DAY = 86400
-LINEAR_BACKOFF_PERIOD_SECONDS = 60
+
+SECONDS_IN_PERIOD = {
+    'seconds': SECONDS_IN_ONE_SECOND,
+    'minutes': SECONDS_IN_ONE_MINUTE,
+    'hours': SECONDS_IN_ONE_HOUR,
+    'days': SECONDS_IN_ONE_DAY
+}
 
 
 def log_request(self, func, logger):
@@ -303,27 +313,39 @@ def validate_user_input_url_for_repeaters(url, domain, src):
             raise
 
 
-def apply_request_backoff(exponential=True):
+def apply_request_backoff(
+    max_retries=MAX_TRIES,
+    exponential_base=DEFAULT_BACKOFF_RETRY_EXPONENT_BASE,
+    exponential_period=DEFAULT_EXPONENTIAL_PERIOD
+):
     def request_handler(request_function):
         def make_request_with_backoff(*args):
-            attempts = 0
+            retry_count = 0
+            response = None
 
-            while attempts < MAX_TRIES:
-                attempts += 1
+            while True:
                 try:
                     response = request_function(*args)
                 except (RequestException, HTTPError):
-                    if exponential:
-                        backoff_days = math.pow(BACKOFF_RETRY_EXPONENT_BASE, attempts - 1)
-                        backoff_seconds = backoff_days * SECONDS_IN_ONE_DAY
+                    if retry_count < max_retries:
+                        backoff_period_seconds = _get_exponential_backoff_period_in_seconds(retry_count)
+                        sleep(backoff_period_seconds)
+                        retry_count += 1
                     else:
-                        backoff_seconds = attempts * LINEAR_BACKOFF_PERIOD_SECONDS
-
-                    sleep(backoff_seconds)
+                        break
                 else:
                     break
 
             return response
+
+        def _get_exponential_backoff_period_in_seconds(attempts_made):
+            exponent = attempts_made - 1
+
+            normalized_period = math.pow(exponential_base, exponent)
+            return normalized_period * _get_exponential_period_factor()
+
+        def _get_exponential_period_factor():
+            return SECONDS_IN_PERIOD.get(exponential_period, SECONDS_IN_ONE_MINUTE)
 
         return make_request_with_backoff
 
