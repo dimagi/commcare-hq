@@ -95,6 +95,7 @@ from .models_sql import (  # noqa
     SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,
     migrate_role_permissions_to_sql,
     migrate_role_assignable_by_to_sql,
+    StaticRole
 )
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -441,10 +442,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
                 domain, UserRolePresets.get_permissions(role_name), role_name)
 
     @classmethod
-    def get_default(cls, domain=None):
-        return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
 
@@ -456,7 +453,7 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
     @classmethod
     def admin_role(cls, domain):
-        return AdminUserRole(domain=domain)
+        return StaticRole.domain_admin(domain=domain)
 
     @property
     def has_users_assigned(self):
@@ -498,15 +495,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             sql_object.save(sync_to_couch=False)
         migrate_role_permissions_to_sql(self, sql_object)
         migrate_role_assignable_by_to_sql(self, sql_object)
-
-
-class AdminUserRole(UserRole):
-
-    def __init__(self, domain):
-        super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
-
-    def get_qualified_id(self):
-        return 'admin'
 
 
 class DomainMembershipError(Exception):

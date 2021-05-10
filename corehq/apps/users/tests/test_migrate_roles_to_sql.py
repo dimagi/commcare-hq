@@ -1,9 +1,9 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.management.commands.populate_user_role import Command
 from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
-from corehq.apps.users.models_sql import SQLUserRole, SQLPermission
+from corehq.apps.users.models_sql import SQLUserRole, SQLPermission, StaticRole
 
 
 class UserRoleCouchToSqlTests(TestCase):
@@ -31,22 +31,7 @@ class UserRoleCouchToSqlTests(TestCase):
         super().tearDown()
 
     def test_sql_role_couch_to_sql(self):
-        couch_role = UserRole(
-            domain=self.domain,
-            name='test_couch_to_sql',
-            permissions=Permissions(
-                edit_data=True,
-                edit_reports=True,
-                access_all_locations=False,
-                view_report_list=[
-                    'corehq.reports.DynamicReportmaster_report_id'
-                ]
-            ),
-            is_non_admin_editable=False,
-            assignable_by=[self.app_editor.get_id],
-            upstream_id=self.app_editor.get_id
-        )
-        couch_role.save()
+        couch_role = make_couch_role(self.domain, [self.app_editor.get_id], self.app_editor.get_id)
 
         sql_roles = list(SQLUserRole.objects.filter(domain=self.domain).all())
         self.assertEqual(2, len(sql_roles))
@@ -195,3 +180,59 @@ def make_couch_role(domain, name, **kwargs):
         **kwargs
     )
     couch_role.save()
+
+    def test_to_json(self):
+        couch_role = make_couch_role(self.domain, [self.app_editor.get_id], self.app_editor.get_id)
+        sql_role = couch_role._migration_get_sql_object()
+        self.assertIsNotNone(sql_role)
+
+        couch_dict = _drop_couch_only_fields(couch_role.to_json())
+        sql_dict = sql_role.to_json()
+
+        # this field differs between the 2, each is the ID in their respective DBs
+        couch_dict.pop("upstream_id")
+        sql_dict.pop("upstream_id")
+        self.assertDictEqual(couch_dict, sql_dict)
+
+
+class TestStaticRoles(SimpleTestCase):
+    domain = "static-role-test"
+
+    def test_static_role_default(self):
+        static_dict = StaticRole.domain_default(self.domain).to_json()
+        couch_dict = UserRole(domain=self.domain, name=None, permissions=Permissions()).to_json()
+        _drop_couch_only_fields(couch_dict)
+        self.assertDictEqual(couch_dict, static_dict)
+
+    def test_static_role_admin(self):
+        static_admin_role = StaticRole.domain_admin(self.domain)
+        couch_dict = UserRole(domain=self.domain, name="Admin", permissions=Permissions.max()).to_json()
+        _drop_couch_only_fields(couch_dict)
+        self.assertDictEqual(couch_dict, static_admin_role.to_json())
+        self.assertEqual(static_admin_role.get_qualified_id(), "admin")
+
+
+def _drop_couch_only_fields(couch_dict):
+    for field in ('_rev', 'doc_type'):
+        couch_dict.pop(field, None)
+    return couch_dict
+
+
+def make_couch_role(domain, assignable_by, upstream_id):
+    role = UserRole(
+        domain=domain,
+        name='test_couch_to_sql',
+        permissions=Permissions(
+            edit_data=True,
+            edit_reports=True,
+            access_all_locations=False,
+            view_report_list=[
+                'corehq.reports.DynamicReportmaster_report_id'
+            ]
+        ),
+        is_non_admin_editable=False,
+        assignable_by=assignable_by,
+        upstream_id=upstream_id
+    )
+    role.save()
+    return role

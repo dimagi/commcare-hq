@@ -10,6 +10,7 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.apps.users.models_sql import StaticRole
 from dimagi.utils.web import json_response
 from django.contrib import messages
 from django.http import (
@@ -660,7 +661,7 @@ class ListRolesView(BaseRoleAccessView):
             'user_roles': self.user_roles,
             'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
-            'default_role': UserRole.get_default(),
+            'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
             'web_apps_list': get_cloudcare_apps(self.domain),
             'apps_list': get_brief_apps_in_domain(self.domain),
