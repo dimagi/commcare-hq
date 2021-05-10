@@ -3,9 +3,7 @@ import os
 import tarfile
 import uuid
 from io import BytesIO, RawIOBase
-from math import ceil
 from tempfile import NamedTemporaryFile
-from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
 
@@ -173,75 +171,6 @@ class TestExtendingExport(TestCase):
                     with tarfile.open(file_three.name, 'r:gz') as tgzfile:
                         keys_in_file_three = set(m.key for m in self.blob_metas[-3:])
                         self.assertEqual(set(tgzfile.getnames()), keys_in_file_three)
-
-
-@skip('Takes a while, and uses as much drive space as there is RAM')
-class TestBigBlobExport(TestCase):
-
-    domain_name = 'big-blob-test-domain'
-
-    def setUp(self):
-        # psutil is in dev-requirements only. Don't bother trying to
-        # import for the module if the test is skipped.
-        from psutil import virtual_memory
-
-        self.memory = virtual_memory().total
-        self.db = TemporaryFilesystemBlobDB()
-        assert get_blob_db() is self.db, (get_blob_db(), self.db)
-        self.blob_metas = []
-
-    def tearDown(self):
-        for meta in self.blob_metas:
-            meta.delete()
-        self.db.close()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        MB = 1024 ** 2
-        self.mb_block = b'\x00' * MB
-
-    def mb_blocks(self):
-        while True:
-            yield self.mb_block
-
-    def test_many_big_blobs(self):
-        number_of_1gb_blobs = ceil(self.memory / 1024 ** 3) + 1
-
-        for __ in range(number_of_1gb_blobs):
-            meta = self.db.put(
-                MockBigBlobIO(self.mb_blocks(), 1024),
-                meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
-            )
-            self.blob_metas.append(meta)
-
-        with NamedTemporaryFile() as out:
-            exporter = EXPORTERS['all_blobs'](self.domain_name)
-            exporter.migrate(out.name, force=True)
-
-            with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertEqual(
-                    set(tgzfile.getnames()),
-                    {m.key for m in self.blob_metas}
-                )
-
-    def test_1_very_big_blob(self):
-        number_of_1mb_blocks = ceil(self.memory / 1024 ** 2) + 1
-
-        meta = self.db.put(
-            MockBigBlobIO(self.mb_blocks(), number_of_1mb_blocks),
-            meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
-        )
-        self.blob_metas.append(meta)
-
-        with NamedTemporaryFile() as out:
-            exporter = EXPORTERS['all_blobs'](self.domain_name)
-            exporter.migrate(out.name, force=True)
-
-            with tarfile.open(out.name, 'r:gz') as tgzfile:
-                self.assertEqual(
-                    set(tgzfile.getnames()),
-                    {m.key for m in self.blob_metas}
-                )
 
 
 class TestMockBigBlobIO(SimpleTestCase):
