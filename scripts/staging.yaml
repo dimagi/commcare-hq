@@ -77,6 +77,7 @@ branches:
     - rp/query_multiple_domains #Rynhard May 4
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
+    - jls/case-search-error # Jenny May 10
     - mk/case-search/dynamic-reports # MK May 6
     - gh/update-jquery-v1-to-latest # Graham May 6
     - gh/unlink-apps-when-deleting-link # Graham May 7
