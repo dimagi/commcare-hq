@@ -21,19 +21,31 @@ def date_type(value):
             "Expected date in the format: YYYY-MM-DD" % value
         )
 
+# NOTE: The `validate_integer` function has been renamed to `validate_range`,
+# and it no longer enforces the argument type. This requires specifying the
+# argument type (for non-default types) when using `action=validate_range(...)`.
+# To compare, the previous function could be used as such:
+#
+#   parser.add_argument("value", action=validate_integer(gt=0))
+#
+# Using the new function, `type` must be specified as well:
+#
+#   parser.add_argument("value", type=int, action=validate_range(gt=0))
+#
+def validate_range(gt=None, lt=None):
+    """Create an argparse.Action subclass for validating comparable inputs.
 
-def validate_integer(gt=None, lt=None):
-    """Return argparser action to validate integer inputs:
+    :param gt: value which the argument cannot be greater than
+    :param lt: value which the argument cannot be less than
+    :returns: argparse.Action subclass
 
-    parser.add_argument('--count', action=validate_integer(gt=0, lt=11), help="Integer between 1 and 10")
+    Example:
+    parser.add_argument('--fraction', action=validate_range(gt=0.0, lt=1.0),
+        type=float, help="Number between 0 and 1")
     """
 
-    class ValidateIntegerRange(argparse.Action):
+    class ValidateRange(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
-            try:
-                values = int(values)
-            except ValueError:
-                raise argparse.ArgumentError(self, f"Invalid integer: {values}")
 
             if gt is not None and gt >= values:
                 raise argparse.ArgumentError(self, f"Must be greater than {gt}")
@@ -43,4 +55,4 @@ def validate_integer(gt=None, lt=None):
 
             setattr(namespace, self.dest, values)
 
-    return ValidateIntegerRange
+    return ValidateRange

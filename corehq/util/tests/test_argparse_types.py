@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from .. argparse_types import validate_integer
+from .. argparse_types import validate_range
 
 
 class SystemExitError(Exception):
@@ -28,8 +28,9 @@ class TestValidateInteger(SimpleTestCase):
     def setUp(self):
         self.parser = ArgumentParser()
 
-    def add_validated_int(self, *args, **kw):
-        self.parser.add_argument("value", action=validate_integer(*args, **kw))
+    def add_validated_arg(self, type, *val_args, **val_kw):
+        self.parser.add_argument("value", type=type,
+            action=validate_range(*val_args, **val_kw))
 
     def assert_parsed_value(self, argv, value):
         with wrap_system_exit():
@@ -43,22 +44,18 @@ class TestValidateInteger(SimpleTestCase):
         err_msg = stderr.getvalue().strip().split("\n")[-1]
         self.assertRegexpMatches(err_msg, f": {re.escape(err_suffix)}$")
 
-    def test_validate_integer_invalid(self):
-        self.add_validated_int(gt=0)
-        self.assert_parser_error(["foo"], "Invalid integer: foo")
-
-    def test_validate_integer_gt5(self):
-        self.add_validated_int(gt=5)
+    def test_validate_range_int_gt5(self):
+        self.add_validated_arg(int, gt=5)
         self.assert_parsed_value(["6"], 6)
 
-    def test_validate_integer_gt5_err(self):
-        self.add_validated_int(gt=5)
+    def test_validate_range_int_gt5_err(self):
+        self.add_validated_arg(int, gt=5)
         self.assert_parser_error(["5"], "Must be greater than 5")
 
-    def test_validate_integer_lt5(self):
-        self.add_validated_int(lt=5)
+    def test_validate_range_int_lt5(self):
+        self.add_validated_arg(int, lt=5)
         self.assert_parsed_value(["4"], 4)
 
-    def test_validate_integer_lt5_err(self):
-        self.add_validated_int(lt=5)
+    def test_validate_range_int_lt5_err(self):
+        self.add_validated_arg(int, lt=5)
         self.assert_parser_error(["5"], "Must be less than 5")
