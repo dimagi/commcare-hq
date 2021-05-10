@@ -186,5 +186,6 @@ def unlink_report(report):
         return None
 
     report.report_meta.master_id = None
+    report.save()
 
     return report
