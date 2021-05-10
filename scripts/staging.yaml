@@ -66,6 +66,7 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - fr/consumer-user             # Farid March 17
     - fr/smart-metadata-urls       # Farid April 28
+    - nh/fhir/repeater+fr/smart-oauth-views # Farid May 10
     - fr/smart-oauth-views # Farid April 7
     - gh/remove-filters-from-saved-ucrs # Graham Apr 9
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
@@ -83,5 +84,4 @@ branches:
     - gh/unlink-apps-when-deleting-link # Graham May 7
     - rn_whitelist_edit_module_detail_screens_url # Rohit May 7
     - smh/embedded-tableau # Steph May 7
-    - nh/fhir/repeater+fr/smart-oauth-views # Farid May 10
 submodules: { }
