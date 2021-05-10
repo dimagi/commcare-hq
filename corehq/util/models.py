@@ -289,8 +289,20 @@ class ForeignValue:
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        fobj = getattr(obj, self.fk.name)
-        return fobj.value if fobj is not None else None
+        fobj_id = getattr(obj, f"{self.fk.name}_id")
+        return self.get_value(fobj_id)
+
+    @cached_property
+    def get_value(self):
+        def get_value(fk_id):
+            try:
+                return manager.filter(pk=fk_id).values_list('value', flat=True)[0]
+            except IndexError:
+                return None
+        manager = self.fk.related_model.objects
+        if self.cache_size:
+            get_value = lru_cache(self.cache_size)(get_value)
+        return get_value
 
     def __set__(self, obj, value):
         if value is None:
