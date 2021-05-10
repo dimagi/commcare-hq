@@ -338,8 +338,8 @@ def apply_request_backoff(
 
             return response
 
-        def _get_exponential_backoff_period_in_seconds(attempts_made):
-            exponent = attempts_made - 1
+        def _get_exponential_backoff_period_in_seconds(retry_count):
+            exponent = retry_count
 
             normalized_period = math.pow(exponential_base, exponent)
             return normalized_period * _get_exponential_period_factor()
