@@ -79,9 +79,7 @@ branches:
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
     - jls/case-search-error # Jenny May 10
-    - mk/case-search/dynamic-reports # MK May 6
     - gh/update-jquery-v1-to-latest # Graham May 6
-    - gh/unlink-apps-when-deleting-link # Graham May 7
     - rn_whitelist_edit_module_detail_screens_url # Rohit May 7
     - smh/embedded-tableau # Steph May 7
 submodules: { }
