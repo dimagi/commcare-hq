@@ -82,3 +82,23 @@ def _update_actions(domain_link, linked_keyword, keyword_actions):
                                             linked_domain=domain_link.linked_domain))
             keyword_action.app_id = app_id
         keyword_action.save()
+
+
+def unlink_keywords_in_domain(domain):
+    unlinked_keywords = []
+    keywords = Keyword.objects.filter(domain=domain, upstream_id__isnull=False)
+    for keyword in keywords:
+        unlinked_keyword = unlink_keyword(keyword)
+        unlinked_keywords.append(unlinked_keyword)
+
+    return unlinked_keywords
+
+
+def unlink_keyword(keyword):
+    if not keyword.upstream_id:
+        return None
+
+    keyword.upstream_id = None
+    keyword.save()
+
+    return keyword
