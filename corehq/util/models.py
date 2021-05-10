@@ -271,10 +271,8 @@ class ForeignValue:
 
     An LRU cache is used to keep recently fetched related objects in
     memory rather than fetching from the database each time a new value
-    is set. Pass `cache_size=0` disable the LRU-cache. Note that the
-    cache is used by `__set__`, but not by `__get__` (unless `__set__`
-    was called first); this is optimize for current/known use cases,
-    optimizing `__get__` may make sense for future use cases.
+    is set or fetched. Pass `cache_size=0` disable the LRU-cache. Note that the
+    `__set__` and `__get__` use different caches (each of the same size).
     """
 
     def __init__(self, foreign_key: models.ForeignKey, truncate=False, cache_size=1000):
