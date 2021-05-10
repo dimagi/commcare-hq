@@ -39,7 +39,7 @@ def validate_integer(gt=None, lt=None):
                 raise argparse.ArgumentError(self, f"Must be greater than {gt}")
 
             if lt is not None and lt <= values:
-                raise argparse.ArgumentError(self, f"Must be less than than {lt}")
+                raise argparse.ArgumentError(self, f"Must be less than {lt}")
 
             setattr(namespace, self.dest, values)
 
