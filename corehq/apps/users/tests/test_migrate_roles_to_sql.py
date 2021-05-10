@@ -50,7 +50,6 @@ class UserRoleCouchToSqlTests(TestCase):
         ])
 
     def test_sync_role_sql_to_couch(self):
-        self.maxDiff = None
         sql_role = SQLUserRole(
             domain=self.domain,
             name="test_sql_to_couch",

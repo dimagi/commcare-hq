@@ -1,8 +1,10 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+import settings
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 
@@ -73,6 +75,18 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             models.Index(fields=("couch_id",)),
         )
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._cached_permissions.clear(self)
+        self._cached_assignable_by.clear(self)
+
+    @classmethod
+    def by_domain(cls, domain, include_archived=False):
+        query = SQLUserRole.objects.filter(domain=domain)
+        if not include_archived:
+            query.filter(is_archived=False)
+        return list(query.prefetch_related('rolepermission_set'))
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -134,6 +148,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @property
     def permissions(self):
+        return self._cached_permissions()
+
+    @quickcache(["self.id"], skip_arg=lambda _: settings.UNIT_TESTING)
+    def _cached_permissions(self):
         from corehq.apps.users.models import Permissions
         return Permissions.from_permission_list(self.get_permission_infos())
 
@@ -162,6 +180,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @property
     def assignable_by(self):
+        return self._cached_assignable_by()
+
+    @quickcache(["self.id"], skip_arg=lambda _: settings.UNIT_TESTING)
+    def _cached_assignable_by(self):
         return list(
             self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
         )
