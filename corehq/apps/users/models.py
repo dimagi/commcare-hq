@@ -116,7 +116,23 @@ def _get_default(list):
     return list[0] if list else None
 
 
-Permission = namedtuple("Permission", "name, allow_all, allowed_items")
+class PermissionInfo(namedtuple("Permission", "name, allow")):
+    ALLOW_ALL = "*"
+
+    def __new__(cls, name, allow=ALLOW_ALL):
+        return super(PermissionInfo, cls).__new__(cls, name, allow)
+
+    @property
+    def allow_all(self):
+        return self.allow == self.ALLOW_ALL
+
+    @property
+    def allowed_items(self):
+        if self.allow_all:
+            return []
+        assert isinstance(self.allow, list), self.allow
+        return self.allow
+
 
 PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
@@ -204,7 +220,7 @@ class Permissions(DocumentSchema):
             if isinstance(value, BooleanProperty)
         }
 
-    def to_list(self) -> List[Permission]:
+    def to_list(self) -> List[PermissionInfo]:
         """Returns a list of Permission objects for those permissions that are enabled."""
         return list(self._yield_enabled())
 
@@ -216,7 +232,7 @@ class Permissions(DocumentSchema):
                 list_name = PARAMETERIZED_PERMISSIONS[name]
                 list_value = getattr(self, list_name)
             if value or list_value:
-                yield Permission(name, value, list_value)
+                yield PermissionInfo(name, allow=PermissionInfo.ALLOW_ALL if value else list_value)
 
     def view_web_app(self, master_app_id):
         return self.view_web_apps or master_app_id in self.view_web_apps_list

@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.apps.users.models import UserRole, Permissions, UserRolePresets
+from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
 from corehq.apps.users.models_sql import SQLUserRole, RolePermission, SQLPermission
 
 
@@ -66,16 +66,12 @@ class UserRoleCouchToSqlTests(TestCase):
             is_non_admin_editable=False,
         )
         sql_role.save()
-        sql_role.rolepermission_set.set([
-            RolePermission(permission=Permissions.edit_data.name),
-            RolePermission(permission=Permissions.edit_reports.name),
-            RolePermission(
-                permission=Permissions.view_reports.name,
-                allow_all=False,
-                allowed_items=['corehq.reports.DynamicReportmaster_report_id']
-            ),
-            RolePermission(permission=Permissions.view_web_apps.name),
-        ], bulk=False)
+        sql_role.set_permissions([
+            PermissionInfo(Permissions.edit_data.name),
+            PermissionInfo(Permissions.edit_reports.name),
+            PermissionInfo(Permissions.view_reports.name, allow=['corehq.reports.DynamicReportmaster_report_id']),
+            PermissionInfo(Permissions.view_web_apps.name),
+        ])
 
         # sync the permissions
         sql_role._migration_do_sync()

@@ -57,13 +57,19 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
-    def get_permissions(self):
-        return [rp.as_permission() for rp in self.rolepermission_set.all()]
+    def set_permissions(self, permission_infos):
+        self.rolepermission_set.set([
+            RolePermission.from_permission_info(self, info)
+            for info in permission_infos
+        ], bulk=False)
+
+    def get_permission_infos(self):
+        return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
 
     @property
     def permissions(self):
         from corehq.apps.users.models import Permissions
-        return Permissions.from_permission_list(self.get_permissions())
+        return Permissions.from_permission_list(self.get_permission_infos())
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
@@ -88,9 +94,16 @@ class RolePermission(models.Model):
     # current max len in 119 chars
     allowed_items = ArrayField(models.CharField(max_length=256), blank=True, null=True)
 
-    def as_permission(self):
-        from corehq.apps.users.models import Permission
-        return Permission(self.permission, self.allow_all, self.allowed_items)
+    @staticmethod
+    def from_permission_info(role, info):
+        return RolePermission(
+            role=role, permission=info.name, allow_all=info.allow_all, allowed_items=info.allowed_items
+        )
+
+    def as_permission_info(self):
+        from corehq.apps.users.models import PermissionInfo
+        allow = PermissionInfo.ALLOW_ALL if self.allow_all else self.allowed_items
+        return PermissionInfo(self.permission, allow=allow)
 
 
 class SQLPermission(models.Model):
@@ -111,17 +124,8 @@ class RoleAssignableBy(models.Model):
 
 
 def migrate_role_permissions_to_sql(user_role, sql_role):
-    sql_permissions = []
-    for couch_perm in user_role.permissions.to_list():
-        sql_perm = RolePermission(
-            role=sql_role,
-            allow_all=couch_perm.allow_all,
-            allowed_items=couch_perm.allowed_items
-        )
-        sql_perm.permission = couch_perm.name
-        sql_permissions.append(sql_perm)
     sql_role.rolepermission_set.all().delete()
-    sql_role.rolepermission_set.set(sql_permissions, bulk=False)
+    sql_role.set_permissions(user_role.permissions.to_list())
 
 
 def migrate_role_assignable_by_to_sql(couch_role, sql_role):
