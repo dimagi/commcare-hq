@@ -55,6 +55,7 @@ from corehq.apps.linked_domain.dbaccessors import (
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
+from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_fixture,
@@ -504,6 +505,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         if toggles.ERM_DEVELOPMENT.enabled(self.domain):
             unlink_apps_in_domain(linked_domain)
             unlink_reports_in_domain(linked_domain)
+            unlink_keywords_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 
