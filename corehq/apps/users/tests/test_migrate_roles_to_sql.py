@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
-from corehq.apps.users.models_sql import SQLUserRole, RolePermission, SQLPermission
+from corehq.apps.users.models_sql import SQLUserRole, SQLPermission
 
 
 class UserRoleCouchToSqlTests(TestCase):

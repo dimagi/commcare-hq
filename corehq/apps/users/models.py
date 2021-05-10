@@ -91,8 +91,8 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-from .models_sql import (
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,  # noqa
+from .models_sql import (  # noqa
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,
     migrate_role_permissions_to_sql,
     migrate_role_assignable_by_to_sql,
 )
@@ -481,7 +481,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
     @classmethod
     def _migration_get_sql_model_class(cls):
-        from corehq.apps.users.models_sql import SQLUserRole
         return SQLUserRole
 
     def _migration_sync_submodels_to_sql(self, sql_object):

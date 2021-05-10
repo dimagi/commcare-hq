@@ -130,7 +130,7 @@ def migrate_role_permissions_to_sql(user_role, sql_role):
 
 def migrate_role_assignable_by_to_sql(couch_role, sql_role):
     from corehq.apps.users.models import UserRole
-    
+
     assignments_by_role_id = {
         assignment.assignable_by_role.get_id: assignment
         for assignment in sql_role.get_assignable_by()
