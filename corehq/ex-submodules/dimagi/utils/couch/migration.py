@@ -44,7 +44,7 @@ class SyncCouchToSQLMixin(object):
     each doc, you can incrementally change the code to use to SQL model
     instead of the Couch model, and eventually remove the Couch model entirely.
 
-    If you have a custom sync process, just override _migration_get_custom_functions to
+    If you have a custom sync process, just override `_migration_get_custom_functions` to
     pass additional migration functions or override _migration_sync_to_sql for a completely
     custom migration.
     """
@@ -66,7 +66,7 @@ class SyncCouchToSQLMixin(object):
         return []
 
     @classmethod
-    def _migration_get_custom_functions(cls):
+    def _migration_get_custom_couch_to_sql_functions(cls):
         """
         Should return a list of functions with args: (couch_object, sql_object)
         These will be called in turn when syncing couch model to SQL
@@ -118,7 +118,7 @@ class SyncCouchToSQLMixin(object):
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
         self._migration_sync_submodels_to_sql(sql_object)
-        for custom_func in self._migration_get_custom_functions():
+        for custom_func in self._migration_get_custom_couch_to_sql_functions():
             custom_func(self, sql_object)
 
     def _migration_sync_submodels_to_sql(self, sql_object):
@@ -196,7 +196,7 @@ class SyncSQLToCouchMixin(object):
         return []
 
     @classmethod
-    def _migration_get_custom_functions(cls):
+    def _migration_get_custom_sql_to_couch_functions(cls):
         """
         Should return a list of functions with args: (sql_object, couch_object)
         These will be called in turn when syncing SQL model to couch
@@ -234,7 +234,7 @@ class SyncSQLToCouchMixin(object):
             value = getattr(self, field_name)
             setattr(couch_object, field_name, value)
         self._migration_sync_submodels_to_couch(couch_object)
-        for custom_func in self._migration_get_custom_functions():
+        for custom_func in self._migration_get_custom_sql_to_couch_functions():
             custom_func(self, couch_object)
 
     def _migration_sync_submodels_to_couch(self, couch_object):
