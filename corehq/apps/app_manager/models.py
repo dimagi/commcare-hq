@@ -2095,7 +2095,7 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
-class CaseSearch(DocumentSchema):
+class CaseSearch(NavMenuItemMediaMixin):
     """
     Properties and search command label
     """
@@ -2135,6 +2135,9 @@ class CaseSearch(DocumentSchema):
             attrs = self.keys() - self.dynamic_properties().keys() - {'properties', 'default_properties'}
             for attr in attrs:
                 setattr(self, attr, getattr(src_config, attr))
+
+    def get_app(self):
+        return self._module.get_app()
 
 
 class ParentSelect(DocumentSchema):
@@ -2217,6 +2220,8 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.case_list._module = self
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
+        if hasattr(self, 'search_config'):
+            self.search_config._module = self
 
     @classmethod
     def wrap(cls, data):

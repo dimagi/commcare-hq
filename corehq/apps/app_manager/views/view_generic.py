@@ -193,6 +193,12 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 'default_file_name': _make_name('case_list_menu_item'),
                 'qualifier': 'case_list-menu_item_',
             })
+            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+                specific_media.append({
+                    'menu_refs': app.get_case_search_menu_item_media(module, to_language=lang),
+                    'default_file_name': _make_name('case_search_menu_item'),
+                    'qualifier': 'case_search-menu_item_'
+                })
             if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
                     toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
                     toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):

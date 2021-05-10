@@ -120,6 +120,11 @@
             </div>
           </div>
           <div class="form-group">
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.search_config qualifier='case_search-command_label_media_' ICON_LABEL="Searching Icon" AUDIO_LABEL="Searching Audio" %}
+            <!-- /ko -->
+          </div>
+          <div class="form-group">
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching Again" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
