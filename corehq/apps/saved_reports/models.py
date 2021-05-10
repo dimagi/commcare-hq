@@ -505,7 +505,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document, SyncCouchToSQLMixin):
                 'slug': None,
             }] + localized_datespan_filters
 
-
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -830,6 +829,7 @@ class ScheduledReportsCheckpoint(models.Model):
         except IndexError:
             return None
 
+
 class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=32, null=False, db_index=True)
     report_type = models.CharField(max_length=32, null=False)
@@ -890,37 +890,3 @@ class SQLReportConfig(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return ReportConfig
-
-
-# TODO: Add SyncCouchToSQLMixin and the following methods to ReportConfig
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "report_type",
-            "report_slug",
-            "subreport_slug",
-            "name",
-            "description",
-            "owner_id",
-            "filters",
-            "date_range",
-            "days",
-            "start_date",
-            "end_date",
-            "datespan_slug",
-            "update_seq",
-            "purge_seq",
-            "db_name",
-            "doc_del_count",
-            "instance_start_time",
-            "disk_size",
-            "doc_count",
-            "disk_format_version",
-            "data_size",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLReportConfig
- 
