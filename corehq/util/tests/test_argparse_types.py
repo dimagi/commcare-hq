@@ -59,3 +59,11 @@ class TestValidateInteger(SimpleTestCase):
     def test_validate_range_int_lt5_err(self):
         self.add_validated_arg(int, lt=5)
         self.assert_parser_error(["5"], "Must be less than 5")
+
+    def test_validate_range_float_gt0(self):
+        self.add_validated_arg(float, gt=0.0)
+        self.assert_parsed_value(["1.5"], 1.5)
+
+    def test_validate_range_float_gt0_err(self):
+        self.add_validated_arg(float, gt=0.0)
+        self.assert_parser_error(["-1.5"], "Must be greater than 0.0")
