@@ -94,6 +94,14 @@ class RolePermission(models.Model):
     # current max len in 119 chars
     allowed_items = ArrayField(models.CharField(max_length=256), blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="users_rolepermission_valid_allow",
+                check=~models.Q(allow_all=True, allowed_items__len__gt=0)
+            )
+        ]
+
     @staticmethod
     def from_permission_info(role, info):
         return RolePermission(

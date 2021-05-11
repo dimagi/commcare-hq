@@ -71,6 +71,12 @@ class Migration(migrations.Migration):
             name='role',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='users.SQLUserRole'),
         ),
+        migrations.AddConstraint(
+            model_name='rolepermission',
+            constraint=models.CheckConstraint(
+                check=models.Q(('allow_all', True), ('allowed_items__len__gt', 0), _negated=True),
+                name='users_rolepermission_valid_allow'),
+        ),
         migrations.AddField(
             model_name='roleassignableby',
             name='assignable_by_role',
