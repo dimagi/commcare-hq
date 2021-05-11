@@ -1,7 +1,7 @@
 Custom Modules
 ==============
 
-CommCare HQ includes some code writted for specific projects.
+CommCare HQ includes some code written for specific projects.
 
 Most of this consists of custom reports or customized messaging logic.
 
