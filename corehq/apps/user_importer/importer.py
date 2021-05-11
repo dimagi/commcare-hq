@@ -358,6 +358,12 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         )
     else:
         roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
+        if definition:
+            profiles_by_name = {
+                profile.name: profile
+                for profile in definition.get_profiles()
+            }
         validators = get_user_import_validators(
             domain_obj,
             domain_user_specs,
@@ -367,12 +373,6 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
             list(profiles_by_name),
             upload_domain
         )
-        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
-        if definition:
-            profiles_by_name = {
-                profile.name: profile
-                for profile in definition.get_profiles()
-            }
 
     domain_info = DomainInfo(
         validators,
