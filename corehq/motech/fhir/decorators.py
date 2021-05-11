@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.http import HttpResponseForbidden
+from django.utils.translation import ugettext_lazy as _
 
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
@@ -38,7 +39,11 @@ def smart_auth(view):
                 break
 
         if not valid:
-            return HttpResponseForbidden(oauth_request.oauth2_error.get('error_description', ''))
+            error_message = _("Invalid OAuth Token")
+            oauth2_error = getattr(oauth_request, 'oauth2_error', None)
+            if oauth2_error:
+                error_message = oauth2_error.get('error_description', error_message)
+            return HttpResponseForbidden(error_message)
         request.oauth_access_token = oauth_request.access_token
 
         return view(request, *args, **kwargs)
