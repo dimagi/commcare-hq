@@ -1,0 +1,42 @@
+{% if import_json %}
+from django.contrib.postgres.fields import JSONField
+{%- endif %}
+from django.db import models
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
+
+
+class SQL{{class_name}}(SyncSQLToCouchMixin, models.Model):
+    {%- for field in suggested_fields %}
+    {{ field }}
+    {%- endfor %}
+
+    class Meta:
+        db_table = "{{db_table}}"
+        indexes = (
+            {%- for index in index_list %}
+            {{ index }}
+            {%- endfor %}
+        )
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            {%- for field in migration_field_names %}
+            "{{ field }}",
+            {%- endfor %}
+        ]
+
+    {%- if submodels %}
+    @classmethod
+    def _migration_get_submodels(cls):
+        # If the built in sub-model migration strategy is not suitable then
+        # override the `_migration_get_custom_sql_to_couch_functions` and use custom migration functions.
+        {% for model in submodels %}
+        #  TODO: Create SubModelSpec for {{ class_name }}.{{ model }}
+        {%- endfor %}
+        pass
+    {%- endif %}
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return {{class_name}}
