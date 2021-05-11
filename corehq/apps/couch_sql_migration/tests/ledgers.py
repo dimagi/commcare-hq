@@ -6,6 +6,7 @@ from casexml.apps.stock.models import StockTransaction
 
 from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+from corehq.form_processor.exceptions import LedgerValueNotFound
 
 
 def print_ledger_history(ledger_ref, verbose=False):
@@ -30,8 +31,12 @@ def print_ledger_history(ledger_ref, verbose=False):
 
     stock = StockState.objects.get(
         case_id=case_id, section_id=section_id, product_id=entry_id)
-    ledger = LedgerAccessorSQL.get_ledger_value(
-        case_id=case_id, section_id=section_id, entry_id=entry_id)
+    try:
+        ledger = LedgerAccessorSQL.get_ledger_value(
+            case_id=case_id, section_id=section_id, entry_id=entry_id)
+    except LedgerValueNotFound:
+        class ledger:
+            balance = None
     print(f"ledger value: {num(stock.balance):>17} {num(ledger.balance):>11}")
 
 
@@ -51,11 +56,13 @@ def print_transactions(ccht, sqlt):
         return (tx.readable_type in "stockonhand balance stockout" or (
             tx.delta and tx.readable_type in "consumption receipts transfer"
         ))
-    ctxx = [tx for tx in ccht.trans if meaningful(tx)]
-    stxx = [tx for tx in sqlt.trans if meaningful(tx)]
+    ctxx = [tx for tx in ccht.trans if meaningful(tx)] if ccht else []
+    stxx = [tx for tx in sqlt.trans if meaningful(tx)] if sqlt else []
     while True:
         if not (ctxx and stxx):
-            for tx in chain(ctxx, stxx):
+            for tx in ctxx:
+                print_tx("", tx, None, tx.readable_type)
+            for tx in stxx:
                 print_tx("", None, tx, tx.readable_type)
             break
         if (
@@ -92,7 +99,9 @@ def print_trans(tx):
 
 
 def num(value):
-    if value is None or isinstance(value, int):
+    if value is None:
+        return ""
+    if isinstance(value, int):
         return value
     if value == 0:
         return 0

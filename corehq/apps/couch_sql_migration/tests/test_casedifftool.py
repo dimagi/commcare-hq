@@ -254,6 +254,22 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
+    def test_patch_ledger_missing_in_sql(self):
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        form = self.update_stock(product, delta=1)
+        FormAccessors(self.domain_name).soft_delete_forms([form.form_id], datetime.utcnow(), 'test')
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="missing", new={"form_state": "present"}),
+        ], changes=[
+            Diff("test-case", type="missing", path=["*"], old="*", new=MISSING),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
     def test_patch_known_properties(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")

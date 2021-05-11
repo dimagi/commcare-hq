@@ -31,6 +31,7 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
 
 from .casediff import get_domain
@@ -379,6 +380,15 @@ def get_ledger_patch_xml(diff):
     path = list(diff.path)
     if path == ["balance"]:
         element = ledger_balance_patch(diff)
+    elif (
+        path == ["*"]
+        and diff.diff_type == "missing"
+        and isinstance(diff.old_value, dict)
+        and isinstance(diff.new_value, dict)
+        and diff.old_value.keys() == {"form_state", "ledger"}
+        and diff.new_value.keys() == {"form_state"}
+    ):
+        element = missing_ledger_patch(diff)
     else:
         raise CannotPatch([diff])
     return ElementTree.tostring(element.as_xml(), encoding='utf-8')
@@ -397,6 +407,17 @@ def ledger_balance_patch(diff):
         date=stock.last_modified_date.date(),
         section_id=ref.section_id,
         entry=Entry(id=ref.entry_id, quantity=diff.old_value),
+    )
+
+
+def missing_ledger_patch(diff):
+    ref = diff.ref
+    data = diff.old_value["ledger"]
+    return Balance(
+        entity_id=ref.case_id,
+        date=iso_string_to_datetime(data["last_modified"]).date(),
+        section_id=ref.section_id,
+        entry=Entry(id=ref.entry_id, quantity=data["balance"]),
     )
 
 
