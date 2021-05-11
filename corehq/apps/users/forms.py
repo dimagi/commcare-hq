@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
@@ -21,8 +22,6 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
@@ -32,20 +31,24 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import UserRole, DomainPermissionsMirror
-from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
+from corehq.apps.users.models import DomainPermissionsMirror, UserRole
+from corehq.apps.users.util import (
+    cc_user_domain,
+    format_username,
+    log_user_role_update,
+)
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-
-from corehq.apps.hqwebapp.utils.translation import format_html_lazy
-
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -97,8 +100,8 @@ def wrapped_language_validation(value):
 
 
 def generate_strong_password():
-    import string
     import random
+    import string
     possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
     password = ''
     password += random.choice(string.punctuation)
@@ -1148,7 +1151,9 @@ class CommCareUserFormSet(object):
     @property
     @memoized
     def custom_data(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
@@ -1257,9 +1262,17 @@ class UserFilterForm(forms.Form):
         if not role_id:
             return None
 
-        role = UserRole.get(role_id)
+        if role_id == "admin":
+            return role_id
+
+        try:
+            role = UserRole.get(role_id.replace("user-role:", ""))
+        except ResourceNotFound:
+            raise forms.ValidationError(_("Invalid Role"))
+
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
+
         return role_id
 
     def clean_search_string(self):
