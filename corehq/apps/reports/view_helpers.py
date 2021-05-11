@@ -25,11 +25,11 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     )
 
     parent_cases = []
-    if case.indices:
+    if case.live_indices:
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        for idx in case.indices:
+        for idx in case.live_indices:
             try:
                 parent_cases.append(idx.referenced_case)
             except ResourceNotFound:

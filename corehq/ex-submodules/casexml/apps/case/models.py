@@ -278,8 +278,12 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return self.doc_type.endswith(DELETED_SUFFIX)
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     @property
     def deletion_id(self):
