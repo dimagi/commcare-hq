@@ -316,9 +316,7 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
 
 
 def dump_usernames(domain, download_id, user_filters, task, owner_id):
-    domains_list = [domain]
-    if 'domains' in user_filters:
-        domains_list = user_filters['domains']  # for instances of multi-domain download
+    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
     users_count = 0
     for download_domain in domains_list:
         users_count += count_web_users_by_filters(download_domain, user_filters)
