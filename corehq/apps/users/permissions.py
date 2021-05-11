@@ -67,13 +67,10 @@ def can_view_sms_exports(couch_user, domain):
 def has_permission_to_view_report(couch_user, domain, report_to_check):
     from corehq.apps.users.decorators import get_permission_name
     from corehq.apps.users.models import Permissions
-    return (
-        couch_user.can_view_reports(domain) or
-        couch_user.has_permission(
-            domain,
-            get_permission_name(Permissions.view_report),
-            data=report_to_check
-        )
+    return couch_user.has_permission(
+        domain,
+        get_permission_name(Permissions.view_report),
+        data=report_to_check
     )
 
 

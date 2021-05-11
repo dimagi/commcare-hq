@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -42,6 +43,7 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -350,6 +352,12 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
+        if not app.domain_link.is_remote:
+            report_map.update({
+                c.report_meta.master_id: c._id
+                for c in get_report_configs_for_domain(app.domain)
+                if c.report_meta.master_id
+            })
 
         try:
             app = overwrite_app(app, master_build, report_map)
@@ -559,3 +567,37 @@ def handle_shadow_child_modules(app, shadow_parent):
         app.save()
 
     return changes
+
+
+class InvalidSessionEndpoint(Exception):
+    pass
+
+
+def set_session_endpoint(module_or_form, raw_endpoint_id, app):
+    raw_endpoint_id = raw_endpoint_id.strip()
+    cleaned_id = slugify(raw_endpoint_id)
+    if cleaned_id != raw_endpoint_id:
+        raise InvalidSessionEndpoint(_(
+            "'{invalid_id}' is not a valid session endpoint ID. It must contain only "
+            "lowercase letters, numbers, underscores, and hyphens. Try {valid_id}."
+        ).format(invalid_id=raw_endpoint_id, valid_id=cleaned_id))
+
+    if _is_duplicate_endpoint_id(cleaned_id, module_or_form.session_endpoint_id, app):
+        raise InvalidSessionEndpoint(_(
+            "Session endpoint IDs must be unique. '{endpoint_id}' is already in-use"
+        ).format(endpoint_id=cleaned_id))
+
+    module_or_form.session_endpoint_id = cleaned_id
+
+
+def _is_duplicate_endpoint_id(new_id, old_id, app):
+    if not new_id or new_id == old_id:
+        return False
+
+    all_endpoint_ids = []
+    for module in app.modules:
+        all_endpoint_ids.append(module.session_endpoint_id)
+        for form in module.get_suite_forms():
+            all_endpoint_ids.append(form.session_endpoint_id)
+
+    return new_id in all_endpoint_ids

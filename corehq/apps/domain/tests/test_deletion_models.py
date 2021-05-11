@@ -56,6 +56,7 @@ IGNORE_MODELS = {
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
+    'registration.AsyncSignupRequest',
 }
 
 

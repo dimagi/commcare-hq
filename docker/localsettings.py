@@ -113,7 +113,7 @@ WS4REDIS_CONNECTION = {
 }
 
 ELASTICSEARCH_HOST = 'elasticsearch2'
-ELASTICSEARCH_PORT = 6200  # ES 2 port
+ELASTICSEARCH_PORT = 9200  # ES 2 port
 ELASTICSEARCH_MAJOR_VERSION = 2
 # to enable v7 ES tests
 if os.environ.get('ELASTICSEARCH_7_PORT'):
@@ -245,16 +245,3 @@ REPORTING_DATABASES = {
     'aaa-data': 'default',
     'icds-ucr-citus': 'icds-ucr'
 }
-
-if os.path.exists("extensions/icds/custom/icds"):
-    # code is not present in fork PR builds
-    LOCAL_APPS = (
-        # these are necessary to facilitate ICDS tests
-        "custom.icds",
-        "custom.icds_reports",
-    )
-    COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
-
-    LOCAL_CUSTOM_DB_ROUTING = {
-        "icds_reports": "icds-ucr-citus"
-    }
