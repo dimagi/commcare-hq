@@ -1,3 +1,4 @@
+import doctest
 from decimal import Decimal
 from uuid import uuid4
 
@@ -5,6 +6,7 @@ from django.test import SimpleTestCase
 
 from nose.tools import assert_equal
 
+from .. import matchers
 from ..const import SYSTEM_URI_CASE_ID
 from ..matchers import (
     GivenName,
@@ -130,7 +132,12 @@ class TestPatientCandidates(SimpleTestCase):
         scores = [matcher.get_score(c) for c in candidates]
         expected = [
             Decimal('-0.4'),  # Same name, different ID
-            Decimal('0.8'),  # Same ID, different name
+            Decimal('0.5'),  # Same ID, different name
             Decimal('1.2'),  # Same ID, same family name
         ]
         self.assertEqual(scores, expected)
+
+
+def test_doctests():
+    results = doctest.testmod(matchers)
+    assert_equal(results.failed, 0)

@@ -114,6 +114,23 @@ class GivenName(ComparisonMethod):
         return any(a_name == b_name for a_name, b_name in zip(a, b))
 
 
+class AnyGivenName(ComparisonMethod):
+    """
+    This ComparisonMethod might be better suited to negative weights
+    because the chances of false positives are high.
+
+    e.g.
+
+    >>> AnyGivenName.compare(['H.', 'John'], ['Santa', 'H.'])
+    True
+
+    """
+
+    @staticmethod
+    def compare(a, b):
+        return bool(set(a) & set(b))
+
+
 class Age(ComparisonMethod):
 
     @staticmethod
@@ -187,7 +204,12 @@ class PersonMatcher(ResourceMatcher):
             negative_weight=Decimal('1.1'),
         ),
         PropertyWeight('$.name[0].given', Decimal('0.3'), GivenName),
-        # PropertyWeight('$.name[0].given', 0.1, AnyGivenName),
+        PropertyWeight(
+            '$.name[0].given',
+            Decimal('0'),
+            AnyGivenName,
+            negative_weight=Decimal('0.3'),
+        ),
         PropertyWeight('$.name[0].family', Decimal('0.4')),
         PropertyWeight('$.telecom[0].value', Decimal('0.4')),
         PropertyWeight(
