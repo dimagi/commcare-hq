@@ -48,7 +48,7 @@ class CreateLinkedAppTest(TestCase):
 
         self.assertIsNone(linked_app)
 
-    def test_create_linked_app_returns_none_if_no_app(self):
+    def test_create_linked_app_raises_exception_if_no_app(self):
         domain_link = DomainLink(linked_domain=self.downstream_domain, master_domain=self.upstream_domain)
         domain_link.save()
         self.addCleanup(domain_link.delete)
