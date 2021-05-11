@@ -92,7 +92,10 @@ def get_linked_apps_for_domain(domain):
     return linked_apps
 
 
-def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):
+def link_app_via_app_manager(master_domain, master_id, target_domain, target_name, remote_details=None):
+    """
+    DEPRECATED: this workflow is in the process of being phased out (hence the weird name)
+    """
     from corehq.apps.app_manager.models import LinkedApplication
     linked_app = LinkedApplication(
         name=target_name,
