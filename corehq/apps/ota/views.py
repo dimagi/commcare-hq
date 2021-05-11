@@ -113,11 +113,11 @@ def app_aware_search(request, domain, app_id):
     except TooManyRelatedCasesError:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     except CaseFilterError as e:
-        # This is an app building error, so show user a generic message and notify
+        # This is an app building error, notify so we can track
         notify_exception(request, str(e), details=dict(
             exception_type=type(e),
         ))
-        return HttpResponse(_('Could not understand search.'), status=400)
+        return HttpResponse(str(e), status=400)
     search_es = case_search_criteria.search_es
 
     try:
