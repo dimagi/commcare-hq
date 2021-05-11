@@ -64,6 +64,7 @@ class Command(BaseCommand):
         self.logger = DatadogLogger(self.stdout, options['datadog'])
         self.show_couch_model_count()
         self.show_custom_modules()
+        self.show_js_dependencies()
         self.show_toggles()
         self.logger.send_all()
 
@@ -80,6 +81,24 @@ class Command(BaseCommand):
         custom_domain_count = len(settings.DOMAIN_MODULE_MAP)
         self.logger.log("commcare.static_analysis.custom_module_count", custom_module_count)
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
+
+    def show_js_dependencies(self):
+        proc = subprocess.Popen(["./scripts/codechecks/hqDefine.sh", "static-analysis"], stdout=subprocess.PIPE)
+        output = proc.communicate()[0].strip().decode("utf-8")
+        (hqdefine_todo, hqdefine_done, requirejs_todo, requirejs_done) = output.split(" ")
+
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_todo), tags={
+            'status': 'todo',
+        })
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_done), tags={
+            'status': 'done',
+        })
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_todo), tags={
+            'status': 'todo',
+        })
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_done), tags={
+            'status': 'done',
+        })
 
     def show_toggles(self):
         counts = Counter(t.tag.name for t in all_toggles() + all_previews())
