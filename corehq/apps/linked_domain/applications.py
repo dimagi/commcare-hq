@@ -118,6 +118,10 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
     return linked_app
 
 
+def link_app_in_existing_domain_link(domain_link, original_app_id):
+    pass
+
+
 def unlink_apps_in_domain(domain):
     linked_apps = get_linked_apps_for_domain(domain)
     unlinked_apps = []
