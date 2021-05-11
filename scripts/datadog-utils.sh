@@ -2,7 +2,9 @@
 
 # Accepts three arguments: metric name, value, and type (gauge, count, or rate)
 # Usage:
-#   send_metric_to_datadog "commcare.foo.barr" 7 "gauge"
+#   send_metric_to_datadog "commcare.foo.bar" 7 "gauge"
+# or with optional "tag" argument:
+#   send_metric_to_datadog "commcare.foo.bar" 7 "gauge" "domain:foo"
 function send_metric_to_datadog() {
     if [ -z "$DATADOG_API_KEY" -o -z "$DATADOG_APP_KEY" ]; then
         return
