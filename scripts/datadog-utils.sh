@@ -31,7 +31,6 @@ function send_metric_to_datadog() {
                     \"travis_build:$TRAVIS_BUILD_ID\",
                     \"travis_number:$TRAVIS_BUILD_NUMBER\",
                     \"travis_job_number:$TRAVIS_JOB_NUMBER\",
-                    \"test_type:$TEST\",
                     \"partition:$NOSE_DIVIDED_WE_RUN\"
                   ]}
                 ]
