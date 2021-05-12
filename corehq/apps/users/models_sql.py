@@ -117,6 +117,9 @@ class RolePermission(models.Model):
 class SQLPermission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
+    class Meta:
+        db_table = "users_permission"
+
     @classmethod
     def create_all(cls):
         from corehq.apps.users.models import Permissions
