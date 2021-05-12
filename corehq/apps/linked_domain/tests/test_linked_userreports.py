@@ -95,7 +95,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.assertTrue(report.config.is_deactivated)
 
     def test_linked_app_filter_maps_correctly(self):
-        linked_app = link_app(self.linked_app, self.domain, self.master1.get_id)
+        linked_app = link_app(self.linked_app, self.domain)
         self.data_source.configured_filter = {
             "type": "and",
             "filters": [

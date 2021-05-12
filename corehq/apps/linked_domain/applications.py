@@ -99,6 +99,7 @@ def _create_linked_app(domain, app_name, upstream_app_id):
         name=app_name,
         upstream_app_id=upstream_app_id,
     )
+    linked_app.save()
     return linked_app
 
 
@@ -107,15 +108,11 @@ def link_app_via_app_manager(master_domain, master_id, target_domain, target_nam
     DEPRECATED: this workflow is in the process of being phased out (hence the weird name)
     """
     linked_app = _create_linked_app(target_domain, target_name, master_id)
-    return link_app(linked_app, master_domain, master_id, remote_details)
+    return link_app(linked_app, master_domain, remote_details)
 
 
-def link_app(linked_app, master_domain, master_id, remote_details=None):
+def link_app(linked_app, master_domain, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
-
-    linked_app.family_id = master_id
-    linked_app.doc_type = 'LinkedApplication'
-    linked_app.save()
 
     if linked_app.master_is_remote:
         try:
