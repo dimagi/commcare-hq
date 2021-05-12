@@ -188,7 +188,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         return format_html(
             '<a href="{url}?q={payload_id}">'
             '<img src="{flower}" title="Search in HQ" width="14px" height="14px" />'
-            '</a> {payload_id}',
+            ' {payload_id}</a>',
             url=reverse('global_quick_find'),
             flower=static('hqwebapp/images/commcare-flower.png'),
             payload_id=payload_id,
