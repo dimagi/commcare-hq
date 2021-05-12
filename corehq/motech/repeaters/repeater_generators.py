@@ -314,7 +314,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         case_id_map = {}
         for case in cases_to_forward:
             original_id = case.case_id
-            indices = case.indices
+            indices = case.live_indices
             case.case_id = self._get_updated_case_id(original_id, case_id_map)
             case.owner_id = new_owner
             for index in indices:

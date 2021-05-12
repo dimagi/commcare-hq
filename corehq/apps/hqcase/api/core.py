@@ -23,7 +23,7 @@ def serialize_case(case):
                 "@case_type": index.referenced_type,
                 "@relationship": index.relationship,
             }
-            for index in case.indices
+            for index in case.indices if not index.is_deleted
         }
     }
 

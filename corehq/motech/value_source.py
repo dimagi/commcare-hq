@@ -505,7 +505,7 @@ class SupercaseValueSource(ValueSource):
 
         case_accessor = CaseAccessors(info.domain)
         case = case_accessor.get_case(info.case_id)
-        for index in case.indices:
+        for index in case.live_indices:
             if filter_index(index):
                 supercase = case_accessor.get_case(index.referenced_id)
                 yield get_case_trigger_info_for_case(
