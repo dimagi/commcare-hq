@@ -291,6 +291,9 @@ class ForeignValue:
         if obj is None:
             return self
         fobj_id = getattr(obj, f"{self.fk.name}_id")
+        if fobj_id is None:
+            fobj = getattr(obj, self.fk.name)
+            return fobj.value if fobj is not None else None
         return self.get_value(fobj_id)
 
     @cached_property
