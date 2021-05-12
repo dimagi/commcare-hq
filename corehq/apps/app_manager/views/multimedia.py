@@ -33,19 +33,6 @@ def multimedia_ajax(request, domain, app_id):
             'is_linked_app': is_linked_app(app),
         }
 
-        if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled_for_request(request):
-            missing_paths = {p for p in app.all_media_paths() if p not in app.multimedia_map}
-            import_apps = get_apps_in_domain(domain, include_remote=False)
-            import_app_counts = {
-                a.id: len(missing_paths.intersection(a.multimedia_map.keys()))
-                for a in import_apps
-            }
-            import_apps = [a for a in import_apps if import_app_counts[a.id]]
-            context.update({
-                'import_apps': import_apps,
-                'import_app_counts': import_app_counts,
-            })
-
         return render(request, "app_manager/partials/settings/multimedia_ajax.html", context)
     else:
         raise Http404()
