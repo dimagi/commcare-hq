@@ -24,6 +24,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 from corehq.blobs import get_blob_db
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
     Attachment,
@@ -271,6 +272,7 @@ def process_patch(patch_form):
     add_patch_operation(sql_form)
     case_stock_result = get_case_and_ledger_updates(patch_form.domain, sql_form)
     save_migrated_models(sql_form, case_stock_result)
+    patch_ledgers_directly(patch_form._case.ledger_diffs)
 
 
 def add_form_xml(sql_form, patch_form):
@@ -389,8 +391,17 @@ def get_ledger_patch_xml(diff):
         and diff.new_value.keys() == {"form_state"}
     ):
         element = missing_ledger_patch(diff)
+    elif (
+        path == ["daily_consumption"]
+        and diff.diff_type == "type"
+        and isinstance(diff.old_value, str)
+        and diff.new_value is None
+    ):
+        element = None
     else:
         raise CannotPatch([diff])
+    if element is None:
+        return b""
     return ElementTree.tostring(element.as_xml(), encoding='utf-8')
 
 
@@ -419,6 +430,42 @@ def missing_ledger_patch(diff):
         section_id=ref.section_id,
         entry=Entry(id=ref.entry_id, quantity=data["balance"]),
     )
+
+
+def patch_ledgers_directly(diffs):
+    """Update ledger values directly rather than patching via form submission
+
+    This is necessary because some operations are not done as a result of
+    form submissions in the context of a migration. Example: publishing to
+    Kafka change feeds is disabled during the migration.
+    """
+    for diff in diffs:
+        path = list(diff.path)
+        if (
+            path == ["daily_consumption"]
+            and diff.diff_type == "type"
+            and diff.new_value is None
+        ):
+            patch_ledger_daily_consumption(diff)
+
+
+def patch_ledger_daily_consumption(diff):
+    """Patch missing LedgerValue daily_consumption
+
+    This is deliberately done as a patch action rather than
+    automatically as part of the main migration to leave an audit trail
+    showing that the difference existed in the initial happy-path
+    migration phase. The migration does not publish ledger changes to
+    Kafka change feeds where daily_consumption is normally calculated.
+    Instead the value is copied from the Couch StockState.
+    """
+    ref = diff.ref
+    ledger = LedgerAccessorSQL.get_ledger_value(
+        ref.case_id, ref.section_id, ref.entry_id
+    )
+    assert ledger.daily_consumption is None, ref
+    ledger.daily_consumption = diff.old_value
+    ledger.save()
 
 
 def get_couch_transactions(ref):
