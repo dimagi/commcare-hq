@@ -127,9 +127,6 @@ The following linked project spaces received content:
         return linebreaksbr(message) if html else message
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
-        if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
-            return self._error_tuple(_("Multi master flag is in use"))
-
         app_id = model['detail']['app_id']
         found = False
         error_prefix = ""
