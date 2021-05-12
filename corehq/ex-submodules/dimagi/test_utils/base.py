@@ -6,7 +6,7 @@ if not settings.configured:
 
 
 from mock import MagicMock, NonCallableMock, patch
-from unittest2 import TestCase
+from unittest import TestCase
 
 from memoized import memoized
 from dimagi.utils.chunked import chunked
