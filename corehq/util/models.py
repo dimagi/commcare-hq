@@ -273,6 +273,9 @@ class ForeignValue:
     memory rather than fetching from the database each time a new value
     is set or fetched. Pass `cache_size=0` disable the LRU-cache. Note that the
     `__set__` and `__get__` use different caches (each of the same size).
+
+    Note: corehq.util.test_utils.patch_foreign_value_caches for how the caches
+    are cleared in tests.
     """
 
     def __init__(self, foreign_key: models.ForeignKey, truncate=False, cache_size=1000):
