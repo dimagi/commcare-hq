@@ -70,6 +70,13 @@ case $command in
     list-html-with-external-scripts | sed 's/^/  /'
     ;;
 
+  # For use with static_analysis management command
+  "static-analysis" )
+    hqDefineCount=$(echo $(list-js-without-hqDefine | wc -l))
+    requireJsCount=$(echo $(list-js-without-requirejs | wc -l))
+    echo "$hqDefineCount $(($jsTotalCount - $hqDefineCount)) $requireJsCount $(($jsTotalCount - $requireJsCount))"
+    ;;
+
   "")
     # No command passed; print total migration progress
     # Don't bother printing the HTML external script percentage as a metric; it's misleading
