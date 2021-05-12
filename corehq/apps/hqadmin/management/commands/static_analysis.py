@@ -87,18 +87,18 @@ class Command(BaseCommand):
         output = proc.communicate()[0].strip().decode("utf-8")
         (hqdefine_todo, hqdefine_done, requirejs_todo, requirejs_done) = output.split(" ")
 
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_todo), tags={
-            'status': 'todo',
-        })
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_done), tags={
-            'status': 'done',
-        })
-        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_todo), tags={
-            'status': 'todo',
-        })
-        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_done), tags={
-            'status': 'done',
-        })
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_todo), tags=[
+            'status: todo',
+        ])
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_done), tags=[
+            'status: done',
+        ])
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_todo), tags=[
+            'status: todo',
+        ])
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_done), tags=[
+            'status: done',
+        ])
 
     def show_toggles(self):
         counts = Counter(t.tag.name for t in all_toggles() + all_previews())
