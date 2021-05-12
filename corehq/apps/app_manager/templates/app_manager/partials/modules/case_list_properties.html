@@ -73,9 +73,9 @@
           {% else %}
         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
       {% endif %}
-      <div data-bind="jqueryElement: nodeset.ui"></div>
+      <div data-bind="jqueryElement: nodeset_extra.ui"></div>
       <span class="help-block"
-            data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
+            data-bind="text: 'Please enter an expression.', visible: showWarning"></span>
       </td>
       <!--/ko-->
       <!--ko ifnot: $data.hasNodeset -->
