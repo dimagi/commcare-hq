@@ -732,10 +732,12 @@ class ReferCaseRepeater(CreateCaseRepeater):
             return response
 
         if response.status_code == 422:
+            # openrosa v3
             retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
             return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
 
         if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
+            # openrosa v2
             return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
 
         return response
