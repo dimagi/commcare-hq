@@ -37,3 +37,7 @@ def write_mappings(mappings: Iterable[CasePropertyMap]):
         csv_writer.writerow(header)
         rows = (attr.astuple(m) for m in mappings)
         csv_writer.writerows(rows)
+
+
+class UnreachableServerError(Exception):
+    pass

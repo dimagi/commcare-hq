@@ -1,4 +1,5 @@
 import sys
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
@@ -26,8 +27,11 @@ from custom.onse.const import (
     CONNECTION_SETTINGS_NAME,
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
+    PING_SUCCESS_CODE,
+    EXPONENTIAL_BACKOFF_FACTOR,
+    RETRY_BACKOFF_MAX_SECONDS,
 )
-from custom.onse.models import iter_mappings
+from custom.onse.models import iter_mappings, UnreachableServerError
 
 # The production DHIS2 server is on the other side of an
 # interoperability service that changes the URL schema from
@@ -36,7 +40,6 @@ from custom.onse.models import iter_mappings
 # Set ``DROP_API_PREFIX = True`` to drop the "/api" before "/resource",
 # so that resource URLs end up as "service/dhis2core/api/v0/resource".
 DROP_API_PREFIX = True
-
 MAX_THREAD_WORKERS = 10
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
@@ -68,6 +71,11 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
     run_every=crontab(day_of_month=5, month_of_year='1,4,7,10',
                       hour=22, minute=30),
     queue='background_queue',
+    autoretry_for=(UnreachableServerError,),
+    retry_backoff=EXPONENTIAL_BACKOFF_FACTOR,
+    retry_backoff_max=RETRY_BACKOFF_MAX_SECONDS,
+    retry_jitter=False,
+    retry_kwargs={'max_retries': 5}
 )
 def update_facility_cases_from_dhis2_data_elements(
     period: Optional[str] = None,
@@ -86,6 +94,23 @@ def update_facility_cases_from_dhis2_data_elements(
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
+
+    if _server_is_online(dhis2_server):
+        _update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
+    else:
+        print('Importing ONSE ISS facility cases from DHIS2 failed: server unreachable.')
+        raise UnreachableServerError
+
+
+def _server_is_online(server: ConnectionSettings) -> bool:
+    return os.system('ping -c 1' + server.url) == PING_SUCCESS_CODE
+
+
+def _update_facility_cases_from_dhis2_data_elements(
+    dhis2_server: ConnectionSettings,
+    period: Optional[str] = None,
+    print_notifications: bool = False,
+):
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
