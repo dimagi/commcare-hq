@@ -72,7 +72,6 @@ class CaseFactory(object):
         self.domain = domain
         self.case_defaults = case_defaults if case_defaults is not None else {}
         self.form_extras = form_extras if form_extras is not None else {}
-        self.case_accessors = CaseAccessors(self.domain)
 
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
@@ -133,6 +132,7 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras, user_id=user_id)
 
     def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
+        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
         self.post_case_blocks(
             self.get_case_blocks(case_structures),
             form_extras,
@@ -141,4 +141,4 @@ class CaseFactory(object):
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
-        return list(self.case_accessors.get_cases(case_ids, ordered=True))
+        return list(CaseAccessors(self.domain).get_cases(case_ids, ordered=True))

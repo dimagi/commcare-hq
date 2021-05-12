@@ -246,7 +246,7 @@ class TestCaseHierarchy(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        parent = factory.case_accessors.get_case(parent.case_id)
+        parent = CaseAccessors(parent.domain).get_case(parent.case_id)
         hierarchy = get_case_hierarchy(parent, {})
         self.assertEqual(1, len(hierarchy['case_list']))
         self.assertEqual(0, len(hierarchy['child_cases']))
@@ -419,8 +419,9 @@ class TestCaseHierarchyContext(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        self.parent = self.factory.case_accessors.get_case(self.parent.case_id)
-        self.child = self.factory.case_accessors.get_case(self.child.case_id)
+        accessors = CaseAccessors(self.parent.domain)
+        self.parent = accessors.get_case(self.parent.case_id)
+        self.child = accessors.get_case(self.child.case_id)
 
 
 @use_sql_backend
