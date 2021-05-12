@@ -57,6 +57,7 @@ def get_upstream_app_ids(downstream_domain):
     return list(_get_downstream_app_id_map(downstream_domain))
 
 
+# TODO: look at usages of this, now that multi master is dead
 @quickcache(vary_on=['downstream_domain'], skip_arg=lambda _: settings.UNIT_TESTING, timeout=5 * 60)
 def _get_downstream_app_id_map(downstream_domain):
     downstream_app_ids = defaultdict(list)
