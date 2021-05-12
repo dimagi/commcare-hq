@@ -119,10 +119,3 @@ A few fields are **not** copied from the master app to the linked app. They incl
 
 ## Overrides
 A small number of settings can be overridden in a linked app. App settings can be tagged with the `supports_linked_app` flag to make them appear on the linked app's settings page.
-
-## Multi-master
-The `MULTI_MASTER_LINKED_DOMAINS` feature flag allows a linked app to pull changes from more than one master app. The use case for multiple master apps is to support a branching-type workflow.
-
-A linked app may pull from all multiple upstream apps within a single "family." Families are created by copying apps; when an app is copied, its `family_id` is set to the id of the app it was copied from.
-
-When this flag is on, different builds of the same linked app may have different values for `upstream_app_id`. This id reflects the app that specific build was pulled from.
