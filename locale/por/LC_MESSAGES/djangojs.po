@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-28 19:19+0000\n"
+"POT-Creation-Date: 2021-05-05 20:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Séfora Vazirna <seforan@gmail.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -210,10 +210,8 @@ msgid "Advanced Mobile UCR Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Lookup Table Options"
-msgstr "Tabelas de Pesquisa"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
@@ -222,16 +220,12 @@ msgid "Lookup Table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:124
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Select a Lookup Table..."
-msgstr "Tabelas de Pesquisa"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:125
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Advanced Lookup Table Options"
-msgstr "Tabelas de Pesquisa"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
 #: corehq/apps/reports/static/reports/js/single_form.js:105

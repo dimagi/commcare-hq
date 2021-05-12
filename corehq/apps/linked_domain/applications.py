@@ -8,9 +8,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
-    wrap_app,
+    wrap_app, get_app, get_apps_in_domain,
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.exceptions import MultipleDownstreamAppsError, RemoteRequestError
 from corehq.apps.linked_domain.remote_accessors import (
@@ -90,6 +91,16 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
     return link_app(linked_app, master_domain, master_id, remote_details)
 
 
+def get_linked_apps_for_domain(domain):
+    linked_apps = []
+    apps = get_apps_in_domain(domain, include_remote=False)
+    for app in apps:
+        if is_linked_app(app):
+            linked_apps.append(app)
+
+    return linked_apps
+
+
 def link_app(linked_app, master_domain, master_id, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
 
@@ -105,3 +116,23 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
 
     _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
+
+
+def unlink_apps_in_domain(domain):
+    linked_apps = get_linked_apps_for_domain(domain)
+    unlinked_apps = []
+    for app in linked_apps:
+        unlinked_app = unlink_app(app)
+        unlinked_apps.append(unlinked_app)
+
+    return unlinked_apps
+
+
+def unlink_app(linked_app):
+    if not is_linked_app(linked_app):
+        return None
+
+    converted_app = linked_app.convert_to_application()
+    converted_app.save()
+
+    return converted_app

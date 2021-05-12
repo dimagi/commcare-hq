@@ -39,7 +39,7 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" -a "$TEST" != "python-elasticsearch-v7"]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript"]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
@@ -69,31 +69,6 @@ function send_counter_metric_to_datadog() {
     send_metric_to_datadog "travis.count" 1 "counter"
 }
 
-function send_metric_to_datadog() {
-    if [ -z "$DATADOG_API_KEY" ]; then
-        return
-    fi
-
-    currenttime=$(date +%s)
-    curl  -X POST -H "Content-type: application/json" \
-    -d "{ \"series\" :
-             [{\"metric\":\"$1\",
-              \"points\":[[$currenttime, $2]],
-              \"type\":\"$3\",
-              \"host\":\"travis-ci.org\",
-              \"tags\":[
-                \"environment:travis\",
-                \"travis_build:$TRAVIS_BUILD_ID\",
-                \"travis_number:$TRAVIS_BUILD_NUMBER\",
-                \"travis_job_number:$TRAVIS_JOB_NUMBER\",
-                \"test_type:$TEST\",
-                \"partition:$NOSE_DIVIDED_WE_RUN\"
-              ]}
-            ]
-        }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
-}
-
 function _run_tests() {
     TEST=$1
     shift
@@ -101,10 +76,6 @@ function _run_tests() {
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
-    elif [ "$TEST" == "python-elasticsearch-v7" ]; then
-        export ELASTICSEARCH_7_PORT=9200
-        export ELASTICSEARCH_MAJOR_VERSION=7
-        TESTS="--attr=es_test"
     else
         TESTS=""
     fi
@@ -119,6 +90,14 @@ function _run_tests() {
         /mnt/wait.sh 127.0.0.1:8000
          echo "grunt test $@"
          grunt test "$@"
+
+         if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+            echo "----------> Begin Static Analysis <----------"
+            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+            ./scripts/static-analysis.sh datadog
+            echo "----------> End Static Analysis <----------"
+         fi
+
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "./manage.py test $@ $TESTS"
@@ -146,6 +125,8 @@ function runserver() {
     JS_SETUP=yes setup python
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
+
+source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
 export -f setup
 export -f run_tests

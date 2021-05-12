@@ -1139,7 +1139,7 @@ class MessagingTab(UITab):
     def settings_urls(self):
         settings_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and self.couch_user.is_domain_admin():
             from corehq.apps.sms.views import (
                 DomainSmsGatewayListView, AddDomainGatewayView,
                 EditDomainGatewayView,
@@ -1401,6 +1401,10 @@ class ProjectUsersTab(UITab):
                     {
                         'title': _get_web_username,
                         'urlname': EditWebUserView.urlname
+                    },
+                    {
+                        'title': _("Bulk Upload"),
+                        'urlname': 'upload_web_users'
                     }
                 ],
                 'show_in_dropdown': True,

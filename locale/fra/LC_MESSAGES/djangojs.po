@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-28 19:19+0000\n"
+"POT-Creation-Date: 2021-05-05 20:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Rowena Luk <rluk@dimagi.com>, 2021\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -209,20 +209,16 @@ msgid "Mobile UCR Report"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:114
-#, fuzzy
-#| msgid "Search Reports..."
 msgid "Select a Report..."
-msgstr "Rechercher rapports..."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:115
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Lookup Table Options"
-msgstr "Tables de Recherche"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
@@ -231,16 +227,12 @@ msgid "Lookup Table"
 msgstr "Table de Recherche"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:124
-#, fuzzy
-#| msgid "Select a language..."
 msgid "Select a Lookup Table..."
-msgstr "Sélection de la langue..."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:125
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Advanced Lookup Table Options"
-msgstr "Tables de Recherche"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
 #: corehq/apps/reports/static/reports/js/single_form.js:105
@@ -4290,7 +4282,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js:94
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "You have unsaved changes to your whitelist"
-#~ msgstr ""
-#~ "Vous avez des modifications non sauvegardées sur sur votre liste blanche"

@@ -121,9 +121,9 @@ def _set_role_for_bundle(kwargs, bundle):
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        preset_role_id = UserRole.get_preset_role_id(bundle.data.get('role'))
+        if preset_role_id:
+            bundle.obj.set_role(kwargs['domain'], preset_role_id)
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -1091,6 +1091,10 @@ class ODataFormResource(BaseODataResource):
 
 
 class MessagingEventResource(HqBaseResource, ModelResource):
+    content_type_display = fields.CharField(attribute='get_content_type_display')
+    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
+    status_display = fields.CharField(attribute='get_status_display')
+    source_display = fields.CharField(attribute='get_source_display')
 
     class Meta(object):
         queryset = MessagingEvent.objects.all()

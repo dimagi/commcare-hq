@@ -19,6 +19,8 @@ env:
     - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
     # DATADOG_API_KEY
     - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
+    # DATADOG_APP_KEY
+    - secure: "fMA0EchlDhjjKn7oo451vfOhYSJyvm4cL+qi46nx4EbPNhYhBafz8uplgrTodSJccLohioRWsu2HAxN/oAOIp4fWzomnGXCe5c/M4dGTqo5CksOG95C9kkGsaq8xyhYRGplI9iCQHwGbjipvEbtg0n2lfirlLV+DHhNGzDCCM78="
     # DOCKER_USERNAME
     - secure: "YJYYdkYEzN33IwHGMhFy8NIKy5fm3IjCSngwYSLTF2wwmtVTdDSObQbRwvU8zN7aziAbyYvfDQjrQZ+XG8q7RhcirqBkV8Odvzc+OxyRqw2m5Rmr6IU/Cjdja5BXuKuZBlmNmh0fzZguH7EwteAh8lKwzPs+05WCbjZ2cA5YupE="
     # DOCKER_PASSWORD
