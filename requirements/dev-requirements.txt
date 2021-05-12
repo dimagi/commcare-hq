@@ -68,7 +68,9 @@ click==7.1.2
 cloudant==2.14.0
     # via jsonobject-couchdbkit
 colorama==0.4.3
-    # via sniffer
+    # via
+    #   radon
+    #   sniffer
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 commonmark==0.9.1
@@ -237,6 +239,8 @@ flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
     # via -r test-requirements.in
+future==0.18.2
+    # via radon
 gevent==1.4.0
     # via
     #   -r base-requirements.in
@@ -339,6 +343,8 @@ lxml==4.6.3
     #   xmlsec
 mako==1.1.3
     # via alembic
+mando==0.6.4
+    # via radon
 markdown==2.2.1
     # via
     #   -r base-requirements.in
@@ -494,6 +500,8 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
+radon==4.5.0
+    # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
 recommonmark==0.7.1
@@ -565,6 +573,7 @@ six==1.15.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
+    #   mando
     #   mock
     #   packaging
     #   protobuf

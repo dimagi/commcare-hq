@@ -70,6 +70,11 @@ class AsyncSignupRequest(models.Model):
     Use this model to store information from signup or invitation forms when
     the user is redirected to login elsewhere (like SSO) but the signup/invitation
     process must resume when they return.
+
+    NOTE: The reason we use this instead of storing data in request.session
+    is that during the SAML handshake for SSO, the Identity Provider
+    acknowledges the handshake by posting to a view that is CSRF exempt.
+    For security reasons, Django wipes the session data during this process.
     """
     username = models.CharField(max_length=255, db_index=True)
     invitation = models.ForeignKey('users.Invitation', null=True, blank=True, on_delete=models.SET_NULL)
