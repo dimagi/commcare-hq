@@ -304,6 +304,7 @@ def get_app_view_context(request, app):
         'is_remote_app': is_remote_app(app),
     })
     if is_linked_app(app):
+        # TODO: there will only ever be one master brief
         try:
             master_versions_by_id = app.get_latest_master_releases_versions()
             master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
@@ -318,7 +319,6 @@ def get_app_view_context(request, app):
         context.update({
             'master_briefs': master_briefs,
             'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
