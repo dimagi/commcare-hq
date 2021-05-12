@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-05 20:10+0000\n"
+"POT-Creation-Date: 2021-05-12 19:19+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Séfora Vazirna <seforan@gmail.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -225,6 +225,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:125
 msgid "Advanced Lookup Table Options"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:26
+msgid "Edit Graph"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
@@ -2692,29 +2696,29 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:279
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:331
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:281
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:333
 msgid "Submit"
 msgstr "Submeter"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:394
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:344
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:396
 msgid "This answer is outside the allowed range."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:16
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
 msgid ""
 "Looks like you got logged out because of inactivity, but your work is safe. "
 "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:24
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
@@ -2734,12 +2738,6 @@ msgstr ""
 msgid "Form submission failed with error"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:485
-msgid ""
-"There are errors in this form's answers. These must be corrected before the "
-"form can be submitted."
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:34
 msgid "Form successfully submitted!"
 msgstr ""
@@ -2752,26 +2750,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:337
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:339
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:348
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:471
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:473
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:499
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:651
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:653
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
