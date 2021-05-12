@@ -36,8 +36,8 @@ def date_type(value):
 def validate_range(gt=None, lt=None):
     """Create an argparse.Action subclass for validating comparable inputs.
 
-    :param gt: value which the argument cannot be greater than
-    :param lt: value which the argument cannot be less than
+    :param gt: value which the argument must be greater than
+    :param lt: value which the argument must be less than
     :returns: argparse.Action subclass
 
     Example:
