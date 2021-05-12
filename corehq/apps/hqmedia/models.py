@@ -634,7 +634,8 @@ class ModuleMediaMixin(MediaMixin):
 
         # Case search and claim menu item
         if hasattr(self, 'search_config'):
-            media.extend(self.menu_media(self.search_config, lang=lang))
+            media.extend(self.menu_media(self.search_config.command_label_multimedia, lang=lang))
+            media.extend(self.menu_media(self.search_config.again_label_multimedia, lang=lang))
 
         for name, details, display in self.get_details():
             # Case list lookup - not language-specific
@@ -830,12 +831,12 @@ class ApplicationMediaMixin(Document, MediaMixin):
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
 
-    def get_case_search_menu_item_media(self, module, to_language=None):
+    def get_case_search_item_media(self, module, item, to_language=None):
         if not module or not module.uses_media() or not hasattr(module, 'search_config'):
             return {}
         media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
-        return self._get_item_media(module.search_config, media_kwargs)
+        return self._get_item_media(item, media_kwargs)
 
     def get_case_list_lookup_image(self, module, type='case'):
         if not module:

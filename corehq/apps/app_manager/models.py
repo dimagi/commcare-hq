@@ -2095,7 +2095,20 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
-class CaseSearch(NavMenuItemMediaMixin):
+class CaseSearchMultimedia(NavMenuItemMediaMixin):
+    def get_app(self):
+        return self._module.get_app()
+
+
+class CaseSearchCommandLabelMultimedia(CaseSearchMultimedia):
+    pass
+
+
+class CaseSearchAgainLabelMultimedia(CaseSearchMultimedia):
+    pass
+
+
+class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
@@ -2110,6 +2123,8 @@ class CaseSearch(NavMenuItemMediaMixin):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+    command_label_multimedia = SchemaProperty(CaseSearchCommandLabelMultimedia)
+    again_label_multimedia = SchemaProperty(CaseSearchAgainLabelMultimedia)
 
     @property
     def case_session_var(self):
@@ -2135,9 +2150,6 @@ class CaseSearch(NavMenuItemMediaMixin):
             attrs = self.keys() - self.dynamic_properties().keys() - {'properties', 'default_properties'}
             for attr in attrs:
                 setattr(self, attr, getattr(src_config, attr))
-
-    def get_app(self):
-        return self._module.get_app()
 
 
 class ParentSelect(DocumentSchema):
@@ -2221,7 +2233,8 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
         if hasattr(self, 'search_config'):
-            self.search_config._module = self
+            self.search_config.command_label_multimedia._module = self
+            self.search_config.again_label_multimedia._module = self
 
     @classmethod
     def wrap(cls, data):
