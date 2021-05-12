@@ -15,6 +15,7 @@ class RepeaterResponse:
     status_code = attr.ib()
     reason = attr.ib()
     text = attr.ib(default="")
+    retry = attr.ib(default=True)
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
