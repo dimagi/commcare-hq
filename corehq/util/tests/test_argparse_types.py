@@ -26,6 +26,7 @@ def wrap_system_exit():
 class TestValidateInteger(SimpleTestCase):
 
     def setUp(self):
+        super().setUp()
         self.parser = ArgumentParser()
 
     def add_validated_arg(self, type, *val_args, **val_kw):
