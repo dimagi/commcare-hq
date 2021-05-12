@@ -852,6 +852,9 @@ def post_user_role(request, domain):
     permissions.normalize()
     role.set_permissions(permissions.to_list())
 
+    assignable_by = role_data["assignable_by"]
+    role.set_assignable_by(assignable_by)
+
     response_data = role.to_json()
     response_data['hasUsersAssigned'] = bool(get_role_user_count(role.domain, role.get_id))
     return json_response(role)
