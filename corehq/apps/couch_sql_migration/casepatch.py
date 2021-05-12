@@ -381,7 +381,11 @@ UNPATCHABLE_LEDGER_PATHS = {
 def get_ledger_patch_xml(diff):
     path = list(diff.path)
     if path == ["balance"]:
-        element = ledger_balance_patch(diff)
+        try:
+            element = ledger_balance_patch(diff)
+        except StockState.DoesNotExist:
+            log.warning("Skipping patch of missing stock state: %s", diff)
+            element = None
     elif (
         path == ["*"]
         and diff.diff_type == "missing"
