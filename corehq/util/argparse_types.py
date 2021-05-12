@@ -21,6 +21,7 @@ def date_type(value):
             "Expected date in the format: YYYY-MM-DD" % value
         )
 
+
 # NOTE: The `validate_integer` function has been renamed to `validate_range`,
 # and it no longer enforces the argument type. This requires specifying the
 # argument type (for non-default types) when using `action=validate_range(...)`.
