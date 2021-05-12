@@ -19,12 +19,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors import (
+    count_invitations_by_filters,
     count_mobile_users_by_filters,
     count_web_users_by_filters,
     get_invitations_by_filters,
     get_mobile_users_by_filters,
     get_mobile_usernames_by_filters,
-    get_web_user_count,
     get_web_users_by_filters,
 )
 from corehq.apps.users.models import UserRole
@@ -404,19 +404,20 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
 def dump_web_users(domain, download_id, user_filters, task, owner_id):
     (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
-    users_count = 0
+    total_count = 0
     for current_domain in domains_list:
-        users_count += count_web_users_by_filters(current_domain, user_filters)
+        total_count += count_web_users_by_filters(current_domain, user_filters)
+        total_count += count_invitations_by_filters(current_domain, user_filters)
 
-    DownloadBase.set_progress(task, 0, users_count)
+    DownloadBase.set_progress(task, 0, total_count)
 
-    user_headers, user_rows = parse_web_users(domain, user_filters, task, users_count)
+    user_headers, user_rows = parse_web_users(domain, user_filters, task, total_count)
 
     headers = [('users', [user_headers])]
     rows = [('users', user_rows)]
 
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count, owner_id)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count, owner_id)
 
 
 class GroupNameError(Exception):
