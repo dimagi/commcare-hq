@@ -68,7 +68,6 @@ class CaseFactory(object):
     """
 
     def __init__(self, domain=None, case_defaults=None, form_extras=None):
-        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
         self.domain = domain
         self.case_defaults = case_defaults if case_defaults is not None else {}
         self.form_extras = form_extras if form_extras is not None else {}
