@@ -11,7 +11,7 @@ from crispy_forms.utils import render_crispy_form
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.analytics import get_role_user_count
-from corehq.apps.users.models_sql import StaticRole
+from corehq.apps.users.models_sql import StaticRole, SQLUserRole
 from dimagi.utils.web import json_response
 from django.contrib import messages
 from django.http import (
@@ -105,8 +105,7 @@ from corehq.apps.users.models import (
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
-    UserRole,
-    WebUser,
+    WebUser, Permissions,
 )
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
@@ -505,7 +504,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            UserRole.by_domain(self.domain),
+            SQLUserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -522,7 +521,7 @@ class ListWebUsersView(BaseRoleAccessView):
     def role_labels(self):
         return {
             r.get_qualified_id(): r.name
-            for r in [UserRole.admin_role(self.domain)] + self.non_admin_roles
+            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
         }
 
     @property
@@ -656,7 +655,7 @@ class ListRolesView(BaseRoleAccessView):
 
     def get_roles_for_display(self):
         show_es_issue = False
-        role_view_data = [UserRole.admin_role(self.domain).to_json()]
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
         for role in self.non_admin_roles:
             role_data = role.to_json()
             role_view_data.append(role_data)
@@ -830,10 +829,6 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
     role_data = json.loads(request.body.decode('utf-8'))
-    role_data = dict(
-        (p, role_data[p])
-        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
-    )
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -841,15 +836,22 @@ def post_user_role(request, domain):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    role = UserRole.wrap(role_data)
-    role.domain = domain
-    if role.get_id:
-        old_role = UserRole.get(role.get_id)
-        assert(old_role.doc_type == UserRole.__name__)
-        assert(old_role.domain == domain)
+    try:
+        role = SQLUserRole.objects.get(couch_id=role_data["_id"])
+        assert role.domain == domain
+    except SQLUserRole.DoesNotExist:
+        role = SQLUserRole()
 
-    role.permissions.normalize()
+    role.domain = domain
+    role.name = role_data["name"]
+    role.default_landing_page = role_data["default_landing_page"]
+    role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
+
+    permissions = Permissions.wrap(role_data["permissions"])
+    permissions.normalize()
+    role.set_permissions(permissions.to_list())
+
     response_data = role.to_json()
     response_data['hasUsersAssigned'] = bool(get_role_user_count(role.domain, role.get_id))
     return json_response(role)
@@ -862,10 +864,10 @@ def delete_user_role(request, domain):
         return json_response({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = UserRole.get(role_data["_id"])
-    except ResourceNotFound:
+        role = SQLUserRole.objects.get(couch_id=role_data["_id"])
+    except SQLUserRole.DoesNotExist:
         return json_response({})
-    copy_id = role._id
+    copy_id = role.get_id
     role.delete()
     # return removed id in order to remove it from UI
     return json_response({"_id": copy_id})

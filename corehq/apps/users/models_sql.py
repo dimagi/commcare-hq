@@ -142,6 +142,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         if permissions_by_name:
             old_ids = [old.id for old in permissions_by_name.values()]
             RolePermission.objects.filter(id__in=old_ids).delete()
+        self._cached_permissions.clear(self)
 
     def get_permission_infos(self):
         return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
@@ -174,6 +175,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         if assignments_by_role_id:
             old_ids = list(assignments_by_role_id.values())
             RoleAssignableBy.objects.filter(id__in=old_ids).delete()
+        self._cached_assignable_by.clear(self)
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
@@ -222,7 +224,7 @@ class RolePermission(models.Model):
 
     def as_permission_info(self):
         from corehq.apps.users.models import PermissionInfo
-        allow = PermissionInfo.ALLOW_ALL if self.allow_all else self.allowed_items
+        allow = PermissionInfo.ALLOW_ALL if self.allow_all else tuple(self.allowed_items)
         return PermissionInfo(self.permission, allow=allow)
 
 
