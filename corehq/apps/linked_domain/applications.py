@@ -111,15 +111,17 @@ def link_app_via_app_manager(master_domain, master_id, target_domain, target_nam
     return link_app(linked_app, master_domain, remote_details)
 
 
-def link_app(linked_app, master_domain, remote_details=None):
-    DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
-
+def _pull_multimedia_if_remote(linked_app):
     if linked_app.master_is_remote:
         try:
             pull_missing_multimedia_for_app(linked_app)
         except RemoteRequestError:
             raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
 
+
+def link_app(linked_app, master_domain, remote_details=None):
+    DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
+    _pull_multimedia_if_remote(linked_app)
     _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
 
@@ -130,7 +132,8 @@ def link_app_in_existing_domain_link(domain_link, upstream_app_id):
 
     original_app = get_app(domain_link.master_domain, upstream_app_id)
     linked_app = _create_linked_app(domain_link.linked_domain, upstream_app_id, original_app.name)
-
+    _pull_multimedia_if_remote(linked_app)
+    _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
 
 
