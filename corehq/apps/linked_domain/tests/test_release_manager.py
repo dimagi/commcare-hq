@@ -124,12 +124,6 @@ class TestReleaseManager(BaseLinkedAppsTest):
             self._model_status(MODEL_APP, detail=AppLinkDetail(app_id='123').to_json()),
         ], error="Could not find app")
 
-    @flag_enabled('MULTI_MASTER_LINKED_DOMAINS')
-    def test_multi_master_app_fail(self):
-        self._assert_release([
-            self._model_status(MODEL_APP, detail=AppLinkDetail(app_id='123').to_json()),
-        ], error="Multi master flag is in use")
-
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_app_build_and_release(self, *args):
         self._make_master1_build(True)
