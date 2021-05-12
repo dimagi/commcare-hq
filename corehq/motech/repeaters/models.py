@@ -69,7 +69,6 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
-from lxml import etree
 
 from django.conf import settings
 from django.db import models

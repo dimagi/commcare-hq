@@ -41,9 +41,8 @@ class TestReferCaseRepeater(SimpleTestCase):
     (422, V3_ERROR, RepeaterResponse(422, ResponseNature.PROCESSING_FAILURE, '', False)),
     (422, V3_RETRY_ERROR, RepeaterResponse(422, ResponseNature.POST_PROCESSING_FAILURE, '', True)),
 ], TestReferCaseRepeater)
-def test_parse_openrosa_response(self, status_code, text, expected_response):
+def test_get_response(self, status_code, text, expected_response):
     response = ReferCaseRepeater.get_response(RepeaterResponse(status_code, responses[status_code], text))
-    print(response)
     self.assertEqual(response.status_code, expected_response.status_code)
     self.assertEqual(response.reason, expected_response.reason)
     self.assertEqual(response.retry, expected_response.retry)

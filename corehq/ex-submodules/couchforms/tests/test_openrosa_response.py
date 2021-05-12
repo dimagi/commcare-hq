@@ -34,4 +34,3 @@ def test_parse_openrosa_response(self, xml, nature, message):
         self.assertEqual(response.nature, nature)
     else:
         self.assertIsNone(response)
-
