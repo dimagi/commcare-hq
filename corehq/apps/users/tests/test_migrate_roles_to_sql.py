@@ -191,6 +191,11 @@ def make_couch_role(domain, name, **kwargs):
         # this field differs between the 2, each is the ID in their respective DBs
         couch_dict.pop("upstream_id")
         sql_dict.pop("upstream_id")
+
+        # sql uses SQL primary keys, couch uses couch IDs
+        sql_dict.pop("assignable_by")
+        couch_dict.pop("assignable_by")
+
         self.assertDictEqual(couch_dict, sql_dict)
 
 
