@@ -34,7 +34,7 @@
                 data-toggle="modal"
                 data-bind="attr: {'data-target': '#update-datavalue-map-' + id}"
                 class="btn btn-primary">
-            Edit
+          {% trans 'Edit' %}
         </button>
 
         <div class="modal fade"
@@ -47,7 +47,9 @@
                           data-dismiss="modal"
                           aria-hidden="true">&times;</button>
                   <h3>
+                    {% blocktrans trimmed %}
                     Update DataValue Map <strong data-bind="text: column"></strong>:
+                    {% endblocktrans %}
                   </h3>
               </div>
               <div class="modal-body">
@@ -61,7 +63,7 @@
                 data-toggle="modal"
                 data-bind="attr: {'data-target': '#delete-datavalue-map-' + id}"
                 class="btn btn-danger">
-            <i class="fa fa-remove"></i> Delete
+            <i class="fa fa-remove"></i> {% trans 'Delete' %}
         </button>
 
         <div class="modal fade"
@@ -74,24 +76,29 @@
                         data-dismiss="modal"
                         aria-hidden="true">&times;</button>
                 <h3>
-                   Delete DataValue Map <strong data-bind="text: column"></strong>?
+                  {% blocktrans trimmed %}
+                  Delete DataValue Map <strong data-bind="text: column"></strong>?
+                  {% endblocktrans %}
                 </h3>
               </div>
               <div class="modal-body">
                 <p class="lead">
-                  Yes, delete the DataValue Map for column <strong data-bind="text: column"></strong>.
+                  {% blocktrans trimmed %}
+                  Yes, delete the DataValue Map for column
+                  <strong data-bind="text: column"></strong>.
+                  {% endblocktrans %}
                 </p>
               </div>
               <div class="modal-footer">
                 <button type="button"
                         class="btn btn-default"
                         data-dismiss="modal">
-                  Cancel
+                  {% trans 'Cancel' %}
                 </button>
                 <button type="button"
                         class="btn btn-danger delete-item-confirm"
-                        data-loading-text="Deleting DataValue Map ...">
-                  <i class="fa fa-remove"></i> Delete
+                        data-loading-text="{% trans 'Deleting DataValue Map ...' %}">
+                  <i class="fa fa-remove"></i> {% trans 'Delete' %}
                 </button>
               </div>
             </div>
