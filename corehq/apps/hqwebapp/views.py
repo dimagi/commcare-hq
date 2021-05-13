@@ -475,6 +475,10 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['enforce_sso_login'] = (
+            settings.ENFORCE_SSO_LOGIN
+            and self.steps.current == 'auth'
+        )
         return context
 
 
