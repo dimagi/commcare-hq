@@ -661,7 +661,7 @@ class ListRolesView(BaseRoleAccessView):
             role_view_data.append(role_data)
 
             try:
-                user_count = get_role_user_count(role.domain, role.get_id)
+                user_count = get_role_user_count(role.domain, role.couch_id)
                 role_data["hasUsersAssigned"] = bool(user_count)
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
@@ -856,8 +856,8 @@ def post_user_role(request, domain):
     role.set_assignable_by(assignable_by)
 
     response_data = role.to_json()
-    response_data['hasUsersAssigned'] = bool(get_role_user_count(role.domain, role.get_id))
-    return json_response(role)
+    response_data['hasUsersAssigned'] = bool(get_role_user_count(role.domain, role.couch_id))
+    return json_response(response_data)
 
 
 @domain_admin_required
