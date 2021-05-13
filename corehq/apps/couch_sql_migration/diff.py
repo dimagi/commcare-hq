@@ -67,7 +67,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     ],
     'HQSubmission': [],
     'XFormArchived': [],
-    'XFormError': [],
+    'XFormError': [
+        Ignore('diff', 'doc_type', old='XFormError', new='XFormInstance'),
+    ],
     'XFormDuplicate': [],
     'XFormDeprecated': [
         ignore_renamed('deprecated_date', 'edited_on'),
