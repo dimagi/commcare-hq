@@ -47,6 +47,16 @@ class StaticRole:
 
 class UserRoleManager(models.Manager):
 
+    def get_by_domain_and_name(self, domain, name):
+        # role names may not be unique to return them all
+        return list(self.filter(domain=domain, name=name).all())
+
+    def by_domain(self, domain, include_archived=False):
+        query = self.filter(domain=domain)
+        if not include_archived:
+            query.filter(is_archived=False)
+        return list(query.prefetch_related('rolepermission_set'))
+
     def by_couch_id(self, couch_id):
         return SQLUserRole.objects.get(couch_id=couch_id)
 
@@ -81,11 +91,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         self._cached_assignable_by.clear(self)
 
     @classmethod
-    def by_domain(cls, domain, include_archived=False):
-        query = SQLUserRole.objects.filter(domain=domain)
-        if not include_archived:
-            query.filter(is_archived=False)
-        return list(query.prefetch_related('rolepermission_set'))
+    def create(cls, domain, name, permissions):
+        role = SQLUserRole.objects.create(domain, name)
+        role.set_permissions(permissions.to_json())
+        return role
 
     @classmethod
     def _migration_get_fields(cls):

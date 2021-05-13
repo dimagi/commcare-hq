@@ -83,6 +83,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -98,7 +99,6 @@ from . import (
     v0_4,
     CorsResourceMixin)
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ...users.role_utils import get_all_role_names_for_domain
 
 MOCK_BULK_USER_ES = None
 

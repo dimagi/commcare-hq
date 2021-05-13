@@ -37,7 +37,7 @@ class RolesTests(TestCase):
         super().tearDownClass()
 
     def test_get_by_domain(self):
-        domain_roles = {role.name: role for role in SQLUserRole.by_domain(self.domain)}
+        domain_roles = {role.name: role for role in SQLUserRole.objects.by_domain(self.domain)}
         self.assertDictEqual({"role1": self.roles[0], "role2": self.roles[1]}, domain_roles)
 
     def test_set_permissions(self):

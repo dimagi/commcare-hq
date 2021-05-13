@@ -503,7 +503,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            SQLUserRole.by_domain(self.domain),
+            SQLUserRole.objects.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
