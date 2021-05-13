@@ -8,6 +8,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
 
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
+        // ToDo: confirm that this isn't broken if reports module also have case search and claim
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
         var navMenuMedia = initNavMenuMedia(
             "",
