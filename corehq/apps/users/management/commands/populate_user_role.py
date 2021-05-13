@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.models_sql import (
