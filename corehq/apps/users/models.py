@@ -413,10 +413,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
 
-    @classmethod
-    def admin_role(cls, domain):
-        return StaticRole.domain_admin(domain=domain)
-
     @property
     def cache_version(self):
         return self._rev
@@ -518,7 +514,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return UserRole.admin_role(self.domain)
+            return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -712,7 +708,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return UserRole.admin_role(domain)
+            return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_mirroring):
             return self.get_domain_membership(domain, allow_mirroring).role
         else:
