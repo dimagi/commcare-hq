@@ -14,10 +14,6 @@ class BaseIdPTest(TestCase):
         super().setUp()
         self.idp = generator.create_idp('vaultwax', self.account)
 
-    def set_idp_active(self, active):
-        self.idp.is_active = active
-        self.idp.save()
-
     def tearDown(self):
         self.idp.delete()
         super().tearDown()
