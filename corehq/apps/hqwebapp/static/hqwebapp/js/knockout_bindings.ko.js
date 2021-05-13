@@ -681,5 +681,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         },
     };
 
+    ko.bindingHandlers.onEnterKey = {
+        // calls a function when the enter key is pressed on an input
+        init: function (element, valueAccessor, allBindings, viewModel) {
+            $(element).keypress(function (event) {
+                let keyCode = (event.which ? event.which : event.keyCode);
+                if (keyCode === 13) {
+                    valueAccessor()();
+                    return false;
+                }
+                return true;
+            });
+        },
+    };
+
     return 1;
 });
