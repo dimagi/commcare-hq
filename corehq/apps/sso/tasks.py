@@ -1,12 +1,15 @@
 import datetime
+import logging
 
 from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils import log_sso_error, log_sso_info
 from corehq.apps.sso.utils.context_helpers import get_idp_cert_expiration_email_context
+
+
+log = logging.getLogger(__name__)
 
 
 IDP_CERT_EXPIRES_REMINDER_DAYS = [30, 15, 7, 3, 1, 0]
@@ -68,7 +71,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
     for idp in queryset.all():
         context = get_idp_cert_expiration_email_context(idp)
         if not context["to"]:
-            log_sso_error(f"no admin email addresses for IdP: {idp}")
+            log.error(f"no admin email addresses for IdP: {idp}")
         try:
             for send_to in context["to"]:
                 send_html_email_async.delay(
@@ -79,7 +82,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
                     email_from=context["from"],
                     bcc=context["bcc"],
                 )
-                log_sso_info(
+                log.info(
                     "Sent %(num_days)s-day certificate expiration reminder "
                     "email for %(idp_name)s to %(send_to)s." % {
                         "num_days": num_days,
@@ -88,7 +91,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
                     }
                 )
         except Exception as exc:
-            log_sso_error(
-                f"Error sending cert reminder email for IdP {idp}: {exc!s}",
-                show_stack_trace=True,
+            log.error(
+                f"Failed to send cert reminder email for IdP {idp}: {exc!s}",
+                exc_info=True,
             )
