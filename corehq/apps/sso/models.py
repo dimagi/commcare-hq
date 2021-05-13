@@ -305,6 +305,22 @@ class IdentityProvider(models.Model):
             return True
         return idp.does_domain_trust_this_idp(domain)
 
+    @classmethod
+    def get_required_identity_provider(cls, username):
+        """
+        Gets the Identity Provider for the given username only if that
+        user is required to login or sign up with that Identity Provider.
+        :param username: String
+        :return: IdentityProvider or None
+        """
+        idp = cls.get_active_identity_provider_by_username(
+            username
+        )
+        if idp and not UserExemptFromSingleSignOn.objects.filter(
+            username=username
+        ).exists():
+            return idp
+
 
 @receiver(post_save, sender=Subscription)
 @receiver(post_delete, sender=Subscription)
