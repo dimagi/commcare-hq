@@ -70,7 +70,6 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - kev/markdown-case-views # Kevin Apr 9
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-    - sk/case-search-expression  # SK April 29
     - rp/query_multiple_domains #Rynhard May 4
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
