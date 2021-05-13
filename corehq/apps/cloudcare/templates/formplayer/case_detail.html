@@ -14,6 +14,8 @@
   <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(data) %>"/></td>
   <% } else if (style.displayFormat === 'Phone') { %>
   <td><a href="tel:<%- data %>"><%- data %></a></td>
+  <% } else if (templateForm === 'markdown' && html) { %>
+  <td><%= html %></td>
   <% } else { %>
   <td><%- data %></td>
   <% } %>
