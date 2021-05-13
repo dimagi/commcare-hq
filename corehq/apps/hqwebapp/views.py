@@ -1372,3 +1372,29 @@ class OauthApplicationRegistration(BasePageView):
             ))
 
         return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
+
+
+@require_POST
+def check_sso_login_status(request):
+    """
+    Checks to see if a given username must sign in or sign up with SSO and
+    returns the url for the SSO's login endpoint.
+    :param request: HttpRequest
+    :return: HttpResponse (as JSON)
+    """
+    username = request.POST['username']
+    is_sso_required = False
+    sso_url = None
+    continue_text = None
+
+    idp = IdentityProvider.get_required_identity_provider(username)
+    if idp:
+        is_sso_required = True
+        sso_url = idp.get_login_url(username=username)
+        continue_text = _("Continue to {}").format(idp.name)
+
+    return JsonResponse({
+        'is_sso_required': is_sso_required,
+        'sso_url': sso_url,
+        'continue_text': continue_text,
+    })
