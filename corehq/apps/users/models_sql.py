@@ -277,5 +277,5 @@ def role_to_dict(role):
     data["permissions"] = role.permissions.to_json()
     data["assignable_by"] = role.assignable_by
     if role.couch_id:
-        data["_id"] = role.couch_id
+        data["_id"] = role.id
     return data

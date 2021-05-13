@@ -837,7 +837,7 @@ def post_user_role(request, domain):
         role_data['permissions']['access_all_locations'] = True
 
     try:
-        role = SQLUserRole.objects.get(couch_id=role_data["_id"])
+        role = SQLUserRole.objects.get(id=role_data["_id"])
         assert role.domain == domain
     except SQLUserRole.DoesNotExist:
         role = SQLUserRole()
@@ -867,10 +867,10 @@ def delete_user_role(request, domain):
         return json_response({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = SQLUserRole.objects.get(couch_id=role_data["_id"])
+        role = SQLUserRole.objects.get(id=role_data["_id"])
     except SQLUserRole.DoesNotExist:
         return json_response({})
-    copy_id = role.get_id
+    copy_id = role.id
     role.delete()
     # return removed id in order to remove it from UI
     return json_response({"_id": copy_id})
