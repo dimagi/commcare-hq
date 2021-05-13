@@ -474,7 +474,7 @@ patch_max_test_time.__test__ = False
 
 
 def patch_foreign_value_caches():
-    """Patch django.test to clear ForeignValue.get_related LRU caches
+    """Patch django.test to clear ForeignValue LRU caches
 
     This complements `django.test.TransactionTestCase` and
     `django.test.TestCase` automatic database cleanup feature. It is
@@ -485,7 +485,7 @@ def patch_foreign_value_caches():
 
     def wrap(cached_prop, cache_clear=None):
         @wraps(cached_prop)
-        def monitored_get_related(self):
+        def monitored_getter(self):
             value = cached_prop(self)
             if cache_clear is None:
                 if self.cache_size:
@@ -495,12 +495,14 @@ def patch_foreign_value_caches():
             return value
 
         if cache_clear is not None:
+            # copy 'public' fields of `cached_prop` to `monitored_getter`
+            # e.g. cache_clear, cache_info
             for name in dir(cached_prop):
                 if not name.startswith("_"):
                     value = getattr(cached_prop, name)
-                    setattr(monitored_get_related, name, value)
+                    setattr(monitored_getter, name, value)
 
-        return monitored_get_related
+        return monitored_getter
 
     def post_teardown(self):
         if clear_funcs:
