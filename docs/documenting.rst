@@ -9,9 +9,12 @@ All the CommCareHQ docs are stored in a ``docs/`` folder in the root of the repo
 To add a new doc, make an appropriately-named rst file in the ``docs/`` directory.
 For the doc to appear in the table of contents, add it to the ``toctree`` list in ``index.rst``.
 
-Sooner or later we'll probably want to organize the docs into sub-directories, that's fine, you can link to specific locations like so: ```Installation <intro/install>```.
+Sooner or later we'll probably want to organize the docs into sub-directories,
+that's fine, you can link to specific locations like so: ``Installation
+<intro/install>``.
 
-For a more complete working set of documentation, check out `Django's docs directory <dj_docs_dir_>`_.  This is used to build `docs.djangoproject.com <dj_docs_>`_.
+For a nice example set of documentation, check out `Django's docs directory
+<dj_docs_dir_>`_. This is used to build `docs.djangoproject.com <dj_docs_>`_.
 
 .. _dj_docs_dir: https://github.com/django/django/tree/master/docs
 .. _dj_docs: https://docs.djangoproject.com
@@ -34,25 +37,59 @@ Sphinx
 Sphinx builds the documentation and extends the functionality of rst a bit
 for stuff like pointing to other files and modules.
 
-To build a local copy of the docs (useful for testing changes), navigate to the ``docs/`` directory and run ``make html``.
-Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and you should have access to the docs for your current version (I bookmarked it on my machine).
+To build a local copy of the docs (useful for testing changes), navigate to the
+``docs/`` directory and run ``make html``. Open
+``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and you
+should have access to the docs for your current version (I bookmarked it on my
+machine).
 
 * `Sphinx Docs <http://sphinx-doc.org/>`_
 * `Full index <http://sphinx-doc.org/genindex.html>`_
-
 
 .. _readthedocs:
 
 Read the Docs
 -------------
 
-Dimagi maintains the hosted version of the documentation at readthedocs.io.
-For Dimagi employees, the credentials are maintained in our internal CommCare keepass file.
+Dimagi maintains the hosted version of the documentation at readthedocs.io. For
+Dimagi employees, the credentials are maintained in our internal CommCare
+keepass file.
 
-The configuration for readthedocs lives in `.readthedocs.yml`, which calls the `docs/conf.py` script.
+The configuration for *Read the Docs* lives in ``.readthedocs.yml``, which calls the
+``docs/conf.py`` script.
 
-Building the documentation reqiures ~all of the source code's requirements to be installed so that
-doc strings can be imported.
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+The docs are built with every new merge to master. This build can fail
+completely, or "succeed" with errors. If you made a change that's not appearing,
+or if ``autodoc`` doesn't seem to be working properly, you should check the build.
+
+On *Read the Docs*, in the bottom left, you should see "v: latest". Click to expand,
+then click "Builds". There you should see a build history (you don't need to log
+in for this). Click on the latest build. I find the "view raw" display to be
+more useful.  That should show logs and any tracebacks.
+
+Running ``autodoc`` or ``automodule`` requires that sphinx be able to load the
+code to import docstrings. This means that ~all of the source code's
+requirements to be installed, and the code cannot do complex stuff like database
+queries on module load.  Build failures are likely caused by issues there.
+
+Replicating the build environment
+.................................
+
+*Read the Docs* builds in an environment that doesn't have any support services,
+so turn those off. Next, make a new virtual environment with just the docs
+requirements. Finally, build the docs, which should surface any errors that'd
+appear on the build server.
+
+.. code-block:: sh
+
+   $ cd commcare-hq/
+   $ mkvirtualenv --python=python3.6 hq-docs
+   $ pip install -r requirements/docs-requirements.txt
+   $ cd docs/
+   $ make html
 
 .. _doc-style:
 
