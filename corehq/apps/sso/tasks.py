@@ -6,7 +6,7 @@ from celery.task import periodic_task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import log_sso_error, log_sso_info
-from corehq.apps.sso.utils.message_helpers import get_idp_cert_expiration_email
+from corehq.apps.sso.utils.context_helpers import get_idp_cert_expiration_email
 
 
 IDP_CERT_EXPIRES_REMINDER_DAYS = [30, 15, 7, 3, 1, 0]
