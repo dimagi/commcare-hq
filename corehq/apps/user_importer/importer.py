@@ -3,6 +3,8 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+
+from corehq.apps.users.models_sql import SQLUserRole
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
@@ -357,7 +359,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
             upload_domain=upload_domain,
         )
     else:
-        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+        roles_by_name = {role.name: role for role in SQLUserRole.objects.by_domain(domain)}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
             profiles_by_name = {

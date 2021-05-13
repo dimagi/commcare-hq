@@ -22,6 +22,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.models_sql import SQLUserRole
 from corehq.apps.users.role_utils import initialize_roles_for_domain, get_or_create_role_with_permissions
 
 
@@ -40,7 +41,7 @@ class AllCommCareUsersTest(TestCase):
         bootstrap_location_types(cls.ccdomain.name)
 
         initialize_roles_for_domain(cls.ccdomain.name)
-        cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
+        cls.user_roles = SQLUserRole.objects.by_domain(cls.ccdomain.name)
         cls.custom_role = get_or_create_role_with_permissions(
             cls.ccdomain.name,
             Permissions(

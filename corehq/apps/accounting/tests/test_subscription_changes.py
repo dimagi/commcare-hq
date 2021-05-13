@@ -32,6 +32,7 @@ from corehq.apps.users.models import (
     UserRolePresets,
     WebUser,
 )
+from corehq.apps.users.models_sql import SQLUserRole
 from corehq.apps.users.role_utils import get_read_only_role_for_domain, initialize_roles_for_domain, \
     get_or_create_role_with_permissions
 from corehq.messaging.scheduling.models import (
@@ -77,7 +78,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
         self.other_domain.save()
         initialize_roles_for_domain(self.domain.name)
-        self.user_roles = UserRole.by_domain(self.domain.name)
+        self.user_roles = SQLUserRole.objects.by_domain(self.domain.name)
         self.custom_role = get_or_create_role_with_permissions(
             self.domain.name,
             Permissions(

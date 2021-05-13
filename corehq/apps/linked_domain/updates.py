@@ -3,6 +3,7 @@ from functools import partial
 
 from django.utils.translation import ugettext as _
 
+from corehq.apps.users.models_sql import SQLUserRole
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -215,7 +216,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.by_domain(domain_link.linked_domain, include_archived=True)
+    local_roles = SQLUserRole.objects.by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:

@@ -5,6 +5,7 @@ from corehq.apps.users.models import (
     DomainMembershipError,
     UserRole,
 )
+from corehq.apps.users.models_sql import SQLUserRole
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualified_id=True):
@@ -18,7 +19,7 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualifie
         return (role.get_qualified_id() if use_qualified_id else role.get_id,
                 role.name or _('(No Name)'))
 
-    roles = UserRole.by_domain(domain)
+    roles = SQLUserRole.objects.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
         try:
             user_role = couch_user.get_role(domain)

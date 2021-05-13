@@ -23,6 +23,7 @@ from memoized import memoized
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.users.models_sql import SQLUserRole
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -1205,7 +1206,7 @@ class CommCareUserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
+        roles = SQLUserRole.objects.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role._id, role.name or _('(No Name)')) for role in roles]
 

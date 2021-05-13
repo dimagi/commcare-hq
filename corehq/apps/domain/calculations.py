@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.users.models_sql import SQLUserRole
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
@@ -447,7 +448,7 @@ def num_custom_roles(domain):
 
 
 def num_location_restricted_roles(domain):
-    roles = [r for r in UserRole.by_domain(domain)
+    roles = [r for r in SQLUserRole.objects.by_domain(domain)
              if not r.permissions.access_all_locations]
     return len(roles)
 
