@@ -107,6 +107,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
@@ -465,6 +466,15 @@ class HQLoginView(LoginView):
         ('backup', HQBackupTokenForm),
     ]
     extra_context = {}
+
+    def post(self, *args, **kwargs):
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+            # catch anyone who by-passes the javascript and tries to log in directly
+            username = self.request.POST.get('auth-username')
+            idp = IdentityProvider.get_required_identity_provider(username) if username else None
+            if idp:
+                return HttpResponseRedirect(idp.get_login_url(username=username))
+        return super().post(*args, **kwargs)
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
