@@ -59,28 +59,13 @@ did it run successfully?) can be performed in the context of a Django migration.
     import sys
     import traceback
 
-    from django.core.management import call_command
     from django.db import migrations
 
     from corehq.util.django_migrations import skip_on_fresh_install
 
-
     COUNT_ITEMS_TO_BE_MIGRATED = "SELECT COUNT(*) FROM ..."
     GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "TODO change this"
     AUTO_MIGRATE_ITEMS_LIMIT = 10000
-    AUTO_MIGRATE_FAILED_MESSAGE = """
-    A migration must be performed before this environment can be upgraded to the
-    latest version of CommCareHQ. Instructions for running the migration can be
-    found at this link:
-
-    https://github.com/dimagi/commcare-cloud/blob/master/docs/changelog/0000-example-entry.md
-
-    You will need to checkout an older version of CommCareHQ first if you are
-    unable to run the management command because it has been deleted:
-
-    git checkout {commit}
-    """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
-
 
     @skip_on_fresh_install
     def _assert_migrated(apps, schema_editor):
@@ -92,25 +77,17 @@ did it run successfully?) can be performed in the context of a Django migration.
             return
 
         if num_items < AUTO_MIGRATE_ITEMS_LIMIT:
-            try:
-                call_command(
-                    "the_migration_management_command",
-                    dbname=schema_editor.connection.alias,
-                )
-                migrated = count_items_to_be_migrated(schema_editor.connection) == 0
-                if not migrated:
-                    print("Automatic migration failed")
-            except Exception:
-                traceback.print_exc()
+            safely_run_management_command(
+                "the_migration_management_command",
+                dbname=schema_editor.connection.alias,
+                required_commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND
+            )
+            migrated = count_items_to_be_migrated(schema_editor.connection) == 0
+            if not migrated:
+                print("Automatic migration failed")
         else:
             print("Found %s items that need to be migrated." % num_items)
             print("Too many to migrate automatically.")
-
-        if not migrated:
-            print("")
-            print(AUTO_MIGRATE_FAILED_MESSAGE)
-            sys.exit(1)
-
 
     def count_items_to_be_migrated(connection):
         """Return the number of items that need to be migrated"""

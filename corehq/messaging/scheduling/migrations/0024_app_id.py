@@ -1,12 +1,6 @@
-from django.core.management import call_command
 from django.db import migrations, models
 
-from corehq.util.django_migrations import skip_on_fresh_install
-
-
-@skip_on_fresh_install
-def _populate_app_id(apps, schema_editor):
-    call_command('populate_app_id_for_scheduling')
+from corehq.util.django_migrations import run_management_command
 
 
 class Migration(migrations.Migration):
@@ -26,7 +20,7 @@ class Migration(migrations.Migration):
             name='app_id',
             field=models.CharField(max_length=126, null=True),
         ),
-        migrations.RunPython(_populate_app_id,
-                             reverse_code=migrations.RunPython.noop,
-                             elidable=True),
+        run_management_command(
+            'populate_app_id_for_scheduling', required_commit='8e8243bc80964e6981fcb89a712776e9faf97397'
+        )
     ]

@@ -1,14 +1,12 @@
 import logging
 import sys
-import traceback
 
 from django.core.management.base import BaseCommand, CommandError
-from django.core.management import call_command
 from django.db import transaction
 
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
-from corehq.util.django_migrations import skip_on_fresh_install
+from corehq.util.django_migrations import skip_on_fresh_install, safely_run_management_command
 
 logger = logging.getLogger(__name__)
 
@@ -108,36 +106,13 @@ class PopulateSQLCommand(BaseCommand):
 
         command_name = cls.__module__.split('.')[-1]
         if to_migrate < cls.AUTO_MIGRATE_ITEMS_LIMIT:
-            try:
-                call_command(command_name)
-                remaining = cls.count_items_to_be_migrated()
-                if remaining != 0:
-                    migrated = False
-                    print(f"Automatic migration failed, {remaining} items remain to migrate.")
-                else:
-                    migrated = True
-            except Exception:
-                traceback.print_exc()
+            safely_run_management_command(command_name, required_commit=cls.commit_adding_migration())
+            remaining = cls.count_items_to_be_migrated()
+            if remaining != 0:
+                print(f"Automatic migration failed, {remaining} items remain to migrate.")
         else:
             print("Found {} items that need to be migrated.".format(to_migrate))
             print("Too many to migrate automatically.")
-
-        if not migrated:
-            print(f"""
-                A migration must be performed before this environment can be upgraded to the latest version
-                of CommCareHQ. This migration is run using the management command {command_name}.
-            """)
-            if cls.commit_adding_migration():
-                print(f"""
-                Run the following commands to run the migration and get up to date:
-
-                    commcare-cloud <env> fab setup_limited_release --set code_branch={cls.commit_adding_migration()}
-
-                    commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
-
-                    commcare-cloud <env> deploy commcare
-                """)
-            sys.exit(1)
 
     @classmethod
     def couch_db(cls):
