@@ -4,6 +4,7 @@ from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.management.commands.populate_user_role import Command
 from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
 from corehq.apps.users.models_sql import SQLUserRole, SQLPermission, StaticRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain, get_or_create_role_with_permissions
 
 
 class UserRoleCouchToSqlTests(TestCase):
@@ -12,7 +13,7 @@ class UserRoleCouchToSqlTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         SQLPermission.create_all()
-        cls.app_editor = UserRole.get_or_create_with_permissions(
+        cls.app_editor = get_or_create_role_with_permissions(
             cls.domain,
             UserRolePresets.get_permissions(UserRolePresets.APP_EDITOR),
             UserRolePresets.APP_EDITOR
@@ -26,7 +27,7 @@ class UserRoleCouchToSqlTests(TestCase):
 
     def tearDown(self):
         SQLUserRole.objects.all().delete()
-        for role in UserRole.get_custom_roles_by_domain(self.domain):
+        for role in get_custom_roles_for_domain(self.domain):
             role.delete()
         super().tearDown()
 

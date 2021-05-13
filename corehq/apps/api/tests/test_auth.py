@@ -8,6 +8,7 @@ from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAu
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.apps.users.role_utils import get_or_create_role_with_permissions
 from corehq.util.test_utils import softer_assert
 
 
@@ -159,13 +160,13 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.role_with_permission = UserRole.get_or_create_with_permissions(
+        cls.role_with_permission = get_or_create_role_with_permissions(
             cls.domain, Permissions(edit_data=True), 'edit-data'
         )
-        cls.role_without_permission = UserRole.get_or_create_with_permissions(
+        cls.role_without_permission = get_or_create_role_with_permissions(
             cls.domain, Permissions(edit_data=False), 'no-edit-data'
         )
-        cls.role_with_permission_but_no_api_access = UserRole.get_or_create_with_permissions(
+        cls.role_with_permission_but_no_api_access = get_or_create_role_with_permissions(
             cls.domain, Permissions(edit_data=True, access_api=False), 'no-api-access'
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)

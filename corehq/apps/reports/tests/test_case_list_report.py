@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.role_utils import initialize_roles_for_domain
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -28,7 +29,7 @@ class TestCaseListReport(TestCase):
         cls.domain = 'case-list-test'
         cls.user = WebUser(username='test@cchq.com', domains=[cls.domain])
         cls.user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='admin')]
-        UserRole.init_domain_with_presets(cls.domain)
+        initialize_roles_for_domain(cls.domain)
         cls.request_factory = RequestFactory()
 
         from corehq.apps.reports.tests.data.case_list_report_data import (

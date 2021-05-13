@@ -22,6 +22,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import initialize_roles_for_domain, get_or_create_role_with_permissions
 
 
 @es_test
@@ -38,9 +39,9 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.save()
         bootstrap_location_types(cls.ccdomain.name)
 
-        UserRole.init_domain_with_presets(cls.ccdomain.name)
+        initialize_roles_for_domain(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
-        cls.custom_role = UserRole.get_or_create_with_permissions(
+        cls.custom_role = get_or_create_role_with_permissions(
             cls.ccdomain.name,
             Permissions(
                 edit_apps=True,

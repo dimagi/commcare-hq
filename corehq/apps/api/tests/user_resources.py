@@ -19,9 +19,9 @@ from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
-    UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import get_or_create_role_with_permissions
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
@@ -381,7 +381,7 @@ class TestWebUserResource(APIResourceTest):
         user_back.delete(deleted_by=None)
 
     def test_create_with_custom_role(self):
-        new_user_role = UserRole.get_or_create_with_permissions(
+        new_user_role = get_or_create_role_with_permissions(
             self.domain.name,
             Permissions(edit_apps=True, view_apps=True, view_reports=True),
             'awesomeness')

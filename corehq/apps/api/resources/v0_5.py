@@ -98,6 +98,7 @@ from . import (
     v0_4,
     CorsResourceMixin)
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+from ...users.role_utils import get_all_role_names_for_domain
 
 MOCK_BULK_USER_ES = None
 
@@ -391,7 +392,7 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
     def _invalid_user_role(self, request, details):
-        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
+        return details.get('role') not in get_all_role_names_for_domain(request.domain)
 
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True
