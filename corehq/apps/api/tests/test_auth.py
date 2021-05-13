@@ -7,7 +7,7 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAuthentication, \
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.apps.users.models import WebUser, HQApiKey, Permissions
 from corehq.apps.users.role_utils import get_or_create_role_with_permissions
 from corehq.util.test_utils import softer_assert
 

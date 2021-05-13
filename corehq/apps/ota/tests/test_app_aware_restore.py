@@ -25,7 +25,8 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import Permissions
+from corehq.apps.users.role_utils import get_or_create_role_with_permissions
 from corehq.util.test_utils import flag_enabled
 
 
@@ -161,15 +162,11 @@ class AppAwareSyncTests(TestCase):
         ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
         """
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-        role = UserRole(
-            domain=self.domain,
-            permissions=Permissions(
-                view_web_apps=False,
-                view_web_apps_list=[self.app1._id]
-            ),
-            name='WebApp Restricted'
+        permissions = Permissions(
+            view_web_apps=False,
+            view_web_apps_list=[self.app1._id]
         )
-        role.save()
+        role = get_or_create_role_with_permissions(self.domain, permissions, 'WebApp Restricted')
         self.user._couch_user.set_role(self.domain, role.get_qualified_id())
 
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:

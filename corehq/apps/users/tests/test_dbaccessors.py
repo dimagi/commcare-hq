@@ -19,10 +19,9 @@ from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
-    UserRole,
     WebUser,
+    SQLUserRole
 )
-from corehq.apps.users.models_sql import SQLUserRole
 from corehq.apps.users.role_utils import initialize_roles_for_domain, get_or_create_role_with_permissions
 
 

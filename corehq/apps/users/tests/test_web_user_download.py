@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser, UserRole, Invitation
+from corehq.apps.users.models import WebUser, Invitation, SQLUserRole
 from corehq.apps.users.bulk_download import parse_web_users
 
 
@@ -16,7 +16,7 @@ class TestDownloadMobileWorkers(TestCase):
         cls.domain = 'bookshelf'
         cls.domain_obj = create_domain(cls.domain)
 
-        cls.role = UserRole(domain=cls.domain, name='App Editor')
+        cls.role = SQLUserRole.create(cls.domain, 'App Editor')
         cls.role.save()
         cls.qualified_role_id = cls.role.get_qualified_id()
 

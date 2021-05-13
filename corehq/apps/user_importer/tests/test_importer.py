@@ -21,7 +21,7 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation, CouchUser
+    CommCareUser, DomainPermissionsMirror, Permissions, WebUser, Invitation
 )
 from corehq.apps.users.role_utils import get_or_create_role_with_permissions
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView

@@ -3,8 +3,7 @@ from mock import patch
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.userreports.util import get_ucr_class_name
-from corehq.apps.users.models import Permissions, UserRole
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import Permissions, SQLUserRole
 
 
 class TestUpdateRoles(BaseLinkedAppsTest):
@@ -13,30 +12,17 @@ class TestUpdateRoles(BaseLinkedAppsTest):
         super(TestUpdateRoles, cls).setUpClass()
         cls.linked_app.save()
 
-        cls.role = UserRole(
-            domain=cls.domain,
-            name='test',
-            permissions=Permissions(
-                edit_data=True,
-                edit_reports=True,
-                view_report_list=[
-                    'corehq.reports.DynamicReportmaster_report_id'
-                ]
-            ),
-            is_non_admin_editable=True,
+        permissions = Permissions(
+            edit_data=True,
+            edit_reports=True,
+            view_report_list=[
+                'corehq.reports.DynamicReportmaster_report_id'
+            ]
         )
-        cls.role.save()
-
-        cls.other_role = UserRole(
-            domain=cls.domain,
-            name='other_test',
-            permissions=Permissions(
-                edit_web_users=True,
-                view_locations=True,
-            ),
-            assignable_by=[cls.role.get_id],
+        cls.role = SQLUserRole.create(cls.domain, 'test', permissions, is_non_admin_editable=True)
+        cls.other_role = SQLUserRole.create(
+            cls.domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
-        cls.other_role.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -67,16 +53,10 @@ class TestUpdateRoles(BaseLinkedAppsTest):
     def test_match_names(self):
         self.assertEqual([], SQLUserRole.objects.by_domain(self.linked_domain))
 
-        role = UserRole(
-            domain=self.linked_domain,
-            name='other_test',
-            permissions=Permissions(
-                edit_web_users=False,
-                view_locations=True,
-            ),
-            assignable_by=[self.role.get_id],
+        role = SQLUserRole.create(
+            self.linked_domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
-        role.save()
+        role.set_assignable_by([self.role.id])
 
         update_user_roles(self.domain_link)
         roles = {r.name: r for r in SQLUserRole.objects.by_domain(self.linked_domain)}
@@ -87,17 +67,11 @@ class TestUpdateRoles(BaseLinkedAppsTest):
     def test_match_ids(self):
         self.assertEqual([], SQLUserRole.objects.by_domain(self.linked_domain))
 
-        role = UserRole(
-            domain=self.linked_domain,
-            name='id_test',
-            permissions=Permissions(
-                edit_web_users=False,
-                view_locations=True,
-            ),
-            assignable_by=[self.role.get_id],
-            upstream_id=self.other_role.get_id
+        role = SQLUserRole.create(
+            self.linked_domain, 'id_test', Permissions(edit_web_users=True, view_locations=True),
+            upstream_id=self.other_role.couch_id
         )
-        role.save()
+        role.set_assignable_by([self.role.id])
 
         update_user_roles(self.domain_link)
         roles = {r.name: r for r in SQLUserRole.objects.by_domain(self.linked_domain)}

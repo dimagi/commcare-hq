@@ -11,7 +11,7 @@ from crispy_forms.utils import render_crispy_form
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.analytics import get_role_user_count
-from corehq.apps.users.models_sql import StaticRole, SQLUserRole
+from corehq.apps.users.models import StaticRole, SQLUserRole
 from django.contrib import messages
 from django.http import (
     Http404,

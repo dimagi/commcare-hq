@@ -23,8 +23,7 @@ from memoized import memoized
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.users.models_sql import SQLUserRole
-from dimagi.utils.django.fields import TrimmedCharField
+from corehq.apps.users.models import SQLUserRole
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
@@ -41,7 +40,7 @@ from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import UserRole, DomainPermissionsMirror
+from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
@@ -1249,7 +1248,11 @@ class CommCareUserFilterForm(forms.Form):
         if not role_id:
             return None
 
-        role = UserRole.get(role_id)
+        try:
+            role = SQLUserRole.objects.by_couch_id(role_id)
+        except SQLUserRole.DoesNotExist:
+            raise forms.ValidationError(_("Invalid Role"))
+
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
         return role_id

@@ -2,8 +2,7 @@ from django.db import IntegrityError
 from django.db.transaction import atomic
 from django.test import TestCase
 
-from corehq.apps.users.models import (
-    Permissions,
+from corehq.apps.users.models import (Permissions,
     SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo
 )
 

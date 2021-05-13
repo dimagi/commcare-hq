@@ -1,11 +1,7 @@
 from django.utils.translation import ugettext as _
 from collections import defaultdict
 
-from corehq.apps.users.models import (
-    DomainMembershipError,
-    UserRole,
-)
-from corehq.apps.users.models_sql import SQLUserRole, StaticRole
+from corehq.apps.users.models import DomainMembershipError, SQLUserRole, StaticRole
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualified_id=True):

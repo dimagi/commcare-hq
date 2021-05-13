@@ -1,7 +1,9 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import PermissionInfo, Permissions
-from corehq.apps.users.models_sql import SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy
+from corehq.apps.users.models import (
+    PermissionInfo, Permissions,
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy
+)
 
 
 class RolesTests(TestCase):

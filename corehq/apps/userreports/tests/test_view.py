@@ -21,8 +21,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import Permissions, WebUser, SQLUserRole
 
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
@@ -225,22 +224,19 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             username = 'editor' if can_edit_reports else 'viewer'
             toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
 
-            user_role = UserRole(
-                domain=domain.name,
-                name=rolename,
-                permissions=Permissions(edit_commcare_users=True,
-                                        view_commcare_users=True,
-                                        edit_groups=True,
-                                        view_groups=True,
-                                        edit_locations=True,
-                                        view_locations=True,
-                                        access_all_locations=False,
-                                        edit_data=True,
-                                        edit_reports=can_edit_reports,
-                                        view_reports=True
-                                        )
+            permissions = Permissions(
+                edit_commcare_users=True,
+                view_commcare_users=True,
+                edit_groups=True,
+                view_groups=True,
+                edit_locations=True,
+                view_locations=True,
+                access_all_locations=False,
+                edit_data=True,
+                edit_reports=can_edit_reports,
+                view_reports=True
             )
-            user_role.save()
+            user_role = SQLUserRole.create(domain.name, rolename, permissions)
             # user_role should be deleted along with the domain.
 
             web_user = WebUser.create(domain.name, username, '***', None, None)

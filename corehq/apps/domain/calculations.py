@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
@@ -42,7 +42,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater

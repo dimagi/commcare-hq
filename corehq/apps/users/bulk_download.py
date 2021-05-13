@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.utils.translation import ugettext
 
+from corehq.apps.users.models import SQLUserRole
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 from soil.util import expose_download, get_download_file_path
@@ -24,7 +25,7 @@ from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, UserRole, Invitation
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -122,8 +123,8 @@ def get_user_role_name(domain_membership):
         role_name = ''
         if domain_membership.role_id:
             try:
-                role_name = UserRole.get(domain_membership.role_id).name
-            except ResourceNotFound:
+                role_name = SQLUserRole.objects.by_couch_id(domain_membership.role_id).name
+            except SQLUserRole.DoesNotExist:
                 role_name = ugettext('Unknown Role')
     return role_name
 

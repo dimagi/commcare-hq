@@ -11,7 +11,6 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembership,
-    UserRole,
     WebUser,
 )
 from corehq.elastic import get_es_new, send_to_elasticsearch

@@ -82,7 +82,7 @@ from corehq.apps.users.models import (
     WebUser, UserRolePresets,
 )
 from corehq.apps.users.role_utils import get_all_role_names_for_domain
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404

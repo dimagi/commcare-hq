@@ -7,8 +7,7 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_f
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 

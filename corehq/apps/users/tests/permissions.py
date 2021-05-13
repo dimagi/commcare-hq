@@ -10,7 +10,6 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import (
     DomainMembership,
     Permissions,
-    UserRole,
     WebUser, PARAMETERIZED_PERMISSIONS,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
@@ -39,9 +38,10 @@ class PermissionsHelpersTest(SimpleTestCase):
         test_self = self
 
         def get_role(self, domain=None):
-            return UserRole(
+            return mock.Mock(
                 domain=test_self.domain,
-                permissions=test_self.permissions
+                permissions=test_self.permissions,
+                spec=["domain", "permissions"]
             )
 
         assert hasattr(WebUser.has_permission, "get_cache"), "not memoized?"

@@ -1,5 +1,4 @@
-from corehq.apps.users.models import UserRole, UserRolePresets, Permissions
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import UserRolePresets, Permissions, SQLUserRole
 
 
 def get_read_only_role_for_domain(domain):
@@ -13,7 +12,7 @@ def get_read_only_role_for_domain(domain):
         )
 
 
-def get_or_create_role_with_permissions(domain, permissions, name):
+def get_or_create_role_with_permissions(domain, permissions, name, **kwargs):
     if isinstance(permissions, dict):
         permissions = Permissions.wrap(permissions)
     roles = SQLUserRole.objects.by_domain(domain)
@@ -23,7 +22,7 @@ def get_or_create_role_with_permissions(domain, permissions, name):
             return role
     # otherwise create it
 
-    return SQLUserRole.create(domain, name, permissions)
+    return SQLUserRole.create(domain, name, permissions, **kwargs)
 
 
 def get_custom_roles_for_domain(domain):

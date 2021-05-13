@@ -3,7 +3,7 @@ from functools import partial
 
 from django.utils.translation import ugettext as _
 
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.case_search.models import CaseSearchConfig

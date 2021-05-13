@@ -12,7 +12,6 @@ from corehq.apps.users.models import (
     DomainPermissionsMirror,
     HQApiKey,
     Permissions,
-    UserRole,
     WebUser,
 )
 
@@ -46,7 +45,7 @@ class DomainPermissionsMirrorTest(TestCase):
 
     @classmethod
     def _master_role(cls):
-        return UserRole(
+        return mock.Mock(
             domain='state',
             permissions=Permissions(
                 view_web_users=True,
@@ -55,7 +54,8 @@ class DomainPermissionsMirrorTest(TestCase):
                 edit_groups=False,
                 edit_apps=True,     # needed for InternalFixtureResource
                 view_apps=True,
-            )
+            ),
+            spec=["domain", "permissions"]
         )
 
     @classmethod

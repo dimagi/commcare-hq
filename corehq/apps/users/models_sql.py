@@ -91,9 +91,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         self._cached_assignable_by.clear(self)
 
     @classmethod
-    def create(cls, domain, name, permissions):
-        role = SQLUserRole.objects.create(domain, name)
-        role.set_permissions(permissions.to_json())
+    def create(cls, domain, name, permissions=None, **kwargs):
+        role = SQLUserRole.objects.create(domain, name, **kwargs)
+        if permissions:
+            role.set_permissions(permissions.to_json())
         return role
 
     @classmethod

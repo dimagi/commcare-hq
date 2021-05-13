@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
@@ -40,7 +40,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    UserRole, InvitationStatus, DomainRequest,
+    InvitationStatus
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
 from corehq.apps.users.views.utils import get_editable_role_choices
