@@ -835,10 +835,13 @@ def post_user_role(request, domain):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    try:
-        role = SQLUserRole.objects.get(id=role_data["_id"])
-        assert role.domain == domain
-    except SQLUserRole.DoesNotExist:
+    if "_id" in role_data:
+        try:
+            role = SQLUserRole.objects.get(id=role_data["_id"])
+            assert role.domain == domain
+        except SQLUserRole.DoesNotExist:
+            role = SQLUserRole()
+    else:
         role = SQLUserRole()
 
     role.domain = domain
