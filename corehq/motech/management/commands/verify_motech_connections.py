@@ -9,6 +9,7 @@ from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 from requests.exceptions import HTTPError, RequestException, SSLError
 
 from corehq.motech.models import ConnectionSettings
+from corehq.util.argparse_types import validate_range
 from corehq.util.log import with_progress_bar
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
@@ -31,6 +32,7 @@ class Command(BaseCommand):
         parser.add_argument("-c", "--ca-bundle", metavar="FILE",
             help="Use a custom CA trust store for SSL verifications.")
         parser.add_argument("--connect-timeout", metavar="SECONDS", type=float,
+            action=validate_range(gt=0.0),
             help="Use custom HTTP connection timeout value.")
         parser.add_argument("--ssl-only", action="store_true", default=False,
             help="Skip normal connection checks and perform only SSL "
@@ -46,8 +48,6 @@ class Command(BaseCommand):
         castore = options["ca_bundle"]
 
         # sanity-check options
-        if timeout < 0:
-            raise CommandError(f"Invalid timeout value: {timeout}")
         if castore is not None and not os.path.isfile(castore):
             raise CommandError(f"Invalid CA store file: {castore}")
 
