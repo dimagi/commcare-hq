@@ -1,5 +1,4 @@
-from unittest import TestCase
-from unittest2 import skipIf
+from unittest import TestCase, skipIf
 
 from django.conf import settings
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
