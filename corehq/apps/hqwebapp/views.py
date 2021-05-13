@@ -1343,6 +1343,7 @@ class OauthApplicationRegistration(BasePageView):
             HQOauthApplication,
             fields=(
                 "pkce_required",
+                "smart_on_fhir_compatible",
             ),
         )
 
