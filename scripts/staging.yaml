@@ -78,6 +78,5 @@ branches:
     - jm/idp-cert-alert # Joel May 12
     - jm/motech-verify-fix # Joel May 12
     - jm/remove-unittest2 # Joel May 12
-    - jm/update-xml2json # Joel May 12
 
 submodules: { }
