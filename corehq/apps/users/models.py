@@ -371,12 +371,6 @@ class UserRolePresets(object):
             return None
         return preset_map[preset]()
 
-    @classmethod
-    def get_role_name_with_matching_permissions(cls, permissions):
-        for name, factory in UserRolePresets.get_preset_map().items():
-            if factory() == permissions:
-                return name
-
 
 class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()

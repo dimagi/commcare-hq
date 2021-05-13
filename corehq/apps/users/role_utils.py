@@ -11,7 +11,7 @@ def get_read_only_role_for_domain(domain):
                 UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
 
 
-def get_or_create_role_with_permissions(domain, permissions, name=None):
+def get_or_create_role_with_permissions(domain, permissions, name):
     if isinstance(permissions, dict):
         permissions = Permissions.wrap(permissions)
     roles = UserRole.by_domain(domain)
@@ -21,11 +21,7 @@ def get_or_create_role_with_permissions(domain, permissions, name=None):
             return role
     # otherwise create it
 
-    def get_name():
-        if name:
-            return name
-        return UserRolePresets.get_role_name_with_matching_permissions(permissions)
-    role = UserRole(domain=domain, permissions=permissions, name=get_name())
+    role = UserRole(domain=domain, permissions=permissions, name=name)
     role.save()
     return role
 
