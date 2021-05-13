@@ -409,10 +409,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         )
         return list(all_roles)
 
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return UserRolePresets.get_preset_role_id(name)
-
     @property
     def cache_version(self):
         return self._rev
