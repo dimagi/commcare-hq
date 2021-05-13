@@ -1384,10 +1384,15 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,    # TODO: only show if you can edit both web and mobile, and this is an enterprise
                 EditWebUserView,
                 ListWebUsersView,
             )
-            menu.append({
+            menu = menu + [{
+                'title': _(EnterpriseUsersView.page_title),
+                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            }, {
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1408,7 +1413,7 @@ class ProjectUsersTab(UITab):
                     }
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
