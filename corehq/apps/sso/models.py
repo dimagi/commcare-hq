@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.urls import reverse
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
@@ -135,6 +136,19 @@ class IdentityProvider(models.Model):
         return UserExemptFromSingleSignOn.objects.filter(
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
+
+    def get_login_url(self, username=None):
+        """
+        Gets the login endpoint for the IdentityProvider based on the protocol
+        being used. Since we only support SAML2 right now, this redirects to
+        the SAML2 login endpoint.
+        :param username: (string) username to pre-populate IdP login with
+        :return: (String) identity provider login url
+        """
+        return '{}?username={}'.format(
+            reverse('sso_saml_login', args=(self.slug,)),
+            username
+        )
 
     def get_active_projects(self):
         """
