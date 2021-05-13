@@ -1,0 +1,7 @@
+CONSUMER_INVITATION_CASE_TYPE = 'commcare-consumeruserinvitation'
+
+CONSUMER_INVITATION_STATUS = 'invitation_status'
+CONSUMER_INVITATION_ERROR = 'invitation_error'
+CONSUMER_INVITATION_EXPIRED = 'expired'
+CONSUMER_INVITATION_SENT = 'sent'
+CONSUMER_INVITATION_ACCEPTED = 'accepted'
