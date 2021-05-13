@@ -8,7 +8,7 @@ from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.web import get_site_domain
 
 
-def render_multiple_strings(context, *templates):
+def render_multiple_to_strings(context, *templates):
     """
     Convenience utility that renders multiple templates with the same context.
 
@@ -19,7 +19,7 @@ def render_multiple_strings(context, *templates):
     return (render_to_string(template, context) for template in templates)
 
 
-def get_idp_cert_expiration_email(idp):
+def get_idp_cert_expiration_email_context(idp):
     """
     Utility to generate metadata and render messages for an IdP certificate
     expiration reminder email.
@@ -38,7 +38,7 @@ def get_idp_cert_expiration_email(idp):
     else:
         expires_on = _(f"on {exp_date:{USER_DATE_FORMAT}}.")
 
-    context = {
+    template_context = {
         "idp_name": idp.name,
         "expires_on": expires_on,
         "contact_email": settings.ACCOUNTS_EMAIL,
@@ -47,13 +47,13 @@ def get_idp_cert_expiration_email(idp):
     subject = _(
         "CommCare Alert: Certificate for Identity Provider %(idp_name)s "
         "expires %(expires_on)s"
-    ) % context
-    body_html, body_txt = render_multiple_strings(
-        context,
+    ) % template_context
+    body_html, body_txt = render_multiple_to_strings(
+        template_context,
         "sso/email/idp_cert_expiring_reminder.html",
         "sso/email/idp_cert_expiring_reminder.txt",
     )
-    message = {
+    email_context = {
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails,
@@ -62,5 +62,5 @@ def get_idp_cert_expiration_email(idp):
         "plaintext": body_txt,
     }
     if idp.owner.dimagi_contact:
-        message["bcc"].append(idp.owner.dimagi_contact)
-    return message
+        email_context["bcc"].append(idp.owner.dimagi_contact)
+    return email_context

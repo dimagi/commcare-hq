@@ -99,7 +99,6 @@ class TestSSOTasks(TestCase):
         self.idp.date_idp_cert_expiration = expires
         self.idp.save()
         # test alerts
-        print(f"the IdP cert is set to expire today ({expires})")
         for num_days in remind_days:
             with freeze_time(expires - datetime.timedelta(days=num_days)):
                 with patch("corehq.apps.sso.tasks.send_html_email_async.delay") as mock_send:
