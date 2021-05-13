@@ -534,6 +534,13 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
@@ -718,6 +725,13 @@ def create_domain_permission_mirror(request, domain):
         messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
+
+
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_enterprise_users(request, domain):
+    return paginate_web_users(request, domain)
 
 
 @always_allow_project_access
