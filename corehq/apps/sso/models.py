@@ -320,6 +320,7 @@ class IdentityProvider(models.Model):
             username=username
         ).exists():
             return idp
+        return None
 
 
 @receiver(post_save, sender=Subscription)
