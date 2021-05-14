@@ -47,8 +47,9 @@ class PopulateSQLCommand(BaseCommand):
     def diff_couch_and_sql(cls, couch, sql):
         """
         This should compare each attribute of the given couch document and sql object.
-        Return a human-reaedable string describing their differences, or None if the
-        two are equivalent.
+        Return a list of human-reaedable strings describing their differences, or None if the
+        two are equivalent. The list may contain `None` or empty strings which will be filtered
+        out before display.
         """
         raise NotImplementedError()
 
@@ -205,6 +206,9 @@ class PopulateSQLCommand(BaseCommand):
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
             diff = self.diff_couch_and_sql(doc, obj)
+            if isinstance(diff, list):
+                diffs = filter(None, diff)
+                diff = "\n".join(diffs) if diffs else None
             if diff:
                 logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1
