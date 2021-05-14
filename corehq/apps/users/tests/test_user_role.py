@@ -14,7 +14,8 @@ class RolesTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         SQLPermission.create_all()
-        cls.roles = [SQLUserRole(
+        cls.roles = [
+            SQLUserRole(
                 domain=cls.domain,
                 name="role1",
             ),
