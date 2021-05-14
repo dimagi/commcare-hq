@@ -132,7 +132,6 @@ class CaseFactory(object):
 
     def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
         from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
         self.post_case_blocks(
             self.get_case_blocks(case_structures),
             form_extras,

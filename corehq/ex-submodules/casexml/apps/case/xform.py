@@ -170,7 +170,7 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
         tree_owners = set()
 
     extension_indices = [index for index in case.indices
-                         if index.referenced_id and index.relationship == CASE_INDEX_EXTENSION]
+                         if not index.is_deleted and index.relationship == CASE_INDEX_EXTENSION]
 
     unowned_host_cases = []
     for index in extension_indices:
@@ -184,7 +184,7 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
 
     owner_ids = {case_db.get(index.referenced_id).owner_id
                  for index in case.indices
-                 if index.referenced_id and case_db.get(index.referenced_id)} | tree_owners
+                 if not index.is_deleted and case_db.get(index.referenced_id)} | tree_owners
     potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
     more_than_one_owner_touched = len(owner_ids) > 1
     touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
@@ -194,7 +194,7 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
         if extension_indices:
             # If this case is an extension, each of the touched cases is also dirty
             for index in case.indices:
-                if index.referenced_id:
+                if not index.is_deleted:
                     referenced_case = case_db.get(index.referenced_id)
                     yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
 
@@ -234,8 +234,7 @@ def _validate_indices(case_db, case_updates):
         case = case_update.case
         if case.indices:
             for index in case.indices:
-                # deleted indices have no referenced id, but must be updated in the database
-                if index.referenced_id:
+                if not index.is_deleted:
                     try:
                         # call get and not doc_exists to force domain checking
                         # see CaseDbCache._validate_case

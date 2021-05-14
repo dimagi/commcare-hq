@@ -856,8 +856,12 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return indices
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     def has_index(self, index_id):
         return any(index.identifier == index_id for index in self.indices)
@@ -1178,6 +1182,10 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.domain, self.case, self.identifier
+
+    @property
+    def is_deleted(self):
+        return not self.referenced_id
 
     @property
     @memoized
