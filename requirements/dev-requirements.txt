@@ -233,7 +233,7 @@ fixture==1.5.11
     # via -r dev-requirements.in
 flake8-polyfill==1.0.2
     # via radon
-flake8==3.9.1
+flake8==3.9.2
     # via
     #   -r dev-requirements.in
     #   flake8-polyfill
