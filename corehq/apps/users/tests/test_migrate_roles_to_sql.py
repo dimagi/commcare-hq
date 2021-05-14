@@ -10,12 +10,13 @@ class UserRoleCouchToSqlTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        SQLPermission.create_all()
         cls.app_editor = UserRole.get_or_create_with_permissions(
             cls.domain,
             UserRolePresets.get_permissions(UserRolePresets.APP_EDITOR),
             UserRolePresets.APP_EDITOR
         )
-        SQLPermission.create_all()
+        cls.app_editor_sql = SQLUserRole.objects.get(couch_id=cls.app_editor.get_id)
 
     @classmethod
     def tearDownClass(cls):
@@ -41,7 +42,8 @@ class UserRoleCouchToSqlTests(TestCase):
                 ]
             ),
             is_non_admin_editable=False,
-            assignable_by=[self.app_editor.get_id]
+            assignable_by=[self.app_editor.get_id],
+            upstream_id=self.app_editor.get_id
         )
         couch_role.save()
 
@@ -51,6 +53,8 @@ class UserRoleCouchToSqlTests(TestCase):
 
         for field in UserRole._migration_get_fields():
             self.assertEqual(getattr(couch_role, field), getattr(sql_role, field))
+
+        self.assertEqual(sql_role.upstream_id, self.app_editor_sql.id)
 
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
@@ -64,6 +68,7 @@ class UserRoleCouchToSqlTests(TestCase):
             name="test_sql_to_couch",
             default_landing_page=ALL_LANDING_PAGES[0].id,
             is_non_admin_editable=False,
+            upstream_id=self.app_editor_sql.id
         )
         sql_role.save()
         sql_role.set_permissions([
@@ -83,6 +88,7 @@ class UserRoleCouchToSqlTests(TestCase):
         for field in SQLUserRole._migration_get_fields():
             self.assertEqual(getattr(couch_role, field), getattr(sql_role, field))
 
+        self.assertEqual(couch_role.upstream_id, self.app_editor.get_id)
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)

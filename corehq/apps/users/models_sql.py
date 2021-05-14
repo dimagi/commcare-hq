@@ -7,6 +7,12 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 
+class UserRoleManager(models.Manager):
+
+    def by_couch_id(self, couch_id):
+        return SQLUserRole.objects.get(couch_id=couch_id)
+
+
 class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
@@ -16,11 +22,13 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     # role can be assigned by all non-admins
     is_non_admin_editable = models.BooleanField(null=False, default=False)
     is_archived = models.BooleanField(null=False, default=False)
-    upstream_id = models.CharField(max_length=32, null=True)
+    upstream_id = models.IntegerField(null=True)
     couch_id = models.CharField(max_length=126, null=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
+
+    objects = UserRoleManager()
 
     class Meta:
         db_table = "users_userrole"
@@ -37,7 +45,6 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             "default_landing_page",
             "is_non_admin_editable",
             "is_archived",
-            "upstream_id",
         ]
 
     @classmethod
@@ -46,6 +53,11 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return UserRole
 
     def _migration_sync_submodels_to_couch(self, couch_object):
+        if self.upstream_id:
+            upstream_role = SQLUserRole.objects.get(id=self.upstream_id)
+            couch_object.upstream_id = upstream_role.couch_id
+        else:
+            couch_object.upstream_id = None
         couch_object.permissions = self.permissions
         couch_object.assignable_by = self.assignable_by
 
