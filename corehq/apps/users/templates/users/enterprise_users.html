@@ -43,6 +43,7 @@
             <th>{% trans "Name" %}</th>
             <th>{% trans "Role" %}</th>
             <th>{% trans "Profile" %}</th>
+            <th class="col-sm-4">{% trans "Other Projects" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -51,6 +52,9 @@
             <td data-bind="text: name"></td>
             <td data-bind="text: role"></td>
             <td data-bind="text: profile"></td>
+            <td data-bind="foreach: other_domains">
+              <span class="label label-default" data-bind="text: $data"></span>
+            </td>
           </tr>
         </tbody>
       </table>
