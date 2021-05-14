@@ -120,6 +120,7 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
     ALLOW_ALL = "*"
 
     def __new__(cls, name, allow=ALLOW_ALL):
+        allow = allow if allow == cls.ALLOW_ALL else tuple(allow)
         return super(PermissionInfo, cls).__new__(cls, name, allow)
 
     @property
@@ -130,7 +131,7 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
     def allowed_items(self):
         if self.allow_all:
             return []
-        assert isinstance(self.allow, list), self.allow
+        assert isinstance(self.allow, tuple), self.allow
         return self.allow
 
 
@@ -208,7 +209,7 @@ class Permissions(DocumentSchema):
         for perm in permission_list:
             setattr(permissions, perm.name, perm.allow_all)
             if perm.name in PARAMETERIZED_PERMISSIONS:
-                setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], perm.allowed_items)
+                setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
         return permissions
 
     @classmethod

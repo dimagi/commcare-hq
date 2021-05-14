@@ -72,10 +72,23 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return 'user-role:%s' % self.get_id
 
     def set_permissions(self, permission_infos):
-        self.rolepermission_set.set([
-            RolePermission.from_permission_info(self, info)
-            for info in permission_infos
-        ], bulk=False)
+        permissions_by_name = {
+            rp.permission: rp
+            for rp in self.rolepermission_set.all()
+        }
+        for info in permission_infos:
+            perm = permissions_by_name.pop(info.name, None)
+            if not perm:
+                new_perm = RolePermission.from_permission_info(self, info)
+                new_perm.save()
+            elif (perm.allow_all, perm.allowed_items) != (info.allow_all, info.allowed_items):
+                perm.allow_all = info.allow_all
+                perm.allowed_items = info.allowed_items
+                perm.save()
+
+        if permissions_by_name:
+            old_ids = [old.id for old in permissions_by_name.values()]
+            RolePermission.objects.filter(id__in=old_ids).delete()
 
     def get_permission_infos(self):
         return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
@@ -165,7 +178,6 @@ class RoleAssignableBy(models.Model):
 
 
 def migrate_role_permissions_to_sql(user_role, sql_role):
-    sql_role.rolepermission_set.all().delete()
     sql_role.set_permissions(user_role.permissions.to_list())
 
 
