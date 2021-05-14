@@ -9,15 +9,13 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
-    HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
@@ -27,20 +25,25 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from corehq.apps.users.analytics import get_role_user_count
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
+
 from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
+
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+    requires_privilege_with_fallback,
+)
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM,
@@ -76,8 +79,17 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
     initiate_sms_verification_workflow,
 )
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.translations.models import SMSTranslations
+from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.user_importer.tasks import (
+    import_users_and_groups,
+    parallel_user_import,
+)
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.analytics import get_role_user_count
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -88,10 +100,10 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
+    CreateDomainPermissionsMirrorForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -107,14 +119,13 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
-from corehq.apps.users.tasks import (
-    bulk_download_users_async,
+from corehq.apps.users.tasks import bulk_download_users_async
+from corehq.apps.users.views.utils import (
+    BulkUploadResponseWrapper,
+    get_editable_role_choices,
 )
-from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
-from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.pillows.utils import WEB_USER_TYPE
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -781,7 +792,7 @@ def paginate_enterprise_users(request, domain):
         users.append({
             'username': web_user.username,
             'domain': domain,
-            'name': web_user.full_name,
+            'created_on': web_user.created_on.strftime(USER_DATETIME_FORMAT),
             #'role': web_user.role_label(domain),  # TODO: roles for each domain
             'id': web_user.get_id,
             'editUrl': reverse('user_account', args=[domain, web_user.get_id]),    # TODO: link into different domains
@@ -791,7 +802,7 @@ def paginate_enterprise_users(request, domain):
             users.append({
                 'username': mobile_user.username,
                 'domain': domain,
-                'name': mobile_user.full_name,
+                'created_on': mobile_user.created_on.strftime(USER_DATETIME_FORMAT),
                 'id': mobile_user.get_id,
                 'editUrl': reverse('user_account', args=[domain, mobile_user.get_id]),
             })
