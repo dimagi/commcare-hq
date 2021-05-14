@@ -20,6 +20,19 @@ class Command(PopulateSQLCommand):
     def commit_adding_migration(cls):
         return "TODO: add once the PR adding this file is merged"
 
+    @classmethod
+    def diff_couch_and_sql(cls, couch, sql):
+        """
+        This should compare each attribute of the given couch document and sql object.
+        Return a list of human-reaedable strings describing their differences, or None if the
+        two are equivalent. The list may contain `None` or empty strings which will be filtered
+        out before display.
+
+        Note: `diff_value`, `diff_attr` and `diff_lists` methods of `PopulateSQLCommand` are useful
+        helpers.
+        """
+        return None
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],
