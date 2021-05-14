@@ -743,7 +743,33 @@ def paginate_enterprise_users(request, domain):
     # TODO: do they really need to see both web and mobile users at once?
     # Would it be good enough to see either web or mobile users, but
     # also include linked users if relevant?
-    return paginate_web_users(request, domain)
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domain(domain, include_mirrors=True).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    web_users = [WebUser.wrap(w) for w in result.hits]
+    web_users_fmt = [{
+        'email': u.get_email(),
+        'domain': domain,
+        'name': u.full_name,
+        #'role': u.role_label(domain),  # TODO: roles for each domain
+        'id': u.get_id,
+        'editUrl': reverse('user_account', args=[domain, u.get_id]),    # TODO: link into different domains
+    } for u in web_users]
+
+    return JsonResponse({
+        'users': web_users_fmt,
+        'total': result.total,
+        'page': page,
+        'query': query,
+    })
 
 
 @always_allow_project_access
@@ -762,6 +788,7 @@ def paginate_web_users(request, domain):
     )
 
     web_users = [WebUser.wrap(w) for w in result.hits]
+    # TODO: should the new page show anything related to SSO?
     is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
