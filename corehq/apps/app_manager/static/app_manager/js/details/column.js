@@ -50,6 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
+            nodesetCaseType: screen.otherCaseTypes[0] || "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -102,20 +103,14 @@ hqDefine("app_manager/js/details/column", function () {
             self.header = uiElement.input().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
-            self.nodeset = uiElement.input().val(self.original.nodeset);
+            self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
+                caseTypes: self.screen.otherCaseTypes,
+            }, _.pick(self.original, ['nodeset', 'nodesetCaseType'])));
+
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
                 self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
-                self.nodeset.ui.find("input[type='text']").attr("placeholder", gettext("Nodeset"));
                 self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
-
-                // Observe nodeset values for the sake of validation
-                if (self.hasNodeset) {
-                    self.nodeset.observableVal = ko.observable(self.original.nodeset);
-                    self.nodeset.on("change", function () {
-                        self.nodeset.observableVal(self.nodeset.val());
-                    });
-                }
 
                 if (self.original.relevant) {
                     self.relevant.observableVal = ko.observable(self.original.relevant);
@@ -134,7 +129,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
             if (self.isTab) {
                 // Data tab missing its nodeset
-                return self.hasNodeset && !self.nodeset.observableVal();
+                return self.hasNodeset && !self.nodeset_extra.dropdownValue().value && !self.nodeset_extra.nodeset();
             }
             // Invalid property name
             return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
@@ -258,7 +253,7 @@ hqDefine("app_manager/js/details/column", function () {
             'model',
             'field',
             'header',
-            'nodeset',
+            'nodeset_extra',
             'relevant',
             'format',
             'date_extra',
@@ -337,13 +332,10 @@ hqDefine("app_manager/js/details/column", function () {
             var column = self.original;
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
-            column.nodeset = self.nodeset.val();
-            column.relevant = self.relevant.val();
             column.format = self.format.val();
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
-            column.graph_configuration =
-                self.format.val() === "graph" ? self.graph_extra.val() : null;
+            column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());
             column.filter_xpath = self.filter_xpath_extra.val();
@@ -351,10 +343,20 @@ hqDefine("app_manager/js/details/column", function () {
             column.case_tile_field = self.case_tile_field();
             if (self.isTab) {
                 // Note: starting_index is added by screenModel.serialize
-                return _.extend({
+                var tab = {
+                    header: column.header,
+                    isTab: true,
                     starting_index: self.starting_index,
+                    relevant: self.relevant.val(),
                     has_nodeset: column.hasNodeset,
-                }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
+                };
+                if (column.hasNodeset) {
+                    tab = _.extend(tab, {
+                        nodeset_case_type: self.nodeset_extra.dropdownValue().value,
+                        nodeset: self.nodeset_extra.nodeset(),
+                    });
+                }
+                return tab;
             }
             return column;
         };
