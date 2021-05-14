@@ -21,6 +21,7 @@ VELLUM_DEBUG = None
 
 # For Single Sign On (SSO) Implementations
 SAML2_DEBUG = False
+ENFORCE_SSO_LOGIN = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
