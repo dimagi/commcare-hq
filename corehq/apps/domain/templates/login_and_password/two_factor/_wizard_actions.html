@@ -6,7 +6,24 @@
           class="btn btn-default btn-lg">{% trans "Back" %}</button>
 {% endif %}
 {% if wizard.steps.current == 'auth' %}
-  <button type="submit" class="btn btn-primary btn-lg">{% trans "Sign In" %}</button>
+  {% if enforce_sso_login %}
+    <button type="button"
+            data-bind="visible: showContinueButton,
+                       click: proceedToNextStep,
+                       disable: isContinueDisabled"
+            class="btn btn-primary btn-lg">
+      <i class="fa fa-spinner fa-spin"
+         data-bind="visible:showContinueSpinner"></i>
+      <span data-bind="text:continueButtonText"></span>
+    </button>
+    <button type="submit"
+            data-bind="visible: showSignInButton"
+            class="btn btn-primary btn-lg">
+      {% trans "Sign In" %}
+    </button>
+  {% else %}
+    <button type="submit" class="btn btn-primary btn-lg">{% trans "Sign In" %}</button>
+  {% endif %}
 {% else %}
   <button type="submit" class="btn btn-primary btn-lg">{% trans "Next" %}</button>
 {% endif %}
