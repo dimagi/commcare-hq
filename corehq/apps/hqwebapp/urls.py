@@ -34,7 +34,7 @@ from corehq.apps.hqwebapp.views import (
     retrieve_download,
     server_up,
     temporary_google_verify,
-    yui_crossdomain,
+    crossdomain_policy,
 )
 from corehq.apps.settings.views import (
     TwoFactorBackupTokensView,
@@ -51,7 +51,7 @@ from corehq.apps.settings.views import (
 urlpatterns = [
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
-    url(r'^crossdomain.xml$', yui_crossdomain, name='yui_crossdomain'),
+    url(r'^crossdomain.xml$', crossdomain_policy, name='crossdomain_policy'),
     url(r'^serverup.txt$', server_up),
     url(r'^change_password/$', password_change, name='password_change'),
 

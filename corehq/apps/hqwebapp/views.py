@@ -254,11 +254,10 @@ def _two_factor_needed(domain_name, request):
         )
 
 
-def yui_crossdomain(req):
+def crossdomain_policy(req):
     x_domain = """<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
-    <allow-access-from domain="yui.yahooapis.com"/>
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
 </cross-domain-policy>""" % get_site_domain()
