@@ -59,7 +59,9 @@ class UserRoleCouchToSqlTests(TestCase):
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
+        self.assertEqual(couch_role.assignable_by, [
+            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
+        ])
 
     def test_sync_role_sql_to_couch(self):
         self.maxDiff = None
@@ -78,6 +80,10 @@ class UserRoleCouchToSqlTests(TestCase):
             PermissionInfo(Permissions.view_web_apps.name),
         ])
 
+        sql_role.set_assignable_by(list(
+            SQLUserRole.objects.filter(couch_id=self.app_editor.get_id).values_list("id", flat=True)
+        ))
+
         # sync the permissions
         sql_role._migration_do_sync()
 
@@ -92,4 +98,6 @@ class UserRoleCouchToSqlTests(TestCase):
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
+        self.assertEqual(couch_role.assignable_by, [
+            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
+        ])

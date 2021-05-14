@@ -59,7 +59,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         else:
             couch_object.upstream_id = None
         couch_object.permissions = self.permissions
-        couch_object.assignable_by = self.assignable_by
+        couch_object.assignable_by = list(
+            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+        )
 
     @property
     def get_id(self):
@@ -83,13 +85,29 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         from corehq.apps.users.models import Permissions
         return Permissions.from_permission_list(self.get_permission_infos())
 
+    def set_assignable_by(self, role_ids):
+        assignments_by_role_id = {
+            assignment[0]: assignment[1]
+            for assignment in self.roleassignableby_set.values_list('assignable_by_role_id', 'id').all()
+        }
+
+        for role_id in role_ids:
+            assignment = assignments_by_role_id.pop(role_id, None)
+            if not assignment:
+                assignment = RoleAssignableBy(role=self, assignable_by_role_id=role_id)
+                assignment.save()
+
+        if assignments_by_role_id:
+            old_ids = list(assignments_by_role_id.values())
+            RoleAssignableBy.objects.filter(id__in=old_ids).delete()
+
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
 
     @property
     def assignable_by(self):
         return list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+            self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
         )
 
 
@@ -154,22 +172,15 @@ def migrate_role_permissions_to_sql(user_role, sql_role):
 def migrate_role_assignable_by_to_sql(couch_role, sql_role):
     from corehq.apps.users.models import UserRole
 
-    assignments_by_role_id = {
-        assignment.assignable_by_role.get_id: assignment
-        for assignment in sql_role.get_assignable_by()
+    assignable_by_mapping = {
+        ids[0]: ids[1] for ids in
+        SQLUserRole.objects.filter(couch_id__in=couch_role.assignable_by).values_list('couch_id', 'id')
     }
-    removed = set(assignments_by_role_id) - set(couch_role.assignable_by)
-    for role_id in removed:
-        assignments_by_role_id[role_id].delete()
+    if len(assignable_by_mapping) != len(couch_role.assignable_by):
+        for couch_id in couch_role.assignable_by:
+            if couch_id not in assignable_by_mapping:
+                assignable_by_sql_role = UserRole.get(couch_id)._migration_do_sync()  # noqa
+                assert assignable_by_sql_role is not None
+                assignable_by_mapping[couch_id] = assignable_by_sql_role.id
 
-    added = set(couch_role.assignable_by) - set(assignments_by_role_id)
-    for doc in iter_docs(UserRole.get_db(), added):
-        couch_role = UserRole.wrap(doc)
-        assignable_by_role = couch_role._migration_get_sql_object()  # noqa
-        if not assignable_by_role:
-            assignable_by_role = couch_role._migration_do_sync()  # noqa
-            assert assignable_by_role is not None
-
-        sql_role.roleassignableby_set.add(
-            RoleAssignableBy(role=sql_role, assignable_by_role=assignable_by_role), bulk=False
-        )
+    sql_role.set_assignable_by(list(assignable_by_mapping.values()))
