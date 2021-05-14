@@ -795,14 +795,16 @@ def paginate_enterprise_users(request, domain):
         users.append({
             **_format_enterprise_user(domain, web_user),
             'profile': None,
-            'other_domains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'otherDomains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'loginAsUser': None,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user._get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
             users.append({
                 **_format_enterprise_user(mobile_user.domain, mobile_user),
                 'profile': profile.name if profile else None,
-                'other_domains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
             })
 
     return JsonResponse({
@@ -820,7 +822,7 @@ def _format_enterprise_user(domain, user):
     membership = user.get_domain_membership(domain)
     role = membership.role if membership else None
     return {
-        'username': user.username,
+        'username': user.raw_username,
         'created_on': user.created_on.strftime(USER_DATETIME_FORMAT),
         'id': user.get_id,
         'editUrl': reverse('user_account', args=[domain, user.get_id]),

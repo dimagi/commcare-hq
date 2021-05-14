@@ -53,14 +53,15 @@
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
-          <tr>
-            <td>
+          <tr data-bind="attr: {'data-login-as-user': loginAsUser}">
+            <td><!-- TODO: nowrap this cell -->
+              <i class="fa fa-link" data-bind="visible: loginAsUser"></i>
               <a data-bind="attr: {href: editUrl}, text: username"></a>
             </td>
             <td data-bind="text: role"></td>
             <td data-bind="text: profile"></td>
             <td data-bind="text: created_on"></td>
-            <td data-bind="foreach: other_domains">
+            <td data-bind="foreach: otherDomains">
               <span class="label label-default" data-bind="text: $data"></span>
             </td>
           </tr>
