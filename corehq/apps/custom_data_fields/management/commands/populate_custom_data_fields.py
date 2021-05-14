@@ -25,7 +25,7 @@ class Command(PopulateSQLCommand):
         diffs = []
         for attr in ('field_type', 'domain'):
             diffs.append(cls.diff_attr(attr, doc, obj))
-        diffs.extend(cls.diff_lists(doc.get('fields', []), obj.get_fields(), [
+        diffs.extend(cls.diff_lists('fields', doc.get('fields', []), obj.get_fields(), [
             'slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'
         ]))
         diffs = [d for d in diffs if d]
