@@ -201,14 +201,19 @@ class PopulateSQLCommand(BaseCommand):
         if not skip_verify:
             logger.info(f"Found {self.diff_count} differences")
 
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diff = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diff, list):
+            diffs = list(filter(None, diff))
+            diff = "\n".join(diffs) if diffs else None
+        return diff
+
     def _verify_doc(self, doc, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            diff = self.diff_couch_and_sql(doc, obj)
-            if isinstance(diff, list):
-                diffs = filter(None, diff)
-                diff = "\n".join(diffs) if diffs else None
+            diff = self.get_diff_as_string(doc, obj)
             if diff:
                 logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1
