@@ -52,6 +52,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -791,9 +792,16 @@ def paginate_enterprise_users(request, domain):
 
     users = []
     for web_user in web_users:
-        users.append(_format_enterprise_user(domain, web_user))
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'profile': None,
+        })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
-            users.append(_format_enterprise_user(mobile_user.domain, mobile_user))
+            profile = mobile_user._get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+            })
 
     return JsonResponse({
         'users': users,

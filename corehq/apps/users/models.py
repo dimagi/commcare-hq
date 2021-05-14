@@ -1700,11 +1700,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
 
+    # TODO: rename to be public, maybe use more broadly (search for PROFILE_SLUG), don't pass in profile_id?
     def _get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
         if not profile_id:
             return None
+        # TODO: check privilege?
 
         try:
             profile = CustomDataFieldsProfile.objects.get(id=profile_id)

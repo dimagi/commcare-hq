@@ -47,6 +47,7 @@
           <tr>
             <th>{% trans "Username" %}</th>
             <th>{% trans "Role" %}</th>
+            <th>{% trans "Profile" %}</th>
             <th>{% trans "Registered On" %}</th>
           </tr>
         </thead>
@@ -56,6 +57,7 @@
               <a data-bind="attr: {href: editUrl}, text: username"></a>
             </td>
             <td data-bind="text: role"></td>
+            <td data-bind="text: profile"></td>
             <td data-bind="text: created_on"></td>
           </tr>
         </tbody>
