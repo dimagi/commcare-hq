@@ -39,7 +39,7 @@
              style="margin-bottom: 0;">
         <thead>
           <tr>
-            <th>{% trans "Email Address" %}</th>
+            <th>{% trans "Username" %}</th>
             <th>{% trans "Role" %}</th>
             <th>{% trans "Name" %}</th>
           </tr>
@@ -47,7 +47,7 @@
         <tbody data-bind="foreach: users">
           <tr>
             <td>
-              <a data-bind="attr: {href: editUrl}, text: email"></a>
+              <a data-bind="attr: {href: editUrl}, text: username"></a>
             </td>
             <td>TODO: put roles here, perhaps</td>
             <td data-bind="text: name"></td>
