@@ -761,8 +761,10 @@ def paginate_enterprise_users(request, domain):
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
+    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+
     web_result = (
-        UserES().domain(domain, include_mirrors=True).web_users().sort('username.exact')
+        UserES().domains(domains).web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
         .start(skip).size(limit).run()
     )
@@ -771,8 +773,8 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().domain(domain, include_mirrors=True).mobile_users().sort('username.exact')
-        .filter(
+        UserES().domains(domains).mobile_users().sort('username.exact')
+        .filter(    # TODO: extract as function and maybe DRY up with login_as_user_query
             queries.nested(
                 'user_data_es',
                 filters.AND(
@@ -790,23 +792,9 @@ def paginate_enterprise_users(request, domain):
 
     users = []
     for web_user in web_users:
-        users.append({
-            'username': web_user.username,
-            'domain': domain,
-            'created_on': web_user.created_on.strftime(USER_DATETIME_FORMAT),
-            #'role': web_user.role_label(domain),  # TODO: roles for each domain
-            'id': web_user.get_id,
-            'editUrl': reverse('user_account', args=[domain, web_user.get_id]),    # TODO: link into different domains
-        })
+        users.append(_format_enterprise_user(domain, web_user))
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
-            # TODO: DRY up with above?
-            users.append({
-                'username': mobile_user.username,
-                'domain': domain,
-                'created_on': mobile_user.created_on.strftime(USER_DATETIME_FORMAT),
-                'id': mobile_user.get_id,
-                'editUrl': reverse('user_account', args=[domain, mobile_user.get_id]),
-            })
+            users.append(_format_enterprise_user(mobile_user.domain, mobile_user))
 
     return JsonResponse({
         'users': users,
@@ -814,6 +802,21 @@ def paginate_enterprise_users(request, domain):
         'page': page,
         'query': query,
     })
+
+
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    # TODO: this does UserRole.get, maybe switch to pulling all roles before this loop?
+    # TODO: show all roles for web user?
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.username,
+        'created_on': user.created_on.strftime(USER_DATETIME_FORMAT),
+        'id': user.get_id,
+        'editUrl': reverse('user_account', args=[domain, user.get_id]),
+        'role': role.name if role else None,
+    }
 
 
 @always_allow_project_access
