@@ -849,9 +849,7 @@ OAUTH2_PROVIDER = {
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
-    'SCOPES': {
-        'access_apis': 'Access API data on all your CommCare projects',
-    },
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 

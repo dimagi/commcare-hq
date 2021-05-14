@@ -6,6 +6,8 @@ from django.db import models
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
+from oauth2_provider.settings import oauth2_settings
+
 from corehq.apps.consumer_user.const import (
     CONSUMER_INVITATION_ACCEPTED,
     CONSUMER_INVITATION_ERROR,
@@ -124,3 +126,36 @@ class ConsumerUserInvitation(models.Model):
             TimestampSigner().unsign(signed_invitation_id, max_age=timedelta(days=30))
         )
         return cls.objects.get(pk=invitation_id)
+
+
+class CaseRelationshipOauthToken(models.Model):
+    """Join table between Oauth access tokens and a case relationship, to ensure
+    the access token was created for this particular case.
+    """
+    consumer_user_case_relationship = models.ForeignKey(ConsumerUserCaseRelationship, on_delete=models.CASCADE)
+    access_token = models.ForeignKey(oauth2_settings.ACCESS_TOKEN_MODEL, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['consumer_user_case_relationship', 'access_token'],
+                name='unique-relationship-access-token'
+            )
+        ]
+
+    @classmethod
+    def create_from_case_id(cls, case_id, access_token):
+        try:
+            consumer_user_case_relationship = ConsumerUserCaseRelationship.objects.get(case_id=case_id)
+        except ConsumerUserCaseRelationship.DoesNotExist:
+            return False
+
+        try:
+            existing = cls.objects.get(consumer_user_case_relationship=consumer_user_case_relationship)
+            existing.access_token = access_token
+            existing.save()
+            return existing
+        except cls.DoesNotExist:
+            return cls.objects.create(
+                consumer_user_case_relationship=consumer_user_case_relationship, access_token=access_token
+            )
