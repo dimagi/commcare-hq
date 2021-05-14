@@ -123,6 +123,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     databases
     metrics
     extensions
+    custom
 
 .. toctree::
     :caption: Documentation Tips

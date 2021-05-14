@@ -1,11 +1,12 @@
-from celery import chord
-from celery.task import task
 from collections import defaultdict
 
 from django.conf import settings
 from django.template.defaultfilters import linebreaksbr
-from django.utils.translation import ugettext as _
 from django.urls import reverse
+from django.utils.translation import ugettext as _
+
+from celery import chord
+from celery.task import task
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
@@ -15,12 +16,19 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.linked_domain.const import MODEL_APP, MODEL_CASE_SEARCH, MODEL_KEYWORD, MODEL_REPORT
+from corehq.apps.linked_domain.const import (
+    FEATURE_FLAG_DATA_MODEL_TOGGLES,
+    MODEL_APP,
+    MODEL_KEYWORD,
+    MODEL_REPORT,
+)
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
+from corehq.apps.linked_domain.util import (
+    pull_missing_multimedia_for_app_and_notify,
+)
 from corehq.apps.reminders.views import KeywordsListView
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
@@ -209,11 +217,6 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
                                            "was released to it.").format(master_domain, linked_domain))
         return manager.results()
 
-    flag_dependent_models = {'case_search_data': toggles.SYNC_SEARCH_CASE_CLAIM,
-                             'data_dictionary': toggles.DATA_DICTIONARY,
-                             'dialer_settings': toggles.WIDGET_DIALER,
-                             'otp_settings': toggles.GAEN_OTP_SERVER,
-                             'hmac_callout_settings': toggles.HMAC_CALLOUT}
     for model in models:
         errors = None
         try:
@@ -221,9 +224,9 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
                 errors = manager._release_app(domain_link, model, manager.user, build_apps)
             elif model['type'] == MODEL_REPORT:
                 errors = manager._release_report(domain_link, model)
-            elif model['type'] in flag_dependent_models:
+            elif model['type'] in FEATURE_FLAG_DATA_MODEL_TOGGLES:
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
-                                                               flag_dependent_models[model['type']])
+                                                               FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model)
             else:

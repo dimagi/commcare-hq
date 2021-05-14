@@ -62,36 +62,11 @@ function run_tests() {
 }
 
 function send_timing_metric_to_datadog() {
-    send_metric_to_datadog "travis.timings.$1" $2 "gauge"
+    send_metric_to_datadog "travis.timings.$1" $2 "gauge" "test_type:$TEST"
 }
 
 function send_counter_metric_to_datadog() {
-    send_metric_to_datadog "travis.count" 1 "counter"
-}
-
-function send_metric_to_datadog() {
-    if [ -z "$DATADOG_API_KEY" ]; then
-        return
-    fi
-
-    currenttime=$(date +%s)
-    curl  -X POST -H "Content-type: application/json" \
-    -d "{ \"series\" :
-             [{\"metric\":\"$1\",
-              \"points\":[[$currenttime, $2]],
-              \"type\":\"$3\",
-              \"host\":\"travis-ci.org\",
-              \"tags\":[
-                \"environment:travis\",
-                \"travis_build:$TRAVIS_BUILD_ID\",
-                \"travis_number:$TRAVIS_BUILD_NUMBER\",
-                \"travis_job_number:$TRAVIS_JOB_NUMBER\",
-                \"test_type:$TEST\",
-                \"partition:$NOSE_DIVIDED_WE_RUN\"
-              ]}
-            ]
-        }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
+    send_metric_to_datadog "travis.count" 1 "counter" "test_type:$TEST"
 }
 
 function _run_tests() {
@@ -115,6 +90,14 @@ function _run_tests() {
         /mnt/wait.sh 127.0.0.1:8000
          echo "grunt test $@"
          grunt test "$@"
+
+         if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+            echo "----------> Begin Static Analysis <----------"
+            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+            ./scripts/static-analysis.sh datadog
+            echo "----------> End Static Analysis <----------"
+         fi
+
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "./manage.py test $@ $TESTS"
@@ -142,6 +125,8 @@ function runserver() {
     JS_SETUP=yes setup python
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
+
+source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
 export -f setup
 export -f run_tests

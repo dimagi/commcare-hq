@@ -22,6 +22,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
     relationship = StringProperty('child', choices=['child', 'extension'])
 
     @property
+    def is_deleted(self):
+        return not self.referenced_id
+
+    @property
     def referenced_case(self):
         """
         For a 'forward' index this is the case that the the index points to.

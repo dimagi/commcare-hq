@@ -16,6 +16,7 @@ from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.sso.decorators import (
     identity_provider_required,
@@ -27,9 +28,6 @@ from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
     prepare_session_with_sso_username,
-    get_new_sso_user_project_name_from_session,
-    prepare_session_for_sso_invitation,
-    clear_sso_registration_data_from_session,
 )
 from corehq.apps.users.models import Invitation
 
@@ -98,10 +96,10 @@ def sso_saml_acs(request, idp_slug):
             auth.login(request, user)
 
             # activate new project if needed
-            project_name = get_new_sso_user_project_name_from_session(request)
-            if project_name:
+            async_signup = AsyncSignupRequest.get_by_username(user.username)
+            if async_signup and async_signup.project_name:
                 try:
-                    request_new_domain(request, project_name, is_new_user=True)
+                    request_new_domain(request, async_signup.project_name, is_new_user=True)
                 except NameUnavailableException:
                     # this should never happen, but in the off chance it does
                     # we don't want to throw a 500 on this view
@@ -112,7 +110,7 @@ def sso_saml_acs(request, idp_slug):
                           "Please contact support.")
                     )
 
-            clear_sso_registration_data_from_session(request)
+            AsyncSignupRequest.clear_data_for_username(user.username)
             return redirect("homepage")
 
         # todo for debugging purposes to dump into the response below
@@ -245,8 +243,8 @@ def sso_test_create_user(request, idp_slug):
         prepare_session_with_sso_username(request, username)
 
     invitation_uuid = request.GET.get('invitation')
-    invitation = Invitation.objects.get(uuid=invitation_uuid)
+    invitation = Invitation.objects.get(uuid=invitation_uuid) if invitation_uuid else None
     if invitation:
-        prepare_session_for_sso_invitation(request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
 
     return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
