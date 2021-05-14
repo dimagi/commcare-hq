@@ -45,10 +45,11 @@
              style="margin-bottom: 0;">
         <thead>
           <tr>
-            <th>{% trans "Username" %}</th>
-            <th>{% trans "Role" %}</th>
-            <th>{% trans "Profile" %}</th>
-            <th>{% trans "Registered On" %}</th>
+            <th class="col-sm-2">{% trans "Username" %}</th>
+            <th class="col-sm-2">{% trans "Role" %}</th>
+            <th class="col-sm-2">{% trans "Profile" %}</th>
+            <th class="col-sm-2">{% trans "Registered On" %}</th>
+            <th class="col-sm-4">{% trans "Other Projects" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -59,6 +60,9 @@
             <td data-bind="text: role"></td>
             <td data-bind="text: profile"></td>
             <td data-bind="text: created_on"></td>
+            <td data-bind="foreach: other_domains">
+              <span class="label label-default" data-bind="text: $data"></span>
+            </td>
           </tr>
         </tbody>
       </table>
