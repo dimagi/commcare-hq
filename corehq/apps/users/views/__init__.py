@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -57,7 +58,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, filters, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -751,25 +752,56 @@ def paginate_enterprise_users(request, domain):
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
-    result = (
+    web_result = (
         UserES().domain(domain, include_mirrors=True).web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
         .start(skip).size(limit).run()
     )
+    web_users = [WebUser.wrap(w) for w in web_result.hits]
 
-    web_users = [WebUser.wrap(w) for w in result.hits]
-    web_users_fmt = [{
-        'email': u.get_email(),
-        'domain': domain,
-        'name': u.full_name,
-        #'role': u.role_label(domain),  # TODO: roles for each domain
-        'id': u.get_id,
-        'editUrl': reverse('user_account', args=[domain, u.get_id]),    # TODO: link into different domains
-    } for u in web_users]
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().domain(domain, include_mirrors=True).mobile_users().sort('username.exact')
+        .filter(
+            queries.nested(
+                'user_data_es',
+                filters.AND(
+                    filters.term('user_data_es.key', 'login_as_user'),
+                    filters.term('user_data_es.value', web_user_usernames),
+                )
+            )
+        )
+        .run()
+    )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
+
+    users = []
+    for web_user in web_users:
+        users.append({
+            'username': web_user.username,
+            'domain': domain,
+            'name': web_user.full_name,
+            #'role': web_user.role_label(domain),  # TODO: roles for each domain
+            'id': web_user.get_id,
+            'editUrl': reverse('user_account', args=[domain, web_user.get_id]),    # TODO: link into different domains
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            # TODO: DRY up with above?
+            users.append({
+                'username': mobile_user.username,
+                'domain': domain,
+                'name': mobile_user.full_name,
+                'id': mobile_user.get_id,
+                'editUrl': reverse('user_account', args=[domain, mobile_user.get_id]),
+            })
 
     return JsonResponse({
-        'users': web_users_fmt,
-        'total': result.total,
+        'users': users,
+        'total': web_result.total,
         'page': page,
         'query': query,
     })
