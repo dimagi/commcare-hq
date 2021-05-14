@@ -6,7 +6,7 @@ from django.db import transaction
 
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
-from corehq.util.django_migrations import skip_on_fresh_install, safely_run_management_command
+from corehq.util.django_migrations import skip_on_fresh_install, run_management_command_or_exit
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ class PopulateSQLCommand(BaseCommand):
 
         command_name = cls.__module__.split('.')[-1]
         if to_migrate < cls.AUTO_MIGRATE_ITEMS_LIMIT:
-            safely_run_management_command(command_name, required_commit=cls.commit_adding_migration())
+            run_management_command_or_exit(command_name, required_commit=cls.commit_adding_migration())
             remaining = cls.count_items_to_be_migrated()
             if remaining != 0:
                 print(f"Automatic migration failed, {remaining} items remain to migrate.")

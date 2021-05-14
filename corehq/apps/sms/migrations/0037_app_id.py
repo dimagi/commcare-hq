@@ -1,6 +1,6 @@
 from django.db import migrations, models
 
-from corehq.util.django_migrations import run_management_command
+from corehq.util.django_migrations import run_once_off_migration
 
 
 class Migration(migrations.Migration):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             name='app_id',
             field=models.CharField(max_length=126, null=True),
         ),
-        run_management_command(
+        run_once_off_migration(
             'populate_app_id_for_sms', required_commit='ddb2c1e9ae4ea932dfa5e590e65aa74ed95ebf13'
         )
     ]

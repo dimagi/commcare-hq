@@ -1,6 +1,6 @@
 from django.db import migrations, models
 
-from corehq.util.django_migrations import run_management_command
+from corehq.util.django_migrations import run_once_off_migration
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='app_id',
             field=models.CharField(max_length=126, null=True),
         ),
-        run_management_command(
+        run_once_off_migration(
             'populate_app_id_for_scheduling', required_commit='8e8243bc80964e6981fcb89a712776e9faf97397'
         )
     ]

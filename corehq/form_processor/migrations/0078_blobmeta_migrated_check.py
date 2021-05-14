@@ -3,7 +3,7 @@ import sys
 
 from django.db import migrations
 
-from corehq.util.django_migrations import skip_on_fresh_install, safely_run_management_command
+from corehq.util.django_migrations import skip_on_fresh_install, run_management_command_or_exit
 
 BLOBMETAS_NOT_MIGRATED_ERROR = """
 Blob metadata needs to be migrated before this environment can be upgraded to
@@ -36,7 +36,7 @@ def _assert_blobmetas_migrated(apps, schema_editor):
         return
 
     if num_attachments < 10000:
-        safely_run_management_command(
+        run_management_command_or_exit(
             "run_sql", "simple_move_form_attachments_to_blobmeta",
             dbname=schema_editor.connection.alias,
             custom_message=BLOBMETAS_NOT_MIGRATED_ERROR

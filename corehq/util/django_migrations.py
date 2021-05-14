@@ -115,18 +115,18 @@ def noop_migration():
     return RunPython(RunPython.noop, RunPython.noop)
 
 
-def run_management_command(command_name, *args, required_commit=None, **kwargs):
+def run_once_off_migration(command_name, *args, required_commit=None, **kwargs):
     """Return a migration operation that can be used to run a management command from
     a Django migration. This will give the user directions for running the command
     manually if the command fails or has since been removed from the codebase"""
     @skip_on_fresh_install
     def _run_command(apps, schema_editor):
-        safely_run_management_command(command_name, required_commit, *args, **kwargs)
+        run_management_command_or_exit(command_name, required_commit, *args, **kwargs)
 
     return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
 
 
-def safely_run_management_command(command_name, *args, required_commit=None, custom_message=None, **kwargs):
+def run_management_command_or_exit(command_name, *args, required_commit=None, custom_message=None, **kwargs):
     """Helper function to run a management command automatically and abort if there was an error
     with helpful console output to allow users to run it manually if it fails or
     has since been removed from the codebase."""
