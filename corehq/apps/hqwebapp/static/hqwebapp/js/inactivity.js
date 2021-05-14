@@ -117,6 +117,9 @@ hqDefine('hqwebapp/js/inactivity', [
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
+                        _.each($(".select2-hidden-accessible"), function(el) {
+                            $(el).select2('close');
+                        });
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
@@ -131,6 +134,7 @@ hqDefine('hqwebapp/js/inactivity', [
                             $body.html(content);
                             $body.find("iframe").on("load", pollToHideModal);
                         });
+
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         hideWarningModal(true);
                     } else {
