@@ -82,9 +82,10 @@ did it run successfully?) can be performed in the context of a Django migration.
                 dbname=schema_editor.connection.alias,
                 required_commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND
             )
-            migrated = count_items_to_be_migrated(schema_editor.connection) == 0
-            if not migrated:
-                print("Automatic migration failed")
+            remaining = count_items_to_be_migrated(schema_editor.connection)
+            if remaining != 0:
+                print(f"Automatic migration failed, {remaining} items remain to migrate.")
+                sys.exit(1)
         else:
             print("Found %s items that need to be migrated." % num_items)
             print("Too many to migrate automatically.")
