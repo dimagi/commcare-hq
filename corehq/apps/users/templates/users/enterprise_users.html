@@ -44,6 +44,7 @@
             {% if show_profile_column %}
               <th>{% trans "Profile" %}</th>
             {% endif %}
+            <th class="col-sm-4">{% trans "Other Projects" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -54,6 +55,9 @@
             {% if show_profile_column %}
               <td data-bind="text: profile"></td>
             {% endif %}
+            <td data-bind="foreach: other_domains">
+              <span class="label label-default" data-bind="text: $data"></span>
+            </td>
           </tr>
         </tbody>
       </table>
