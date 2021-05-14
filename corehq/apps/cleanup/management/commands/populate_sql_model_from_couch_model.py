@@ -64,7 +64,7 @@ class PopulateSQLCommand(BaseCommand):
             couch = wrap_couch(couch) if couch is not None else None
         if wrap_sql:
             sql = wrap_sql(sql) if sql is not None else None
-        cls.diff_value(name, couch, sql, name_prefix)
+        return cls.diff_value(name, couch, sql, name_prefix)
 
     @classmethod
     def diff_value(cls, name, couch, sql, name_prefix=None):
@@ -81,7 +81,7 @@ class PopulateSQLCommand(BaseCommand):
             for couch_field, sql_field in list(zip(docs, objects)):
                 if attr_list:
                     for attr in attr_list:
-                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name))
+                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=name))
                 else:
                     diffs.append(cls.diff_value(name, couch_field, sql_field))
         return diffs
