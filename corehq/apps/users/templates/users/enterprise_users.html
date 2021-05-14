@@ -47,7 +47,7 @@
           <tr>
             <th>{% trans "Username" %}</th>
             <th>{% trans "Role" %}</th>
-            <th>{% trans "Name" %}</th>
+            <th>{% trans "Registered On" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
@@ -56,7 +56,7 @@
               <a data-bind="attr: {href: editUrl}, text: username"></a>
             </td>
             <td>TODO: put roles here, perhaps</td>
-            <td data-bind="text: name"></td>
+            <td data-bind="text: created_on"></td>
           </tr>
         </tbody>
       </table>
