@@ -70,7 +70,7 @@ class PopulateSQLCommand(BaseCommand):
     def diff_lists(cls, docs, objects, attr_list):
         diffs = []
         if len(docs) != len(objects):
-            diffs.append(f"{len(docs)} in couch != {len(attr_list)} in sql")
+            diffs.append(f"{len(docs)} in couch != {len(objects)} in sql")
         else:
             for couch_field, sql_field in list(zip(docs, objects)):
                 for attr in attr_list:
