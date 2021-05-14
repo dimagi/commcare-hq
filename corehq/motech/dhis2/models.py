@@ -1,10 +1,7 @@
-import bz2
-from base64 import b64decode, b64encode
 from datetime import date, timedelta
 from itertools import chain
 from typing import Dict, List, Optional, Union
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import model_to_dict
 
@@ -35,34 +32,6 @@ from .const import (
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
 )
-
-
-# UNUSED
-class Dhis2Connection(models.Model):
-    domain = models.CharField(max_length=255, unique=True)
-    server_url = models.CharField(max_length=255, null=True)
-    username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255, null=True)
-    skip_cert_verify = models.BooleanField(default=False)
-
-    @property
-    def plaintext_password(self):
-        plaintext_bytes = bz2.decompress(b64decode(self.password))
-        return plaintext_bytes.decode('utf8')
-
-    @plaintext_password.setter
-    def plaintext_password(self, plaintext):
-        # Use simple symmetric encryption. We don't need it to be
-        # strong, considering we'd have to store the algorithm and the
-        # key together anyway; it just shouldn't be plaintext.
-        # (2020-03-09) Not true. The key is stored separately.
-        plaintext_bytes = plaintext.encode('utf8')
-        self.password = b64encode(bz2.compress(plaintext_bytes))
-
-    def save(self, *args, **kwargs):
-        raise ValidationError(
-            'Dhis2Connection is unused. Use ConnectionSettings instead.'
-        )
 
 
 class DataValueMap(DocumentSchema):
