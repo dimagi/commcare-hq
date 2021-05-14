@@ -39,15 +39,17 @@
         <thead>
           <tr>
             <th>{% trans "Username" %}</th>
-            <th>{% trans "Role" %}</th>
             <th>{% trans "Name" %}</th>
+            <th>{% trans "Role" %}</th>
+            <th>{% trans "Profile" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: users">
           <tr>
             <td data-bind="text: username"></td>
-            <td data-bind="text: role"></td>
             <td data-bind="text: name"></td>
+            <td data-bind="text: role"></td>
+            <td data-bind="text: profile"></td>
           </tr>
         </tbody>
       </table>
