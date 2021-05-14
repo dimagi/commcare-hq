@@ -12,5 +12,4 @@ requests-mock
 sqlalchemy-postgres-copy==0.5.0
 flaky==3.7.0
 freezegun~=1.1
-radon
-flake8-polyfill  # Needed only for a bug in radon's dependency management
+radon[flake8]  # flake8 extra needed due to bug in radon's dependency management
