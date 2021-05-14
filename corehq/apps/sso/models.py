@@ -313,9 +313,7 @@ class IdentityProvider(models.Model):
         :param username: String
         :return: IdentityProvider or None
         """
-        idp = cls.get_active_identity_provider_by_username(
-            username
-        )
+        idp = cls.get_active_identity_provider_by_username(username)
         if idp and not UserExemptFromSingleSignOn.objects.filter(
             username=username
         ).exists():
