@@ -12,6 +12,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
+from corehq.const import OPENROSA_VERSION_3
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
@@ -260,6 +262,11 @@ class CaseTypeReferralConfig(object):
 
 
 class ReferCasePayloadGenerator(BasePayloadGenerator):
+
+    def get_headers(self):
+        headers = super().get_headers()
+        headers[OPENROSA_VERSION_HEADER] = OPENROSA_VERSION_3
+        return headers
 
     def get_payload(self, repeat_record, payload_doc):
 
