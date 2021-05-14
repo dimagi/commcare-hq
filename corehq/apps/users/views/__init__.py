@@ -777,15 +777,16 @@ def paginate_enterprise_users(request, domain):
     for web_user in web_users:
         users.append({
             **_format_enterprise_user(domain, web_user),
-            'profile': None,
-            'other_domains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'otherDomains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'loginAsUserCount': len(mobile_users[web_user.username]),
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
             users.append({
                 **_format_enterprise_user(mobile_user.domain, mobile_user),
                 'profile': profile.name if profile else None,
-                'other_domains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
             })
 
     return JsonResponse({
@@ -801,7 +802,7 @@ def _format_enterprise_user(domain, user):
     membership = user.get_domain_membership(domain)
     role = membership.role if membership else None
     return {
-        'username': user.username,
+        'username': user.raw_username,
         'name': user.full_name,
         'id': user.get_id,
         'role': role.name if role else None,
