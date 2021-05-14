@@ -43,8 +43,7 @@ class Command(PopulateSQLCommand):
             for attr in spec['fields']:
                 diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel,
                              wrap_couch=normalize, wrap_sql=normalize, name_prefix=spec['couch_attr']))
-        diffs = [d for d in diffs if d]
-        return "\n".join(diffs) if diffs else None
+        return diffs
 
     @classmethod
     def attrs_to_sync(cls):
