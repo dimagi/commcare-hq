@@ -1,6 +1,10 @@
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.models_sql import migrate_role_assignable_by_to_sql, migrate_role_permissions_to_sql
+from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models_sql import (
+    migrate_role_assignable_by_to_sql,
+    migrate_role_permissions_to_sql,
+    SQLUserRole,
+)
 
 
 class Command(PopulateSQLCommand):
@@ -20,6 +24,48 @@ class Command(PopulateSQLCommand):
     @classmethod
     def commit_adding_migration(cls):
         return "TODO: add once the PR adding this file is merged"
+
+    @classmethod
+    def diff_couch_and_sql(cls, couch, sql):
+        diffs = []
+        for field in UserRole._migration_get_fields():
+            diffs.append(cls.diff_attr(field, couch, sql))
+
+        couch_upstream_id = couch["upstream_id"]
+        sql_upstream_id = sql.upstream_id
+        if couch_upstream_id or sql_upstream_id:
+            try:
+                sql_mapped_upstream_id = SQLUserRole.objects.get(id=sql_upstream_id).couch_id
+            except SQLUserRole.DoesNotExist:
+                sql_mapped_upstream_id = None
+            diffs.append(cls.diff_value("upstream_id", couch_upstream_id, sql_mapped_upstream_id))
+
+        couch_permissions = {
+            info.name: info
+            for info in Permissions.wrap(couch["permissions"]).to_list()
+        }
+        sql_permissions = {
+            info.name: info
+            for info in sql.permissions.to_list()
+        }
+
+        for name in sorted(set(couch_permissions) | set(sql_permissions)):
+            couch_permission = couch_permissions.get(name)
+            diffs.append(cls.diff_attr(
+                "allow",
+                couch_permission._asdict() if couch_permission else None,
+                sql_permissions.get(name),
+                name_prefix=f"permissions.{name}"
+            ))
+
+        couch_assignable_by = couch["assignable_by"]
+        sql_assignable_by = list(sql.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True))
+        diffs.extend(cls.diff_lists(
+            "assignable_by",
+            sorted(couch_assignable_by) if couch_assignable_by else [],
+            sorted(sql_assignable_by),
+        ))
+        return diffs
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(

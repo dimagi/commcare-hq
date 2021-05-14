@@ -3,7 +3,6 @@ from django.db import models
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 
@@ -99,6 +98,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return Permissions.from_permission_list(self.get_permission_infos())
 
     def set_assignable_by(self, role_ids):
+        if not role_ids:
+            self.roleassignableby_set.all().delete()
+            return
+
         assignments_by_role_id = {
             assignment[0]: assignment[1]
             for assignment in self.roleassignableby_set.values_list('assignable_by_role_id', 'id').all()
