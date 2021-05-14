@@ -37,7 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
+from corehq.apps.case_search.filter_dsl import CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.utils import CaseSearchCriteria, get_related_cases
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -112,6 +112,12 @@ def app_aware_search(request, domain, app_id):
         case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
     except TooManyRelatedCasesError:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
+    except CaseFilterError as e:
+        # This is an app building error, notify so we can track
+        notify_exception(request, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        return HttpResponse(str(e), status=400)
     search_es = case_search_criteria.search_es
 
     try:

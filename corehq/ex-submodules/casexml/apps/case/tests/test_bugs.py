@@ -7,7 +7,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.reports.view_helpers import get_case_hierarchy
+from corehq.apps.reports.view_helpers import get_case_hierarchy, case_hierarchy_context
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -228,6 +228,28 @@ class TestCaseHierarchy(TestCase):
         hierarchy = get_case_hierarchy(cp, {})
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
+        return hierarchy
+
+    def test_deleted_index(self):
+        hierarchy = self.test_normal_index()
+        parent, child = hierarchy['case_list']
+
+        factory = CaseFactory()
+        ref = CaseStructure()
+        ref.case_id = ""  # reset case_id to empty
+        factory.create_or_update_case(
+            CaseStructure(
+                case_id=child.case_id,
+                indices=[CaseIndex(ref, related_type='parent')],
+                walk_related=False
+            ),
+        )
+
+        # re-fetch case to clear memoized properties
+        parent = CaseAccessors(parent.domain).get_case(parent.case_id)
+        hierarchy = get_case_hierarchy(parent, {})
+        self.assertEqual(1, len(hierarchy['case_list']))
+        self.assertEqual(0, len(hierarchy['child_cases']))
 
     def test_extension_index(self):
         factory = CaseFactory()
@@ -340,4 +362,68 @@ class TestCaseHierarchy(TestCase):
 
 @use_sql_backend
 class TestCaseHierarchySQL(TestCaseHierarchy):
+    pass
+
+
+def _get_case_url_blank(case_id):
+    return ""
+
+
+class TestCaseHierarchyContext(TestCase):
+    def setUp(self):
+        self.factory = CaseFactory()
+        parent_id = uuid.uuid4().hex
+        [self.parent] = self.factory.create_or_update_case(
+            CaseStructure(case_id=parent_id, attrs={'case_type': 'parent', 'create': True})
+        )
+
+        child_id = uuid.uuid4().hex
+        [self.child] = self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            attrs={'case_type': 'child', 'create': True},
+            indices=[CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')],
+            walk_related=False
+        ))
+
+    def tearDown(self):
+        self.parent.delete()
+        self.child.delete()
+
+    def test_case_hierarchy_context_parent(self):
+        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        self.assertEqual(2, len(hierarchy['case_list']))
+
+    def test_case_hierarchy_context_parent_deleted_index(self):
+        self._delete_child_index()
+        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        self.assertEqual(1, len(hierarchy['case_list']))
+
+    def test_case_hierarchy_context_child(self):
+        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        self.assertEqual(2, len(hierarchy['case_list']))
+
+    def test_case_hierarchy_context_child_deleted_index(self):
+        self._delete_child_index()
+        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        self.assertEqual(1, len(hierarchy['case_list']))
+
+    def _delete_child_index(self):
+        ref = CaseStructure()
+        ref.case_id = ""  # reset case_id to empty
+        self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=self.child.case_id,
+                indices=[CaseIndex(ref, related_type='parent')],
+                walk_related=False
+            ),
+        )
+
+        # re-fetch case to clear memoized properties
+        accessors = CaseAccessors(self.parent.domain)
+        self.parent = accessors.get_case(self.parent.case_id)
+        self.child = accessors.get_case(self.child.case_id)
+
+
+@use_sql_backend
+class TestCaseHierarchyContextSQL(TestCaseHierarchyContext):
     pass

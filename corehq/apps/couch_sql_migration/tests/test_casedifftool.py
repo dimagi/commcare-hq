@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from uuid import uuid4
 from xml.sax.saxutils import unescape
 
 from mock import patch
@@ -15,6 +16,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
+    should_use_sql_backend,
 )
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.test_utils import capture_log_output
@@ -206,11 +208,9 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         logs = log.get_output()
         self.assertIn("couch case test-case has wrong domain: wrong", logs)
 
-    def test_ledger_dup_transaction_diff(self):
+    def test_patch_ledger_with_duplicate_transaction(self):
         product_id = self.create_form_with_duplicate_stock_transaction()
         self.do_migration(case_diff='none')
-        self.compare_diffs(ignore_fail=True)
-        clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
         self.compare_diffs(changes=[Diff(
             f"test-case/things/{product_id}",
@@ -221,6 +221,78 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             new=1,
             kind="stock state",
         )])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_with_out_of_order_transactions(self):
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", qty=0)
+        self.update_stock(product, "2020-09-27", "2020-09-25T00:00:01.000Z", qty=0)
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["last_modified"], kind="stock state"),
+            Diff(ref_id, type="diff", path=["last_modified_form_id"], kind="stock state"),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_with_incorrect_balance(self):
+        from corehq.apps.commtrack.models import StockState
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", qty=0)
+        stock = StockState.objects.get(case_id="test-case", section_id="things", product_id=product._id)
+        stock.stock_on_hand = 2
+        stock.save()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["balance"], kind="stock state"),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_missing_in_sql(self):
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        form = self.update_stock(product, qty=1)
+        FormAccessors(self.domain_name).soft_delete_forms([form.form_id], datetime.utcnow(), 'test')
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="missing", new={"form_state": "present"}),
+        ], changes=[
+            Diff("test-case", type="missing", path=["*"], old="*", new=MISSING),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_daily_consumption_diff(self):
+        from corehq.apps.commtrack.models import StockState
+        from corehq.pillows.ledger import _get_daily_consumption_for_ledger
+        with self.enable_commtrack_daily_consumption():
+            product = self.make_product()
+            for num in [-3, -2, -1]:
+                params = {
+                    "reported": (datetime.now() + timedelta(days=num)).strftime("%Y-%m-%d"),
+                    "section": "stock",
+                }
+                self.update_stock(product, balance=True, qty=3, **params)
+                self.update_stock(product, qty=num, **params)
+            stock = StockState.objects.get(case_id="test-case", section_id="stock", product_id=product._id)
+            assert not should_use_sql_backend(self.domain_name), self.domain_name
+            _get_daily_consumption_for_ledger(stock.to_json())
+            self.do_migration(case_diff='none')
+            self.do_case_diffs()
+            ref_id = f"test-case/stock/{product._id}"
+            self.compare_diffs([
+                Diff(ref_id, type="type", path=["daily_consumption"], old="2.50000", new=None),
+            ])
+            self.do_migration(forms="missing", case_diff="patch")
 
     def test_patch_known_properties(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
@@ -243,6 +315,20 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
         self.assertEqual(self._get_case("case-1").opened_on, open_date)
+
+    def test_patch_case_with_non_ascii_name(self):
+        self.submit_form(make_test_form("form1", case_name="ऊषा"))
+        self.do_migration(case_diff="none")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.augmented_couch_case("test-case") as case:
+            case.type = "old-type"
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('test-case', 'diff', ['type'], old='old-type', new='testing'),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+        self.assertEqual(self._get_case("test-case").name, "ऊषा")
 
     def test_unpatchable_properties(self):
         date1 = "2018-07-13T11:20:11.381000Z"
@@ -567,15 +653,39 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
 
     def create_form_with_duplicate_stock_transaction(self):
-        from corehq.apps.commtrack.helpers import make_product
         from corehq.apps.commtrack.processing import process_stock
-        thing1 = make_product(self.domain_name, 'thing-1', 'thing-1')
-        self.submit_form(LEDGER_FORM.replace("thing-1", thing1._id))
-        stock_result = process_stock([self._get_form("ledger-form")])
+        product = self.make_product()
+        form = self.update_stock(product)
+        stock_result = process_stock([form])  # create duplicate transaction
         stock_result.populate_models()
         for model in stock_result.models_to_save:
             model.save()
-        return thing1._id
+        return product._id
+
+    def make_product(self, name="thing-1"):
+        from corehq.apps.commtrack.helpers import make_product
+        return make_product(self.domain_name, name, name)
+
+    def update_stock(self, product, reported="2014-08-04", submitted=None,
+            qty=1, balance=False, section="things", tx_type="write_things_to_ledger"):
+        submission_date = "2014-08-04T18:25:56.656Z"
+        if balance:
+            tx_type = "stock_balance"
+        xml = (
+            LEDGER_FORM
+            .replace('thing-1', product._id)
+            .replace('ledger-form', uuid4().hex)
+            .replace('section-id="things"', f'section-id="{section}"')
+            .replace('type="write_things_to_ledger"', f'type="{tx_type}"')
+            .replace('date="2014-08-04"', f'date="{reported}"')
+            .replace(submission_date, submitted or submission_date)
+            .replace('quantity="1"', f'quantity="{qty if balance else abs(qty)}"')
+        )
+        if balance:
+            xml = xml.replace("n2:transfer", "n2:balance").replace('dest=', 'entity-id=')
+        elif qty < 0:
+            xml = xml.replace("dest=", "src=")
+        return self.submit_form(xml, received_on=submitted)
 
     def do_migration(self, *args, **kw):
         if kw.get("case_diff") != "patch":
@@ -591,6 +701,26 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.migration_success = True  # clear migration failure on diff cases
         migrator = mod.get_migrator(self.domain_name, self.state_dir)
         return mod.do_case_patch(migrator, cases, stop=stop, batch_size=100)
+
+    @contextmanager
+    def enable_commtrack_daily_consumption(self):
+        from corehq.apps.commtrack.util import make_domain_commtrack
+        old_commtrack_enabled = self.domain.commtrack_enabled
+        old_locations_enabled = getattr(self.domain, 'locations_enabled', None)
+        make_domain_commtrack(self.domain)
+        config = self.domain.commtrack_settings
+        config.sqlconsumptionconfig.min_window = 2
+        config.sqlconsumptionconfig.save()
+        try:
+            yield
+        finally:
+            self.domain.commtrack_settings.delete()
+            self.domain.commtrack_enabled = old_commtrack_enabled
+            if old_locations_enabled is not None:
+                self.domain.locations_enabled = old_locations_enabled
+            else:
+                del self.domain.locations_enabled
+            self.domain.save()
 
     @contextmanager
     def augmented_couch_case(self, case_id):

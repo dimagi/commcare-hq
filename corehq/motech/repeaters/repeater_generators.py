@@ -12,6 +12,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
+from corehq.const import OPENROSA_VERSION_3
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
@@ -261,13 +263,18 @@ class CaseTypeReferralConfig(object):
 
 class ReferCasePayloadGenerator(BasePayloadGenerator):
 
+    def get_headers(self):
+        headers = super().get_headers()
+        headers[OPENROSA_VERSION_HEADER] = OPENROSA_VERSION_3
+        return headers
+
     def get_payload(self, repeat_record, payload_doc):
 
         case_ids_to_forward = payload_doc.get_case_property('cases_to_forward')
         if not case_ids_to_forward:
             raise ReferralError(f'No cases included in transfer. Please add case ids to "cases_to_forward" property')
         else:
-            case_ids_to_forward = case_ids_to_forward.split(' ')
+            case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
         cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
         case_ids_to_forward = set(case_ids_to_forward)
@@ -314,7 +321,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         case_id_map = {}
         for case in cases_to_forward:
             original_id = case.case_id
-            indices = case.indices
+            indices = case.live_indices
             case.case_id = self._get_updated_case_id(original_id, case_id_map)
             case.owner_id = new_owner
             for index in indices:

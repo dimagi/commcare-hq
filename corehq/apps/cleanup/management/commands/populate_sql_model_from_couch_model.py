@@ -64,7 +64,7 @@ class PopulateSQLCommand(BaseCommand):
             couch = wrap_couch(couch) if couch is not None else None
         if wrap_sql:
             sql = wrap_sql(sql) if sql is not None else None
-        cls.diff_value(name, couch, sql, name_prefix)
+        return cls.diff_value(name, couch, sql, name_prefix)
 
     @classmethod
     def diff_value(cls, name, couch, sql, name_prefix=None):
@@ -81,7 +81,7 @@ class PopulateSQLCommand(BaseCommand):
             for couch_field, sql_field in list(zip(docs, objects)):
                 if attr_list:
                     for attr in attr_list:
-                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name))
+                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=name))
                 else:
                     diffs.append(cls.diff_value(name, couch_field, sql_field))
         return diffs
@@ -201,11 +201,19 @@ class PopulateSQLCommand(BaseCommand):
         if not skip_verify:
             logger.info(f"Found {self.diff_count} differences")
 
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diff = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diff, list):
+            diffs = list(filter(None, diff))
+            diff = "\n".join(diffs) if diffs else None
+        return diff
+
     def _verify_doc(self, doc, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            diff = self.diff_couch_and_sql(doc, obj)
+            diff = self.get_diff_as_string(doc, obj)
             if isinstance(diff, list):
                 diffs = filter(None, diff)
                 diff = "\n".join(diffs) if diffs else None

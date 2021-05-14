@@ -84,8 +84,10 @@ def diff_cases(couch_cases, log_cases=False):
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     case_ids = list(couch_cases)
     sql_case_ids = set()
+    sql_cases = {}
     for sql_case in get_sql_cases(case_ids):
         case_id = sql_case.case_id
+        sql_cases[case_id] = sql_case
         sql_case_ids.add(case_id)
         doc_type = couch_cases[case_id]['doc_type']
         diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
@@ -99,7 +101,7 @@ def diff_cases(couch_cases, log_cases=False):
         if log_cases:
             log.info("case %s -> %s diffs", case_id, len(diffs))
 
-    diffs, changes = diff_ledgers(case_ids, dd_count)
+    diffs, changes = diff_ledgers(case_ids, sql_cases, dd_count)
     data.diffs.extend(diffs)
     data.changes.extend(changes)
     add_missing_docs(data, couch_cases, sql_case_ids, dd_count)
@@ -171,7 +173,7 @@ def hard_rebuild(couch_case):
     ).to_json()
 
 
-def diff_ledgers(case_ids, dd_count):
+def diff_ledgers(case_ids, sql_cases, dd_count):
     def diff(couch_state, ledger_value):
         couch_json = couch_state.to_json() if couch_state is not None else {}
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
@@ -181,6 +183,7 @@ def diff_ledgers(case_ids, dd_count):
         state.ledger_reference: state
         for state in StockState.objects.filter(case_id__in=case_ids)
     }
+    patches = LedgerPatches(sql_cases)
     sql_refs = set()
     all_diffs = []
     all_changes = []
@@ -192,24 +195,27 @@ def diff_ledgers(case_ids, dd_count):
         if couch_state is None:
             couch_state = stock_tx.get_stock_state(ref)
             dd_count("commcare.couchsqlmigration.ledger.rebuild")
+        changes = []
         if couch_state is None:
             diffs = [stock_tx.diff_missing_ledger(ledger_value)]
             old_value = diffs[0].old_value
             if old_value["form_state"] == FORM_PRESENT and "ledger" not in old_value:
                 changes = diffs_to_changes(diffs, "missing couch stock transaction")
-                all_changes.append(("stock state", ref.as_id(), changes))
-                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
         else:
             diffs = diff(couch_state, ledger_value)
             if diffs and stock_tx.has_duplicate_transactions(ref):
                 changes = diffs_to_changes(diffs, "duplicate stock transaction")
-                all_changes.append(("stock state", ref.as_id(), changes))
-                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
+        assert not (diffs and changes), (diffs, changes)
+        if (diffs or changes) and patches.is_patched(ref, diffs or changes):
+            continue
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
         all_diffs.append(("stock state", ref.as_id(), diffs))
+        if changes:
+            dd_count("commcare.couchsqlmigration.ledger.did_change")
+            all_changes.append(("stock state", ref.as_id(), changes))
     for ref, couch_state in couch_state_map.items():
         if ref not in sql_refs:
             diffs = [stock_tx.diff_missing_ledger(couch_state, sql_miss=True)]
@@ -341,26 +347,17 @@ def is_case_patched(case_id, diffs):
         forms = get_sql_forms(form_ids, ordered=True)
         for form in reversed(forms):
             if form.xmlns == PatchForm.xmlns:
-                discard_expected_diffs(form.form_data.get("diff"))
+                patch_diffs = get_case_patch_diffs(form, case_id)
+                discard_expected_diffs(patch_diffs, unpatched)
                 if not unpatched:
                     return True
         return False
-
-    def discard_expected_diffs(patch_data):
-        data = json.loads(unescape(patch_data)) if patch_data else {}
-        if data.get("case_id") != case_id:
-            return
-        for diff in data.get("diffs", []):
-            diff.pop("reason", None)
-            path = tuple(diff["path"])
-            if path in unpatched and diff_to_json(unpatched[path], ANY) == diff:
-                unpatched.pop(path)
 
     def expected_patch_diff(diff):
         return not is_patchable(diff) or (
             diff.old_value is MISSING and diff.new_value == "")
 
-    from .casepatch import PatchForm, is_patchable, diff_to_json
+    from .casepatch import PatchForm, is_patchable
     unpatched = {tuple(d.path): d for d in diffs if expected_patch_diff(d)}
     xform_ids = unpatched.pop(("xform_ids", "[*]"), None)
     return (
@@ -370,6 +367,86 @@ def is_case_patched(case_id, diffs):
         and len(diffs) == len(unpatched) + 1  # false if any diffs are patchable
         and is_patched(xform_ids.new_value.split(","))
     )
+
+
+def get_case_patch_diffs(form, case_id):
+    data = get_patch_data(form)
+    return without_reason(data.get("diffs", [])) if data.get("case_id") == case_id else []
+
+
+def get_patch_data(form):
+    data = form.form_data.get("diff")
+    return json.loads(unescape(data)) if data else {}
+
+
+def without_reason(diffs):
+    # note: this mutates the given diffs
+    for diff in diffs:
+        diff.pop("reason", None)
+    return diffs
+
+
+def discard_expected_diffs(patch_diffs, unpatched):
+    """Discard `patch_diffs` that have been patched from `unpatched`
+
+    :param patch_diffs: List of diffs from a patch form.
+    :param unpatched: Dict of possibly unpatched diffs by diff path.
+    """
+    from .casepatch import diff_to_json
+    for diff in patch_diffs:
+        path = tuple(diff["path"])
+        if path in unpatched and diff_to_json(unpatched[path], ANY) == diff:
+            unpatched.pop(path)
+
+
+class LedgerPatches:
+
+    def __init__(self, sql_cases):
+        self.sql_cases = sql_cases
+        self.forms = {}  # {case_id: forms, ...}
+
+    def is_patched(self, ref, diffs):
+        """Check if ledger diffs have been patched"""
+        from .casepatch import LedgerDiff, is_ledger_patchable
+        assert diffs, ref
+        if not any(is_ledger_patchable(d) for d in diffs):
+            unpatched = {tuple(d.path): LedgerDiff(d, ref) for d in diffs}
+            for form in reversed(self.get_patch_forms(ref.case_id)):
+                patch_diffs = self.get_ledger_patch_diffs(form, ref)
+                self.discard_expected_ledger_diffs(form, patch_diffs, unpatched)
+                if not unpatched:
+                    return True
+        return False
+
+    def get_patch_forms(self, case_id):
+        try:
+            forms = self.forms[case_id]
+        except KeyError:
+            forms = self.forms[case_id] = self.load_patch_forms(case_id)
+        return forms
+
+    def load_patch_forms(self, case_id):
+        from .casepatch import PatchForm
+        case = self.sql_cases.get(case_id)
+        if case is None:
+            return []
+        forms = get_sql_forms(case.xform_ids)
+        return [f for f in forms if f.xmlns == PatchForm.xmlns]
+
+    @staticmethod
+    def get_ledger_patch_diffs(form, ref):
+        ledgers = get_patch_data(form).get("ledgers", {})
+        return without_reason(ledgers.get(ref.as_id(), []))
+
+    @staticmethod
+    def discard_expected_ledger_diffs(form, patch_diffs, unpatched):
+        form_key = "last_modified_form_id",
+        form_diff = unpatched.get(form_key)
+        if form_diff and form_diff.new_value == form.form_id:
+            unpatched.pop(form_key)
+            unpatched.pop(("last_modified",), None)
+        if unpatched:
+            discard_expected_diffs(patch_diffs, unpatched)
 
 
 def diff_case_forms(couch_json, sql_json):
