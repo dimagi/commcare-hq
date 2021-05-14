@@ -1,3 +1,4 @@
+// TODO: extract webUserList and share with web_users.js?
 hqDefine("users/js/enterprise_users",[
     'jquery',
     'knockout',
@@ -6,6 +7,22 @@ hqDefine("users/js/enterprise_users",[
     "hqwebapp/js/initial_page_data",
     'hqwebapp/js/components.ko',    // pagination and search box widgets
 ], function ($, ko, _, assertProperties, initialPageData) {
+    var UserModel = function (options) {
+        var self = _.defaults(options, {
+            profile: null,
+            loginAsUser: null,
+            loginAsUserCount: 0,
+        });
+
+        // Only varies for mobile users
+        self.visible = ko.observable(!self.loginAsUser);
+
+        // Only relevant for web users
+        self.expanded = ko.observable(false);
+
+        return self;
+    };
+
     var webUsersList = function () {
         var self = {};
         self.users = ko.observableArray([]);
@@ -27,7 +44,7 @@ hqDefine("users/js/enterprise_users",[
                 if (self.query()) {
                     return gettext("No users matched your search.");
                 }
-                return gettext("This project has no web users. Please invite a web user above.");
+                return gettext("This project has no web users. Please invite a web user above.");   // TODO: remove or update
             }
             return "";
         });
@@ -49,7 +66,7 @@ hqDefine("users/js/enterprise_users",[
                     self.totalItems(data.total);
                     self.users.removeAll();
                     _.each(data.users, function (user) {
-                        self.users.push(user);
+                        self.users.push(UserModel(user));
                     });
                 },
                 error: function () {
@@ -57,6 +74,15 @@ hqDefine("users/js/enterprise_users",[
                     self.showPaginationSpinner(false);
                     self.error(gettext("Could not load users. Please try again later or report an issue if this problem persists."));
                 },
+            });
+        };
+
+        self.toggleLoginAsUsers = function (web_user, e) {
+            web_user.expanded(!web_user.expanded());
+            _.each(self.users(), function (user) {
+                if (user.loginAsUser === web_user.username) {
+                    user.visible(web_user.expanded());
+                }
             });
         };
 
