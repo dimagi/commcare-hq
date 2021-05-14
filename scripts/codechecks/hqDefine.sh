@@ -72,9 +72,9 @@ case $command in
 
   # For use with static_analysis management command
   "static-analysis" )
-    hqDefineCount=$(echo $(list-js-without-hqDefine | wc -l))
-    requireJsCount=$(echo $(list-js-without-requirejs | wc -l))
-    echo "$hqDefineCount $(($jsTotalCount - $hqDefineCount)) $requireJsCount $(($jsTotalCount - $requireJsCount))"
+    withoutHqDefineCount=$(echo $(list-js-without-hqDefine | wc -l))
+    withoutRequireJsCount=$(echo $(list-js-without-requirejs | wc -l))
+    echo "$withoutHqDefineCount $(($withoutRequireJsCount - $withoutHqDefineCount)) $(($jsTotalCount - $withoutRequireJsCount))"
     ;;
 
   "")
