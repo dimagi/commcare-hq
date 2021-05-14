@@ -53,7 +53,7 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
-    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None):
+    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None, name_prefix=None):
         """
         Helper for diff_couch_and_sql
         """
@@ -64,17 +64,18 @@ class PopulateSQLCommand(BaseCommand):
         if wrap_sql:
             sql = wrap_sql(sql) if sql is not None else None
         if couch != sql:
-            return f"{name}: couch value {couch!r} != sql value {sql!r}"
+            name_prefix = "" if name_prefix is None else f"{name_prefix}."
+            return f"{name_prefix}{name}: couch value {couch!r} != sql value {sql!r}"
 
     @classmethod
-    def diff_lists(cls, docs, objects, attr_list):
+    def diff_lists(cls, name, docs, objects, attr_list=None):
         diffs = []
         if len(docs) != len(objects):
-            diffs.append(f"{len(docs)} in couch != {len(objects)} in sql")
+            diffs.append(f"{name}: {len(docs)} in couch != {len(objects)} in sql")
         else:
             for couch_field, sql_field in list(zip(docs, objects)):
                 for attr in attr_list:
-                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+                    diffs.append(cls.diff_attr(attr, couch_field, sql_field, name))
         return diffs
 
     @classmethod
