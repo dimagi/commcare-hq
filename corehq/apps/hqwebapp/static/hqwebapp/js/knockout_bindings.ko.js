@@ -686,7 +686,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         init: function (element, valueAccessor, allBindings, viewModel) {
             $(element).keypress(function (event) {
                 let keyCode = (event.which ? event.which : event.keyCode);
-                if (keyCode === 13) {
+                if (event.key === "Enter" || keyCode === 13) {
                     valueAccessor()();
                     return false;
                 }
