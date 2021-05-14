@@ -60,7 +60,7 @@ branches:
     # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    #- jls/cross-domain-web-user-download # Jenny April 24
+    - jls/cross-domain-web-user-download # Jenny April 24
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - fr/consumer-user             # Farid March 17
     - fr/smart-metadata-urls       # Farid April 28
