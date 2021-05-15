@@ -794,9 +794,8 @@ def paginate_enterprise_users(request, domain):
     for web_user in web_users:
         users.append({
             **_format_enterprise_user(domain, web_user),
-            'profile': None,
             'otherDomains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
-            'loginAsUser': None,
+            'loginAsUserCount': len(mobile_users[web_user.username]),
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user._get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
