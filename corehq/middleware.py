@@ -194,7 +194,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         return time_since_activity > datetime.timedelta(minutes=timeout)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated or not hasattr(request, 'couch_user'):
             return
 
         secure_session = request.session.get('secure_session')

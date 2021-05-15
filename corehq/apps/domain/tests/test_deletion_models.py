@@ -46,6 +46,7 @@ IGNORE_MODELS = {
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
+    'consumer_user.ConsumerUser',
     'domain.DomainAuditRecordEntry',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',

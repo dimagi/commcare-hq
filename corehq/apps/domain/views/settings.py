@@ -33,6 +33,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
     enable_case_search,
 )
+from corehq.apps.consumer_user.models import ConsumerUser
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -480,7 +481,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         if self.user:
             # redirect mobile worker password reset to a domain-specific login with their username already set
             couch_user = CouchUser.get_by_username(self.user.username)
-            if couch_user.is_commcare_user():
+            if couch_user and couch_user.is_commcare_user():
                 messages.success(
                     self.request,
                     _('Password for {} has successfully been reset. You can now login.').format(
@@ -491,6 +492,13 @@ class CustomPasswordResetView(PasswordResetConfirmView):
                     reverse('domain_login', args=[couch_user.domain]),
                     couch_user.raw_username,
                 )
+            elif couch_user:
+                return super().get_success_url()
+            try:
+                ConsumerUser.objects.get(user=self.user)
+                return reverse('consumer_user:login')
+            except ConsumerUser.DoesNotExist:
+                pass
         return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
