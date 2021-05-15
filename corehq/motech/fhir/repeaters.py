@@ -7,7 +7,7 @@ from memoized import memoized
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.const import TAG_FORM, TAG_META
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import StringProperty
+from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
@@ -48,6 +48,8 @@ class FHIRRepeater(CaseRepeater):
     _has_config = False
 
     fhir_version = StringProperty(default=FHIR_VERSION_4_0_1)
+    patient_registration_enabled = BooleanProperty(default=True)
+    patient_search_enabled = BooleanProperty(default=False)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -85,8 +87,19 @@ class FHIRRepeater(CaseRepeater):
         )
         try:
             resources = get_info_resource_list(infos, resource_types)
-            resources = register_patients(requests, resources, self._id)
-            response = send_resources(requests, resources, self.fhir_version, self._id)
+            resources = register_patients(
+                requests,
+                resources,
+                self.patient_registration_enabled,
+                self.patient_search_enabled,
+                self._id,
+            )
+            response = send_resources(
+                requests,
+                resources,
+                self.fhir_version,
+                self._id,
+            )
         except Exception as err:
             requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))

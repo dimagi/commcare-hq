@@ -231,7 +231,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship == relationship]
 
-        return [CommCareCase.get(index.referenced_id) for index in indices]
+        return [CommCareCase.get(index.referenced_id) for index in indices if not index.is_deleted]
 
     @property
     def parent(self):
@@ -278,8 +278,12 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return self.doc_type.endswith(DELETED_SUFFIX)
 
     @property
+    def live_indices(self):
+        return [i for i in self.indices if not i.is_deleted]
+
+    @property
     def has_indices(self):
-        return self.indices or self.reverse_indices
+        return self.live_indices or self.reverse_indices
 
     @property
     def deletion_id(self):

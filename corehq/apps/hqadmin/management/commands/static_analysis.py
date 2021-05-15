@@ -1,4 +1,6 @@
 import os
+import subprocess
+from collections import Counter
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -6,6 +8,42 @@ from django.core.management.base import BaseCommand
 from datadog import api, initialize
 
 from dimagi.ext.couchdbkit import Document
+
+from corehq.toggles import all_toggles
+from corehq.feature_previews import all_previews
+
+
+class DatadogLogger:
+    def __init__(self, stdout, datadog):
+        self.stdout = stdout
+        self.datadog = datadog
+        if self.datadog:
+            api_key = os.environ.get("DATADOG_API_KEY")
+            app_key = os.environ.get("DATADOG_APP_KEY")
+            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
+            initialize(api_key=api_key, app_key=app_key)
+            self.metrics = []
+
+    def log(self, metric, value, tags=None):
+        self.stdout.write(f"{metric}: {value} {tags or ''}")
+        if self.datadog:
+            self.metrics.append({
+                'metric': metric,
+                'points': value,
+                'type': "gauge",
+                'host': "travis-ci.org",
+                'tags': [
+                    "environment:travis",
+                    f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
+                    f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
+                    f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
+                ] + (tags or []),
+            })
+
+    def send_all(self):
+        if self.datadog:
+            api.Metric.send(self.metrics)
+            self.metrics = []
 
 
 class Command(BaseCommand):
@@ -26,6 +64,9 @@ class Command(BaseCommand):
         self.logger = DatadogLogger(self.stdout, options['datadog'])
         self.show_couch_model_count()
         self.show_custom_modules()
+        self.show_js_dependencies()
+        self.show_toggles()
+        self.logger.send_all()
 
     def show_couch_model_count(self):
         def all_subclasses(cls):
@@ -41,31 +82,22 @@ class Command(BaseCommand):
         self.logger.log("commcare.static_analysis.custom_module_count", custom_module_count)
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
 
+    def show_js_dependencies(self):
+        proc = subprocess.Popen(["./scripts/codechecks/hqDefine.sh", "static-analysis"], stdout=subprocess.PIPE)
+        output = proc.communicate()[0].strip().decode("utf-8")
+        (step1, step2, step3) = output.split(" ")
 
-class DatadogLogger:
-    def __init__(self, stdout, datadog):
-        self.stdout = stdout
-        self.datadog = datadog
-        if datadog:
-            api_key = os.environ.get("DATADOG_API_KEY")
-            app_key = os.environ.get("DATADOG_APP_KEY")
-            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY environment variables must both be set"
-            initialize(api_key=api_key, app_key=app_key)
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step1), tags=[
+            'status:unmigrated',
+        ])
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step2), tags=[
+            'status:hqdefine_only',
+        ])
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(step3), tags=[
+            'status:migrated',
+        ])
 
-    def log(self, metric, value):
-        self.stdout.write(f"{metric}: {value}")
-        if not self.datadog:
-            return
-
-        api.Metric.send(
-            metric=metric,
-            points=value,
-            type="gauge",
-            host="travis-ci.org",
-            tags=[
-                "environment:travis",
-                f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
-                f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
-                f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
-            ],
-        )
+    def show_toggles(self):
+        counts = Counter(t.tag.name for t in all_toggles() + all_previews())
+        for tag, count in counts.items():
+            self.logger.log("commcare.static_analysis.toggle_count", count, [f"toggle_tag:{tag}"])

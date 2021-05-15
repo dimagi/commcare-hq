@@ -13,7 +13,7 @@ def transform_loadtest_update(update, factor):
         return '{}-{}'.format(id, count)
     case = deepcopy(update.case)
     case.set_case_id(_map_id(case.case_id, factor))
-    for index in case.indices:
+    for index in case.live_indices:
         index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = '{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
