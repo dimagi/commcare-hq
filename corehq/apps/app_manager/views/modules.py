@@ -827,6 +827,11 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
+    src_module = app.get_module_by_unique_id(module_unique_id)
+    detail_type = request.POST['detail_type']
+
+    # For short details, user selects which properties to copy.
+    # For long details, all properties are copied.
     short_attrs = {
         'columns',
         'filter',
@@ -840,8 +845,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'search_claim_options',
     }
     short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
-    src_module = app.get_module_by_unique_id(module_unique_id)
-    detail_type = request.POST['detail_type']
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
