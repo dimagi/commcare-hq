@@ -2100,14 +2100,6 @@ class CaseSearchMultimedia(NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
-class CaseSearchCommandLabelMultimedia(CaseSearchMultimedia):
-    pass
-
-
-class CaseSearchAgainLabelMultimedia(CaseSearchMultimedia):
-    pass
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2123,8 +2115,8 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
-    command_label_multimedia = SchemaProperty(CaseSearchCommandLabelMultimedia)
-    again_label_multimedia = SchemaProperty(CaseSearchAgainLabelMultimedia)
+    command_label_multimedia = SchemaProperty(CaseSearchMultimedia)
+    again_label_multimedia = SchemaProperty(CaseSearchMultimedia)
 
     @property
     def case_session_var(self):
