@@ -119,7 +119,7 @@
               {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group case-search-multimedia-input" id="case-search-command-label-media">
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.search_config qualifier='case_search-command_label_media_' ICON_LABEL="Searching Icon" AUDIO_LABEL="Searching Audio" %}
             <!-- /ko -->
@@ -134,7 +134,7 @@
               {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group case-search-multimedia-input" id="case-search-again-label-media">
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.search_config qualifier='case_search-again_label_media_' ICON_LABEL="Searching Icon" AUDIO_LABEL="Searching Audio" %}
             <!-- /ko -->

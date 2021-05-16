@@ -164,13 +164,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant',
+        'searchAdditionalRelevant', 'commandLabelMultimedia', 'againLabelMultimedia',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
         options.searchCommandLabel = options.searchCommandLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
+        options.commandLabelMultimedia = options.commandLabelMultimedia[lang] || null;
+        options.againLabelMultimedia = options.againLabelMultimedia[lang] || null;
         var self = ko.mapping.fromJS(options);
 
         self.workflow = ko.computed({
@@ -203,6 +205,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
+        $(".case-search-multimedia-input button").on("click", function () {
+            saveButton.fire('change');
+        });
 
         self.serialize = function () {
             return {
@@ -212,7 +217,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 search_command_label: self.searchCommandLabel(),
+                command_label_multimedia_image: $("#case-search-command-label-media input[type=hidden]").val() || null,
                 search_again_label: self.searchAgainLabel(),
+                again_label_multimedia_image: $("#case-search-again-label-media input[type=hidden]").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };

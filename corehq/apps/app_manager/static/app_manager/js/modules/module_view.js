@@ -49,7 +49,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
                     searchCommandLabel: options.search_command_label,
+                    commandLabelMultimedia: options.search_command_label_multimedia,
                     searchAgainLabel: options.search_again_label,
+                    againLabelMultimedia: options.search_again_label_multimedia,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                 });
