@@ -872,10 +872,13 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             )
         else:
             try:
-                if detail_attrs:
+                if detail_type == "short":
+                    if detail_attrs:
+                        _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
+                    if search_attrs:
+                        _update_module_search_config(src_module, dest_module, search_attrs)
+                else:
                     _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
-                if search_attrs:
-                    _update_module_search_config(src_module, dest_module, search_attrs)
                 updated_modules.append(dest_module.default_name())
             except Exception:
                 notify_exception(
