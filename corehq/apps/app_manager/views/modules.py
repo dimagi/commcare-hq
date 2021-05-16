@@ -859,9 +859,9 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         else:
             try:
                 if detail_type == "short":
-                    _update_module_short_detail(detail_type, src_module, dest_module, short_attrs)
+                    _update_module_short_detail(src_module, dest_module, short_attrs)
                 else:
-                    _update_module_long_detail(detail_type, src_module, dest_module)
+                    _update_module_long_detail(src_module, dest_module)
                 messages.success(request, _("Updated {}").format(dest_module.default_name()))
             except Exception:
                 notify_exception(
