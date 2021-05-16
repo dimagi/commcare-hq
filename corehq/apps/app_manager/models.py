@@ -2095,12 +2095,22 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
+class CaseSearchLabel(DocumentSchema):
+    label = DictProperty(default={'en': 'Search All Cases'})
+
+
+class CaseSearchAgainLabel(DocumentSchema):
+    label = DictProperty(default={'en': 'Search Again'})
+
+
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     again_label = DictProperty(default={'en': 'Search Again'})
+    search_label = SchemaProperty(CaseSearchLabel)
+    search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen

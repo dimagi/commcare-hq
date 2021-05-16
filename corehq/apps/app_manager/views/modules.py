@@ -50,6 +50,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -222,10 +224,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
             'default_value_expression_enabled': app.enable_default_value_expression,
             # populate these even if module_offers_search is false because search_config might just not exist yet
-            'search_command_label':
-                module.search_config.command_label if hasattr(module, 'search_config') else "",
+            'search_label':
+                module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
-                module.search_config.again_label if hasattr(module, 'search_config') else "",
+                module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1124,10 +1126,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_properties.get('properties') is not None
                 or search_properties.get('default_properties') is not None
         ):
-            command_label = module.search_config.command_label
-            command_label[lang] = search_properties.get('search_command_label', '')
-            again_label = module.search_config.again_label
-            again_label[lang] = search_properties.get('search_again_label', '')
+            search_label = module.search_config.search_label.label
+            search_label[lang] = search_properties.get('search_label', '')
+            search_again_label = module.search_config.search_again_label.label
+            search_again_label[lang] = search_properties.get('search_again_label', '')
             try:
                 properties = [
                     CaseSearchProperty.wrap(p)
@@ -1139,8 +1141,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
             module.search_config = CaseSearch(
-                command_label=command_label,
-                again_label=again_label,
+                search_label=CaseSearchLabel(label=search_label),
+                search_again_label=CaseSearchAgainLabel(label=search_again_label),
                 properties=properties,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
