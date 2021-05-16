@@ -846,20 +846,13 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
         for err in error_list:
-            messages.error(
-                request,
-                err
-            )
+            messages.error(request, err)
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         if dest_module.case_type != src_module.case_type:
-            messages.error(
-                request,
-                _("Please choose a menu with the same case type as the current one ({}).").format(
-                    src_module.case_type)
-            )
+            messages.error(request, _("Case type {} does not match current menu.").format(src_module.case_type))
         else:
             try:
                 if detail_type == "short":
