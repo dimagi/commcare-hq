@@ -40,6 +40,7 @@ class Command(AppMigrationCommandBase):
                 'task_list',
                 'referral_list',
                 'case_list_form',
+                'search_config',  # add this?
             ]
             # update other module menu media
             for attr in nav_menu_media_attrs:
