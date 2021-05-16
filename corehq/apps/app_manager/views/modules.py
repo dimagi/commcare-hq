@@ -874,11 +874,11 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             try:
                 if detail_type == "short":
                     if detail_attrs:
-                        _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
+                        _update_module_short_detail(detail_type, src_module, dest_module, detail_attrs)
                     if search_attrs:
                         _update_module_search_config(src_module, dest_module, search_attrs)
                 else:
-                    _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
+                    _update_module_long_detail(detail_type, src_module, dest_module)
                 updated_modules.append(dest_module.default_name())
             except Exception:
                 notify_exception(
@@ -919,13 +919,14 @@ def _update_module_search_config(src_module, dest_module, search_attrs):
     dest_config.overwrite_attrs(src_config, search_attrs)
 
 
-def _update_module_detail(detail_type, src_module, dest_module, detail_attrs):
-    if detail_type == 'long':
-        setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
-    else:
-        src_detail = getattr(src_module.case_details, detail_type)
-        dest_detail = getattr(dest_module.case_details, detail_type)
-        dest_detail.overwrite_attrs(src_detail, detail_attrs)
+def _update_module_short_detail(src_module, dest_module, detail_attrs):
+    src_detail = getattr(src_module.case_details, "short")
+    dest_detail = getattr(dest_module.case_details, "short")
+    dest_detail.overwrite_attrs(src_detail, detail_attrs)
+
+
+def _update_module_long_detail(src_module, dest_module):
+    setattr(dest_module.case_details, "long", getattr(src_module.case_details, "long"))
 
 
 def _update_search_properties(module, search_properties, lang='en'):
