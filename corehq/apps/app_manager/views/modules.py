@@ -827,7 +827,7 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    all_attrs = [
+    short_attrs = {
         'columns',
         'filter',
         'sort_elements',
@@ -838,8 +838,8 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'search_properties',
         'search_default_properties',
         'search_claim_options',
-    ]
-    short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
+    }
+    short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
 
@@ -851,14 +851,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                 err
             )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
-
-    detail_attrs = []
-    search_attrs = []
-    for attr in short_attrs:
-        if attr.startswith('search_'):
-            search_attrs.append(attr)
-        else:
-            detail_attrs.append(attr)
 
     updated_modules = []
     not_updated_modules = []
@@ -873,10 +865,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         else:
             try:
                 if detail_type == "short":
-                    if detail_attrs:
-                        _update_module_short_detail(detail_type, src_module, dest_module, detail_attrs)
-                    if search_attrs:
-                        _update_module_search_config(src_module, dest_module, search_attrs)
+                    _update_module_short_detail(detail_type, src_module, dest_module, short_attrs)
                 else:
                     _update_module_long_detail(detail_type, src_module, dest_module)
                 updated_modules.append(dest_module.default_name())
@@ -919,10 +908,18 @@ def _update_module_search_config(src_module, dest_module, search_attrs):
     dest_config.overwrite_attrs(src_config, search_attrs)
 
 
-def _update_module_short_detail(src_module, dest_module, detail_attrs):
-    src_detail = getattr(src_module.case_details, "short")
-    dest_detail = getattr(dest_module.case_details, "short")
-    dest_detail.overwrite_attrs(src_detail, detail_attrs)
+# attrs may contain a both top-level Detail attributes and attributes that
+# belong to the detail's search config with should be prefixed with "search_"
+def _update_module_short_detail(src_module, dest_module, attrs):
+    search_attrs = {a for a in attrs if a.startswith('search_')}
+    if search_attrs:
+        _update_module_search_config(src_module, dest_module, search_attrs)
+
+    attrs = attrs - search_attrs
+    if attrs:
+        src_detail = getattr(src_module.case_details, "short")
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(src_detail, attrs)
 
 
 def _update_module_long_detail(src_module, dest_module):
