@@ -902,12 +902,6 @@ def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs)
     return error_list
 
 
-def _update_module_search_config(src_module, dest_module, search_attrs):
-    src_config = src_module.search_config
-    dest_config = dest_module.search_config
-    dest_config.overwrite_attrs(src_config, search_attrs)
-
-
 # attrs may contain a both top-level Detail attributes and attributes that
 # belong to the detail's search config with should be prefixed with "search_"
 def _update_module_short_detail(src_module, dest_module, attrs):
@@ -920,6 +914,12 @@ def _update_module_short_detail(src_module, dest_module, attrs):
         src_detail = getattr(src_module.case_details, "short")
         dest_detail = getattr(dest_module.case_details, "short")
         dest_detail.overwrite_attrs(src_detail, attrs)
+
+
+def _update_module_search_config(src_module, dest_module, search_attrs):
+    src_config = src_module.search_config
+    dest_config = dest_module.search_config
+    dest_config.overwrite_attrs(src_config, search_attrs)
 
 
 def _update_module_long_detail(src_module, dest_module):
