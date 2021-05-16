@@ -226,6 +226,12 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.command_label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.again_label if hasattr(module, 'search_config') else "",
+            'search_command_label_multimedia':
+                module.search_config.command_label_multimedia.media_image
+                if hasattr(module, 'search_config') else "",
+            'search_again_label_multimedia':
+                module.search_config.again_label_multimedia.media_image
+                if hasattr(module, 'search_config') else "",
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1154,6 +1160,15 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                     for p in search_properties.get('default_properties')
                 ]
             )
+
+        if search_properties.get('command_label_multimedia_image'):
+            module.search_config.command_label_multimedia.media_image.update({
+                lang: search_properties.get('command_label_multimedia_image')
+            })
+        if search_properties.get('again_label_multimedia_image'):
+            module.search_config.again_label_multimedia.media_image.update({
+                lang: search_properties.get('again_label_multimedia_image')
+            })
 
     resp = {}
     app.save(resp)
