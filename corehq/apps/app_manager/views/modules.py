@@ -852,7 +852,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
-    not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         if dest_module.case_type != src_module.case_type:
@@ -874,12 +873,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                     message=f'Error in updating module: {dest_module.default_name()}',
                     details={'domain': domain, 'app_id': app_id, }
                 )
-                not_updated_modules.append(dest_module.default_name())
-
-    if not_updated_modules:
-        _error_msg = _("Failed to overwrite case lists to menu(s): {}.").format(
-            ", ".join(map(str, not_updated_modules)))
-        messages.error(request, _error_msg)
+                messages.error(request, _("Could not update {}").format(dest_module.default_name()))
 
     app.save()
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
