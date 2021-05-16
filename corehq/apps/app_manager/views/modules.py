@@ -852,7 +852,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
-    updated_modules = []
     not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
@@ -868,7 +867,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                     _update_module_short_detail(detail_type, src_module, dest_module, short_attrs)
                 else:
                     _update_module_long_detail(detail_type, src_module, dest_module)
-                updated_modules.append(dest_module.default_name())
+                messages.success(request, _("Updated {}").format(dest_module.default_name()))
             except Exception:
                 notify_exception(
                     request,
@@ -882,11 +881,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             ", ".join(map(str, not_updated_modules)))
         messages.error(request, _error_msg)
 
-    if updated_modules:
-        app.save()  # Save successfully overwritten menus.
-        _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
-            src_module.default_name(), ", ".join(map(str, updated_modules)))
-        messages.success(request, _msg)
+    app.save()
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
