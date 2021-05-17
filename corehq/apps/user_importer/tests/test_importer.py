@@ -40,8 +40,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                                             is_superuser=True)
 
         permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
-        cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
-        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps', permission=permissions)
+        cls.other_role = UserRole.create(cls.domain.name, 'admin', permissions=permissions)
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -872,10 +872,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
-        cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
-        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
-        cls.other_domain_role = UserRole.get_or_create_with_permissions(cls.other_domain.name, permissions,
-                                                                        'view-apps')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps', permissions=permissions)
+        cls.other_role = UserRole.create(cls.domain.name, 'admin', permissions=permissions)
+        cls.other_domain_role = UserRole.create(cls.domain.name, 'view-apps', permissions=permissions)
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 

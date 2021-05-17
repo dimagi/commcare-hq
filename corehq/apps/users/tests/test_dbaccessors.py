@@ -40,18 +40,17 @@ class AllCommCareUsersTest(TestCase):
 
         UserRole.init_domain_with_presets(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
-        cls.custom_role = UserRole.get_or_create_with_permissions(
+        cls.custom_role = UserRole.create(
             cls.ccdomain.name,
-            Permissions(
+            "Custom Role",
+            permissions=Permissions(
                 edit_apps=True,
                 view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,
-            ),
-            "Custom Role"
+            )
         )
-        cls.custom_role.save()
 
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")

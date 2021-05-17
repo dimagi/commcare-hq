@@ -328,6 +328,12 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return list(all_roles)
 
     @classmethod
+    def create(cls, domain, name, **kwargs):
+        role = cls(domain=domain, name=name, **kwargs)
+        role.save()
+        return role
+
+    @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
         if isinstance(permissions, dict):
             permissions = Permissions.wrap(permissions)

@@ -381,10 +381,11 @@ class TestWebUserResource(APIResourceTest):
         user_back.delete(deleted_by=None)
 
     def test_create_with_custom_role(self):
-        new_user_role = UserRole.get_or_create_with_permissions(
+        new_user_role = UserRole.create(
             self.domain.name,
-            Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            'awesomeness')
+            'awesomeness',
+            permissions=Permissions(edit_apps=True, view_apps=True, view_reports=True),
+        )
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False

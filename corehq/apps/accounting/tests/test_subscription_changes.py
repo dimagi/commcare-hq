@@ -76,18 +76,17 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.other_domain.save()
         UserRole.init_domain_with_presets(self.domain.name)
         self.user_roles = UserRole.by_domain(self.domain.name)
-        self.custom_role = UserRole.get_or_create_with_permissions(
+        self.custom_role = UserRole.create(
             self.domain.name,
-            Permissions(
+            "Custom Role",
+            permissions=Permissions(
                 edit_apps=True,
                 view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,
-            ),
-            "Custom Role"
+            )
         )
-        self.custom_role.save()
         self.read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
 
         self.admin_username = generator.create_arbitrary_web_user_name()
