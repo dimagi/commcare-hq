@@ -108,6 +108,9 @@ def _process_log_subreport(domain, xform):
 
 def _get_type_from_log(log):
     type_ = log["type"]
+    if not type_:
+        return type_
+
     if type_.startswith('org.commcare'):
         # Just take the class name and leave the package path
         type_ = type_.split('.')[-1]
@@ -144,6 +147,7 @@ def _process_user_error_subreport(domain, xform):
         # beta versions have 'version', but the name should now be 'app_build'.
         # Probably fine to remove after June 2016.
         version = error['app_build'] if 'app_build' in error else error['version']
+        type_ = _get_type_from_log(error)
         entry = UserErrorEntry(
             domain=domain,
             xform_id=xform.form_id,
@@ -156,7 +160,7 @@ def _process_user_error_subreport(domain, xform):
             expr=error['expr'],
             msg=error['msg'],
             session=error['session'],
-            type=error['type'],
+            type=type_,
             context_node=error.get('context_node', ''),
         )
         to_save.append(entry)
@@ -176,6 +180,7 @@ def _process_force_close_subreport(domain, xform):
         # All of this is probably fine to remove after, say June 2016.
         version = (force_closure['app_build'] if 'app_build' in force_closure
                    else force_closure['build_number'])
+        type_ = _get_type_from_log(force_closure)
         entry = ForceCloseEntry(
             domain=domain,
             xform_id=xform.form_id,
@@ -184,7 +189,7 @@ def _process_force_close_subreport(domain, xform):
             date=force_closure["@date"],
             server_date=xform.received_on,
             user_id=force_closure.get('user_id'),
-            type=force_closure['type'],
+            type=type_,
             msg=force_closure['msg'],
             android_version=force_closure['android_version'],
             device_model=force_closure['device_model'],

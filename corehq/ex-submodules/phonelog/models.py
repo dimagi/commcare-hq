@@ -52,7 +52,7 @@ class UserErrorEntry(models.Model):
     expr = models.TextField()
     msg = models.TextField()
     session = models.TextField()
-    type = models.CharField(max_length=32, db_index=True)
+    type = models.CharField(max_length=DEVICE_REPORT_TYPE_MAX_LEN, db_index=True)
 
     class Meta(object):
         app_label = 'phonelog'
@@ -94,7 +94,7 @@ class ForceCloseEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
 
     # Information about the specific error
-    type = models.CharField(max_length=32)
+    type = models.CharField(max_length=DEVICE_REPORT_TYPE_MAX_LEN)
     msg = models.TextField()
     android_version = models.CharField(max_length=32)
     device_model = models.CharField(max_length=32)
