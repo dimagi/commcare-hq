@@ -75,7 +75,6 @@ branches:
     - rn_whitelist_edit_module_detail_screens_url # Rohit May 7
     - smh/embedded-tableau # Steph May 7
     - jm/idp-cert-alert # Joel May 12
-    - bmb/sso-sign-in  # Biyeun May 13
     - cs/onse-dhis-exponential-backoff # Charl May 17
 
 submodules: { }
