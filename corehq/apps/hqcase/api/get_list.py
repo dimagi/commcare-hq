@@ -65,6 +65,7 @@ FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
+    'index': case_search.reverse_index_case_query,
 }
 FILTERS.update(chain(*[
     _to_date_filters('last_modified', case_es.modified_range),
