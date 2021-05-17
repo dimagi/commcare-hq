@@ -13,7 +13,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from couchdbkit import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
@@ -1210,9 +1209,9 @@ class UserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = [UserRole.admin_role(self.domain)] + UserRole.by_domain(self.domain)
+        roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role.get_qualified_id(), role.name or _('(No Name)')) for role in roles
+            (role._id, role.name or _('(No Name)')) for role in roles
         ]
 
         self.fields['domains'].choices = [(self.domain, self.domain)]
@@ -1262,17 +1261,9 @@ class UserFilterForm(forms.Form):
         if not role_id:
             return None
 
-        if role_id == "admin":
-            return role_id
-
-        try:
-            role = UserRole.get(role_id.replace("user-role:", ""))
-        except ResourceNotFound:
-            raise forms.ValidationError(_("Invalid Role"))
-
+        role = UserRole.get(role_id)
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
-
         return role_id
 
     def clean_search_string(self):
