@@ -424,11 +424,6 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $(document).trigger('correction', [key, data.corrections[key]]);
                             }
                         }
-                        if (_.has(data, 'case_list-show') &&
-                            _.has(module, 'module_view')) {
-                            var requiresCaseDetails = hqImport('app_manager/js/details/screen_config').state.requiresCaseDetails;
-                            requiresCaseDetails(data['case_list-show']);
-                        }
                         if (_.has(data, 'redirect')) {
                             window.location = data.redirect;
                         }
