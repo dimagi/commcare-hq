@@ -334,7 +334,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def get_or_create_with_permissions(cls, domain, permissions, name=None):
+    def get_or_create_with_permissions(cls, domain, permissions, name):
         if isinstance(permissions, dict):
             permissions = Permissions.wrap(permissions)
         roles = cls.by_domain(domain)
@@ -342,13 +342,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
         for role in roles:
             if role.permissions == permissions:
                 return role
-        # otherwise create it
 
-        def get_name():
-            if name:
-                return name
-            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
-        role = cls(domain=domain, permissions=permissions, name=get_name())
+        # otherwise create it
+        role = cls(domain=domain, permissions=permissions, name=name)
         role.save()
         return role
 
