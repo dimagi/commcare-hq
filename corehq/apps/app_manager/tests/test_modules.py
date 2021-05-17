@@ -9,10 +9,13 @@ from corehq.apps.app_manager.models import (
     Application,
     AutoSelectCase,
     CaseIndex,
+    CaseSearch,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
     ReportAppConfig,
-    ReportModule, CaseSearch, CaseSearchProperty, DefaultCaseSearchProperty,
+    ReportModule,
 )
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.userreports.models import ReportConfiguration
