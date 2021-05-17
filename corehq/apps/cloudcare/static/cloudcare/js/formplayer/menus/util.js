@@ -139,13 +139,12 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
-                var eventData = menuResponse.title;
                 if (searchText) {
                     event = "Searched Case List";
                 }
                 var eventData = {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    name: eventData,
+                    name: menuResponse.title,
                 };
                 var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
                 if (_.size(fields)) {
