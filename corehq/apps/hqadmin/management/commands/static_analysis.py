@@ -85,19 +85,16 @@ class Command(BaseCommand):
     def show_js_dependencies(self):
         proc = subprocess.Popen(["./scripts/codechecks/hqDefine.sh", "static-analysis"], stdout=subprocess.PIPE)
         output = proc.communicate()[0].strip().decode("utf-8")
-        (hqdefine_todo, hqdefine_done, requirejs_todo, requirejs_done) = output.split(" ")
+        (step1, step2, step3) = output.split(" ")
 
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_todo), tags=[
-            'status:todo',
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step1), tags=[
+            'status:unmigrated',
         ])
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(hqdefine_done), tags=[
-            'status:done',
+        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step2), tags=[
+            'status:hqdefine_only',
         ])
-        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_todo), tags=[
-            'status:todo',
-        ])
-        self.logger.log("commcare.static_analysis.requirejs_file_count", int(requirejs_done), tags=[
-            'status:done',
+        self.logger.log("commcare.static_analysis.requirejs_file_count", int(step3), tags=[
+            'status:migrated',
         ])
 
     def show_toggles(self):

@@ -231,8 +231,12 @@ faker==5.0.2
     # via -r base-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
+flake8-polyfill==1.0.2
+    # via radon
 flake8==3.9.1
-    # via -r dev-requirements.in
+    # via
+    #   -r dev-requirements.in
+    #   flake8-polyfill
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
@@ -496,7 +500,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==4.5.0
+radon[flake8]==4.5.0
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
