@@ -3,7 +3,8 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.linked_domain.applications import link_app
+from corehq.apps.linked_domain.applications import handle_special_cases_for_linked_app
+from corehq.apps.linked_domain.models import DomainLink
 
 
 class Command(BaseCommand):
@@ -27,6 +28,6 @@ class Command(BaseCommand):
             )
 
         linked_app = LinkedApplication.get(linked_id)
-
-        link_app(linked_app, master_app.domain)
+        DomainLink.link_domains(linked_app.domain, master_app.domain)
+        handle_special_cases_for_linked_app(linked_app)
         update_linked_app(linked_app, master_id, 'system')

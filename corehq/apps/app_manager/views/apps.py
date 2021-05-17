@@ -97,7 +97,7 @@ from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.linked_domain.applications import link_app_via_app_manager
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
@@ -474,7 +474,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
         messages.error(request, _("Creating linked app failed. {}").format(error))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[from_domain, app_id]))
 
-    linked_app = link_app_via_app_manager(from_domain, from_app.origin_id, to_domain, link_app_name)
+    linked_app = create_linked_app(from_domain, from_app.origin_id, to_domain, link_app_name)
     try:
         update_linked_app(linked_app, from_app, request.couch_user.get_id)
     except AppLinkError as e:

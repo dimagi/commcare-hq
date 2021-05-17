@@ -2,8 +2,8 @@ from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.linked_domain.applications import link_app
-from corehq.apps.linked_domain.models import RemoteLinkDetails
+from corehq.apps.linked_domain.applications import handle_special_cases_for_linked_app
+from corehq.apps.linked_domain.models import RemoteLinkDetails, DomainLink
 
 
 class Command(BaseCommand):
@@ -34,5 +34,6 @@ class Command(BaseCommand):
         )
 
         linked_app = LinkedApplication.get(linked_id)
-        link_app(linked_app, domain, remote_details)
+        DomainLink.link_domains(linked_app.domain, domain, remote_details)
+        handle_special_cases_for_linked_app(linked_app)
         update_linked_app(linked_app, master_id, 'system')

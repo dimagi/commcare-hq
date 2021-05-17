@@ -103,12 +103,14 @@ def _create_linked_app(domain, app_name, upstream_app_id):
     return linked_app
 
 
-def link_app_via_app_manager(master_domain, master_id, target_domain, target_name, remote_details=None):
-    """
-    DEPRECATED: this workflow is in the process of being phased out (hence the weird name)
-    """
-    linked_app = _create_linked_app(target_domain, target_name, master_id)
-    return link_app(linked_app, master_domain, remote_details)
+def create_linked_app(upstream_domain, upstream_id, downstream_domain, app_name=None, remote_details=None):
+    DomainLink.link_domains(downstream_domain, upstream_domain, remote_details)
+    if not app_name:
+        original_app = get_app(upstream_domain, upstream_id)
+        app_name = original_app.name
+
+    linked_app = _create_linked_app(downstream_domain, app_name, upstream_id)
+    return handle_special_cases_for_linked_app(linked_app)
 
 
 def _pull_multimedia_if_remote(linked_app):
@@ -119,19 +121,11 @@ def _pull_multimedia_if_remote(linked_app):
             raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
 
 
-def link_app(linked_app, master_domain, remote_details=None):
-    DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
-    _pull_multimedia_if_remote(linked_app)
-    _get_downstream_app_id_map.clear(linked_app.domain)
-    return linked_app
-
-
-def link_app_in_existing_domain_link(domain_link, upstream_app_id):
-    if not domain_link:
-        return None
-
-    original_app = get_app(domain_link.master_domain, upstream_app_id)
-    linked_app = _create_linked_app(domain_link.linked_domain, upstream_app_id, original_app.name)
+def handle_special_cases_for_linked_app(linked_app):
+    """
+    These are misc. methods to update a recently linked app
+    Clearing the downstream app id map is related to multi-master apps and may be removed soon
+    """
     _pull_multimedia_if_remote(linked_app)
     _get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app

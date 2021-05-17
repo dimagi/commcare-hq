@@ -30,7 +30,7 @@ from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.linked_domain.applications import link_app_via_app_manager
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
@@ -304,8 +304,8 @@ def apps_modules_setup(test_case):
     test_case.deleted_app.delete_app()
     test_case.deleted_app.save()  # delete_app() changes doc_type. This save() saves that.
 
-    test_case.linked_app = link_app_via_app_manager(test_case.project.name, test_case.app.id,
-                                                    test_case.project.name, 'LinkedApp')
+    test_case.linked_app = create_linked_app(test_case.project.name, test_case.app.id,
+                                             test_case.project.name, 'LinkedApp')
     try:
         yield
     finally:

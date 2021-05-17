@@ -33,7 +33,7 @@ from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.linked_domain.applications import link_app
+from corehq.apps.linked_domain.applications import handle_special_cases_for_linked_app
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
@@ -368,7 +368,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         linked_app.domain = 'other-domain'
         linked_app.save()
 
-        link_app(linked_app, factory.app.domain, factory.app.id)
+        DomainLink.link_domains(linked_app.domain, factory.app.domain)
+        handle_special_cases_for_linked_app(linked_app)
         update_linked_app(linked_app, factory.app.id, 'system')
 
         unlinked_doc = linked_app.convert_to_application().to_json()
