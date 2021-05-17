@@ -334,28 +334,14 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def get_or_create_with_permissions(cls, domain, permissions, name):
-        if isinstance(permissions, dict):
-            permissions = Permissions.wrap(permissions)
-        roles = cls.by_domain(domain)
-        # try to get a matching role from the db
-        for role in roles:
-            if role.permissions == permissions:
-                return role
-
-        # otherwise create it
-        role = cls(domain=domain, permissions=permissions, name=name)
-        role.save()
-        return role
-
-    @classmethod
     def get_read_only_role_by_domain(cls, domain):
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
         try:
             return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
         except (IndexError, TypeError):
-            return cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(
-                    UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
+            return get_or_create_role_with_permissions(
+                domain, UserRolePresets.READ_ONLY, UserRolePresets.get_permissions(UserRolePresets.READ_ONLY)
+            )
 
     @classmethod
     def get_custom_roles_by_domain(cls, domain):
@@ -385,9 +371,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def init_domain_with_presets(cls, domain):
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
         for role_name in UserRolePresets.INITIAL_ROLES:
-            cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(role_name), role_name)
+            get_or_create_role_with_permissions(
+                domain, role_name, UserRolePresets.get_permissions(role_name)
+            )
 
     @classmethod
     def get_default(cls, domain=None):
