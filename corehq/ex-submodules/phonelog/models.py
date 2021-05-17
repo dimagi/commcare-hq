@@ -2,6 +2,7 @@ import architect
 from django.db import models
 
 COUCH_UUID_MAX_LEN = 50
+DEVICE_REPORT_TYPE_MAX_LEN = 32
 
 
 @architect.install('partition', type='range', subtype='date', constraint='day', column='server_date')
@@ -9,7 +10,7 @@ class DeviceReportEntry(models.Model):
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     i = models.IntegerField()
     msg = models.TextField()
-    type = models.CharField(max_length=32)
+    type = models.CharField(max_length=DEVICE_REPORT_TYPE_MAX_LEN)
     date = models.DateTimeField()
     server_date = models.DateTimeField(db_index=True)
     domain = models.CharField(max_length=100)

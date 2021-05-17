@@ -10,7 +10,7 @@ from .models import (
     DeviceReportEntry,
     ForceCloseEntry,
     UserEntry,
-    UserErrorEntry,
+    UserErrorEntry, DEVICE_REPORT_TYPE_MAX_LEN,
 )
 from .tasks import send_device_log_to_sumologic
 
@@ -87,11 +87,13 @@ def _process_log_subreport(domain, xform):
         if not log:
             continue
         logged_in_username, logged_in_user_id = _get_user_info_from_log(domain, log)
+        type_ = _get_type_from_log(log)
+
         to_save.append(DeviceReportEntry(
             xform_id=xform.form_id,
             i=i,
             domain=domain,
-            type=log["type"],
+            type=type_,
             msg=log["msg"],
             # must accept either date or datetime string
             date=log["@date"],
@@ -102,6 +104,18 @@ def _process_log_subreport(domain, xform):
             user_id=logged_in_user_id,
         ))
     DeviceReportEntry.objects.bulk_create(to_save)
+
+
+def _get_type_from_log(log):
+    type_ = log["type"]
+    if type_.startswith('org.commcare'):
+        # Just take the class name and leave the package path
+        type_ = type_.split('.')[-1]
+
+    if len(type_) > DEVICE_REPORT_TYPE_MAX_LEN:
+        type_ = type_[:30] + ".."
+
+    return type_
 
 
 def _get_user_info_from_log(domain, log):
