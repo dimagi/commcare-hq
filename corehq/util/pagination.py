@@ -1,5 +1,4 @@
 import hashlib
-import time
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
@@ -173,7 +172,6 @@ class ResumableIteratorState(JsonObject):
     timestamp = DateTimeProperty()
     args = ListProperty()
     kwargs = DictProperty()
-    retry = DictProperty()
     progress = DictProperty()
     complete = BooleanProperty(default=False)
 
@@ -225,8 +223,7 @@ class ResumableFunctionIterator(object):
     :param data_function: function to iterate over. Must return an list
     of data elements.
     :param args_provider: An instance of the ``ArgsProvider`` class.
-    :param item_getter: Function which can be used to get an item by ID.
-    Used for retrying items that failed.
+    :param item_getter: Obsolete/unused.
     :param event_handler: Instance of ``PaginationEventHandler`` to be
     notified on page events. May raise ``StopToResume`` to terminate the
     iteration immediately (it may be resumed later).
@@ -270,19 +267,8 @@ class ResumableFunctionIterator(object):
         except StopToResume:
             return
 
-        retried = {}
-        while self.state.retry != retried:
-            for item_id, retries in self.state.retry.items():
-                if retries == retried.get(item_id):
-                    continue  # skip already retried (successfully)
-                retried[item_id] = retries
-                item = self.item_getter(item_id)
-                if item is not None:
-                    yield item
-
         self.state.args = None
         self.state.kwargs = None
-        self.state.retry = {}
         self.state.complete = True
         self._save_state()
 
@@ -294,31 +280,6 @@ class ResumableFunctionIterator(object):
             ])
         else:
             return ResumableIteratorEventHandler(self)
-
-    def retry(self, item_id, max_retry=3):
-        """Add document to be yielded at end of iteration
-
-        Iteration order of retry documents is undefined. All retry
-        documents will be yielded after the initial non-retry phase of
-        iteration has completed, and every retry document will be
-        yielded each time the iterator is stopped and resumed during the
-        retry phase. This method is relatively inefficient because it
-        forces the iteration state to be saved to couch. If you find
-        yourself calling this for many documents during the iteration
-        you may want to consider a different retry strategy.
-
-        :param item_id: The ID of the item to retry. It will be re-fetched using
-        the ``item_getter`` before being yielded from the iteration.
-        :param max_retry: Maximum number of times a given document may
-        be retried.
-        :raises: `TooManyRetries` if this method has been called too
-        many times with a given document.
-        """
-        retries = self.state.retry.get(item_id, 0) + 1
-        if retries > max_retry:
-            raise TooManyRetries(item_id)
-        self.state.retry[item_id] = retries
-        self._save_state()
 
     def get_iterator_detail(self, key):
         """Get the detail value value for the given key
@@ -373,8 +334,4 @@ class ResumableIteratorEventHandler(PaginationEventHandler):
 
 
 class StopToResume(Exception):
-    pass
-
-
-class TooManyRetries(Exception):
     pass
