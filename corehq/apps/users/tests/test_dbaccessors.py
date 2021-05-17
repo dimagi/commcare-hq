@@ -97,8 +97,6 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='webuser@example.com',
         )
-        cls.web_user.set_role(cls.ccdomain.name, "admin")
-        cls.web_user.save()
         cls.ccuser_other_domain = CommCareUser.create(
             domain=cls.other_domain.name,
             username='cc_user_other_domain',
@@ -167,18 +165,12 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 0)
 
         # can search by role_id
-        filters = {'role_id': self.custom_role.get_qualified_id()}
+        filters = {'role_id': self.custom_role._id}
         self.assertItemsEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_2.username]
         )
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
-        filters = {'role_id': 'admin'}
-        self.assertItemsEqual(
-            usernames(get_web_users_by_filters(self.ccdomain.name, filters)),
-            [self.web_user.username]
-        )
-        self.assertEqual(count_web_users_by_filters(self.ccdomain.name, filters), 1)
 
         # can search by location
         filters = {'location_id': self.loc1._id}
