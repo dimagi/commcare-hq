@@ -4,6 +4,7 @@ from datetime import datetime
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from corehq.motech.utils import pformat_json
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -74,7 +75,8 @@ def send_dataset(
     .. _DHIS2 API docs: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    with dataset_map.connection_settings.get_requests() as requests:
+    payload_id = dataset_map.ucr_id  # Allows us to filter Remote API Logs
+    with dataset_map.connection_settings.get_requests(payload_id) as requests:
         response = None
         try:
             dataset = get_dataset(dataset_map, send_date)
@@ -83,16 +85,17 @@ def send_dataset(
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
+            text = pformat_json(response.text if response else None)
             return {
                 'success': False,
                 'error': str(err),
                 'traceback': traceback.format_exc(),
                 'status_code': response.status_code if response else None,
-                'text': response.text if response else None,
+                'text': text,
             }
         else:
             return {
                 'success': True,
                 'status_code': response.status_code,
-                'text': response.text,
+                'text': pformat_json(response.text),
             }
