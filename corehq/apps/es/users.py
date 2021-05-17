@@ -39,6 +39,7 @@ class UserES(HQESQuery):
     def builtin_filters(self):
         return [
             domain,
+            domains,
             created,
             mobile_users,
             web_users,
@@ -64,12 +65,15 @@ class UserES(HQESQuery):
 
 
 def domain(domain, allow_mirroring=False):
-    domains = [domain]
     if allow_mirroring:
         from corehq.apps.users.models import DomainPermissionsMirror
         source_domain = DomainPermissionsMirror.source_domain(domain)
-        if source_domain:
-            domains.append(source_domain)
+        return domains([domain, source_domain])
+    else:
+        return domains([domain])
+
+
+def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
@@ -158,7 +162,18 @@ def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
 
 
+# Accepts either qualified role ids or plain couch ids
 def role_id(role_id):
+    if role_id == "admin":
+        return filters.OR(
+            filters.term("domain_membership.is_admin", True),     # mobile users
+            filters.term("domain_memberships.is_admin", True)     # web users
+        )
+
+    # Translate qualified role ids
+    if role_id.startswith("user-role:"):
+        role_id = role_id[len("user-role:"):]
+
     return filters.OR(
         filters.term("domain_membership.role_id", role_id),     # mobile users
         filters.term("domain_memberships.role_id", role_id)     # web users
