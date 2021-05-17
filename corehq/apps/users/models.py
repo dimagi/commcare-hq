@@ -341,22 +341,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
             role.save()
 
     @classmethod
-    def archive_custom_roles_for_domain(cls, domain):
-        from corehq.apps.users.role_utils import get_custom_roles_for_domain
-        custom_roles = get_custom_roles_for_domain(domain)
-        for role in custom_roles:
-            role.is_archived = True
-            role.save()
-
-    @classmethod
-    def unarchive_roles_for_domain(cls, domain):
-        all_roles = cls.by_domain(domain, include_archived=True)
-        for role in all_roles:
-            if role.is_archived:
-                role.is_archived = False
-                role.save()
-
-    @classmethod
     def init_domain_with_presets(cls, domain):
         from corehq.apps.users.role_utils import get_or_create_role_with_permissions
         for role_name in UserRolePresets.INITIAL_ROLES:

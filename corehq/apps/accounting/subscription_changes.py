@@ -19,7 +19,11 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
 from corehq.apps.users.models import CommCareUser, UserRole
-from corehq.apps.users.role_utils import get_custom_roles_for_domain
+from corehq.apps.users.role_utils import (
+    get_custom_roles_for_domain,
+    archive_custom_roles_for_domain,
+    unarchive_roles_for_domain,
+)
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -254,7 +258,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
         #         cc_user.set_role(self.domain.name, 'none')
         #         cc_user.save()
-        UserRole.archive_custom_roles_for_domain(domain.name)
+        archive_custom_roles_for_domain(domain.name)
         UserRole.reset_initial_roles_for_domain(domain.name)
         return True
 
@@ -370,7 +374,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
-        UserRole.unarchive_roles_for_domain(domain.name)
+        unarchive_roles_for_domain(domain.name)
         return True
 
     @staticmethod

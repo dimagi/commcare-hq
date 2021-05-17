@@ -37,3 +37,18 @@ def get_read_only_role_for_domain(domain):
 
 def get_custom_roles_for_domain(domain):
     return [x for x in UserRole.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
+
+
+def archive_custom_roles_for_domain(domain):
+    custom_roles = get_custom_roles_for_domain(domain)
+    for role in custom_roles:
+        role.is_archived = True
+        role.save()
+
+
+def unarchive_roles_for_domain(domain):
+    all_roles = UserRole.by_domain(domain, include_archived=True)
+    for role in all_roles:
+        if role.is_archived:
+            role.is_archived = False
+            role.save()
