@@ -59,3 +59,10 @@ def reset_initial_roles_for_domain(domain):
     for role in initial_roles:
         role.permissions = UserRolePresets.get_permissions(role.name)
         role.save()
+
+
+def init_domain_with_presets(domain):
+    for role_name in UserRolePresets.INITIAL_ROLES:
+        get_or_create_role_with_permissions(
+            domain, role_name, UserRolePresets.get_permissions(role_name)
+        )

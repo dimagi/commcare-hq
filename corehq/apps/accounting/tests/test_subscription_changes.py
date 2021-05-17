@@ -32,7 +32,7 @@ from corehq.apps.users.models import (
     UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import get_read_only_role_for_domain
+from corehq.apps.users.role_utils import get_read_only_role_for_domain, init_domain_with_presets
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -75,7 +75,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             is_active=True,
         )
         self.other_domain.save()
-        UserRole.init_domain_with_presets(self.domain.name)
+        init_domain_with_presets(self.domain.name)
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.create(
             self.domain.name,

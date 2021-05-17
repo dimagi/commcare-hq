@@ -334,14 +334,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def init_domain_with_presets(cls, domain):
-        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
-        for role_name in UserRolePresets.INITIAL_ROLES:
-            get_or_create_role_with_permissions(
-                domain, role_name, UserRolePresets.get_permissions(role_name)
-            )
-
-    @classmethod
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 

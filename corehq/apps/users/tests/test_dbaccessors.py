@@ -21,6 +21,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import init_domain_with_presets
 
 
 @es_test
@@ -37,7 +38,7 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.save()
         bootstrap_location_types(cls.ccdomain.name)
 
-        UserRole.init_domain_with_presets(cls.ccdomain.name)
+        init_domain_with_presets(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
         cls.custom_role = UserRole.create(cls.ccdomain.name, "Custom Role")
 
