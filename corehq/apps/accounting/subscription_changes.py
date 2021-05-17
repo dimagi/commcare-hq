@@ -18,11 +18,12 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
-from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
     get_custom_roles_for_domain,
     archive_custom_roles_for_domain,
     unarchive_roles_for_domain,
+    reset_initial_roles_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -259,7 +260,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         #         cc_user.set_role(self.domain.name, 'none')
         #         cc_user.save()
         archive_custom_roles_for_domain(domain.name)
-        UserRole.reset_initial_roles_for_domain(domain.name)
+        reset_initial_roles_for_domain(domain.name)
         return True
 
     @staticmethod

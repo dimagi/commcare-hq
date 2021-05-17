@@ -52,3 +52,10 @@ def unarchive_roles_for_domain(domain):
         if role.is_archived:
             role.is_archived = False
             role.save()
+
+
+def reset_initial_roles_for_domain(domain):
+    initial_roles = [x for x in UserRole.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
+    for role in initial_roles:
+        role.permissions = UserRolePresets.get_permissions(role.name)
+        role.save()
