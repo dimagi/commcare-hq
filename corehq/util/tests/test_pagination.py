@@ -40,12 +40,7 @@ class TestResumableFunctionIterator(SimpleTestCase):
             except IndexError:
                 return []
 
-        def item_getter(item_id):
-            if missing_items and item_id in missing_items:
-                return None
-            return int(item_id)
-
-        itr = ResumableFunctionIterator('test', data_provider, TestArgsProvider(), item_getter)
+        itr = ResumableFunctionIterator('test', data_provider, TestArgsProvider())
         itr.couch_db = self.couch_db
         return itr
 

@@ -223,17 +223,15 @@ class ResumableFunctionIterator(object):
     :param data_function: function to iterate over. Must return an list
     of data elements.
     :param args_provider: An instance of the ``ArgsProvider`` class.
-    :param item_getter: Obsolete/unused.
     :param event_handler: Instance of ``PaginationEventHandler`` to be
     notified on page events. May raise ``StopToResume`` to terminate the
     iteration immediately (it may be resumed later).
     """
 
-    def __init__(self, iteration_key, data_function, args_provider, item_getter, event_handler=None):
+    def __init__(self, iteration_key, data_function, args_provider, event_handler=None):
         self.iteration_key = iteration_key
         self.data_function = data_function
         self.args_provider = args_provider
-        self.item_getter = item_getter
         self.event_handler = event_handler
         self.iteration_id = hashlib.sha1(self.iteration_key.encode('utf-8')).hexdigest()
 
@@ -315,7 +313,6 @@ class ResumableFunctionIterator(object):
             self.iteration_key,
             self.data_function,
             self.args_provider,
-            self.item_getter,
             self.event_handler
         )
 
