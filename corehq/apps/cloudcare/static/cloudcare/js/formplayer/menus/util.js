@@ -148,7 +148,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 };
                 var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
                 if (_.size(fields)) {
-                    eventData.fields = _.sortBy(_.keys(fields)).join(",");
+                    eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
