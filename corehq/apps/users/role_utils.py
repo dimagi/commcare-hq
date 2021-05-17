@@ -33,3 +33,7 @@ def get_read_only_role_for_domain(domain):
         return get_or_create_role_with_permissions(
             domain, UserRolePresets.READ_ONLY, UserRolePresets.get_permissions(UserRolePresets.READ_ONLY)
         )
+
+
+def get_custom_roles_for_domain(domain):
+    return [x for x in UserRole.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]

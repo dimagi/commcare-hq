@@ -19,6 +19,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
 from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -237,7 +238,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Set user roles using custom roles to Read Only.
         - Reset initial roles to standard permissions.
         """
-        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = [r.get_id for r in get_custom_roles_for_domain(domain.name)]
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
@@ -658,7 +659,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = [r.name for r in get_custom_roles_for_domain(domain.name)]
         num_roles = len(custom_roles)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED:

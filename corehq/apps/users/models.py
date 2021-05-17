@@ -334,10 +334,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def get_custom_roles_by_domain(cls, domain):
-        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
-
-    @classmethod
     def reset_initial_roles_for_domain(cls, domain):
         initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
         for role in initial_roles:
@@ -346,7 +342,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def archive_custom_roles_for_domain(cls, domain):
-        custom_roles = cls.get_custom_roles_by_domain(domain)
+        from corehq.apps.users.role_utils import get_custom_roles_for_domain
+        custom_roles = get_custom_roles_for_domain(domain)
         for role in custom_roles:
             role.is_archived = True
             role.save()
