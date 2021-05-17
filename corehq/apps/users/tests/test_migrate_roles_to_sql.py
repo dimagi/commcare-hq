@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -25,12 +26,14 @@ class UserRoleCouchToSqlTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.app_editor.delete()
+        cls.app_editor_sql.delete()
         super().tearDownClass()
 
     def tearDown(self):
-        SQLUserRole.objects.all().delete()
-        for role in get_custom_roles_for_domain(self.domain):
-            role.delete()
+        SQLUserRole.objects.filter(~Q(id=self.app_editor_sql.id)).delete()
+        for role in UserRole.by_domain(self.domain):
+            if role.get_id != self.app_editor.get_id:
+                role.delete()
         super().tearDown()
 
     def test_sql_role_couch_to_sql(self):
@@ -72,7 +75,7 @@ class UserRoleCouchToSqlTests(TestCase):
             SQLUserRole.objects.filter(couch_id=self.app_editor.get_id).values_list("id", flat=True)
         ))
 
-        # sync the permissions
+        # sync the permissions & assignable_by
         sql_role._migration_do_sync()
 
         couch_roles = UserRole.by_domain(self.domain)
