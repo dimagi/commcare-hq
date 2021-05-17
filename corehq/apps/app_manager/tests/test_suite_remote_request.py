@@ -14,8 +14,12 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSION
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSION,
+)
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RESULTS_INSTANCE,
+)
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
