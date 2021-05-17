@@ -1,13 +1,15 @@
 import sys
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
 from typing import Iterable, List, Optional, Tuple, Union
 from urllib.error import HTTPError
+from urllib.parse import urlparse
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
@@ -26,8 +28,11 @@ from custom.onse.const import (
     CONNECTION_SETTINGS_NAME,
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
+    PING_SUCCESS_CODE,
+    MAX_RETRY_ATTEMPTS,
 )
 from custom.onse.models import iter_mappings
+from django.conf import settings
 
 # The production DHIS2 server is on the other side of an
 # interoperability service that changes the URL schema from
@@ -36,7 +41,6 @@ from custom.onse.models import iter_mappings
 # Set ``DROP_API_PREFIX = True`` to drop the "/api" before "/resource",
 # so that resource URLs end up as "service/dhis2core/api/v0/resource".
 DROP_API_PREFIX = True
-
 MAX_THREAD_WORKERS = 10
 
 _soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
@@ -83,9 +87,54 @@ def update_facility_cases_from_dhis2_data_elements(
         otherwise they are emailed.
 
     """
+    _update_facility_cases_from_dhis2_data_elements(period, print_notifications)
+
+
+@task
+def _update_facility_cases_from_dhis2_data_elements(period, print_notifications, retry_attempt=0):
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
+
+    if _server_is_online(dhis2_server):
+        _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
+    else:
+        retry_attempt += 1
+        if retry_attempt <= MAX_RETRY_ATTEMPTS:
+            retry_in_n_days = 2 ** (retry_attempt - 1)
+            retry_date = datetime.utcnow() + relativedelta(days=retry_in_n_days)
+
+            print(f'Importing ONSE ISS facility cases from DHIS2 failed: server unreachable. '
+                  f'Retrying on {retry_date.date()}')
+
+            schedule_execution(
+                _update_facility_cases_from_dhis2_data_elements,
+                [period, print_notifications, retry_attempt],
+                retry_date
+            )
+        else:
+            print('Importing ONSE ISS facility cases from DHIS2 failed: server unreachable. '
+                  'No more retry attempts')
+
+
+def schedule_execution(callback_task, args: list, on_date: datetime):
+    always_eager = hasattr(settings, "CELERY_TASK_ALWAYS_EAGER") and settings.CELERY_TASK_ALWAYS_EAGER
+    settings.CELERY_TASK_ALWAYS_EAGER = False
+    callback_task.apply_async(tuple(args), eta=on_date)
+    settings.CELERY_TASK_ALWAYS_EAGER = always_eager
+
+
+def _server_is_online(dhis2_server: ConnectionSettings) -> bool:
+    network_locality = urlparse(dhis2_server.url).netloc
+    domain = network_locality.split(':')[0]
+    return os.system('ping -c 1 ' + domain) == PING_SUCCESS_CODE
+
+
+def _execute_update_facility_cases_from_dhis2_data_elements(
+    dhis2_server: ConnectionSettings,
+    period: Optional[str] = None,
+    print_notifications: bool = False,
+):
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
