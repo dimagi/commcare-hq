@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     AutoSelectCase,
     CaseIndex,
     CaseSearch,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     LoadUpdateAction,
@@ -216,11 +217,11 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         self.app = Application.new_app('domain', "Untitled Application")
         self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
         self.case_search_config = CaseSearch(
-            search_label={
-                'label': {
+            search_label=CaseSearchLabel(
+                label={
                     'en': 'Search Patients Nationally'
-                },
-            },
+                }
+            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})

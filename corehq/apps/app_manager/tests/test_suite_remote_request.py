@@ -6,6 +6,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
@@ -75,11 +77,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ))
         )
         self.module.search_config = CaseSearch(
-            search_label={
-                'label': {
+            search_label=CaseSearchLabel(
+                label={
                     'en': 'Search Patients Nationally'
-                },
-            },
+                }
+            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
@@ -171,16 +173,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
-            search_label={
-                'label': {
+            search_label=CaseSearchLabel(
+                label={
                     'en': 'Advanced Search'
-                },
-            },
-            search_again_label={
-                'label': {
+                }
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={
                     'en': 'Search One More Time'
                 }
-            },
+            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
