@@ -343,6 +343,7 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
+    'corehq.apps.consumer_user',
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
