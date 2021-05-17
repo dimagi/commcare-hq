@@ -243,7 +243,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             return True
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
-        # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
+        # read_only_role = get_read_only_role_for_domain(self.domain.name)
         # web_users = WebUser.by_domain(self.domain.name)
         # for web_user in web_users:
         #     if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:

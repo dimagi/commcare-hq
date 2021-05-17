@@ -32,6 +32,7 @@ from corehq.apps.users.models import (
     UserRolePresets,
     WebUser,
 )
+from corehq.apps.users.role_utils import get_read_only_role_for_domain
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -87,7 +88,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 view_roles=True,
             )
         )
-        self.read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
+        self.read_only_role = get_read_only_role_for_domain(self.domain.name)
 
         self.admin_username = generator.create_arbitrary_web_user_name()
 

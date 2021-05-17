@@ -334,16 +334,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def get_read_only_role_by_domain(cls, domain):
-        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
-        try:
-            return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
-        except (IndexError, TypeError):
-            return get_or_create_role_with_permissions(
-                domain, UserRolePresets.READ_ONLY, UserRolePresets.get_permissions(UserRolePresets.READ_ONLY)
-            )
-
-    @classmethod
     def get_custom_roles_by_domain(cls, domain):
         return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
 
