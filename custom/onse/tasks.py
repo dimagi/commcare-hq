@@ -117,7 +117,7 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
                   'No more retry attempts')
 
 
-def schedule_execution(on_date: datetime, args: list, callback_task):
+def schedule_execution(callback_task, args: list, on_date: datetime):
     always_eager = hasattr(settings, "CELERY_TASK_ALWAYS_EAGER") and settings.CELERY_TASK_ALWAYS_EAGER
     settings.CELERY_TASK_ALWAYS_EAGER = False
     callback_task.apply_async(tuple(args), eta=on_date)
