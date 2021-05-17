@@ -145,16 +145,23 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         # mark domain link to be remote
         self.domain_link.remote_base_url = "http://find/my/app"
 
-        url = reverse('linked_domain:ucr_config', args=[self.domain, self.report.get_id])
-        headers = auth_headers.copy()
-        headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
-        resp = self.client.get(url, **headers)
+        def _reset_domain_link():
+            self.domain_link.remote_base_url = None
+        self.addCleanup(_reset_domain_link)
 
-        response_json = resp.json()
-        fake_ucr_getter.return_value = {
-            "report": ReportConfiguration.wrap(response_json["report"]),
-            "datasource": DataSourceConfiguration.wrap(response_json["datasource"]),
-        }
+        def _get_response():
+            url = reverse('linked_domain:ucr_config', args=[self.domain, self.report.get_id])
+            headers = auth_headers.copy()
+            headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
+            resp = self.client.get(url, **headers)
+
+            response_json = resp.json()
+            return {
+                "report": ReportConfiguration.wrap(response_json["report"]),
+                "datasource": DataSourceConfiguration.wrap(response_json["datasource"]),
+            }
+
+        fake_ucr_getter.return_value = _get_response()
 
         # Create
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
@@ -165,6 +172,8 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.report.title = "Another new title"
         self.report.save()
 
+        fake_ucr_getter.return_value = _get_response()
+
         update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
-        self.assertEqual("CommBugz", report.title)
+        self.assertEqual("Another new title", report.title)
