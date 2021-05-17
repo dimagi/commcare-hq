@@ -92,9 +92,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def create(cls, domain, name, permissions=None, **kwargs):
-        role = SQLUserRole.objects.create(domain, name, **kwargs)
+        role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
         if permissions:
-            role.set_permissions(permissions.to_json())
+            role.set_permissions(permissions.to_list())
         return role
 
     @classmethod
@@ -118,6 +118,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             couch_object.upstream_id = upstream_role.couch_id
         else:
             couch_object.upstream_id = None
+
         couch_object.permissions = self.permissions
         couch_object.assignable_by = list(
             self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)

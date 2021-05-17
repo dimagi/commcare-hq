@@ -23,6 +23,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
         cls.other_role = SQLUserRole.create(
             cls.domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
+        cls.other_role.set_assignable_by([cls.role.id])
 
     @classmethod
     def tearDownClass(cls):
@@ -48,34 +49,34 @@ class TestUpdateRoles(BaseLinkedAppsTest):
         self.assertTrue(roles['test'].is_non_admin_editable)
 
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].assignable_by, [roles['test'].get_id])
+        self.assertEqual(roles['other_test'].assignable_by, [roles['test'].id])
 
     def test_match_names(self):
         self.assertEqual([], SQLUserRole.objects.by_domain(self.linked_domain))
 
-        role = SQLUserRole.create(
+        # create role in linked domain
+        SQLUserRole.create(
             self.linked_domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
-        role.set_assignable_by([self.role.id])
 
         update_user_roles(self.domain_link)
         roles = {r.name: r for r in SQLUserRole.objects.by_domain(self.linked_domain)}
         self.assertEqual(2, len(roles))
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
+        self.assertEqual(roles['other_test'].upstream_id, self.other_role.id)
 
     def test_match_ids(self):
         self.assertEqual([], SQLUserRole.objects.by_domain(self.linked_domain))
 
-        role = SQLUserRole.create(
+        # create role in linked domain
+        SQLUserRole.create(
             self.linked_domain, 'id_test', Permissions(edit_web_users=True, view_locations=True),
-            upstream_id=self.other_role.couch_id
+            upstream_id=self.other_role.id
         )
-        role.set_assignable_by([self.role.id])
 
         update_user_roles(self.domain_link)
         roles = {r.name: r for r in SQLUserRole.objects.by_domain(self.linked_domain)}
-        self.assertEqual(2, len(roles))
+        self.assertEqual(2, len(roles), roles.keys())
         self.assertIsNotNone(roles.get('other_test'))
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
+        self.assertEqual(roles['other_test'].upstream_id, self.other_role.id)
