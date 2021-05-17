@@ -104,6 +104,10 @@ def _create_linked_app(domain, app_name, upstream_app_id):
 
 
 def create_linked_app(upstream_domain, upstream_id, downstream_domain, app_name=None, remote_details=None):
+    """
+    Links domains if not already linked, creates a LinkedApplication in the downstream domain
+    Handles any additional setup necessary for a newly linked app
+    """
     DomainLink.link_domains(downstream_domain, upstream_domain, remote_details)
     if not app_name:
         original_app = get_app(upstream_domain, upstream_id)
