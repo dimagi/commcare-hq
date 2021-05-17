@@ -285,9 +285,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
-    ModelDeletion('users', 'SQLUserRole', 'domain', [
-        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
-    ]),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
     CustomDeletion('form_processor', _delete_all_cases, ['CommCareCaseSQL']),
     CustomDeletion('form_processor', _delete_all_forms, ['XFormInstanceSQL']),
@@ -384,6 +381,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
+    ModelDeletion('users', 'SQLUserRole', 'domain', [
+        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+    ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
