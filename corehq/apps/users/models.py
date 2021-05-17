@@ -342,12 +342,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return UserRolePresets.get_preset_role_id(name)
 
     @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        presets = set(UserRolePresets.NAME_ID_MAP.keys())
-        custom = set([role.name for role in cls.by_domain(domain_name)])
-        return presets | custom
-
-    @classmethod
     def admin_role(cls, domain):
         return AdminUserRole(domain=domain)
 
