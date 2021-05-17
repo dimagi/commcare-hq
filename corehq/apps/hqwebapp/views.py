@@ -365,13 +365,15 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
-        redirect_to = req.GET.get('next', '')
-        if redirect_to:
-            return HttpResponseRedirect(redirect_to)
-        if not domain_name:
-            return HttpResponseRedirect(reverse('homepage'))
-        else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
+        couch_user = CouchUser.get_by_username(req.user.username)
+        if couch_user:
+            redirect_to = req.GET.get('next', '')
+            if redirect_to:
+                return HttpResponseRedirect(redirect_to)
+            if not domain_name:
+                return HttpResponseRedirect(reverse('homepage'))
+            else:
+                return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         with mutable_querydict(req.POST):

@@ -392,6 +392,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
+    ModelDeletion('consumer_user', 'ConsumerUserInvitation', 'domain'),
+    ModelDeletion('consumer_user', 'ConsumerUserCaseRelationship', 'domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
 ]
 

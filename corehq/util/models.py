@@ -16,6 +16,18 @@ AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
                                 'destination')
 
 
+class GetOrNoneManager(models.Manager):
+    """
+    Adds get_or_none method to objects
+    """
+
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except self.model.DoesNotExist:
+            return None
+
+
 class NotificationType(object):
     BOUNCE = "Bounce"
     COMPLAINT = "Complaint"
