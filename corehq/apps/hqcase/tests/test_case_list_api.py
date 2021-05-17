@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from base64 import b64decode
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -102,11 +103,11 @@ class TestCaseListAPI(TestCase):
             ['mattie', 'rooster', 'laboeuf'],
             [c['external_id'] for c in res['cases']]
         )
-        self.assertDictContainsSubset({
-            "limit": "3",
-            "case_type": "person",
-        }, res['next'])
-        self.assertIn('indexed_on.gte', res['next'])
+
+        cursor = b64decode(res['next']['cursor']).decode('utf-8')
+        self.assertIn('limit=3', cursor)
+        self.assertIn('case_type=person', cursor)
+        self.assertIn('indexed_on.gte', cursor)
 
         res = get_list(self.domain, res['next'])
         self.assertEqual(res['matching_records'], 3)

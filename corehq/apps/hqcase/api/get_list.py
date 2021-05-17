@@ -1,5 +1,9 @@
 import datetime
+from base64 import b64decode, b64encode
 from itertools import chain
+from django.utils.http import urlencode
+
+from django.http import QueryDict
 
 from dateutil.parser import parse
 
@@ -72,15 +76,22 @@ FILTERS.update(chain(*[
 
 
 def get_list(domain, params):
+    if 'cursor' in params:
+        params_string = b64decode(params['cursor']).decode('utf-8')
+        params = QueryDict(params_string).dict()
+
     es_result = _run_query(domain, params)
     hits = es_result.hits
     ret = {
         "matching_records": es_result.total,
         "cases": [serialize_es_case(case) for case in hits],
     }
+
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        ret['next'] = {**params, **{'indexed_on.gte': hits[-1]["@indexed_on"]}}
+        cursor = urlencode({**params, **{'indexed_on.gte': hits[-1]["@indexed_on"]}})
+        ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
+
     return ret
 
 
