@@ -21,7 +21,7 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation, CouchUser
+    CommCareUser, DomainPermissionsMirror, UserRole, WebUser, Invitation
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
@@ -39,9 +39,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
-        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
-        cls.role = UserRole.create(cls.domain.name, 'edit-apps', permission=permissions)
-        cls.other_role = UserRole.create(cls.domain.name, 'admin', permissions=permissions)
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -871,10 +870,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
-        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
-        cls.role = UserRole.create(cls.domain.name, 'edit-apps', permissions=permissions)
-        cls.other_role = UserRole.create(cls.domain.name, 'admin', permissions=permissions)
-        cls.other_domain_role = UserRole.create(cls.domain.name, 'view-apps', permissions=permissions)
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
+        cls.other_domain_role = UserRole.create(cls.domain.name, 'view-apps')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
