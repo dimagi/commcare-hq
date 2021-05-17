@@ -96,8 +96,8 @@ class TestCaseListAPI(TestCase):
 
     def test_pagination(self):
         res = get_list(self.domain, {"limit": "3", "case_type": "person"})
-        self.assertItemsEqual(res.keys(), ['next', 'cases', 'total'])
-        self.assertEqual(res['total'], 5)
+        self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
+        self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
             ['mattie', 'rooster', 'laboeuf'],
             [c['external_id'] for c in res['cases']]
@@ -109,7 +109,7 @@ class TestCaseListAPI(TestCase):
         self.assertIn('indexed_on.gte', res['next'])
 
         res = get_list(self.domain, res['next'])
-        self.assertEqual(res['total'], 3)
+        self.assertEqual(res['matching_records'], 3)
         self.assertEqual(
             ['laboeuf', 'chaney', 'ned'],
             [c['external_id'] for c in res['cases']]

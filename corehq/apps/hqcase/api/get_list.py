@@ -95,7 +95,7 @@ def get_list(domain, params):
     es_result = query.run()
     hits = es_result.hits
     ret = {
-        "total": es_result.total,
+        "matching_records": es_result.total,
         "cases": [serialize_es_case(case) for case in hits],
     }
     cases_in_result = len(hits)
