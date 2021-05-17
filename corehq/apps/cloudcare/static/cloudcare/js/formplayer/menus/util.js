@@ -143,10 +143,15 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 if (searchText) {
                     event = "Searched Case List";
                 }
-                hqImport('analytix/js/kissmetrix').track.event(event, {
+                var eventData = {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                     name: eventData,
-                });
+                };
+                var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
+                if (_.size(fields)) {
+                    eventData.fields = _.sortBy(_.keys(fields)).join(",");
+                }
+                hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
