@@ -1,11 +1,10 @@
 import sys
-import os
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
 from typing import Iterable, List, Optional, Tuple, Union
 from urllib.error import HTTPError
-from urllib.parse import urlparse
 
 import attr
 from celery.schedules import crontab
@@ -28,7 +27,6 @@ from custom.onse.const import (
     CONNECTION_SETTINGS_NAME,
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
-    PING_SUCCESS_CODE,
     MAX_RETRY_ATTEMPTS,
 )
 from custom.onse.models import iter_mappings
@@ -96,7 +94,7 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
         return
     dhis2_server = get_dhis2_server(print_notifications)
 
-    if _server_is_online(dhis2_server):
+    if _server_ready(dhis2_server):
         _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
         retry_attempt += 1
@@ -124,10 +122,17 @@ def schedule_execution(callback_task, args: list, on_date: datetime):
     settings.CELERY_TASK_ALWAYS_EAGER = always_eager
 
 
-def _server_is_online(dhis2_server: ConnectionSettings) -> bool:
-    network_locality = urlparse(dhis2_server.url).netloc
-    domain = network_locality.split(':')[0]
-    return os.system('ping -c 1 ' + domain) == PING_SUCCESS_CODE
+def _server_ready(dhis2_server: ConnectionSettings) -> bool:
+    requests = dhis2_server.get_requests()
+    try:
+        requests.send_request_unlogged("HEAD", dhis2_server.url, raise_for_status=True)
+    except HTTPError as e:
+        if e.response.status_code != 405:  # ignore method not allowed
+            return False
+    except RequestException:
+        return False
+
+    return True
 
 
 def _execute_update_facility_cases_from_dhis2_data_elements(
