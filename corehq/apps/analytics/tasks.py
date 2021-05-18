@@ -103,10 +103,11 @@ def _track_on_hubspot(webuser, properties):
         )
 
 
-def _delete_hubspot_contact(vid):
+def _delete_hubspot_contact(vid, retry_num=0):
     """
     Permanently deletes a Hubspot contact.
     :param vid:  (the contact ID)
+    :param retry_num: the number of the current retry attempt
     :return: boolean if contact was deleted
     """
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
@@ -120,19 +121,25 @@ def _delete_hubspot_contact(vid):
         )
         if req.status_code == 200:
             return True
-        if req.status_code == 429:
+        if req.status_code in [429, 502]:
+            if retry_num < 5:
+                time.sleep(10)  # wait 10 seconds
+                retry_num += 1
+                _delete_hubspot_contact(vid, retry_num)
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.delete_hubspot_contact',
+                'commcare.hubspot_data.retry.delete_hubspot_contact',
                 1
             )
+
     return False
 
 
-def _get_contact_ids_for_emails(list_of_emails):
+def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
     """
     Gets a list of Contact IDs on Hubspot from a list of emails.
     If an email in the list doesn't exist on Hubspot, it's simply ignored.
     :param list_of_emails:
+    :param retry_num: the number of the current retry attempt
     :return: list of contact ids
     """
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
@@ -146,26 +153,24 @@ def _get_contact_ids_for_emails(list_of_emails):
         )
         if req.status_code == 200:
             return req.json().keys()
-        if req.status_code == 429:
-            print("WE ARE RATE LIMITED")
+        if req.status_code in [429, 502]:
+            if retry_num < 5:
+                time.sleep(10)  # wait 10 seconds
+                retry_num += 1
+                _get_contact_ids_for_emails(list_of_emails, retry_num)
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.get_contact_ids_for_emails',
+                'commcare.hubspot_data.retry.get_contact_ids_for_emails',
                 1
             )
-        if req.status_code == 502:
-            print("BAD GATEWAY ERROR")
-            print(api_key)
-            print(list_of_emails)
-            print('\n\n')
-        print(req)
     return []
 
 
-def _get_contact_ids_for_email_domain(email_domain):
+def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
     """
     Searches Hubspot for an email domain and returns the list of matching
     contact IDs for that email domain.
     :param email_domain:
+    :param retry_num: the number of the current retry attempt
     :return: list of matching contact IDs
     """
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
@@ -179,9 +184,13 @@ def _get_contact_ids_for_email_domain(email_domain):
         )
         if req.status_code == 200:
             return [contact.get('vid') for contact in req.json().get('contacts')]
-        if req.status_code == 429:
+        if req.status_code in [429, 502]:
+            if retry_num < 5:
+                time.sleep(10)  # wait 10 seconds
+                retry_num += 1
+                _get_contact_ids_for_email_domain(email_domain, retry_num)
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.get_contact_ids_for_email_domain',
+                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain',
                 1
             )
     return []
