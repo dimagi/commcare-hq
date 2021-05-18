@@ -2,7 +2,7 @@ import os
 import io
 
 from PIL import Image
-from unittest2 import TestCase
+from unittest import TestCase
 
 from dimagi.utils.django import cached_object
 from dimagi.utils.django.cached_object import CachedObject, CachedImage, IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL

@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
+from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSION
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -213,7 +214,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <action auto_launch="false" redo_last="false">
+          <action auto_launch="false()" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>
@@ -234,9 +235,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_case_search_auto_launch(self, *args):
         self.module.search_config.auto_launch = True
         suite = self.app.create_suite()
-        expected = """
+        expected = f"""
         <partial>
-          <action auto_launch="true" redo_last="false">
+          <action auto_launch="{AUTO_LAUNCH_EXPRESSION}" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>

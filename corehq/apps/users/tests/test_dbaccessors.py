@@ -33,6 +33,7 @@ from corehq.apps.users.models import (
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
+from corehq.apps.users.role_utils import init_domain_with_presets
 
 
 @es_test
@@ -49,20 +50,9 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.save()
         bootstrap_location_types(cls.ccdomain.name)
 
-        UserRole.init_domain_with_presets(cls.ccdomain.name)
+        init_domain_with_presets(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
-        cls.custom_role = UserRole.get_or_create_with_permissions(
-            cls.ccdomain.name,
-            Permissions(
-                edit_apps=True,
-                view_apps=True,
-                edit_web_users=True,
-                view_web_users=True,
-                view_roles=True,
-            ),
-            "Custom Role"
-        )
-        cls.custom_role.save()
+        cls.custom_role = UserRole.create(cls.ccdomain.name, "Custom Role")
 
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")

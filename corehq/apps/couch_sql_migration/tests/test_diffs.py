@@ -133,6 +133,17 @@ class DiffTestCases(SimpleTestCase):
             )]
         )
 
+    def test_form_error_type_change(self):
+        couch_form = {
+            "doc_type": "XFormError",
+            "problem": "something went wrong",
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "problem": "something went wrong",
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
     def test_filter_form_deletion_fields(self):
         couch_doc = {
             'doc_type': 'XFormInstance-Deleted',

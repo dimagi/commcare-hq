@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext_lazy
 
+from corehq import toggles
+
 MODEL_FLAGS = 'toggles'
 MODEL_FIXTURE = 'fixture'
 MODEL_ROLES = 'roles'
@@ -15,21 +17,37 @@ MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
 
-LINKED_MODELS = [
+INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
+    (MODEL_FIXTURE, ugettext_lazy('Lookup Table')),
+    (MODEL_REPORT, ugettext_lazy('Report')),
+    (MODEL_KEYWORD, ugettext_lazy('Keyword')),
+]
+
+DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_USER_DATA, ugettext_lazy('Custom User Data Fields')),
     (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
     (MODEL_FLAGS, ugettext_lazy('Feature Flags and Previews')),
-    (MODEL_FIXTURE, ugettext_lazy('Lookup Table')),
+]
+
+FEATURE_FLAG_DATA_MODELS = [
     (MODEL_CASE_SEARCH, ugettext_lazy('Case Search Settings')),
-    (MODEL_REPORT, ugettext_lazy('Report')),
     (MODEL_DATA_DICTIONARY, ugettext_lazy('Data Dictionary')),
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
-    (MODEL_KEYWORD, ugettext_lazy('Keyword')),
 ]
 
+LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS
+
 LINKED_MODELS_MAP = dict(LINKED_MODELS)
+
+FEATURE_FLAG_DATA_MODEL_TOGGLES = {
+    MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
+    MODEL_DATA_DICTIONARY: toggles.DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS: toggles.WIDGET_DIALER,
+    MODEL_OTP_SETTINGS: toggles.GAEN_OTP_SERVER,
+    MODEL_HMAC_CALLOUT_SETTINGS: toggles.HMAC_CALLOUT,
+}

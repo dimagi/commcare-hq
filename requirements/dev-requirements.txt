@@ -12,8 +12,6 @@ amqp==2.6.1
     # via kombu
 architect==0.5.6
     # via -r base-requirements.in
-argparse==1.4.0
-    # via unittest2
 attrs==18.2.0
     # via
     #   -r base-requirements.in
@@ -233,8 +231,12 @@ faker==5.0.2
     # via -r base-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
+flake8-polyfill==1.0.2
+    # via radon
 flake8==3.9.1
-    # via -r dev-requirements.in
+    # via
+    #   -r dev-requirements.in
+    #   flake8-polyfill
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
@@ -334,8 +336,6 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-linecache2==1.0.0
-    # via traceback2
 lxml==4.6.3
     # via
     #   -r base-requirements.in
@@ -500,7 +500,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==4.5.0
+radon[flake8]==4.5.0
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
@@ -588,7 +588,6 @@ six==1.15.0
     #   traitlets
     #   transifex-client
     #   twilio
-    #   unittest2
 smartypants==2.0.1
     # via pycco
 smmap==4.0.0
@@ -658,8 +657,6 @@ tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
     # via pep517
-traceback2==1.4.0
-    # via unittest2
 traitlets==4.3.3
     # via ipython
 transifex-client==0.14.2
@@ -672,8 +669,6 @@ twilio==6.5.1
     # via -r base-requirements.in
 ua-parser==0.10.0
     # via user-agents
-unittest2==1.1.0
-    # via -r test-requirements.in
 urllib3==1.25.10
     # via
     #   botocore

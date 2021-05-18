@@ -62,11 +62,11 @@ function run_tests() {
 }
 
 function send_timing_metric_to_datadog() {
-    send_metric_to_datadog "travis.timings.$1" $2 "gauge"
+    send_metric_to_datadog "travis.timings.$1" $2 "gauge" "test_type:$TEST"
 }
 
 function send_counter_metric_to_datadog() {
-    send_metric_to_datadog "travis.count" 1 "counter"
+    send_metric_to_datadog "travis.count" 1 "counter" "test_type:$TEST"
 }
 
 function _run_tests() {

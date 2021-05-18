@@ -20,8 +20,8 @@ from corehq.apps.accounting.utils import (
     is_accounting_admin,
 )
 from corehq.apps.accounting.views import (
-    TriggerDowngradeView,
     TriggerAutopaymentsView,
+    TriggerDowngradeView,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -93,7 +93,7 @@ from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.motech.dhis2.views import DataSetMapView
+from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -1139,7 +1139,7 @@ class MessagingTab(UITab):
     def settings_urls(self):
         settings_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and self.couch_user.is_domain_admin():
             from corehq.apps.sms.views import (
                 DomainSmsGatewayListView, AddDomainGatewayView,
                 EditDomainGatewayView,
@@ -1873,8 +1873,8 @@ def _get_integration_section(domain):
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.append({
-            'title': _(DataSetMapView.page_title),
-            'url': reverse(DataSetMapView.urlname, args=[domain])
+            'title': _(DataSetMapListView.page_title),
+            'url': reverse(DataSetMapListView.urlname, args=[domain])
         })
 
     if toggles.INCREMENTAL_EXPORTS.enabled(domain):
