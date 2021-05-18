@@ -4,6 +4,7 @@ requirejs.config({
     paths: {
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "lodash": "lodash/lodash",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
