@@ -20,17 +20,19 @@ hqDefine('users/js/filtered_download', [
     }
 
     function countUsers(currentFilters) {
-        var countUsersUrl = initialPageData.get('count_users_url');
+        var countUsersUrl = initialPageData.get('count_users_url'),
+            $submitButton = $('.submit_button');
+        $submitButton.html("<i class='fa fa-spin fa-spinner'></i>");
         $.get({
             url: countUsersUrl,
             data: currentFilters,
             success: function (data) {
                 var count = data.count;
-                var template = count === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> users");
-                $('.submit_button').text(_.template(template)({count: count}));
+                var template = count === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> records");
+                $submitButton.text(_.template(template)({count: count}));
             },
             error: function () {
-                alert("Error determining number of matching users");
+                alert(gettext("Error determining number of matching users"));
             },
         });
     }
