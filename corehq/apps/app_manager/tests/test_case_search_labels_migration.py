@@ -19,24 +19,35 @@ class TestCaseSearchLabelsMigration(TestCase):
         super(TestCaseSearchLabelsMigration, cls).tearDownClass()
 
     def test_migration(self):
-        # module without case search
+        # module with default case search labels
+        self._remove_new_properties_from_doc(self.factory.app)
         call_command('migrate_case_search_labels', domain=self.domain)
+        app, module = self._reload_app_and_module()
 
         self.assertEqual(self.module.search_config.search_label.label, {'en': 'Search All Cases'})
         self.assertEqual(self.module.search_config.search_again_label.label, {'en': 'Search Again'})
 
-        # module with case search
-        app, module = self._reload_app_and_module()
+        # module with updated case search labels
         module.search_config.command_label = {'en': 'Find my cases'}
         module.search_config.again_label = {'en': 'Find Again', 'fr': 'trouve encore'}
         app.save()
 
+        self._remove_new_properties_from_doc(app)
         call_command('migrate_case_search_labels', domain=self.domain)
 
         app, module = self._reload_app_and_module()
         self.assertEqual(module.search_config.search_label.label, {'en': 'Find my cases'})
         self.assertEqual(module.search_config.search_again_label.label,
                          {'en': 'Find Again', 'fr': 'trouve encore'})
+
+    @staticmethod
+    def _remove_new_properties_from_doc(app):
+        # remove the new properties from doc as how it would be during migration
+        app_doc = app.to_json()
+        module = app_doc["modules"][0]
+        module["search_config"].pop("search_label")
+        module["search_config"].pop("search_again_label")
+        app.get_db().save_docs([app_doc])
 
     def _reload_app_and_module(self):
         app = get_app(self.domain, self.factory.app.get_id)
