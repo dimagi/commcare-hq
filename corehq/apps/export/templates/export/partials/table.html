@@ -20,7 +20,7 @@
     <th class="col-sm-1">
       {% if export_filter_form %}
         {% if has_edit_permissions %}
-          {% trans "Edit Filters" %}
+          {% trans "Filters and Files" %}
         {% endif %}
       {% else %}
         {{ export_type_caps }}
@@ -500,17 +500,12 @@
       </td>
     {% endif %}
 
-    <td>
+    <td nowrap>
       <a data-bind="attr: {href: downloadUrl},
                     visible: !showSavedFilters,
                     click: $root.sendExportAnalytics"
          class="btn btn-primary">
         {{ export_type_caps }}
-      </a>
-      <br>
-      <br>
-      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default btn-xs">
-        {% trans "Download DET Config" %}
       </a>
       {% if has_edit_permissions %}
         <a class="btn btn-default"
@@ -524,6 +519,10 @@
           {% trans "Edit Filters" %}
         </a>
       {% endif %}
+      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default">
+        <i class="fa fa-download"></i>
+        {% trans "DET Config" %}
+      </a>
     </td>
 
     {% if allow_bulk_export %}
