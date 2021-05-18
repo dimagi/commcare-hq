@@ -110,6 +110,7 @@ from corehq.apps.hqmedia.models import (
     CommCareMultimedia,
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -979,6 +980,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         yield ret
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_unique_id):
