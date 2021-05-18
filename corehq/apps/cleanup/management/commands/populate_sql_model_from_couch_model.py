@@ -47,13 +47,14 @@ class PopulateSQLCommand(BaseCommand):
     def diff_couch_and_sql(cls, couch, sql):
         """
         This should compare each attribute of the given couch document and sql object.
-        Return a human-reaedable string describing their differences, or None if the
-        two are equivalent.
+        Return a list of human-reaedable strings describing their differences, or None if the
+        two are equivalent. The list may contain `None` or empty strings which will be filtered
+        out before display.
         """
         raise NotImplementedError()
 
     @classmethod
-    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None):
+    def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None, name_prefix=None):
         """
         Helper for diff_couch_and_sql
         """
@@ -63,18 +64,26 @@ class PopulateSQLCommand(BaseCommand):
             couch = wrap_couch(couch) if couch is not None else None
         if wrap_sql:
             sql = wrap_sql(sql) if sql is not None else None
-        if couch != sql:
-            return f"{name}: couch value {couch!r} != sql value {sql!r}"
+        return cls.diff_value(name, couch, sql, name_prefix)
 
     @classmethod
-    def diff_lists(cls, docs, objects, attr_list):
+    def diff_value(cls, name, couch, sql, name_prefix=None):
+        if couch != sql:
+            name_prefix = "" if name_prefix is None else f"{name_prefix}."
+            return f"{name_prefix}{name}: couch value {couch!r} != sql value {sql!r}"
+
+    @classmethod
+    def diff_lists(cls, name, docs, objects, attr_list=None):
         diffs = []
         if len(docs) != len(objects):
-            diffs.append(f"{len(docs)} in couch != {len(attr_list)} in sql")
+            diffs.append(f"{name}: {len(docs)} in couch != {len(objects)} in sql")
         else:
             for couch_field, sql_field in list(zip(docs, objects)):
-                for attr in attr_list:
-                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+                if attr_list:
+                    for attr in attr_list:
+                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=name))
+                else:
+                    diffs.append(cls.diff_value(name, couch_field, sql_field))
         return diffs
 
     @classmethod
@@ -192,11 +201,19 @@ class PopulateSQLCommand(BaseCommand):
         if not skip_verify:
             logger.info(f"Found {self.diff_count} differences")
 
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diff = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diff, list):
+            diffs = list(filter(None, diff))
+            diff = "\n".join(diffs) if diffs else None
+        return diff
+
     def _verify_doc(self, doc, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            diff = self.diff_couch_and_sql(doc, obj)
+            diff = self.get_diff_as_string(doc, obj)
             if diff:
                 logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1

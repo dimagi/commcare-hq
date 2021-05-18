@@ -64,9 +64,10 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload
 
 
 @task(serializer='pickle', queue='ush_background_tasks')
-def parallel_import_task(domain, user_specs, group_specs, upload_user, upload_record_id):
+def parallel_import_task(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_user_upload=False):
     task = parallel_import_task
-    return import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, task)
+    return import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id,
+                                   is_web_user_upload, task)
 
 
 @task(serializer='pickle', queue='ush_background_tasks')

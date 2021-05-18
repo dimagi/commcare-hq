@@ -34,6 +34,7 @@ from corehq.apps.hqwebapp.views import (
     retrieve_download,
     server_up,
     temporary_google_verify,
+    check_sso_login_status,
 )
 from corehq.apps.settings.views import (
     TwoFactorBackupTokensView,
@@ -97,6 +98,7 @@ urlpatterns = [
         name=OauthApplicationRegistration.urlname
     ),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
 ]
 
 domain_specific = [

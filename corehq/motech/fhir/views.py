@@ -32,18 +32,19 @@ class AddFHIRRepeaterView(AddRepeaterView):
 
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
-        repeater.fhir_version = (self.add_repeater_form
-                                 .cleaned_data['fhir_version'])
+        for attr in (
+            'fhir_version',
+            'patient_registration_enabled',
+            'patient_search_enabled',
+        ):
+            value = self.add_repeater_form.cleaned_data[attr]
+            setattr(repeater, attr, value)
         return repeater
 
 
 class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
     urlname = 'edit_fhir_repeater'
     page_title = _('Edit FHIR Repeater')
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
 
 
 @require_GET

@@ -44,6 +44,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/advanced_app_features
     apps/builds
     cloudcare
+    formplayer
 
 .. toctree::
     :caption: Application Data Layer
@@ -67,6 +68,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     ucr
     change_feeds
     pillows
+    email_monitoring_SES
 
 .. toctree::
     :caption: Messaging
@@ -116,6 +118,8 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     commtrack
     elasticsearch
     es_query
+    middleware
+    migration_command_pattern
     nfs
     forms_and_cases
     couchdb
@@ -123,6 +127,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     databases
     metrics
     extensions
+    custom
 
 .. toctree::
     :caption: Documentation Tips

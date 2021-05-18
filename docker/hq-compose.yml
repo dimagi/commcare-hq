@@ -13,8 +13,10 @@ services:
       TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
       TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
       DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
@@ -56,7 +58,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: klaemo/couchdb:2.0-dev
+    image: dimagi/couchdb-dev:3.1.1
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ulimits:
       # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)

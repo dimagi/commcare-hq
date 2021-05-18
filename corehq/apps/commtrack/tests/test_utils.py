@@ -84,7 +84,7 @@ class CommtrackUtilsTest(TestCase):
             }
         })
         doc = CommtrackConfig.get_db().get(config.couch_id)
-        self.assertIsNone(Command.diff_couch_and_sql(doc, config))
+        self.assertIsNone(Command.get_diff_as_string(doc, config))
         config.delete()
         domain_obj.delete()
 

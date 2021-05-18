@@ -153,6 +153,12 @@ def get_linked_report_configs(domain, report_id):
     return existing_linked_reports
 
 
+def get_linked_reports_in_domain(domain):
+    reports = get_report_configs_for_domain(domain)
+    linked_reports = [report for report in reports if report.report_meta.master_id]
+    return linked_reports
+
+
 def linked_downstream_reports_by_domain(master_domain, report_id):
     """A dict of all downstream domains with and if this is already linked to `report_id`
     """
@@ -163,3 +169,23 @@ def linked_downstream_reports_by_domain(master_domain, report_id):
             r for r in get_linked_report_configs(domain_link.linked_domain, report_id)
         )
     return linked_domains
+
+
+def unlink_reports_in_domain(domain):
+    unlinked_reports = []
+    reports = get_linked_reports_in_domain(domain)
+    for report in reports:
+        unlinked_report = unlink_report(report)
+        unlinked_reports.append(unlinked_report)
+
+    return unlinked_reports
+
+
+def unlink_report(report):
+    if not report.report_meta.master_id:
+        return None
+
+    report.report_meta.master_id = None
+    report.save()
+
+    return report
