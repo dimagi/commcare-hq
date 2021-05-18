@@ -17,6 +17,26 @@ class Command(BaseCommand):
     help = "Manually cleans up blocked hubspot contacts"
 
     def handle(self, **options):
+
+
+        # Next delete any user info from users that have emails or usernames ending
+        # in blocked email-domains
+        blocked_email_domains = get_blocked_hubspot_email_domains()
+        for email_domain in blocked_email_domains:
+            ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
+            print("ids to delete for email domain")
+            print(ids_to_delete)
+            num_deleted = sum(
+                _delete_hubspot_contact(vid) for vid in ids_to_delete)
+            metrics_gauge(
+                'commcare.hubspot_data.deleted_user.blocked_email_domain',
+                num_deleted,
+                tags={
+                    'email_domain': email_domain,
+                    'ids_deleted': ids_to_delete,
+                }
+            )
+
         # First delete any user information from users that are members of
         # blocked domains
         blocked_domains = get_blocked_hubspot_domains()
@@ -59,20 +79,3 @@ class Command(BaseCommand):
                     }
                 )
 
-        # Next delete any user info from users that have emails or usernames ending
-        # in blocked email-domains
-        blocked_email_domains = get_blocked_hubspot_email_domains()
-        for email_domain in blocked_email_domains:
-            ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
-            print("ids to delete for email domain")
-            print(ids_to_delete)
-            num_deleted = sum(
-                _delete_hubspot_contact(vid) for vid in ids_to_delete)
-            metrics_gauge(
-                'commcare.hubspot_data.deleted_user.blocked_email_domain',
-                num_deleted,
-                tags={
-                    'email_domain': email_domain,
-                    'ids_deleted': ids_to_delete,
-                }
-            )
