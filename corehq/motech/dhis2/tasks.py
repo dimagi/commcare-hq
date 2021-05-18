@@ -87,6 +87,7 @@ def send_dataset(
                 'error': _('There was an error retrieving some UCR data. '
                            'Try contacting support to help resolve this issue.'),
                 'traceback': traceback.format_exc(),
+                'text': None
             }
         except Exception as err:
             requests.notify_error(message=str(err),
