@@ -74,5 +74,6 @@ branches:
     - smh/embedded-tableau # Steph May 7
     - jm/idp-cert-alert # Joel May 12
     - cs/onse-dhis-exponential-backoff # Charl May 17
+    - rp/subscriptions-notification-change # Rynhard May 18
 
 submodules: { }
