@@ -17,12 +17,16 @@ class Command(AppMigrationCommandBase):
         for module in app_doc.get('modules', []):
             if module.get('search_config'):
                 command_label = module['search_config'].get('command_label')
-                if command_label != module['search_config'].get('search_label', {}).get('label'):
+                search_label_label = module['search_config'].get('search_label', {}).get('label')
+                # if there is some value set for old label but nothing has been set for new label yet
+                if command_label and not search_label_label:
                     should_save = True
                     module['search_config']['search_label'] = {'label': command_label}
 
                 again_label = module['search_config'].get('again_label')
-                if again_label != module['search_config'].get('search_again_label', {}).get('label'):
+                search_again_label_label = module['search_config'].get('search_again_label', {}).get('label')
+                # if there is some value set for old label but nothing has been set for new label yet
+                if again_label and not search_again_label_label:
                     should_save = True
                     module['search_config']['search_again_label'] = {'label': again_label}
 
