@@ -20,7 +20,10 @@ class Command(BaseCommand):
         # First delete any user information from users that are members of
         # blocked domains
         blocked_domains = get_blocked_hubspot_domains()
+        print("BLOCKED DOMAINS")
+        print(blocked_domains)
         for domain in blocked_domains:
+            print(f'\nDOMAIN  {domain}')
             user_query = UserES().domain(domain).source(['email', 'username'])
 
             total_users = user_query.count()
@@ -41,11 +44,12 @@ class Command(BaseCommand):
                     if user_email and user_email != username:
                         blocked_emails.append(user_email)
                 ids_to_delete = _get_contact_ids_for_emails(set(blocked_emails))
-                print("IDS to DELETE")
-                print(ids_to_delete)
                 num_deleted = sum(
                     _delete_hubspot_contact(vid) for vid in ids_to_delete)
-                print("NUM DELETED", num_deleted)
+                if ids_to_delete:
+                    print("IDS to DELETE")
+                    print(ids_to_delete)
+                    print("NUM DELETED", num_deleted)
                 metrics_gauge(
                     'commcare.hubspot_data.deleted_user.blocked_domain',
                     num_deleted,
