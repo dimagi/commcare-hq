@@ -53,7 +53,7 @@ class Command(PopulateSQLCommand):
             couch_permission = couch_permissions.get(name)
             diffs.append(cls.diff_attr(
                 "allow",
-                couch_permission._asdict() if couch_permission else None,
+                couch_permission._asdict() if couch_permission else {},
                 sql_permissions.get(name),
                 name_prefix=f"permissions.{name}"
             ))

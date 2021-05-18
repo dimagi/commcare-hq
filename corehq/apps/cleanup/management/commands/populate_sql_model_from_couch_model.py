@@ -70,7 +70,7 @@ class PopulateSQLCommand(BaseCommand):
         """
         Helper for diff_couch_and_sql
         """
-        couch = doc.get(name, None) if doc else None
+        couch = doc.get(name, None)
         sql = getattr(obj, name, None)
         if wrap_couch:
             couch = wrap_couch(couch) if couch is not None else None
