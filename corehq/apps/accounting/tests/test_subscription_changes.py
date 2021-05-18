@@ -32,7 +32,7 @@ from corehq.apps.users.models import (
     UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import get_read_only_role_for_domain, init_domain_with_presets
+from corehq.apps.users.role_utils import init_domain_with_presets
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -88,7 +88,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 view_roles=True,
             )
         )
-        self.read_only_role = get_read_only_role_for_domain(self.domain.name)
 
         self.admin_username = generator.create_arbitrary_web_user_name()
 
@@ -124,18 +123,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
 
-        # disable this part of the test until we improve the UX for notifying
-        # downgraded users of their privilege changes
-        # custom_web_user = WebUser.get(self.web_users[0].get_id)
-        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-        # self.assertEqual(
-        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
-        #     self.read_only_role.get_id
-        # )
-        # self.assertIsNone(
-        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        # )
-        
         self._assertInitialRoles()
         self._assertStdUsers()
 
@@ -151,18 +138,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         new_subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
-
-        # disable this part of the test until we improve the UX for notifying
-        # downgraded users of their privilege changes
-        # custom_web_user = WebUser.get(self.web_users[0].get_id)
-        # custom_commcare_user = CommCareUser.get(self.commcare_users[0].get_id)
-        # self.assertEqual(
-        #     custom_web_user.get_domain_membership(self.domain.name).role_id,
-        #     self.read_only_role.get_id
-        # )
-        # self.assertIsNone(
-        #     custom_commcare_user.get_domain_membership(self.domain.name).role_id
-        # )
 
         self._assertInitialRoles()
         self._assertStdUsers()
