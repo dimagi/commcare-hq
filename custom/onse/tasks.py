@@ -93,17 +93,21 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
+    server_status = _check_server_status(dhis2_server)
 
-    if _server_ready(dhis2_server):
+    if server_status['ready']:
         _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
+        exception = server_status['error']
+        message = f'Importing ONSE ISS facility cases from DHIS2 failed: {exception}.'
+
         retry_attempt += 1
         if retry_attempt <= MAX_RETRY_ATTEMPTS:
             retry_in_n_days = 2 ** (retry_attempt - 1)
             retry_date = datetime.utcnow() + relativedelta(days=retry_in_n_days)
+            retry_message = f'{message} Retrying on {retry_date.date()}'
 
-            print(f'Importing ONSE ISS facility cases from DHIS2 failed: server unreachable. '
-                  f'Retrying on {retry_date.date()}')
+            _notify_message(print_notifications, retry_message, dhis2_server, exception)
 
             schedule_execution(
                 _update_facility_cases_from_dhis2_data_elements,
@@ -111,8 +115,8 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
                 retry_date
             )
         else:
-            print('Importing ONSE ISS facility cases from DHIS2 failed: server unreachable. '
-                  'No more retry attempts')
+            message = f'{message} No more retries.'
+            _notify_message(print_notifications, message, dhis2_server, exception)
 
 
 def schedule_execution(callback_task, args: list, on_date: datetime):
@@ -122,17 +126,23 @@ def schedule_execution(callback_task, args: list, on_date: datetime):
     settings.CELERY_TASK_ALWAYS_EAGER = always_eager
 
 
-def _server_ready(dhis2_server: ConnectionSettings) -> bool:
+def _check_server_status(dhis2_server: ConnectionSettings):
+    server_status = {
+        'ready': True,
+        'error': None
+    }
     requests = dhis2_server.get_requests()
     try:
         requests.send_request_unlogged("HEAD", dhis2_server.url, raise_for_status=True)
     except HTTPError as e:
         if e.response.status_code != 405:  # ignore method not allowed
-            return False
-    except RequestException:
-        return False
+            server_status['ready'] = False
+            server_status['error'] = e
+    except RequestException as re:
+        server_status['ready'] = False
+        server_status['error'] = re
 
-    return True
+    return server_status
 
 
 def _execute_update_facility_cases_from_dhis2_data_elements(
@@ -376,11 +386,7 @@ def handle_error(
     print_notifications: bool,
 ):
     message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
-    if print_notifications:
-        print(message, file=sys.stderr)
-    else:
-        dhis2_server.get_requests().notify_exception(message)
-        raise err
+    _notify_message(print_notifications, message, dhis2_server, err)
 
 
 def handle_success(
@@ -388,10 +394,18 @@ def handle_success(
     print_notifications: bool,
 ):
     message = 'Successfully imported ONSE ISS facility cases from DHIS2'
+    _notify_message(print_notifications, message, dhis2_server)
+
+
+def _notify_message(print_notifications, message, connection_settings, exception=None):
     if print_notifications:
         print(message, file=sys.stderr)
     else:
-        # For most things we pass silently. But we can repurpose
-        # `notify_error()` to tell admins that the import went through,
-        # because it only happens once a quarter.
-        dhis2_server.get_requests().notify_error(message)
+        if exception is not None:
+            connection_settings.get_requests().notify_exception(message)
+            raise exception
+        else:
+            # For most things we pass silently. But we can repurpose
+            # `notify_error()` to tell admins that the import went through,
+            # because it only happens once a quarter.
+            connection_settings.get_requests().notify_error(message)

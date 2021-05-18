@@ -8,6 +8,7 @@ from nose.tools import assert_equal
 from custom.onse import tasks
 from custom.onse.tasks import _update_facility_cases_from_dhis2_data_elements
 from corehq.motech.models import ConnectionSettings
+from requests import RequestException
 
 
 def test_previous_quarter():
@@ -34,10 +35,10 @@ class TestUpdateFromDhis2Task(TestCase):
 
     @patch('custom.onse.tasks.domain_exists', return_value=True)
     @patch('custom.onse.tasks.get_dhis2_server', return_value=ConnectionSettings())
-    @patch('custom.onse.tasks._server_ready', return_value=False)
+    @patch('custom.onse.tasks._check_server_status', return_value={'ready': False, 'error': RequestException})
     @patch('custom.onse.tasks.schedule_execution')
     def test_retry(self, *args):
-        _update_facility_cases_from_dhis2_data_elements(None, False)
+        _update_facility_cases_from_dhis2_data_elements(None, True)
 
         schedule_execution_function = args[0]
         list_of_schedule_execution_function_calls = schedule_execution_function.call_args_list
@@ -51,5 +52,5 @@ class TestUpdateFromDhis2Task(TestCase):
         expected_execution_date = datetime.utcnow() + relativedelta(days=1)
 
         assert callback_function == _update_facility_cases_from_dhis2_data_elements
-        assert callback_function_args == [None, False, 1]
+        assert callback_function_args == [None, True, 1]
         assert callback_function_execution_date.date() == expected_execution_date.date()
