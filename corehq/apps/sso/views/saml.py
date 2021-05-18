@@ -204,7 +204,7 @@ def sso_saml_login(request, idp_slug):
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
     login_url = request.saml2_auth.login()
-    username = get_sso_username_from_session(request)
+    username = get_sso_username_from_session(request) or request.GET.get('username')
     if username:
         # verify that the stored user data actually the current IdP
         idp = IdentityProvider.get_active_identity_provider_by_username(username)

@@ -1,3 +1,9 @@
+"""
+COVID: Available Criteria
+-------------------------
+
+The following criteria can be used in messaging in projects using the ``covid`` custom module.
+"""
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.const import USERCASE_TYPE
