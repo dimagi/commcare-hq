@@ -15,7 +15,11 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import get_simple_wrapped_form
 from corehq.util.doc_processor.couch import resumable_docs_by_type_iterator, CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DocumentProcessorController, BulkDocProcessor, BulkProcessingFailed
+    BaseDocProcessor,
+    BulkDocProcessor,
+    BulkProcessingFailed,
+    DocumentProcessorController,
+    UnhandledDocumentError,
 )
 from corehq.util.doc_processor.sql import resumable_sql_model_iterator
 from dimagi.ext.couchdbkit import Document
@@ -453,6 +457,21 @@ class TestCouchDocProcessor(BaseCouchDocProcessorTest):
     def test_multiple_runs_no_skip(self):
         self._test_processor(4, list(range(4)))
         self._test_processor(0, [])
+
+    def test_handle_skip(self):
+        doc_processor, processor = self._get_processor(skip_docs=['bar-2'])
+        doc_processor.handle_skip = lambda doc: True
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 3)
+        self.assertEqual(skipped, 1)
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1', 'bar-3'})
+
+    def test_unhandled_skip(self):
+        doc_processor, processor = self._get_processor(skip_docs=['bar-2'])
+        with self.assertRaises(UnhandledDocumentError) as cm:
+            processor.run()
+        self.assertIn('bar-2', str(cm.exception))
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1'})
 
 
 class TestBulkDocProcessor(BaseCouchDocProcessorTest):

@@ -132,6 +132,12 @@ class DocumentProcessorController(object):
             self.progress.add()
         elif self.doc_processor.handle_skip(doc):
             self.progress.skip(doc)
+        else:
+            raise UnhandledDocumentError(doc)
+
+
+class UnhandledDocumentError(Exception):
+    pass
 
 
 class BulkDocProcessorEventHandler(PaginationEventHandler):
