@@ -147,10 +147,12 @@ def _get_contact_ids_for_emails(list_of_emails):
         if req.status_code == 200:
             return req.json().keys()
         if req.status_code == 429:
+            print("WE ARE RATE LIMITED")
             metrics_gauge(
                 'commcare.hubspot_data.rate_limited.get_contact_ids_for_emails',
                 1
             )
+        print(req)
     return []
 
 
