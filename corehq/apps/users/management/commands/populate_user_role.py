@@ -31,7 +31,7 @@ class Command(PopulateSQLCommand):
         for field in UserRole._migration_get_fields():
             diffs.append(cls.diff_attr(field, couch, sql))
 
-        couch_upstream_id = couch["upstream_id"]
+        couch_upstream_id = couch.get("upstream_id", None)
         sql_upstream_id = sql.upstream_id
         if couch_upstream_id or sql_upstream_id:
             try:
