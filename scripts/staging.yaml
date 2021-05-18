@@ -63,7 +63,6 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-    - rp/query_multiple_domains #Rynhard May 4
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
     - jls/cross-domain-web-user-download # Jenny April 24
@@ -71,5 +70,6 @@ branches:
     - jm/idp-cert-alert # Joel May 12
     - jm/pip-21.1.1 # Joel May 18
     - gh/add-app-id-to-downstream-report # Graham May 18
+    - rp/subscription-notification-change # Rynhard May 18
 
 submodules: { }
