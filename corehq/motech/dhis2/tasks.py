@@ -1,6 +1,7 @@
 import traceback
 from datetime import datetime
-
+from psycopg2 import DatabaseError
+from django.utils.translation import ugettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
@@ -80,6 +81,13 @@ def send_dataset(
             dataset = get_dataset(dataset_map, send_date)
             response = requests.post('/api/dataValueSets', json=dataset,
                                      raise_for_status=True)
+        except DatabaseError:
+            return {
+                'success': False,
+                'error': _('There was an error retrieving some UCR data. '
+                           'Try contacting support to help resolve this issue.'),
+                'traceback': traceback.format_exc(),
+            }
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
