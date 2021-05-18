@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 from collections import defaultdict, namedtuple
-from datetime import date, datetime
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -134,10 +134,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return result
 
     @classmethod
-    def default(cls):
+    def default(self):
         return {
             'name': '',
             'description': '',
+            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,
@@ -235,27 +236,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        if not self.is_configurable_report:
-            params.update(self.filters)
-            params.update(self.get_date_range())
+        params.update(self.filters)
+        params.update(self.get_date_range())
 
         return urlencode(params, True)
-
-    @property
-    @memoized
-    def serialized_filters(self):
-        """
-        converts date objects to iso formatted strings
-        """
-        serialized_filters = {}
-        for key, value in self.filters.items():
-            value_to_add = value
-            if isinstance(value, date):
-                value_to_add = value.isoformat()
-
-            serialized_filters[key] = value_to_add
-
-        return serialized_filters
 
     @property
     @memoized
