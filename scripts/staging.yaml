@@ -71,5 +71,6 @@ branches:
     - smh/embedded-tableau # Steph May 7
     - jm/idp-cert-alert # Joel May 12
     - rp/subscriptions-notification-change # Rynhard May 18
+    - jm/pip-21.1.1 # Joel May 18
 
 submodules: { }
