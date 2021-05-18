@@ -13,7 +13,6 @@ from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, capture_log_output
-from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -62,7 +61,7 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            TEST_INDEX_INFO.mapping['properties']['doc_type'],
             mapping['properties']['doc_type']
         )
 

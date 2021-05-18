@@ -283,8 +283,6 @@ def delete_case_search_cases(domain):
         "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
     }
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        op_kwargs.pop('_type')
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         **op_kwargs,
