@@ -152,6 +152,11 @@ def _get_contact_ids_for_emails(list_of_emails):
                 'commcare.hubspot_data.rate_limited.get_contact_ids_for_emails',
                 1
             )
+        if req.status_code == 502:
+            print("BAD GATEWAY ERROR")
+            print(api_key)
+            print(list_of_emails)
+            print('\n\n')
         print(req)
     return []
 
