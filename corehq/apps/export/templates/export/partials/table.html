@@ -507,13 +507,11 @@
          class="btn btn-primary">
         {{ export_type_caps }}
       </a>
-      {% if request|toggle_enabled:"DATA_EXPORT_TOOL_SCHEMA_EXPORT" %}
       <br>
       <br>
       <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default btn-xs">
         {% trans "Download DET Config" %}
       </a>
-      {% endif %}
       {% if has_edit_permissions %}
         <a class="btn btn-default"
            data-bind="visible: showSavedFilters && isLocationSafeForUser(),
