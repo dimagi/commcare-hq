@@ -872,7 +872,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         cls.role = UserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = UserRole.create(cls.domain.name, 'admin')
-        cls.other_domain_role = UserRole.create(cls.domain.name, 'view-apps')
+        cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
