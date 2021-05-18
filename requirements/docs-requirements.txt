@@ -290,6 +290,7 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+    #   sphinx
 mock==2.0.0
     # via -r base-requirements.in
 oauthlib==3.1.0
@@ -472,7 +473,7 @@ sortedcontainers==2.3.0
     # via intervaltree
 sphinx-rtd-theme==0.5.2
     # via -r docs-requirements.in
-sphinx==3.5.4
+sphinx==4.0.1
     # via
     #   -r docs-requirements.in
     #   recommonmark

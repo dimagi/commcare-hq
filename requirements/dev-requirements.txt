@@ -353,6 +353,7 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+    #   sphinx
 mccabe==0.6.1
     # via flake8
 mock==2.0.0
@@ -604,7 +605,7 @@ soupsieve==2.0.1
     # via beautifulsoup4
 sphinx-rtd-theme==0.5.2
     # via -r dev-requirements.in
-sphinx==3.5.4
+sphinx==4.0.1
     # via
     #   -r dev-requirements.in
     #   recommonmark
@@ -712,7 +713,7 @@ zipp==3.2.0
     #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.0.1
+pip==21.1.1
     # via pip-tools
 setuptools==50.3.0
     # via
