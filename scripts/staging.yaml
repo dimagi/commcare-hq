@@ -67,7 +67,6 @@ branches:
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
     - jls/cross-domain-web-user-download # Jenny April 24
-    - rn_whitelist_edit_module_detail_screens_url # Rohit May 7
     - smh/embedded-tableau # Steph May 7
     - jm/idp-cert-alert # Joel May 12
     - rp/subscriptions-notification-change # Rynhard May 18
