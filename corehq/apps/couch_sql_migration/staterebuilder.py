@@ -65,7 +65,7 @@ iter_id_chunks.chunk_size = 5000
 
 def get_endkey_docid(domain, doc_type, migration_id):
     resume_key = "%s.%s.%s" % (domain, doc_type, migration_id)
-    state = ResumableFunctionIterator(resume_key, None, None, None).state
+    state = ResumableFunctionIterator(resume_key, None, None).state
     assert getattr(state, '_rev', None), "rebuild not necessary (no resume state)"
     assert not state.complete, "iteration is complete"
     state_json = state.to_json()
