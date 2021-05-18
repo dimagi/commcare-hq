@@ -161,6 +161,18 @@
                 {% endif %}
               </div>
             {% endif %}
+            <div class="checkbox">
+              <label>
+                <input type="checkbox"
+                       id="det-config-checkbox"
+                       data-bind="checked: show_det_config_download" />
+                <strong>{% trans "Generate a Data Export Tool config file?" %}</strong><br/>
+                {% blocktrans %}
+                  Checking this will add a button to download a configuration file
+                  for the CommCare Data Export Tool for the export.
+                {% endblocktrans %}
+              </label>
+            </div>
 
 
             {% if export_instance.type == 'form' %}
