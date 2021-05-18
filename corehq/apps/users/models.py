@@ -634,6 +634,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         role_qualified_id is either 'admin' 'user-role:[id]'
         """
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
+
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
         if role_qualified_id == "admin":
@@ -644,7 +646,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
             role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
             permissions = UserRolePresets.get_permissions(role_name)
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
+            dm.role_id = get_or_create_role_with_permissions(domain, role_name, permissions).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
