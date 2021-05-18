@@ -205,8 +205,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             current_user_downloaded_count += 1
-            if task:
-                DownloadBase.set_progress(task, current_user_downloaded_count, total_count)
+            DownloadBase.set_progress(task, current_user_downloaded_count, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -246,14 +245,12 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
             user_dicts.append(user_dict)
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             progress += 1
-            if task:
-                DownloadBase.set_progress(task, progress, total_count)
+            DownloadBase.set_progress(task, progress, total_count)
         for invite in get_invitations_by_filters(current_domain, user_filters):
             user_dict = make_invited_web_user_dict(invite, location_cache)
             user_dicts.append(user_dict)
             progress += 1
-            if task:
-                DownloadBase.set_progress(task, progress, total_count)
+            DownloadBase.set_progress(task, progress, total_count)
 
     user_headers = [
         'username', 'first_name', 'last_name', 'email', 'role', 'last_access_date (read only)',
