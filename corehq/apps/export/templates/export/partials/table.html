@@ -510,7 +510,7 @@
       {% if request|toggle_enabled:"DATA_EXPORT_TOOL_SCHEMA_EXPORT" %}
       <br>
       <br>
-      <a data-bind="attr: {href: detSchemaUrl}" class="btn btn-default btn-xs">
+      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default btn-xs">
         {% trans "Download DET Config" %}
       </a>
       {% endif %}

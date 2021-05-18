@@ -48,6 +48,7 @@ hqDefine("export/js/export_list", [
             'deleteUrl',
             'description',
             'downloadUrl',
+            'showDetDownload',
             'detSchemaUrl',
             'editUrl',
             'emailedExport',
