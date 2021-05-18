@@ -762,6 +762,8 @@ class ExportInstance(BlobMixin, Document):
     is_daily_saved_export = BooleanProperty(default=False)
     auto_rebuild_enabled = BooleanProperty(default=True)
 
+    show_det_config_download = BooleanProperty(default=False)
+
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
