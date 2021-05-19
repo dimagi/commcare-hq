@@ -1358,7 +1358,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     # These were originally DictProperty(JRResourceProperty),
     # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
-    # so it was actually wrapping as a StringPropery
+    # so it was actually wrapping as a StringProperty
     # too late to retroactively apply that validation,
     # so now these are DictProperty(StringProperty)
     media_image = DictProperty(StringProperty)
