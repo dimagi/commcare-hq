@@ -18,6 +18,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
+from requests import HTTPError
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -70,6 +71,8 @@ HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
+MAX_API_RETRIES = 5
+
 
 HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
 KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
@@ -103,80 +106,109 @@ def _track_on_hubspot(webuser, properties):
         )
 
 
-def _delete_hubspot_contact(vid):
+def _delete_hubspot_contact(vid, retry_num=0):
     """
     Permanently deletes a Hubspot contact.
     :param vid:  (the contact ID)
+    :param retry_num: the number of the current retry attempt
     :return: boolean if contact was deleted
     """
+    if retry_num > 0:
+        time.sleep(10)  # wait 10 seconds if this is another retry attempt
+
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-
-        req = requests.delete(
-            f'https://api.hubapi.com/contacts/v1/contact/vid/{vid}',
-            params={
-                'hapikey': api_key,
-            }
-        )
-        if req.status_code == 200:
-            return True
-        if req.status_code == 429:
+        try:
+            req = requests.delete(
+                f'https://api.hubapi.com/contacts/v1/contact/vid/{vid}',
+                params={
+                    'hapikey': api_key,
+                }
+            )
+            if req.status_code == 404:
+                return False
+            req.raise_for_status()
+        except (ConnectionError, HTTPError):
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.delete_hubspot_contact',
+                'commcare.hubspot_data.retry.delete_hubspot_contact',
                 1
             )
+            if retry_num <= MAX_API_RETRIES:
+                return _delete_hubspot_contact(vid, retry_num + 1)
+        else:
+            return True
     return False
 
 
-def _get_contact_ids_for_emails(list_of_emails):
+def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
     """
     Gets a list of Contact IDs on Hubspot from a list of emails.
     If an email in the list doesn't exist on Hubspot, it's simply ignored.
     :param list_of_emails:
+    :param retry_num: the number of the current retry attempt
     :return: list of contact ids
     """
+    if retry_num > 0:
+        time.sleep(10)  # wait 10 seconds if this is another retry attempt
+
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        req = requests.get(
-            "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
-            params={
-                'hapikey': api_key,
-                'email': list_of_emails,
-            },
-        )
-        if req.status_code == 200:
-            return req.json().keys()
-        if req.status_code == 429:
+        try:
+            req = requests.get(
+                "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
+                params={
+                    'hapikey': api_key,
+                    'email': list_of_emails,
+                },
+            )
+            if req.status_code == 404:
+                return []
+            req.raise_for_status()
+        except (ConnectionError, HTTPError):
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.get_contact_ids_for_emails',
+                'commcare.hubspot_data.retry.get_contact_ids_for_emails',
                 1
             )
+            if retry_num <= MAX_API_RETRIES:
+                return _get_contact_ids_for_emails(list_of_emails, retry_num + 1)
+        else:
+            return req.json().keys()
     return []
 
 
-def _get_contact_ids_for_email_domain(email_domain):
+def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
     """
     Searches Hubspot for an email domain and returns the list of matching
     contact IDs for that email domain.
     :param email_domain:
+    :param retry_num: the number of the current retry attempt
     :return: list of matching contact IDs
     """
+    if retry_num > 0:
+        time.sleep(10)  # wait 10 seconds if this is another retry attempt
+
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        req = requests.get(
-            "https://api.hubapi.com/contacts/v1/search/query",
-            params={
-                'hapikey': api_key,
-                'q': f'@{email_domain}',
-            },
-        )
-        if req.status_code == 200:
-            return [contact.get('vid') for contact in req.json().get('contacts')]
-        if req.status_code == 429:
+        try:
+            req = requests.get(
+                "https://api.hubapi.com/contacts/v1/search/query",
+                params={
+                    'hapikey': api_key,
+                    'q': f'@{email_domain}',
+                },
+            )
+            if req.status_code == 404:
+                return []
+            req.raise_for_status()
+        except (ConnectionError, HTTPError):
             metrics_gauge(
-                'commcare.hubspot_data.rate_limited.get_contact_ids_for_email_domain',
+                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain',
                 1
             )
+            if retry_num <= MAX_API_RETRIES:
+                return _get_contact_ids_for_email_domain(email_domain, retry_num + 1)
+        else:
+            return [contact.get('vid') for contact in req.json().get('contacts')]
     return []
 
 
@@ -257,19 +289,34 @@ def _send_post_data(url, params, data, headers):
     return response
 
 
-def _get_user_hubspot_id(web_user):
+def _get_user_hubspot_id(web_user, retry_num=0):
+    """
+    Attempts to match a web_user with a hubspot vid if that web user's email is
+    in hubspot.
+    :param web_user: WebUser
+    :param retry_num: the number of the current retry attempt
+    :return: string or None
+    """
+    if retry_num > 0:
+        time.sleep(10)  # wait 10 seconds if this is another retry attempt
+
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key and hubspot_enabled_for_user(web_user):
-        req = requests.get(
-            "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                six.moves.urllib.parse.quote(web_user.username)
-            ),
-            params={'hapikey': api_key},
-        )
-        if req.status_code == 404:
-            return None
-        req.raise_for_status()
-        return req.json().get("vid", None)
+        try:
+            req = requests.get(
+                "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+                    six.moves.urllib.parse.quote(web_user.username)
+                ),
+                params={'hapikey': api_key},
+            )
+            if req.status_code == 404:
+                return None
+            req.raise_for_status()
+        except (ConnectionError, HTTPError):
+            if retry_num <= MAX_API_RETRIES:
+                return _get_user_hubspot_id(web_user, retry_num + 1)
+        else:
+            return req.json().get("vid", None)
     elif api_key:
         metrics_gauge(
             'commcare.hubspot_data.rejected.get_user_hubspot_id',
