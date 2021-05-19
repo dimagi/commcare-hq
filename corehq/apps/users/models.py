@@ -2598,8 +2598,10 @@ class Invitation(models.Model):
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
     @classmethod
-    def by_domain(cls, domain):
-        return Invitation.objects.filter(domain=domain, is_accepted=False)
+    def by_domain(cls, domain, **filters):
+        if 'is_accepted' not in filters:
+            filters['is_accepted'] = False
+        return Invitation.objects.filter(domain=domain, **filters)
 
     @classmethod
     def by_email(cls, email):
