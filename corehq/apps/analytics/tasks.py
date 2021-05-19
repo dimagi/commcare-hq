@@ -18,7 +18,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
-from requests import HTTPError
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -40,6 +39,9 @@ from corehq.apps.analytics.utils import (
     get_blocked_hubspot_email_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
+    remove_blocked_email_domains_from_hubspot,
+    remove_blocked_domain_contacts_from_hubspot,
+    MAX_API_RETRIES,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
@@ -70,8 +72,6 @@ HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
 HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
-
-MAX_API_RETRIES = 5
 
 
 HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
@@ -104,112 +104,6 @@ def _track_on_hubspot(webuser, properties):
             ),
             data=json.dumps(data),
         )
-
-
-def _delete_hubspot_contact(vid, retry_num=0):
-    """
-    Permanently deletes a Hubspot contact.
-    :param vid:  (the contact ID)
-    :param retry_num: the number of the current retry attempt
-    :return: boolean if contact was deleted
-    """
-    if retry_num > 0:
-        time.sleep(10)  # wait 10 seconds if this is another retry attempt
-
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
-        try:
-            req = requests.delete(
-                f'https://api.hubapi.com/contacts/v1/contact/vid/{vid}',
-                params={
-                    'hapikey': api_key,
-                }
-            )
-            if req.status_code == 404:
-                return False
-            req.raise_for_status()
-        except (ConnectionError, HTTPError):
-            metrics_gauge(
-                'commcare.hubspot_data.retry.delete_hubspot_contact',
-                1
-            )
-            if retry_num <= MAX_API_RETRIES:
-                return _delete_hubspot_contact(vid, retry_num + 1)
-        else:
-            return True
-    return False
-
-
-def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
-    """
-    Gets a list of Contact IDs on Hubspot from a list of emails.
-    If an email in the list doesn't exist on Hubspot, it's simply ignored.
-    :param list_of_emails:
-    :param retry_num: the number of the current retry attempt
-    :return: list of contact ids
-    """
-    if retry_num > 0:
-        time.sleep(10)  # wait 10 seconds if this is another retry attempt
-
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
-        try:
-            req = requests.get(
-                "https://api.hubapi.com/contacts/v1/contact/emails/batch/",
-                params={
-                    'hapikey': api_key,
-                    'email': list_of_emails,
-                },
-            )
-            if req.status_code == 404:
-                return []
-            req.raise_for_status()
-        except (ConnectionError, HTTPError):
-            metrics_gauge(
-                'commcare.hubspot_data.retry.get_contact_ids_for_emails',
-                1
-            )
-            if retry_num <= MAX_API_RETRIES:
-                return _get_contact_ids_for_emails(list_of_emails, retry_num + 1)
-        else:
-            return req.json().keys()
-    return []
-
-
-def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
-    """
-    Searches Hubspot for an email domain and returns the list of matching
-    contact IDs for that email domain.
-    :param email_domain:
-    :param retry_num: the number of the current retry attempt
-    :return: list of matching contact IDs
-    """
-    if retry_num > 0:
-        time.sleep(10)  # wait 10 seconds if this is another retry attempt
-
-    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
-        try:
-            req = requests.get(
-                "https://api.hubapi.com/contacts/v1/search/query",
-                params={
-                    'hapikey': api_key,
-                    'q': f'@{email_domain}',
-                },
-            )
-            if req.status_code == 404:
-                return []
-            req.raise_for_status()
-        except (ConnectionError, HTTPError):
-            metrics_gauge(
-                'commcare.hubspot_data.retry.get_contact_ids_for_email_domain',
-                1
-            )
-            if retry_num <= MAX_API_RETRIES:
-                return _get_contact_ids_for_email_domain(email_domain, retry_num + 1)
-        else:
-            return [contact.get('vid') for contact in req.json().get('contacts')]
-    return []
 
 
 def _track_on_hubspot_by_email(email, properties):
@@ -312,7 +206,7 @@ def _get_user_hubspot_id(web_user, retry_num=0):
             if req.status_code == 404:
                 return None
             req.raise_for_status()
-        except (ConnectionError, HTTPError):
+        except (ConnectionError, requests.exceptions.HTTPError):
             if retry_num <= MAX_API_RETRIES:
                 return _get_user_hubspot_id(web_user, retry_num + 1)
         else:
@@ -946,51 +840,5 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
-    # First delete any user info from users that have emails or usernames ending
-    # in blocked email-domains
-    blocked_email_domains = get_blocked_hubspot_email_domains()
-    for email_domain in blocked_email_domains:
-        ids_to_delete = _get_contact_ids_for_email_domain(email_domain)
-        num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-        metrics_gauge(
-            'commcare.hubspot_data.deleted_user.blocked_email_domain',
-            num_deleted,
-            tags={
-                'email_domain': email_domain,
-                'ids_deleted': ids_to_delete,
-            }
-        )
-
-    # Next delete any user information from users that are members of
-    # blocked domains
-    blocked_domains = get_blocked_hubspot_domains()
-    for domain in blocked_domains:
-        user_query = UserES().domain(domain).source(['email', 'username'])
-
-        total_users = user_query.count()
-        chunk_size = 30  # Hubspot recommends fewer than 100 emails per request
-        num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
-
-        for chunk in range(num_chunks):
-            blocked_users = (user_query
-                             .size(chunk_size)
-                             .start(chunk * chunk_size)
-                             .run()
-                             .hits)
-            blocked_emails = []
-            for user in blocked_users:
-                username = user.get('username')
-                user_email = user.get('email')
-                blocked_emails.append(username)
-                if user_email and user_email != username:
-                    blocked_emails.append(user_email)
-            ids_to_delete = _get_contact_ids_for_emails(set(blocked_emails))
-            num_deleted = sum(_delete_hubspot_contact(vid) for vid in ids_to_delete)
-            metrics_gauge(
-                'commcare.hubspot_data.deleted_user.blocked_domain',
-                num_deleted,
-                tags={
-                    'domain': domain,
-                    'ids_deleted': ids_to_delete,
-                }
-            )
+    remove_blocked_email_domains_from_hubspot()
+    remove_blocked_domain_contacts_from_hubspot()
