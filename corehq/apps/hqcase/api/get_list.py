@@ -21,7 +21,6 @@ from .core import UserError, serialize_es_case
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 CUSTOM_PROPERTY_PREFIX = 'property.'
-INDEX_PREFIX = 'indices.'
 
 
 def _to_boolean(val):
@@ -60,20 +59,28 @@ def _to_date_filters(field, date_filter):
     ]
 
 
-FILTERS = {
+def _index_filter(identifier, case_id):
+    return case_search.reverse_index_case_query(case_id, identifier)
+
+
+
+SIMPLE_FILTERS = {
     'external_id': case_search.external_id,
     'case_type': case_es.case_type,
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
 }
-FILTERS.update(chain(*[
+SIMPLE_FILTERS.update(chain(*[
     _to_date_filters('last_modified', case_es.modified_range),
     _to_date_filters('server_last_modified', case_es.server_modified_range),
     _to_date_filters('date_opened', case_es.opened_range),
     _to_date_filters('date_closed', case_es.closed_range),
     _to_date_filters('indexed_on', case_search.indexed_on),
 ]))
+COMPOUND_FILTERS = {
+    'indices': _index_filter,
+}
 
 
 def get_list(domain, params):
@@ -110,12 +117,13 @@ def _run_query(domain, params):
     for key, val in params.items():
         if key.startswith(CUSTOM_PROPERTY_PREFIX):
             query = query.filter(_get_custom_property_filter(key, val))
-        elif key.startswith(INDEX_PREFIX):
-            query = query.filter(_get_index_filter(key, val))
         elif key == 'xpath':
             query = query.filter(_get_xpath_filter(domain, val))
-        elif key in FILTERS:
-            query = query.filter(FILTERS[key](val))
+        elif key in SIMPLE_FILTERS:
+            query = query.filter(SIMPLE_FILTERS[key](val))
+        elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
+            prefix, qualifier = key.split(".", maxsplit=1)
+            query = query.filter(COMPOUND_FILTERS[prefix](qualifier, val))
         else:
             raise UserError(f"'{key}' is not a valid parameter.")
 
@@ -127,11 +135,6 @@ def _get_custom_property_filter(key, val):
     if val == "":
         return case_search.case_property_missing(prop)
     return case_search.exact_case_property_text_query(prop, val)
-
-
-def _get_index_filter(key, case_id):
-    identifier = key[len(INDEX_PREFIX):]
-    return case_search.reverse_index_case_query(case_id, identifier)
 
 
 def _get_xpath_filter(domain, xpath):
