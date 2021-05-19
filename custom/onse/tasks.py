@@ -98,7 +98,7 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
         _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
         exception = server_status['error']
-        message = f'Importing ONSE ISS facility cases from DHIS2 failed: {exception}.'
+        message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {exception}.'
 
         retry_attempt += 1
         if retry_attempt <= MAX_RETRY_ATTEMPTS:
@@ -381,7 +381,7 @@ def handle_error(
     dhis2_server: ConnectionSettings,
     print_notifications: bool,
 ):
-    message = f'Importing ONSE ISS facility cases from DHIS2 failed: {err}'
+    message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {err}'
     _notify_message(print_notifications, message, dhis2_server, err)
 
 
@@ -389,7 +389,7 @@ def handle_success(
     dhis2_server: ConnectionSettings,
     print_notifications: bool,
 ):
-    message = 'Successfully imported ONSE ISS facility cases from DHIS2'
+    message = f'Successfully imported {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME}'
     _notify_message(print_notifications, message, dhis2_server)
 
 
