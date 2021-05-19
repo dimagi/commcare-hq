@@ -71,5 +71,5 @@ branches:
     - jm/pip-21.1.1 # Joel May 18
     - gh/add-app-id-to-downstream-report # Graham May 18
     - rp/subscription-notification-change # Rynhard May 18
-
+    - sk/sql-user-role  # Simon May 19
 submodules: { }
