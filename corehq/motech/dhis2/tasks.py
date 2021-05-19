@@ -81,12 +81,13 @@ def send_dataset(
             dataset = get_dataset(dataset_map, send_date)
             response = requests.post('/api/dataValueSets', json=dataset,
                                      raise_for_status=True)
-        except DatabaseError:
+        except DatabaseError as db_err:
+            requests.notify_error(message=str(db_err),
+                                  details=traceback.format_exc())
             return {
                 'success': False,
                 'error': _('There was an error retrieving some UCR data. '
                            'Try contacting support to help resolve this issue.'),
-                'traceback': traceback.format_exc(),
                 'text': None
             }
         except Exception as err:
@@ -95,7 +96,6 @@ def send_dataset(
             return {
                 'success': False,
                 'error': str(err),
-                'traceback': traceback.format_exc(),
                 'status_code': response.status_code if response else None,
                 'text': response.text if response else None,
             }
