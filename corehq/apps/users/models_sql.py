@@ -66,6 +66,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
+    def to_json(self):
+        return role_to_dict(self)
+
     def set_permissions(self, permission_infos):
         permissions_by_name = {
             rp.permission: rp
@@ -195,3 +198,14 @@ def migrate_role_assignable_by_to_sql(couch_role, sql_role):
                 assignable_by_mapping[couch_id] = assignable_by_sql_role.id
 
     sql_role.set_assignable_by(list(assignable_by_mapping.values()))
+
+
+def role_to_dict(role):
+    data = {}
+    for field in SQLUserRole._migration_get_fields():
+        data[field] = getattr(role, field)
+    data["permissions"] = role.permissions.to_json()
+    data["assignable_by"] = role.assignable_by
+    if role.couch_id:
+        data["_id"] = role.couch_id
+    return data
