@@ -1,6 +1,6 @@
+import csv
 import datetime
 import os
-import re
 import sys
 from difflib import unified_diff
 from html.parser import HTMLParser
