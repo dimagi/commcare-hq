@@ -41,7 +41,6 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -83,6 +82,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -391,7 +391,7 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
     def _invalid_user_role(self, request, details):
-        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
+        return details.get('role') not in get_all_role_names_for_domain(request.domain)
 
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True

@@ -381,64 +381,10 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return list(all_roles)
 
     @classmethod
-    def get_or_create_with_permissions(cls, domain, permissions, name=None):
-        if isinstance(permissions, dict):
-            permissions = Permissions.wrap(permissions)
-        roles = cls.by_domain(domain)
-        # try to get a matching role from the db
-        for role in roles:
-            if role.permissions == permissions:
-                return role
-        # otherwise create it
-
-        def get_name():
-            if name:
-                return name
-            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
-        role = cls(domain=domain, permissions=permissions, name=get_name())
+    def create(cls, domain, name, **kwargs):
+        role = cls(domain=domain, name=name, **kwargs)
         role.save()
         return role
-
-    @classmethod
-    def get_read_only_role_by_domain(cls, domain):
-        try:
-            return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
-        except (IndexError, TypeError):
-            return cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(
-                    UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
-
-    @classmethod
-    def get_custom_roles_by_domain(cls, domain):
-        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
-
-    @classmethod
-    def reset_initial_roles_for_domain(cls, domain):
-        initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
-        for role in initial_roles:
-            role.permissions = UserRolePresets.get_permissions(role.name)
-            role.save()
-
-    @classmethod
-    def archive_custom_roles_for_domain(cls, domain):
-        custom_roles = cls.get_custom_roles_by_domain(domain)
-        for role in custom_roles:
-            role.is_archived = True
-            role.save()
-
-    @classmethod
-    def unarchive_roles_for_domain(cls, domain):
-        all_roles = cls.by_domain(domain, include_archived=True)
-        for role in all_roles:
-            if role.is_archived:
-                role.is_archived = False
-                role.save()
-
-    @classmethod
-    def init_domain_with_presets(cls, domain):
-        for role_name in UserRolePresets.INITIAL_ROLES:
-            cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(role_name), role_name)
 
     @classmethod
     def get_default(cls, domain=None):
@@ -447,12 +393,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     @classmethod
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
-
-    @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        presets = set(UserRolePresets.NAME_ID_MAP.keys())
-        custom = set([role.name for role in cls.by_domain(domain_name)])
-        return presets | custom
 
     @classmethod
     def admin_role(cls, domain):
@@ -768,6 +708,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         role_qualified_id is either 'admin' 'user-role:[id]'
         """
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
+
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
         if role_qualified_id == "admin":
@@ -778,7 +720,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
             role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
             permissions = UserRolePresets.get_permissions(role_name)
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
+            dm.role_id = get_or_create_role_with_permissions(domain, role_name, permissions).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
