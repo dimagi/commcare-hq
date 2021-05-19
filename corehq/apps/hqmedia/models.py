@@ -672,6 +672,11 @@ class ModuleMediaMixin(MediaMixin):
         if hasattr(self, 'case_list') and self.case_list.show:
             count += self.rename_menu_media(self.case_list, old_path, new_path)
 
+        # Case search and claim menu items
+        if hasattr(self, 'search_config'):
+            count += self.rename_menu_media(self.search_config.search_label, old_path, new_path)
+            count += self.rename_menu_media(self.search_config.search_again_label, old_path, new_path)
+
         for name, details, display in self.get_details():
             # Case list lookup
             if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
