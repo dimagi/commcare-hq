@@ -73,14 +73,17 @@ def get_blocked_hubspot_domains():
 
 
 def get_blocked_hubspot_email_domains():
-    return [_email for email_list in BillingAccount.objects.filter(
+    email_domains = {_email for email_list in BillingAccount.objects.filter(
         is_active=True,
     ).exclude(
         block_email_domains_from_hubspot=[],
     ).values_list(
         'block_email_domains_from_hubspot',
         flat=True,
-    ) for _email in email_list]
+    ) for _email in email_list}
+    # we want to ensure that gmail.com is never a part of this list
+    email_domains.difference_update(['gmail.com'])
+    return list(email_domains)
 
 
 def get_blocked_hubspot_accounts():
