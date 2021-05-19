@@ -26,13 +26,25 @@ def handle(domain, scheduled_report_id, past_date):
     assert scheduled_report.domain == domain
     ReportNotification.save = ReportNotification.delete = ReportNotification.bulk_save = ReportNotification.bulk_delete = NotImplemented
     ReportConfig.save = ReportConfig.delete = ReportConfig.bulk_save = ReportConfig.bulk_delete = NotImplemented
+    scheduled_report.send_to_owner = False
+    scheduled_report.recipient_emails = []
 
     for config in scheduled_report.configs:
         if config.is_configurable_report:
+            print(f'Config {config.name}')
             diff_text(
-                get_diffable_report_content_for_past_date(config, past_date, respect_filters=True),
-                get_diffable_report_content_for_past_date(config, past_date, respect_filters=False),
+                get_diffable_report_content_for_past_date(config, past_date, respect_filters=True, respect_date_filter=True),
+                get_diffable_report_content_for_past_date(config, past_date, respect_filters=False, respect_date_filter=True),
+                text1_name='Date range with filters',
+                text2_name='Date range without filters',
             )
+            diff_text(
+                get_diffable_report_content_for_past_date(config, past_date, respect_filters=True, respect_date_filter=False),
+                get_diffable_report_content_for_past_date(config, past_date, respect_filters=False, respect_date_filter=True),
+                text1_name='No date range with filters',
+                text2_name='Date range without filters',
+            )
+            print()
     return scheduled_report
 
 
@@ -62,29 +74,34 @@ def get_report_content_for_dates(config, start_date, end_date):
         config._query_string_cache = {}
 
 
-def get_report_content_for_past_date(config, past_date, respect_filters):
+def get_report_content_for_past_date(config, past_date, respect_filters, respect_date_filter):
     try:
         _filters = config.filters
         if not respect_filters:
             config.filters = {}
-        if config.date_range:
-            start_date, end_date = get_daterange_start_end_dates(
-                config.date_range,
-                start_date=config.start_date,
-                end_date=config.end_date,
-                days=config.days,
-                today=past_date,
-            )
-            return f'date={past_date} start_date={start_date} end_date={end_date} respect_filters={respect_filters}', get_report_content_for_dates(config, start_date, end_date)
-        else:
+        if not config.date_range:
             return f'[Report not filtered by date] respect_filters={respect_filters}', config.get_report_content('en')
+        else:
+            if respect_date_filter:
+                start_date, end_date = get_daterange_start_end_dates(
+                    config.date_range,
+                    start_date=config.start_date,
+                    end_date=config.end_date,
+                    days=config.days,
+                    today=past_date,
+                )
+            else:
+                start_date = datetime.date(2000, 1, 1)
+                end_date = past_date
+            return f'date={past_date} start_date={start_date} end_date={end_date} respect_filters={respect_filters}', get_report_content_for_dates(config, start_date, end_date)
     finally:
         config.filters = _filters
         config._query_string_cache = {}
 
 
-def get_diffable_report_content_for_past_date(config, past_date, respect_filters):
-    summary, report_content = get_report_content_for_past_date(config, past_date, respect_filters=respect_filters)
+def get_diffable_report_content_for_past_date(config, past_date, respect_filters, respect_date_filter):
+    summary, report_content = get_report_content_for_past_date(
+        config, past_date, respect_filters=respect_filters, respect_date_filter=respect_date_filter)
     return f'{summary}\n{filter_to_relevant_lines(report_content.text)}'
 
 
@@ -108,10 +125,15 @@ def filter_to_relevant_lines(report_text):
 
 
 def diff_text(text1, text2, text1_name='before', text2_name='after'):
-    sys.stdout.writelines(
-        unified_diff(
-            text1.splitlines(keepends=True), text2.splitlines(keepends=True),
-            fromfile=text1_name, tofile=text2_name
-        )
-    )
+    lines = list(unified_diff(
+        text1.splitlines(keepends=True), text2.splitlines(keepends=True),
+        fromfile=text1_name, tofile=text2_name
+    ))
+    # filter out '-' rows from the data but not from the first few lines
+    first_lines = lines[:5]
+    rest_lines = lines[5:]
+    rest_lines = [line for line in rest_lines if not line.startswith('-')]
+    sys.stdout.writelines(first_lines)
+    sys.stdout.write('\n')
+    sys.stdout.writelines(rest_lines)
     sys.stdout.write('\n')
