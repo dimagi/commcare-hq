@@ -65,6 +65,11 @@ def hubspot_enabled_for_email(email_address):
 
 
 def get_blocked_hubspot_domains():
+    """
+    Get the list of domains / project spaces that have active subscriptions
+    with accounts that have blocked hubspot data.
+    :return: list
+    """
     return list(Subscription.visible_objects.filter(
         account__block_hubspot_data_for_all_users=True,
         is_active=True,
@@ -73,6 +78,11 @@ def get_blocked_hubspot_domains():
 
 
 def get_blocked_hubspot_email_domains():
+    """
+    Get the list of email domains (everything after the @ in an email address)
+    that have been blocked from Hubspot by BillingAccounts (excluding gmail.com)
+    :return: list
+    """
     email_domains = {_email for email_list in BillingAccount.objects.filter(
         is_active=True,
     ).exclude(
