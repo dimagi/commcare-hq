@@ -20,7 +20,6 @@ from .core import UserError, serialize_es_case
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
-CUSTOM_PROPERTY_PREFIX = 'property.'
 
 
 def _to_boolean(val):
@@ -32,6 +31,12 @@ def _to_int(val, param_name):
         return int(val)
     except ValueError:
         raise UserError(f"'{val}' is not a valid value for '{param_name}'")
+
+
+def _get_custom_property_filter(case_property, val):
+    if val == "":
+        return case_search.case_property_missing(case_property)
+    return case_search.exact_case_property_text_query(case_property, val)
 
 
 def _make_date_filter(date_filter):
@@ -56,7 +61,6 @@ def _index_filter(identifier, case_id):
     return case_search.reverse_index_case_query(case_id, identifier)
 
 
-
 SIMPLE_FILTERS = {
     'external_id': case_search.external_id,
     'case_type': case_es.case_type,
@@ -64,7 +68,11 @@ SIMPLE_FILTERS = {
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
 }
+
+# Compound filters take the form `prefix.qualifier=value`
+# These filter functions are called with qualifier and value
 COMPOUND_FILTERS = {
+    'property': _get_custom_property_filter,
     'last_modified': _make_date_filter(case_es.modified_range),
     'server_last_modified': _make_date_filter(case_es.server_modified_range),
     'date_opened': _make_date_filter(case_es.opened_range),
@@ -106,9 +114,7 @@ def _run_query(domain, params):
              .sort("@indexed_on"))
 
     for key, val in params.items():
-        if key.startswith(CUSTOM_PROPERTY_PREFIX):
-            query = query.filter(_get_custom_property_filter(key, val))
-        elif key == 'xpath':
+        if key == 'xpath':
             query = query.filter(_get_xpath_filter(domain, val))
         elif key in SIMPLE_FILTERS:
             query = query.filter(SIMPLE_FILTERS[key](val))
@@ -119,13 +125,6 @@ def _run_query(domain, params):
             raise UserError(f"'{key}' is not a valid parameter.")
 
     return query.run()
-
-
-def _get_custom_property_filter(key, val):
-    prop = key[len(CUSTOM_PROPERTY_PREFIX):]
-    if val == "":
-        return case_search.case_property_missing(prop)
-    return case_search.exact_case_property_text_query(prop, val)
 
 
 def _get_xpath_filter(domain, xpath):
