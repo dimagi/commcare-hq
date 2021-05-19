@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from corehq.apps.accounting.models import Subscription, BillingAccount
+from corehq.apps.users.models import WebUser, CommCareUser
 
 
 def get_meta(request):
@@ -33,13 +34,28 @@ def is_domain_blocked_from_hubspot(domain):
     ).exists()
 
 
-def hubspot_enabled_for_user(couch_user):
-    if is_email_blocked_from_hubspot(couch_user.username):
+def hubspot_enabled_for_user(user):
+    """
+    Check if a user (or account policy) has given permission for Hubspot
+    analytics to be synced for a given user.
+    :param user: CouchUser or WebUser
+    :return: Boolean (True if hubspot is enabled/allowed)
+    """
+    if is_email_blocked_from_hubspot(user.username):
         return False
-    for domain in couch_user.get_domains():
-        if is_domain_blocked_from_hubspot(domain):
+    if isinstance(user, WebUser):
+        web_user = user
+    else:
+        web_user = WebUser.get_by_username(user.username)
+    if web_user:
+        for domain in web_user.get_domains():
+            if is_domain_blocked_from_hubspot(domain):
+                return False
+    else:
+        commcare_user = CommCareUser.get_by_username(user.username)
+        if is_domain_blocked_from_hubspot(commcare_user.domain):
             return False
-    return couch_user.analytics_enabled
+    return user.analytics_enabled
 
 
 def hubspot_enabled_for_email(email_address):
