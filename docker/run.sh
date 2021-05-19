@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
-function setup() {
+function setup {
     [ -n "$1" ] && TEST="$1"
 
     rm *.log || true
@@ -37,7 +37,7 @@ function setup() {
     /mnt/wait.sh
 }
 
-function run_tests() {
+function run_tests {
     TEST="$1"
     if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
         echo "Unknown test suite: $TEST"
@@ -45,17 +45,17 @@ function run_tests() {
     fi
     shift
 
-    now=`date +%s`
-    setup $TEST
-    delta=$((`date +%s` - $now))
+    now=$(date +%s)
+    setup "$TEST"
+    delta=$(($(date +%s) - $now))
 
     send_timing_metric_to_datadog "setup" $delta
 
-    now=`date +%s`
+    now=$(date +%s)
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
     [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-    delta=$((`date +%s` - $now))
+    delta=$(($(date +%s) - $now))
 
     send_timing_metric_to_datadog "tests" $delta
     send_counter_metric_to_datadog
@@ -69,8 +69,8 @@ function send_counter_metric_to_datadog() {
     send_metric_to_datadog "travis.count" 1 "counter" "test_type:$TEST"
 }
 
-function _run_tests() {
-    TEST=$1
+function _run_tests {
+    TEST="$1"
     shift
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
@@ -82,36 +82,36 @@ function _run_tests() {
 
     if [ "$TEST" == "python-sharded-and-javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "./manage.py test $@ $TESTS"
+        echo "./manage.py test $* $TESTS"
         ./manage.py test "$@" $TESTS
 
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         /mnt/wait.sh 127.0.0.1:8000
-         echo "grunt test $@"
-         grunt test "$@"
+        echo "grunt test $*"
+        grunt test "$@"
 
-         if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+        if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
             echo "----------> Begin Static Analysis <----------"
             COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
             ./scripts/static-analysis.sh datadog
             echo "----------> End Static Analysis <----------"
-         fi
+        fi
 
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "./manage.py test $@ $TESTS"
+        echo "./manage.py test $* $TESTS"
         ./manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         host=127.0.0.1 /mnt/wait.sh hq:8000
-         echo "grunt test $@"
-         grunt test "$@"
+        echo "grunt test $*"
+        grunt test "$@"
     fi
 }
 
-function bootstrap() {
+function bootstrap {
     JS_SETUP=yes setup python
     su cchq -c "export CCHQ_IS_FRESH_INSTALL=1 &&
                 ./manage.py sync_couch_views &&
@@ -121,7 +121,7 @@ function bootstrap() {
                 ./manage.py make_superuser admin@example.com"
 }
 
-function runserver() {
+function runserver {
     JS_SETUP=yes setup python
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
@@ -162,5 +162,5 @@ chown cchq:cchq lib/sharedfiles
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py
 
-echo "running: $@"
+echo "running: $*"
 "$@"
