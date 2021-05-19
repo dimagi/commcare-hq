@@ -2,6 +2,7 @@ import datetime
 import re
 import sys
 from difflib import unified_diff
+from html.parser import HTMLParser
 
 from django.core.management import BaseCommand
 
@@ -106,22 +107,20 @@ def get_diffable_report_content_for_past_date(config, past_date, respect_filters
 
 
 def filter_to_relevant_lines(report_text):
-    text = '\n'.join(
-        line for line in report_text.split('\n')
-        if 'tr>' in line
-        or 'th>' in line
-        or 'td>' in line
-    )
-    text = re.sub(r'</t[dh]>\s*<t[dh]>', '\t', text, flags=re.RegexFlag.MULTILINE)
-    text = re.sub(r'\s*</t[dh]>\s*</tr>\s*<tr>\s*<t[dh]>\s*', '\n', text, flags=re.RegexFlag.MULTILINE)
-    text = re.sub(r'\s*<t[rh]>\s*', '', text, flags=re.RegexFlag.MULTILINE)
-    text = re.sub(r'\s*</t[rhd]>\s*', '', text, flags=re.RegexFlag.MULTILINE)
-    lines = text.split('\n')
-    header_line = lines[0]
-    data_lines = lines[1:]
-    data_lines.sort()
-    text = '\n'.join([header_line] + data_lines)
-    return text
+    parser = ReportHTMLParser()
+    parser.feed(report_text)
+    formatted_rows = []
+    for row in parser.data:
+        formatted_row = []
+        for cell in row:
+            if '\n' in cell or '\t' in cell:
+                cell = repr(cell)
+            formatted_row.append(cell)
+        formatted_rows.append('\t'.join(formatted_row) + '\n')
+    header_line = formatted_rows[0]
+    body_lines = formatted_rows[1:]
+    body_lines.sort()
+    return ''.join([header_line] + body_lines)
 
 
 def diff_text(text1, text2, text1_name='before', text2_name='after'):
@@ -129,11 +128,52 @@ def diff_text(text1, text2, text1_name='before', text2_name='after'):
         text1.splitlines(keepends=True), text2.splitlines(keepends=True),
         fromfile=text1_name, tofile=text2_name
     ))
-    # filter out '-' rows from the data but not from the first few lines
-    first_lines = lines[:5]
-    rest_lines = lines[5:]
-    rest_lines = [line for line in rest_lines if not line.startswith('-')]
+    # filter out '-' and ' ' rows from the data but not from the first few lines
+    first_lines = lines[:6]
+    rest_lines = lines[6:]
+    rest_lines = [line for line in rest_lines if line.startswith('+')]
     sys.stdout.writelines(first_lines)
     sys.stdout.write('\n')
     sys.stdout.writelines(rest_lines)
     sys.stdout.write('\n')
+
+
+class ReportHTMLParser(HTMLParser):
+    def __init__(self, *, convert_charrefs=True):
+        super().__init__(convert_charrefs=convert_charrefs)
+        self.data = []
+        self.current_row = None
+        self.current_cell = None
+        self.table_started = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'table':
+            self.table_started = True
+        if self.table_started:
+            if tag == 'tr':
+                self.current_row = []
+            if tag in ('th', 'td'):
+                self.current_cell = ''
+
+    def handle_endtag(self, tag):
+        if tag == 'table':
+            self.table_started = False
+        if self.table_started:
+            if tag == 'tr':
+                self.data.append(self.current_row)
+                self.current_row = None
+            if tag in ('th', 'td'):
+                self.current_row.append(self.current_cell)
+                self.current_cell = None
+
+    def handle_data(self, data):
+        if self.table_started:
+            if self.current_row is not None:
+                if self.current_cell is not None:
+                    self.current_cell += data
+                else:
+                    if data.strip():
+                        Exception(f"Unexpected text: {data}")
+            else:
+                if data.strip():
+                    raise Exception(f'Unexpected text: {data}')
