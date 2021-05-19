@@ -48,8 +48,8 @@ def get_simple_dateranges():
     return [choice for choice in get_all_daterange_choices() if choice.simple]
 
 
-def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None):
-    today = datetime.date.today()
+def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None, today=None):
+    today = today or datetime.date.today()
     if date_range == 'since':
         start_date = start_date
         end_date = today
