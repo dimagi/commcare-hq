@@ -21,7 +21,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     # role can be assigned by all non-admins
     is_non_admin_editable = models.BooleanField(null=False, default=False)
     is_archived = models.BooleanField(null=False, default=False)
-    upstream_id = models.IntegerField(null=True)
+    upstream_id = models.CharField(max_length=32, null=True)
     couch_id = models.CharField(max_length=126, null=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
@@ -44,6 +44,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             "default_landing_page",
             "is_non_admin_editable",
             "is_archived",
+            "upstream_id",
         ]
 
     @classmethod
@@ -52,11 +53,6 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return UserRole
 
     def _migration_sync_submodels_to_couch(self, couch_object):
-        if self.upstream_id:
-            upstream_role = SQLUserRole.objects.get(id=self.upstream_id)
-            couch_object.upstream_id = upstream_role.couch_id
-        else:
-            couch_object.upstream_id = None
         couch_object.permissions = self.permissions
         couch_object.assignable_by = list(
             self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)

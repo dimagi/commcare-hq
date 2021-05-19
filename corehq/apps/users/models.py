@@ -477,6 +477,7 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             "default_landing_page",
             "is_non_admin_editable",
             "is_archived",
+            "upstream_id",
         ]
 
     @classmethod
@@ -484,12 +485,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return SQLUserRole
 
     def _migration_sync_submodels_to_sql(self, sql_object):
-        if self.upstream_id:
-            upstream_role = SQLUserRole.objects.by_couch_id(self.upstream_id)
-            sql_object.upstream_id = upstream_role.id
-        else:
-            sql_object.upstream_id = None
-
         if not sql_object._get_pk_val():
             sql_object.save(sync_to_couch=False)
         migrate_role_permissions_to_sql(self, sql_object)

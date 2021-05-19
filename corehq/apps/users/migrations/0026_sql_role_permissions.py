@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('default_landing_page', models.CharField(choices=[('dashboard', 'Dashboard'), ('webapps', 'Web Apps'), ('reports', 'Reports'), ('downloads', 'Data File Downloads')], max_length=64, null=True)),
                 ('is_non_admin_editable', models.BooleanField(default=False)),
                 ('is_archived', models.BooleanField(default=False)),
-                ('upstream_id', models.IntegerField(null=True)),
+                ('upstream_id', models.CharField(max_length=32, null=True)),
                 ('couch_id', models.CharField(max_length=126, null=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('modified_on', models.DateTimeField(auto_now=True)),

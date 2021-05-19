@@ -55,8 +55,6 @@ class UserRoleCouchToSqlTests(TestCase):
         for field in UserRole._migration_get_fields():
             self.assertEqual(getattr(couch_role, field), getattr(sql_role, field))
 
-        self.assertEqual(sql_role.upstream_id, self.app_editor_sql.id)
-
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
@@ -71,7 +69,7 @@ class UserRoleCouchToSqlTests(TestCase):
             name="test_sql_to_couch",
             default_landing_page=ALL_LANDING_PAGES[0].id,
             is_non_admin_editable=False,
-            upstream_id=self.app_editor_sql.id
+            upstream_id=self.app_editor_sql.couch_id
         )
         sql_role.save()
         sql_role.set_permissions([
@@ -92,10 +90,6 @@ class UserRoleCouchToSqlTests(TestCase):
         self.assertEqual(len(couch_roles), 2)
         couch_role = [r for r in couch_roles if r.name == sql_role.name][0]
 
-        for field in SQLUserRole._migration_get_fields():
-            self.assertEqual(getattr(couch_role, field), getattr(sql_role, field))
-
-        self.assertEqual(couch_role.upstream_id, self.app_editor.get_id)
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
@@ -181,7 +175,7 @@ class UserRoleCouchToSqlTests(TestCase):
             domain=self.domain,
             name=couch_role.name,
             is_non_admin_editable=False,
-            upstream_id=self.app_editor_sql.id
+            upstream_id=self.app_editor.get_id
         )
         sql_role.set_permissions(permissions.to_list())
         sql_role.set_assignable_by([self.app_editor_sql.id])

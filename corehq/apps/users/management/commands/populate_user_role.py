@@ -31,15 +31,6 @@ class Command(PopulateSQLCommand):
         for field in UserRole._migration_get_fields():
             diffs.append(cls.diff_attr(field, couch, sql))
 
-        couch_upstream_id = couch.get("upstream_id", None)
-        sql_upstream_id = sql.upstream_id
-        if couch_upstream_id or sql_upstream_id:
-            try:
-                sql_mapped_upstream_id = SQLUserRole.objects.get(id=sql_upstream_id).couch_id
-            except SQLUserRole.DoesNotExist:
-                sql_mapped_upstream_id = None
-            diffs.append(cls.diff_value("upstream_id", couch_upstream_id, sql_mapped_upstream_id))
-
         couch_permissions = {
             info.name: info
             for info in Permissions.wrap(couch["permissions"]).to_list()
@@ -76,17 +67,9 @@ class Command(PopulateSQLCommand):
                 "default_landing_page": doc.get("default_landing_page"),
                 "is_non_admin_editable": doc.get("is_non_admin_editable"),
                 "is_archived": doc.get("is_archived"),
+                "upstream_id": doc.get("upstream_id"),
             })
         couch_role = UserRole.wrap(doc)
-        if couch_role.upstream_id:
-            try:
-                upstream_role = self.sql_class().objects.by_couch_id(couch_role.upstream_id)
-            except self.sql_class().DoesNotExist:
-                # if the upstream role is not yet in SQL create it now
-                upstream_role = UserRole.get(couch_role.upstream_id)._migration_do_sync()
-            model.upstream_id = upstream_role.id
-        else:
-            model.upstream_id = None
         migrate_role_permissions_to_sql(couch_role, model)
         migrate_role_assignable_by_to_sql(couch_role, model)
         return model, created
