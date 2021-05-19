@@ -34,9 +34,11 @@ def _to_int(val, param_name):
         raise UserError(f"'{val}' is not a valid value for '{param_name}'")
 
 
-def _make_date_filter(date_filter, param):
+def _make_date_filter(date_filter):
 
-    def filter_fn(val):
+    def filter_fn(param, val):
+        if param not in ['gt', 'gte', 'lt', 'lte']:
+            raise UserError(f"'{param}' is not a valid type of date range.")
         try:
             # If it's only a date, don't turn it into a datetime
             val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
@@ -48,15 +50,6 @@ def _make_date_filter(date_filter, param):
         return date_filter(**{param: val})
 
     return filter_fn
-
-
-def _to_date_filters(field, date_filter):
-    return [
-        (f'{field}.gt', _make_date_filter(date_filter, 'gt')),
-        (f'{field}.gte', _make_date_filter(date_filter, 'gte')),
-        (f'{field}.lte', _make_date_filter(date_filter, 'lte')),
-        (f'{field}.lt', _make_date_filter(date_filter, 'lt')),
-    ]
 
 
 def _index_filter(identifier, case_id):
@@ -71,14 +64,12 @@ SIMPLE_FILTERS = {
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
 }
-SIMPLE_FILTERS.update(chain(*[
-    _to_date_filters('last_modified', case_es.modified_range),
-    _to_date_filters('server_last_modified', case_es.server_modified_range),
-    _to_date_filters('date_opened', case_es.opened_range),
-    _to_date_filters('date_closed', case_es.closed_range),
-    _to_date_filters('indexed_on', case_search.indexed_on),
-]))
 COMPOUND_FILTERS = {
+    'last_modified': _make_date_filter(case_es.modified_range),
+    'server_last_modified': _make_date_filter(case_es.server_modified_range),
+    'date_opened': _make_date_filter(case_es.opened_range),
+    'date_closed': _make_date_filter(case_es.closed_range),
+    'indexed_on': _make_date_filter(case_search.indexed_on),
     'indices': _index_filter,
 }
 

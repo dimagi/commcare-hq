@@ -160,6 +160,7 @@ def test_case_list_queries(self, querystring, expected):
     ("password=1234", "'password' is not a valid parameter."),
     ("case_name.gte=a", "'case_name.gte' is not a valid parameter."),
     ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
+    ("date_opened.start=2020-01-30", "'start' is not a valid type of date range."),
     ('xpath=gibberish',
      "Bad XPath: Your search query is required to have at least one boolean "
      "operator (>, >=, <, <=, =, !=)"),
