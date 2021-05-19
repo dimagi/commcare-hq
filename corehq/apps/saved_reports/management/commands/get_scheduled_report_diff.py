@@ -5,6 +5,7 @@ import sys
 from difflib import unified_diff
 from html.parser import HTMLParser
 
+from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -37,7 +38,11 @@ def handle(filename, output_dir, past_date):
 
 
 def handle_one(domain, scheduled_report_id, past_date, stream=sys.stdout):
-    scheduled_report = ReportNotification.get(scheduled_report_id)
+    try:
+        scheduled_report = ReportNotification.get(scheduled_report_id)
+    except ResourceNotFound:
+        print('ReportNotification not found')
+        return
     assert scheduled_report.doc_type == 'ReportNotification'
     assert scheduled_report.domain == domain
     ReportNotification.save = ReportNotification.delete = ReportNotification.bulk_save = ReportNotification.bulk_delete = NotImplemented
@@ -134,10 +139,13 @@ def filter_to_relevant_lines(report_text):
                 cell = repr(cell)
             formatted_row.append(cell)
         formatted_rows.append('\t'.join(formatted_row) + '\n')
-    header_line = formatted_rows[0]
-    body_lines = formatted_rows[1:]
-    body_lines.sort()
-    return ''.join([header_line] + body_lines)
+    if formatted_rows:
+        header_line = formatted_rows[0]
+        body_lines = formatted_rows[1:]
+        body_lines.sort()
+        return ''.join([header_line] + body_lines)
+    else:
+        return ''
 
 
 def diff_text(text1, text2, text1_name='before', text2_name='after', stream=sys.stdout):
