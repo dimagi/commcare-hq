@@ -131,9 +131,6 @@ class FormplayerMain(View):
         except DomainMembershipError:
             # User has access via domain mirroring
             pass
-        if role:
-            apps = [app for app in apps
-                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
@@ -255,10 +252,6 @@ class FormplayerPreviewSingleApp(View):
         app = get_current_app(domain, app_id)
 
         if not app_access.user_can_access_app(request.couch_user, app):
-            raise Http404()
-
-        role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app.origin_id):
             raise Http404()
 
         def _default_lang():
