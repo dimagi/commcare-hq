@@ -2095,11 +2095,16 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
-class CaseSearchLabel(DocumentSchema):
+class BaseCaseSearchLabel(NavMenuItemMediaMixin):
+    def get_app(self):
+        return self._module.get_app()
+
+
+class CaseSearchLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search All Cases'})
 
 
-class CaseSearchAgainLabel(DocumentSchema):
+class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
@@ -2227,6 +2232,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.case_list._module = self
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
+        if hasattr(self, 'search_config'):
+            self.search_config.search_label._module = self
+            self.search_config.search_again_label._module = self
 
     @classmethod
     def wrap(cls, data):

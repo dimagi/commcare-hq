@@ -203,6 +203,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
+        $(".case-search-multimedia-input button").on("click", function () {
+            saveButton.fire('change');
+        });
 
         self.serialize = function () {
             return {
