@@ -21,6 +21,7 @@ from .core import UserError, serialize_es_case
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 CUSTOM_PROPERTY_PREFIX = 'property.'
+INDEX_PREFIX = 'indices.'
 
 
 def _to_boolean(val):
@@ -65,7 +66,6 @@ FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
-    'index': case_search.reverse_index_case_query,
 }
 FILTERS.update(chain(*[
     _to_date_filters('last_modified', case_es.modified_range),
@@ -110,6 +110,8 @@ def _run_query(domain, params):
     for key, val in params.items():
         if key.startswith(CUSTOM_PROPERTY_PREFIX):
             query = query.filter(_get_custom_property_filter(key, val))
+        elif key.startswith(INDEX_PREFIX):
+            query = query.filter(_get_index_filter(key, val))
         elif key == 'xpath':
             query = query.filter(_get_xpath_filter(domain, val))
         elif key in FILTERS:
@@ -125,6 +127,11 @@ def _get_custom_property_filter(key, val):
     if val == "":
         return case_search.case_property_missing(prop)
     return case_search.exact_case_property_text_query(prop, val)
+
+
+def _get_index_filter(key, case_id):
+    identifier = key[len(INDEX_PREFIX):]
+    return case_search.reverse_index_case_query(case_id, identifier)
 
 
 def _get_xpath_filter(domain, xpath):

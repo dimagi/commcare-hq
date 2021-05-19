@@ -143,7 +143,7 @@ class TestCaseListAPI(TestCase):
     ('property.foo={"test": "json"}', []),  # This is escaped as expected
     ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
     ('xpath=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
-    (f"index={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
+    (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()
