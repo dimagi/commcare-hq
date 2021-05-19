@@ -22,6 +22,8 @@ def handle(domain, scheduled_report_id, past_date):
     scheduled_report = ReportNotification.get(scheduled_report_id)
     assert scheduled_report.doc_type == 'ReportNotification'
     assert scheduled_report.domain == domain
+    ReportNotification.save = ReportNotification.delete = ReportNotification.bulk_save = ReportNotification.bulk_delete = NotImplemented
+    ReportConfig.save = ReportConfig.delete = ReportConfig.bulk_save = ReportConfig.bulk_delete = NotImplemented
 
     for config in scheduled_report.configs:
         if config.is_configurable_report:
