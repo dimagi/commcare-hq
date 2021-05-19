@@ -30,7 +30,6 @@ from custom.onse.const import (
     MAX_RETRY_ATTEMPTS,
 )
 from custom.onse.models import iter_mappings
-from django.conf import settings
 
 # The production DHIS2 server is on the other side of an
 # interoperability service that changes the URL schema from
@@ -109,7 +108,7 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
 
             _notify_message(print_notifications, retry_message, dhis2_server, exception)
 
-            schedule_execution(
+            _schedule_execution(
                 _update_facility_cases_from_dhis2_data_elements,
                 [period, print_notifications, retry_attempt],
                 retry_date
@@ -119,11 +118,8 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
             _notify_message(print_notifications, message, dhis2_server, exception)
 
 
-def schedule_execution(callback_task, args: list, on_date: datetime):
-    always_eager = hasattr(settings, "CELERY_TASK_ALWAYS_EAGER") and settings.CELERY_TASK_ALWAYS_EAGER
-    settings.CELERY_TASK_ALWAYS_EAGER = False
+def _schedule_execution(callback_task, args: list, on_date: datetime):
     callback_task.apply_async(tuple(args), eta=on_date)
-    settings.CELERY_TASK_ALWAYS_EAGER = always_eager
 
 
 def _check_server_status(dhis2_server: ConnectionSettings):

@@ -36,7 +36,7 @@ class TestUpdateFromDhis2Task(TestCase):
     @patch('custom.onse.tasks.domain_exists', return_value=True)
     @patch('custom.onse.tasks.get_dhis2_server', return_value=ConnectionSettings())
     @patch('custom.onse.tasks._check_server_status', return_value={'ready': False, 'error': RequestException})
-    @patch('custom.onse.tasks.schedule_execution')
+    @patch('custom.onse.tasks._schedule_execution')
     def test_retry(self, *args):
         _update_facility_cases_from_dhis2_data_elements(None, True)
 
