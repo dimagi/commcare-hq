@@ -2,8 +2,10 @@ from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.management.commands.populate_user_role import Command
-from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
-from corehq.apps.users.models_sql import SQLUserRole, SQLPermission
+from corehq.apps.users.models import (
+    UserRole, Permissions, UserRolePresets, PermissionInfo,
+    SQLUserRole, SQLPermission
+)
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
 
 

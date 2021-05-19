@@ -10,7 +10,7 @@ from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.sso.tests.generator import create_request_session
-from corehq.apps.users.models import WebUser, Invitation, UserRole
+from corehq.apps.users.models import WebUser, Invitation, StaticRole
 
 
 class TestSsoBackend(TestCase):
@@ -260,7 +260,7 @@ class TestSsoBackend(TestCase):
         invitation should add the user to the invited project
         space and accept the invitation
         """
-        admin_role = UserRole.admin_role(self.domain.name)
+        admin_role = StaticRole.domain_admin(self.domain.name)
         invitation = Invitation(
             domain=self.domain.name,
             email='isa@vaultwax.com',
@@ -342,7 +342,7 @@ class TestSsoBackend(TestCase):
         user data from a registration form and/or the samlUserdata are all
         properly saved to the User model.
         """
-        admin_role = UserRole.admin_role(domain=self.domain.name)
+        admin_role = StaticRole.domain_admin(domain=self.domain.name)
         existing_user = WebUser.create(
             None, 'exist@vaultwax.com', 'testpwd', None, None
         )

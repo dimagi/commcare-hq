@@ -92,7 +92,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_sql import (  # noqa
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
     migrate_role_permissions_to_sql,
     migrate_role_assignable_by_to_sql,
 )
@@ -274,6 +274,7 @@ class Permissions(DocumentSchema):
             setattr(perms, name, value)
         return perms
 
+
 class UserRolePresets(object):
     # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
     # because these are in JSON and cannot be serialized
@@ -387,16 +388,8 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return role
 
     @classmethod
-    def get_default(cls, domain=None):
-        return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
-
-    @classmethod
-    def admin_role(cls, domain):
-        return AdminUserRole(domain=domain)
 
     @property
     def has_users_assigned(self):
@@ -429,15 +422,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             sql_object.save(sync_to_couch=False)
         migrate_role_permissions_to_sql(self, sql_object)
         migrate_role_assignable_by_to_sql(self, sql_object)
-
-
-class AdminUserRole(UserRole):
-
-    def __init__(self, domain):
-        super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
-
-    def get_qualified_id(self):
-        return 'admin'
 
 
 class DomainMembershipError(Exception):
@@ -504,7 +488,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return UserRole.admin_role(self.domain)
+            return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -698,7 +682,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return UserRole.admin_role(domain)
+            return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_mirroring):
             return self.get_domain_membership(domain, allow_mirroring).role
         else:

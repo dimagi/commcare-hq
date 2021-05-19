@@ -1,9 +1,43 @@
+import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+
+
+@attr.s(frozen=True)
+class StaticRole:
+    domain = attr.ib()
+    name = attr.ib()
+    permissions = attr.ib()
+    default_landing_page = None
+    is_non_admin_editable = False
+    is_archived = False
+    upstream_id = None
+    couch_id = None
+    assignable_by = []
+
+    @classmethod
+    def domain_admin(cls, domain):
+        from corehq.apps.users.models import Permissions
+        return StaticRole(domain, "Admin", Permissions.max())
+
+    @classmethod
+    def domain_default(cls, domain):
+        from corehq.apps.users.models import Permissions
+        return StaticRole(domain, None, Permissions())
+
+    def get_qualified_id(self):
+        return self.name.lower() if self.name else None
+
+    @property
+    def get_id(self):
+        return None
+
+    def to_json(self):
+        return role_to_dict(self)
 
 
 class UserRoleManager(models.Manager):
