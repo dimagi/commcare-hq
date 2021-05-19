@@ -1,4 +1,5 @@
 import datetime
+import os
 import re
 import sys
 from difflib import unified_diff
@@ -12,16 +13,30 @@ from corehq.apps.saved_reports.models import ReportNotification, ReportConfig
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('scheduled_report_id')
+        parser.add_argument('filename')
+        parser.add_argument('output_dir')
         parser.add_argument('past_date')
 
-    def handle(self, domain, scheduled_report_id, past_date, *args, **options):
+    def handle(self, filename, output_dir, past_date, *args, **options):
         past_date = datetime.datetime.strptime(past_date, '%Y-%m-%d').date()
-        handle(domain, scheduled_report_id, past_date)
+        handle(filename, output_dir, past_date)
 
 
-def handle(domain, scheduled_report_id, past_date):
+def handle(filename, output_dir, past_date):
+    with open(filename, 'r') as f:
+        reader = csv.reader(f, dialect='excel-tab')
+        for row in reader:
+            domain, scheduled_report_id = row
+            output_path = os.path.join(output_dir, f'{domain}-{scheduled_report_id}.diffs')
+            if os.path.exists(output_path):
+                print(f'Skipping existing file {output_path}')
+            else:
+                with open(output_path, 'w') as stream:
+                    print(f'Writing output to {output_path}')
+                    handle_one(domain, scheduled_report_id, past_date, stream=stream)
+
+
+def handle_one(domain, scheduled_report_id, past_date, stream=sys.stdout):
     scheduled_report = ReportNotification.get(scheduled_report_id)
     assert scheduled_report.doc_type == 'ReportNotification'
     assert scheduled_report.domain == domain
@@ -32,20 +47,22 @@ def handle(domain, scheduled_report_id, past_date):
 
     for config in scheduled_report.configs:
         if config.is_configurable_report:
-            print(f'Config {config.name}')
+            print(f'Config {config.name}', file=stream)
             diff_text(
                 get_diffable_report_content_for_past_date(config, past_date, respect_filters=True, respect_date_filter=True),
                 get_diffable_report_content_for_past_date(config, past_date, respect_filters=False, respect_date_filter=True),
                 text1_name='Date range with filters',
                 text2_name='Date range without filters',
+                stream=stream,
             )
             diff_text(
                 get_diffable_report_content_for_past_date(config, past_date, respect_filters=True, respect_date_filter=False),
                 get_diffable_report_content_for_past_date(config, past_date, respect_filters=False, respect_date_filter=True),
                 text1_name='No date range with filters',
                 text2_name='Date range without filters',
+                stream=stream,
             )
-            print()
+            print(file=stream)
     return scheduled_report
 
 
@@ -123,7 +140,7 @@ def filter_to_relevant_lines(report_text):
     return ''.join([header_line] + body_lines)
 
 
-def diff_text(text1, text2, text1_name='before', text2_name='after'):
+def diff_text(text1, text2, text1_name='before', text2_name='after', stream=sys.stdout):
     lines = list(unified_diff(
         text1.splitlines(keepends=True), text2.splitlines(keepends=True),
         fromfile=text1_name, tofile=text2_name
@@ -132,10 +149,10 @@ def diff_text(text1, text2, text1_name='before', text2_name='after'):
     first_lines = lines[:6]
     rest_lines = lines[6:]
     rest_lines = [line for line in rest_lines if line.startswith('+')]
-    sys.stdout.writelines(first_lines)
-    sys.stdout.write('\n')
-    sys.stdout.writelines(rest_lines)
-    sys.stdout.write('\n')
+    stream.writelines(first_lines)
+    stream.write('\n')
+    stream.writelines(rest_lines)
+    stream.write('\n')
 
 
 class ReportHTMLParser(HTMLParser):
