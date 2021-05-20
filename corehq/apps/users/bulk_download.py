@@ -189,7 +189,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
@@ -228,7 +228,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
-    if is_multi_domain_download:
+    if is_cross_domain:
         user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
 
@@ -236,7 +236,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 def parse_web_users(domain, user_filters, task=None, total_count=None):
     user_dicts = []
     max_location_length = 0
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     progress = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
@@ -260,19 +260,19 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
         user_headers.extend(json_to_headers(
             {'location_code': list(range(1, max_location_length + 1))}
         ))
-    if is_multi_domain_download:
+    if is_cross_domain:
         user_headers += ['domain']
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
 def get_domains_from_user_filters(domain, user_filters):
     domains_list = [domain]
-    is_multi_domain_download = False
+    is_cross_domain = False
     if 'domains' in user_filters:
         domains_list = user_filters['domains']
     if domains_list != [domain]:
-        is_multi_domain_download = True
-    return (is_multi_domain_download, domains_list)
+        is_cross_domain = True
+    return (is_cross_domain, domains_list)
 
 
 def parse_groups(groups):
@@ -313,7 +313,7 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
 
 
 def dump_usernames(domain, download_id, user_filters, task, owner_id):
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     users_count = 0
     for download_domain in domains_list:
         users_count += count_web_users_by_filters(download_domain, user_filters)
@@ -367,7 +367,7 @@ def load_memoizer(domain):
 
 
 def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
     users_groups_count = 0
     groups = set()
@@ -400,7 +400,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
 
 
 def dump_web_users(domain, download_id, user_filters, task, owner_id):
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     total_count = 0
     for current_domain in domains_list:
         total_count += count_web_users_by_filters(current_domain, user_filters)

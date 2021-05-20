@@ -1349,7 +1349,7 @@ def _count_users(request, domain, user_type):
         return HttpResponseBadRequest("Invalid Request")
 
     user_count = 0
-    (is_multi_domain_download, domains_list) = get_domains_from_user_filters(domain, user_filters)
+    (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
