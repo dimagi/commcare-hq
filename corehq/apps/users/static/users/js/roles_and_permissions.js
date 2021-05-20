@@ -61,7 +61,6 @@ hqDefine("users/js/roles_and_permissions",[
             saveUrl: url("post_user_role"),
             deleteUrl: url("delete_user_role"),
             reportOptions: initialPageData.get("report_list"),
-            webAppsList: initialPageData.get("web_apps_list"),
             appsList: initialPageData.get("apps_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
