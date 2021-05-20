@@ -20,7 +20,6 @@ from corehq.motech.value_source import (
     as_value_source,
 )
 from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
-from corehq.motech.fhir import signals  # noqa # pylint: disable=unused-import
 
 from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from .validators import validate_supported_type
