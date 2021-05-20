@@ -28,7 +28,7 @@ hqDefine('users/js/filtered_download', [
             data: currentFilters,
             success: function (data) {
                 var count = data.count;
-                var template = count === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> records");
+                var template = count === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> users");
                 $submitButton.text(_.template(template)({count: count}));
             },
             error: function () {
