@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from base64 import b64decode
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -24,6 +25,9 @@ from ..api.core import UserError
 from ..api.get_list import MAX_PAGE_SIZE, get_list
 from ..utils import submit_case_blocks
 
+GOOD_GUYS_ID = str(uuid.uuid4())
+BAD_GUYS_ID = str(uuid.uuid4())
+
 
 @es_test
 @privilege_enabled(privileges.API_ACCESS)
@@ -47,9 +51,7 @@ class TestCaseListAPI(TestCase):
     @classmethod
     def _mk_cases(cls):
         case_blocks = []
-        good_id = str(uuid.uuid4())
-        bad_id = str(uuid.uuid4())
-        for team_id, name in [(good_id, 'good_guys'), (bad_id, 'bad_guys')]:
+        for team_id, name in [(GOOD_GUYS_ID, 'good_guys'), (BAD_GUYS_ID, 'bad_guys')]:
             case_blocks.append(CaseBlock(
                 case_id=team_id,
                 case_type='team',
@@ -61,11 +63,11 @@ class TestCaseListAPI(TestCase):
 
         date_opened = datetime.datetime(1878, 2, 17, 12)
         for external_id, name, properties, team_id in [
-                ('mattie', "Mattie Ross", {}, good_id),
-                ('rooster', "Reuben Cogburn", {"alias": "Rooster"}, good_id),
-                ('laboeuf', "LaBoeuf", {"alias": ""}, good_id),
-                ('chaney', "Tom Chaney", {"alias": "The Coward"}, bad_id),
-                ('ned', "Ned Pepper", {"alias": "Lucky Ned"}, bad_id),
+                ('mattie', "Mattie Ross", {}, GOOD_GUYS_ID),
+                ('rooster', "Reuben Cogburn", {"alias": "Rooster"}, GOOD_GUYS_ID),
+                ('laboeuf', "LaBoeuf", {"alias": ""}, GOOD_GUYS_ID),
+                ('chaney', "Tom Chaney", {"alias": "The Coward"}, BAD_GUYS_ID),
+                ('ned', "Ned Pepper", {"alias": "Lucky Ned"}, BAD_GUYS_ID),
         ]:
             case_blocks.append(CaseBlock(
                 case_id=str(uuid.uuid4()),
@@ -96,20 +98,20 @@ class TestCaseListAPI(TestCase):
 
     def test_pagination(self):
         res = get_list(self.domain, {"limit": "3", "case_type": "person"})
-        self.assertItemsEqual(res.keys(), ['next', 'cases', 'total'])
-        self.assertEqual(res['total'], 5)
+        self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
+        self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
             ['mattie', 'rooster', 'laboeuf'],
             [c['external_id'] for c in res['cases']]
         )
-        self.assertDictContainsSubset({
-            "limit": "3",
-            "case_type": "person",
-        }, res['next'])
-        self.assertIn('indexed_on.gte', res['next'])
+
+        cursor = b64decode(res['next']['cursor']).decode('utf-8')
+        self.assertIn('limit=3', cursor)
+        self.assertIn('case_type=person', cursor)
+        self.assertIn('indexed_on.gte', cursor)
 
         res = get_list(self.domain, res['next'])
-        self.assertEqual(res['total'], 3)
+        self.assertEqual(res['matching_records'], 3)
         self.assertEqual(
             ['laboeuf', 'chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
@@ -141,6 +143,7 @@ class TestCaseListAPI(TestCase):
     ('property.foo={"test": "json"}', []),  # This is escaped as expected
     ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
     ('xpath=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
+    (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()
@@ -157,6 +160,7 @@ def test_case_list_queries(self, querystring, expected):
     ("password=1234", "'password' is not a valid parameter."),
     ("case_name.gte=a", "'case_name.gte' is not a valid parameter."),
     ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
+    ("date_opened.start=2020-01-30", "'start' is not a valid type of date range."),
     ('xpath=gibberish',
      "Bad XPath: Your search query is required to have at least one boolean "
      "operator (>, >=, <, <=, =, !=)"),
