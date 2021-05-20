@@ -845,6 +845,9 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.domain = domain
         request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
+    if notification.doc_type != 'ReportNotification' or notification.domain != domain:
+        raise Http404
+
     return _render_report_configs(
         request,
         notification.configs,
@@ -883,7 +886,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
+        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
