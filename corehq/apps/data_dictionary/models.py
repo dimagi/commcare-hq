@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -91,3 +93,11 @@ class CaseProperty(models.Model):
         from .util import get_data_dict_props_by_case_type
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
         return super(CaseProperty, self).save(*args, **kwargs)
+
+    def valid_value(self, value):
+        if self.data_type == 'date':
+            try:
+                datetime.strptime(value, '%Y-%m-%d')
+            except ValueError:
+                return False
+        return True
