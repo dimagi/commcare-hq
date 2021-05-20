@@ -709,8 +709,8 @@ def create_domain_permission_mirror(request, domain):
                 mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
                 mirror.save()
             except IntegrityError:
-                message = _(mirror_domain_name + ' has already been added.')
-                messages.error(request, message)
+                message = _('"{mirror_domain_name}" has already been added.')
+                messages.error(request, message.format(mirror_domain_name=mirror_domain_name))
             else:
                 message = _('You have successfully added the project space "{mirror_domain_name}".')
                 messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
