@@ -1,9 +1,11 @@
 hqDefine("reports/js/config.dataTables.bootstrap", [
     'jquery',
+    'underscore',
     'analytix/js/google',
     'datatables.bootstrap',
 ], function (
     $,
+    _,
     googleAnalytics
 ) {
     var HQReportDataTables = function (options) {
