@@ -28,6 +28,7 @@ from custom.onse.const import (
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
     MAX_RETRY_ATTEMPTS,
+    TASK_RETRY_FACTOR
 )
 from custom.onse.models import iter_mappings
 
@@ -84,11 +85,11 @@ def update_facility_cases_from_dhis2_data_elements(
         otherwise they are emailed.
 
     """
-    _update_facility_cases_from_dhis2_data_elements(period, print_notifications)
+    _update_facility_cases_from_dhis2_data_elements.delay(period, print_notifications)
 
 
-@task
-def _update_facility_cases_from_dhis2_data_elements(period, print_notifications, retry_attempt=0):
+@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
@@ -98,28 +99,13 @@ def _update_facility_cases_from_dhis2_data_elements(period, print_notifications,
         _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
         exception = server_status['error']
-        message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {exception}.'
+        retry_days = 2 ** self.request.retries
 
-        retry_attempt += 1
-        if retry_attempt <= MAX_RETRY_ATTEMPTS:
-            retry_in_n_days = 2 ** (retry_attempt - 1)
-            retry_date = datetime.utcnow() + relativedelta(days=retry_in_n_days)
-            retry_message = f'{message} Retrying on {retry_date.date()}'
+        message = f'Importing {DOMAIN.upper()} cases from {CONNECTION_SETTINGS_NAME} failed: {exception}. ' \
+                  f'Retrying in {retry_days} days'
+        _notify_message(print_notifications, message, dhis2_server, exception)
 
-            _notify_message(print_notifications, retry_message, dhis2_server, exception)
-
-            _schedule_execution(
-                _update_facility_cases_from_dhis2_data_elements,
-                [period, print_notifications, retry_attempt],
-                retry_date
-            )
-        else:
-            message = f'{message} No more retries.'
-            _notify_message(print_notifications, message, dhis2_server, exception)
-
-
-def _schedule_execution(callback_task, args: list, on_date: datetime):
-    callback_task.apply_async(tuple(args), eta=on_date)
+        self.retry(countdown=(retry_days * TASK_RETRY_FACTOR))
 
 
 def _check_server_status(dhis2_server: ConnectionSettings):
