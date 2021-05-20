@@ -35,7 +35,7 @@ class Command(BaseCommand):
             case_blocks.append(ElementTree.tostring(CaseBlock.deprecated_init(
                 create=False,
                 case_id=case.case_id,
-                update={"closed": ""},
+                update={"closed": case.closed},
             ).as_xml(), encoding='utf-8').decode('utf-8'))
 
         total = 0
