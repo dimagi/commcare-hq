@@ -519,7 +519,8 @@
           {% trans "Edit Filters" %}
         </a>
       {% endif %}
-      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default">
+      {% trans "Download a Data Export Tool configuration file for this export" as det_help %}
+      <a data-bind="visible: showDetDownload, attr: {href: detSchemaUrl}" class="btn btn-default" title="{{ det_help }}">
         <i class="fa fa-download"></i>
         {% trans "DET Config" %}
       </a>
