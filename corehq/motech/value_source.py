@@ -1,3 +1,118 @@
+"""
+Mapping data using ValueSource
+==============================
+
+DHIS2-, OpenMRS- and FHIR Integration all use the ValueSource class to
+map CommCare data to API resources.
+
+A ValueSource is given in JSON format. e.g.
+
+.. code-block:: javascript
+
+   {
+     "case_property": "active",
+     "jsonpath": "$.active"
+   }
+
+This ValueSource maps the value from the case property named "active" to
+the "active" property of an API resource.
+
+
+Different Sources of Values
+---------------------------
+
+The ValueSource class supports several different sources of values:
+
+* ``case_property``: As seen above, a ValueSource can be used for
+  fetching a value from a case property, or setting a value on a case
+  property.
+
+* ``form_question``: Fetches a value from a form question. e.g.
+  "/data/foo/bar" will get the value of a form question named "bar" in
+  the group "foo". Form metadata is also available, e.g.
+  "/metadata/received_on" is the server time when the form submission
+  was received. You can find more details in the source code at
+  corehq.motech.value_source:FormQuestion
+
+* ``case_owner_ancestor_location_field``: Specifies a location metadata
+  field name. The ValueSource will start at the location of the case
+  owner, traverse up their location hierarchy, and return the first
+  value it finds for a location with that field. This can be used for
+  mapping CommCare locations to locations or organization units in a
+  remote system.
+
+* ``form_user_ancestor_location_field``: Specifies a location metadata
+  field name. Similar to `case_owner_ancestor_location_field` but for
+  forms instead of cases.  The ValueSource will start at the location of
+  the user who submitted the form, traverse up their location hierarchy,
+  and return the first value it finds for a location with that field.
+  This can be used for mapping CommCare locations to locations or
+  organization units in a remote system.
+
+* ``subcase_value_source``: Defines a ValueSource to be evaluated on the
+  subcases of a case. e.g.
+
+  .. code-block:: javascript
+     {
+       "subcase_value_source": {"case_property": "name"}
+       "case_type": "child",
+       "is_closed": false,
+       "jsonpath": "$.childrensNames"
+     }
+
+* ``supercase_value_source``: Defines a ValueSource to be evaluated on
+  the parent/host case of a case. e.g.
+
+  .. code-block:: javascript
+
+     {
+       "supercase_value_source": {"case_property": "name"}
+       "referenced_type": "mother",
+       "jsonpath": "$.mothersName"
+     }
+
+* ``value``: A constant value. This can be used for exporting a
+  constant, or it can be combined with `case_property` for importing a
+  constant value to a case property. See
+  corehq.motech.value_source:ConstantValue for more details.
+
+
+Data Types
+----------
+
+Use data type declarations to cast the data type of a value. e.g.
+
+.. code-block:: javascript
+
+   {
+     "case_property": "active",
+     "jsonpath": "$.active",
+     "external_data_type": "cc_boolean"
+   }
+
+"cc_" is a namespace for CommCare data types. For more details, see the
+``serializers`` module in ``motech`` and its submodules.
+
+
+JSONPath
+--------
+
+JSONPath has emerged as a standard for navigating JSON documents, and it
+is supported by `PostgreSQL`_, `SQL Server`_, and others. ValueSource
+uses it to read values from JSON API resources.
+
+And, in the case of FHIR Integration, it also uses it to build FHIR
+resources.
+
+See the `article by Stefan Goessner`_, who created JSONPath, for more
+details.
+
+
+.. _PostgreSQL: https://www.postgresql.org/docs/12/functions-json.html#FUNCTIONS-SQLJSON-PATH
+.. _SQL Server: https://docs.microsoft.com/en-us/sql/relational-databases/json/json-path-expressions-sql-server
+.. _article by Stefan Goessner: https://goessner.net/articles/JsonPath/
+
+"""
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import attr
