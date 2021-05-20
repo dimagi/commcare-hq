@@ -80,6 +80,7 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
+        self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
@@ -102,8 +103,8 @@ class _Importer(object):
             return self.results.to_json()
 
     def import_row(self, row_num, raw_row):
-        search_id = _parse_search_id(self.config, raw_row)
-        fields_to_update = _populate_updated_fields(self.config, raw_row)
+        search_id = self._parse_search_id(raw_row)
+        fields_to_update = self._populate_updated_fields(raw_row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
@@ -194,6 +195,92 @@ class _Importer(object):
             self.user.user_id,
             device_id=__name__ + ".do_import",
         )
+
+    def _parse_search_id(self, row):
+        """ Find and convert the search id in an Excel row """
+
+        # Find index of user specified search column
+        search_column = self.config.search_column
+        search_id = row[search_column] or ''
+
+        try:
+            # if the spreadsheet gives a number, strip any decimals off
+            # float(x) is more lenient in conversion from string so both
+            # are used
+            search_id = int(float(search_id))
+        except (ValueError, TypeError, OverflowError):
+            # if it's not a number that's okay too
+            pass
+
+        return _convert_field_value(search_id)
+
+    def _populate_updated_fields(self, row):
+        """
+        Returns a dict map of fields that were marked to be updated
+        due to the import. This can be then used to pass to the CaseBlock
+        to trigger updates.
+        """
+        field_map = self.field_map
+        fields_to_update = {}
+        for key in field_map:
+            try:
+                update_value = row[key]
+            except Exception:
+                continue
+
+            if 'field_name' in field_map[key]:
+                update_field_name = field_map[key]['field_name'].strip()
+            else:
+                # nothing was selected so don't add this value
+                continue
+
+            if update_field_name in RESERVED_FIELDS:
+                if update_field_name == 'parent_ref':
+                    raise exceptions.InvalidCustomFieldNameException(
+                        _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
+                else:
+                    raise exceptions.InvalidCustomFieldNameException(
+                        _('Field name "{}" is reserved').format(update_field_name))
+
+            if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
+                # If we find any instances of blanks ('---'), convert them to an
+                # actual blank value without performing any data type validation.
+                # This is to be consistent with how the case export works.
+                update_value = ''
+            elif update_value is not None:
+                update_value = _convert_field_value(update_value)
+
+            fields_to_update[update_field_name] = update_value
+
+        return fields_to_update
+
+    def _create_field_map(self):
+        config = self.config
+        excel_fields = config.excel_fields
+        case_fields = config.case_fields
+        custom_fields = config.custom_fields
+
+        field_map = {}
+        for i, field in enumerate(excel_fields):
+            if field:
+                field_map[field] = {}
+
+                if case_fields[i]:
+                    field_map[field]['field_name'] = case_fields[i]
+                elif custom_fields[i]:
+                    # if we have configured this field for external_id populate external_id instead
+                    # of the default property name from the column
+                    if config.search_field == EXTERNAL_ID and field == config.search_column:
+                        field_map[field]['field_name'] = EXTERNAL_ID
+                    else:
+                        field_map[field]['field_name'] = custom_fields[i]
+        # hack: make sure the external_id column ends up in the field_map if the user
+        # didn't explicitly put it there
+        if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
+            field_map[config.search_column] = {
+                'field_name': EXTERNAL_ID
+            }
+        return field_map
 
 
 class _TimedAndThrottledImporter(_Importer):
@@ -399,34 +486,6 @@ def _log_case_lookup(domain):
     case_load_counter("case_importer", domain)
 
 
-def _convert_custom_fields_to_struct(config):
-    excel_fields = config.excel_fields
-    case_fields = config.case_fields
-    custom_fields = config.custom_fields
-
-    field_map = {}
-    for i, field in enumerate(excel_fields):
-        if field:
-            field_map[field] = {}
-
-            if case_fields[i]:
-                field_map[field]['field_name'] = case_fields[i]
-            elif custom_fields[i]:
-                # if we have configured this field for external_id populate external_id instead
-                # of the default property name from the column
-                if config.search_field == EXTERNAL_ID and field == config.search_column:
-                    field_map[field]['field_name'] = EXTERNAL_ID
-                else:
-                    field_map[field]['field_name'] = custom_fields[i]
-    # hack: make sure the external_id column ends up in the field_map if the user
-    # didn't explicitly put it there
-    if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
-        field_map[config.search_column] = {
-            'field_name': EXTERNAL_ID
-        }
-    return field_map
-
-
 class _ImportResults(object):
     CREATED = 'created'
     UPDATED = 'updated'
@@ -475,66 +534,6 @@ class _ImportResults(object):
 def _convert_field_value(value):
     # coerce to string unless it's a unicode string then we want that
     return value if isinstance(value, str) else str(value)
-
-
-def _parse_search_id(config, row):
-    """ Find and convert the search id in an Excel row """
-
-    # Find index of user specified search column
-    search_column = config.search_column
-    search_id = row[search_column] or ''
-
-    try:
-        # if the spreadsheet gives a number, strip any decimals off
-        # float(x) is more lenient in conversion from string so both
-        # are used
-        search_id = int(float(search_id))
-    except (ValueError, TypeError, OverflowError):
-        # if it's not a number that's okay too
-        pass
-
-    return _convert_field_value(search_id)
-
-
-def _populate_updated_fields(config, row):
-    """
-    Returns a dict map of fields that were marked to be updated
-    due to the import. This can be then used to pass to the CaseBlock
-    to trigger updates.
-    """
-    field_map = _convert_custom_fields_to_struct(config)
-    fields_to_update = {}
-    for key in field_map:
-        try:
-            update_value = row[key]
-        except Exception:
-            continue
-
-        if 'field_name' in field_map[key]:
-            update_field_name = field_map[key]['field_name'].strip()
-        else:
-            # nothing was selected so don't add this value
-            continue
-
-        if update_field_name in RESERVED_FIELDS:
-            if update_field_name == 'parent_ref':
-                raise exceptions.InvalidCustomFieldNameException(
-                    _('Field name "{}" is deprecated. Please use "parent_identifier" instead.'))
-            else:
-                raise exceptions.InvalidCustomFieldNameException(
-                    _('Field name "{}" is reserved').format(update_field_name))
-
-        if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
-            # If we find any instances of blanks ('---'), convert them to an
-            # actual blank value without performing any data type validation.
-            # This is to be consistent with how the case export works.
-            update_value = ''
-        elif update_value is not None:
-            update_value = _convert_field_value(update_value)
-
-        fields_to_update[update_field_name] = update_value
-
-    return fields_to_update
 
 
 class _OwnerAccessor(object):
