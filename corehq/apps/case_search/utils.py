@@ -88,7 +88,8 @@ class CaseSearchCriteria(object):
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         drop_keys = []
         for key, val in self.criteria.items():
-            if val.startswith('__range__'):
+            # multiple daterange query param values are not supported
+            if not isinstance(val, list) and val.startswith('__range__'):
                 match = pattern.match(val)
                 if match:
                     [_, _, startdate, enddate] = val.split('__')
@@ -116,9 +117,15 @@ class CaseSearchCriteria(object):
             )
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
-                value = re.sub(to_remove, '', value)
+                if isinstance(value, list):
+                    new_value = []
+                    for val in value:
+                        new_value.append(re.sub(to_remove, '', value))
+                else:
+                    value = re.sub(to_remove, '', value)
 
             if '/' in key:
+                assert not isinstance(value, list), "Multiple xpath queries for a query param is not supported"
                 query = '{} = "{}"'.format(key, value)
                 self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=(key in fuzzies))
             else:
