@@ -7,6 +7,16 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
+
+# NOTE: the following variable is:
+#   - Used by the 'run_tests' subcommand only.
+#   - Not externally exposed because it's only useful for debugging this script.
+# Enabling this option skips setup and actual tests and instead runs some recon
+# commands inside the container for debugging overlay filesystem configurations,
+# owners and file modes.
+DOCKER_OVERLAY_TEST_DEBUG='no'
+
+
 function logmsg {
     local script=$(basename "$0")
     local levelname="$1"
@@ -87,27 +97,53 @@ function run_tests {
         exit 1
     fi
     shift
-    # ensure overlayfs (CWD) is readable and emit a useful message if it is not
-    if ! su cchq -c "test -r ."; then
-        logmsg ERROR "commcare-hq filesystem (${DOCKER_HQ_OVERLAY}) is not readable (consider setting/changing DOCKER_HQ_OVERLAY)"
-        exit 1
+    if [ "$DOCKER_OVERLAY_TEST_DEBUG" == "yes" ]; then
+        # skip setup and tests and run debugging commands instead
+        function overlay_debug {
+            function logdo {
+                echo -e "\\n$ $*"
+                "$@"
+            }
+            logdo sh -c "mount | grep 'on /mnt/'"
+            logdo id
+            logdo pwd
+            logdo ls -ld . .. corehq manage.py node_modules staticfiles
+            if logdo df -hP .; then
+                upone=..
+            else
+                # can't read CWD, use absolute path
+                upone=$(dirname "$(pwd)")
+            fi
+            logdo ls -la "$upone"
+            for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
+                logdo ls -la "$dirpath"
+            done
+            logdo cat -n ../run_tests
+        }
+        echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
+    else
+        # ensure overlayfs (CWD) is readable and emit a useful message if it is not
+        if ! su cchq -c "test -r ."; then
+            logmsg ERROR "commcare-hq filesystem (${DOCKER_HQ_OVERLAY}) is not readable (consider setting/changing DOCKER_HQ_OVERLAY)"
+            exit 1
+        fi
+
+        now=$(date +%s)
+        setup "$TEST"
+        delta=$(($(date +%s) - $now))
+
+        send_timing_metric_to_datadog "setup" $delta
+
+        now=$(date +%s)
+        argv_str=$(printf ' %q' "$TEST" "$@")
+        su cchq -c "/bin/bash ../run_tests $argv_str"
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+        [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+        delta=$(($(date +%s) - $now))
+
+        send_timing_metric_to_datadog "tests" $delta
+        send_counter_metric_to_datadog
     fi
-
-    now=$(date +%s)
-    setup "$TEST"
-    delta=$(($(date +%s) - $now))
-
-    send_timing_metric_to_datadog "setup" $delta
-
-    now=$(date +%s)
-    argv_str=$(printf '%q ' "$TEST" "$@")
-    su cchq -c "/bin/bash ../run_tests $argv_str"
-    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-    [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-    delta=$(($(date +%s) - $now))
-
-    send_timing_metric_to_datadog "tests" $delta
-    send_counter_metric_to_datadog
 }
 
 function send_timing_metric_to_datadog() {
