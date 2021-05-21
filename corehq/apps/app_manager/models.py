@@ -1965,7 +1965,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     instance_name = StringProperty(default='casedb')
@@ -2016,9 +2015,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def sort_nodeset_columns_for_detail(self):
         return (
-            self.display == "long" and
-            self.sort_nodeset_columns and
-            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+            self.display == "long"
+            and any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
     def has_persistent_tile(self):
