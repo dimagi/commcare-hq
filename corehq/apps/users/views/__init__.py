@@ -701,25 +701,13 @@ def delete_domain_permission_mirror(request, domain, mirror):
 @require_POST
 def create_domain_permission_mirror(request, domain):
     form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if form.is_valid():
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if mirror_domain is not None:
-            try:
-                mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
-                mirror.save()
-            except IntegrityError:
-                message = _('"{mirror_domain_name}" has already been added.')
-                messages.error(request, message.format(mirror_domain_name=mirror_domain_name))
-            else:
-                message = _('You have successfully added the project space "{mirror_domain_name}".')
-                messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-        else:
-            message = _('Please enter a valid project space.')
-            messages.error(request, message.format())
-    else:
+    if not form.is_valid():
         for field, message in form.errors.items():
             messages.error(request, message)
+    else:
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        message = _('You have successfully added the project space "{mirror_domain_name}".')
+        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
