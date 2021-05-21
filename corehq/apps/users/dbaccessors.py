@@ -150,7 +150,7 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
 
     Applies "search_string" filter to the invitations' emails. This does not
     support ES search syntax, it's just a case-insensitive substring search.
-    Ignores location filter.
+    Ignores any other filters.
     """
     filters = {}
     search_string = user_filters.get("search_string", None)
