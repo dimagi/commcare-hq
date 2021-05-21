@@ -70,7 +70,7 @@ class CaseSearchCriteria(object):
     def _validate_param_value(self, key, value):
         if isinstance(value, list):
             raise CaseFilterError(
-                _("Multiple xpath queries for a query param is not supported"),
+                _("Multiple values for this param is not supported"),
                 key
             )
 
@@ -100,7 +100,9 @@ class CaseSearchCriteria(object):
         drop_keys = []
         for key, val in self.criteria.items():
             # multiple daterange query param values are not supported
-            if not isinstance(val, list) and val.startswith('__range__'):
+            if isinstance(val, list) and val.startswith('__range__'):
+                self._validate_param_value(key, val)
+            elif val.startswith('__range__'):
                 match = pattern.match(val)
                 if match:
                     [_, _, startdate, enddate] = val.split('__')
