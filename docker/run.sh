@@ -128,10 +128,6 @@ function runserver() {
 
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 
-export -f setup
-export -f run_tests
-export -f bootstrap
-
 # put _run_tests body code in a file so it can be run as cchq
 printf "#! /bin/bash\nset -e\n" > /mnt/run_tests
 type _run_tests | tail -n +4 | head -n -1 >> /mnt/run_tests
