@@ -1,6 +1,7 @@
 import datetime
 from unittest.mock import ANY, patch
 
+from django.test import TestCase
 from freezegun import freeze_time
 
 from corehq.apps.sso.certificates import DEFAULT_EXPIRATION
@@ -10,14 +11,23 @@ from corehq.apps.sso.tasks import (
     renew_service_provider_x509_certificates,
     create_rollover_service_provider_x509_certificates,
 )
-from corehq.apps.sso.tests.base_test import BaseIdPTest
+from corehq.apps.sso.tests import generator
 
 
 def _get_days_before_expiration(days_before):
     return (DEFAULT_EXPIRATION / (24 * 60 * 60)) - days_before
 
 
-class TestSSOTasks(BaseIdPTest):
+class TestSSOTasks(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.account = generator.get_billing_account_for_idp()
+
+    def setUp(self):
+        super().setUp()
+        self.idp = generator.create_idp('vaultwax', self.account)
 
     def test_create_rollover_service_provider_x509_certificates(self):
         self.idp.create_service_provider_certificate()
@@ -114,3 +124,12 @@ class TestSSOTasks(BaseIdPTest):
     def test_idp_cert_expires_reminder_inactive(self):
         self.set_idp_active(False)
         self.assert_idp_cert_expires_reminder(False)
+
+    def tearDown(self):
+        self.idp.delete()
+        super().tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.account.delete()
+        super().tearDownClass()
