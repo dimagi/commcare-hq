@@ -1,4 +1,5 @@
 import re
+from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -13,6 +14,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 
 
 class CaseSearchCriteria(object):
@@ -65,13 +67,22 @@ class CaseSearchCriteria(object):
         self._add_daterange_queries()
         self._add_case_property_queries()
 
+    def _validate_param_value(self, key, value):
+        if isinstance(value, list):
+            raise CaseFilterError(
+                _("Multiple xpath queries for a query param is not supported"),
+                key
+            )
+
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
+        self._validate_param_value(CASE_SEARCH_XPATH_QUERY_KEY, query)
         if query:
             self.search_es = self.search_es.xpath_query(self.domain, query)
 
     def _add_owner_id(self):
         owner_id = self.criteria.pop('owner_id', False)
+        self._validate_param_value('owner_id', owner_id)
         if owner_id:
             self.search_es = self.search_es.owner(owner_id)
 
@@ -125,7 +136,7 @@ class CaseSearchCriteria(object):
                     value = re.sub(to_remove, '', value)
 
             if '/' in key:
-                assert not isinstance(value, list), "Multiple xpath queries for a query param is not supported"
+                self._validate_param_value(key, value)
                 query = '{} = "{}"'.format(key, value)
                 self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=(key in fuzzies))
             else:
