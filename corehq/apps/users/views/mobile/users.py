@@ -116,8 +116,11 @@ from corehq.apps.users.util import (
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
+    BaseManageWebUserView,
+    BaseUploadUser,
+    UserUploadJobPollView,
     BaseUserSettingsView,
-    get_domain_languages, BaseUploadUser, UserUploadJobPollView,
+    get_domain_languages,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -1124,7 +1127,7 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-class FilteredUserDownload(BaseManageCommCareUserView):
+class FilteredUserDownload(BaseUserSettingsView):
     page_title = ugettext_noop('Filter and Download Users')
 
     def get(self, request, domain, *args, **kwargs):
@@ -1141,7 +1144,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
 
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
-class FilteredCommCareUserDownload(FilteredUserDownload):
+class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
@@ -1152,7 +1155,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload):
 
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
-class FilteredWebUserDownload(FilteredUserDownload):
+class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
