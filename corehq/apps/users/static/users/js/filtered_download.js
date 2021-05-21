@@ -21,6 +21,10 @@ hqDefine('users/js/filtered_download', [
         self.columns = ko.observable();
         self.domains = ko.observableArray();
 
+        self.isCrossDomain = ko.computed(function () {
+            return self.domains() && self.domains().length > 0;
+        });
+
         self.count = ko.observable(null);
         self.buttonHTML = ko.computed(function () {
             if (self.count() === null) {
@@ -34,14 +38,19 @@ hqDefine('users/js/filtered_download', [
 
         self.countUsers = function () {
             self.count(null);
+            var data = {
+                search_string: self.search_string(),
+                domains: self.domains(),
+            };
+            if (!self.isCrossDomain()) {
+                data = _.extend(data, {
+                    role_id: self.role_id(),
+                    location_id: self.location_id(),
+                });
+            }
             $.get({
                 url: options.url,
-                data: {
-                    role_id: self.role_id(),
-                    search_string: self.search_string(),
-                    location_id: self.location_id(),
-                    domains: self.domains(),
-                },
+                data: data,
                 success: function (data) {
                     self.count(data.count);
                 },

@@ -1232,12 +1232,16 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = [
-            crispy.Field("role_id", css_class="hqwebapp-select2", data_bind="value: role_id"),
+            crispy.Field(
+                "role_id",
+                css_class="hqwebapp-select2",
+                data_bind="value: role_id, disable: isCrossDomain()",
+            ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
         if self.user_type == MOBILE_USER_TYPE:
             fields += [
-                crispy.Field("location_id", data_bind="value: location_id"),
+                crispy.Field("location_id", data_bind="value: location_id, disable: isCrossDomain()"),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
         fields += [crispy.Field("domains", data_bind="value: domains")]
