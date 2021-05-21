@@ -27,7 +27,6 @@ ACCESS_LOOKUP = {
 }
 
 
-@periodic_task(run_every=crontab(minute="30"), queue='background_queue')
 def copy_events_to_sql(limit=1000):
     db = get_db("auditcare")
     start_date = get_sql_start_date()
@@ -42,6 +41,7 @@ def copy_events_to_sql(limit=1000):
         start_date.second,
         start_date.microsecond,
     ]
+    count = 0
     for result in db.view(
         "auditcare/all_events",
         startkey=startkey,
@@ -77,6 +77,7 @@ def copy_events_to_sql(limit=1000):
                     "path": doc.get("path_info"),
                 })
                 AccessAudit(**kwargs).save()
+            count += 1
         except Exception:
             message = f"Error in copy_events_to_sql on doc {doc['_id']}"
             notify_exception(None, message=message)
@@ -86,6 +87,8 @@ def copy_events_to_sql(limit=1000):
 
     final_start_date = get_sql_start_date()
     log.info(f"Final start date: {final_start_date}")
+
+    return count
 
 
 def _pick(doc, keys):
