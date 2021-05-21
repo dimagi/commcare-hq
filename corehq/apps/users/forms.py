@@ -1190,7 +1190,7 @@ class UserFilterForm(forms.Form):
         required=False,
         label=ugettext_noop("Columns"),
         choices=COLUMNS_CHOICES,
-        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
+        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=False),
     )
     domains = forms.MultipleChoiceField(
         required=False,
@@ -1232,15 +1232,15 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = [
-            crispy.Field('role_id', css_class="hqwebapp-select2"),
-            crispy.Field('search_string'),
+            crispy.Field("role_id", css_class="hqwebapp-select2", data_bind="value: role_id"),
+            crispy.Field("search_string", data_bind="value: search_string"),
         ]
         if self.user_type == MOBILE_USER_TYPE:
             fields += [
-                crispy.Field('location_id'),
-                crispy.Field('columns'),
+                crispy.Field("location_id", data_bind="value: location_id"),
+                crispy.Field("columns", data_bind="value: columns"),
             ]
-        fields += [crispy.Field('domains')]
+        fields += [crispy.Field("domains", data_bind="value: domains")]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1251,7 +1251,8 @@ class UserFilterForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Download All Users"),
                     type="submit",
-                    css_class="btn btn-primary submit_button",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
                 )
             ),
         )
