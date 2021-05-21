@@ -8,7 +8,7 @@ class Command(AppMigrationCommandBase):
     help = "One-time migration to replace CaseSearch command_label and again_label with " \
            "search_label and search_again_label"
 
-    chunk_size = 20
+    chunk_size = 10
     include_builds = True
     include_linked_apps = True
 
