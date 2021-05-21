@@ -1,8 +1,6 @@
 import logging
 import sys
 
-from celery.schedules import crontab
-from celery.task import periodic_task
 from couchdbkit.ext.django.loading import get_db
 
 from dimagi.utils.dates import force_to_datetime
