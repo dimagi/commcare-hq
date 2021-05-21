@@ -68,8 +68,8 @@ branches:
     - jls/cross-domain-web-user-download # Jenny April 24
     - smh/embedded-tableau # Steph May 7
     - jm/idp-cert-alert # Joel May 12
-    - jm/pip-21.1.1 # Joel May 18
     - gh/add-app-id-to-downstream-report # Graham May 18
     - rp/subscription-notification-change # Rynhard May 18
-
+    - sk/sql-user-role  # Simon May 19
+    - dmr/tighten-view-scheduled-report  # Danny May 19
 submodules: { }
