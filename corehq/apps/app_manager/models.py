@@ -1461,7 +1461,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return custom_icon.form, custom_icon_text
         return None, None
 
-    def _set_media(self, media_attr, lang, media_path):
+    def set_media(self, media_attr, lang, media_path):
         """
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
@@ -1484,10 +1484,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
+        self.set_media('media_image', lang, icon_path)
 
     def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
+        self.set_media('media_audio', lang, audio_path)
 
     def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
