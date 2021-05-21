@@ -6,6 +6,7 @@ hqDefine('users/js/filtered_download', [
     'hqwebapp/js/widgets',      // role selection
     'locations/js/widgets',     // location search
     'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/knockout_bindings.ko', // slideVisible binding
 ], function (
     $,
     ko,

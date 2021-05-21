@@ -1214,12 +1214,10 @@ class UserFilterForm(forms.Form):
             (role._id, role.name or _('(No Name)')) for role in roles
         ]
 
-        self.fields['domains'].choices = [(self.domain, self.domain)]
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
-            self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
-                                             [(self.domain, self.domain)] + \
-                                             [(domain, domain) for domain in
-                                              DomainPermissionsMirror.mirror_domains(self.domain)]
+        self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
+                                         [(self.domain, self.domain)] + \
+                                         [(domain, domain) for domain in
+                                          DomainPermissionsMirror.mirror_domains(self.domain)]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1231,20 +1229,28 @@ class UserFilterForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
-        fields = [
-            crispy.Field(
-                "role_id",
-                css_class="hqwebapp-select2",
-                data_bind="value: role_id, disable: isCrossDomain()",
+        fields = []
+        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+            fields += [crispy.Field("domains", data_bind="value: domains")]
+        fields += [
+            crispy.Div(
+                crispy.Field(
+                    "role_id",
+                    css_class="hqwebapp-select2",
+                    data_bind="value: role_id",
+                ),
+                data_bind="slideVisible: !isCrossDomain()",
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
         if self.user_type == MOBILE_USER_TYPE:
             fields += [
-                crispy.Field("location_id", data_bind="value: location_id, disable: isCrossDomain()"),
+                crispy.Div(
+                    crispy.Field("location_id", data_bind="value: location_id"),
+                    data_bind="slideVisible: !isCrossDomain()",
+                ),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
-        fields += [crispy.Field("domains", data_bind="value: domains")]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
