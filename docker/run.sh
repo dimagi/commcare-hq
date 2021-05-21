@@ -18,9 +18,14 @@ DOCKER_OVERLAY_TEST_DEBUG='no'
 
 
 function logmsg {
+    local echo_args=( -e )
     local script=$(basename "$0")
     local levelname="$1"
     shift
+    if [ "x${1}" == "x-n" ]; then
+        shift
+        echo_args+=( -n )
+    fi
     local msg="$*"
     local ccode=''
     local reset=''
@@ -44,7 +49,7 @@ function logmsg {
         ccode="\\033[${color}m"
         reset='\033[0m'
     fi
-    echo -e "[${script}] ${ccode}${levelname}${reset}: $msg" >&2
+    echo "${echo_args[@]}" "[${script}] ${ccode}${levelname}${reset}: $msg" >&2
 }
 
 function func_text {
@@ -57,6 +62,31 @@ function func_text {
         type "$func_name" | tail -n +2
         echo ''
     done
+}
+
+function truthy {
+    function _usage {
+        logmsg ERROR "USAGE: truthy [false|true|no|yes|off|on|0|1]"
+        logmsg ERROR "$*"
+    }
+    if [ $# -gt 1 ]; then
+        _usage "too many arguments: $*"
+        exit 1
+    fi
+    local value="$1"
+    if [ -n "$value" ]; then
+        if echo "$value" | grep -Ei '^(t(rue)?|y(es)?|on|1)$' >/dev/null; then
+            return 0
+        elif echo "$value" | grep -Ei '^(f(alse)?|n(o)?|off|0)$' >/dev/null; then
+            return 1
+        else
+            _usage "invalid boolean string: '$value'"
+            exit 1
+        fi
+    else
+        # absent == false
+        return 1
+    fi
 }
 
 function setup {
@@ -97,7 +127,7 @@ function run_tests {
         exit 1
     fi
     shift
-    if [ "$DOCKER_OVERLAY_TEST_DEBUG" == "yes" ]; then
+    if truthy "$DOCKER_OVERLAY_TEST_DEBUG"; then
         # skip setup and tests and run debugging commands instead
         function overlay_debug {
             function logdo {
@@ -107,7 +137,7 @@ function run_tests {
             logdo sh -c "mount | grep 'on /mnt/'"
             logdo id
             logdo pwd
-            logdo ls -ld . .. corehq manage.py node_modules staticfiles
+            logdo ls -ld . .. corehq manage.py node_modules staticfiles docker/wait.sh
             if logdo df -hP .; then
                 upone=..
             else
@@ -223,6 +253,12 @@ source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_d
 func_text logmsg _run_tests  > /mnt/run_tests
 echo '_run_tests "$@"'      >> /mnt/run_tests
 
+# Initial state of /mnt docker volumes:
+# /mnt/commcare-hq-ro:
+#   - points to local commcare-hq repo directory
+#   - read-only (except for travis).
+# /mnt/lib:
+#   - empty (except for travis)
 cd /mnt
 if [ "$DOCKER_HQ_OVERLAY" == "none" ]; then
     ln -s commcare-hq-ro commcare-hq
@@ -231,20 +267,84 @@ if [ "$DOCKER_HQ_OVERLAY" == "none" ]; then
 else
     # commcare-hq source overlay prevents modifications in this container
     # from leaking to the host; allows safe overwrite of localsettings.py
-    rm -rf lib/overlay  # clear source overlay
-    mkdir -p commcare-hq lib/overlay lib/node_modules lib/staticfiles
+    rm -rf lib/overlay  # clear source overlay (if it exists)
+    mkdir -p commcare-hq lib/{overlay,node_modules,staticfiles}
     ln -s /mnt/lib/node_modules lib/overlay/node_modules
     ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
     logmsg INFO "mounting $(pwd)/commcare-hq via $DOCKER_HQ_OVERLAY"
     if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
         rm -rf lib/work
         mkdir lib/work
-        mount -t overlay -olowerdir=commcare-hq-ro,upperdir=lib/overlay,workdir=lib/work overlay commcare-hq
+        overlayopts="lowerdir=/mnt/commcare-hq-ro,upperdir=/mnt/lib/overlay,workdir=/mnt/lib/work"
+        if truthy "$DOCKER_HQ_OVERLAYFS_METACOPY"; then
+            # see: https://www.kernel.org/doc/html/latest/filesystems/overlayfs.html#metadata-only-copy-up
+            # Significantly speeds up recursive chmods (<1sec when enabled
+            # compared to ~20sec when not). Provided as a configurable setting
+            # since there are security implications.
+            overlayopts="metacopy=on,${overlayopts}"
+        fi
+        mount -t overlay -o"$overlayopts" overlay commcare-hq
+        if truthy "$DOCKER_HQ_OVERLAYFS_CHMOD"; then
+            # May be required so cchq user can read files in the mounted
+            # commcare-hq volume. Provided as a configurable setting because it
+            # is an expensive operation and some container ecosystems (travis
+            # perhaps?) may not require it. I suspect this is the reason local
+            # testing was not working for many people in the past.
+            logmsg INFO -n "chmod'ing commcare-hq overlay... "
+            now=$(date +%s)
+            # add world-read (and world-x for dirs and existing-x files)
+            chmod -R o+rX commcare-hq
+            delta=$(($(date +%s) - $now))
+            echo "(delta=${delta}sec)" >&2  # append the previous log line
+        fi
     else
-        mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
+        # TODO: use overlayfs and drop support for aufs
+        mount -t aufs -o br=/mnt/lib/overlay:/mnt/commcare-hq-ro none commcare-hq
     fi
-    chown cchq:cchq lib/overlay lib/staticfiles
+    # Own the new dirs after the overlay is mounted.
+    chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
+    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
+    # with one that points at the overlay mount.
+    ln -sf commcare-hq/docker/wait.sh wait.sh
 fi
+# New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
+#
+# none (travis, typically):
+#   /mnt
+#   ├── commcare-hq -> commcare-hq-ro
+#   ├── commcare-hq-ro  # NOTE: not read-only
+#   │   ├── staticfiles
+#   │   │   └── [empty]
+#   │   └── [existing commcare-hq files...]
+#   └── lib
+#       └── [maybe files with travis...]
+#
+# overlayfs:
+#   /mnt
+#   ├── commcare-hq
+#   │   └── [overlayfs of /mnt/commcare-hq-ro + /mnt/lib/overlay + /mnt/lib/work]
+#   ├── commcare-hq-ro
+#   │   └── [existing commcare-hq files...]
+#   └── lib
+#       ├── node_modules
+#       ├── overlay
+#       │   ├── node_modules -> /mnt/lib/node_modules
+#       │   └── staticfiles -> /mnt/lib/staticfiles
+#       ├── staticfiles
+#       └── work
+#
+# aufs:
+#   /mnt
+#   ├── commcare-hq
+#   │   └── [aufs of /mnt/commcare-hq-ro + /mnt/lib/overlay]
+#   ├── commcare-hq-ro
+#   │   └── [existing commcare-hq files...]
+#   └── lib
+#       ├── node_modules
+#       ├── overlay
+#       │   ├── node_modules -> /mnt/lib/node_modules
+#       │   └── staticfiles -> /mnt/lib/staticfiles
+#       └── staticfiles
 
 mkdir -p lib/sharedfiles
 ln -sf /mnt/lib/sharedfiles /sharedfiles

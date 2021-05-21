@@ -234,6 +234,7 @@ if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
+    # TODO: use overlayfs and drop support for aufs
     export RO=":ro"
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi
