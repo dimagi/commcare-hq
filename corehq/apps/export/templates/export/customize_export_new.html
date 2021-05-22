@@ -161,6 +161,19 @@
                 {% endif %}
               </div>
             {% endif %}
+            <div class="checkbox">
+              <label>
+                <input type="checkbox"
+                       id="det-config-checkbox"
+                       data-bind="checked: show_det_config_download" />
+                <strong>{% trans "Generate a Data Export Tool config file?" %}</strong><br/>
+                {% blocktrans %}
+                  Checking this will add a button to download a configuration file
+                  for the <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Data+Export+Tool" target="_blank">
+                  CommCare Data Export Tool</a> for the export.
+                {% endblocktrans %}
+              </label>
+            </div>
 
 
             {% if export_instance.type == 'form' %}

@@ -516,6 +516,7 @@ hqDefine('export/js/models', [
             'case_type',
             'xmlns',
             'is_daily_saved_export',
+            'show_det_config_download',
         ],
         tables: {
             create: function (options) {
