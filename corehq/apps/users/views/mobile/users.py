@@ -1,9 +1,7 @@
 import io
 import json
 import re
-from datetime import datetime
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
