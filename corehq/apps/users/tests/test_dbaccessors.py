@@ -176,7 +176,7 @@ class AllCommCareUsersTest(TestCase):
     def test_get_invitations_by_filters(self):
         invitations = [
             Invitation(domain=self.ccdomain.name, email='wolfgang@email.com', invited_by='friend@email.com',
-                       invited_on=datetime.utcnow()),
+                       invited_on=datetime.utcnow(), role=self.custom_role.get_qualified_id()),
             Invitation(domain=self.ccdomain.name, email='sergei_p@email.com', invited_by='friend@email.com',
                        invited_on=datetime.utcnow()),
             Invitation(domain=self.ccdomain.name, email='sergei_r@email.com', invited_by='friend@email.com',
@@ -189,6 +189,7 @@ class AllCommCareUsersTest(TestCase):
 
         self._assert_invitations({}, ["sergei_p@email.com", "sergei_r@email.com", "wolfgang@email.com"])
         self._assert_invitations({"search_string": "Sergei"}, ["sergei_p@email.com", "sergei_r@email.com"])
+        self._assert_invitations({"role_id": self.custom_role._id}, ["wolfgang@email.com"])
 
         for inv in invitations:
             inv.delete()

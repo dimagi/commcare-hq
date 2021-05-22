@@ -158,7 +158,8 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
         filters["email__icontains"] = search_string
     role_id = user_filters.get("role_id", None)
     if role_id:
-        filters["role"] = role_id
+        role = UserRole.get(role_id)
+        filters["role"] = role.get_qualified_id()
 
     invitations = Invitation.by_domain(domain, **filters)
     if count_only:
