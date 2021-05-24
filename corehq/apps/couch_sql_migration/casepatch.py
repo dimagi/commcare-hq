@@ -369,7 +369,14 @@ def is_patchable(diff):
 
 
 def is_ledger_patchable(diff):
-    return tuple(diff.path) not in UNPATCHABLE_LEDGER_PATHS
+    return tuple(diff.path) not in UNPATCHABLE_LEDGER_PATHS and not (
+        list(diff.path) == ["*"]
+        and diff.diff_type == "missing"
+        and isinstance(diff.old_value, dict)
+        and isinstance(diff.new_value, dict)
+        and diff.old_value.keys() == {"form_state"}
+        and diff.new_value.keys() == {"form_state", "ledger"}
+    )
 
 
 UNPATCHABLE_LEDGER_PATHS = {

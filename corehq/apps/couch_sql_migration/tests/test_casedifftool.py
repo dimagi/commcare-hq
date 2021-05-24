@@ -271,6 +271,23 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
+    def test_patch_ledger_missing_in_couch(self):
+        from corehq.apps.commtrack.models import StockState
+        from casexml.apps.stock.models import StockTransaction
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, qty=1, section="stock")
+        StockState.objects.filter(product_id=product._id).delete()
+        StockTransaction.objects.filter(product_id=product._id).delete()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/stock/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs(changes=[
+            Diff(ref_id, type="missing", old={"form_state": "present"}),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
     def test_patch_ledger_daily_consumption_diff(self):
         from corehq.apps.commtrack.models import StockState
         from corehq.pillows.ledger import _get_daily_consumption_for_ledger
