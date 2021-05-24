@@ -25,17 +25,6 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
-                data.webAppsPermissions = {
-                    all: data.permissions.view_web_apps,
-                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
-                        };
-                    }),
-                };
-
                 data.manageRoleAssignments = {
                     all: data.is_non_admin_editable,
                     specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
@@ -270,13 +259,6 @@ hqDefine('users/js/roles',[
                     return report.path;
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
-
-                data.permissions.view_web_apps = data.webAppsPermissions.all;
-                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
                     return role.value;
@@ -291,7 +273,6 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
-        self.webAppsList = o.webAppsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;

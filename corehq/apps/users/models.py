@@ -142,8 +142,6 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    view_web_apps = BooleanProperty(default=True)
-    view_web_apps_list = StringListProperty(default=[])
     access_mobile_endpoints = BooleanProperty(default=True)
 
     view_file_dropzone = BooleanProperty(default=False)
@@ -165,9 +163,6 @@ class Permissions(DocumentSchema):
                 reports[i] = MOVED_REPORT_MAPPING[report_name]
 
         return super(Permissions, cls).wrap(data)
-
-    def view_web_app(self, master_app_id):
-        return self.view_web_apps or master_app_id in self.view_web_apps_list
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list

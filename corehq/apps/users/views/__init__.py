@@ -659,7 +659,6 @@ class ListRolesView(BaseRoleAccessView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
-            'web_apps_list': get_cloudcare_apps(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,

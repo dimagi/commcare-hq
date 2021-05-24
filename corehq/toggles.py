@@ -777,13 +777,6 @@ DISABLE_WEB_APPS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Disable+access+to+Web+Apps+UI',
 )
 
-ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
-    'role_webapps_permissions',
-    'ICDS: Toggle which webapps to see based on role',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
