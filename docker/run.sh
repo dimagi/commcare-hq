@@ -273,6 +273,7 @@ else
     ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
     logmsg INFO "mounting $(pwd)/commcare-hq via $DOCKER_HQ_OVERLAY"
     if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
+        # Default Docker overlay engine
         rm -rf lib/work
         mkdir lib/work
         overlayopts="lowerdir=/mnt/commcare-hq-ro,upperdir=/mnt/lib/overlay,workdir=/mnt/lib/work"
@@ -298,6 +299,11 @@ else
             echo "(delta=${delta}sec)" >&2  # append the previous log line
         fi
     else
+        # This (aufs) was the default (perhaps only?) Docker overlay engine when
+        # this script was originally written, and has hung around ever since.
+        # Likely because this script has not been kept up-to-date with the
+        # latest Docker features.
+        #
         # TODO: use overlayfs and drop support for aufs
         mount -t aufs -o br=/mnt/lib/overlay:/mnt/commcare-hq-ro none commcare-hq
     fi
