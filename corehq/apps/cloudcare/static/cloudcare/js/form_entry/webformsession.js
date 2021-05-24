@@ -481,9 +481,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                     alert(gettext("Form submission failed with error") + ": \n\n" +
                                         resp.notification.message + ". \n\n " +
                                         "This must be corrected before the form can be submitted.");
-                                } else {
-                                    alert(gettext("There are errors in this form's answers. " +
-                                        "These must be corrected before the form can be submitted."));
                                 }
                             }
                         },

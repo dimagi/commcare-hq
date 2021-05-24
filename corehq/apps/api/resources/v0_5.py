@@ -41,7 +41,6 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -83,6 +82,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -121,9 +121,9 @@ def _set_role_for_bundle(kwargs, bundle):
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        preset_role_id = UserRole.get_preset_role_id(bundle.data.get('role'))
+        if preset_role_id:
+            bundle.obj.set_role(kwargs['domain'], preset_role_id)
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -391,7 +391,7 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
     def _invalid_user_role(self, request, details):
-        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
+        return details.get('role') not in get_all_role_names_for_domain(request.domain)
 
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True
@@ -1091,6 +1091,10 @@ class ODataFormResource(BaseODataResource):
 
 
 class MessagingEventResource(HqBaseResource, ModelResource):
+    content_type_display = fields.CharField(attribute='get_content_type_display')
+    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
+    status_display = fields.CharField(attribute='get_status_display')
+    source_display = fields.CharField(attribute='get_source_display')
 
     class Meta(object):
         queryset = MessagingEvent.objects.all()

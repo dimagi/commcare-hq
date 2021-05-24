@@ -215,13 +215,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.view(
-        'users/roles_by_domain',
-        startkey=[domain_link.linked_domain],
-        endkey=[domain_link.linked_domain, {}],
-        include_docs=True,
-        reduce=False,
-    )
+    local_roles = UserRole.by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:

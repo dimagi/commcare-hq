@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-28 19:19+0000\n"
+"POT-Creation-Date: 2021-05-19 19:08+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -204,20 +204,16 @@ msgid "Mobile UCR Report"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:114
-#, fuzzy
-#| msgid "Search Reports..."
 msgid "Select a Report..."
-msgstr "Buscar Reportes..."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:115
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Lookup Table Options"
-msgstr "Tablas de Búsqueda"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
@@ -226,16 +222,16 @@ msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:124
-#, fuzzy
-#| msgid "Select a language..."
 msgid "Select a Lookup Table..."
-msgstr "Seleccionar un idioma..."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:125
-#, fuzzy
-#| msgid "Lookup Tables"
 msgid "Advanced Lookup Table Options"
-msgstr "Tablas de Búsqueda"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:26
+msgid "Edit Graph"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
 #: corehq/apps/reports/static/reports/js/single_form.js:105
@@ -1746,6 +1742,7 @@ msgid "Are you sure you want to perform this action?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/registration/static/registration/js/user_login_form.js:41
 msgid "Continue"
 msgstr "Continuar"
 
@@ -2830,29 +2827,29 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:279
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:331
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:281
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:333
 msgid "Submit"
 msgstr "Ingresar"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:342
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:394
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:344
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:396
 msgid "This answer is outside the allowed range."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:16
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
 msgid ""
 "Looks like you got logged out because of inactivity, but your work is safe. "
 "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:24
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
@@ -2872,12 +2869,6 @@ msgstr ""
 msgid "Form submission failed with error"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:485
-msgid ""
-"There are errors in this form's answers. These must be corrected before the "
-"form can be submitted."
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:34
 msgid "Form successfully submitted!"
 msgstr ""
@@ -2890,26 +2881,26 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:337
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:339
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:348
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:471
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:473
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:499
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:501
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:651
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:653
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
@@ -3345,11 +3336,11 @@ msgstr ""
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:160
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:163
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:168
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:171
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:46
 msgid "Done"
 msgstr "Listo"
@@ -4381,13 +4372,25 @@ msgstr "Enviar"
 msgid "Complete"
 msgstr "Completar"
 
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js:22
+#, fuzzy
+#| msgid "Free response"
+msgid "DHIS2 response: "
+msgstr "Respuesta libre"
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js:30
+msgid "CommCare HQ was unable to send the DataSet: "
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map_json.js:27
+#, fuzzy
+#| msgid "Unable to save DataSet maps"
+msgid "Unable to save DataSet map"
+msgstr "No es posible guardar los mapas DataSet"
+
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js:60
 msgid "Unable to save case configs"
 msgstr ""
-
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:161
-msgid "Unable to save DataSet maps"
-msgstr "No es posible guardar los mapas DataSet"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
 msgid "Daily"
@@ -4440,6 +4443,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js:94
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "You have unsaved changes to your whitelist"
-#~ msgstr "Tiene cambios sin guardar en su listablanca"

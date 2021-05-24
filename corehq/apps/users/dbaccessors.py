@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -298,3 +298,12 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
+
+
+def get_all_role_ids():
+    roles = UserRole.view(
+        'users/roles_by_domain',
+        include_docs=False,
+        reduce=False
+    ).all()
+    return [r['id'] for r in roles]

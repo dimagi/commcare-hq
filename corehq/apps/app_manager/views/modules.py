@@ -110,6 +110,7 @@ from corehq.apps.hqmedia.models import (
     CommCareMultimedia,
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -189,11 +190,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     Get context items that are used by both basic and advanced modules.
     '''
-    case_type = module.case_type
     item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
     context = {
-        'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
-        'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
+        'details': _get_module_details_context(request, app, module, case_property_builder),
+        'case_list_form_options': _case_list_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
@@ -256,7 +256,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
 
 
 def _get_advanced_module_view_context(app, module):
-    case_type = module.case_type
     return {
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': True,
@@ -274,8 +273,7 @@ def _get_advanced_module_view_context(app, module):
 
 def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
-        'parent_case_modules': _get_modules_with_parent_case_type(
-            app, module, case_property_builder, module.case_type),
+        'parent_case_modules': _get_modules_with_parent_case_type(app, module, case_property_builder),
         'all_case_modules': _get_all_case_modules(app, module),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
@@ -378,9 +376,9 @@ def _setup_case_property_builder(app):
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
-def _get_modules_with_parent_case_type(app, module, case_property_builder, case_type_):
+def _get_modules_with_parent_case_type(app, module, case_property_builder):
 
-    parent_types = case_property_builder.get_parent_types(case_type_)
+    parent_types = case_property_builder.get_parent_types(module.case_type)
     modules = app.modules
     parent_module_ids = [
         mod.unique_id for mod in modules
@@ -390,7 +388,7 @@ def _get_modules_with_parent_case_type(app, module, case_property_builder, case_
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': mod.unique_id in parent_module_ids,
-    } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
+    } for mod in app.modules if mod.case_type != module.case_type and mod.unique_id != module.unique_id]
 
 
 def _get_all_case_modules(app, module):
@@ -429,12 +427,12 @@ def _get_shadow_parent(app, module):
     return None
 
 
-def _case_list_form_options(app, module, case_type_, lang=None):
+def _case_list_form_options(app, module, lang=None):
     options = OrderedDict()
     forms = [
         form
         for mod in app.get_modules() if module.unique_id != mod.unique_id
-        for form in mod.get_forms() if form.is_registration_form(case_type_)
+        for form in mod.get_forms() if form.is_registration_form(module.case_type)
     ]
     langs = None if lang is None else [lang]
     options.update({f.unique_id: {
@@ -448,7 +446,7 @@ def _case_list_form_options(app, module, case_type_, lang=None):
     }
 
 
-def _get_module_details_context(request, app, module, case_property_builder, case_type_, messages=messages):
+def _get_module_details_context(request, app, module, case_property_builder, messages=messages):
     subcase_types = list(app.get_subcase_types(module.case_type))
     item = {
         'label': gettext_lazy('Case List'),
@@ -461,8 +459,8 @@ def _get_module_details_context(request, app, module, case_property_builder, cas
         'long': module.case_details.long,
     }
     try:
-        case_properties = case_property_builder.get_properties(case_type_)
-        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
+        case_properties = case_property_builder.get_properties(module.case_type)
+        if is_usercase_in_use(app.domain) and module.case_type != USERCASE_TYPE:
             usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
             case_properties |= usercase_properties
     except CaseError as e:
@@ -830,7 +828,12 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    all_attrs = [
+    src_module = app.get_module_by_unique_id(module_unique_id)
+    detail_type = request.POST['detail_type']
+
+    # For short details, user selects which properties to copy.
+    # For long details, all properties are copied.
+    short_attrs = {
         'columns',
         'filter',
         'sort_elements',
@@ -838,52 +841,38 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'print_template',
-    ]
-    short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
-    src_module = app.get_module_by_unique_id(module_unique_id)
-    detail_type = request.POST['detail_type']
+        'search_properties',
+        'search_default_properties',
+        'search_claim_options',
+    }
+    short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
         for err in error_list:
-            messages.error(
-                request,
-                err
-            )
+            messages.error(request, err)
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
-    updated_modules = []
-    not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         if dest_module.case_type != src_module.case_type:
-            messages.error(
-                request,
-                _("Please choose a menu with the same case type as the current one ({}).").format(
-                    src_module.case_type)
-            )
+            messages.error(request, _("Case type {} does not match current menu.").format(src_module.case_type))
         else:
             try:
-                _update_module_detail(detail_type, src_module, dest_module, short_attrs)
-                updated_modules.append(dest_module.default_name())
+                if detail_type == "short":
+                    _update_module_short_detail(src_module, dest_module, short_attrs)
+                else:
+                    _update_module_long_detail(src_module, dest_module)
+                messages.success(request, _("Updated {}").format(dest_module.default_name()))
             except Exception:
                 notify_exception(
                     request,
                     message=f'Error in updating module: {dest_module.default_name()}',
                     details={'domain': domain, 'app_id': app_id, }
                 )
-                not_updated_modules.append(dest_module.default_name())
+                messages.error(request, _("Could not update {}").format(dest_module.default_name()))
 
-    if not_updated_modules:
-        _error_msg = _("Failed to overwrite case lists to menu(s): {}.").format(
-            ", ".join(map(str, not_updated_modules)))
-        messages.error(request, _error_msg)
-
-    if updated_modules:
-        app.save()  # Save successfully overwritten menus.
-        _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
-            src_module.default_name(), ", ".join(map(str, updated_modules)))
-        messages.success(request, _msg)
+    app.save()
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
@@ -899,13 +888,28 @@ def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs)
     return error_list
 
 
-def _update_module_detail(detail_type, src_module, dest_module, short_attrs):
-    if detail_type == 'long':
-        setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
-    else:
-        src_detail = getattr(src_module.case_details, detail_type)
-        dest_detail = getattr(dest_module.case_details, detail_type)
-        dest_detail.overwrite_attrs(src_detail, short_attrs)
+# attrs may contain a both top-level Detail attributes and attributes that
+# belong to the detail's search config with should be prefixed with "search_"
+def _update_module_short_detail(src_module, dest_module, attrs):
+    search_attrs = {a for a in attrs if a.startswith('search_')}
+    if search_attrs:
+        _update_module_search_config(src_module, dest_module, search_attrs)
+
+    attrs = attrs - search_attrs
+    if attrs:
+        src_detail = getattr(src_module.case_details, "short")
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(src_detail, attrs)
+
+
+def _update_module_search_config(src_module, dest_module, search_attrs):
+    src_config = src_module.search_config
+    dest_config = dest_module.search_config
+    dest_config.overwrite_attrs(src_config, search_attrs)
+
+
+def _update_module_long_detail(src_module, dest_module):
+    setattr(dest_module.case_details, "long", getattr(src_module.case_details, "long"))
 
 
 def _update_search_properties(module, search_properties, lang='en'):
@@ -976,6 +980,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         yield ret
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_unique_id):

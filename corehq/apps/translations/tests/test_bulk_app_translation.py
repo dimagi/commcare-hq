@@ -21,6 +21,7 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_menu_item_rows,
     get_module_detail_rows,
     get_module_search_command_rows,
+    get_case_search_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     get_sheet_name_to_unique_id_map,
@@ -1058,6 +1059,13 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_command_label', 'list', 'Find a Mother'),
                           ('search_again_label', 'list', 'Find Another Mother')])
+
+    @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
+    def test_module_case_search_rows(self):
+        app = AppFactory.case_claim_app_factory().app
+        self.assertEqual(get_case_search_rows(app.langs, app.modules[0], self.app.domain),
+                         [('name', 'case_search_display', 'Name of Mother'),
+                          ('name', 'case_search_hint', '')])
 
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [

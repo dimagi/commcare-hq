@@ -264,6 +264,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         if received_on is not None:
             if isinstance(received_on, timedelta):
                 received_on = datetime.utcnow() + received_on
+            elif isinstance(received_on, str):
+                received_on = parse_date(received_on).replace(tzinfo=None)
             return {"received_on": received_on}
         return {}
 

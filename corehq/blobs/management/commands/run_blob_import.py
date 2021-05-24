@@ -30,7 +30,7 @@ def import_blobs_from_tgz(filename):
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
         func = partial(worker, filename, total // NUM_WORKERS)
         futures = executor.map(func, range(NUM_WORKERS))
-        list(futures)  # Resolves results and exceptions from workers
+        return list(futures)  # Resolves results and exceptions from workers
 
 
 def worker(filename, length, worker_number):

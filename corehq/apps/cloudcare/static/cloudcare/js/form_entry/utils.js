@@ -8,10 +8,14 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.isWebApps = function () {
+        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            environment = FormplayerFrontend.getChannel().request('currentUser').environment;
+        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
+    };
+
     module.reloginErrorHtml = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-        var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-        if (isWebApps) {
+        if (module.isWebApps()) {
             var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
             return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
                                       "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"))({url: url});

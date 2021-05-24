@@ -97,7 +97,6 @@ from corehq.util.doc_processor.couch import (
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.doc_processor.progress import DOCS_SKIPPED_WARNING, ProgressManager
-from corehq.util.pagination import TooManyRetries
 from couchdbkit import ResourceConflict
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
 
@@ -422,10 +421,7 @@ class Migrator(object):
                 if success:
                     progress.add()
                 else:
-                    try:
-                        iterable.retry(doc, max_retry)
-                    except TooManyRetries:
-                        progress.skip(doc)
+                    progress.skip(doc)
 
         if not progress.skipped:
             self.write_migration_completed_state()

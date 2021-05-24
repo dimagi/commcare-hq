@@ -194,14 +194,14 @@ class TestCouchToSQLCommtrackConfig(TestCase):
     def test_diff_identical(self):
         couch = self._create_unsynced_couch().to_json()
         sql = self._create_unsynced_sql()
-        self.assertIsNone(Command.diff_couch_and_sql(couch, sql))
+        self.assertIsNone(Command.get_diff_as_string(couch, sql))
 
     def test_diff_top_level_attributes(self):
         couch = self._create_unsynced_couch().to_json()
         sql = self._create_unsynced_sql()
         couch['domain'] = 'other_project'
         couch['use_auto_emergency_levels'] = True
-        self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
+        self.assertEqual(Command.get_diff_as_string(couch, sql), "\n".join([
             "domain: couch value 'other_project' != sql value 'my_project'",
             "use_auto_emergency_levels: couch value True != sql value False",
         ]))
@@ -212,21 +212,21 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         couch['consumption_config']['min_window'] = 4
         couch['ota_restore_config']['force_consumption_case_types'] = ['type2']
         couch['ota_restore_config']['section_to_consumption_types'] = {'s1': 'c1', 's2': 'c2'}
-        self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "min_window: couch value 4 != sql value 2",
-            "section_to_consumption_types: couch value {'s1': 'c1', 's2': 'c2'} != sql value {'s1': 'c1'}",
-            "force_consumption_case_types: couch value ['type2'] != sql value ['type1']",
+        self.assertEqual(Command.get_diff_as_string(couch, sql), "\n".join([
+            "consumption_config.min_window: couch value 4 != sql value 2",
+            "ota_restore_config.section_to_consumption_types: couch value {'s1': 'c1', 's2': 'c2'} != sql value {'s1': 'c1'}",
+            "ota_restore_config.force_consumption_case_types: couch value ['type2'] != sql value ['type1']",
         ]))
 
     def test_diff_remove_submodel(self):
         couch = self._create_unsynced_couch().to_json()
         sql = self._create_unsynced_sql()
         couch.pop('alert_config')
-        self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "stock_out_facilities: couch value None != sql value True",
-            "stock_out_commodities: couch value None != sql value True",
-            "stock_out_rates: couch value None != sql value True",
-            "non_report: couch value None != sql value True",
+        self.assertEqual(Command.get_diff_as_string(couch, sql), "\n".join([
+            "alert_config.stock_out_facilities: couch value None != sql value True",
+            "alert_config.stock_out_commodities: couch value None != sql value True",
+            "alert_config.stock_out_rates: couch value None != sql value True",
+            "alert_config.non_report: couch value None != sql value True",
         ]))
 
     def test_diff_action_attributes(self):
@@ -234,9 +234,9 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         sql = self._create_unsynced_sql()
         couch['actions'][0]['subaction'] = 'other-subaction'
         couch['actions'][1]['_keyword'] = 'dos'
-        self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "subaction: couch value 'other-subaction' != sql value 'sub-receipts'",
-            "_keyword: couch value 'dos' != sql value 'two'",
+        self.assertEqual(Command.get_diff_as_string(couch, sql), "\n".join([
+            "actions.subaction: couch value 'other-subaction' != sql value 'sub-receipts'",
+            "actions._keyword: couch value 'dos' != sql value 'two'",
         ]))
 
     def test_diff_action_order(self):
@@ -244,11 +244,11 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         sql = self._create_unsynced_sql()
         (action1, action2) = couch['actions']
         couch['actions'] = [action2, action1]
-        self.assertEqual(Command.diff_couch_and_sql(couch, sql), "\n".join([
-            "_keyword: couch value 'two' != sql value 'one'",
-            "caption: couch value 'second action' != sql value 'first action'",
-            "_keyword: couch value 'one' != sql value 'two'",
-            "caption: couch value 'first action' != sql value 'second action'",
+        self.assertEqual(Command.get_diff_as_string(couch, sql), "\n".join([
+            "actions._keyword: couch value 'two' != sql value 'one'",
+            "actions.caption: couch value 'second action' != sql value 'first action'",
+            "actions._keyword: couch value 'one' != sql value 'two'",
+            "actions.caption: couch value 'first action' != sql value 'second action'",
         ]))
 
     def test_wrap_action_config(self):

@@ -130,6 +130,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
+    Util.getCurrentQueryInputs = function () {
+        var queryData = Util.currentUrlToObject().queryData[sessionStorage.queryKey];
+        if (queryData) {
+            return queryData.inputs || {};
+        }
+        return {};
+    };
+
     Util.getStickyQueryInputs = function () {
         if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
             return {};
