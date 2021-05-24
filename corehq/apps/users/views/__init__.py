@@ -17,7 +17,9 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect,
     JsonResponse,
+    HttpResponseBadRequest,
 )
+from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -25,6 +27,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
@@ -34,17 +38,14 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM,
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_app_languages,
-    get_brief_apps_in_domain,
-)
+from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -105,9 +106,18 @@ from corehq.apps.users.models import (
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
 )
-from corehq.apps.users.views.utils import get_editable_role_choices
+from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
+from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    WorksheetNotFound,
+    get_workbook,
+)
 
 
 def _users_context(request, domain):
@@ -649,8 +659,6 @@ class ListRolesView(BaseRoleAccessView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
-            'web_apps_list': get_cloudcare_apps(self.domain),
-            'apps_list': get_brief_apps_in_domain(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -1017,6 +1025,152 @@ class InviteWebUserView(BaseManageWebUserView):
                 args=[self.domain]
             ))
         return self.get(request, *args, **kwargs)
+
+
+class BaseUploadUser(BaseUserSettingsView):
+    def post(self, request, *args, **kwargs):
+        """View's dispatch method automatically calls this"""
+        try:
+            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return self.get(request, *args, **kwargs)
+
+        try:
+            self.user_specs = self.workbook.get_worksheet(title='users')
+        except WorksheetNotFound:
+            try:
+                self.user_specs = self.workbook.get_worksheet()
+            except WorksheetNotFound:
+                return HttpResponseBadRequest("Workbook has no worksheets")
+
+        try:
+            self.group_specs = self.workbook.get_worksheet(title='groups')
+        except WorksheetNotFound:
+            self.group_specs = []
+        try:
+            check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
+        except UserUploadError as e:
+            messages.error(request, _(str(e)))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
+            if list(self.group_specs):
+                messages.error(
+                    request,
+                    _("Groups are not allowed with parallel user import. Please upload them separately")
+                )
+                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+            task = parallel_user_import.delay(
+                self.domain,
+                list(self.user_specs),
+                request.couch_user
+            )
+        else:
+            upload_record = UserUploadRecord(
+                domain=self.domain,
+                user_id=request.couch_user.user_id
+            )
+            upload_record.save()
+            task = import_users_and_groups.delay(
+                self.domain,
+                list(self.user_specs),
+                list(self.group_specs),
+                request.couch_user,
+                upload_record.pk,
+                self.is_web_upload
+            )
+        task_ref.set_task(task)
+        if self.is_web_upload:
+            return HttpResponseRedirect(
+                reverse(
+                    WebUserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+        else:
+            from corehq.apps.users.views.mobile import UserUploadStatusView
+            return HttpResponseRedirect(
+                reverse(
+                    UserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+
+
+class UploadWebUsers(BaseUploadUser):
+    template_name = 'hqwebapp/bulk_upload.html'
+    urlname = 'upload_web_users'
+    page_title = ugettext_noop("Bulk Upload Web Users")
+    is_web_upload = True
+
+    @method_decorator(always_allow_project_access)
+    @method_decorator(require_can_edit_web_users)
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadWebUsers, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
+        from corehq.apps.users.views.mobile import get_user_upload_context
+        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
+
+    def post(self, request, *args, **kwargs):
+        track_workflow(request.couch_user.get_email(), 'Bulk upload web users selected')
+        return super(UploadWebUsers, self).post(request, *args, **kwargs)
+
+
+class WebUserUploadStatusView(BaseManageWebUserView):
+    urlname = 'web_user_upload_status'
+    page_title = ugettext_noop('Web User Upload Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(WebUserUploadStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse(WebUserUploadJobPollView.urlname, args=[self.domain, kwargs['download_id']]),
+            'title': _("Web User Upload Status"),
+            'progress_text': _("Importing your data. This may take some time..."),
+            'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'next_url_text': _("Return to manage web users"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+class UserUploadJobPollView(BaseManageWebUserView):
+
+    def get(self, request, domain, download_id):
+        try:
+            context = get_download_context(download_id)
+        except TaskFailedError:
+            return HttpResponseServerError()
+
+        context.update({
+            'on_complete_short': _('Bulk upload complete.'),
+            'on_complete_long': _(self.on_complete_long),
+            'user_type': _(self.user_type),
+        })
+
+        context['result'] = BulkUploadResponseWrapper(context)
+        return render(request, 'users/mobile/partials/user_upload_status.html', context)
+
+
+class WebUserUploadJobPollView(UserUploadJobPollView):
+    urlname = "web_user_upload_job_poll"
+    on_complete_long = 'Web Worker upload has finished'
+    user_type = 'web users'
+
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(WebUserUploadJobPollView, self).dispatch(request, *args, **kwargs)
 
 
 @require_POST

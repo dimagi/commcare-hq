@@ -30,7 +30,7 @@ class TestCouchToSQLMobileAuth(TestCase):
         expires = valid + timedelta(days=30)
         couch = MobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires, key=key)
         sql = SQLMobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires, key=key)
-        self.assertIsNone(Command.diff_couch_and_sql(couch.to_json(), sql))
+        self.assertIsNone(Command.get_diff_as_string(couch.to_json(), sql))
 
     def test_diff_top_level_attributes(self):
         valid = datetime.utcnow()
@@ -39,7 +39,7 @@ class TestCouchToSQLMobileAuth(TestCase):
         couch = MobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires1)
         sql = SQLMobileAuthKeyRecord(domain='other-domain', user_id='123', valid=valid, expires=expires2)
 
-        (domain_diff, key_diff, expires_diff) = Command.diff_couch_and_sql(couch.to_json(), sql).split("\n")
+        (domain_diff, key_diff, expires_diff) = Command.get_diff_as_string(couch.to_json(), sql).split("\n")
         self.assertEqual(domain_diff, "domain: couch value 'my-domain' != sql value 'other-domain'")
         self.assertRegex(
             key_diff,

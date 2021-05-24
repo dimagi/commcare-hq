@@ -26,28 +26,6 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
-                data.webAppsPermissions = {
-                    all: data.permissions.view_web_apps,
-                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
-                        };
-                    }),
-                };
-
-                data.manageAppReleasePermissions = {
-                    all: data.permissions.manage_releases,
-                    specific: ko.utils.arrayMap(root.appsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
-                        };
-                    }),
-                };
-
                 data.manageRoleAssignments = {
                     all: data.is_non_admin_editable,
                     specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
@@ -282,19 +260,6 @@ hqDefine('users/js/roles',[
                     return report.path;
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
-
-                data.permissions.view_web_apps = data.webAppsPermissions.all;
-                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
-                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
-                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
                     return role.value;
@@ -309,8 +274,6 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
-        self.webAppsList = o.webAppsList;
-        self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;

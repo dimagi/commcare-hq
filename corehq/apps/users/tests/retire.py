@@ -191,7 +191,7 @@ class RetireUserTestCase(TestCase):
         # check that the index is removed via a new form
         child = CaseAccessors(self.domain).get_case(child_id)
         self.assertEqual(1, len(child.indices))
-        self.assertEqual('', child.indices[0].referenced_id)
+        self.assertTrue(child.indices[0].is_deleted)
         self.assertEqual(2, len(child.xform_ids))
 
     @run_with_all_backends

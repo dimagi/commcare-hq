@@ -330,12 +330,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def owner(self):
         return CouchUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, lang, attach_excel=False):
+    def get_report_content(self, lang, attach_excel=False, couch_user=None):
         """
         Get the report's HTML content as rendered by the static view format.
 
         """
         from corehq.apps.locations.middleware import LocationAccessMiddleware
+
+        if couch_user is None:
+            couch_user = self.owner
 
         try:
             if self.report is None:
@@ -359,8 +362,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             )
 
         mock_request = HttpRequest()
-        mock_request.couch_user = self.owner
-        mock_request.user = self.owner.get_django_user()
+        mock_request.couch_user = couch_user
+        mock_request.user = couch_user.get_django_user()
         mock_request.domain = self.domain
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang

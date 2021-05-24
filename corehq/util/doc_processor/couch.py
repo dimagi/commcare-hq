@@ -39,13 +39,7 @@ def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=
             for result in super(ResumableDocsIterator, self).__iter__():
                 yield result if full_row else result['doc']
 
-    def item_getter(doc_id):
-        try:
-            return {'doc': db.get(doc_id)}
-        except ResourceNotFound:
-            pass
-
-    return ResumableDocsIterator(iteration_key, data_function, args_provider, item_getter, view_event_handler)
+    return ResumableDocsIterator(iteration_key, data_function, args_provider, view_event_handler)
 
 
 def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100,

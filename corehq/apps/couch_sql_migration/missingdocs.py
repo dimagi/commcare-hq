@@ -207,7 +207,7 @@ class MissingIds:
 
     @staticmethod
     def discard_iteration_state(resume_key):
-        ResumableFunctionIterator(resume_key, None, None, None).discard_state()
+        ResumableFunctionIterator(resume_key, None, None).discard_state()
 
     def reset_doc_count(self, doc_type, count_key):
         count = self.counter.pop(count_key)
