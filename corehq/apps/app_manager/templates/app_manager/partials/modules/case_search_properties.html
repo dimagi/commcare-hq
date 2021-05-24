@@ -119,6 +119,11 @@
               {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
             </div>
           </div>
+          <div class="case-search-multimedia-input">
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
+            <!-- /ko -->
+          </div>
           <div class="form-group">
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching Again" %}
@@ -128,6 +133,11 @@
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
+          </div>
+          <div class="case-search-multimedia-input">
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+            <!-- /ko -->
           </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
