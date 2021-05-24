@@ -1,6 +1,7 @@
 import math
 import time
 import requests
+import logging
 
 from django.conf import settings
 
@@ -9,6 +10,7 @@ from corehq.apps.accounting.models import Subscription, BillingAccount
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser, CommCareUser
 
+logger = logging.getLogger('analytics')
 
 MAX_API_RETRIES = 5
 
@@ -143,13 +145,16 @@ def _delete_hubspot_contact(vid, retry_num=0):
             if req.status_code == 404:
                 return False
             req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError):
+        except (ConnectionError, requests.exceptions.HTTPError) as e:
             metrics_gauge(
                 'commcare.hubspot_data.retry.delete_hubspot_contact',
                 1
             )
             if retry_num <= MAX_API_RETRIES:
                 return _delete_hubspot_contact(vid, retry_num + 1)
+            else:
+                logger.error(f"Failed to delete Hubspot contact {vid} due to "
+                             f"{str(e)}.")
         else:
             return True
     return False
@@ -179,13 +184,16 @@ def _get_contact_ids_for_emails(list_of_emails, retry_num=0):
             if req.status_code == 404:
                 return []
             req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError):
+        except (ConnectionError, requests.exceptions.HTTPError) as e:
             metrics_gauge(
                 'commcare.hubspot_data.retry.get_contact_ids_for_emails',
                 1
             )
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_for_emails(list_of_emails, retry_num + 1)
+            else:
+                logger.error(f"Failed to get Hubspot contact ids for emails "
+                             f"{list_of_emails.join(', ')} due to {str(e)}.")
         else:
             return req.json().keys()
     return []
@@ -215,13 +223,16 @@ def _get_contact_ids_for_email_domain(email_domain, retry_num=0):
             if req.status_code == 404:
                 return []
             req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError):
+        except (ConnectionError, requests.exceptions.HTTPError) as e:
             metrics_gauge(
                 'commcare.hubspot_data.retry.get_contact_ids_for_email_domain',
                 1
             )
             if retry_num <= MAX_API_RETRIES:
                 return _get_contact_ids_for_email_domain(email_domain, retry_num + 1)
+            else:
+                logger.error(f"Failed to get Hubspot contact ids for email "
+                             f"domain {email_domain} due to {str(e)}.")
         else:
             return [contact.get('vid') for contact in req.json().get('contacts')]
     return []

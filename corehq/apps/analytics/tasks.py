@@ -206,9 +206,12 @@ def _get_user_hubspot_id(web_user, retry_num=0):
             if req.status_code == 404:
                 return None
             req.raise_for_status()
-        except (ConnectionError, requests.exceptions.HTTPError):
+        except (ConnectionError, requests.exceptions.HTTPError) as e:
             if retry_num <= MAX_API_RETRIES:
                 return _get_user_hubspot_id(web_user, retry_num + 1)
+            else:
+                logger.error(f"Failed to get Hubspot user id for WebUser "
+                             f"{web_user.username} due to {str(e)}.")
         else:
             return req.json().get("vid", None)
     elif api_key:
