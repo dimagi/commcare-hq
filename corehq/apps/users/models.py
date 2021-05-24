@@ -508,6 +508,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return domain_membership
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
+        if kwargs.get('last_accessed'):
+            kwargs['last_accessed'] = datetime.strptime(kwargs['last_accessed'], '%Y-%m-%d').date()
         for d in self.domain_memberships:
             if d.domain == domain:
                 if domain not in self.domains:
