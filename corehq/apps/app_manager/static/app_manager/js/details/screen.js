@@ -37,6 +37,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.langs = options.langs || [];
         self.properties = options.properties;
         self.childCaseTypes = options.childCaseTypes;
+        self.otherCaseTypes = options.otherCaseTypes;
         self.fixtures = options.fixtures;
         // The column key is used to retrieve the columns from the spec and
         // as the name of the key in the data object that is sent to the
@@ -120,7 +121,9 @@ hqDefine("app_manager/js/details/screen", function () {
                 0,
                 _.extend({
                     hasNodeset: tabs[i].has_nodeset,
-                }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
+                    nodeset: tabs[i].nodeset,
+                    nodesetCaseType: tabs[i].nodeset_case_type,
+                }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
             );
         }
         if (self.columnKey === 'long') {
