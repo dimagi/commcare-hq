@@ -796,6 +796,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
+    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
