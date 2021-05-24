@@ -220,7 +220,7 @@ else
             # is an expensive operation and some container ecosystems (travis
             # perhaps?) may not require it. I suspect this is the reason local
             # testing was not working for many people in the past.
-            logmsg INFO -n "chmod'ing commcare-hq overlay... "
+            logmsg -n INFO "chmod'ing commcare-hq overlay... "
             now=$(date +%s)
             # add world-read (and world-x for dirs and existing-x files)
             chmod -R o+rX commcare-hq
