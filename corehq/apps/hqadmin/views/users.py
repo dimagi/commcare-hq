@@ -97,12 +97,22 @@ class SuperuserManagement(UserAdministration):
             for user in users:
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
+                    update_log = {
+                        'field': 'is_superuser',
+                        'previous': user.is_superuser,
+                        'current': is_superuser,
+                    }
                     user.is_superuser = is_superuser
-                    changed_fields.append('is_superuser')
+                    changed_fields.append(update_log)
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
+                    update_log = {
+                        'field': 'is_staff',
+                        'previous': user.is_staff,
+                        'current': is_staff,
+                    }
                     user.is_staff = is_staff
-                    changed_fields.append('is_staff')
+                    changed_fields.append(update_log)
 
                 if changed_fields:
                     user.save()
