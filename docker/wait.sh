@@ -4,12 +4,14 @@
 set -e
 
 if [ -n "$1" ]; then
+    # always use argv if provided
     SERVICES="$1"
-else [ -n "DEPENDENT_SERVICES" ]
+elif [ -n "$DEPENDENT_SERVICES" ]; then
+    # otherwise use DEPENDENT_SERVICES (if present)
     SERVICES="$DEPENDENT_SERVICES"
-fi
-if [ -z "$SERVICES" ]; then
-    exit 0
+else
+    echo "ERROR: No services to wait for!"
+    exit 1
 fi
 
 echo "Waiting for services: $SERVICES"
