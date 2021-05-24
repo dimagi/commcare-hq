@@ -23,7 +23,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         options = _.defaults(options, {
             'instance_id': '',
             'instance_uri': '',
-            'nodeset': '',
+            'nodeset': null,
             'label': '',
             'value': '',
             'sort': '',

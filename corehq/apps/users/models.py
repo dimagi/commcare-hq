@@ -142,14 +142,10 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    view_web_apps = BooleanProperty(default=True)
-    view_web_apps_list = StringListProperty(default=[])
     access_mobile_endpoints = BooleanProperty(default=True)
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
-    manage_releases = BooleanProperty(default=True)
-    manage_releases_list = StringListProperty(default=[])
 
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
@@ -168,25 +164,8 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
-    def view_web_app(self, master_app_id):
-        if self.view_web_apps:
-            return True
-        return master_app_id in self.view_web_apps_list
-
-    def view_report(self, report, value=None):
-        """Both a getter (when value=None) and setter (when value=True|False)"""
-
-        if value is None:
-            return self.view_reports or report in self.view_report_list
-        else:
-            if value:
-                if report not in self.view_report_list:
-                    self.view_report_list.append(report)
-            else:
-                try:
-                    self.view_report_list.remove(report)
-                except ValueError:
-                    pass
+    def view_report(self, report):
+        return self.view_reports or report in self.view_report_list
 
     def has(self, permission, data=None):
         if data:
@@ -194,31 +173,11 @@ class Permissions(DocumentSchema):
         else:
             return getattr(self, permission)
 
-    def set(self, permission, value, data=None):
-        if self.has(permission, data) == value:
-            return
-        if data:
-            getattr(self, permission)(data, value)
-        else:
-            setattr(self, permission, value)
-
     def _getattr(self, name):
         a = getattr(self, name)
         if isinstance(a, list):
             a = set(a)
         return a
-
-    def _setattr(self, name, value):
-        if isinstance(value, set):
-            value = list(value)
-        setattr(self, name, value)
-
-    def __or__(self, other):
-        permissions = Permissions()
-        for name, value in permissions.properties().items():
-            if isinstance(value, (BooleanProperty, ListProperty)):
-                permissions._setattr(name, self._getattr(name) | other._getattr(name))
-        return permissions
 
     def __eq__(self, other):
         for name in self.properties():
@@ -340,7 +299,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, include_archived=False):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
         all_roles = cls.view(
             'users/roles_by_domain',
             startkey=[domain],
@@ -353,75 +311,20 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return [x for x in all_roles if not x.is_archived]
 
     @classmethod
-    def by_domain_and_name(cls, domain, name, is_archived=False):
-        # todo change this view to show is_archived status or move to PRBAC UserRole
+    def by_domain_and_name(cls, domain, name):
         all_roles = cls.view(
             'users/roles_by_domain',
             key=[domain, name],
             include_docs=True,
             reduce=False,
         )
-        return [x for x in all_roles if x.is_archived == is_archived]
+        return list(all_roles)
 
     @classmethod
-    def get_or_create_with_permissions(cls, domain, permissions, name=None):
-        if isinstance(permissions, dict):
-            permissions = Permissions.wrap(permissions)
-        roles = cls.by_domain(domain)
-        # try to get a matching role from the db
-        for role in roles:
-            if role.permissions == permissions:
-                return role
-        # otherwise create it
-
-        def get_name():
-            if name:
-                return name
-            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
-        role = cls(domain=domain, permissions=permissions, name=get_name())
+    def create(cls, domain, name, **kwargs):
+        role = cls(domain=domain, name=name, **kwargs)
         role.save()
         return role
-
-    @classmethod
-    def get_read_only_role_by_domain(cls, domain):
-        try:
-            return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
-        except (IndexError, TypeError):
-            return cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(
-                    UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
-
-    @classmethod
-    def get_custom_roles_by_domain(cls, domain):
-        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
-
-    @classmethod
-    def reset_initial_roles_for_domain(cls, domain):
-        initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
-        for role in initial_roles:
-            role.permissions = UserRolePresets.get_permissions(role.name)
-            role.save()
-
-    @classmethod
-    def archive_custom_roles_for_domain(cls, domain):
-        custom_roles = cls.get_custom_roles_by_domain(domain)
-        for role in custom_roles:
-            role.is_archived = True
-            role.save()
-
-    @classmethod
-    def unarchive_roles_for_domain(cls, domain):
-        all_roles = cls.by_domain(domain, include_archived=True)
-        for role in all_roles:
-            if role.is_archived:
-                role.is_archived = False
-                role.save()
-
-    @classmethod
-    def init_domain_with_presets(cls, domain):
-        for role_name in UserRolePresets.INITIAL_ROLES:
-            cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(role_name), role_name)
 
     @classmethod
     def get_default(cls, domain=None):
@@ -430,12 +333,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
-
-    @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        presets = set(UserRolePresets.NAME_ID_MAP.keys())
-        custom = set([role.name for role in cls.by_domain(domain_name)])
-        return presets | custom
 
     @classmethod
     def admin_role(cls, domain):
@@ -730,6 +627,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         role_qualified_id is either 'admin' 'user-role:[id]'
         """
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
+
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
         if role_qualified_id == "admin":
@@ -740,7 +639,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
             role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
             permissions = UserRolePresets.get_permissions(role_name)
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
+            dm.role_id = get_or_create_role_with_permissions(domain, role_name, permissions).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
@@ -2507,7 +2406,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_location.reset_cache(self)
         self.save()
 
-    def unset_location(self, domain, fall_back_to_next=False):
+    def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
         Change primary location to next location from assigned_location_ids,
         if there are no more locations in assigned_location_ids, primary location is cleared
@@ -2522,7 +2421,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             membership.location_id = None
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
@@ -2538,7 +2438,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.get_sql_locations.reset_cache(self)
             self.save()
 
-    def reset_locations(self, domain, location_ids):
+    def reset_locations(self, domain, location_ids, commit=True):
         """
         reset locations to given list of location_ids. Before calling this, primary location
             should be explicitly set/unset via set_location/unset_location
@@ -2548,7 +2448,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     @memoized
     def get_sql_location(self, domain):

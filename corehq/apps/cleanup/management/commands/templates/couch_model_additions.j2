@@ -1,0 +1,13 @@
+# Add SyncCouchToSQLMixin and the following methods
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            {%- for field in migration_field_names %}
+            "{{ field }}",
+            {%- endfor %}
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQL{{ class_name }}

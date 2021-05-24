@@ -245,16 +245,3 @@ REPORTING_DATABASES = {
     'aaa-data': 'default',
     'icds-ucr-citus': 'icds-ucr'
 }
-
-if os.path.exists("extensions/icds/custom/icds"):
-    # code is not present in fork PR builds
-    LOCAL_APPS = (
-        # these are necessary to facilitate ICDS tests
-        "custom.icds",
-        "custom.icds_reports",
-    )
-    COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
-
-    LOCAL_CUSTOM_DB_ROUTING = {
-        "icds_reports": "icds-ucr-citus"
-    }

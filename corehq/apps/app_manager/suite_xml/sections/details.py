@@ -49,6 +49,8 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
 
+AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
@@ -314,12 +316,7 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_case_search_action(module, in_search=False):
-        relevant_kwarg = {}
-        if not in_search and module.search_config.search_button_display_condition:
-            relevant_kwarg = dict(
-                relevant=XPath(module.search_config.search_button_display_condition),
-            )
-        allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
+        action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
         action = Action(
             display=Display(
                 text=Text(locale_id=(
@@ -328,15 +325,36 @@ class DetailContributor(SectionContributor):
                 ))
             ),
             stack=Stack(),
-            auto_launch=allow_auto_launch and module.search_config.auto_launch,
+            auto_launch=DetailContributor._get_auto_launch_expression(module, in_search),
             redo_last=in_search,
-            **relevant_kwarg
+            **action_kwargs
         )
         frame = PushFrame()
         frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action
+
+    @staticmethod
+    def _get_action_kwargs(module, in_search):
+        action_kwargs = {}
+        relevant = DetailContributor._get_relevant_expression(module, in_search)
+        if relevant:
+            action_kwargs["relevant"] = relevant
+        return action_kwargs
+
+    @staticmethod
+    def _get_relevant_expression(module, in_search):
+        if not in_search and module.search_config.search_button_display_condition:
+            return XPath(module.search_config.search_button_display_condition)
+
+    @staticmethod
+    def _get_auto_launch_expression(module, in_search):
+        allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
+        auto_launch_expression = "false()"
+        if allow_auto_launch and module.search_config.auto_launch:
+            auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+        return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
         d = load_xmlobject_from_string(

@@ -110,6 +110,7 @@ from corehq.apps.hqmedia.models import (
     CommCareMultimedia,
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -831,7 +832,12 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    all_attrs = [
+    src_module = app.get_module_by_unique_id(module_unique_id)
+    detail_type = request.POST['detail_type']
+
+    # For short details, user selects which properties to copy.
+    # For long details, all properties are copied.
+    short_attrs = {
         'columns',
         'filter',
         'sort_elements',
@@ -842,63 +848,35 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'search_properties',
         'search_default_properties',
         'search_claim_options',
-    ]
-    short_attrs = [a for a in all_attrs if request.POST.get(a) == 'on']
-    src_module = app.get_module_by_unique_id(module_unique_id)
-    detail_type = request.POST['detail_type']
+    }
+    short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
         for err in error_list:
-            messages.error(
-                request,
-                err
-            )
+            messages.error(request, err)
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
-    detail_attrs = []
-    search_attrs = []
-    for attr in short_attrs:
-        if attr.startswith('search_'):
-            search_attrs.append(attr)
-        else:
-            detail_attrs.append(attr)
-
-    updated_modules = []
-    not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         if dest_module.case_type != src_module.case_type:
-            messages.error(
-                request,
-                _("Please choose a menu with the same case type as the current one ({}).").format(
-                    src_module.case_type)
-            )
+            messages.error(request, _("Case type {} does not match current menu.").format(src_module.case_type))
         else:
             try:
-                if detail_attrs:
-                    _update_module_detail(detail_type, src_module, dest_module, detail_attrs)
-                if search_attrs:
-                    _update_module_search_config(src_module, dest_module, search_attrs)
-                updated_modules.append(dest_module.default_name())
+                if detail_type == "short":
+                    _update_module_short_detail(src_module, dest_module, short_attrs)
+                else:
+                    _update_module_long_detail(src_module, dest_module)
+                messages.success(request, _("Updated {}").format(dest_module.default_name()))
             except Exception:
                 notify_exception(
                     request,
                     message=f'Error in updating module: {dest_module.default_name()}',
                     details={'domain': domain, 'app_id': app_id, }
                 )
-                not_updated_modules.append(dest_module.default_name())
+                messages.error(request, _("Could not update {}").format(dest_module.default_name()))
 
-    if not_updated_modules:
-        _error_msg = _("Failed to overwrite case lists to menu(s): {}.").format(
-            ", ".join(map(str, not_updated_modules)))
-        messages.error(request, _error_msg)
-
-    if updated_modules:
-        app.save()  # Save successfully overwritten menus.
-        _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
-            src_module.default_name(), ", ".join(map(str, updated_modules)))
-        messages.success(request, _msg)
+    app.save()
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
@@ -914,19 +892,28 @@ def _validate_overwrite_request(request, detail_type, dest_modules, short_attrs)
     return error_list
 
 
+# attrs may contain a both top-level Detail attributes and attributes that
+# belong to the detail's search config with should be prefixed with "search_"
+def _update_module_short_detail(src_module, dest_module, attrs):
+    search_attrs = {a for a in attrs if a.startswith('search_')}
+    if search_attrs:
+        _update_module_search_config(src_module, dest_module, search_attrs)
+
+    attrs = attrs - search_attrs
+    if attrs:
+        src_detail = getattr(src_module.case_details, "short")
+        dest_detail = getattr(dest_module.case_details, "short")
+        dest_detail.overwrite_attrs(src_detail, attrs)
+
+
 def _update_module_search_config(src_module, dest_module, search_attrs):
     src_config = src_module.search_config
     dest_config = dest_module.search_config
     dest_config.overwrite_attrs(src_config, search_attrs)
 
 
-def _update_module_detail(detail_type, src_module, dest_module, detail_attrs):
-    if detail_type == 'long':
-        setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
-    else:
-        src_detail = getattr(src_module.case_details, detail_type)
-        dest_detail = getattr(dest_module.case_details, detail_type)
-        dest_detail.overwrite_attrs(src_detail, detail_attrs)
+def _update_module_long_detail(src_module, dest_module):
+    setattr(dest_module.case_details, "long", getattr(src_module.case_details, "long"))
 
 
 def _update_search_properties(module, search_properties, lang='en'):
@@ -997,6 +984,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         yield ret
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_unique_id):

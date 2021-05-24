@@ -48,7 +48,11 @@
         {% trans "Looks like your CommCare session has expired." %}<br />
         {% trans "Please log in again to continue working." %}
       {% else %}
-        {% trans "Please sign in below to continue." %}
+        {% if enforce_sso_login %}
+          {% trans "Please sign in below." %} {# removed "to continue" because of the two-part step involving a Continue button #}
+        {% else %}
+          {% trans "Please sign in below to continue." %}
+        {% endif %}
       {% endif %}
     </p>
 
