@@ -45,10 +45,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_app_languages,
-    get_brief_apps_in_domain,
-)
+from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -662,7 +659,6 @@ class ListRolesView(BaseRoleAccessView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
-            'apps_list': get_brief_apps_in_domain(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,

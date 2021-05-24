@@ -12,8 +12,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
-    ODATA_FEED_PERMISSION, can_manage_releases
-from corehq.util.test_utils import flag_enabled
+    ODATA_FEED_PERMISSION
 
 
 @mock.patch('corehq.apps.export.views.utils.domain_has_privilege',
@@ -84,23 +83,3 @@ class PermissionsHelpersTest(SimpleTestCase):
         self.assertFalse(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
         self.permissions = Permissions(view_report_list=[ODATA_FEED_PERMISSION])
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
-
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases_all(self):
-        self.permissions = Permissions(manage_releases=False)    # manage_releases is True by default
-        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.permissions = Permissions()
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
-
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases(self):
-        self.permissions = Permissions(manage_releases=False)  # manage_releases is True by default
-        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.permissions = Permissions(manage_releases=False, manage_releases_list=["app_id"])
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
-
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases_domain_admin(self):
-        self.permissions = Permissions()
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.assertFalse(can_manage_releases(self.web_user, self.admin_domain, "app_id"))

@@ -146,8 +146,6 @@ class Permissions(DocumentSchema):
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
-    manage_releases = BooleanProperty(default=True)
-    manage_releases_list = StringListProperty(default=[])
 
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
