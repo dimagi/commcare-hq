@@ -1104,6 +1104,3 @@ diagnosis is, you can use the official `Bahmni demo server`_.
 .. _Wget: https://www.gnu.org/software/wget/
 .. _Atom: https://atom.io/
 .. _pretty-json: https://atom.io/packages/pretty-json
-
-
-.. include:: ../corehq/motech/docs/value_source.rst
