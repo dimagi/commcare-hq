@@ -1,7 +1,9 @@
+from couchdbkit.ext.django.schema import ListProperty
 from django.test import SimpleTestCase, TestCase
 
 import mock
 from memoized import Memoized
+from testil import eq
 
 from corehq.apps.export.views.utils import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
@@ -9,7 +11,7 @@ from corehq.apps.users.models import (
     DomainMembership,
     Permissions,
     UserRole,
-    WebUser,
+    WebUser, PARAMETERIZED_PERMISSIONS,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
     ODATA_FEED_PERMISSION
@@ -83,3 +85,15 @@ class PermissionsHelpersTest(SimpleTestCase):
         self.assertFalse(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
         self.permissions = Permissions(view_report_list=[ODATA_FEED_PERMISSION])
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
+
+
+def test_parameterized_permissions():
+    list_names = set(PARAMETERIZED_PERMISSIONS.values())
+    list_properties = {
+        name for name, type_ in Permissions.properties().items()
+        if isinstance(type_, ListProperty)
+    }
+    eq(list_names, list_properties)
+
+    parameterized_perms = set(PARAMETERIZED_PERMISSIONS.keys())
+    eq(set(), parameterized_perms - set(Permissions.properties()))

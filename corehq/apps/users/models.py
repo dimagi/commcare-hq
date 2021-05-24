@@ -2,8 +2,10 @@ import hmac
 import json
 import logging
 import re
+from collections import namedtuple
 from datetime import datetime
 from hashlib import sha1
+from typing import List
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -45,6 +47,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -88,6 +91,11 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
+from .models_sql import (  # noqa
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy,
+    migrate_role_permissions_to_sql,
+    migrate_role_assignable_by_to_sql,
+)
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -106,6 +114,32 @@ def _add_to_list(list, obj, default):
 
 def _get_default(list):
     return list[0] if list else None
+
+
+class PermissionInfo(namedtuple("Permission", "name, allow")):
+    ALLOW_ALL = "*"
+
+    def __new__(cls, name, allow=ALLOW_ALL):
+        allow = allow if allow == cls.ALLOW_ALL else tuple(allow)
+        return super(PermissionInfo, cls).__new__(cls, name, allow)
+
+    @property
+    def allow_all(self):
+        return self.allow == self.ALLOW_ALL
+
+    @property
+    def allowed_items(self):
+        if self.allow_all:
+            return []
+        assert isinstance(self.allow, tuple), self.allow
+        return self.allow
+
+
+PARAMETERIZED_PERMISSIONS = {
+    'view_reports': 'view_report_list',
+    'view_web_apps': 'view_web_apps_list',
+    'manage_releases': 'manage_releases_list',
+}
 
 
 class Permissions(DocumentSchema):
@@ -164,6 +198,39 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
+    @classmethod
+    def from_permission_list(cls, permission_list):
+        """Converts a list of Permission objects into a Permissions object"""
+        permissions = Permissions.min()
+        for perm in permission_list:
+            setattr(permissions, perm.name, perm.allow_all)
+            if perm.name in PARAMETERIZED_PERMISSIONS:
+                setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
+        return permissions
+
+    @classmethod
+    @memoized
+    def permission_names(cls):
+        """Returns a list of permission names"""
+        return {
+            name for name, value in Permissions.properties().items()
+            if isinstance(value, BooleanProperty)
+        }
+
+    def to_list(self) -> List[PermissionInfo]:
+        """Returns a list of Permission objects for those permissions that are enabled."""
+        return list(self._yield_enabled())
+
+    def _yield_enabled(self):
+        for name in Permissions.permission_names():
+            value = getattr(self, name)
+            list_value = None
+            if name in PARAMETERIZED_PERMISSIONS:
+                list_name = PARAMETERIZED_PERMISSIONS[name]
+                list_value = getattr(self, list_name)
+            if value or list_value:
+                yield PermissionInfo(name, allow=PermissionInfo.ALLOW_ALL if value else list_value)
+
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
 
@@ -187,32 +254,18 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions(
-            edit_web_users=True,
-            view_web_users=True,
-            view_roles=True,
-            edit_commcare_users=True,
-            view_commcare_users=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_users_in_groups=True,
-            edit_locations=True,
-            view_locations=True,
-            edit_users_in_locations=True,
-            edit_motech=True,
-            edit_data=True,
-            edit_apps=True,
-            view_apps=True,
-            edit_reports=True,
-            view_reports=True,
-            edit_billing=True,
-            edit_shared_exports=True,
-            view_file_dropzone=True,
-            edit_file_dropzone=True,
-            access_mobile_endpoints=True,
-            access_api=True,
-        )
+        return Permissions._all(True)
 
+    @classmethod
+    def min(cls):
+        return Permissions._all(False)
+
+    @classmethod
+    def _all(cls, value: bool):
+        perms = Permissions()
+        for name in Permissions.permission_names():
+            setattr(perms, name, value)
+        return perms
 
 class UserRolePresets(object):
     # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
@@ -283,7 +336,7 @@ class UserRolePresets(object):
                 return name
 
 
-class UserRole(QuickCachedDocumentMixin, Document):
+class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     default_landing_page = StringProperty(
@@ -348,6 +401,27 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "name",
+            "default_landing_page",
+            "is_non_admin_editable",
+            "is_archived",
+            "upstream_id",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLUserRole
+
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        if not sql_object._get_pk_val():
+            sql_object.save(sync_to_couch=False)
+        migrate_role_permissions_to_sql(self, sql_object)
+        migrate_role_assignable_by_to_sql(self, sql_object)
 
 
 class AdminUserRole(UserRole):
