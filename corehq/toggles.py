@@ -1672,13 +1672,6 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-RESTRICT_APP_RELEASE = StaticToggle(
-    'restrict_app_release',
-    'ICDS: Show permission to manage app releases on user roles',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
-)
 
 RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     'release_builds_per_profile',
