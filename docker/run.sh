@@ -16,6 +16,13 @@ fi
 # owners and file modes.
 DOCKER_OVERLAY_TEST_DEBUG='no'
 
+VALID_TEST_SUITES=(
+    javascript
+    python
+    python-sharded
+    python-sharded-and-javascript
+)
+
 
 function setup {
     [ -n "$1" ] && TEST="$1"
@@ -50,11 +57,12 @@ function setup {
 
 function run_tests {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
-        logmsg ERROR "Unknown test suite: $TEST"
+    shift
+    suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
+    if ! echo "$TEST" | grep -E "^(${suite_pat})$" >/dev/null; then
+        logmsg ERROR "invalid test suite: $TEST (choices=${suite_pat})"
         exit 1
     fi
-    shift
     if truthy "$DOCKER_OVERLAY_TEST_DEBUG"; then
         # skip setup and tests and run debugging commands instead
         function overlay_debug {
@@ -121,43 +129,51 @@ function _run_tests {
     set -e
     TEST="$1"
     shift
+    py_test_args=("$@")
+    js_test_args=("$@")
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
-        TESTS="--attr=sql_backend"
-    else
-        TESTS=""
+        py_test_args+=("--attr=sql_backend")
     fi
 
-    if [ "$TEST" == "python-sharded-and-javascript" ]; then
+    function _test_python {
         ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test $* $TESTS"
-        ./manage.py test "$@" $TESTS
+        logmsg INFO "./manage.py test ${py_test_args[*]}"
+        ./manage.py test "${py_test_args[@]}"
+    }
 
+    function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         /mnt/wait.sh 127.0.0.1:8000
-        logmsg INFO "grunt test $*"
-        grunt test "$@"
+        logmsg INFO "grunt test ${js_test_args[*]}"
+        grunt test "${js_test_args[@]}"
+    }
 
-        if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-            echo "----------> Begin Static Analysis <----------"
-            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
-            ./scripts/static-analysis.sh datadog
-            echo "----------> End Static Analysis <----------"
-        fi
-
-    elif [ "$TEST" != "javascript" ]; then
-        ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test $* $TESTS"
-        ./manage.py test "$@" $TESTS
-    else
-        ./manage.py migrate --noinput
-        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        host=127.0.0.1 /mnt/wait.sh hq:8000
-        logmsg INFO "grunt test $*"
-        grunt test "$@"
-    fi
+    case "$TEST" in
+        python-sharded-and-javascript)
+            _test_python
+            _test_javascript
+            if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+                echo "----------> Begin Static Analysis <----------"
+                COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+                ./scripts/static-analysis.sh datadog
+                echo "----------> End Static Analysis <----------"
+            fi
+            ;;
+        python|python-sharded)
+            _test_python
+            ;;
+        javascript)
+            _test_javascript
+            ;;
+        *)
+            # this should never happen (would mean there is a bug in this script)
+            logmsg ERROR "invalid TEST value: '${TEST}'"
+            exit 1
+            ;;
+    esac
 }
 
 function bootstrap {

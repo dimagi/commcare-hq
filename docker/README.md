@@ -133,10 +133,13 @@ ENV Vars
 
 * JS_SETUP=[yes|**no**]
   * Run `yarn` installs
-* TEST=[javascript|python|python-sharded]
-  * javascript: extra setup and config for JS tests. Also only run JS tests
-  * python: default tests
-  * python-sharded: configure django for sharded setup and only run subset of tests
+* TEST=[javascript|**python**|python-sharded|python-sharded-and-javascript]
+  * `javascript`: extra setup and config for JS tests. Also only run JS tests
+  * `python`: default tests
+  * `python-sharded`: configure django for sharded setup and only run subset of
+    tests
+  * `python-sharded-and-javascript`: combines `python-sharded` and `javascript`.
+    Also sends static analysis to datadog if job is travis "cron" event.
 * NOSE_DIVIDED_WE_RUN
   * used to only run a subset of tests
   * see .travis.yml for exact options
