@@ -10,7 +10,6 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from dimagi.utils.web import json_response
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -26,6 +25,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -816,7 +816,7 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     role_data = dict(
         (p, role_data[p])
@@ -870,24 +870,25 @@ def post_user_role(request, domain):
         role.permissions.edit_users_in_locations = False
 
     role.save()
-    role.__setattr__('hasUsersAssigned', role.has_users_assigned)
-    return json_response(role)
+    response_data = role.to_json()
+    response_data['hasUsersAssigned'] = role.has_users_assigned
+    return JsonResponse(response_data)
 
 
 @domain_admin_required
 @require_POST
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
         role = UserRole.get(role_data["_id"])
     except ResourceNotFound:
-        return json_response({})
+        return JsonResponse({})
     copy_id = role._id
     role.delete()
     # return removed id in order to remove it from UI
-    return json_response({"_id": copy_id})
+    return JsonResponse({"_id": copy_id})
 
 
 @always_allow_project_access
@@ -895,7 +896,7 @@ def delete_user_role(request, domain):
 @require_can_edit_web_users
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({'status': 'ok'})
 
 
 @always_allow_project_access
