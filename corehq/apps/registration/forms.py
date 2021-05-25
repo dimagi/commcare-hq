@@ -306,8 +306,8 @@ class DomainRegistrationForm(forms.Form):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
+        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
+        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-4'
         self.helper.layout = crispy.Layout(
             'hr_name',
             'org',
