@@ -23,7 +23,6 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1950,7 +1949,7 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
     ])
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
-    notify_msg = mark_safe("""{} {}""".format(msg, case_links))
+    notify_msg = format_html("""{} {}""".format(msg, case_links))
     return notify_msg
 
 
