@@ -137,11 +137,14 @@ class RolePermission(models.Model):
     allowed_items = ArrayField(models.CharField(max_length=256), blank=True, null=True)
 
     class Meta:
+        unique_together = [
+            ("role", "permission_fk")
+        ]
         constraints = [
             models.CheckConstraint(
                 name="users_rolepermission_valid_allow",
                 check=~models.Q(allow_all=True, allowed_items__len__gt=0)
-            )
+            ),
         ]
 
     @staticmethod

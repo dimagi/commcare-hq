@@ -111,31 +111,56 @@ class RolesTests(TestCase):
 class TestRolePermissionsModel(TestCase):
     domain = "user-role-test"
 
-    def test_allow_check_constraint_success(self):
-        sql_role = SQLUserRole(domain=self.domain, name="role1")
-        sql_role.save()
-        self.addCleanup(sql_role.delete)
+    def setUp(self):
+        self.role1 = SQLUserRole(domain=self.domain, name="role1")
+        self.role1.save()
+        self.addCleanup(self.role1.delete)
 
-        sql_role.rolepermission_set.set([
-            RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=None),
+
+    def _test_allow_check_constraint(self, name, allow_all, allowed_items):
+        self.role1.rolepermission_set.set([
+            RolePermission(permission=name, allow_all=allow_all, allowed_items=allowed_items)
         ], bulk=False)
 
-        sql_role.rolepermission_set.set([
-            RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=[]),
-        ], bulk=False)
+    def test_allow_check_constraint_allow_all_params_none(self):
+        self._test_allow_check_constraint(Permissions.view_reports.name, True, None)
 
-        sql_role.rolepermission_set.set([
-            RolePermission(permission=Permissions.view_reports.name, allow_all=False, allowed_items=['report1']),
-        ], bulk=False)
+    def test_allow_check_constraint_allow_all_params_empty(self):
+        self._test_allow_check_constraint(Permissions.view_reports.name, True, [])
+
+    def test_allow_check_constraint_params_list(self):
+        self._test_allow_check_constraint(Permissions.view_reports.name, False, ['report1'])
 
     @atomic
     def test_allow_check_constraint_fail(self):
+        constraint_name = "users_rolepermission_valid_allow"
+        with self.assertRaisesMessage(IntegrityError, constraint_name):
+            self.role1.rolepermission_set.set([
+                RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=['report1']),
+            ], bulk=False)
+
+    def test_unique_constraint_ok(self):
+        self.role1.rolepermission_set.set([
+            RolePermission(permission=Permissions.edit_data.name, allow_all=True),
+        ], bulk=False)
+
+        role2 = SQLUserRole(domain=self.domain, name="role2")
+        role2.save()
+        self.addCleanup(role2.delete)
+
+        role2.rolepermission_set.set([
+            RolePermission(permission=Permissions.edit_data.name, allow_all=True),
+        ], bulk=False)
+
+    @atomic
+    def test_unique_constraint_fail(self):
         sql_role = SQLUserRole(domain=self.domain, name="role1")
         sql_role.save()
         self.addCleanup(sql_role.delete)
 
-        constraint_name = "users_rolepermission_valid_allow"
+        constraint_name = "users_rolepermission_role_id_permission_fk_id_bc5f84db_uniq"
         with self.assertRaisesMessage(IntegrityError, constraint_name):
             sql_role.rolepermission_set.set([
-                RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=['report1']),
+                RolePermission(permission=Permissions.edit_data.name, allow_all=True),
+                RolePermission(permission=Permissions.edit_data.name, allow_all=False),
             ], bulk=False)
