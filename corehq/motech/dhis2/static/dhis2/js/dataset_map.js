@@ -11,7 +11,7 @@ hqDefine("dhis2/js/dataset_map", [
 ) {
     $(function () {
         var $sendNowResult = $('#send-now-result');
-        var $remoteLogsLink = $('#remote-logs')
+        var $remoteLogsLink = $('#remote-logs');
         $remoteLogsLink.hide();
 
         var handleSuccess = function (response) {
@@ -22,8 +22,8 @@ hqDefine("dhis2/js/dataset_map", [
                 $sendNowResult.addClass("text-danger");
             }
             $sendNowResult.text(gettext('DHIS2 response: ') + response.text);
-            if (resp.responseJSON) {
-                $remoteLogsLink.attr('href', resp.responseJSON['log_url']);
+            if (response.responseJSON) {
+                $remoteLogsLink.attr('href', response.responseJSON['log_url']);
                 $remoteLogsLink.show();
             }
         };
