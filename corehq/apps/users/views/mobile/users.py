@@ -1,9 +1,9 @@
 import io
 import json
 import re
-from datetime import datetime
 
-from django.conf import settings
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -23,21 +23,12 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
-
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
-
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -71,9 +62,6 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
-from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -121,8 +109,7 @@ from corehq.const import (
 )
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
-    TWO_STAGE_USER_PROVISIONING,
-    PARALLEL_USER_IMPORTS
+    TWO_STAGE_USER_PROVISIONING
 )
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -133,7 +120,11 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
-
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
