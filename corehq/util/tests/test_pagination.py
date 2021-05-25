@@ -54,6 +54,26 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.itr = self.get_iterator()
         self.assertEqual([item for item in self.itr], self.all_items[3:])
 
+    def test_resume_iteration_after_exhaustion(self):
+        itr = iter(self.itr)
+        self.assertEqual(list(itr), self.all_items)
+        # resume iteration
+        self.batches.append([8, 9])
+        self.itr = self.get_iterator()
+        self.assertEqual(list(self.itr), [8, 9])
+
+    def test_resume_iteration_after_legacy_completion(self):
+        itr = iter(self.itr)
+        self.assertEqual(list(itr), self.all_items)
+        state = self.itr.state
+        state.complete = True
+        state.args = state.kwargs = None
+        self.itr._save_state()
+        # attempt to resume yields no new items
+        self.batches.append([8, 9])
+        self.itr = self.get_iterator()
+        self.assertEqual(list(self.itr), [])
+
     def test_resume_iteration_after_complete_iteration(self):
         self.assertEqual(list(self.itr), self.all_items)
         # resume iteration
