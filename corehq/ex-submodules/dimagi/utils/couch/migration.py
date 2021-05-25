@@ -133,11 +133,11 @@ class SyncCouchToSQLMixin(object):
             sql_attr = getattr(sql_object, spec.sql_attr)
             sql_attr.all().delete()
             sql_attr.set(sql_submodels, bulk=False)
-        sql_object.save(sync_to_couch=False)
 
     def _migration_do_sync(self):
         sql_object = self._migration_get_or_create_sql_object()
         self._migration_sync_to_sql(sql_object)
+        sql_object.save(sync_to_couch=False)
 
     def save(self, *args, **kwargs):
         sync_to_sql = kwargs.pop('sync_to_sql', True)
