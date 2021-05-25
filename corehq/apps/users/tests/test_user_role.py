@@ -116,7 +116,6 @@ class TestRolePermissionsModel(TestCase):
         self.role1.save()
         self.addCleanup(self.role1.delete)
 
-
     def _test_allow_check_constraint(self, name, allow_all, allowed_items):
         self.role1.rolepermission_set.set([
             RolePermission(permission=name, allow_all=allow_all, allowed_items=allowed_items)
@@ -140,6 +139,7 @@ class TestRolePermissionsModel(TestCase):
             ], bulk=False)
 
     def test_unique_constraint_ok(self):
+        """different roles can have the same permission"""
         self.role1.rolepermission_set.set([
             RolePermission(permission=Permissions.edit_data.name, allow_all=True),
         ], bulk=False)
@@ -154,6 +154,7 @@ class TestRolePermissionsModel(TestCase):
 
     @atomic
     def test_unique_constraint_fail(self):
+        """the same role can not have duplicate permissions"""
         sql_role = SQLUserRole(domain=self.domain, name="role1")
         sql_role.save()
         self.addCleanup(sql_role.delete)

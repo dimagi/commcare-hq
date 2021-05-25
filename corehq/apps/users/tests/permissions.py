@@ -104,4 +104,3 @@ def test_parameterized_permission_validation():
     PermissionInfo(Permissions.view_apps.name, allow=PermissionInfo.ALLOW_ALL)
     with assert_raises(TypeError):
         PermissionInfo(Permissions.view_apps.name, allow=["app1"])
-
