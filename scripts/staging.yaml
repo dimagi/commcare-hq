@@ -74,4 +74,5 @@ branches:
     - mk/case_search_labels/multimedia # MK May 21
     - sr/hide-geo  # Sravan May 25
     - bmb/sso-new-user-page  # Biyeun 25th May
+    - bmb/sso-remove-toggle  # Biyeun 25th May
 submodules: { }
