@@ -704,6 +704,7 @@ def create_domain_permission_mirror(request, domain):
         for field, message in form.errors.items():
             messages.error(request, message)
     else:
+        form.save_mirror_domain()
         mirror_domain_name = form.cleaned_data.get("mirror_domain")
         message = _('You have successfully added the project space "{mirror_domain_name}".')
         messages.success(request, message.format(mirror_domain_name=mirror_domain_name))

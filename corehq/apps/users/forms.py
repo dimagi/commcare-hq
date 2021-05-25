@@ -7,7 +7,6 @@ from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
-from django.db.utils import IntegrityError
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
@@ -1278,6 +1277,7 @@ class CreateDomainPermissionsMirrorForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain', None)
+        self.mirror_domain = None
         super().__init__(*args, **kwargs)
 
     def clean_mirror_domain(self):
@@ -1286,14 +1286,15 @@ class CreateDomainPermissionsMirrorForm(forms.Form):
             raise forms.ValidationError(_("""
                 Enterprise permissions cannot be granted from a project space to itself.
             """))
-        mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if mirror_domain is not None:
-            try:
-                mirror = DomainPermissionsMirror(source=self.domain, mirror=mirror_domain)
-                mirror.save()
-            except IntegrityError:
-                message = '"' + mirror_domain_name + '"' + ' has already been added.'
-                raise forms.ValidationError(_(message))
-        else:
+        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
+        if not self.mirror_domain:
             raise forms.ValidationError(_('Please enter valid project space.'))
+        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
+            message = _('"{mirror_domain_name}" has already been added.')
+            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
         return mirror_domain_name
+
+    def save_mirror_domain(self):
+        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
+        mirror.save()
+
