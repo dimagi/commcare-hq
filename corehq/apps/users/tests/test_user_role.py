@@ -79,22 +79,28 @@ class RolesTests(TestCase):
         role.save()
         role.rolepermission_set.set([
             RolePermission(permission=Permissions.edit_data.name),
-            RolePermission(permission=Permissions.manage_releases.name, allow_all=False,
-                           allowed_items=['app1']),
-            RolePermission(permission=Permissions.view_reports.name, allow_all=True),
+            RolePermission(permission=Permissions.view_reports.name, allow_all=False,
+                           allowed_items=['report1']),
         ], bulk=False)
 
         self.assertEqual(set(role.get_permission_infos()), {
             PermissionInfo(Permissions.edit_data.name),
-            PermissionInfo(Permissions.manage_releases.name, allow=['app1']),
-            PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL),
+            PermissionInfo(Permissions.view_reports.name, allow=['report1']),
         })
 
         new_permissions = {
             # removed edit_data
             PermissionInfo(Permissions.access_api.name),  # new
-            PermissionInfo(Permissions.edit_data.name, allow=['app1', 'app2']),  # edit
-            PermissionInfo(Permissions.view_reports.name, allow=['report1']),  # edit
+            PermissionInfo(Permissions.view_reports.name, allow=['report1', 'report2']),  # edit
+        }
+        role.set_permissions(new_permissions)
+
+        role2 = SQLUserRole.objects.get(id=role.id)
+        self.assertEqual(set(role2.get_permission_infos()), new_permissions)
+
+        # change parameterized permission to allow all
+        new_permissions = {
+            PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL),  # edit
         }
         role.set_permissions(new_permissions)
 
@@ -111,8 +117,14 @@ class TestRolePermissionsModel(TestCase):
         self.addCleanup(sql_role.delete)
 
         sql_role.rolepermission_set.set([
-            RolePermission(permission=Permissions.view_web_apps.name, allow_all=True, allowed_items=None),
-            RolePermission(permission=Permissions.manage_releases.name, allow_all=True, allowed_items=[]),
+            RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=None),
+        ], bulk=False)
+
+        sql_role.rolepermission_set.set([
+            RolePermission(permission=Permissions.view_reports.name, allow_all=True, allowed_items=[]),
+        ], bulk=False)
+
+        sql_role.rolepermission_set.set([
             RolePermission(permission=Permissions.view_reports.name, allow_all=False, allowed_items=['report1']),
         ], bulk=False)
 

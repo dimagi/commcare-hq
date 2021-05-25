@@ -137,8 +137,6 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
-    'view_web_apps': 'view_web_apps_list',
-    'manage_releases': 'manage_releases_list',
 }
 
 

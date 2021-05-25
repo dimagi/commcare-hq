@@ -77,7 +77,7 @@ class UserRoleCouchToSqlTests(TestCase):
             PermissionInfo(Permissions.edit_data.name),
             PermissionInfo(Permissions.edit_reports.name),
             PermissionInfo(Permissions.view_reports.name, allow=['corehq.reports.DynamicReportmaster_report_id']),
-            PermissionInfo(Permissions.view_web_apps.name),
+            PermissionInfo(Permissions.view_apps.name),
         ])
 
         sql_role.set_assignable_by(list(
