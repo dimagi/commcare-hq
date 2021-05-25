@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from corehq.motech.utils import pformat_json
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -36,6 +37,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
 def send_dataset(
     dataset_map: SQLDataSetMap,
     send_date: datetime.date,
+    log_resource_url=None
 ) -> dict:
     """
     Sends a data set of data values in the following format. "period" is
@@ -75,7 +77,8 @@ def send_dataset(
     .. _DHIS2 API docs: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    with dataset_map.connection_settings.get_requests() as requests:
+    payload_id = dataset_map.ucr_id  # Allows us to filter Remote API Logs
+    with dataset_map.connection_settings.get_requests(payload_id) as requests:
         response = None
         try:
             dataset = get_dataset(dataset_map, send_date)
@@ -84,24 +87,38 @@ def send_dataset(
         except DatabaseError as db_err:
             requests.notify_error(message=str(db_err),
                                   details=traceback.format_exc())
-            return {
+
+            response = {
                 'success': False,
                 'error': _('There was an error retrieving some UCR data. '
                            'Try contacting support to help resolve this issue.'),
                 'text': None
             }
+
+            if log_resource_url is not None:
+                response['log_url'] = f'{log_resource_url}?filter_payload={payload_id}'
+
+            return response
+
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
-            return {
+            text = pformat_json(response.text if response else None)
+
+            response = {
                 'success': False,
                 'error': str(err),
                 'status_code': response.status_code if response else None,
-                'text': response.text if response else None,
+                'text': text
             }
+
+            if log_resource_url is not None:
+                response['log_url'] = f'{log_resource_url}?filter_payload={payload_id}'
+
+            return response
         else:
             return {
                 'success': True,
                 'status_code': response.status_code,
-                'text': response.text,
+                'text': pformat_json(response.text),
             }
