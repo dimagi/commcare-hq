@@ -1118,8 +1118,26 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         ):
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
+            if search_properties.get('search_label_image_for_all'):
+                search_label.use_default_image_for_all = (
+                    search_properties.get('search_label_image_for_all') == 'true')
+            if search_properties.get('search_label_audio_for_all'):
+                search_label.use_default_audio_for_all = (
+                    search_properties.get('search_label_audio_for_all') == 'true')
+            search_label.set_media("media_image", lang, search_properties.get('search_label_image'))
+            search_label.set_media("media_audio", lang, search_properties.get('search_label_audio'))
+
             search_again_label = module.search_config.search_again_label
             search_again_label.label[lang] = search_properties.get('search_again_label', '')
+            if search_properties.get('search_again_label_image_for_all'):
+                search_again_label.use_default_image_for_all = (
+                    search_properties.get('search_again_label_image_for_all') == 'true')
+            if search_properties.get('search_again_label_audio_for_all'):
+                search_again_label.use_default_audio_for_all = (
+                    search_properties.get('search_again_label_audio_for_all') == 'true')
+            search_again_label.set_media("media_image", lang, search_properties.get('search_again_label_image'))
+            search_again_label.set_media("media_audio", lang, search_properties.get('search_again_label_audio'))
+
             try:
                 properties = [
                     CaseSearchProperty.wrap(p)
