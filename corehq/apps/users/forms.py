@@ -1297,4 +1297,3 @@ class CreateDomainPermissionsMirrorForm(forms.Form):
     def save_mirror_domain(self):
         mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
         mirror.save()
-
