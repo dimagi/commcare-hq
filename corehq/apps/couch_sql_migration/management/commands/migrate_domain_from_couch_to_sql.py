@@ -12,6 +12,7 @@ from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import DomainMigrationProgress, reset_caches
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -31,8 +32,14 @@ from ...couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
-from ...missingdocs import MissingIds, find_missing_docs, recheck_missing_docs
+from ...missingdocs import (
+    MissingIds,
+    discard_missing_docs_state,
+    find_missing_docs,
+    recheck_missing_docs,
+)
 from ...progress import (
+    COUCH_TO_SQL_SLUG,
     MigrationStatus,
     couch_sql_migration_in_progress,
     get_couch_sql_migration_status,
@@ -56,6 +63,7 @@ MIGRATE = "MIGRATE"
 COMMIT = "COMMIT"
 RESET = "reset"  # was --blow-away
 REWIND = "rewind"
+UNFINISH = "unfinish"
 STATS = "stats"
 INFO = "info"
 DIFF = "diff"
@@ -82,6 +90,7 @@ class Command(BaseCommand):
             COMMIT,
             RESET,
             REWIND,
+            UNFINISH,
             STATS,
             INFO,
             DIFF,
@@ -110,16 +119,18 @@ class Command(BaseCommand):
                 interruption or to top off a previous live migration by
                 processing unmigrated forms that are older than one
                 hour. Migration state must be present in the state
-                directory to resume. A live migration may be followed by
-                a normal (non-live) migration, which will commit the
-                result if all goes well.
+                directory to resume. All commands will operate in "live
+                migration" mode once a live migration has been started
+                and until the --finish option is used to complete it.
             ''')
         parser.add_argument("--finish", action='store_true', default=False,
             help="""
-                Finish live migration. All commands will operate in "live
-                migration" mode once a live migration has been started
-                unless this option is used to move beyond the live
-                migration.
+                Finish live migration. This disables form submissions for
+                the domain until the COMMIT action is run or the "unfinish"
+                action is used to revert the migration to "dry_run" (live
+                migrating) mode. The "unfinish" action is useful to allow
+                migration issues preventing a COMMIT to be fixed with less
+                urgency.
             """)
         parser.add_argument('--rebuild-state',
             dest="rebuild_state", action='store_true', default=False,
@@ -297,6 +308,9 @@ class Command(BaseCommand):
             )
         set_couch_sql_migration_complete(domain)
 
+    def do_unfinish(self, domain):
+        unfinish_couch_sql_migration(domain, self.state_dir)
+
     def do_stats(self, domain):
         self.print_stats(domain, short=not self.verbose)
 
@@ -399,6 +413,18 @@ def _confirm(message):
     response = input('{} [y/N]'.format(message)).lower()
     if response != 'y':
         raise CommandError('abort')
+
+
+def unfinish_couch_sql_migration(domain, state_dir):
+    prog = DomainMigrationProgress.objects.get(domain=domain, migration_slug=COUCH_TO_SQL_SLUG)
+    if prog.migration_status != MigrationStatus.IN_PROGRESS:
+        raise CommandError(f"cannot unfinish migration in {prog.migration_status} state")
+    assert couch_sql_migration_in_progress(domain, include_dry_runs=False)
+    discard_missing_docs_state(domain, state_dir)  # force rescan for missing docs
+    prog.migration_status = MigrationStatus.DRY_RUN
+    prog.save()
+    reset_caches(domain, COUCH_TO_SQL_SLUG)
+    log.info(f"set migration status to '{prog.migration_status}'")
 
 
 def blow_away_migration(domain, state_dir):
