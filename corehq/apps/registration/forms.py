@@ -287,9 +287,16 @@ class DomainRegistrationForm(forms.Form):
     max_name_length = 25
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
-                                      widget=forms.TextInput(attrs={'class': 'form-control',
-                                        'placeholder': _('My CommCare Project')}))
+    hr_name = forms.CharField(
+        label=_('Project Name'),
+        max_length=max_name_length,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': _('My CommCare Project'),
+            }
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
