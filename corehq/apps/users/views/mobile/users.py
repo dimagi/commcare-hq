@@ -34,7 +34,6 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -834,11 +833,11 @@ def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if (not _can_edit_workers_location(request.couch_user, user)
             or (is_active and not can_add_extra_mobile_workers(request))):
-        return json_response({
+        return JsonResponse({
             'error': _("No Permission."),
         })
     if not is_active and user.user_location_id:
-        return json_response({
+        return JsonResponse({
             'error': _("This is a location user, archive or delete the "
                        "corresponding location to deactivate it."),
         })
@@ -847,7 +846,7 @@ def _modify_user_status(request, domain, user_id, is_active):
     change_message = "Activated User" if is_active else "Deactivated User"
     log_model_change(request.user, user.get_django_user(), message=change_message,
                      action=ModelAction.UPDATE)
-    return json_response({
+    return JsonResponse({
         'success': True,
     })
 
@@ -918,7 +917,7 @@ def paginate_mobile_workers(request, domain):
             'status': _status_string(user),
         })
 
-    return json_response({
+    return JsonResponse({
         'users': users,
         'total': users_data.total,
     })
@@ -1313,7 +1312,7 @@ def count_users(request, domain):
     user_count = 0
     for domain in user_filters['domains']:
         user_count += get_commcare_users_by_filters(domain, user_filters, count_only=True)
-    return json_response({
+    return JsonResponse({
         'count': user_count
     })
 
