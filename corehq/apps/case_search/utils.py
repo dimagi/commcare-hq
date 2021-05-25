@@ -61,28 +61,37 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
+        self._validate_multiple_parameter_values()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_daterange_queries()
         self._add_case_property_queries()
 
-    def _validate_param_value(self, key, value):
-        if isinstance(value, list):
-            raise CaseFilterError(
-                _("Multiple values for this param is not supported"),
-                key
-            )
+    def _validate_multiple_parameter_values(self):
+        disallowed_multiple_value_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+            CASE_SEARCH_XPATH_QUERY_KEY,
+        ]
+
+        for key, val in self.criteria.items():
+            if not isinstance(val, list):
+                continue
+            daterange_invalid = any([v.startswith('__range__') for v in val])
+            if key in disallowed_multiple_value_parameters or '/' in key or daterange_invalid:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text lookups"),
+                    key
+                )
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
-        self._validate_param_value(CASE_SEARCH_XPATH_QUERY_KEY, query)
         if query:
             self.search_es = self.search_es.xpath_query(self.domain, query)
 
     def _add_owner_id(self):
         owner_id = self.criteria.pop('owner_id', False)
-        self._validate_param_value('owner_id', owner_id)
         if owner_id:
             self.search_es = self.search_es.owner(owner_id)
 
@@ -99,10 +108,7 @@ class CaseSearchCriteria(object):
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         drop_keys = []
         for key, val in self.criteria.items():
-            # multiple daterange query param values are not supported
-            if isinstance(val, list) and val.startswith('__range__'):
-                self._validate_param_value(key, val)
-            elif val.startswith('__range__'):
+            if val.startswith('__range__'):
                 match = pattern.match(val)
                 if match:
                     [_, _, startdate, enddate] = val.split('__')
@@ -138,7 +144,6 @@ class CaseSearchCriteria(object):
                     value = re.sub(to_remove, '', value)
 
             if '/' in key:
-                self._validate_param_value(key, value)
                 query = '{} = "{}"'.format(key, value)
                 self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=(key in fuzzies))
             else:
