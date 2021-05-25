@@ -296,6 +296,10 @@ class DomainRegistrationForm(forms.Form):
                 'placeholder': _('My CommCare Project'),
             }
         ),
+        help_text=_(
+            "Important: This will be used to create a project URL, and you "
+            "will not be able to change it in the future."
+        ),
     )
 
     def __init__(self, *args, **kwargs):
