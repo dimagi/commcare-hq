@@ -1,6 +1,5 @@
 import json
 import os
-from itertools import zip_longest
 from typing import Optional, Union
 
 from django.conf import settings
@@ -14,14 +13,20 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
     as_value_source,
 )
-from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
 
-from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from .const import (
+    FHIR_VERSION_4_0_1,
+    FHIR_VERSIONS,
+    IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
+)
 from .validators import validate_supported_type
 
 
@@ -298,3 +303,29 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
         )
     except FHIRResourceType.DoesNotExist:
         return None
+
+
+class FHIRImporter(models.Model):
+    domain = models.CharField(max_length=127, db_index=True)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT,
+    )
+    fhir_version = models.CharField(
+        max_length=12,
+        choices=FHIR_VERSIONS,
+        default=FHIR_VERSION_4_0_1,
+    )
+    frequency = models.CharField(
+        max_length=12,
+        choices=IMPORT_FREQUENCY_CHOICES,
+        default=IMPORT_FREQUENCY_DAILY,
+    )
+    # ID of user or location that will own imported cases
+    owner_id = models.CharField(max_length=32, null=False, blank=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['frequency']),
+        ]

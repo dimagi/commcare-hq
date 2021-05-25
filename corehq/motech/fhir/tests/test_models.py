@@ -1,7 +1,9 @@
 import doctest
 from contextlib import contextmanager
 
-from django.db import IntegrityError
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 from django.test import TestCase
 
 from nose.tools import assert_in
@@ -9,10 +11,98 @@ from nose.tools import assert_in
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
+from corehq.motech.models import ConnectionSettings
 
-from ..models import FHIRResourceProperty, FHIRResourceType
+from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
+from ..models import FHIRImporter, FHIRResourceProperty, FHIRResourceType
 
 DOMAIN = 'test-domain'
+
+
+class TestFHIRImporter(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Test ConnectionSettings',
+            url='https://example.com/api/',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.conn.delete()
+        super().tearDownClass()
+
+    def tearDown(self):
+        FHIRImporter.objects.filter(domain=DOMAIN).delete()
+
+    def test_connection_settings_null(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            owner_id='b0b',
+        )
+        with self.assertRaises(ValidationError):
+            importer.full_clean()
+        with self.assertRaises(IntegrityError), \
+                transaction.atomic():
+            importer.save()
+
+    def test_connection_settings_protected(self):
+        FHIRImporter.objects.create(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+        )
+        with self.assertRaises(ProtectedError):
+            self.conn.delete()
+
+    def test_fhir_version_good(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            fhir_version=FHIR_VERSION_4_0_1,
+            owner_id='b0b',
+        )
+        importer.full_clean()
+
+    def test_fhir_version_bad(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            fhir_version='1.0.2',
+            owner_id='b0b',
+        )
+        with self.assertRaises(ValidationError):
+            importer.full_clean()
+
+    def test_frequency_good(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            frequency=IMPORT_FREQUENCY_DAILY,
+            owner_id='b0b',
+        )
+        importer.full_clean()
+
+    def test_frequency_bad(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            frequency='weekly',
+            owner_id='b0b',
+        )
+        with self.assertRaises(ValidationError):
+            importer.full_clean()
+
+    def test_owner_id_missing(self):
+        importer = FHIRImporter(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+        )
+        with self.assertRaises(ValidationError):
+            importer.full_clean()
 
 
 class TestConfigurationErrors(TestCase):
