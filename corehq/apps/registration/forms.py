@@ -315,7 +315,7 @@ class DomainRegistrationForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Create Project"),
                     type="submit",
-                    css_class="btn btn-primary btn-lg disable-on-submit",
+                    css_class="btn btn-primary disable-on-submit",
                 )
             )
         )
