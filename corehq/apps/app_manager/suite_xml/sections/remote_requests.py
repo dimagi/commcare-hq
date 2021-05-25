@@ -180,7 +180,8 @@ class RemoteRequestFactory(object):
             }
             if not prop.appearance or prop.itemset.nodeset:
                 kwargs['receive'] = prop.receiver_expression
-            kwargs['hidden'] = prop.hidden or False
+            if prop.hidden:
+                kwargs['hidden'] = prop.hidden
             if prop.appearance and self.app.enable_search_prompt_appearance:
                 if prop.appearance == 'address':
                     kwargs['input_'] = prop.appearance
