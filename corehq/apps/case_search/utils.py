@@ -217,9 +217,6 @@ def get_child_case_types(app, case_type):
 
 def get_child_case_results(domain, parent_cases, case_types):
     parent_case_ids = {c.case_id for c in parent_cases}
-    child_cases = []
-    for case_type in case_types:
-        query = CaseSearchES().domain(domain).case_type(case_type).get_child_cases(parent_case_ids, "parent")
-        results = query.run().hits
-        child_cases.extend([CommCareCase.wrap(flatten_result(result)) for result in results])
-    return child_cases
+    query = CaseSearchES().domain(domain).case_type(case_types).get_child_cases(parent_case_ids, "parent")
+    results = query.run().hits
+    return [CommCareCase.wrap(flatten_result(result)) for result in results]
