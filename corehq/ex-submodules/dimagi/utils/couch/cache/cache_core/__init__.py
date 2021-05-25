@@ -49,8 +49,8 @@ def get_redis_default_cache():
 def get_redis_client():
     rcache = get_redis_default_cache()
 
-    if not isinstance(rcache, RedisCache):
-        raise RedisClientError('Could not get redis cache. Is the redis cache configured?')
+    # if not isinstance(rcache, RedisCache):
+    #     raise RedisClientError('Could not get redis cache. Is the redis cache configured?')
 
     return rcache
 

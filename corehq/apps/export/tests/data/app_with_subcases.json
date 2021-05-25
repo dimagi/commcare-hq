@@ -686,8 +686,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",
@@ -1094,8 +1096,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",
@@ -1504,8 +1508,10 @@
             "root_module_id": null,
             "search_config": {
                 "blacklisted_owner_ids_expression": null,
-                "command_label": {
-                    "en": "Search All Cases"
+                "search_label": {
+                    "label": {
+                        "en": "Search All Cases"
+                    }
                 },
                 "default_properties": [],
                 "doc_type": "CaseSearch",
