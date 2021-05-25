@@ -1466,7 +1466,7 @@ class MissingFormLoader:
 def get_main_forms_iteration_stop_date(statedb):
     resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
     itr = ResumableFunctionIterator(resume_key, None, None)
-    if itr.state.complete:
+    if getattr(itr.state, "complete", False):
         return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
