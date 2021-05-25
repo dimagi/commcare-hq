@@ -63,14 +63,15 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
-    - rp/query_multiple_domains #Rynhard May 4
     - jls/refactor-details-js-retry # Jenny May 5
     - jls/detail-nodeset-rebased # Jenny May 6
     - jls/cross-domain-web-user-download # Jenny April 24
-    - rn_whitelist_edit_module_detail_screens_url # Rohit May 7
     - smh/embedded-tableau # Steph May 7
-    - jm/idp-cert-alert # Joel May 12
-    - cs/onse-dhis-exponential-backoff # Charl May 17
-    - rp/subscriptions-notification-change # Rynhard May 18
-
+    - gh/add-app-id-to-downstream-report # Graham May 18
+    - sk/sql-user-role  # Simon May 19
+    - dependabot/npm_and_yarn/underscore-1.13.1  # Biyeun May 20. if u see "_ is undefined" errors all over the place it's probably a quick fix but feel free to comment out and redeploy
+    - mk/case_search_labels/migrate # MK May 21
+    - mk/case_search_labels/multimedia # MK May 21
+    - sr/hide-geo  # Sravan May 25
+    - cs/dhis-readable-response # Charl Smit May 25
 submodules: { }
