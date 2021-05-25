@@ -126,6 +126,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
+    FilteredModelIteratorBuilder('users.SQLUserRole', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.SQLCommtrackConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.SQLActionConfig', SimpleFilter('commtrack_config__domain')),
