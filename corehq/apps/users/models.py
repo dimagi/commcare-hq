@@ -121,6 +121,8 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
     def __new__(cls, name, allow=ALLOW_ALL):
         allow = allow if allow == cls.ALLOW_ALL else tuple(allow)
+        if allow != cls.ALLOW_ALL and name not in PARAMETERIZED_PERMISSIONS:
+            raise TypeError(f"Permission '{name}' does not support parameterization")
         return super(PermissionInfo, cls).__new__(cls, name, allow)
 
     @property
