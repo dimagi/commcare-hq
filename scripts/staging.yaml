@@ -69,7 +69,6 @@ branches:
     - smh/embedded-tableau # Steph May 7
     - gh/add-app-id-to-downstream-report # Graham May 18
     - sk/sql-user-role  # Simon May 19
-    - dependabot/npm_and_yarn/underscore-1.13.1  # Biyeun May 20. if u see "_ is undefined" errors all over the place it's probably a quick fix but feel free to comment out and redeploy
     - mk/case_search_labels/migrate # MK May 21
     - mk/case_search_labels/multimedia # MK May 21
     - sr/hide-geo  # Sravan May 25
