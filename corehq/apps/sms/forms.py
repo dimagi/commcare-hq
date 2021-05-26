@@ -1236,7 +1236,6 @@ class SubscribeSMSForm(Form):
             )
         )
 
-    # TODO: test this still saves
     def save(self, commtrack_settings):
         if not hasattr(commtrack_settings, 'alertconfig'):
             commtrack_settings.alertconfig = AlertConfig()
