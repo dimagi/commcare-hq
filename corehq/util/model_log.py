@@ -1,27 +1,25 @@
 from enum import Enum
 
-from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.admin.options import get_content_type_for_model
-from django.utils.encoding import force_text
+from corehq.apps.users.models_sql import HQLogEntry, UpdateDetails
 
 
 class ModelAction(Enum):
-    CREATE = ADDITION
-    UPDATE = CHANGE
-    DELETE = DELETION
+    CREATE = HQLogEntry.CREATE
+    UPDATE = HQLogEntry.UPDATE
+    DELETE = HQLogEntry.DELETE
 
 
-def log_model_change(user, model_object, message=None, fields_changed=None, action=ModelAction.UPDATE):
+def log_model_change(domain, user, model_object, message=None, fields_changed=None, action=ModelAction.UPDATE):
     """
-    :param user: User making the change (couch user or django user)
-    :param model_object: The object being changed (must be a Django model)
+    :param domain: domain where the update was initiated
+    :param user: User making the change (couch user)
+    :param model_object: The user being changed (couch user)
     :param message: Message text
     :param fields_changed: List of model field names that have
     :param action: Action on the model
     """
-    from corehq.apps.users.models import CouchUser
-    if isinstance(user, CouchUser):
-        user = user.get_django_user()
+    if not domain:
+        raise ValueError("Please pass domain")
 
     if message is None and fields_changed is None:
         raise ValueError("One of 'message' or 'fields_changed' is required.")
@@ -35,11 +33,12 @@ def log_model_change(user, model_object, message=None, fields_changed=None, acti
 
         message = [{'changed': {'fields': fields_changed}}]
 
-    return LogEntry.objects.log_action(
-        user_id=user.pk,
-        content_type_id=get_content_type_for_model(model_object).pk,
-        object_id=model_object.pk,
-        object_repr=force_text(model_object),
+    return HQLogEntry.objects.create(
+        domain=domain,
+        object_type=model_object.doc_type,
+        object_id=model_object.get_id,
+        by_user_id=user.get_id,
+        details=UpdateDetails.wrap({}),
+        message=message,
         action_flag=action.value,
-        change_message=message,
     )

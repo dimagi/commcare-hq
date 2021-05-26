@@ -1,9 +1,14 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+import jsonobject
+from jsonfield.fields import JSONField
+
+from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 
 class UserRoleManager(models.Manager):
@@ -177,6 +182,41 @@ class RoleAssignableBy(models.Model):
     assignable_by_role = models.ForeignKey(
         "SQLUserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
     )
+
+
+class UserUpdateMeta(jsonobject.JsonObject):
+    updated_via = jsonobject.StringProperty()
+
+
+class UpdateDetails(jsonobject.JsonObject):
+    meta = jsonobject.ObjectProperty(UserUpdateMeta)
+    changes = jsonobject.DictProperty()
+
+
+class HQLogEntry(models.Model):
+    """
+    HQ Adaptation of Django's LogEntry model
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_FLAG_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255, db_index=True)
+    object_type = models.CharField(max_length=255, db_index=True, choices=(
+        ('CommCareUser', 'CommCareUser'),
+        ('WebUser', 'WebUser'),
+    ))
+    object_id = models.CharField(max_length=128, db_index=True)
+    by_user_id = models.CharField(max_length=128, db_index=True)
+    details = JSONField(default=dict)  # UpdateDetails
+    message = models.TextField(_('change message'), blank=True)
+    action_time = models.DateTimeField(_('action time'), auto_now_add=True, editable=False)
+    action_flag = models.PositiveSmallIntegerField(_('action flag'), choices=ACTION_FLAG_CHOICES)
 
 
 def migrate_role_permissions_to_sql(user_role, sql_role):
