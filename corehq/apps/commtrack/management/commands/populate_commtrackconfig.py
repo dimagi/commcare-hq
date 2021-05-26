@@ -33,7 +33,7 @@ class Command(PopulateSQLCommand):
             'action', 'subaction', '_keyword', 'caption'
         ]))
         for spec in cls.one_to_one_submodels():
-            normalize = float if spec["sql_class"] == SQLStockLevelsConfig else None
+            normalize = float if spec["sql_class"] == StockLevelsConfig else None
             sql_submodel = getattr(obj, spec['sql_class'].__name__.lower())
             couch_submodel = doc.get(spec['couch_attr'], {})
             for attr in spec['fields']:
