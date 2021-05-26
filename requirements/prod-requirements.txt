@@ -38,7 +38,6 @@ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/re
 certifi==2020.6.20
     # via
     #   -r prod-requirements.in
-    #   elasticsearch7
     #   requests
     #   sentry-sdk
 cffi==1.14.3
@@ -179,8 +178,6 @@ dropbox==9.3.0
 elasticsearch==1.9.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
-    # via -r base-requirements.in
-elasticsearch7==7.9.1
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -525,7 +522,6 @@ urllib3==1.26.5
     #   botocore
     #   elasticsearch
     #   elasticsearch2
-    #   elasticsearch7
     #   py-kissmetrics
     #   requests
     #   sentry-sdk
