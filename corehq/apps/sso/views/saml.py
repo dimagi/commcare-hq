@@ -61,6 +61,8 @@ def sso_saml_acs(request, idp_slug):
     In this view we verify the received SAML 2.0 response and then log in the user
     to CommCare HQ.
     """
+    if request.method is not 'POST':
+        raise Http404()
 
     request_id = request.session.get('AuthNRequestID')
     request.saml2_auth.process_response(request_id=request_id)
