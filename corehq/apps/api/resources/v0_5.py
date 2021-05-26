@@ -377,7 +377,7 @@ class WebUserResource(v0_1.WebUserResource):
                 _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            bundle.obj.delete(kwargs['domain'], deleted_by=bundle.obj)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
