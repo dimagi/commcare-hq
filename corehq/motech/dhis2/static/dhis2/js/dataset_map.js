@@ -22,8 +22,8 @@ hqDefine("dhis2/js/dataset_map", [
                 $sendNowResult.addClass("text-danger");
             }
             $sendNowResult.text(gettext('DHIS2 response: ') + response.text);
-            if (response.responseJSON) {
-                $remoteLogsLink.attr('href', response.responseJSON['log_url']);
+            if (response.log_url) {
+                $remoteLogsLink.attr('href', response.log_url);
                 $remoteLogsLink.show();
             }
         };
@@ -36,7 +36,6 @@ hqDefine("dhis2/js/dataset_map", [
                 gettext('CommCare HQ was unable to send the DataSet: ')
                 + (resp.responseJSON ? resp.responseJSON['error'] : resp.statusText)
             );
-
             if (resp.responseJSON) {
                 $remoteLogsLink.attr('href', resp.responseJSON['log_url']);
                 $remoteLogsLink.show();

@@ -364,12 +364,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
 def send_dataset_now(request, domain, pk):
     dataset_map = SQLDataSetMap.objects.get(domain=domain, pk=pk)
     send_date = datetime.utcnow().date()
-
-    result = send_dataset(
-        dataset_map,
-        send_date,
-        log_resource_url=reverse('motech_log_list_view', args=[domain])
-    )
+    result = send_dataset(dataset_map, send_date)
     return JsonResponse(result, status=result['status_code'] or 500)
 
 
