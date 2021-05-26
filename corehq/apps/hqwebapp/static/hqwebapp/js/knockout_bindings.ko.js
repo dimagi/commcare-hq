@@ -1,9 +1,11 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
+    'underscore',
     'knockout',
     'jquery-ui/ui/widgets/sortable',
 ], function (
     $,
+    _,
     ko
 ) {
     // Need this due to https://github.com/knockout/knockout/pull/2324
