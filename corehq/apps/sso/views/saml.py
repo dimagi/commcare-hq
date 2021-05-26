@@ -67,7 +67,7 @@ def sso_saml_acs(request, idp_slug):
     saml_relay = None
 
     request_id = request.session.get('AuthNRequestID')
-    processed_response = request.saml2_auth.process_response(request_id=request_id)
+    request.saml2_auth.process_response(request_id=request_id)
     errors = request.saml2_auth.get_errors()
 
     if errors:
