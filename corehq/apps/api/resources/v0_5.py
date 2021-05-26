@@ -272,15 +272,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
+                bundle.obj.retire(kwargs['domain'], deleted_by=request.couch_user, deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
                 django_user.delete()
-                log_model_change(request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
-                                 action=ModelAction.DELETE)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -296,7 +294,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
         if user:
-            user.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+            user.retire(kwargs['domain'], deleted_by=bundle.request.couch_user, deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
 

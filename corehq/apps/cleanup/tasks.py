@@ -253,7 +253,8 @@ def delete_web_user():
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
-                web_user.delete(deleted_by=None, deleted_via=__name__)
+                # ToDo: Should this pass "system" as the user? Currently won't be logged at all
+                web_user.delete(None, deleted_by=None, deleted_via=__name__)
 
 
 def _get_missing_domains():

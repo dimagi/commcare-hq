@@ -106,7 +106,8 @@ class SuperuserManagement(UserAdministration):
 
                 if changed_fields:
                     user.save()
-                    log_model_change(self.request.user, user, fields_changed=changed_fields)
+                    couch_user = CouchUser.from_django_user(user)
+                    log_model_change(None, self.request.couch_user, couch_user, fields_changed=changed_fields)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -394,7 +395,8 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_model_change(self.request.user, self.user, f'User {verb}. Reason: "{reason}"')
+        couch_user = CouchUser.from_django_user(self.user)
+        log_model_change(None, self.request.couch_user, couch_user, f'User {verb}. Reason: "{reason}"')
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -478,8 +480,8 @@ class DisableTwoFactorView(FormView):
             device.delete()
 
         disable_for_days = form.cleaned_data['disable_for_days']
+        couch_user = CouchUser.from_django_user(user)
         if disable_for_days:
-            couch_user = CouchUser.from_django_user(user)
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
@@ -487,7 +489,7 @@ class DisableTwoFactorView(FormView):
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         log_model_change(
-            self.request.user, user,
+            None, self.request.couch_user, couch_user,
             f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
         )
         mail_admins(

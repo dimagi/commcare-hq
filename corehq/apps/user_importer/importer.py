@@ -542,9 +542,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
 
                 user.save()
                 if log_user_create:
-                    user.log_user_create(upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                    user.log_user_create(upload_domain, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if log_role_update:
-                    log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                    user_domain_role = user.get_role(domain)
+                    log_user_role_update(upload_domain, user_domain_role, user, upload_user,
+                                         USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
                     check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)

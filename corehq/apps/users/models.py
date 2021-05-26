@@ -1185,16 +1185,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, domain, deleted_by, deleted_via=None):
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
-            if deleted_by:
-                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
+        if deleted_by:
+            # ToDo: should this after the couch doc is deleted from where its called
+            log_model_change(domain, deleted_by, self, message=f"deleted_via: {deleted_via}",
+                             action=ModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1619,17 +1620,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, created_by, created_via):
+    def log_user_create(self, domain, created_by, created_via):
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
-        self_django_user = self.get_django_user(use_primary_db=True)
-        created_by = created_by or self_django_user
-        if isinstance(created_by, CouchUser):
-            created_by = created_by.get_django_user()
+        created_by = created_by or self
         log_model_change(
+            domain,
             created_by,
-            self_django_user,
+            self,
             message=f"created_via: {created_via}",
             action=ModelAction.CREATE
         )
@@ -1741,12 +1740,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
             sync_usercases_if_applicable(self, spawn_task)
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
-        super(CommCareUser, self).delete(deleted_by=deleted_by, deleted_via=deleted_via)
+        super(CommCareUser, self).delete(domain, deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
     @memoized
@@ -1805,7 +1804,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-            commcare_user.log_user_create(created_by, created_via)
+            commcare_user.log_user_create(domain, created_by, created_via)
         return commcare_user
 
     @property
@@ -1848,7 +1847,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self, unretired_by, unretired_via=None):
+    def unretire(self, domain, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1873,13 +1872,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
         if unretired_by:
             log_model_change(
+                domain,
                 unretired_by,
-                self.get_django_user(use_primary_db=True),
+                self,
                 message=f"unretired_via: {unretired_via}",
             )
         return True, None
 
-    def retire(self, deleted_by, deleted_via=None):
+    def retire(self, domain, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
@@ -1914,7 +1914,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
             if deleted_by:
-                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
+                log_model_change(domain, deleted_by, self, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         self.save()
 
@@ -2395,7 +2395,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(created_by, created_via)
+        web_user.log_user_create(domain, created_by, created_via)
         return web_user
 
     def is_commcare_user(self):
