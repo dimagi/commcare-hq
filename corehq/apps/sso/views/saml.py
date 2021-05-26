@@ -8,7 +8,7 @@ from django.http import (
     HttpResponseRedirect,
     Http404,
 )
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
@@ -61,81 +61,67 @@ def sso_saml_acs(request, idp_slug):
     In this view we verify the received SAML 2.0 response and then log in the user
     to CommCare HQ.
     """
-    # todo these are placeholders for the json dump below
-    error_reason = None
-    request_session_data = None
-    saml_relay = None
+    if request.method is not 'POST':
+        raise Http404()
 
     request_id = request.session.get('AuthNRequestID')
-    processed_response = request.saml2_auth.process_response(request_id=request_id)
+    request.saml2_auth.process_response(request_id=request_id)
     errors = request.saml2_auth.get_errors()
-    not_auth_warn = not request.saml2_auth.is_authenticated()
 
-    if not errors:
-        if 'AuthNRequestID' in request.session:
-            del request.session['AuthNRequestID']
+    if errors:
+        return render(request, 'sso/acs_errors.html', {
+            'saml_error_reason': request.saml2_auth.get_last_error_reason(),
+            'idp_type': "Azure AD",  # we will update this later,
+            'docs_link': '#tbd',  # we will update this later,
+        })
 
-        store_saml_data_in_session(request)
+    if not request.saml2_auth.is_authenticated():
+        return render(request, 'sso/sso_request_denied.html', {})
 
-        user = auth.authenticate(
-            request=request,
-            username=request.session['samlNameId'],
-            idp_slug=idp_slug,
-            is_handshake_successful=True,
-        )
+    if 'AuthNRequestID' in request.session:
+        del request.session['AuthNRequestID']
 
-        # we add the messages to the django messages framework here since
-        # that middleware was not available for SsoBackend
-        if hasattr(request, 'sso_new_user_messages'):
-            for success_message in request.sso_new_user_messages['success']:
-                messages.success(request, success_message)
-            for error_message in request.sso_new_user_messages['error']:
-                messages.error(request, error_message)
+    store_saml_data_in_session(request)
 
-        if user:
-            auth.login(request, user)
+    user = auth.authenticate(
+        request=request,
+        username=request.session['samlNameId'],
+        idp_slug=idp_slug,
+        is_handshake_successful=True,
+    )
 
-            # activate new project if needed
-            async_signup = AsyncSignupRequest.get_by_username(user.username)
-            if async_signup and async_signup.project_name:
-                try:
-                    request_new_domain(request, async_signup.project_name, is_new_user=True)
-                except NameUnavailableException:
-                    # this should never happen, but in the off chance it does
-                    # we don't want to throw a 500 on this view
-                    messages.error(
-                        request,
-                        _("We were unable to create your requested project "
-                          "because the name was already taken."
-                          "Please contact support.")
-                    )
+    # we add the messages to the django messages framework here since
+    # that middleware was not available for SsoBackend
+    if hasattr(request, 'sso_new_user_messages'):
+        for success_message in request.sso_new_user_messages['success']:
+            messages.success(request, success_message)
+        for error_message in request.sso_new_user_messages['error']:
+            messages.error(request, error_message)
 
-            AsyncSignupRequest.clear_data_for_username(user.username)
-            return redirect("homepage")
+    if user:
+        auth.login(request, user)
 
-        # todo for debugging purposes to dump into the response below
-        request_session_data = {
-            "samlUserdata": request.session['samlUserdata'],
-            "samlNameId": request.session['samlNameId'],
-            "samlNameIdFormat": request.session['samlNameIdFormat'],
-            "samlNameIdNameQualifier": request.session['samlNameIdNameQualifier'],
-            "samlNameIdSPNameQualifier": request.session['samlNameIdSPNameQualifier'],
-            "samlSessionIndex": request.session['samlSessionIndex'],
-        }
+        # activate new project if needed
+        async_signup = AsyncSignupRequest.get_by_username(user.username)
+        if async_signup and async_signup.project_name:
+            try:
+                request_new_domain(request, async_signup.project_name, is_new_user=True)
+            except NameUnavailableException:
+                # this should never happen, but in the off chance it does
+                # we don't want to throw a 500 on this view
+                messages.error(
+                    request,
+                    _("We were unable to create your requested project "
+                      "because the name was already taken."
+                      "Please contact support.")
+                )
 
-    else:
-        error_reason = request.saml2_auth.get_last_error_reason()
+        AsyncSignupRequest.clear_data_for_username(user.username)
+        return redirect("homepage")
 
-    return HttpResponse(json.dumps({
-        "errors": errors,
-        "error_reason": error_reason,
-        "not_auth_warn": not_auth_warn,
-        "request_id": request_id,
-        "processed_response": processed_response,
-        "saml_relay": saml_relay,
-        "request_session_data": request_session_data,
-        "login_error": getattr(request, 'sso_login_error', None),
-    }), 'text/json')
+    return render(request, 'sso/acs_errors.html', {
+        'login_error': getattr(request, 'sso_login_error', None),
+    })
 
 
 @use_saml2_auth
