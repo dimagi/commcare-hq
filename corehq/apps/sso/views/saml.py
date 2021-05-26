@@ -61,10 +61,6 @@ def sso_saml_acs(request, idp_slug):
     In this view we verify the received SAML 2.0 response and then log in the user
     to CommCare HQ.
     """
-    # todo these are placeholders for the json dump below
-    error_reason = None
-    request_session_data = None
-    saml_relay = None
 
     request_id = request.session.get('AuthNRequestID')
     request.saml2_auth.process_response(request_id=request_id)
