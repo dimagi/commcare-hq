@@ -47,7 +47,7 @@ class PasswordResetTest(TestCase):
     def test_mobile_worker_included_with_flag(self):
         email = 'mw-included@example.com'
         mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', None, None, email=email)
-        self.addCleanup(mobile_worker.delete, deleted_by=None)
+        self.addCleanup(mobile_worker.delete, self.domain, deleted_by=None)
         results = list(get_active_users_by_email(email))
         self.assertEqual(1, len(results))
         self.assertEqual(mobile_worker.username, results[0].username)
