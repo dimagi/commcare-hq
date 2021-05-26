@@ -36,6 +36,10 @@ class StaticRole:
     def get_id(self):
         return None
 
+    @property
+    def cache_version(self):
+        return self.name
+
     def to_json(self):
         return role_to_dict(self)
 
@@ -99,6 +103,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
+
+    @property
+    def cache_version(self):
+        return self.modified_on.isoformat()
 
     def to_json(self):
         return role_to_dict(self)
