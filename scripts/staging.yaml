@@ -76,4 +76,5 @@ branches:
     - bmb/sso-remove-toggle  # Biyeun 25th May
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-logout-cleanup  # Biyeun 26 May
+    - bmb/sso-cleanup-errors  # Biyeun 26 May
 submodules: { }
