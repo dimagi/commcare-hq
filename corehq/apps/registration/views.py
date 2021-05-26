@@ -51,7 +51,7 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser, WebUser, Invitation
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
@@ -285,6 +285,20 @@ class RegisterDomainView(TemplateView):
                 })
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
+
+    @property
+    def extra_context(self):
+        invitations = [
+            e for e in Invitation.by_email(self.request.user.username)
+            if not e.is_expired
+        ]
+        return {
+            'invitation_links': [{
+                'domain': i.domain,
+                'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
+            } for i in invitations],
+            'show_multiple_invites': len(invitations) > 1,
+        }
 
     @property
     @memoized
