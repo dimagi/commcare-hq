@@ -380,9 +380,14 @@ class CouchSqlDomainMigrator:
             external_id=couch_case.external_id,
             case_json=couch_case.dynamic_case_properties()
         )
-        _migrate_case_actions(couch_case, sql_case)
-        _migrate_case_indices(couch_case, sql_case)
-        _migrate_case_attachments(couch_case, sql_case)
+        try:
+            _migrate_case_actions(couch_case, sql_case)
+            _migrate_case_indices(couch_case, sql_case)
+            _migrate_case_attachments(couch_case, sql_case)
+        except Exception:
+            log.exception("unprocessed case error: %s", couch_case.case_id)
+            self.case_diff_queue.enqueue(couch_case.case_id)
+            return
         try:
             CaseAccessorSQL.save_case(sql_case)
         except CaseSaveError:
@@ -1076,9 +1081,8 @@ def _migrate_case_attachments(couch_case, sql_case):
             name=name or attachment.identifier,
             case=sql_case,
             content_type=attachment.server_mime,
-            content_length=attachment.content_length,
-            blob_id=blob.id,
-            blob_bucket=couch_case._blobdb_bucket(),
+            content_length=blob.content_length,
+            blob_id=blob.key,
             properties=attachment.attachment_properties,
             md5=attachment.server_md5
         ))
