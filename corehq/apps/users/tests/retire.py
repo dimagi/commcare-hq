@@ -1,9 +1,7 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
-from django.contrib.admin.models import LogEntry
 from django.test import TestCase
-from django.utils.encoding import force_text
 
 import mock
 
@@ -19,6 +17,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models_sql import HQLogEntry
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -66,13 +65,10 @@ class RetireUserTestCase(TestCase):
 
     def test_retire(self):
         deleted_via = "Test test"
-        django_user = self.commcare_user.get_django_user()
-        other_django_user = self.other_user.get_django_user()
-
-        self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.DELETE.value)
-        self.assertEqual(log_entry.object_repr, force_text(django_user))
-        self.assertEqual(log_entry.change_message, f"deleted_via: {deleted_via}")
+        self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
+        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action_flag=ModelAction.DELETE.value,
+                                           object_id=self.commcare_user.get_id)
+        self.assertEqual(log_entry.message, f"deleted_via: {deleted_via}")
 
     @run_with_all_backends
     def test_unretire_user(self):
@@ -91,7 +87,7 @@ class RetireUserTestCase(TestCase):
             ).as_text())
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
-        self.commcare_user.retire(deleted_by=None)
+        self.commcare_user.retire(self.domain, deleted_by=None)
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
@@ -99,14 +95,15 @@ class RetireUserTestCase(TestCase):
         self.assertTrue(form.is_deleted)
 
         self.assertEqual(
-            list(LogEntry.objects.filter(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)),
-            []
+            HQLogEntry.objects.filter(
+                by_user_id=self.other_user.get_id, action_flag=ModelAction.UPDATE.value
+            ).count(),
+            0
         )
-        self.commcare_user.unretire(unretired_by=other_django_user, unretired_via="Test")
+        self.commcare_user.unretire(self.domain, unretired_by=self.other_user, unretired_via="Test")
 
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)
-        self.assertEqual(log_entry.object_repr, force_text(self.commcare_user.get_django_user()))
-        self.assertEqual(log_entry.change_message, f"unretired_via: Test")
+        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action_flag=ModelAction.UPDATE.value)
+        self.assertEqual(log_entry.message, "unretired_via: Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))

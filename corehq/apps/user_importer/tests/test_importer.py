@@ -1,5 +1,4 @@
 from copy import deepcopy
-from django.contrib.admin.models import LogEntry
 
 from django.test import TestCase
 
@@ -23,6 +22,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser, DomainPermissionsMirror, UserRole, WebUser, Invitation
 )
+from corehq.apps.users.models_sql import HQLogEntry
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
@@ -515,7 +515,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
     def test_tracking_updates(self):
-        self.assertEqual(LogEntry.objects.count(), 0)
+        self.assertEqual(HQLogEntry.objects.count(), 0)
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(role=self.role.name)],
@@ -524,11 +524,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock(),
             False
         )
-        log_entry = LogEntry.objects.order_by('action_time').first()
+        log_entry = HQLogEntry.objects.order_by('action_time').first()
         self.assertEqual(
             log_entry.change_message,
             f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
-        log_entry = LogEntry.objects.order_by('action_time').last()
+        log_entry = HQLogEntry.objects.order_by('action_time').last()
         self.assertEqual(
             log_entry.change_message,
             f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
