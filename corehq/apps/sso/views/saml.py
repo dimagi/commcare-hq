@@ -12,6 +12,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
+from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from corehq.apps.domain.decorators import login_required
@@ -61,14 +62,19 @@ def sso_saml_acs(request, idp_slug):
     In this view we verify the received SAML 2.0 response and then log in the user
     to CommCare HQ.
     """
-
     request_id = request.session.get('AuthNRequestID')
-    request.saml2_auth.process_response(request_id=request_id)
-    errors = request.saml2_auth.get_errors()
+
+    try:
+        request.saml2_auth.process_response(request_id=request_id)
+        errors = request.saml2_auth.get_errors()
+    except OneLogin_Saml2_Error as e:
+        if e.code == OneLogin_Saml2_Error.SAML_RESPONSE_NOT_FOUND:
+            return redirect("sso_saml_login", idp_slug=idp_slug)
+        errors = [e]
 
     if errors:
         return render(request, 'sso/acs_errors.html', {
-            'saml_error_reason': request.saml2_auth.get_last_error_reason(),
+            'saml_error_reason': request.saml2_auth.get_last_error_reason() or errors[0],
             'idp_type': "Azure AD",  # we will update this later,
             'docs_link': '#tbd',  # we will update this later,
         })
