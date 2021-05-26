@@ -2680,7 +2680,6 @@ class DomainRemovalRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
-        #user.add_domain_membership(**self.domain_membership._doc)
         user.save()
 
 
