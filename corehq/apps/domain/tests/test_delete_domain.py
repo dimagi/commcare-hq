@@ -53,7 +53,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.commtrack.models import SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
@@ -988,9 +988,9 @@ class TestDeleteDomain(TestCase):
 
     def test_delete_commtrack_config(self):
         # Config will have been created by convert_to_commtrack in setUp
-        self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        self.assertIsNotNone(CommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
-        self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
     def tearDown(self):
         self.domain2.delete()
