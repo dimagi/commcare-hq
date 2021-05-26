@@ -184,10 +184,11 @@ class CouchSqlDomainMigrator:
         self.case_diff_queue = diff_queue(self.statedb)
 
     def migrate(self):
-        log.info('{live}migrating domain {domain} ({state})'.format(
+        log.info('{live}migrating domain {domain} ({state})\n{stats}'.format(
             live=("live " if self.live_migrate else ""),
             domain=self.domain,
             state=self.statedb.unique_id,
+            stats="\n".join(iter_couch_stats(self.domain)),
         ))
         patch = migration_patches()
         with self.counter, patch, self.case_diff_queue, self.stopper:
@@ -1563,6 +1564,25 @@ class DocCounter:
                     metric_name_template_normalized % timing.full_name, normalized_value,
                     buckets=NORMALIZED_TIMING_BUCKETS, bucket_tag='duration'
                 )
+
+
+def iter_couch_stats(domain_name):
+    from .missingdocs import MissingIds
+    from couchforms.analytics import get_last_form_submission_received
+    couchdb = XFormInstance.get_db()
+    for entity in MissingIds.DOC_TYPES:
+        count = get_couch_doc_count(domain_name, entity, couchdb)
+        yield f"Total {entity}s: {count}"
+    received_on = get_last_form_submission_received(domain_name)
+    yield f"Last form submission: {received_on}"
+
+
+def get_couch_doc_count(domain_name, entity, couchdb):
+    from .missingdocs import MissingIds
+    return sum(
+        get_doc_count_in_domain_by_type(domain_name, doc_type, couchdb)
+        for doc_type in MissingIds.DOC_TYPES[entity]
+    )
 
 
 def commit_migration(domain_name):
