@@ -100,7 +100,6 @@ from corehq.apps.users.models import (
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
-    StaticRole,
     UserRole,
     WebUser,
 )
@@ -500,7 +499,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @property
     @memoized
     def user_roles(self):
-        user_roles = [StaticRole.domain_admin(self.domain)]
+        user_roles = [UserRole.admin_role(self.domain)]
         user_roles.extend(sorted(
             UserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
@@ -658,7 +657,7 @@ class ListRolesView(BaseRoleAccessView):
             'user_roles': self.user_roles,
             'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
-            'default_role': StaticRole.domain_default(self.domain),
+            'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,

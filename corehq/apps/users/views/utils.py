@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from corehq.apps.users.models import (
     DomainMembershipError,
-    StaticRole,
     UserRole,
 )
 
@@ -31,7 +30,7 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualifie
             if role.accessible_by_non_admin_role(user_role_id)
         ]
     elif allow_admin_role:
-        roles = [StaticRole.domain_admin(domain)] + roles
+        roles = [UserRole.admin_role(domain)] + roles
     return [role_to_choice(role) for role in roles]
 
 

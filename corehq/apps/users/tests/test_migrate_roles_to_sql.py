@@ -2,10 +2,8 @@ from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.management.commands.populate_user_role import Command
-from corehq.apps.users.models import (
-    UserRole, Permissions, UserRolePresets, PermissionInfo,
-    SQLUserRole, SQLPermission
-)
+from corehq.apps.users.models import UserRole, Permissions, UserRolePresets, PermissionInfo
+from corehq.apps.users.models_sql import SQLUserRole, SQLPermission
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
 
 
@@ -161,29 +159,6 @@ class UserRoleCouchToSqlTests(TestCase):
             f"assignable_by: couch value 'other_id' != sql value '{self.app_editor.get_id}'"
         ])
 
-    def test_to_json(self):
-        permissions = Permissions(
-            edit_data=True, edit_reports=True, access_all_locations=False,
-            view_report_list=['report1']
-        )
-        couch_role = make_couch_role(
-            self.domain, "test-to-json",
-            permissions=permissions,
-            assignable_by=[self.app_editor.get_id]
-        )
-        sql_role = couch_role._migration_get_sql_object()
-        self.assertIsNotNone(sql_role)
-
-        couch_dict = _drop_couch_only_fields(couch_role.to_json())
-        sql_dict = sql_role.to_json()
-
-        # sql uses SQL primary keys, couch uses couch IDs
-        couch_assignable_by = couch_dict.pop("assignable_by")
-        sql_assignable_by = sql_dict.pop("assignable_by")
-        self.assertEqual(len(sql_assignable_by), len(couch_assignable_by))
-
-        self.assertDictEqual(couch_dict, sql_dict)
-
     def _create_identical_objects_for_diff(self):
         permissions = Permissions(
             edit_data=True, edit_reports=True, access_all_locations=False,
@@ -215,10 +190,3 @@ def make_couch_role(domain, name, **kwargs):
         **kwargs
     )
     couch_role.save()
-    return couch_role
-
-
-def _drop_couch_only_fields(couch_dict):
-    for field in ('_rev', 'doc_type'):
-        couch_dict.pop(field, None)
-    return couch_dict
