@@ -1,11 +1,13 @@
 from django.db import IntegrityError
 from django.db.transaction import atomic
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
     Permissions,
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo, UserRole,
+    StaticRole
 )
+from corehq.apps.users.tests.test_migrate_roles_to_sql import _drop_couch_only_fields
 
 
 class RolesTests(TestCase):
@@ -165,3 +167,20 @@ class TestRolePermissionsModel(TestCase):
                 RolePermission(permission=Permissions.edit_data.name, allow_all=True),
                 RolePermission(permission=Permissions.edit_data.name, allow_all=False),
             ], bulk=False)
+
+
+class TestStaticRoles(SimpleTestCase):
+    domain = "static-role-test"
+
+    def test_static_role_default(self):
+        static_dict = StaticRole.domain_default(self.domain).to_json()
+        couch_dict = UserRole(domain=self.domain, name=None, permissions=Permissions()).to_json()
+        _drop_couch_only_fields(couch_dict)
+        self.assertDictEqual(couch_dict, static_dict)
+
+    def test_static_role_admin(self):
+        static_admin_role = StaticRole.domain_admin(self.domain)
+        couch_dict = UserRole(domain=self.domain, name="Admin", permissions=Permissions.max()).to_json()
+        _drop_couch_only_fields(couch_dict)
+        self.assertDictEqual(couch_dict, static_admin_role.to_json())
+        self.assertEqual(static_admin_role.get_qualified_id(), "admin")
