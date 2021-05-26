@@ -259,7 +259,8 @@
 ├─ end-of-stream@1.4.4
 │  └─ once@^1.4.0
 ├─ entities@2.1.0
-├─ equivalent-xml-js@0.0.0
+├─ equivalent-xml-js@0.1.0
+│  └─ underscore@^1.13.1
 ├─ errno@0.1.8
 │  └─ prr@~1.0.1
 ├─ error@7.2.1
@@ -678,7 +679,7 @@
 ├─ locate-path@3.0.0
 │  ├─ p-locate@^3.0.0
 │  └─ path-exists@^3.0.0
-├─ lodash@4.17.20
+├─ lodash@4.17.21
 ├─ log-symbols@3.0.0
 │  └─ chalk@^2.4.2
 ├─ make-iterator@1.0.1
@@ -1001,12 +1002,11 @@
 ├─ require-main-filename@2.0.0
 ├─ requirejs-plugins@1.0.2
 ├─ requirejs-text@2.0.15
-├─ requirejs-undertemplate@0.0.4
+├─ requirejs-undertemplate@0.0.5
 │  ├─ requirejs-text@~2.0.12
-│  ├─ requirejs@~2.2.0
-│  ├─ requirejs@2.2.0
-│  ├─ underscore@^1.8.3
-│  └─ underscore@1.12.0
+│  ├─ requirejs@2.3.3
+│  ├─ requirejs@2.3.3
+│  └─ underscore@^1.8.3
 ├─ requirejs@2.3.6
 ├─ requires-port@1.0.0
 ├─ resolve-dir@1.0.1
@@ -1189,7 +1189,7 @@
 │  ├─ sprintf-js@^1.0.3
 │  ├─ sprintf-js@1.1.2
 │  └─ util-deprecate@^1.0.2
-├─ underscore@1.8.3
+├─ underscore@1.13.1
 ├─ union-value@1.0.1
 │  ├─ arr-union@^3.1.0
 │  ├─ get-value@^2.0.6
@@ -1274,4 +1274,4 @@
 └─ yauzl@2.10.0
    ├─ buffer-crc32@~0.2.3
    └─ fd-slicer@~1.1.0
-Done in 0.47s.
+Done in 0.50s.
