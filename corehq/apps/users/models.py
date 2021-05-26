@@ -2729,7 +2729,8 @@ class DomainRemovalRecord(DeleteRecord):
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
-        user.add_domain_membership(**self.domain_membership._doc)
+        user.domain_memberships.append(self.domain_membership)
+        user.domains.append(self.domain)
         user.save()
 
 
