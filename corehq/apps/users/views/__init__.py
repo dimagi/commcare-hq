@@ -1140,7 +1140,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-class UserUploadJobPollView(BaseManageWebUserView):
+class UserUploadJobPollView(BaseUserSettingsView):
 
     def get(self, request, domain, download_id):
         try:
@@ -1158,7 +1158,7 @@ class UserUploadJobPollView(BaseManageWebUserView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
-class WebUserUploadJobPollView(UserUploadJobPollView):
+class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
     user_type = 'web users'
