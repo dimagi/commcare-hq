@@ -54,6 +54,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     saveUrl: self.saveUrl,
                     columnKey: columnType,
                     childCaseTypes: spec.childCaseTypes,
+                    otherCaseTypes: spec.otherCaseTypes,
                     fixtures: _.keys(spec.fixture_columns_by_type),
                     containsSortConfiguration: columnType === "short",
                     containsParentConfiguration: columnType === "short",
