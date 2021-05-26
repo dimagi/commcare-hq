@@ -63,6 +63,7 @@ def sso_saml_acs(request, idp_slug):
     to CommCare HQ.
     """
     request_id = request.session.get('AuthNRequestID')
+    error_template = 'sso/acs_errors.html'
 
     try:
         request.saml2_auth.process_response(request_id=request_id)
@@ -73,7 +74,7 @@ def sso_saml_acs(request, idp_slug):
         errors = [e]
 
     if errors:
-        return render(request, 'sso/acs_errors.html', {
+        return render(request, error_template, {
             'saml_error_reason': request.saml2_auth.get_last_error_reason() or errors[0],
             'idp_type': "Azure AD",  # we will update this later,
             'docs_link': '#tbd',  # we will update this later,
@@ -123,7 +124,7 @@ def sso_saml_acs(request, idp_slug):
         AsyncSignupRequest.clear_data_for_username(user.username)
         return redirect("homepage")
 
-    return render(request, 'sso/acs_errors.html', {
+    return render(request, error_template, {
         'login_error': getattr(request, 'sso_login_error', None),
     })
 
