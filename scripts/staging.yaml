@@ -75,5 +75,5 @@ branches:
     - sr/hide-geo  # Sravan May 25
     - bmb/sso-new-user-page  # Biyeun 25th May
     - bmb/sso-remove-toggle  # Biyeun 25th May
-    - cs/dhis-readable-response  # Charl 26 May
+
 submodules: { }
