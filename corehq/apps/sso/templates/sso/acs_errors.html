@@ -11,14 +11,15 @@
           <div class="form-bubble form-bubble-lg">
             <h2>
               {% blocktrans %}
-                Something went wrong...
+                Single Sign-On
               {% endblocktrans %}
             </h2>
             <p class="lead">
               {% blocktrans %}
-                It seems there was an issue with Single Sign-On.
+                Sorry, but we're having trouble signing you in.
               {% endblocktrans %}
             </p>
+
             {% if saml_error_reason %}
               <p>
                 {% blocktrans %}
@@ -49,10 +50,11 @@
                 {% endblocktrans %}
               </p>
             {% endif %}
+
             {% if login_error %}
               <p>
                 {% blocktrans %}
-                  There was an issue logging in due to the following reason:
+                  This issue might be due to the following reason:
                 {% endblocktrans %}
               </p>
               <div class="alert alert-danger">
@@ -67,6 +69,7 @@
                 {% endblocktrans %}
               </p>
             {% endif %}
+
           </div>
         </div>
       </div>
