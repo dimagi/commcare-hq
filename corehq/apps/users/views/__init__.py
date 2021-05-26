@@ -813,6 +813,13 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
+    role = _update_role_from_view(domain, role_data)
+    response_data = role.to_json()
+    response_data['hasUsersAssigned'] = role.has_users_assigned
+    return JsonResponse(response_data)
+
+
+def _update_role_from_view(domain, role_data):
     role_data = dict(
         (p, role_data[p])
         for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
@@ -865,9 +872,7 @@ def post_user_role(request, domain):
         role.permissions.edit_users_in_locations = False
 
     role.save()
-    response_data = role.to_json()
-    response_data['hasUsersAssigned'] = role.has_users_assigned
-    return JsonResponse(response_data)
+    return role
 
 
 @domain_admin_required
