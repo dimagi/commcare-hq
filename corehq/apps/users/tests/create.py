@@ -23,7 +23,7 @@ class CreateTestCase(TestCase):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, None, None, email=email)
-        self.addCleanup(couch_user.delete, deleted_by=None)
+        self.addCleanup(couch_user.delete, domain, deleted_by=None)
 
         self.assertEqual(couch_user.domains, [domain])
         self.assertEqual(couch_user.email, email)

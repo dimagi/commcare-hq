@@ -54,8 +54,8 @@ class TestDownloadMobileWorkers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user1.delete(deleted_by=None)
-        cls.user2.delete(deleted_by=None)
+        cls.user1.delete(cls.domain, deleted_by=None)
+        cls.user2.delete(cls.domain, deleted_by=None)
         cls.invited_user.delete()
         cls.domain_obj.delete()
         cls.role.delete()

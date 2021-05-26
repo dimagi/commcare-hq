@@ -70,7 +70,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
-        self.addCleanup(commcare_user.delete, deleted_by=None)
+        self.addCleanup(commcare_user.delete, self.domain, deleted_by=None)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
 
@@ -98,7 +98,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
-        self.addCleanup(commcare_user.delete, deleted_by=None)
+        self.addCleanup(commcare_user.delete, self.domain, deleted_by=None)
         backend_id = commcare_user._id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -150,7 +150,7 @@ class TestCommCareUserResource(APIResourceTest):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
-        self.addCleanup(user_back.delete, deleted_by=None)
+        self.addCleanup(user_back.delete, self.domain, deleted_by=None)
         self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
         self.assertEqual(user_back.username, "jdoe")
@@ -169,7 +169,7 @@ class TestCommCareUserResource(APIResourceTest):
         group = Group({"name": "test"})
         group.save()
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         self.addCleanup(group.delete)
 
         user_json = {
@@ -213,7 +213,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None)
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
 
         user_json = {
             "first_name": "florence",
@@ -311,7 +311,7 @@ class TestWebUserResource(APIResourceTest):
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
-        self.addCleanup(another_user.delete, deleted_by=None)
+        self.addCleanup(another_user.delete, self.domain, deleted_by=None)
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -350,7 +350,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
+        user_back.delete(self.domain, deleted_by=None)
 
     def test_create_admin_without_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -365,7 +365,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
+        user_back.delete(self.domain, deleted_by=None)
 
     def test_create_with_preset_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -377,7 +377,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.role, 'Field Implementer')
-        user_back.delete(deleted_by=None)
+        user_back.delete(self.domain, deleted_by=None)
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.create(self.domain.name, 'awesomeness')
@@ -390,7 +390,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.role, new_user_role.name)
-        user_back.delete(deleted_by=None)
+        user_back.delete(self.domain, deleted_by=None)
 
     def test_create_with_invalid_admin_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -427,7 +427,7 @@ class TestWebUserResource(APIResourceTest):
     def test_update(self):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234",
                               created_by=None, created_via=None)
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         user_json = deepcopy(self.default_user_json)
         user_json.pop('username')
         backend_id = user._id
