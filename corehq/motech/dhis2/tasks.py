@@ -98,7 +98,7 @@ def send_dataset(
                 'error': _('There was an error retrieving some UCR data. '
                            'Try contacting support to help resolve this issue.'),
                 'text': None,
-                'log_url': response_log_url
+                'log_url': response_log_url,
             }
 
         except Exception as err:
@@ -111,12 +111,12 @@ def send_dataset(
                 'error': str(err),
                 'status_code': response.status_code if response else None,
                 'text': text,
-                'log_url': response_log_url
+                'log_url': response_log_url,
             }
         else:
             return {
                 'success': True,
                 'status_code': response.status_code,
                 'text': pformat_json(response.text),
-                'log_url': response_log_url
+                'log_url': response_log_url,
             }
