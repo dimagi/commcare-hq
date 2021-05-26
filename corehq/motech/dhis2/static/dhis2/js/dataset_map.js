@@ -10,7 +10,8 @@ hqDefine("dhis2/js/dataset_map", [
     initialPageData
 ) {
     $(function () {
-        var $sendNowResult = $('#send-now-result'), $remoteLogsLink = $('#remote-logs');
+        var $sendNowResult = $('#send-now-result'),
+            $remoteLogsLink = $('#remote-logs');
         $remoteLogsLink.hide();
 
         var handleSuccess = function (response) {
