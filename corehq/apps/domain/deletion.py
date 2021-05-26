@@ -381,6 +381,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
+    ModelDeletion('users', 'SQLUserRole', 'domain', [
+        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+    ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
