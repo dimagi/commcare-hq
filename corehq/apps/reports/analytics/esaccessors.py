@@ -424,10 +424,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
-    else:
-        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
