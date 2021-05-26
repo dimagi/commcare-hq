@@ -14,7 +14,7 @@ from corehq.apps.data_analytics.esaccessors import (
 )
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
+from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.const import MISSING_APP_ID

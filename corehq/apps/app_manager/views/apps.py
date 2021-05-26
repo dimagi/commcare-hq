@@ -101,7 +101,7 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
 )
 from corehq.elastic import ESError
@@ -981,7 +981,7 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-def drop_user_case(request, domain, app_id):
+def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
         for form in module.get_forms():
@@ -1025,13 +1025,3 @@ def pull_master_app(request, domain, app_id):
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def update_linked_whitelist(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    new_whitelist = json.loads(request.POST.get('whitelist'))
-    app.linked_whitelist = new_whitelist
-    app.save()
-    return HttpResponse()

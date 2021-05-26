@@ -1,4 +1,4 @@
-from lxml import etree as ElementTree
+from lxml import etree as ElementTree, etree
 from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 import six
@@ -79,3 +79,18 @@ BLACKLISTED_RESPONSE = get_openrosa_reponse(
     nature=ResponseNature.SUBMIT_ERROR,
     status=509,
 )
+
+
+def parse_openrosa_response(response):
+    """Parse an OpenRosaResponse from the response XML.
+    :returns: OpenRosaResponse object or None"""
+    try:
+        root = etree.fromstring(response)
+    except etree.XMLSyntaxError:
+        return
+
+    message = root.find(f'{{{RESPONSE_XMLNS}}}message')
+    if message is None:
+        return
+
+    return OpenRosaResponse(message.text.strip(), message.get("nature"), None)

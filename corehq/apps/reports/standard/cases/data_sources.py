@@ -206,7 +206,7 @@ class CaseDisplay:
     def owner_display(self):
         owner_type, owner = self.owner
         if owner_type == 'group':
-            return '<span class="label label-default">%s</span>' % owner['name']
+            return format_html('<span class="label label-default">{}</span>', owner['name'])
         else:
             return owner['name']
     owner_name = owner_display

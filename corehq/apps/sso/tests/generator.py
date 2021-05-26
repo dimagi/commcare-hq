@@ -78,6 +78,14 @@ def create_request_session(request, use_sso=False):
 
 
 @unit_testing_only
+def store_full_name_in_saml_user_data(request, first_name, last_name):
+    request.session['samlUserdata'] = {
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': [first_name],
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': [last_name],
+    }
+
+
+@unit_testing_only
 def get_public_cert_file(expiration_in_seconds=certificates.DEFAULT_EXPIRATION):
     key_pair = certificates.create_key_pair()
     cert = certificates.create_self_signed_cert(

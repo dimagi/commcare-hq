@@ -383,7 +383,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     except Exception as e:
                                         change_exceptions.append((change, e))
                                     eval_context.reset_iteration()
-                            elif (doc_subtype is None
+                            elif (not doc_subtype
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
                                 # Delete if the subtype is unknown or
                                 # if the subtype matches our filters, but the full filter no longer applies

@@ -26,6 +26,7 @@ class TestMessagingEventResource(APIResourceTest):
             "additional_error_text": None,
             "app_id": None,
             "content_type": MessagingEvent.CONTENT_SMS,
+            "content_type_display": 'SMS Message',
             "date": "2016-01-01T12:00:00",
             "domain": "qwerty",
             "error_code": None,
@@ -34,10 +35,13 @@ class TestMessagingEventResource(APIResourceTest):
             # "id": 1,  # ids are explicitly removed from comparison
             "recipient_id": None,
             "recipient_type": None,
+            "recipient_type_display": None,
             "resource_uri": "",
             "source": MessagingEvent.SOURCE_OTHER,
+            "source_display": 'Other',
             "source_id": None,
             "status": MessagingEvent.STATUS_COMPLETED,
+            "status_display": 'Completed',
         }
 
     def test_get_list_simple(self):

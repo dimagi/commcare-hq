@@ -56,7 +56,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
         self.previousAnswer = self.answer();
-
     }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
@@ -402,6 +401,36 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
 
     /**
+     * Represents a select2 for multiple options
+     */
+    function MultiDropdownEntry(question, options) {
+        var self = this;
+        MultiSelectEntry.call(this, question, options);
+        self.templateType = 'multidropdown';
+        self.placeholderText = gettext('Please choose an item');
+
+        self.helpText = function () {
+            return "";
+        };
+
+        self.options = ko.computed(function () {
+            return _.map(question.choices(), function (choice, idx) {
+                return {
+                    text: choice,
+                    id: idx + 1,
+                };
+            });
+        });
+
+        self.afterRender = function () {
+            select2ify(self, {});
+        };
+    }
+    MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
+    MultiDropdownEntry.prototype.constructor = MultiSelectEntry;
+    MultiDropdownEntry.prototype.onAnswerChange = select2AnswerChange(MultiSelectEntry);
+
+    /**
      * Represents multiple radio button entries
      */
     function SingleSelectEntry(question, options) {
@@ -506,36 +535,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             }));
         });
 
-        self.options.subscribe(function () {
-            // Clear answer if options change
-            self.rawAnswer(undefined);
-        });
-
         self.additionalSelect2Options = function () {
             return {};
         };
-        self.renderSelect2 = function () {
-            var $input = $('#' + self.entryId);
-            $input.select2(_.extend({
-                allowClear: true,
-                placeholder: self.placeholderText,
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-            }, self.additionalSelect2Options()));
-        };
 
         self.afterRender = function () {
-            self.renderSelect2();
+            select2ify(self, self.additionalSelect2Options());
         };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     DropdownEntry.prototype.constructor = EntrySingleAnswer;
-    DropdownEntry.prototype.onAnswerChange = function (newValue) {
-        var self = this;
-        EntrySingleAnswer.prototype.onAnswerChange.call(self, newValue);
-        _.delay(function () {
-            $("#" + self.entryId).trigger("change.select2");
-        });
-    };
+    DropdownEntry.prototype.onAnswerChange = select2AnswerChange(EntrySingleAnswer);
     DropdownEntry.prototype.onPreProcess = function (newValue) {
         // When newValue is undefined it means we've unset the select question.
         if (newValue === Const.NO_ANSWER || newValue === undefined) {
@@ -812,6 +822,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
         if (calendarLanguage === 'en') {
             $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions['']);
+        } else {
+            $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions[calendarLanguage]);
         }
 
         self._formatDateForAnswer = function (newDate) {
@@ -1046,7 +1058,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 }
                 break;
             case Const.MULTI_SELECT:
-                entry = new MultiSelectEntry(question, {});
+                isMinimal = style === Const.MINIMAL;
+                if (isMinimal) {
+                    entry = new MultiDropdownEntry(question, {});
+                } else {
+                    entry = new MultiSelectEntry(question, {});
+                }
                 break;
             case Const.DATE:
                 if (style === Const.ETHIOPIAN) {
@@ -1099,6 +1116,33 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         return form.displayOptions || {};
     }
 
+    /**
+     * Utility to render question as select2
+     * additionalOptions is passed as object to select2 constructor
+     */
+    function select2ify(entry, additionalOptions) {
+        var $input = $('#' + entry.entryId);
+        $input.select2(_.extend({
+            allowClear: true,
+            placeholder: entry.placeholderText,
+            escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+        }, additionalOptions));
+
+    }
+
+    /**
+     * Function to handle answer changes for entries using selct2
+     */
+    function select2AnswerChange(parentClass) {
+        return function(newValue) {
+            var self = this;
+            parentClass.prototype.onAnswerChange.call(self, newValue);
+            _.delay(function () {
+                $("#" + self.entryId).trigger("change.select2");
+            });
+        };
+    }
+
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
@@ -1111,6 +1155,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
+        MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
         TimeEntry: TimeEntry,

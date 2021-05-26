@@ -35,6 +35,8 @@ from corehq.toggles import (
     PredictablyRandomToggle,
     all_toggles,
     NAMESPACE_EMAIL_DOMAIN,
+    toggles_enabled_for_domain,
+    toggles_enabled_for_user,
 )
 from corehq.util.soft_assert import soft_assert
 
@@ -245,10 +247,12 @@ def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_e
             domain = entry
             if static_toggle.save_fn is not None:
                 static_toggle.save_fn(domain, enabled)
+            toggles_enabled_for_domain.clear(domain)
         elif namespace != NAMESPACE_EMAIL_DOMAIN:
             # these are sent down with no namespace
             assert ':' not in entry, entry
             username = entry
+            toggles_enabled_for_user.clear(username)
 
 
 def _clear_caches_for_dynamic_toggle(static_toggle):

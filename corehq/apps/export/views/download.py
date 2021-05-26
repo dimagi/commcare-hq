@@ -39,7 +39,11 @@ from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
 )
-from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.export import (
+    get_export_download,
+    get_export_query,
+    get_export_size,
+)
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
@@ -59,7 +63,7 @@ from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.tasks import build_form_multimedia_zip
+from corehq.apps.reports.tasks import build_form_multimedia_zipfile
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
@@ -437,10 +441,10 @@ def prepare_form_multimedia(request, domain):
         })
 
     export = view_helper.get_export(export_specs[0]['export_id'])
-    datespan = filter_form.cleaned_data['date_range']
-    user_types = filter_form.get_es_user_types(filter_form_data)
+    filters = filter_form.get_export_filters(request, filter_form_data)
+    export_es_query = get_export_query(export, filters)
 
-    if media_export_is_too_big(domain, export.app_id, export.xmlns, datespan, user_types):
+    if media_export_is_too_big(export_es_query):
         return json_response({
             'success': False,
             'error': _("This is too many files to export at once.  "
@@ -448,11 +452,10 @@ def prepare_form_multimedia(request, domain):
         })
 
     download = DownloadBase()
-    download.set_task(build_form_multimedia_zip.delay(
+    download.set_task(build_form_multimedia_zipfile.delay(
         domain=domain,
         export_id=export.get_id,
-        datespan=datespan,
-        user_types=user_types,
+        es_filters=filters,
         download_id=download.download_id,
         owner_id=request.couch_user.get_id,
     ))

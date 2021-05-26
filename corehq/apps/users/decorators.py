@@ -8,7 +8,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     redirect_for_login_or_domain,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_deleted_user_by_username,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser

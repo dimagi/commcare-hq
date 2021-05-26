@@ -4,17 +4,20 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_api_key, require_superuser
+from corehq.apps.domain.decorators import (
+    login_or_api_key,
+    require_superuser,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
-from corehq.util.view_utils import absolute_reverse, get_case_or_404
+from corehq.util.view_utils import get_case_or_404
 
 from .const import FHIR_VERSIONS
 from .forms import FHIRRepeaterForm
 from .models import FHIRResourceType, build_fhir_resource
-from .utils import build_capability_statement, resource_url
+from .utils import resource_url
 
 
 class AddFHIRRepeaterView(AddRepeaterView):
@@ -29,18 +32,19 @@ class AddFHIRRepeaterView(AddRepeaterView):
 
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
-        repeater.fhir_version = (self.add_repeater_form
-                                 .cleaned_data['fhir_version'])
+        for attr in (
+            'fhir_version',
+            'patient_registration_enabled',
+            'patient_search_enabled',
+        ):
+            value = self.add_repeater_form.cleaned_data[attr]
+            setattr(repeater, attr, value)
         return repeater
 
 
 class EditFHIRRepeaterView(EditRepeaterView, AddFHIRRepeaterView):
     urlname = 'edit_fhir_repeater'
     page_title = _('Edit FHIR Repeater')
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
 
 
 @require_GET
@@ -121,23 +125,3 @@ def _get_fhir_version(fhir_version_name):
     except IndexError:
         pass
     return fhir_version
-
-
-@require_GET
-@toggles.FHIR_INTEGRATION.required_decorator()
-def smart_configuration_view(request, domain, fhir_version_name):
-    return JsonResponse(
-        {
-            "authorization_endpoint": absolute_reverse('oauth2_provider:authorize'),
-            "token_endpoint": absolute_reverse('oauth2_provider:token'),
-        }
-    )
-
-
-@require_GET
-@toggles.FHIR_INTEGRATION.required_decorator()
-def smart_metadata_view(request, domain, fhir_version_name):
-    fhir_version = _get_fhir_version(fhir_version_name)
-    if not fhir_version:
-        return JsonResponse(status=400, data={'message': "Unsupported FHIR version"})
-    return JsonResponse(build_capability_statement(domain, fhir_version))

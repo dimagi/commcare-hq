@@ -18,7 +18,7 @@
     <instance id="locations" src="jr://fixture/locations"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
-      <query url="https://www.example.com/a/test_domain/phone/search/"
+      <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
              storage-instance="results"
              template="case">
@@ -29,7 +29,7 @@
       <datum id="search_case_id"
              nodeset="instance('results')/results/case[@case_type='case']"
              value="./@case_id"
-             detail-confirm="m0_case_long"
+             detail-confirm="m0_search_long"
              detail-select="m0_search_short"/>
     </session>
     <stack>

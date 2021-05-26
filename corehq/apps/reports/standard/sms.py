@@ -26,7 +26,6 @@ from corehq.apps.hqwebapp.doc_info import (
     DomainMismatchException,
     get_doc_info,
     get_doc_info_by_id,
-    get_object_info,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import EditLocationView
@@ -259,19 +258,21 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             except (ResourceNotFound, CaseNotFound, ObjectDoesNotExist):
                 pass
 
-        doc_info = None
+        doc, doc_info = None, None
         if couch_object:
+            doc = couch_object.to_json()
+        elif sql_object:
+            doc = sql_object
+
+        if doc:
             try:
-                doc_info = get_doc_info(couch_object.to_json(), domain)
+                doc_info = get_doc_info(doc, domain)
             except DomainMismatchException:
                 # This can happen, for example, if a WebUser was sent an SMS
                 # and then they unsubscribed from the domain. If that's the
                 # case, we'll just leave doc_info as None and no contact link
                 # will be displayed.
                 pass
-
-        if sql_object:
-            doc_info = get_object_info(sql_object)
 
         contact_cache[recipient_id] = doc_info
 

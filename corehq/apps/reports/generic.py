@@ -486,7 +486,6 @@ class GenericReportView(object):
             show_time_notice=self.show_time_notice,
             domain=self.domain,
             layout_flush_content=self.flush_layout,
-            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -510,9 +509,6 @@ class GenericReportView(object):
             'urlRoot': self.url_root,
             'asyncUrl': async_url
         }
-
-    def icds_pre_release_features(self):
-        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """

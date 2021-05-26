@@ -112,7 +112,7 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.1.4
     # via -r base-requirements.in
-django-extensions==3.1.1
+django-extensions==3.1.3
     # via -r docs-requirements.in
 django-formtools==2.1
     # via
@@ -154,13 +154,14 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.19
+django==2.2.20
     # via
     #   -r base-requirements.in
     #   django-angular
     #   django-appconf
     #   django-braces
     #   django-bulk-update
+    #   django-extensions
     #   django-formtools
     #   django-logentry-admin
     #   django-oauth-toolkit
@@ -186,6 +187,7 @@ docutils==0.16
     #   -r docs-requirements.in
     #   recommonmark
     #   sphinx
+    #   sphinx-rtd-theme
 dropbox==9.3.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
@@ -366,7 +368,7 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -458,7 +460,6 @@ six==1.15.0
     #   pyzxcvbn
     #   qrcode
     #   quickcache
-    #   sphinx
     #   tenacity
     #   twilio
 smartypants==2.0.1
@@ -469,18 +470,26 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx-rtd-theme==0.5.1
+sphinx-rtd-theme==0.5.2
     # via -r docs-requirements.in
-sphinx==1.8.5
+sphinx==3.5.4
     # via
     #   -r docs-requirements.in
     #   recommonmark
     #   sphinx-rtd-theme
+sphinxcontrib-applehelp==1.0.2
+    # via sphinx
+sphinxcontrib-devhelp==1.0.2
+    # via sphinx
 sphinxcontrib-django==0.5.1
     # via -r docs-requirements.in
+sphinxcontrib-htmlhelp==1.0.3
+    # via sphinx
+sphinxcontrib-jsmath==1.0.1
+    # via sphinx
+sphinxcontrib-qthelp==1.0.3
+    # via sphinx
 sphinxcontrib-serializinghtml==1.1.4
-    # via sphinxcontrib-websupport
-sphinxcontrib-websupport==1.2.4
     # via sphinx
 sqlagg==0.17.2
     # via -r base-requirements.in

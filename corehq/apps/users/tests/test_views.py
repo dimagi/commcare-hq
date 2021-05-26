@@ -4,10 +4,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.util.test_utils import generate_cases
 
 
 class TestMobileWorkerListView(TestCase):

@@ -23,9 +23,25 @@
 {% endblock %}
 
 {% block page_content %}
-
-  {% crispy form form.new_helper %}
   {% if user_type == 'web' %}
-    {% include 'users/partials/manage_my_numbers.html' %}
+    <ul class="nav nav-tabs">
+      <li class="active">
+        <a data-toggle="tab" href="#user-settings-tab">{% trans "My Settings" %}</a>
+      </li>
+      <li>
+        <a data-toggle="tab" href="#manage-phone-numbers-tab">{% trans "Phone Numbers" %}</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="tab-content">
+      <div class="tab-pane active" id="user-settings-tab">
+        {% crispy form form.new_helper %}
+      </div>
+      <div class="tab-pane" id="manage-phone-numbers-tab">
+        {% include 'users/partials/manage_my_numbers.html' %}
+      </div>
+    </div>
+  {% else %}
+    {# just show the plain basic form without tabs #}
+    {% crispy form form.new_helper %}
   {% endif %}
 {% endblock %}

@@ -9,7 +9,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
 )
 from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )

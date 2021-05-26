@@ -24,8 +24,7 @@ class Command(PopulateSQLCommand):
             diffs.append(cls.diff_attr(attr, couch, sql))
         for attr in ["valid", "expires"]:
             diffs.append(cls.diff_attr(attr, couch, sql, wrap_couch=string_to_utc_datetime))
-        diffs = [d for d in diffs if d]
-        return "\n".join(diffs) if diffs else None
+        return diffs
 
     def update_or_create_sql_object(self, doc):
         # Use get_or_create so that if sql model exists we don't bother saving it,

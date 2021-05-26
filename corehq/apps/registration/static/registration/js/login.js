@@ -2,11 +2,15 @@ hqDefine('registration/js/login', [
     'jquery',
     'blazy/blazy',
     'analytix/js/kissmetrix',
+    'registration/js/user_login_form',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/captcha', // shows captcha
 ], function (
     $,
     blazy,
-    kissmetrics
+    kissmetrics,
+    userLoginForm,
+    initialPageData
 ) {
     $(function () {
         // Blazy for loading images asynchronously
@@ -24,6 +28,17 @@ hqDefine('registration/js/login', [
             if (usernameElt) {
                 usernameElt.value = username;
             }
+        }
+
+        if (initialPageData.get('enforce_sso_login')) {
+            let $passwordField = $('#id_auth-password');
+            let loginController = userLoginForm.loginController({
+                initialUsername: $('#id_auth-username').val(),
+                passwordField: $passwordField,
+                passwordFormGroup: $passwordField.closest('.form-group'),
+            });
+            $('#user-login-form').koApplyBindings(loginController);
+            loginController.init();
         }
 
         kissmetrics.whenReadyAlways(function () {

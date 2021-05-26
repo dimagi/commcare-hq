@@ -11,7 +11,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 
 
@@ -115,7 +115,7 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             create=True,
-            index={'dad': ('father-case', self.FATHER_CASE_ID)},
+            index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
             date_opened=now.date()
         ).as_xml()

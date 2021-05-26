@@ -161,8 +161,6 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
-from custom.icds_core.view_utils import is_icds_cas_project
-from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
@@ -847,6 +845,9 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.domain = domain
         request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
+    if notification.doc_type != 'ReportNotification' or notification.domain != domain:
+        raise Http404
+
     return _render_report_configs(
         request,
         notification.configs,
@@ -885,7 +886,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
+        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1022,20 +1023,20 @@ class CaseDataView(BaseProjectReportSectionView):
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
-        display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
 
         def _get_case_url(case_id):
             return absolute_reverse(self.urlname, args=[self.domain, case_id])
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
+        display = wrapped_case.get_display_config()
         default_properties = _get_tables_as_rows(data, display)
         dynamic_data = wrapped_case.dynamic_properties()
 
         for section in display:
             for row in section['layout']:
                 for item in row:
-                    dynamic_data.pop(item.get("expr"), None)
+                    dynamic_data.pop(item.expr, None)
 
         if dynamic_data:
             dynamic_keys = sorted(dynamic_data.keys())
@@ -1076,7 +1077,6 @@ class CaseDataView(BaseProjectReportSectionView):
         show_properties_edit = (
             can_edit_data
             and has_privilege(self.request, privileges.DATA_CLEANUP)
-            and not is_icds_cas_project(self.domain)
         )
 
         context = {
@@ -1254,7 +1254,6 @@ def case_property_names(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-@check_data_interfaces_blocked_for_domain
 def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
@@ -1406,10 +1405,8 @@ def _get_form_context(request, domain, instance):
     except AssertionError:
         raise Http404()
 
-    display = request.project.get_form_display(instance)
     context = {
         "domain": domain,
-        "display": display,
         "timezone": timezone,
         "instance": instance,
         "user": request.couch_user,
@@ -1644,7 +1641,6 @@ def _get_display_options(request, domain, user, form, support_enabled):
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
         and not form.is_deprecated
-        and not is_icds_cas_project(domain)
     )
 
     show_resave = (
@@ -2029,7 +2025,6 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
-@check_data_interfaces_blocked_for_domain
 def edit_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain

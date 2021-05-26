@@ -133,6 +133,17 @@ class DiffTestCases(SimpleTestCase):
             )]
         )
 
+    def test_form_error_type_change(self):
+        couch_form = {
+            "doc_type": "XFormError",
+            "problem": "something went wrong",
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "problem": "something went wrong",
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
     def test_filter_form_deletion_fields(self):
         couch_doc = {
             'doc_type': 'XFormInstance-Deleted',
@@ -201,6 +212,20 @@ class DiffTestCases(SimpleTestCase):
     def test_filter_twice_deleted_case(self):
         couch_case = {
             'doc_type': 'CommCareCase-Deleted-Deleted',
+            '-deletion_id': 'abc',
+            '-deletion_date': '123',
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            'deletion_id': 'abc',
+            'deleted_on': '123',
+        }
+        filtered = filter_case_diffs(couch_case, sql_case, DELETION_DIFFS + REAL_DIFFS)
+        self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_delete_case_with_mangled_doc_type(self):
+        couch_case = {
+            'doc_type': 'CommCareCase-Deleted-Deleted-Deleted',
             '-deletion_id': 'abc',
             '-deletion_date': '123',
         }
@@ -286,9 +311,9 @@ class DiffTestCases(SimpleTestCase):
             'type': 'commcare-user'
         }
 
-        user_case_diffs = json_diff(couch_case, sql_case)
-        self.assertEqual(2, len(user_case_diffs))
-        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs + REAL_DIFFS)
+        usercase_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(2, len(usercase_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, usercase_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_usercase_diff_bad(self):
@@ -303,9 +328,9 @@ class DiffTestCases(SimpleTestCase):
             'type': 'commcare-user'
         }
 
-        user_case_diffs = json_diff(couch_case, sql_case)
-        self.assertEqual(1, len(user_case_diffs))
-        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs)
+        usercase_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(1, len(usercase_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, usercase_diffs)
         self.assertEqual(filtered, [
             FormJsonDiff(
                 diff_type='missing', path=('hq_user_id',),
@@ -571,6 +596,30 @@ class DiffTestCases(SimpleTestCase):
             "server_modified_on": "2019-09-03T18:33:32.777366Z",
         }
         self._test_form_diff_filter(couch_form, sql_form)
+
+    def test_form_time_value_diff(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "form": {"end_time": "11:49:00"},
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "form": {"end_time": "11:49:00.000"},
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
+    def test_case_time_value_diff(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "some_property": "11:49:00",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "some_property": "11:49:00.000",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
 
     def test_form_with_number_with_extra_leading_zero(self):
         couch_form = {

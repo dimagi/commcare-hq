@@ -25,11 +25,11 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     )
 
     parent_cases = []
-    if case.indices:
+    if case.live_indices:
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        for idx in case.indices:
+        for idx in case.live_indices:
             try:
                 parent_cases.append(idx.referenced_case)
             except ResourceNotFound:
@@ -189,7 +189,7 @@ def get_case_hierarchy(case, type_info):
         seen.add(case.case_id)
         children = [
             get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
-            if i.referenced_id not in seen
+            if i.referenced_id and i.referenced_id not in seen
         ]
 
         children = [c for c in children if c is not None]

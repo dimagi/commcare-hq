@@ -12,7 +12,7 @@ from corehq.apps.dump_reload.couch.id_providers import (
 )
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
+from corehq.apps.users.dbaccessors import get_all_usernames_by_domain
 from corehq.feature_previews import all_previews
 from dimagi.utils.couch.database import iter_docs
 

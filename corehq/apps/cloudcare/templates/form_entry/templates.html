@@ -114,21 +114,70 @@
           <div class="question-container">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
-          <div class="form-actions form-group" data-bind="visible: showSubmitButton">
+          <div class="row" data-bind="visible: erroredQuestions().length > 0">
+            <div class="col-sm-12 alert alert-danger">
+              {% blocktrans %}
+                Please correct the answers below before submitting.
+                <br>
+                You can use the <strong><i class='fa fa-arrow-down'></i> Next Question</strong> button on the left-hand side of the screen to navigate between required fields.
+              {% endblocktrans %}
+              <ul data-bind="foreach: erroredQuestions">
+                  <li>
+                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || gettext('Unknown Question')"></a>
+                      <span data-bind="visible: serverError, text: serverError"></span>
+                      <span data-bind="if: error">
+                        <!-- ko text: error --><!-- /ko -->
+                      </span>
+                      <span data-bind="visible: !serverError() && !error()">
+                        {% trans "An answer is required." %}
+                      </span>
+                  </li>
+              </ul>
+            </div>
+          </div>
+          <div id="submit-button" class="form-actions form-group" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
-                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton()"></i>
+                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"></i>
                 <!-- ko text: submitText --><!-- /ko -->
               </button>
             </div>
           </div>
         </form>
       </div>
+      <div data-bind="visible: erroredQuestions().length > 0">
+        {% if environment == "web-apps" %}
+          {% if True or request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+            <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
+                 style="position: fixed; width: 300px; bottom: 65px;"
+                 data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
+                 role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
+              <p>
+                {% blocktrans %}
+                  You can use this button to navigate between questions that are required but missing or that contain errors.
+                  You will also see a summary of questions that need attention at the bottom of the form.
+                {% endblocktrans %}
+                <br>
+                <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
+              </p>
+            </div>
+          {% endif %}
+        {% endif %}
+        <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
+          <i class='fa fa-arrow-down'> </i>
+              {% trans "Next Question" %}
+        </div>
+      </div>
     </div>
   </div>
 </script>
+
 
 <script type="text/html" id="question-fullform-ko-template">
   <!-- ko if: datatype() !== 'info' -->
@@ -182,7 +231,7 @@
                 visible: error,
                 text: error
             "></div>
-      <div class="text-danger error-message server-error-message" data-bind="
+      <div class="text-danger error-message" data-bind="
                 visible: serverError,
                 text: serverError
             "></div>
@@ -382,6 +431,23 @@
         visible: helpText(),
     "></span>
 </script>
+<script type="text/html" id="multidropdown-entry-ko-template">
+  <select multiple class="form-control" data-bind="
+        foreach: options,
+        selectedOptions: rawAnswer,
+        attr: {
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
+        valueAllowUnset: true,
+        ">
+    <option data-bind="value: id, text: text"></option>
+  </select>
+  <span class="help-block type" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
+</script>
 <script type="text/html" id="choice-label-entry-ko-template">
   <div class="row">
     <!-- ko foreach: choices -->
@@ -435,7 +501,7 @@
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>

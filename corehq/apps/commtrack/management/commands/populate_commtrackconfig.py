@@ -29,7 +29,7 @@ class Command(PopulateSQLCommand):
         diffs = []
         for attr in cls.attrs_to_sync():
             diffs.append(cls.diff_attr(attr, doc, obj))
-        diffs.extend(cls.diff_lists(doc.get('actions', []), obj.all_actions, [
+        diffs.extend(cls.diff_lists('actions', doc.get('actions', []), obj.all_actions, [
             'action', 'subaction', '_keyword', 'caption'
         ]))
         for spec in cls.one_to_one_submodels():
@@ -38,9 +38,8 @@ class Command(PopulateSQLCommand):
             couch_submodel = doc.get(spec['couch_attr'], {})
             for attr in spec['fields']:
                 diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel,
-                             wrap_couch=normalize, wrap_sql=normalize))
-        diffs = [d for d in diffs if d]
-        return "\n".join(diffs) if diffs else None
+                             wrap_couch=normalize, wrap_sql=normalize, name_prefix=spec['couch_attr']))
+        return diffs
 
     @classmethod
     def attrs_to_sync(cls):

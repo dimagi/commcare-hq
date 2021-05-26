@@ -27,14 +27,14 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
 from ..fixtures import (
     LocationSet,
-    _get_location_data_fields,
     _location_to_fixture,
+    get_location_data_fields,
     flat_location_fixture_generator,
     get_location_fixture_queryset,
     location_fixture_generator,
@@ -450,10 +450,10 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
-        self.assertItemsEqual(self.field_slugs, [f.slug for f in _get_location_data_fields(self.domain)])
+        self.assertItemsEqual(self.field_slugs, [f.slug for f in get_location_data_fields(self.domain)])
 
     def test_utility_method_empty(self):
-        self.assertEqual([], [f.slug for f in _get_location_data_fields('no-fields-defined')])
+        self.assertEqual([], [f.slug for f in get_location_data_fields('no-fields-defined')])
 
     def test_metadata_added_to_all_nodes(self):
         mass = self.locations['Massachusetts']

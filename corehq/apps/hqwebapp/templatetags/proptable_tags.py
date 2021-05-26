@@ -12,6 +12,7 @@ import collections
 import datetime
 from itertools import zip_longest
 
+import attr
 from django import template
 from django.template.defaultfilters import yesno
 from django.utils.html import conditional_escape, escape
@@ -30,6 +31,20 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATE_FORMAT, USER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
+
+
+class DisplayProcessor(collections.namedtuple("DisplayProcessor", "processor, returns_html")):
+    def __call__(self, value, data):
+        return self.processor(value, data)
+
+
+VALUE_DISPLAY_PROCESSORS = {
+    'date': DisplayProcessor(lambda value, data: _parse_date_or_datetime(value), False),
+    'yesno': DisplayProcessor(lambda value, data: conditional_escape(yesno(value)), False),
+    'doc_info': DisplayProcessor(lambda value, data: pretty_doc_info(
+        get_doc_info_by_id(data['domain'], value)
+    ), True)
+}
 
 register = template.Library()
 
@@ -59,11 +74,14 @@ def _parse_date_or_datetime(val):
                 return dt.date()
             else:
                 return dt
-
-    result = parse()
-    if isinstance(result, datetime.datetime):
-        assert result.tzinfo is None
-    return result
+    try:
+        result = parse()
+        if isinstance(result, datetime.datetime):
+            assert result.tzinfo is None
+        return result
+    except Exception:
+        # ignore exceptions from date parsing
+        pass
 
 
 def _format_slug_string_for_display(key):
@@ -107,12 +125,12 @@ def _to_html(val, key=None, level=0, timeago=False):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = format_html(
-            "<time {} title='{}' datetime='{}'>{}</time>",
-            mark_safe("class='timeago'") if timeago else "",  # nosec: no user input
-            iso,
-            iso,
-            safe_strftime(val, fmt))
+        ret = format_html("<time{timeago} title='{title}' datetime='{iso}'>{display}</time>".format(
+            timeago=mark_safe(" class='timeago'") if timeago else "",  # nosec: no user input
+            title=iso,
+            iso=iso,
+            display=safe_strftime(val, fmt)
+        ))
     else:
         if val is None:
             val = '---'
@@ -122,64 +140,77 @@ def _to_html(val, key=None, level=0, timeago=False):
     return ret
 
 
-def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
-    # when prop_def came from a couchdbkit document, it will be a LazyDict with
-    # a broken pop method.  This conversion also has the effect of a shallow
-    # copy, which we want.
-    prop_def = dict(prop_def)
+@attr.s
+class DisplayConfig:
+    # dict key or callable to get value from data dict
+    expr = attr.ib()
 
-    default_processors = {
-        'yesno': yesno,
-        'doc_info': lambda value: pretty_doc_info(
-            get_doc_info_by_id(data['domain'], value)
-        )
-    }
-    processors = processors or {}
-    processors.update(default_processors)
+    # name of the field. Defaults to the value `expr` if not given.
+    name = attr.ib(default=None)
 
+    # processor to apply. Available processors are:
+    # - 'yesno': convert boolean values to yes / no / maybe
+    # - 'doc_info': render a DocInfo
+    # - 'date': convert date strings to date objects
+    process = attr.ib(default=None)
+
+    # String to use as the output format e.g. "<b>{}</b>"
+    format = attr.ib(default=None)
+
+    # add 'timeago' class to <time/> elements
+    timeago = attr.ib(default=False)
+
+    # property that is passed through in the return result
+    has_history = attr.ib(default=False)
+
+    # True if this value represents a 'phone time'. See ``PhoneTime``
+    is_phone_time = attr.ib(default=False)
+
+    @process.validator
+    def _validate_process(self, attribute, value):
+        choices = VALUE_DISPLAY_PROCESSORS.keys()
+        if value is not None and value not in choices:
+            raise ValueError("'process' must be one of {}".format(", ".join(choices)))
+
+
+def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
     expr_name = _get_expr_name(prop_def)
-    expr = prop_def.pop('expr')
-    name = prop_def.pop('name', None) or _format_slug_string_for_display(expr)
-    format = prop_def.pop('format', None)
-    process = prop_def.pop('process', None)
-    timeago = prop_def.get('timeago', False)
-    has_history = prop_def.pop('has_history', False)
+    name = prop_def.name or _format_slug_string_for_display(expr_name)
 
-    val = eval_expr(expr, data)
+    val = eval_expr(prop_def.expr, data)
 
-    if prop_def.pop('parse_date', None):
+    processor = VALUE_DISPLAY_PROCESSORS.get(prop_def.process, None)
+    if processor:
         try:
-            val = _parse_date_or_datetime(val)
+            val = processor(val, data)
         except Exception:
             # ignore exceptions from date parsing
             pass
-    is_phone_time = prop_def.pop('is_phone_time', False)
     if isinstance(val, datetime.datetime):
-        if not is_phone_time:
+        if not prop_def.is_phone_time:
             val = ServerTime(val).user_time(timezone).done()
         else:
             val = PhoneTime(val, timezone).user_time(timezone).done()
 
-    try:
-        val = conditional_escape(processors[process](val))
-    except KeyError:
-        val = _to_html(val, timeago=timeago)
-    if format:
-        val = format_html(format, val)
+    if not processor or not processor.returns_html:
+        val = _to_html(val, timeago=prop_def.timeago)
+
+    if prop_def.format:
+        val = format_html(prop_def.format, val)
 
     return {
         "expr": expr_name,
         "name": name,
         "value": val,
-        "has_history": has_history,
+        "has_history": prop_def.has_history,
     }
 
 
-def _get_expr_name(prop_def):
-    if callable(prop_def['expr']):
-        return prop_def['name']
+def _get_expr_name(prop_def: DisplayConfig):
+    if callable(prop_def.expr):
+        return prop_def.name
     else:
-        return prop_def['expr']
+        return prop_def.expr
 
 
 def eval_expr(expr, dict_data):
@@ -194,12 +225,16 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+def get_tables_as_rows(data, definition, timezone=pytz.utc):
     """
     Return a low-level definition of a group of tables, given a data object and
     a high-level declarative definition of the table rows and value
     calculations.
 
+    :param definition: dict with keys:
+       "name" (optional): the name of the section
+       "layout": list of rows to display. Each row must be a list of `DisplayConfig` classes
+            that represent the cells of the row.
     """
 
     sections = []
@@ -209,8 +244,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
             [get_display_data(
                 data,
                 prop,
-                timezone=timezone,
-                processors=processors) for prop in row]
+                timezone=timezone) for prop in row]
             for row in section['layout']]
 
         max_row_len = max(list(map(len, rows))) if rows else 0
@@ -250,12 +284,10 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
     date_fields = date_fields or set()
     layout = chunked(
         [
-            {
-                "expr": prop,
-                "is_phone_time": prop in phonetime_fields,
-                "has_history": True,
-                "parse_date": prop in date_fields
-            }
+            DisplayConfig(
+                expr=prop, is_phone_time=prop in phonetime_fields, has_history=True,
+                process="date" if prop in date_fields else None
+            )
             for prop in keys
         ],
         num_columns

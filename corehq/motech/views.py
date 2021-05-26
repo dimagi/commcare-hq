@@ -19,11 +19,11 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
-from corehq.motech.forms import ConnectionSettingsForm
+from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
 
-from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 
 class Http409(Http400):
@@ -161,17 +161,21 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             }
 
     def _get_item_data(self, connection_settings):
-        return {
+        data = {
             'id': connection_settings.id,
             'name': connection_settings.name,
             'url': connection_settings.url,
             'notifyAddresses': ', '.join(connection_settings.notify_addresses),
             'usedBy': ', '.join(connection_settings.used_by),
-            'editUrl': reverse(
+        }
+
+        if connection_settings.id is not None:
+            data['editUrl'] = reverse(
                 ConnectionSettingsDetailView.urlname,
                 kwargs={'domain': self.domain, 'pk': connection_settings.id}
-            ),
-        }
+            )
+
+        return data
 
     def get_deleted_item_data(self, item_id):
         connection_settings = ConnectionSettings.objects.get(
@@ -254,6 +258,9 @@ def test_connection_settings(request, domain):
         })
     form = ConnectionSettingsForm(domain=domain, data=request.POST)
     if form.is_valid():
+        if isinstance(form.cleaned_data['url'], UnrecognizedHost):
+            return JsonResponse({"success": False, "response": "Unknown URL"})
+
         conn = form.save(commit=False)
         requests = conn.get_requests()
         try:

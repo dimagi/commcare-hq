@@ -5,8 +5,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.views import MySavedReportsView
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,

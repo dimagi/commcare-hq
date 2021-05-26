@@ -321,11 +321,11 @@ def get_export_file(export_instances, filters, temp_path, progress_tracker=None)
 
 def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
-    query = _get_export_query(export_instance, filters)
+    query = get_export_query(export_instance, filters)
     return iter_es_docs_from_query(query)
 
 
-def _get_export_query(export_instance, filters):
+def get_export_query(export_instance, filters):
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
@@ -333,7 +333,7 @@ def _get_export_query(export_instance, filters):
 
 
 def get_export_size(export_instance, filters):
-    return _get_export_query(export_instance, filters).count()
+    return get_export_query(export_instance, filters).count()
 
 
 def write_export_instance(writer, export_instance, documents, progress_tracker=None):

@@ -1,4 +1,4 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function ($, ko, atwho, ace) {
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'underscore', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function ($, _, ko, atwho, ace) {
 
     ko.bindingHandlers.xPathAutocomplete = {
         init: function (element, valueAccessor, allBindings, viewModel) {

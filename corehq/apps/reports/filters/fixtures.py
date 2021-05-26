@@ -6,7 +6,6 @@ from corehq.apps.locations.util import (
     location_hierarchy_config,
 )
 from corehq.apps.reports.filters.base import BaseReportFilter
-from custom.icds_core.view_utils import icds_pre_release_features
 
 
 class AsyncLocationFilter(BaseReportFilter):
@@ -50,7 +49,6 @@ class AsyncLocationFilter(BaseReportFilter):
             'make_optional': self.make_optional,
             'hierarchy': self.location_hierarchy_config,
             'path': self.request.path,
-            'have_access_to_icds_dashboard_features': icds_pre_release_features(user)
         }
 
     @classmethod

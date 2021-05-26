@@ -10,8 +10,6 @@ amqp==2.6.1
     # via kombu
 architect==0.5.6
     # via -r base-requirements.in
-argparse==1.4.0
-    # via unittest2
 attrs==18.2.0
     # via
     #   -r base-requirements.in
@@ -59,6 +57,8 @@ click==7.1.2
     # via pip-tools
 cloudant==2.14.0
     # via jsonobject-couchdbkit
+colorama==0.4.4
+    # via radon
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 concurrent-log-handler==0.9.12
@@ -157,7 +157,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.19
+django==2.2.20
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -204,10 +204,16 @@ fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
     # via -r base-requirements.in
+flake8-polyfill==1.0.2
+    # via radon
+flake8==3.9.2
+    # via flake8-polyfill
 flaky==3.7.0
     # via -r test-requirements.in
-freezegun==0.3.15
+freezegun==1.1.0
     # via -r test-requirements.in
+future==0.18.2
+    # via radon
 gevent==1.4.0
     # via
     #   -r base-requirements.in
@@ -235,7 +241,10 @@ idna==2.10
     #   email-validator
     #   requests
 importlib-metadata==3.4.0
-    # via jsonschema
+    # via
+    #   flake8
+    #   jsonschema
+    #   pep517
 intervaltree==3.1.0
     # via ddtrace
 iso8601==0.1.13
@@ -276,8 +285,6 @@ kombu==4.2.2.post1
     #   celery
 laboratory==0.2.0
     # via -r base-requirements.in
-linecache2==1.0.0
-    # via traceback2
 lxml==4.6.3
     # via
     #   -r base-requirements.in
@@ -285,6 +292,8 @@ lxml==4.6.3
     #   xmlsec
 mako==1.1.3
     # via alembic
+mando==0.6.4
+    # via radon
 markdown==2.2.1
     # via
     #   -r base-requirements.in
@@ -293,6 +302,8 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+mccabe==0.6.1
+    # via flake8
 mock==2.0.0
     # via -r base-requirements.in
 nose-exclude==0.5.0
@@ -312,6 +323,8 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 pbr==5.5.0
     # via mock
+pep517==0.10.0
+    # via pip-tools
 phonenumberslite==8.12.10
     # via -r base-requirements.in
 pillow==8.1.2
@@ -320,7 +333,7 @@ pillow==8.1.2
     #   cairosvg
     #   django-simple-captcha
     #   reportlab
-pip-tools==5.5.0
+pip-tools==6.1.0
     # via -r test-requirements.in
 ply==3.11
     # via
@@ -342,10 +355,14 @@ py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pycco==0.5.1
     # via -r base-requirements.in
+pycodestyle==2.7.0
+    # via flake8
 pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
     # via -r base-requirements.in
+pyflakes==2.3.1
+    # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.8.1
@@ -380,7 +397,7 @@ python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
-python-levenshtein==0.12.0
+python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -405,6 +422,8 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
+radon[flake8]==4.5.0
+    # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
 redis==3.5.3
@@ -461,7 +480,6 @@ six==1.15.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   freezegun
     #   ghdiff
     #   html5lib
     #   isodate
@@ -470,6 +488,7 @@ six==1.15.0
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
+    #   mando
     #   mock
     #   protobuf
     #   pyopenssl
@@ -481,7 +500,6 @@ six==1.15.0
     #   sqlalchemy-postgres-copy
     #   tenacity
     #   twilio
-    #   unittest2
 smartypants==2.0.1
     # via pycco
 socketpool==0.5.3
@@ -521,8 +539,8 @@ tinycss2==1.0.2
     #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
-traceback2==1.4.0
-    # via unittest2
+toml==0.10.2
+    # via pep517
 tropo-webapi-python==0.1.3
     # via -r base-requirements.in
 turn-python==0.0.1
@@ -533,8 +551,6 @@ typing-extensions==3.7.4.3
     # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
-unittest2==1.1.0
-    # via -r test-requirements.in
 urllib3==1.25.10
     # via
     #   botocore
@@ -566,10 +582,12 @@ xlwt==1.3.0
 xmlsec==1.3.9
     # via python3-saml
 zipp==3.4.0
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.0.1
+pip==21.1.1
     # via pip-tools
 setuptools==50.3.0
     # via

@@ -681,7 +681,7 @@ class SchedulingRecipientTest(TestCase):
             )
             self.assertIsNone(instance.recipient.get_email())
 
-    def create_user_case(self, user):
+    def create_usercase(self, user):
         create_case_kwargs = {
             'external_id': user.get_id,
             'update': {'hq_user_id': user.get_id},
@@ -711,12 +711,12 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with self.create_user_case(user2) as case:
+        with self.create_usercase(user2) as case:
             self.assertIsNotNone(user2.memoized_usercase)
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-        with self.create_user_case(user3) as case:
+        with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
             update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
@@ -765,12 +765,12 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
         with change_context_manager:
-            with self.create_user_case(user2) as case:
+            with self.create_usercase(user2) as case:
                 self.assertIsNotNone(user2.memoized_usercase)
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-        with self.create_user_case(user3) as case:
+        with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
             with change_context_manager:
                 update_case(self.domain, case.case_id,
@@ -815,12 +815,12 @@ class SchedulingRecipientTest(TestCase):
             self.assertIsNone(user1.memoized_usercase)
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-            with self.create_user_case(user2) as case:
+            with self.create_usercase(user2) as case:
                 self.assertIsNotNone(user2.memoized_usercase)
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
-            with self.create_user_case(user3) as case:
+            with self.create_usercase(user3) as case:
                 # If the user has no number, the user case's number is used
                 update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)

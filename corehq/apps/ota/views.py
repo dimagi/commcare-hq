@@ -37,8 +37,8 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.case_search.filter_dsl import CaseFilterError, TooManyRelatedCasesError
+from corehq.apps.case_search.utils import CaseSearchCriteria, get_related_cases
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     mobile_auth,
@@ -55,7 +55,6 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from custom.icds_core.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -92,6 +91,13 @@ def restore(request, domain, app_id=None):
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
+    return app_aware_search(request, domain, None)
+
+
+@location_safe
+@mobile_auth
+@check_domain_migration
+def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
     Returns results as a fixture with the same structure as a casedb instance.
@@ -106,6 +112,12 @@ def search(request, domain):
         case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
     except TooManyRelatedCasesError:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
+    except CaseFilterError as e:
+        # This is an app building error, notify so we can track
+        notify_exception(request, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        return HttpResponse(str(e), status=400)
     search_es = case_search_criteria.search_es
 
     try:
@@ -118,6 +130,9 @@ def search(request, domain):
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+    if app_id:
+        cases.extend(get_related_cases(domain, app_id, case_type, cases))
+
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -263,10 +278,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         skip_fixtures = False
 
     app = get_app_cached(domain, app_id) if app_id else None
-    if app:
-        error_response = check_authorization(domain, couch_user, app.origin_id)
-        if error_response:
-            return error_response, None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -318,9 +329,6 @@ def heartbeat(request, domain, app_build_id):
 
     info["app_id"] = app_id
     if master_app_id:
-        error_response = check_authorization(domain, request.couch_user, master_app_id)
-        if error_response:
-            return error_response
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 

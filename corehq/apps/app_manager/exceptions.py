@@ -148,7 +148,7 @@ class CaseXPathValidationError(XPathValidationError):
     pass
 
 
-class UserCaseXPathValidationError(XPathValidationError):
+class UsercaseXPathValidationError(XPathValidationError):
     pass
 
 

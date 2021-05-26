@@ -445,6 +445,17 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class Argument(IdNode):
+    ROOT_NAME = 'argument'
+
+
+class SessionEndpoint(IdNode):
+    ROOT_NAME = 'endpoint'
+
+    arguments = NodeListField('argument', Argument)
+    stack = NodeField('stack', Stack)
+
+
 class Assertion(XmlObject):
     ROOT_NAME = 'assert'
 
@@ -738,7 +749,7 @@ class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
-    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    auto_launch = StringField("@auto_launch")
     redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
@@ -920,6 +931,7 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    endpoints = NodeListField('endpoint', SessionEndpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)

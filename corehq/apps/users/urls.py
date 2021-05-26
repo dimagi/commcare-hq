@@ -5,15 +5,14 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
     DefaultProjectUserSettingsView,
     DomainPermissionsMirrorView,
-    DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
+    UploadWebUsers,
+    WebUserUploadStatusView,
     ListRolesView,
     ListWebUsersView,
-    accept_invitation,
     add_domain_membership,
     change_password,
-    delete_invitation,
     delete_phone_number,
     delete_request,
     check_sso_trust,
@@ -23,7 +22,6 @@ from .views import (
     paginate_web_users,
     post_user_role,
     register_fcm_device_token,
-    reinvite_web_user,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
@@ -32,6 +30,13 @@ from .views import (
     create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
+    WebUserUploadJobPollView,
+)
+from .views.web import (
+    accept_invitation,
+    delete_invitation,
+    DomainRequestView,
+    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -65,8 +70,9 @@ from .views.mobile.users import (
     toggle_demo_mode,
     update_user_groups,
     user_download_job_poll,
-    user_upload_job_poll,
-    CommCareUserConfirmAccountView, send_confirmation_email)
+    CommCareUserConfirmAccountView,
+    send_confirmation_email,
+    CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
@@ -99,6 +105,11 @@ urlpatterns = [
     url(r'^web/download/$', download_web_users, name='download_web_users'),
     url(r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(), name='download_web_users_status'),
+    url(r'^web/upload/$', waf_allow('XSS_BODY')(UploadWebUsers.as_view()), name=UploadWebUsers.urlname),
+    url(r'^web/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
+    url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadJobPollView.as_view(),
+        name=WebUserUploadJobPollView.urlname),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),
@@ -143,7 +154,7 @@ urlpatterns = [
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_upload_job_poll, name='user_upload_job_poll'),
+        CommcareUserUploadJobPollView.as_view(), name=CommcareUserUploadJobPollView.urlname),
     url(r'^commcare/download/$', download_commcare_users, name='download_commcare_users'),
     url(r'^commcare/filter_and_download/$', FilteredUserDownload.as_view(),
         name=FilteredUserDownload.urlname),

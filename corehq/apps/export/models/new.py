@@ -762,6 +762,8 @@ class ExportInstance(BlobMixin, Document):
     is_daily_saved_export = BooleanProperty(default=False)
     auto_rebuild_enabled = BooleanProperty(default=True)
 
+    show_det_config_download = BooleanProperty(default=False)
+
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
@@ -2613,7 +2615,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
+        case_ids = [index.get('referenced_id') for index in indices if index.get('referenced_type') == case_type]
         return ' '.join(case_ids)
 
 

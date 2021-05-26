@@ -1328,6 +1328,7 @@ class XForm(WrappedNode):
     def _get_leaf_data_nodes(self):
         return self._get_flattened_data_nodes(leaves_only=True)
 
+    @memoized
     def _get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
             return {}

@@ -201,7 +201,7 @@ class ScheduledReportSendingTest(TestCase):
         })
         report_config.save()
         report = ReportNotification(
-            hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id]
+            domain=self.domain, hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id]
         )
         report.save()
         report_text = get_scheduled_report_response(

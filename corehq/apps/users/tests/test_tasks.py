@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser, DomainPermissionsMirror
 from corehq.apps.users.tasks import update_domain_date
 

@@ -3,12 +3,14 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
     ResourceNotFound,
+    ResourceConflict
 )
 
 from dimagi.utils.parsing import string_to_boolean
@@ -36,18 +38,22 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    UserRole,
+    UserRole, InvitationStatus, DomainRequest,
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
+from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
 required_headers = set(['username'])
+web_required_headers = set(['username', 'role'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
+    'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
+    'last_login (read only)', 'last_name', 'status', 'first_name',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -55,7 +61,7 @@ old_headers = {
 }
 
 
-def check_headers(user_specs):
+def check_headers(user_specs, domain, is_web_upload=False):
     messages = []
     headers = set(user_specs.fieldnames)
 
@@ -68,8 +74,14 @@ def check_headers(user_specs):
                 ))
             headers.discard(old_name)
 
+    if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        allowed_headers.add('domain')
+
     illegal_headers = headers - allowed_headers
-    missing_headers = required_headers - headers
+    if is_web_upload:
+        missing_headers = web_required_headers - headers
+    else:
+        missing_headers = required_headers - headers
 
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
@@ -285,54 +297,106 @@ DomainInfo = namedtuple('DomainInfo', [
 ])
 
 
-def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id, send_email=True):
+    invite, invite_created = Invitation.objects.update_or_create(
+        email=email,
+        domain=domain,
+        is_accepted=False,
+        defaults={
+            'invited_by': upload_user.user_id,
+            'invited_on': datetime.utcnow(),
+            'supply_point': location_id,
+            'role': role_qualified_id
+        },
+    )
+    if invite_created and send_email:
+        invite.send_activation_email()
+
+
+def find_location_id(location_codes, location_cache):
+    location_ids = []
+    for code in location_codes:
+        loc = get_location_from_site_code(code, location_cache)
+        location_ids.append(loc.location_id)
+    return location_ids
+
+
+def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
+    locations_updated = set(assigned_loc_ids) != set(location_ids)
+    primary_location_removed = bool(loc_id and (not location_ids or loc_id not in location_ids))
+    return locations_updated, primary_location_removed
+
+
+def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    domain_info_by_domain = {}
+    domain_info = domain_info_by_domain.get(domain)
+    if domain_info:
+        return domain_info
+    if domain == upload_domain:
+        domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
+    else:
+        domain_group_memoizer = GroupMemoizer(domain)
+    domain_group_memoizer.load_all()
+    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    location_cache = None
+    if can_assign_locations:
+        location_cache = SiteCodeToLocationCache(domain)
 
-    def _get_domain_info(domain):
-        domain_info = domain_info_by_domain.get(domain)
-        if domain_info:
-            return domain_info
-        if domain == upload_domain:
-            domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
-        else:
-            domain_group_memoizer = GroupMemoizer(domain)
-        domain_group_memoizer.load_all()
-        can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-        location_cache = None
-        if can_assign_locations:
-            location_cache = SiteCodeToLocationCache(domain)
-
-        domain_obj = Domain.get_by_name(domain)
-        allowed_group_names = [group.name for group in domain_group_memoizer.groups]
+    domain_obj = Domain.get_by_name(domain)
+    allowed_group_names = [group.name for group in domain_group_memoizer.groups]
+    profiles_by_name = {}
+    domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+    if is_web_upload:
+        roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
+                                                                                allow_admin_role=True)}
+        validators = get_user_import_validators(
+            Domain.get_by_name(domain),
+            domain_user_specs,
+            True,
+            allowed_roles=list(roles_by_name),
+            upload_domain=upload_domain,
+        )
+    else:
         roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-        profiles_by_name = {}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
             profiles_by_name = {
                 profile.name: profile
                 for profile in definition.get_profiles()
             }
-        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
         validators = get_user_import_validators(
             domain_obj,
             domain_user_specs,
+            False,
             allowed_group_names,
             list(roles_by_name),
             list(profiles_by_name),
             upload_domain
         )
 
-        domain_info = DomainInfo(
-            validators,
-            can_assign_locations,
-            location_cache,
-            roles_by_name,
-            profiles_by_name,
-            domain_group_memoizer
-        )
-        domain_info_by_domain[domain] = domain_info
-        return domain_info
+    domain_info = DomainInfo(
+        validators,
+        can_assign_locations,
+        location_cache,
+        roles_by_name,
+        profiles_by_name,
+        domain_group_memoizer
+    )
+    domain_info_by_domain[domain] = domain_info
+    return domain_info
+
+
+def format_location_codes(location_codes):
+    if location_codes and not isinstance(location_codes, list):
+        location_codes = [location_codes]
+    if location_codes is not None:
+        # ignore empty
+        location_codes = [code for code in location_codes if code]
+    return location_codes
+
+
+def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+    domain_info_by_domain = {}
 
     ret = {"errors": [], "rows": []}
 
@@ -354,7 +418,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 'row': row,
             }
 
-            domain_info = _get_domain_info(domain)
+            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, group_memoizer)
 
             try:
                 for validator in domain_info.validators:
@@ -374,11 +438,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
             location_codes = row.get('location_code', []) if 'location_code' in row else None
-            if location_codes and not isinstance(location_codes, list):
-                location_codes = [location_codes]
-            if location_codes is not None:
-                # ignore empty
-                location_codes = [code for code in location_codes if code]
+            location_codes = format_location_codes(location_codes)
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user = row.get('web_user')
@@ -397,11 +457,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         raise UserUploadError(_(
                             "User with ID '{user_id}' not found"
                         ).format(user_id=user_id, domain=domain))
-
-                    if username and user.username != username:
-                        raise UserUploadError(_(
-                            'Changing usernames is not supported: %(username)r to %(new_username)r'
-                        ) % {'username': user.username, 'new_username': username})
+                    check_changing_username(user, username)
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
@@ -462,17 +518,13 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
+
                     # Do not update location info if the column is not included at all
-                    location_ids = []
-                    for code in location_codes:
-                        loc = get_location_from_site_code(code, domain_info.location_cache)
-                        location_ids.append(loc.location_id)
-
-                    locations_updated = set(user.assigned_location_ids) != set(location_ids)
-                    primary_location_removed = (user.location_id and not location_ids or
-                                                user.location_id not in location_ids)
-
-                    if primary_location_removed:
+                    location_ids = find_location_id(location_codes, domain_info.location_cache)
+                    locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                                     user.location_id,
+                                                                                     user.assigned_location_ids)
+                    if primary_loc_removed:
                         user.unset_location(commit=False)
                     if locations_updated:
                         user.reset_locations(location_ids, commit=False)
@@ -494,24 +546,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if log_role_update:
                     log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
-                    if not upload_user.can_edit_web_users():
-                        raise UserUploadError(_(
-                            "Only users with the edit web users permission can upload web users"
-                        ))
+                    check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)
                     if remove_web_user:
-                        if not current_user or not current_user.is_member_of(domain):
-                            raise UserUploadError(_(
-                                "You cannot remove a web user that is not a member of this project. {web_user} is not a member.").format(web_user=web_user)
-                            )
-                        else:
-                            current_user.delete_domain_membership(domain)
-                            current_user.save()
+                        remove_web_user_from_domain(domain, current_user, username, upload_user)
                     else:
-                        if not role:
-                            raise UserUploadError(_(
-                                "You cannot upload a web user without a role. {web_user} does not have a role").format(web_user=web_user)
-                            )
+                        check_user_role(username, role)
                         if not current_user and is_account_confirmed:
                             raise UserUploadError(_(
                                 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.").format(web_user=web_user)
@@ -520,18 +560,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
 
                         elif not current_user or not current_user.is_member_of(domain):
-                            invite, invite_created = Invitation.objects.update_or_create(
-                                email=web_user,
-                                domain=domain,
-                                defaults={
-                                    'invited_by': upload_user.user_id,
-                                    'invited_on': datetime.utcnow(),
-                                    'supply_point': user.location_id,
-                                    'role': role_qualified_id
-                                },
-                            )
-                            if invite_created and send_account_confirmation_email:
-                                invite.send_activation_email()
+                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user, user.location_id,
+                                                             send_email=send_account_confirmation_email)
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
@@ -581,3 +611,166 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             ret['errors'].append(_error_message)
 
     return ret
+
+
+def create_or_update_web_users(upload_domain, user_specs, upload_user, update_progress=None):
+    domain_info_by_domain = {}
+
+    ret = {"errors": [], "rows": []}
+    current = 0
+
+    for row in user_specs:
+        if update_progress:
+            update_progress(current)
+            current += 1
+        role_updated = False
+
+        username = row.get('username')
+        domain = row.get('domain') or upload_domain
+        status_row = {
+            'username': username,
+            'row': row,
+        }
+        domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+                                      upload_user=upload_user, is_web_upload=True)
+        try:
+            for validator in domain_info.validators:
+                validator(row)
+        except UserUploadError as e:
+            status_row['flag'] = str(e)
+            ret['rows'].append(status_row)
+            continue
+
+        role = row.get('role', None)
+        status = row.get('status')
+
+        location_codes = row.get('location_code', []) if 'location_code' in row else None
+        location_codes = format_location_codes(location_codes)
+
+        try:
+            remove = spec_value_to_boolean_or_none(row, 'remove')
+            check_user_role(username, role)
+            role_qualified_id = domain_info.roles_by_name[role]
+            check_can_upload_web_users(upload_user)
+
+            user = CouchUser.get_by_username(username, strict=True)
+            if user:
+                check_changing_username(user, username)
+                if remove:
+                    remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=True)
+                else:
+                    membership = user.get_domain_membership(domain)
+                    if membership:
+                        modify_existing_user_in_domain(domain, domain_info, location_codes, membership,
+                                                       role_qualified_id, upload_user, user)
+                    else:
+                        create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                         user.location_id)
+                status_row['flag'] = 'updated'
+
+            else:
+                if remove:
+                    remove_invited_web_user(domain, username)
+                    status_row['flag'] = 'updated'
+                else:
+                    if status == "Invited":
+                        try:
+                            invitation = Invitation.objects.get(domain=domain, email=username)
+                        except Invitation.DoesNotExist:
+                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
+                                                    " {web_user} is not yet invited.").format(web_user=username))
+                        if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
+                            raise UserUploadError(_("The email has bounced for this user's invite. Please try "
+                                                    "again with a different username").format(web_user=username))
+                    user_invite_loc_id = None
+                    if domain_info.can_assign_locations and location_codes is not None:
+                        # set invite location to first item in location_codes
+                        if len(location_codes) > 0:
+                            user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
+                            user_invite_loc_id = user_invite_loc.location_id
+                    create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
+                                                     user_invite_loc_id)
+                    status_row['flag'] = 'invited'
+
+        except (UserUploadError, CouchUser.Inconsistent) as e:
+            status_row['flag'] = str(e)
+
+        ret["rows"].append(status_row)
+
+    return ret
+
+
+def modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
+                                   upload_user, current_user, max_tries=3):
+    if domain_info.can_assign_locations and location_codes is not None:
+        location_ids = find_location_id(location_codes, domain_info.location_cache)
+        locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
+                                                                         membership.location_id,
+                                                                         membership.assigned_location_ids)
+        if primary_loc_removed:
+            current_user.unset_location(domain, commit=False)
+        if locations_updated:
+            current_user.reset_locations(domain, location_ids, commit=False)
+    user_current_role = current_user.get_role(domain=domain)
+    role_updated = not (user_current_role
+                        and user_current_role.get_qualified_id() == role_qualified_id)
+    if role_updated:
+        current_user.set_role(domain, role_qualified_id)
+        log_user_role_update(domain, current_user, upload_user,
+                             USER_CHANGE_VIA_BULK_IMPORTER)
+    try:
+        current_user.save()
+    except ResourceConflict:
+        notify_exception(None, message="ResouceConflict during web user import",
+                         details={'domain': domain, 'username': current_user.username})
+        if max_tries > 0:
+            current_user.clear_quickcache_for_user()
+            updated_user = CouchUser.get_by_username(current_user.username, strict=True)
+            modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
+                                           upload_user, updated_user, max_tries=max_tries - 1)
+        else:
+            raise
+
+
+def check_user_role(username, role):
+    if not role:
+        raise UserUploadError(_(
+            "You cannot upload a web user without a role. {username} does not have "
+            "a role").format(username=username))
+
+
+def check_can_upload_web_users(upload_user):
+    if not upload_user.can_edit_web_users():
+        raise UserUploadError(_(
+            "Only users with the edit web users permission can upload web users"
+        ))
+
+
+def check_changing_username(user, username):
+    if username and user.username != username:
+        raise UserUploadError(_(
+            'Changing usernames is not supported: %(username)r to %(new_username)r'
+        ) % {'username': user.username, 'new_username': username})
+
+
+def remove_invited_web_user(domain, username):
+    try:
+        invitation = Invitation.objects.get(domain=domain, email=username)
+    except Invitation.DoesNotExist:
+        raise UserUploadError(_("You cannot remove a web user that is not a member or invited to this project. "
+                                "{username} is not a member or invited.").format(username=username))
+    invitation.delete()
+
+
+def remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=False):
+    if not user or not user.is_member_of(domain):
+        if is_web_upload:
+            remove_invited_web_user(domain, username)
+        else:
+            raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
+                                    " {web_user} is not a member.").format(web_user=user))
+    elif username == upload_user.username:
+        raise UserUploadError(_("You cannot remove a yourself from a domain via bulk upload"))
+    else:
+        user.delete_domain_membership(domain)
+        user.save()

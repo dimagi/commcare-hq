@@ -1,6 +1,7 @@
 from django.conf import settings
 
 
+# TODO add support for microseconds with timezones
 DATE_FORMATS_ARR = ["yyyy-MM-dd",
                    "yyyy-MM-dd'T'HH:mm:ssZZ",
                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
