@@ -122,6 +122,15 @@ def sso_saml_acs(request, idp_slug):
                 )
 
         AsyncSignupRequest.clear_data_for_username(user.username)
+        relay_state = request.saml2_request_data['post_data'].get('RelayState')
+        messages.success(
+            request,
+            f"relay state {relay_state}"
+        )
+        # if 'RelayState' in request.saml2_request_data['post_data'] and :
+        #     return HttpResponseRedirect(
+        #         request.saml2_auth.redirect_to(request.saml2_request_data['post_data']['RelayState'])
+        #     )
         return redirect("homepage")
 
     return render(request, error_template, {
@@ -152,7 +161,7 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    login_url = request.saml2_auth.login()
+    login_url = request.saml2_auth.login(return_to=request.GET.get('next', None))
     username = get_sso_username_from_session(request) or request.GET.get('username')
     if username:
         # verify that the stored user data actually the current IdP
