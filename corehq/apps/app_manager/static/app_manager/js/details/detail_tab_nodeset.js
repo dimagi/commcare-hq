@@ -15,9 +15,10 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
             return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
         }).concat([{name: gettext("Data Tab: Custom Expression"), value: ""}]);
 
+        // This is an object with keys `name` and `value`, as in dropdownOptions
         self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
             return o.value === options.nodesetCaseType;
-        }));
+        }) || {});
         self.dropdownValue.subscribe(function (newValue) {
             if (!newValue.value) {
                 self.nodeset("");
