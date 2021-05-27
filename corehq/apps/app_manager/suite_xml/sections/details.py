@@ -322,6 +322,7 @@ class DetailContributor(SectionContributor):
                 ),
                 stack=Stack(),
                 for_action_menu=True,
+                **action_kwargs,
             )
         else:
             action = Action(
@@ -334,8 +335,6 @@ class DetailContributor(SectionContributor):
                     media_audio=search_label.default_media_audio
                 ),
                 stack=Stack(),
-                auto_launch=DetailContributor._get_auto_launch_expression(module, in_search),
-                redo_last=in_search,
                 **action_kwargs
             )
         frame = PushFrame()
@@ -346,7 +345,10 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_action_kwargs(module, in_search):
-        action_kwargs = {}
+        action_kwargs = {
+            'auto_launch': DetailContributor._get_auto_launch_expression(module, in_search),
+            'redo_last': in_search,
+        }
         relevant = DetailContributor._get_relevant_expression(module, in_search)
         if relevant:
             action_kwargs["relevant"] = relevant
