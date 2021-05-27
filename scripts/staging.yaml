@@ -77,4 +77,5 @@ branches:
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-cleanup-errors  # Biyeun 26 May
     - bmb/sso-fix-iframe-login  # Biyeun 27 May
+    - bmb/sso-next-redirect-test  # Biyeun 27 May
 submodules: { }
