@@ -164,7 +164,9 @@
       <!-- End Google Tag Manager (noscript) -->
     {% endif %}
     {% block background_content %}{% endblock %}
-    {% maintenance_alert request %}
+    {% if not hide_maintenance_alerts %}
+      {% maintenance_alert request %}
+    {% endif %}
     {% if show_trial_banner %}
       {% include "hqwebapp/partials/trial_banner.html" %}
     {% endif %}
