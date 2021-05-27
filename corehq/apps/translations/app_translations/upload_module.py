@@ -90,9 +90,11 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.search_command_label:
             self._update_translation(self.search_command_label, self.module.search_config.command_label)
+            self.module.search_config.search_label.label = self.module.search_config.command_label
 
         if self.search_again_label:
             self._update_translation(self.search_again_label, self.module.search_config.again_label)
+            self.module.search_config.search_again_label.label = self.module.search_config.again_label
 
         self._update_case_search_labels(rows)
 
