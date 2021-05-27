@@ -79,12 +79,16 @@ hqDefine("linked_domain/js/domain_links", [
         // manage downstream domains tab
         self.paginated_domain_links = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
-        self.totalItems = ko.observable(self.domain_links().length);
+        self.totalItems = ko.computed(function () {
+            return self.domain_links().length;
+        });
+        self.currentPage = 1;
 
         self.goToPage = function (page) {
+            self.currentPage = page;
             self.paginated_domain_links.removeAll();
-            var skip = (page - 1) * self.itemsPerPage()
-            self.paginated_domain_links = self.domain_links.slice(skip, skip + self.itemsPerPage())
+            var skip = (self.currentPage - 1) * self.itemsPerPage();
+            self.paginated_domain_links(self.domain_links().slice(skip, skip + self.itemsPerPage()));
         };
 
         self.onPaginationLoad = function () {
@@ -96,6 +100,7 @@ hqDefine("linked_domain/js/domain_links", [
                 "linked_domain": link.linked_domain(),
             }).done(function () {
                 self.domain_links.remove(link);
+                self.goToPage(self.currentPage);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
                     'Please try again, or report an issue if the problem persists.'), 'danger');
