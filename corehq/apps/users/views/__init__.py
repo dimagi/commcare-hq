@@ -832,9 +832,11 @@ def _update_role_from_view(domain, role_data):
     if "_id" in role_data:
         try:
             role = SQLUserRole.objects.by_couch_id(role_data["_id"])
-            assert role.domain == domain
         except SQLUserRole.DoesNotExist:
             role = SQLUserRole()
+        else:
+            if role.domain != domain:
+                raise Http404()
     else:
         role = SQLUserRole()
 
