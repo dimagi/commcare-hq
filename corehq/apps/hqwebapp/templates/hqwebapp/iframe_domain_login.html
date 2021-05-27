@@ -16,3 +16,7 @@
 
 {# hide any surprise modals #}
 {% block modals %}{% endblock %}
+
+{% block additional_initial_page_data %}
+  {% initial_page_data 'is_session_expiration' is_session_expiration %}
+{% endblock %}

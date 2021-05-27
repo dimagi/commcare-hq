@@ -467,6 +467,7 @@ def iframe_domain_login(req, domain):
         'allow_report_an_issue': False,
         'show_mobile_ux_warning': False,
         'hide_maintenance_alerts': True,
+        'is_session_expiration': True,
     })
 
 
