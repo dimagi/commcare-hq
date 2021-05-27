@@ -73,6 +73,25 @@ class RolesTests(TestCase):
             {r.name for r in new_assignments}
         )
 
+    def test_set_assignable_by_couch(self):
+        role = SQLUserRole(
+            domain=self.domain,
+            name="test-role",
+        )
+        role.save()
+
+        new_assignments = {
+            self.roles[1],
+            self.roles[2]
+        }
+        role.set_assignable_by_couch([r.couch_id for r in new_assignments])
+
+        role2 = SQLUserRole.objects.get(id=role.id)
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role2.get_assignable_by()},
+            {r.name for r in new_assignments}
+        )
+
     def test_set_permissions(self):
         role = SQLUserRole(
             domain=self.domain,

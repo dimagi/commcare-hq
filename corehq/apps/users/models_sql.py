@@ -92,9 +92,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     def _migration_sync_submodels_to_couch(self, couch_object):
         couch_object.permissions = self.permissions
-        couch_object.assignable_by = list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
-        )
+        couch_object.assignable_by = self.assignable_by
 
     @property
     def get_id(self):
@@ -138,6 +136,12 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         from corehq.apps.users.models import Permissions
         return Permissions.from_permission_list(self.get_permission_infos())
 
+    def set_assignable_by_couch(self, couch_role_ids):
+        sql_ids = []
+        if couch_role_ids:
+            sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
+        self.set_assignable_by(sql_ids)
+
     def set_assignable_by(self, role_ids):
         if not role_ids:
             self.roleassignableby_set.all().delete()
@@ -162,10 +166,21 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
 
     @property
-    def assignable_by(self):
+    def assignable_by_sql(self):
         return list(
             self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
         )
+
+    @property
+    def assignable_by_couch(self):
+        return list(
+            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+        )
+
+    @property
+    def assignable_by(self):
+        # alias for compatibility with couch UserRole
+        return self.assignable_by_couch
 
 
 @foreign_value_init
