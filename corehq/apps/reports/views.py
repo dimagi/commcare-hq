@@ -1937,20 +1937,26 @@ def archive_form(request, domain, instance_id):
 
 
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
-    def _get_case_link(case_id, name):
-        if case_id == case_id_from_request:
-            return _("%(case_name)s (this case)") % {'case_name': name}
-        else:
-            return '<a href="{}#!history">{}</a>'.format(reverse('case_data', args=[domain, case_id]), name)
+    def _get_all_case_links():
+        all_case_links = []
+        for case_id, case_name in cases_with_other_forms.items():
+            if case_id == case_id_from_request:
+                all_case_links.append(_(
+                    format_html(f'{case_name}s (this case)')
+                ))
+            else:
+                all_case_links.append(_(
+                    format_html(
+                        f'<a href=\"{reverse("case_data", args=[domain, case_id])}#!history\">{case_name}</a>'
+                    )
+                ))
+        return all_case_links
 
-    case_links = ', '.join([
-        _get_case_link(case_id, name)
-        for case_id, name in cases_with_other_forms.items()
-    ])
+    case_links = ", ".join(_get_all_case_links())
+
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
-    notify_msg = format_html("""{} {}""".format(msg, case_links))
-    return notify_msg
+    return format_html(f"{msg} {case_links}")
 
 
 def _get_cases_with_other_forms(domain, xform):
