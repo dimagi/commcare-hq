@@ -37,7 +37,6 @@ hqDefine("app_manager/js/details/screen", function () {
         self.langs = options.langs || [];
         self.properties = options.properties;
         self.childCaseTypes = options.childCaseTypes;
-        self.otherCaseTypes = options.otherCaseTypes;
         self.fixtures = options.fixtures;
         // The column key is used to retrieve the columns from the spec and
         // as the name of the key in the data object that is sent to the

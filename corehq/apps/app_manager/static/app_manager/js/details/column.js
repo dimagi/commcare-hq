@@ -50,7 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
-            nodesetCaseType: screen.otherCaseTypes[0] || "",
+            nodesetCaseType: screen.childCaseTypes[0] || "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -104,7 +104,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.header.setVisibleValue(visibleVal);
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
-                caseTypes: self.screen.otherCaseTypes,
+                caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
