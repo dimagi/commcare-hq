@@ -79,7 +79,7 @@ hqDefine("linked_domain/js/domain_links", [
         // manage downstream domains tab
         self.paginated_domain_links = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
-        self.totalItems = ko.observable(self.domain_links.length);
+        self.totalItems = ko.observable(self.domain_links().length);
 
         self.goToPage = function (page) {
             self.paginated_domain_links.removeAll();
