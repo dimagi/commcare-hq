@@ -2044,3 +2044,10 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+EMBEDDED_TABLEAU = StaticToggle(
+    'embedded_tableau',
+    'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
