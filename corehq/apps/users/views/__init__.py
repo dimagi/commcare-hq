@@ -102,7 +102,6 @@ from corehq.apps.users.models import (
     DomainRequest,
     Invitation,
     StaticRole,
-    UserRole,
     WebUser,
     Permissions,
     SQLUserRole,
@@ -502,26 +501,31 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def user_roles(self):
-        user_roles = [StaticRole.domain_admin(self.domain)]
-        user_roles.extend(sorted(
-            UserRole.by_domain(self.domain),
+    def non_admin_roles(self):
+        return list(sorted(
+            SQLUserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
+    def get_roles_for_display(self):
         show_es_issue = False
-        # skip the admin role since it's not editable
-        for role in user_roles[1:]:
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
             try:
-                user_count = get_role_user_count(self.domain, role.get_id)
-                role.hasUsersAssigned = user_count > 0
+                user_count = get_role_user_count(role.domain, role.couch_id)
+                role_data["hasUsersAssigned"] = bool(user_count)
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
-            role.has_unpermitted_location_restriction = (
+
+            role_data["has_unpermitted_location_restriction"] = (
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
             )
+
         if show_es_issue:
             messages.error(
                 self.request,
@@ -533,7 +537,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
                     "data-toggle='modal'>Report an Issue</a>."
                 ))
             )
-        return user_roles
+        return role_view_data
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -546,11 +550,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
+        return {
+            r.get_qualified_id(): r.name
+            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+        }
 
     @property
     @memoized
@@ -651,7 +654,7 @@ class ListRolesView(BaseRoleAccessView):
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)):
+                        for role in self.non_admin_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -659,8 +662,8 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
         return {
-            'user_roles': self.user_roles,
-            'non_admin_roles': self.user_roles[1:],
+            'user_roles': self.get_roles_for_display(),
+            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
