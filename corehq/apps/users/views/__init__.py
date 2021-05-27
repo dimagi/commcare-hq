@@ -838,39 +838,7 @@ def _update_role_from_view(domain, role_data):
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
 
-    if not role.permissions.access_all_locations:
-        # The following permissions cannot be granted to location-restricted
-        # roles.
-        role.permissions.edit_web_users = False
-        role.permissions.view_web_users = False
-        role.permissions.edit_groups = False
-        role.permissions.view_groups = False
-        role.permissions.edit_apps = False
-        role.permissions.view_roles = False
-        role.permissions.edit_reports = False
-        role.permissions.edit_billing = False
-
-    if role.permissions.edit_web_users:
-        role.permissions.view_web_users = True
-
-    if role.permissions.edit_commcare_users:
-        role.permissions.view_commcare_users = True
-
-    if role.permissions.edit_groups:
-        role.permissions.view_groups = True
-
-    if role.permissions.edit_locations:
-        role.permissions.view_locations = True
-
-    if role.permissions.edit_apps:
-        role.permissions.view_apps = True
-
-    if not role.permissions.edit_groups:
-        role.permissions.edit_users_in_groups = False
-
-    if not role.permissions.edit_locations:
-        role.permissions.edit_users_in_locations = False
-
+    role.permissions.normalize()
     role.save()
     return role
 
