@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
@@ -47,7 +47,7 @@ from corehq.apps.app_manager.util import (
     get_sort_and_sort_only_columns,
     module_offers_search,
 )
-from corehq.apps.app_manager.xpath import XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
@@ -143,7 +143,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=tab.nodeset if tab.has_nodeset else None,
+                    nodeset=self._get_detail_tab_nodeset(detail, tab),
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -216,6 +216,23 @@ class DetailContributor(SectionContributor):
                 load_xmlobject_from_string(etree.tostring(e, encoding='utf-8'), xmlclass=DetailVariable)
                 for e in custom_variable_elements
             ])
+
+    def _get_detail_tab_nodeset(self, detail, tab):
+        if not tab.has_nodeset:
+            return None
+
+        if tab.nodeset:
+            return tab.nodeset
+
+        if tab.nodeset_case_type:
+            nodeset = CaseTypeXpath(tab.nodeset_case_type)
+            nodeset = nodeset.case(instance_name=detail.instance_name)
+            nodeset = nodeset.select(CaseXPath().parent_id(),
+                                     CaseXPath("current()").property("@case_id"))
+            nodeset = nodeset.select("@status", "open")
+            return nodeset
+
+        return None
 
     def _get_lookup_element(self, detail, module):
         if detail.lookup_display_results:
@@ -376,7 +393,9 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_report_context_tile_detail():
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MOBILE_UCR_TILE_DETAIL_ID
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+            MOBILE_UCR_TILE_DETAIL_ID,
+        )
         return Detail(
             id=MOBILE_UCR_TILE_DETAIL_ID,
             title=Text(),
@@ -449,7 +468,7 @@ def get_nodeset_sort_elements(detail):
     sort_elements = defaultdict(list)
     tab_spans = detail.get_tab_spans()
     for tab in detail.get_tabs():
-        if tab.nodeset:
+        if tab.has_nodeset:
             tab_span = tab_spans[tab.id]
             for column in detail.columns[tab_span[0]:tab_span[1]]:
                 if column.invisible:
@@ -534,7 +553,7 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
     for tab in detail.get_tabs():
         tab_span = tab_spans[tab.id]
         tab_columns = detail_columns[tab_span[0]:tab_span[1]]
-        if tab.nodeset and sort_elements[tab.id]:
+        if tab.has_nodeset and sort_elements[tab.id]:
             tab_sorts = sort_elements[tab.id]
             _, sort_columns = get_sort_and_sort_only_columns(tab_columns, tab_sorts)
             for column in tab_columns:
