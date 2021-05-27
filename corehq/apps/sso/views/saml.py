@@ -122,10 +122,15 @@ def sso_saml_acs(request, idp_slug):
                 )
 
         AsyncSignupRequest.clear_data_for_username(user.username)
-        if 'RelayState' in request.saml2_request_data['post_data']:
-            return HttpResponseRedirect(
-                request.saml2_auth.redirect_to(request.saml2_request_data['post_data']['RelayState'])
-            )
+        relay_state = request.saml2_request_data['post_data'].get('RelayState')
+        messages.success(
+            request,
+            f"relay state {relay_state}"
+        )
+        # if 'RelayState' in request.saml2_request_data['post_data'] and :
+        #     return HttpResponseRedirect(
+        #         request.saml2_auth.redirect_to(request.saml2_request_data['post_data']['RelayState'])
+        #     )
         return redirect("homepage")
 
     return render(request, error_template, {
