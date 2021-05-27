@@ -1,13 +1,11 @@
 hqDefine("scheduling/js/broadcasts_list", [
     'jquery',
-    'underscore',
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/components.ko",     // pagination
 ], function (
     $,
-    _,
     ko,
     assertProperties,
     initialPageData

@@ -1,13 +1,11 @@
 // Note that this file depends on the paginate_releases URL being registered
 hqDefine("app_manager/js/widgets", [
     'jquery',
-    'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
-    _,
     assertProperties,
     initialPageData
 ) {

@@ -1,9 +1,8 @@
 hqDefine('hqadmin/js/raw_doc', [
     'jquery',
-    'underscore',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/base_ace",
-], function ($, _, intialPageData, baseAce) {
+], function ($, intialPageData, baseAce) {
     $(function () {
         var allDatabase = intialPageData.get('all_databases').map(function (database) {
             return {'dbName': database,'dbValue': database};

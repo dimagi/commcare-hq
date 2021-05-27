@@ -3,7 +3,6 @@
  */
 hqDefine("fixtures/js/lookup-manage", [
     "jquery",
-    "underscore",
     "knockout",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
@@ -11,7 +10,6 @@ hqDefine("fixtures/js/lookup-manage", [
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
-    _,
     ko,
     assertProperties,
     initialPageData

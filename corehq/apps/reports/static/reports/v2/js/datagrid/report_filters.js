@@ -1,10 +1,8 @@
 hqDefine('reports/v2/js/datagrid/report_filters', [
     'jquery',
-    'underscore',
     'knockout',
 ], function (
     $,
-    _,
     ko
 ) {
     'use strict';

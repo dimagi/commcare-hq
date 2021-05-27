@@ -1,11 +1,10 @@
 /* globals hqDefine */
 hqDefine('builds/js/edit-builds', [
     'jquery',
-    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/knockout_bindings.ko',
-], function ($, _, ko, initialPageData) {
+], function ($,ko, initialPageData) {
     var doc = initialPageData.get('doc');
 
     function versionModel(version, label, superuserOnly, j2meEnabled) {

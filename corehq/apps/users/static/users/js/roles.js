@@ -1,9 +1,8 @@
 hqDefine('users/js/roles',[
     'jquery',
-    'underscore',
     'knockout',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, alertUser) {
+], function ($, ko, alertUser) {
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;

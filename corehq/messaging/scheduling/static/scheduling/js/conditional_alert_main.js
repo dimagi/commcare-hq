@@ -1,13 +1,12 @@
 hqDefine("scheduling/js/conditional_alert_main", [
     'jquery',
-    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets',
     'data_interfaces/js/case_rule_criteria',
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
-], function ($, _, ko, initialPageData) {
+], function ($, ko, initialPageData) {
     function basicInformationTab(name) {
         var self = {};
         self.name = ko.observable(name);

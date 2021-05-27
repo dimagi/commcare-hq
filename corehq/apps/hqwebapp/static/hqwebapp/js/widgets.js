@@ -1,10 +1,9 @@
 hqDefine("hqwebapp/js/widgets",[
         'jquery',
-        'underscore',
         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
         'hqwebapp/js/initial_page_data',
         'select2/dist/js/select2.full.min',
-    ], function ($, _, MapboxGeocoder, initialPageData) {
+    ], function ($, MapboxGeocoder, initialPageData) {
         var init = function () {
             var MAPBOX_ACCESS_TOKEN = initialPageData.get(
                 "mapbox_access_token"
