@@ -302,9 +302,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
-    ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain', [
-        'SQLActionConfig', 'SQLAlertConfig', 'SQLConsumptionConfig',
-        'SQLStockLevelsConfig', 'SQLStockRestoreConfig',
+    ModelDeletion('commtrack', 'CommtrackConfig', 'domain', [
+        'ActionConfig', 'AlertConfig', 'ConsumptionConfig',
+        'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
@@ -381,9 +381,13 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
+    ModelDeletion('users', 'SQLUserRole', 'domain', [
+        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+    ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
-    ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
+    ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
+    ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('repeaters', 'RepeaterStub', 'domain'),

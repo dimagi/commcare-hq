@@ -6,14 +6,11 @@ from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.registration.forms import RegisterWebUserForm
+from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.tests import generator
 from corehq.apps.sso.tests.generator import create_request_session
-from corehq.apps.sso.utils.session_helpers import (
-    prepare_session_with_new_sso_user_data,
-    prepare_session_for_sso_invitation,
-)
-from corehq.apps.users.models import WebUser, Invitation, UserRole
+from corehq.apps.users.models import WebUser, Invitation, StaticRole
 
 
 class TestSsoBackend(TestCase):
@@ -54,7 +51,13 @@ class TestSsoBackend(TestCase):
         cls.user.delete(None)
 
         # cleanup "new" users
-        for username in ['m@vaultwax.com', 'isa@vaultwax.com', 'zee@vaultwax.com']:
+        for username in [
+            'm@vaultwax.com',
+            'isa@vaultwax.com',
+            'zee@vaultwax.com',
+            'exist@vaultwax.com',
+            'aart@vaultwax.com',
+        ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
                 web_user.delete(None)
@@ -216,8 +219,10 @@ class TestSsoBackend(TestCase):
         user data from a registration form and/or the samlUserdata are all
         properly saved to the User model.
         """
+        username = 'm@vaultwax.com'
         reg_form = RegisterWebUserForm()
         reg_form.cleaned_data = {
+            'email': username,
             'phone_number': '+15555555555',
             'project_name': 'test-vault',
             'persona': 'Other',
@@ -229,15 +234,15 @@ class TestSsoBackend(TestCase):
             'Maarten',
             'van der Berg'
         )
-        prepare_session_with_new_sso_user_data(self.request, reg_form)
+        AsyncSignupRequest.create_from_registration_form(reg_form)
         user = auth.authenticate(
             request=self.request,
-            username='m@vaultwax.com',
+            username=username,
             idp_slug=self.idp.slug,
             is_handshake_successful=True,
         )
         self.assertIsNotNone(user)
-        self.assertEqual(user.username, 'm@vaultwax.com')
+        self.assertEqual(user.username, username)
         self.assertEqual(user.first_name, 'Maarten')
         self.assertEqual(user.last_name, 'van der Berg')
         web_user = WebUser.get_by_username(user.username)
@@ -255,7 +260,7 @@ class TestSsoBackend(TestCase):
         invitation should add the user to the invited project
         space and accept the invitation
         """
-        admin_role = UserRole.admin_role(self.domain.name)
+        admin_role = StaticRole.domain_admin(self.domain.name)
         invitation = Invitation(
             domain=self.domain.name,
             email='isa@vaultwax.com',
@@ -264,7 +269,7 @@ class TestSsoBackend(TestCase):
             role=admin_role.get_qualified_id(),
         )
         invitation.save()
-        prepare_session_for_sso_invitation(self.request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
         generator.store_full_name_in_saml_user_data(
             self.request,
             'Isa',
@@ -300,7 +305,7 @@ class TestSsoBackend(TestCase):
             invited_on=datetime.datetime.utcnow() - relativedelta(months=2),
         )
         invitation.save()
-        prepare_session_for_sso_invitation(self.request, invitation)
+        AsyncSignupRequest.create_from_invitation(invitation)
         generator.store_full_name_in_saml_user_data(
             self.request,
             'Zee',
@@ -326,6 +331,72 @@ class TestSsoBackend(TestCase):
             self.request.sso_new_user_messages['error'],
             [
                 'Could not accept invitation because it is expired.',
+            ]
+        )
+
+    def test_existing_user_invitation_accepted(self):
+        """
+        SsoBackend should create a new user if the username passed to does
+        not exist and the email domain matches an AuthenticatedEmailDomain
+        for the given IdentityProvider. It should also ensure that any
+        user data from a registration form and/or the samlUserdata are all
+        properly saved to the User model.
+        """
+        admin_role = StaticRole.domain_admin(domain=self.domain.name)
+        existing_user = WebUser.create(
+            None, 'exist@vaultwax.com', 'testpwd', None, None
+        )
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=existing_user.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow(),
+            role=admin_role.get_qualified_id(),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+        user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, invitation.email)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_new_user_with_no_async_signup_request_creates_new_user(self):
+        """
+        There is a use case where brand new users can click on the CommCare HQ
+        App icon right from their Active Directory home screen. In this case,
+        we want to create the user's account and then present them with any
+        project invitations once they have logged in.
+        """
+        username = 'aart@vaultwax.com'
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Aart',
+            'Janssen'
+        )
+        user = auth.authenticate(
+            request=self.request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Aart')
+        self.assertEqual(user.last_name, 'Janssen')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {username} created.',
             ]
         )
 

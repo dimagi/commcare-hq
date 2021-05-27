@@ -75,7 +75,7 @@ to see how that works.
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
 .. _Javascript Guide: docs/js-guide/README.md
-.. _Guide to Authoring Pull Requests: https://github.com/dimagi/code-review/blob/master/Writing_PRs.md
+.. _Guide to Authoring Pull Requests: https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
 .. _Read the Docs: https://commcare-hq.readthedocs.io/

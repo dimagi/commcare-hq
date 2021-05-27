@@ -372,6 +372,17 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(attempts[-1].message, message)
         self.assertEqual(attempts[-1].traceback, '')
 
+    def test_add_client_failure_attempt_no_retry(self):
+        message = '422: Unprocessable Entity'
+        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+            self.repeat_record.add_client_failure_attempt(message=message, retry=False)
+        self.assertIsNone(self.repeater_stub.last_attempt_at)
+        self.assertIsNone(self.repeater_stub.next_attempt_at)
+        self.assertEqual(self.repeat_record.num_attempts, 1)
+        self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
+        self.assertEqual(self.repeat_record.attempts[0].message, message)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
+
     def test_add_payload_exception_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'

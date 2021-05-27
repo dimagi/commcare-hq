@@ -235,16 +235,16 @@ class UITab(object):
         user_id = user.get_id
         try:
             user_role = user.get_role(domain, allow_mirroring=True)
-            role_rev = user_role._rev if user_role else None
+            role_version = user_role.cache_version if user_role else None
         except DomainMembershipError:
-            role_rev = None
+            role_version = None
         for is_active in True, False:
             key = make_template_fragment_key('header_tab', [
                 cls.class_name(),
                 domain,
                 is_active,
                 user_id,
-                role_rev,
+                role_version,
                 get_language(),
             ])
             cache.delete(key)

@@ -107,6 +107,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
@@ -466,6 +467,15 @@ class HQLoginView(LoginView):
     ]
     extra_context = {}
 
+    def post(self, *args, **kwargs):
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+            # catch anyone who by-passes the javascript and tries to log in directly
+            username = self.request.POST.get('auth-username')
+            idp = IdentityProvider.get_required_identity_provider(username) if username else None
+            if idp:
+                return HttpResponseRedirect(idp.get_login_url(username=username))
+        return super().post(*args, **kwargs)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -475,6 +485,10 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['enforce_sso_login'] = (
+            settings.ENFORCE_SSO_LOGIN
+            and self.steps.current == 'auth'
+        )
         return context
 
 
@@ -1368,3 +1382,29 @@ class OauthApplicationRegistration(BasePageView):
             ))
 
         return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
+
+
+@require_POST
+def check_sso_login_status(request):
+    """
+    Checks to see if a given username must sign in or sign up with SSO and
+    returns the url for the SSO's login endpoint.
+    :param request: HttpRequest
+    :return: HttpResponse (as JSON)
+    """
+    username = request.POST['username']
+    is_sso_required = False
+    sso_url = None
+    continue_text = None
+
+    idp = IdentityProvider.get_required_identity_provider(username)
+    if idp:
+        is_sso_required = True
+        sso_url = idp.get_login_url(username=username)
+        continue_text = _("Continue to {}").format(idp.name)
+
+    return JsonResponse({
+        'is_sso_required': is_sso_required,
+        'sso_url': sso_url,
+        'continue_text': continue_text,
+    })
