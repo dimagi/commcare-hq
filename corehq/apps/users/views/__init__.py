@@ -862,10 +862,10 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = UserRole.get(role_data["_id"])
-    except ResourceNotFound:
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+    except SQLUserRole.DoesNotExist:
         return JsonResponse({})
-    copy_id = role._id
+    copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
     return JsonResponse({"_id": copy_id})
