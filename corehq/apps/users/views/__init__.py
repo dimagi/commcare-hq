@@ -103,6 +103,8 @@ from corehq.apps.users.models import (
     StaticRole,
     UserRole,
     WebUser,
+    Permissions,
+    SQLUserRole,
 )
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
@@ -820,10 +822,6 @@ def post_user_role(request, domain):
 
 
 def _update_role_from_view(domain, role_data):
-    role_data = dict(
-        (p, role_data[p])
-        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
-    )
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -831,15 +829,27 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    role = UserRole.wrap(role_data)
-    role.domain = domain
-    if role.get_id:
-        old_role = UserRole.get(role.get_id)
-        assert(old_role.doc_type == UserRole.__name__)
-        assert(old_role.domain == domain)
+    if "_id" in role_data:
+        try:
+            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+            assert role.domain == domain
+        except SQLUserRole.DoesNotExist:
+            role = SQLUserRole()
+    else:
+        role = SQLUserRole()
 
-    role.permissions.normalize()
+    role.domain = domain
+    role.name = role_data["name"]
+    role.default_landing_page = role_data["default_landing_page"]  # TODO: validate this
+    role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
+
+    permissions = Permissions.wrap(role_data["permissions"])
+    permissions.normalize()
+    role.set_permissions(permissions.to_list())
+
+    assignable_by = role_data["assignable_by"]
+    role.set_assignable_by_couch(assignable_by)
     return role
 
 
