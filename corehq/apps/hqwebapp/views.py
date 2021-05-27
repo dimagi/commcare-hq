@@ -456,6 +456,17 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 def iframe_domain_login(req, domain):
     return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
+        'restrict_domain_creation': True,
+        'show_trial_banner': False,
+        'show_community_banner': False,
+        'ANALYTICS_IDS': {},
+        'is_demo_visible': False,
+        'show_overdue_invoice_modal': False,
+        'show_prepaid_modal': False,
+        'EULA_COMPLIANCE': False,
+        'allow_report_an_issue': False,
+        'show_mobile_ux_warning': False,
+        'hide_maintenance_alerts': True,
     })
 
 
