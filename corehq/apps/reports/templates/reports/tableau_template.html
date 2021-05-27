@@ -1,0 +1,54 @@
+
+{% extends "reports/standard/base_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'reports/js/report_config_models.js' %}"></script>
+    <script src="{% static "reports/js/base.js" %}"></script>
+    <script src="{% static "reports/js/base_maps.js" %}"></script>
+  {% endcompress %}
+{% endblock %}
+
+{% block filter_panel %}
+    <p>Title {{ report.title }}<p>
+    <p>Slug {{ report.slug }}<p>
+    <p>Server Type {{ server_type }}</p>
+    <p>Server {{ server_address }}<p>
+    <p>Target Site {{ target_site }}<p>
+    <p>View URL {{ server_address }}/trusted/{{ ticket }}/{{ view_url }}</p>
+
+<script src="{{ server_address }}/javascripts/api/tableau-2.5.0.min.js"></script>
+
+<script type="text/javascript">
+    function initViz() {
+        var containerDiv = document.getElementById("vizContainer");
+
+        var url = "{{ server_address }}/".concat(
+                  "{{ server_type }}" == "server" ? "trusted/{{ ticket }}/" : "",
+                  "{{ view_url }}");
+
+        var options = {
+            hideTabs: true,
+            onFirstInteractive: function () {
+                console.log("Run this code when the viz has finished loading.");
+            }
+        };
+
+        var viz = new tableau.Viz(containerDiv, url, options);
+    }
+</script>
+
+<body onload="initViz();">
+    <div id="vizContainer" style="width:800px; height:700px;"></div>
+</body>
+
+{% endblock %}
+
+{% block additional_initial_page_data %}
+  {% initial_page_data 'default_config' default_config %}
+  {% initial_page_data 'has_datespan' report.has_datespan %}
+  {% initial_page_data 'report_configs' report_configs %}
+  {% registerurl 'add_report_config' domain %}
+{% endblock %}
