@@ -50,6 +50,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,

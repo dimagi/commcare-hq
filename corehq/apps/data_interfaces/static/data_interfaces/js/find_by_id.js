@@ -1,11 +1,13 @@
 hqDefine("data_interfaces/js/find_by_id", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
 ], function (
     $,
+    _,
     ko,
     assertProperties,
     initialPageData,

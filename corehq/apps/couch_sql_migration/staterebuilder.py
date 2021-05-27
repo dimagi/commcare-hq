@@ -1,8 +1,6 @@
 import logging
 from functools import partial
 
-from django.db import connections
-
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -67,7 +65,7 @@ def get_endkey_docid(domain, doc_type, migration_id):
     resume_key = "%s.%s.%s" % (domain, doc_type, migration_id)
     state = ResumableFunctionIterator(resume_key, None, None).state
     assert getattr(state, '_rev', None), "rebuild not necessary (no resume state)"
-    assert not state.complete, "iteration is complete"
+    assert not getattr(state, "complete", False), "iteration is complete"
     state_json = state.to_json()
     assert not state_json['args']
     kwargs = state_json['kwargs']
