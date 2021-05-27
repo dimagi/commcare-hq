@@ -26,6 +26,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from corehq.apps.users.analytics import get_role_user_count
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -512,7 +513,8 @@ class BaseRoleAccessView(BaseUserSettingsView):
         # skip the admin role since it's not editable
         for role in user_roles[1:]:
             try:
-                role.hasUsersAssigned = role.has_users_assigned
+                user_count = get_role_user_count(self.domain, role.get_id)
+                role.hasUsersAssigned = user_count > 0
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
@@ -817,7 +819,8 @@ def post_user_role(request, domain):
     role_data = json.loads(request.body.decode('utf-8'))
     role = _update_role_from_view(domain, role_data)
     response_data = role.to_json()
-    response_data['hasUsersAssigned'] = role.has_users_assigned
+    user_count = get_role_user_count(domain, role.couch_id)
+    response_data['hasUsersAssigned'] = user_count > 0
     return JsonResponse(response_data)
 
 

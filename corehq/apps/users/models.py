@@ -416,11 +416,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def get_preset_role_id(cls, name):
         return UserRolePresets.get_preset_role_id(name)
 
-    @property
-    def has_users_assigned(self):
-        from corehq.apps.es.users import UserES
-        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
-
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
