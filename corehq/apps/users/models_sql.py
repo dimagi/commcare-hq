@@ -1,6 +1,6 @@
 import attr
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
@@ -109,6 +109,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     def to_json(self):
         return role_to_dict(self)
 
+    @transaction.atomic
     def set_permissions(self, permission_infos):
         permissions_by_name = {
             rp.permission: rp
@@ -142,6 +143,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
         self.set_assignable_by(sql_ids)
 
+    @transaction.atomic
     def set_assignable_by(self, role_ids):
         if not role_ids:
             self.roleassignableby_set.all().delete()
