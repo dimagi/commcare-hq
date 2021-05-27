@@ -5,6 +5,7 @@ hqDefine("linked_domain/js/domain_links", [
     'knockout',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/multiselect_utils',
+    'hqwebapp/js/components.ko', // for pagination
 ], function (
     RMI,
     initialPageData,
@@ -66,26 +67,42 @@ hqDefine("linked_domain/js/domain_links", [
             }
         }
 
+        self.domain_links = ko.observableArray(_.map(data.linked_domains, function (link) {
+            return DomainLink(link);
+        }));
+
+        // pull content
+        self.model_status = _.map(data.model_status, ModelStatus);
         self.can_update = data.can_update;
         self.models = data.models;
 
-        self.model_status = _.map(data.model_status, ModelStatus);
+        // manage downstream domains tab
+        self.paginated_domain_links = ko.observableArray([]);
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.observable(self.domain_links.length);
 
-        self.linked_domains = ko.observableArray(_.map(data.linked_domains, function (link) {
-            return DomainLink(link);
-        }));
+        self.goToPage = function (page) {
+            self.paginated_domain_links.removeAll();
+            var skip = (page - 1) * self.itemsPerPage()
+            self.paginated_domain_links = self.domain_links.slice(skip, skip + self.itemsPerPage())
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
 
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.linked_domain(),
             }).done(function () {
-                self.linked_domains.remove(link);
+                self.domain_links.remove(link);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
                     'Please try again, or report an issue if the problem persists.'), 'danger');
             });
         };
 
+        // push content tab
         self.domainsToRelease = ko.observableArray();
         self.modelsToRelease = ko.observableArray();
         self.buildAppsOnRelease = ko.observable(false);
@@ -93,6 +110,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.enableReleaseButton = ko.computed(function () {
             return self.domainsToRelease().length && self.modelsToRelease().length && !self.releaseInProgress();
         });
+
         self.createRelease = function () {
             self.releaseInProgress(true);
             _private.RMI("create_release", {
@@ -139,6 +157,14 @@ hqDefine("linked_domain/js/domain_links", [
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);
 
         var model = DomainLinksViewModel(view_data);
-        $("#domain_links").koApplyBindings(model);
+        if ($("#ko-tabs-pull-content").length) {
+            $("#ko-tabs-pull-content").koApplyBindings(model);
+        }
+        if ($("#ko-tabs-push-content").length) {
+            $("#ko-tabs-push-content").koApplyBindings(model);
+        }
+        if ($("#ko-tabs-manage-downstream").length) {
+            $("#ko-tabs-manage-downstream").koApplyBindings(model);
+        }
     });
 });
