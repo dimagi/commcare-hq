@@ -314,21 +314,47 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
-    @staticmethod
-    def _get_case_search_action(module, in_search=False):
+    def _get_case_search_action(self, module, in_search=False):
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
-        action = Action(
-            display=Display(
-                text=Text(locale_id=(
+        if in_search:
+            search_label = module.search_config.search_again_label
+        else:
+            search_label = module.search_config.search_label
+
+        if self.app.enable_localized_menu_media:
+            action = LocalizedAction(
+                menu_locale_id=(
                     id_strings.case_search_again_locale(module) if in_search
                     else id_strings.case_search_locale(module)
-                ))
-            ),
-            stack=Stack(),
-            auto_launch=DetailContributor._get_auto_launch_expression(module, in_search),
-            redo_last=in_search,
-            **action_kwargs
-        )
+                ),
+                media_image=search_label.uses_image(build_profile_id=self.build_profile_id),
+                media_audio=search_label.uses_audio(build_profile_id=self.build_profile_id),
+                image_locale_id=(
+                    id_strings.case_search_again_icon_locale(module) if in_search
+                    else id_strings.case_search_icon_locale(module)
+                ),
+                audio_locale_id=(
+                    id_strings.case_search_again_audio_locale(module) if in_search
+                    else id_strings.case_search_audio_locale(module)
+                ),
+                stack=Stack(),
+                for_action_menu=True,
+            )
+        else:
+            action = Action(
+                display=Display(
+                    text=Text(locale_id=(
+                        id_strings.case_search_again_locale(module) if in_search
+                        else id_strings.case_search_locale(module)
+                    )),
+                    media_image=search_label.default_media_image,
+                    media_audio=search_label.default_media_audio
+                ),
+                stack=Stack(),
+                auto_launch=DetailContributor._get_auto_launch_expression(module, in_search),
+                redo_last=in_search,
+                **action_kwargs
+            )
         frame = PushFrame()
         frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
