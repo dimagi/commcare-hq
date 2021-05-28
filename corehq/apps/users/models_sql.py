@@ -49,7 +49,7 @@ class UserRoleManager(models.Manager):
     def get_by_domain(self, domain, include_archived=False):
         query = self.filter(domain=domain)
         if not include_archived:
-            query.filter(is_archived=False)
+            query = query.filter(is_archived=False)
         return list(query.prefetch_related('rolepermission_set'))
 
     def by_couch_id(self, couch_id):
