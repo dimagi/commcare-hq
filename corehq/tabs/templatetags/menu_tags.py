@@ -89,19 +89,19 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        role_rev = None
+        role_version = None
         try:
             if couch_user:
                 user_role = couch_user.get_role(domain, allow_mirroring=True)
-                role_rev = user_role._rev if user_role else None
+                role_version = user_role.cache_version if user_role else None
         except DomainMembershipError:
-            role_rev = None
+            role_version = None
 
         context.dicts[0]['active_tab'] = active_tab
         flat = context.flatten()
         flat.update({
             'tabs': visible_tabs,
-            'role_rev': role_rev
+            'role_version': role_version
         })
         return render_to_string('tabs/menu_main.html', flat)
 

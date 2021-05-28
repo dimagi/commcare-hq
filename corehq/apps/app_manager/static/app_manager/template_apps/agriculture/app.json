@@ -187,7 +187,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -215,7 +214,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -508,7 +506,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -563,7 +560,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -649,7 +645,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -677,7 +672,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -1425,7 +1419,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1703,7 +1696,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -1789,7 +1781,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1817,7 +1808,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -2957,7 +2947,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -3226,7 +3215,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -3312,7 +3300,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -3340,7 +3327,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -3749,7 +3735,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -3898,7 +3883,6 @@
           "lookup_responses": [],
           "filter": null,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },

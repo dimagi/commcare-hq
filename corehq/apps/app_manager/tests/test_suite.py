@@ -499,31 +499,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
             self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
-    def test_case_detail_tabs_with_nodesets_for_sorting(self, *args):
-        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
-        app.modules[0].case_details.long.sort_nodeset_columns = True
-        xml_partial = """
-        <partial>
-          <field>
-            <header width="0">
-              <text/>
-            </header>
-            <template width="0">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </template>
-            <sort direction="ascending" order="1" type="string">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </sort>
-          </field>
-        </partial>"""
-        self.assertXmlPartialEqual(
-            xml_partial, app.create_suite(),
-            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
-
     def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
         app_json = self.get_json("app_case_detail_tabs_with_nodesets")
         app = Application.wrap(app_json)
@@ -547,7 +522,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         plain_gender_col.format = "plain"
         index = len(app.modules[0].case_details.long.columns) - 1
         app.modules[0].case_details.long.columns.insert(index, plain_gender_col)
-        app.modules[0].case_details.long.sort_nodeset_columns = True
         self.assertXmlPartialEqual(
             self.get_xml("suite-case-detail-tabs-with-nodesets-for-sorting-search-only"),
             app.create_suite(),

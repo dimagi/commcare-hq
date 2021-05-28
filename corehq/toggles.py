@@ -781,7 +781,7 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -793,6 +793,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
+    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -2038,4 +2039,11 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

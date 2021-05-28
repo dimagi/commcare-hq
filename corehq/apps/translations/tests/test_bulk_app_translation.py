@@ -771,6 +771,21 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ]
         )
 
+    def test_new_labels_on_upload(self):
+        module = self.app.get_module(0)
+
+        # default values
+        self.assertEqual(module.search_config.search_label.label, {'en': 'Search All Cases'})
+        self.assertEqual(module.search_config.search_again_label.label, {'en': 'Search Again'})
+
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+
+        # updated to be exactly as old labels
+        self.assertEqual(module.search_config.search_label.label,
+                         {'en': 'Find a Mother', 'fra': 'Mère!'})
+        self.assertEqual(module.search_config.search_again_label.label,
+                         {'en': 'Find Another Mother', 'fra': 'Mère! Encore!'})
+
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
 
