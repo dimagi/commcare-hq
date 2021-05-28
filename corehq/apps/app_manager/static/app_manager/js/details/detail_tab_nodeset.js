@@ -11,25 +11,17 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         self.nodeset = ko.observable(options.nodeset);
         self.nodesetCaseType = ko.observable(options.nodesetCaseType);
 
-        self.dropdownOptions = _.map(options.caseTypes, function (t) {
-            return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
-        }).concat([{name: gettext("Data Tab: Custom Expression"), value: ""}]);
-
-        // This is an object with keys `name` and `value`, as in dropdownOptions
-        self.dropdownValue = ko.observable(_.find(self.dropdownOptions, function (o) {
-            return o.value === options.nodesetCaseType;
-        }) || {});
-        self.dropdownValue.subscribe(function (newValue) {
-            if (!newValue.value) {
-                self.nodeset("");
-            }
-        });
+        self.dropdownOptions = [{name: gettext("Data Tab: Custom Expression"), value: ""}].concat(
+            _.map(options.caseTypes, function (t) {
+                return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
+            })
+        );
 
         self.showXpath = ko.computed(function () {
-            return !self.dropdownValue().value;
+            return !self.nodesetCaseType();
         });
 
-        var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', value: dropdownValue"></select>';
+        var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', optionsValue: \'value\', value: nodesetCaseType"></select>';
         ui += '<textarea type="text" class="form-control" data-bind="value: nodeset, visible: showXpath" style="margin-top: 5px" /></textarea>';
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')) {
             ui += '<p data-bind="visible: showXpath() && nodeset()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
@@ -41,7 +33,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         self.nodeset.subscribe(function () {
             self.fire('change');
         });
-        self.dropdownValue.subscribe(function () {
+        self.nodesetCaseType.subscribe(function () {
             self.fire('change');
         });
 

@@ -50,7 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
-            nodesetCaseType: screen.childCaseTypes[0] || "",
+            nodesetCaseType: _.has(self.original, "nodesetCaseType") ? self.original.nodesetCaseType : screen.childCaseTypes[0] || "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -129,7 +129,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
             if (self.isTab) {
                 // Data tab missing its nodeset
-                return self.hasNodeset && !self.nodeset_extra.dropdownValue().value && !self.nodeset_extra.nodeset();
+                return self.hasNodeset && !self.nodeset_extra.nodesetCaseType() && !self.nodeset_extra.nodeset();
             }
             // Invalid property name
             return (self.field.observableVal() || self.saveAttempted()) && !Utils.isValidPropertyName(self.field.observableVal());
@@ -352,7 +352,7 @@ hqDefine("app_manager/js/details/column", function () {
                 };
                 if (column.hasNodeset) {
                     tab = _.extend(tab, {
-                        nodeset_case_type: self.nodeset_extra.dropdownValue().value,
+                        nodeset_case_type: self.nodeset_extra.nodesetCaseType(),
                         nodeset: self.nodeset_extra.nodeset(),
                     });
                 }
