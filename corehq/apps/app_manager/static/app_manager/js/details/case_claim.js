@@ -85,6 +85,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hint: '',
             appearance: '',
             defaultValue: '',
+            hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
         });
@@ -95,6 +96,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -144,7 +146,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
+        subscribeToSave(self,
+            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression'], saveButton);
 
         return self;
     };
@@ -279,6 +282,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     hint: hint,
                     appearance: appearance,
                     defaultValue: searchProperties[i].default_value,
+                    hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
@@ -314,6 +318,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
                         default_value: p.defaultValue(),
+                        hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
