@@ -80,4 +80,5 @@ branches:
     - bmb/sso-fix-iframe-login  # Biyeun 27 May
     - bmb/sso-next-redirect-test  # Biyeun 27 May
     - cs/annote-route  # Charl 28 May
+    - sk/test_role_create_update  # Simon May 28
 submodules: { }
