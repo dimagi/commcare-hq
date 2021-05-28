@@ -158,14 +158,30 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             from corehq.apps.app_manager.models import CaseSearch
             if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
                 yield id_strings.case_search_locale(module), trans(module.search_config.search_label.label)
+                search_label_icon = module.search_config.search_label.icon_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                search_label_audio = module.search_config.search_label.audio_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                if search_label_icon:
+                    yield id_strings.case_search_icon_locale(module), search_label_icon
+                if search_label_audio:
+                    yield id_strings.case_search_audio_locale(module), search_label_audio
+
                 yield (id_strings.case_search_again_locale(module),
                        trans(module.search_config.search_again_label.label))
+                search_again_label_icon = module.search_config.search_again_label.icon_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                search_again_label_audio = module.search_config.search_again_label.audio_app_string(
+                    lang, for_default=for_default, build_profile_id=build_profile_id)
+                if search_again_label_icon:
+                    yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
+                if search_again_label_audio:
+                    yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
             else:
                 yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.label.default())
                 yield (id_strings.case_search_again_locale(module),
                        trans(CaseSearch.search_again_label.label.default()))
 
-            # icon and audio not yet available
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
                 yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
