@@ -14,7 +14,13 @@ from corehq.motech.fhir import models
 from corehq.motech.models import ConnectionSettings
 
 from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
-from ..models import FHIRImporter, FHIRResourceProperty, FHIRResourceType
+from ..models import (
+    FHIRImporter,
+    FHIRImporterResourceType,
+    FHIRResourceProperty,
+    FHIRResourceType,
+    JSONPathToResourceType,
+)
 
 DOMAIN = 'test-domain'
 
@@ -103,6 +109,70 @@ class TestFHIRImporter(TestCase):
         )
         with self.assertRaises(ValidationError):
             importer.full_clean()
+
+
+class TestFHIRImporterResourceType(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Test ConnectionSettings',
+            url='https://example.com/api/',
+        )
+        cls.fhir_importer = FHIRImporter.objects.create(
+            domain=DOMAIN,
+            connection_settings=cls.conn,
+            owner_id='b0b',
+        )
+        cls.mother = CaseType.objects.create(
+            domain=DOMAIN,
+            name='mother',
+        )
+        cls.referral = CaseType.objects.create(
+            domain=DOMAIN,
+            name='referral',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.referral.delete()
+        cls.mother.delete()
+        cls.fhir_importer.delete()
+        cls.conn.delete()
+        super().tearDownClass()
+
+    def test_search_params_empty(self):
+        service_request = FHIRImporterResourceType.objects.create(
+            fhir_importer=self.fhir_importer,
+            name='ServiceRequest',
+            case_type=self.referral,
+        )
+        self.assertEqual(service_request.search_params, {})
+
+    def test_related_resource_types(self):
+        service_request = FHIRImporterResourceType.objects.create(
+            fhir_importer=self.fhir_importer,
+            name='ServiceRequest',
+            case_type=self.referral,
+        )
+        patient = FHIRImporterResourceType.objects.create(
+            fhir_importer=self.fhir_importer,
+            name='Patient',
+            case_type=self.mother,
+        )
+        JSONPathToResourceType.objects.create(
+            resource_type=service_request,
+            jsonpath='$.subject.reference',
+            related_resource_type=patient,
+        )
+
+        related = service_request.jsonpaths_to_related_resource_types.all()
+        self.assertEqual(len(related), 1)
+        self.assertEqual(related[0].related_resource_type.name, 'Patient')
+        case_type = related[0].related_resource_type.case_type
+        self.assertEqual(case_type.name, 'mother')
 
 
 class TestConfigurationErrors(TestCase):

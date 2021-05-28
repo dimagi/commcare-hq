@@ -329,3 +329,100 @@ class FHIRImporter(models.Model):
             models.Index(fields=['domain']),
             models.Index(fields=['frequency']),
         ]
+
+
+class FHIRImporterResourceType(models.Model):
+    """
+    Similar to ``FHIRResourceType`` but allows importing different case
+    types, with different mappings, from those used by ``FHIRRepeater``
+    and the FHIR API.
+
+    ``import_related_only`` determines whether the ``FHIRImporter``
+    searches the remote service for instances, or only imports instances
+    related to the resource types it is interested in. e.g. Only import
+    the Patients of imported ServiceRequests, not all Patients. Or only
+    import the Person resources who are the contacts of imported
+    Patients, not all Person resources.
+
+    If ``import_related_only`` is ``False`` (the default) , then
+    ``FHIRImporterResourceType`` imports resources filtered by the
+    ``search_params`` field.
+
+    .. note::
+
+       If ``import_related_only`` is ``False`` and ``search_params`` is
+       empty, then all resources of that type will be imported.
+
+    See the ``jsonpath_to_related_resource_type`` related name defined
+    in ``JSONPathToResourceType`` for details of how related resource
+    types are set.
+    """
+    fhir_importer = models.ForeignKey(
+        FHIRImporter,
+        on_delete=models.CASCADE,
+        related_name='resource_types',
+    )
+    name = models.CharField(max_length=255)
+    case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
+
+    import_related_only = models.BooleanField(default=False)
+    search_params = JSONField(default=dict)
+
+
+class JSONPathToResourceType(models.Model):
+    """
+    ``JSONPathToResourceType`` maps a ``FHIRImporterResourceType`` to a
+    related ``FHIRImporterResourceType`` by the JSONPath of a property.
+    e.g. Consider the following ServiceRequest:
+
+    .. code-block:: javascript
+
+        {
+            "id": "67890",
+            "resourceType": "ServiceRequest",
+            "subject": {
+                "reference": "Patient/12345",
+                "display": "Alice Apple"
+            },
+            "status": "active",
+            "intent": "directive",
+            "priority": "routine"
+        }
+
+    This ServiceRequest can be linked to its Patient as follows:
+
+    .. code-block:: python
+
+        service_request = FHIRImporterResourceType(
+            name='ServiceRequest',
+            search_params={'status': 'active'},
+        )
+        patient = FHIRImporterResourceType(
+            name='Patient',
+            import_related_only=True,
+        )
+        service_request_patient = JSONPathToResourceType(
+            resource_type=service_request,
+            jsonpath='$.subject.reference',
+            related_resource_type=patient,
+        )
+
+    ``jsonpath`` is the JSONPath for the reference to the related
+    resource. e.g. The JSONPath for the reference to the Patient of a
+    ServiceRequest is "$.subject.reference". Its value might look like
+    "Patient/12345".
+    """
+    resource_type = models.ForeignKey(
+        FHIRImporterResourceType,
+        on_delete=models.CASCADE,
+        related_name='jsonpaths_to_related_resource_types',
+    )
+
+    # JSONPath for the reference to the resource of ``related_resource_type``
+    jsonpath = models.TextField(default='')
+
+    # Related resource type to import
+    related_resource_type = models.ForeignKey(
+        FHIRImporterResourceType,
+        on_delete=models.CASCADE,
+    )
