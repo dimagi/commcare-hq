@@ -22,12 +22,16 @@ hqDefine('registration/js/login', [
 
         // populate username field if set in the query string
         const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username');
-        if (username) {
-            var usernameElt = document.getElementById('id_auth-username');
-            if (usernameElt) {
-                usernameElt.value = username;
+        const isSessionExpiration = initialPageData.get('is_session_expiration');
+
+        let username = urlParams.get('username');
+        let usernameElt = document.getElementById('id_auth-username');
+        if (username && usernameElt) {
+            if (isSessionExpiration && username.endsWith("commcarehq.org")) {
+                username = username.split("@")[0];
             }
+            usernameElt.value = username;
+            if (isSessionExpiration) usernameElt.readOnly = true;
         }
 
         if (initialPageData.get('enforce_sso_login')) {
