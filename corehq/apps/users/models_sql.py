@@ -190,6 +190,9 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         # alias for compatibility with couch UserRole
         return self.assignable_by_couch
 
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
+
 
 @foreign_value_init
 class RolePermission(models.Model):
