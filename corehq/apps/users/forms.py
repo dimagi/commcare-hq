@@ -1198,7 +1198,6 @@ class CommCareUserFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
-        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
