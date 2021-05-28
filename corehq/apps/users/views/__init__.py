@@ -26,6 +26,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from corehq.apps.users.analytics import get_role_user_count
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -101,8 +102,9 @@ from corehq.apps.users.models import (
     DomainRequest,
     Invitation,
     StaticRole,
-    UserRole,
     WebUser,
+    Permissions,
+    SQLUserRole,
 )
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
@@ -498,25 +500,31 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def user_roles(self):
-        user_roles = [StaticRole.domain_admin(self.domain)]
-        user_roles.extend(sorted(
-            UserRole.by_domain(self.domain),
+    def non_admin_roles(self):
+        return list(sorted(
+            SQLUserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
+    def get_roles_for_display(self):
         show_es_issue = False
-        # skip the admin role since it's not editable
-        for role in user_roles[1:]:
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
             try:
-                role.hasUsersAssigned = role.has_users_assigned
+                user_count = get_role_user_count(role.domain, role.couch_id)
+                role_data["hasUsersAssigned"] = bool(user_count)
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
-            role.has_unpermitted_location_restriction = (
+
+            role_data["has_unpermitted_location_restriction"] = (
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
             )
+
         if show_es_issue:
             messages.error(
                 self.request,
@@ -528,7 +536,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
                     "data-toggle='modal'>Report an Issue</a>."
                 ))
             )
-        return user_roles
+        return role_view_data
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -541,11 +549,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
+        return {
+            r.get_qualified_id(): r.name
+            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+        }
 
     @property
     @memoized
@@ -645,7 +652,7 @@ class ListRolesView(BaseRoleAccessView):
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)):
+                        for role in self.non_admin_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -653,8 +660,8 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
         return {
-            'user_roles': self.user_roles,
-            'non_admin_roles': self.user_roles[1:],
+            'user_roles': self.get_roles_for_display(),
+            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
@@ -808,10 +815,14 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    role_data = dict(
-        (p, role_data[p])
-        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
-    )
+    role = _update_role_from_view(domain, role_data)
+    response_data = role.to_json()
+    user_count = get_role_user_count(domain, role.couch_id)
+    response_data['hasUsersAssigned'] = user_count > 0
+    return JsonResponse(response_data)
+
+
+def _update_role_from_view(domain, role_data):
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -819,50 +830,30 @@ def post_user_role(request, domain):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    role = UserRole.wrap(role_data)
+    if "_id" in role_data:
+        try:
+            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+        except SQLUserRole.DoesNotExist:
+            role = SQLUserRole()
+        else:
+            if role.domain != domain:
+                raise Http404()
+    else:
+        role = SQLUserRole()
+
     role.domain = domain
-    if role.get_id:
-        old_role = UserRole.get(role.get_id)
-        assert(old_role.doc_type == UserRole.__name__)
-        assert(old_role.domain == domain)
-
-    if not role.permissions.access_all_locations:
-        # The following permissions cannot be granted to location-restricted
-        # roles.
-        role.permissions.edit_web_users = False
-        role.permissions.view_web_users = False
-        role.permissions.edit_groups = False
-        role.permissions.view_groups = False
-        role.permissions.edit_apps = False
-        role.permissions.view_roles = False
-        role.permissions.edit_reports = False
-        role.permissions.edit_billing = False
-
-    if role.permissions.edit_web_users:
-        role.permissions.view_web_users = True
-
-    if role.permissions.edit_commcare_users:
-        role.permissions.view_commcare_users = True
-
-    if role.permissions.edit_groups:
-        role.permissions.view_groups = True
-
-    if role.permissions.edit_locations:
-        role.permissions.view_locations = True
-
-    if role.permissions.edit_apps:
-        role.permissions.view_apps = True
-
-    if not role.permissions.edit_groups:
-        role.permissions.edit_users_in_groups = False
-
-    if not role.permissions.edit_locations:
-        role.permissions.edit_users_in_locations = False
-
+    role.name = role_data["name"]
+    role.default_landing_page = role_data["default_landing_page"]  # TODO: validate this
+    role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
-    response_data = role.to_json()
-    response_data['hasUsersAssigned'] = role.has_users_assigned
-    return JsonResponse(response_data)
+
+    permissions = Permissions.wrap(role_data["permissions"])
+    permissions.normalize()
+    role.set_permissions(permissions.to_list())
+
+    assignable_by = role_data["assignable_by"]
+    role.set_assignable_by_couch(assignable_by)
+    return role
 
 
 @domain_admin_required
@@ -872,10 +863,10 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = UserRole.get(role_data["_id"])
-    except ResourceNotFound:
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+    except SQLUserRole.DoesNotExist:
         return JsonResponse({})
-    copy_id = role._id
+    copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
     return JsonResponse({"_id": copy_id})
