@@ -434,7 +434,7 @@ redis==3.5.3
     #   django-websocket-redis
 reportlab==3.5.53
     # via -r base-requirements.in
-requests-mock==1.8.0
+requests-mock==1.9.3
     # via -r test-requirements.in
 requests-oauthlib==1.3.0
     # via -r base-requirements.in
