@@ -1,5 +1,6 @@
 hqDefine('hqwebapp/js/base_ace', [
     'jquery',
+    'underscore',
     'knockout',
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
@@ -7,6 +8,7 @@ hqDefine('hqwebapp/js/base_ace', [
     'ace-builds/src-min-noconflict/ext-searchbox',
 ], function (
     $,
+    _,
     ko,
     ace,
     jsonMode,  // eslint-disable-line no-unused-vars

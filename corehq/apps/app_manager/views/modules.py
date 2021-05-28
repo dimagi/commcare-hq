@@ -50,6 +50,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -1129,6 +1131,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 command_label=command_label,
                 again_label=again_label,
+                search_label=CaseSearchLabel(label=command_label),
+                search_again_label=CaseSearchAgainLabel(label=again_label),
                 properties=properties,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),

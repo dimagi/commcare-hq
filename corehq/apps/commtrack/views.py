@@ -31,7 +31,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 
 from .forms import CommTrackSettingsForm, ConsumptionForm
-from .models import SQLActionConfig, SQLStockRestoreConfig
+from .models import ActionConfig, StockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
 
@@ -85,12 +85,12 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     @memoized
     def commtrack_settings_form(self):
         initial = self.commtrack_settings.to_json()
-        if hasattr(self.commtrack_settings, 'sqlconsumptionconfig'):
+        if hasattr(self.commtrack_settings, 'consumptionconfig'):
             initial.update(dict(('consumption_' + k, v) for k, v in
-                self.commtrack_settings.sqlconsumptionconfig.to_json().items()))
-        if hasattr(self.commtrack_settings, 'sqlstocklevelsconfig'):
+                self.commtrack_settings.consumptionconfig.to_json().items()))
+        if hasattr(self.commtrack_settings, 'stocklevelsconfig'):
             initial.update(dict(('stock_' + k, v) for k, v in
-                self.commtrack_settings.sqlstocklevelsconfig.to_json().items()))
+                self.commtrack_settings.stocklevelsconfig.to_json().items()))
 
         if self.request.method == 'POST':
             return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
@@ -107,7 +107,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         """
 
         if self.commtrack_settings.sync_consumption_fixtures:
-            self.domain_object.commtrack_settings.sqlstockrestoreconfig = SQLStockRestoreConfig(
+            self.domain_object.commtrack_settings.stockrestoreconfig = StockRestoreConfig(
                 section_to_consumption_types={
                     'stock': 'consumption'
                 },
@@ -117,7 +117,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 use_dynamic_product_list=True,
             )
         else:
-            self.domain_object.commtrack_settings.sqlstockrestoreconfig = SQLStockRestoreConfig()
+            self.domain_object.commtrack_settings.stockrestoreconfig = StockRestoreConfig()
 
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
@@ -131,26 +131,26 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:
                 if data.get('stock_' + field):
-                    setattr(self.commtrack_settings.sqlstocklevelsconfig, field,
+                    setattr(self.commtrack_settings.stocklevelsconfig, field,
                             data['stock_' + field])
 
             consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
-                    setattr(self.commtrack_settings.sqlconsumptionconfig, field,
+                    setattr(self.commtrack_settings.consumptionconfig, field,
                             data['consumption_' + field])
 
             try:
                 self.commtrack_settings.save()
-                for attr in ('sqlconsumptionconfig', 'sqlstockrestoreconfig', 'sqlstocklevelsconfig'):
+                for attr in ('consumptionconfig', 'stockrestoreconfig', 'stocklevelsconfig'):
                     submodel = getattr(self.commtrack_settings, attr)
                     submodel.commtrack_settings = self.commtrack_settings
                     submodel.save()
             except (decimal.InvalidOperation, DataError):      # capture only decimal errors and integer overflows
                 try:
                     # Get human-readable messages
-                    self.commtrack_settings.sqlstocklevelsconfig.full_clean()
-                    self.commtrack_settings.sqlconsumptionconfig.full_clean()
+                    self.commtrack_settings.stocklevelsconfig.full_clean()
+                    self.commtrack_settings.consumptionconfig.full_clean()
                 except ValidationError as e:
                     for key, msgs in dict(e).items():
                         for msg in msgs:
@@ -162,7 +162,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
 
             same_flag = previous_json['use_auto_consumption'] == self.commtrack_settings.use_auto_consumption
             same_config = (
-                previous_json['consumption_config'] == self.commtrack_settings.sqlconsumptionconfig.to_json()
+                previous_json['consumption_config'] == self.commtrack_settings.consumptionconfig.to_json()
             )
             if (not same_flag or not same_config):
                 # kick off delayed consumption rebuild
@@ -239,7 +239,7 @@ class SMSSettingsView(BaseCommTrackManageView):
         payload = json.loads(request.POST.get('json'))
 
         def make_action(action):
-            return SQLActionConfig(**{
+            return ActionConfig(**{
                 'action': action['type'],
                 'subaction': action['caption'],
                 'keyword': action['keyword'],

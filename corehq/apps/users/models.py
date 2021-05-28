@@ -392,6 +392,10 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
+    @property
+    def cache_version(self):
+        return self._rev
+
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
@@ -2729,7 +2733,8 @@ class DomainRemovalRecord(DeleteRecord):
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
-        user.add_domain_membership(**self.domain_membership._doc)
+        user.domain_memberships.append(self.domain_membership)
+        user.domains.append(self.domain)
         user.save()
 
 
