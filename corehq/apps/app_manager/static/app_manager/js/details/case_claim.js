@@ -203,7 +203,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
+        // media image/audio buttons
         $(".case-search-multimedia-input button").on("click", function () {
+            saveButton.fire('change');
+        });
+        // checkbox to select media for all languages
+        $(".case-search-multimedia-input input[type='checkbox']").on('click', function () {
             saveButton.fire('change');
         });
 
