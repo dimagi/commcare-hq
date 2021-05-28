@@ -64,7 +64,6 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2020.12.5 # Joel Apr 19
     - jls/detail-nodeset-rebased # Jenny May 6
-    - orangejenny-patch-8 # Jenny May 27
     - jls/cross-domain-web-user-download # Jenny April 24
     - smh/embedded-tableau # Steph May 7
     - gh/add-app-id-to-downstream-report # Graham May 18
