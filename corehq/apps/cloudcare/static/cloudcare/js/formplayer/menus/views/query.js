@@ -237,9 +237,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 answers = {},
                 model = this.parentModel;
             $fields.each(function (index) {
-                if (this.value !== '') {
-                    answers[model[index].get('id')] = encodeValue(model[index], this.value);
+                if (this.tagName === 'SELECT' && this.multiple) {
+                    var val = Array.from(this.selectedOptions).map(option => option.value)
+                        .join(" ");
                 }
+                else if (this.value !== '') {
+                    val = this.value
+                }
+                answers[model[index].get('id')] = encodeValue(model[index], val);
             });
             return answers;
         },

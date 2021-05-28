@@ -78,12 +78,12 @@
                       </select>
                     </div>
                   </div>
-                  <div class="form-group">
+                  <div class="form-group" data-bind="visible: appearanceFinal() == 'fixture'">
                     <label class="control-label col-xs-12 col-sm-3">
                       {% trans "Is Multi Select" %}
                     </label>
-                    <div class="col-xs-12 col-sm-9" data-bind="visible: appearanceFinal() == 'fixture'">
-                      <input type="checkbox" name="autopay" data-bind="checked: isMultiselect"/>
+                    <div class="col-xs-12 col-sm-9">
+                      <input type="checkbox" data-bind="checked: isMultiselect"/>
                     </div>
                   </div>
                 {% endif %}
