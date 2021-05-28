@@ -41,7 +41,8 @@ class RolesTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        SQLUserRole.objects.all().delete()
+        for role in SQLUserRole.objects.get_by_domain(cls.domain, include_archived=True):
+            role.delete()
         super().tearDownClass()
 
     def test_set_assignable_by(self):

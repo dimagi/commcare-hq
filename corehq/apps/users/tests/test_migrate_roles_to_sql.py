@@ -28,9 +28,9 @@ class UserRoleCouchToSqlTests(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        SQLUserRole.objects.all().delete()
-        for role in get_custom_roles_for_domain(self.domain):
-            role.delete()
+        for role in SQLUserRole.objects.get_by_domain(self.domain, include_archived=True):
+            if role.id != self.app_editor_sql.id:
+                role.delete()
         super().tearDown()
 
     def test_sql_role_couch_to_sql(self):
