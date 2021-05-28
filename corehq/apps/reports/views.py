@@ -22,7 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1941,22 +1941,22 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         all_case_links = []
         for case_id, case_name in cases_with_other_forms.items():
             if case_id == case_id_from_request:
-                all_case_links.append(_(
-                    format_html(f'{case_name}s (this case)')
-                ))
+                all_case_links.append([(
+                    format_html(_("{}s (this case)"), case_name)
+                )])
             else:
-                all_case_links.append(_(
-                    format_html(
-                        f'<a href=\"{reverse("case_data", args=[domain, case_id])}#!history\">{case_name}</a>'
-                    )
-                ))
+                all_case_links.append([format_html(_(
+                    '<a href="{}#!history">{}</a>'),
+                    reverse("case_data", args=[domain, case_id]),
+                    case_name
+                )])
         return all_case_links
 
-    case_links = ", ".join(_get_all_case_links())
+    case_links = format_html_join(", ", "{}", _get_all_case_links())
 
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
-    return format_html(f"{msg} {case_links}")
+    return format_html("{} {}", msg, case_links)
 
 
 def _get_cases_with_other_forms(domain, xform):
