@@ -32,6 +32,7 @@ function setup {
 
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
+    python_preheat  # preheat the python libs
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
@@ -53,6 +54,25 @@ function setup {
     fi
 
     /mnt/wait.sh
+}
+
+function python_preheat {
+    # Perform preflight operations as the container's root user to "preheat"
+    # libraries used by Django.
+    #
+    # Import the `eulxml.xmlmap` module which checks if its lextab module
+    # (.../eulxml/xpath/lextab.py) is up-to-date and writes a new lextab.py file
+    # if not. This write fails if performed by the container's cchq user due to
+    # insufficient filesystem permissions at that path. E.g.
+    #   WARNING: Couldn't write lextab module 'eulxml.xpath.lextab'. [Errno 13] Permission denied: '/vendor/lib/python3.6/site-packages/eulxml/xpath/lextab.py'
+    #
+    # NOTE: This "preheat" can also be performed by executing a no-op manage
+    # action (e.g. `manage.py test -h`), but this operation is heavy-handed and
+    # importing the python module directly is done instead to improve
+    # performance.
+    logmsg INFO "preheating python libraries"
+    # send to /dev/null and allow to fail
+    python -c 'import eulxml.xmlmap' >/dev/null 2>&1 || true
 }
 
 function run_tests {
