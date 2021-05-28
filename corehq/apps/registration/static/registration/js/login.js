@@ -40,6 +40,7 @@ hqDefine('registration/js/login', [
                 initialUsername: $('#id_auth-username').val(),
                 passwordField: $passwordField,
                 passwordFormGroup: $passwordField.closest('.form-group'),
+                nextUrl: urlParams.get('next'),
             });
             $('#user-login-form').koApplyBindings(loginController);
             loginController.init();
