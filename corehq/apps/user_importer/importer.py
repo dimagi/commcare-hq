@@ -718,7 +718,7 @@ def modify_existing_user_in_domain(domain, domain_info, location_codes, membersh
                         and user_current_role.get_qualified_id() == role_qualified_id)
     if role_updated:
         current_user.set_role(domain, role_qualified_id)
-        log_user_role_update(domain, current_user, upload_user,
+        log_user_role_update(domain, user_current_role, current_user, upload_user,
                              USER_CHANGE_VIA_BULK_IMPORTER)
     try:
         current_user.save()
