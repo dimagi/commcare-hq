@@ -50,6 +50,7 @@ hqDefine("app_manager/js/details/column", function () {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
+            // Blank string is meaningful for nodesetCaseType (indicating a custom expression), so be strict here
             nodesetCaseType: _.has(self.original, "nodesetCaseType") ? self.original.nodesetCaseType : screen.childCaseTypes[0] || "",
             relevant: "",
         };
