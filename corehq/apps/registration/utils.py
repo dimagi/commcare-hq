@@ -65,13 +65,14 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
         domain=domain,
         ip=ip,
         atypical_user=form.cleaned_data.get('atypical_user', False),
+        can_skip_domain=(not domain),
     )
     return new_user
 
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+    is_domain_admin=True, domain=None, ip=None, atypical_user=False, can_skip_domain=False,
 ):
     now = datetime.utcnow()
 
@@ -81,7 +82,8 @@ def activate_new_user(
         password,
         created_by,
         created_via,
-        is_admin=is_domain_admin
+        is_admin=is_domain_admin,
+        can_skip_domain=can_skip_domain,
     )
     new_user.first_name = first_name
     new_user.last_name = last_name

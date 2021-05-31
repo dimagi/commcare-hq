@@ -109,6 +109,7 @@ class SsoBackend(ModelBackend):
             last_name=get_sso_user_last_name_from_session(request),
             domain=domain,
             ip=get_ip(request),
+            can_skip_domain=(not domain),
         )
         request.sso_new_user_messages['success'].append(
             _("User account for {} created.").format(new_web_user.username)
