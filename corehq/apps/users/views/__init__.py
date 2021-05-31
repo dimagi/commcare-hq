@@ -89,14 +89,12 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
-    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -674,48 +672,6 @@ class ListRolesView(BaseRoleAccessView):
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
         }
-
-
-# TODO: move these 3 views
-@require_can_edit_or_view_web_users
-@require_superuser
-def enterprise_permissions(request, domain):
-    context = {
-        'domain': domain,   # TODO: remove
-        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
-    }
-    return render(request, "enterprise/enterprise_permissions.html", context)
-
-
-@require_superuser
-@require_POST
-def delete_domain_permission_mirror(request, domain, mirror):
-    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
-    if mirror_obj:
-        mirror_obj.delete()
-        message = _('You have successfully deleted the project space "{mirror}".')
-        messages.success(request, message.format(mirror=mirror))
-    else:
-        message = _('The project space you are trying to delete was not found.')
-        messages.error(request, message)
-    redirect = reverse("enterprise_permissions", args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
-@require_superuser
-@require_POST
-def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if not form.is_valid():
-        for field, message in form.errors.items():
-            messages.error(request, message)
-    else:
-        form.save_mirror_domain()
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        message = _('You have successfully added the project space "{mirror_domain_name}".')
-        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-    redirect = reverse("enteprise_permissions", args=[domain])
-    return HttpResponseRedirect(redirect)
 
 
 @always_allow_project_access
