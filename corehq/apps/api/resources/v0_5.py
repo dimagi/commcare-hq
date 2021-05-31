@@ -376,7 +376,18 @@ class WebUserResource(v0_1.WebUserResource):
                 _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            if bundle.obj._id:
+                bundle.obj.delete(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+            else:
+                try:
+                    django_user = bundle.obj.get_django_user()
+                except User.DoesNotExist:
+                    pass
+                else:
+                    django_user.delete()
+                    log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
+                                     action=ModelAction.DELETE)
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):

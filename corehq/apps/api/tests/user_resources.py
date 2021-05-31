@@ -412,10 +412,7 @@ class TestWebUserResource(APIResourceTest):
         user_json = deepcopy(self.default_user_json)
         user_json['is_admin'] = False
         user_json["role"] = 'Jack of all trades'
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
+        response = self._assert_auth_post_resource(self.list_endpoint, json.dumps(user_json))
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'Jack of all trades\'"}')
 
