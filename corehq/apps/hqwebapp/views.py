@@ -214,9 +214,10 @@ def redirect_to_default(req, domain=None):
     else:
         domains = Domain.active_for_user(req.user)
 
-    if 0 == len(domains) and not req.user.is_superuser:
+    if not domains and not req.user.is_superuser:
         return redirect('registration_domain')
-    elif 1 == len(domains):
+
+    if 1 == len(domains):
         from corehq.apps.users.models import DomainMembershipError
         if domains[0]:
             domain = domains[0].name
