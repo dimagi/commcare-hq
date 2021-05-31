@@ -1,6 +1,6 @@
 import attr
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
@@ -45,6 +45,12 @@ class StaticRole:
 
 
 class UserRoleManager(models.Manager):
+
+    def get_by_domain(self, domain, include_archived=False):
+        query = self.filter(domain=domain)
+        if not include_archived:
+            query = query.filter(is_archived=False)
+        return list(query.prefetch_related('rolepermission_set'))
 
     def by_couch_id(self, couch_id):
         return SQLUserRole.objects.get(couch_id=couch_id)
@@ -92,9 +98,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     def _migration_sync_submodels_to_couch(self, couch_object):
         couch_object.permissions = self.permissions
-        couch_object.assignable_by = list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
-        )
+        couch_object.assignable_by = self.assignable_by
 
     @property
     def get_id(self):
@@ -111,6 +115,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     def to_json(self):
         return role_to_dict(self)
 
+    @transaction.atomic
     def set_permissions(self, permission_infos):
         permissions_by_name = {
             rp.permission: rp
@@ -138,6 +143,13 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         from corehq.apps.users.models import Permissions
         return Permissions.from_permission_list(self.get_permission_infos())
 
+    def set_assignable_by_couch(self, couch_role_ids):
+        sql_ids = []
+        if couch_role_ids:
+            sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
+        self.set_assignable_by(sql_ids)
+
+    @transaction.atomic
     def set_assignable_by(self, role_ids):
         if not role_ids:
             self.roleassignableby_set.all().delete()
@@ -162,10 +174,24 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
 
     @property
-    def assignable_by(self):
+    def assignable_by_sql(self):
         return list(
             self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
         )
+
+    @property
+    def assignable_by_couch(self):
+        return list(
+            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+        )
+
+    @property
+    def assignable_by(self):
+        # alias for compatibility with couch UserRole
+        return self.assignable_by_couch
+
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
 @foreign_value_init
