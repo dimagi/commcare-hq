@@ -28,6 +28,10 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq import privileges
 from corehq.apps.accounting.models import CustomerInvoice, CustomerBillingRecord
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
@@ -39,13 +43,12 @@ from corehq.apps.enterprise.forms import (
 )
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
-
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.users.decorators import require_can_edit_or_view_web_users
+
+from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.const import USER_DATE_FORMAT
 
 
@@ -323,3 +326,45 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@require_can_edit_or_view_web_users
+@require_superuser
+def enterprise_permissions(request, domain):
+    context = {
+        'domain': domain,   # TODO: remove
+        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
+    }
+    return render(request, "enterprise/enterprise_permissions.html", context)
+
+
+@require_superuser
+@require_POST
+def delete_domain_permission_mirror(request, domain, mirror):
+    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
+    if mirror_obj:
+        mirror_obj.delete()
+        message = _('You have successfully deleted the project space "{mirror}".')
+        messages.success(request, message.format(mirror=mirror))
+    else:
+        message = _('The project space you are trying to delete was not found.')
+        messages.error(request, message)
+    redirect = reverse("enterprise_permissions", args=[domain])
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_POST
+def create_domain_permission_mirror(request, domain):
+    from corehq.apps.users.forms import CreateDomainPermissionsMirrorForm
+    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
+    if not form.is_valid():
+        for field, message in form.errors.items():
+            messages.error(request, message)
+    else:
+        form.save_mirror_domain()
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        message = _('You have successfully added the project space "{mirror_domain_name}".')
+        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
+    redirect = reverse("enterprise_permissions", args=[domain])
+    return HttpResponseRedirect(redirect)
