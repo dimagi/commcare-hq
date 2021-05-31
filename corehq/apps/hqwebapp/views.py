@@ -221,29 +221,32 @@ def redirect_to_default(req, domain=None):
         return HttpResponseRedirect(settings.DOMAIN_SELECT_URL)
 
     from corehq.apps.users.models import DomainMembershipError
-    if domains[0]:
-        domain = domains[0].name
-        couch_user = req.couch_user
-        try:
-            role = couch_user.get_role(domain)
-        except DomainMembershipError:
-            # commcare users without roles should always be denied access
-            if couch_user.is_commcare_user():
-                raise Http404()
-            else:
-                # web users without roles are redirected to the dashboard default
-                # view since some domains allow web users to request access if they
-                # don't have it
-                url = reverse("dashboard_domain", args=[domain])
-        else:
-            if role and role.default_landing_page:
-                url = get_redirect_url(role.default_landing_page, domain)
-            elif couch_user.is_commcare_user():
-                url = reverse(get_cloudcare_urlname(domain), args=[domain])
-            else:
-                url = reverse("dashboard_domain", args=[domain])
-    else:
+
+    domain = domains[0]
+    if not domain:
         raise Http404()
+
+    domain_name = domain.name
+    couch_user = req.couch_user
+    try:
+        role = couch_user.get_role(domain_name)
+    except DomainMembershipError:
+        # commcare users without roles should always be denied access
+        if couch_user.is_commcare_user():
+            raise Http404()
+        else:
+            # web users without roles are redirected to the dashboard default
+            # view since some domains allow web users to request access if they
+            # don't have it
+            url = reverse("dashboard_domain", args=[domain_name])
+    else:
+        if role and role.default_landing_page:
+            url = get_redirect_url(role.default_landing_page, domain_name)
+        elif couch_user.is_commcare_user():
+            url = reverse(get_cloudcare_urlname(domain_name), args=[domain_name])
+        else:
+            url = reverse("dashboard_domain", args=[domain_name])
+
     return HttpResponseRedirect(url)
 
 
