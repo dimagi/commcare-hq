@@ -45,10 +45,9 @@ class DataSetMapForm(forms.ModelForm):
     )
     data_set_id = forms.CharField(
         label=_('DataSetID'),
-        help_text=_('Set DataSetID if this UCR adds values to an existing '
-                    'DHIS2 DataSet'),
+        help_text=_('The DHIS2 DataSet ID to which this UCR adds value'),
         validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
-        required=False,
+        required=True,
     )
     org_unit_id = forms.CharField(
         label=_('OrgUnitID¹'),
