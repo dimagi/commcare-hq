@@ -39,7 +39,7 @@ def get_landing_page(domain, landing_page_id):
     for landing_page in get_allowed_landing_pages(domain):
         if landing_page.id == landing_page_id:
             return landing_page
-    raise ValueError(_("No landing page found with id {}".format(landing_page_id)))
+    raise ValueError(_("No landing page found with id {page_id}").format(page_id=landing_page_id))
 
 
 def get_redirect_url(landing_page_id, domain):
