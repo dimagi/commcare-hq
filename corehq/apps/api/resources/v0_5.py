@@ -308,21 +308,6 @@ class WebUserResource(v0_1.WebUserResource):
             data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
-    def dispatch(self, request_type, request, **kwargs):
-        """
-        Override dispatch to check for proper params for user create : role and admin permissions
-        """
-        if request.method == 'POST':
-            details = self._meta.serializer.deserialize(request.body)
-            if details.get('is_admin', False):
-                if self._admin_assigned_another_role(details):
-                    raise BadRequest("An admin can have only one role : Admin")
-            else:
-                if not details.get('role', None):
-                    raise BadRequest("Please assign role for non admin user")
-
-        return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
-
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
             domain = bundle_or_obj.request.domain
@@ -334,6 +319,15 @@ class WebUserResource(v0_1.WebUserResource):
                                                           domain=domain,
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
+
+    def _validate(self, bundle):
+        if bundle.data.get('is_admin', False):
+            # default value Admin since that will be assigned later anyway since is_admin is True
+            if bundle.data.get('role', 'Admin') != 'Admin':
+                raise BadRequest("An admin can have only one role : Admin")
+        else:
+            if not bundle.data.get('role', None):
+                raise BadRequest("Please assign role for non admin user")
 
     def _update(self, bundle):
         should_save = False
@@ -358,6 +352,7 @@ class WebUserResource(v0_1.WebUserResource):
         return should_save
 
     def obj_create(self, bundle, request=None, **kwargs):
+        self._validate(bundle)
         try:
             self._meta.domain = kwargs['domain']
             bundle.obj = WebUser.create(
@@ -391,16 +386,13 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
+        self._validate(bundle)
         bundle.obj = WebUser.get(kwargs['pk'])
         assert kwargs['domain'] in bundle.obj.domains
         if self._update(bundle):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
         return bundle
-
-    def _admin_assigned_another_role(self, details):
-        # default value Admin since that will be assigned later anyway since is_admin is True
-        return details.get('role', 'Admin') != 'Admin'
 
 
 class AdminWebUserResource(v0_1.UserResource):
