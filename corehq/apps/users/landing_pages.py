@@ -35,13 +35,13 @@ def get_allowed_landing_pages(domain):
     return [page for page in ALL_LANDING_PAGES if page.id != 'downloads']
 
 
-def get_landing_page(id):
-    for landing_page in ALL_LANDING_PAGES:
-        if landing_page.id == id:
+def get_landing_page(domain, landing_page_id):
+    for landing_page in get_allowed_landing_pages(domain):
+        if landing_page.id == landing_page_id:
             return landing_page
-    raise ValueError(_("No landing page found with id {}".format(id)))
+    raise ValueError(_("No landing page found with id {}".format(landing_page_id)))
 
 
-def get_redirect_url(id, domain):
-    page = get_landing_page(id)
+def get_redirect_url(landing_page_id, domain):
+    page = get_landing_page(domain, landing_page_id)
     return reverse(page.get_urlname(domain), args=[domain])
