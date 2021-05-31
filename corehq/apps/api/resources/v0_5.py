@@ -80,7 +80,7 @@ from corehq.apps.users.models import (
     CouchUser,
     Permissions,
     UserRole,
-    WebUser,
+    WebUser, UserRolePresets,
 )
 from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
@@ -121,7 +121,7 @@ def _set_role_for_bundle(kwargs, bundle):
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
-        preset_role_id = UserRole.get_preset_role_id(bundle.data.get('role'))
+        preset_role_id = UserRolePresets.get_preset_role_id(bundle.data.get('role'))
         if preset_role_id:
             bundle.obj.set_role(kwargs['domain'], preset_role_id)
 
