@@ -326,7 +326,7 @@ class WebUserResource(v0_1.WebUserResource):
                 if not details.get('role', None):
                     raise BadRequest("Please assign role for non admin user")
                 elif self._invalid_user_role(request, details):
-                    raise BadRequest("Invalid User Role %s" % details.get('role', None))
+                    raise BadRequest(f"Invalid User Role '{details.get('role')}'")
 
         return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
 
