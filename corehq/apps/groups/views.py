@@ -14,6 +14,7 @@ from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.privileges import CASE_SHARING_GROUPS
+from corehq.util.validation import is_url_or_host_banned
 from django_prbac.utils import has_privilege
 
 require_can_edit_groups = require_permission(Permissions.edit_groups)
@@ -28,7 +29,16 @@ def add_group(request, domain):
             "We could not create the group; "
             "please give it a name first"
         ))
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        redirection_url = request.META['HTTP_REFERER']
+
+        if not is_url_or_host_banned(redirection_url):
+            messages.warning(request, _(
+                "We sensed a fishy redirection URL in your Request. "
+                "Therefore, redirected you here as we care about your security."
+            ))
+            return HttpResponseRedirect(reverse("dashboard_domain", args=[domain]))
+
+        return HttpResponseRedirect(redirection_url)
     group = Group.by_name(domain, group_name)
     if group:
         messages.warning(request, _(
