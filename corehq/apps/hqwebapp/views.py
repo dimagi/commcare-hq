@@ -240,12 +240,18 @@ def redirect_to_default(req, domain=None):
             # don't have it
             url = reverse("dashboard_domain", args=[domain_name])
     else:
+        url = None
         if role and role.default_landing_page:
-            url = get_redirect_url(role.default_landing_page, domain_name)
-        elif couch_user.is_commcare_user():
-            url = reverse(get_cloudcare_urlname(domain_name), args=[domain_name])
-        else:
-            url = reverse("dashboard_domain", args=[domain_name])
+            try:
+                url = get_redirect_url(role.default_landing_page, domain_name)
+            except ValueError:
+                pass  # landing page no longer accessible to domain
+
+        if url is None:
+            if couch_user.is_commcare_user():
+                url = reverse(get_cloudcare_urlname(domain_name), args=[domain_name])
+            else:
+                url = reverse("dashboard_domain", args=[domain_name])
 
     return HttpResponseRedirect(url)
 
