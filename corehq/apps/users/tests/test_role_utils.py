@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.users.models import SQLUserRole, Permissions, UserRolePresets
 from corehq.apps.users.role_utils import (
     get_or_create_role_with_permissions,
-    init_domain_with_presets,
+    initialize_domain_with_default_roles,
     reset_initial_roles_for_domain,
     archive_custom_roles_for_domain,
     unarchive_roles_for_domain,
@@ -38,13 +38,13 @@ class RoleUtilsTests(TestCase):
 
     def test_init_domain_with_presets(self):
         self.addCleanup(self._delete_presets)
-        init_domain_with_presets(self.domain)
+        initialize_domain_with_default_roles(self.domain)
         role_names = set(SQLUserRole.objects.filter(domain=self.domain).values_list("name", flat=True))
         self.assertEqual(role_names, set(UserRolePresets.INITIAL_ROLES) | {'role1'})
 
     def test_reset_initial_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
-        init_domain_with_presets(self.domain)
+        initialize_domain_with_default_roles(self.domain)
         role = SQLUserRole.objects.get(domain=self.domain, name=UserRolePresets.APP_EDITOR)
         original_permissions = role.permissions
         role.set_permissions([])
@@ -62,7 +62,7 @@ class RoleUtilsTests(TestCase):
 
         self.addCleanup(self._delete_presets)
         self.addCleanup(_unarchive_custom_role)
-        init_domain_with_presets(self.domain)
+        initialize_domain_with_default_roles(self.domain)
 
         roles = SQLUserRole.objects.get_by_domain(self.domain, include_archived=True)
         self.assertEqual(len(roles), 5)
@@ -74,7 +74,7 @@ class RoleUtilsTests(TestCase):
 
     def test_unarchive_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
-        init_domain_with_presets(self.domain)
+        initialize_domain_with_default_roles(self.domain)
 
         for role in SQLUserRole.objects.get_by_domain(self.domain):
             role.is_archived = True
@@ -90,7 +90,7 @@ class RoleUtilsTests(TestCase):
 
     def test_get_custom_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
-        init_domain_with_presets(self.domain)
+        initialize_domain_with_default_roles(self.domain)
         roles = get_custom_roles_for_domain(self.domain)
         self.assertEqual([role.name for role in roles], ["role1"])
 

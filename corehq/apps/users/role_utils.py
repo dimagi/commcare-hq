@@ -50,7 +50,7 @@ def reset_initial_roles_for_domain(domain):
         role._migration_do_sync()  # sync role to couch
 
 
-def init_domain_with_presets(domain):
+def initialize_domain_with_default_roles(domain):
     for role_name in UserRolePresets.INITIAL_ROLES:
         get_or_create_role_with_permissions(
             domain, role_name, UserRolePresets.get_permissions(role_name)
