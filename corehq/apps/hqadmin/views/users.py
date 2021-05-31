@@ -97,15 +97,15 @@ class SuperuserManagement(UserAdministration):
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    changed_field_logs.append(_("{} to {}".format("is_superuser", is_superuser)))
+                    changed_field_logs.append(_(f"is_superuser to {is_superuser}"))
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    changed_field_logs.append(_("{} to {}".format("is_staff", is_staff)))
+                    changed_field_logs.append(_(f"is_staff to {is_staff}"))
 
                 if changed_field_logs:
                     user.save()
-                    log_message = _("Changed: ") + _(" and ").join(changed_field_logs)
+                    log_message = _("Changed: ") + _(", ").join(changed_field_logs)
                     log_model_change(self.request.user, user, message=log_message)
             messages.success(request, _("Successfully updated superuser permissions"))
 
