@@ -338,12 +338,16 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 def enterprise_permissions(request, domain):
     account = BillingAccount.get_account_by_domain(domain)
     subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
-    domain_names = set(s.subscriber.domain for s in subscriptions)
+    domains = set(s.subscriber.domain for s in subscriptions)
+    ignored_domains = set(account.permissions_ignore_domains)
+    controlled_domains = domains - ignored_domains - set([account.permissions_source_domain])
+
     context = {
         'domain': domain,   # TODO: remove
-        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),  # TODO: remove
-        'domains': sorted(domain_names),
+        'domains': sorted(domains),
         'source_domain': account.permissions_source_domain,
+        'ignored_domains': sorted(list(ignored_domains)),
+        'controlled_domains': sorted(list(controlled_domains)),
     }
     return render(request, "enterprise/enterprise_permissions.html", context)
 
