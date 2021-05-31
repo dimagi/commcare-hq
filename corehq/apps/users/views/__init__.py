@@ -696,18 +696,15 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
-@method_decorator(require_superuser, name='dispatch')
-class DomainPermissionsMirrorView(BaseUserSettingsView):
-    template_name = 'users/domain_permissions_mirror.html'
-    page_title = ugettext_lazy("Enterprise Permissions")
-    urlname = 'domain_permissions_mirror'
-
-    @property
-    def page_context(self):
-        return {
-            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
-        }
+# TODO: move these 3 views
+@require_can_edit_or_view_web_users
+@require_superuser
+def enterprise_permissions(request, domain):
+    context = {
+        'domain': domain,   # TODO: remove
+        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
+    }
+    return render(request, "enterprise/enterprise_permissions.html", context)
 
 
 @require_superuser
