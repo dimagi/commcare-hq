@@ -4,7 +4,6 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 from .views import (
     DefaultProjectUserSettingsView,
-    DomainPermissionsMirrorView,
     EditWebUserView,
     InviteWebUserView,
     UploadWebUsers,
@@ -115,7 +114,7 @@ urlpatterns = [
         WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
     url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadJobPollView.as_view(),
         name=WebUserUploadJobPollView.urlname),
-    url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
+    # TODO: move these 2
     url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
         name='delete_domain_permission_mirror'),
     url(r'^enterprise/create_domain_permission_mirror/$', create_domain_permission_mirror,
