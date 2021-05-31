@@ -2,7 +2,6 @@ from django.test import TestCase
 
 from corehq.apps.users.models import SQLUserRole, Permissions, UserRolePresets
 from corehq.apps.users.role_utils import (
-    get_or_create_role_with_permissions,
     initialize_domain_with_default_roles,
     reset_initial_roles_for_domain,
     archive_custom_roles_for_domain,
@@ -24,17 +23,6 @@ class RoleUtilsTests(TestCase):
         for role in SQLUserRole.objects.get_by_domain(cls.domain):
             role.delete()
         super().tearDownClass()
-
-    def test_get_or_create_role_with_permissions_create(self):
-        permissions = Permissions(view_web_users=True)
-        role = get_or_create_role_with_permissions(self.domain, 'new_role', permissions)
-        self.assertNotEqual(role.get_id, self.role1.get_id)
-        self.assertEqual(role.name, 'new_role')
-
-    def test_get_or_create_role_with_permissions_get_existing(self):
-        role = get_or_create_role_with_permissions(self.domain, 'new_role', self.role1_permissions)
-        self.assertEqual(role.get_id, self.role1.get_id)
-        self.assertEqual(role.name, 'role1')
 
     def test_init_domain_with_presets(self):
         self.addCleanup(self._delete_presets)

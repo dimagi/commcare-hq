@@ -1,24 +1,6 @@
 from corehq.apps.users.models import Permissions, SQLUserRole, UserRolePresets
 
 
-def get_or_create_role_with_permissions(domain, name, permissions):
-    """This function will check all existing roles in the domain
-    for a role with matching permissions before creating a new role.
-    """
-    if isinstance(permissions, dict):
-        permissions = Permissions.wrap(permissions)
-
-    roles = SQLUserRole.objects.get_by_domain(domain)
-
-    # try to get a matching role from the db
-    for role in roles:
-        if role.permissions == permissions:
-            return role
-
-    # otherwise create it
-    return SQLUserRole.create(domain, name, permissions=permissions)
-
-
 def get_custom_roles_for_domain(domain):
     return [
         role for role in SQLUserRole.objects.get_by_domain(domain)
@@ -51,7 +33,6 @@ def reset_initial_roles_for_domain(domain):
 
 
 def initialize_domain_with_default_roles(domain):
+    """Outside of tests this is only called when creating a new domain"""
     for role_name in UserRolePresets.INITIAL_ROLES:
-        get_or_create_role_with_permissions(
-            domain, role_name, UserRolePresets.get_permissions(role_name)
-        )
+        SQLUserRole.create(domain, role_name, permissions=UserRolePresets.get_permissions(role_name))
