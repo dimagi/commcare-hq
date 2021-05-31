@@ -192,7 +192,7 @@ def not_found(request, template_name='404.html', exception=None):
 @always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
-        if domain != None:
+        if domain is not None:
             url = reverse('domain_login', args=[domain])
         else:
             url = reverse('login')
