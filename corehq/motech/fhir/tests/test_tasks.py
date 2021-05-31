@@ -1,14 +1,23 @@
+import re
 from unittest.mock import patch
 
 from django.test import TestCase
 
+from requests import HTTPError
+
 from corehq.apps.data_dictionary.models import CaseType
+from corehq.motech.auth import AuthManager
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
 from ..const import FHIR_VERSION_4_0_1
 from ..models import FHIRImporter, FHIRImporterResourceType
-from ..tasks import run_importer
+from ..tasks import (
+    ServiceRequestNotActive,
+    claim_service_request,
+    run_importer,
+)
 
 DOMAIN = 'test-domain'
 
@@ -65,3 +74,127 @@ class TestRunImporter(TestCase):
             import_resource_type.assert_called_once()
             call_arg_2 = import_resource_type.call_args[0][1]
             self.assertEqual(call_arg_2, import_me)
+
+
+class TestClaimServiceRequest(TestCase):
+
+    service_request = {
+        'id': '12345',
+        'resourceType': 'ServiceRequest',
+        'status': 'active',
+    }
+
+    def setUp(self):
+        self.no_auth = AuthManager()
+
+    def test_service_request_404(self):
+        with patch.object(Requests, 'get') as requests_get:
+            requests_get.side_effect = HTTPError('Client Error: 404')
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+
+            with self.assertRaises(HTTPError):
+                claim_service_request(requests, self.service_request)
+
+    def test_service_request_500(self):
+        with patch.object(Requests, 'get') as requests_get:
+            requests_get.side_effect = HTTPError('Server Error: 500')
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+
+            with self.assertRaises(HTTPError):
+                claim_service_request(requests, self.service_request)
+
+    def test_service_request_on_hold(self):
+        response = ServiceRequestResponse('on-hold')
+        with patch.object(Requests, 'get') as requests_get:
+            requests_get.return_value = response
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+
+            with self.assertRaises(ServiceRequestNotActive):
+                claim_service_request(requests, self.service_request)
+
+    def test_service_request_completed(self):
+        response = ServiceRequestResponse('completed')
+        with patch.object(Requests, 'get') as requests_get:
+            requests_get.return_value = response
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+
+            with self.assertRaises(ServiceRequestNotActive):
+                claim_service_request(requests, self.service_request)
+
+    def test_service_request_claimed(self):
+        response = ServiceRequestResponse()
+        with patch.object(Requests, 'get') as requests_get, \
+                patch.object(Requests, 'put') as requests_put:
+            requests_get.return_value = response
+            requests_put.return_value = response
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            case_id = claim_service_request(requests, self.service_request)
+
+        self.assertTrue(is_hex(case_id))
+
+    def test_service_request_412(self):
+        response_active = ServiceRequestResponse()
+        response_on_hold = ServiceRequestResponse('on-hold')
+        response_412 = ServiceRequestResponse()
+        response_412.status = 412
+
+        with patch.object(Requests, 'get') as requests_get, \
+                patch.object(Requests, 'put') as requests_put:
+            requests_get.side_effect = [
+                response_active,  # First call: Ready to be claimed
+                response_on_hold,  # Recursion: Claimed by other CHIS
+            ]
+            requests_put.return_value = response_412
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            with self.assertRaises(ServiceRequestNotActive):
+                claim_service_request(requests, self.service_request)
+
+
+class ServiceRequestResponse:
+
+    status = 200
+    headers = {'ETag': 'W/"123"'}
+
+    def __init__(self, status='active'):
+        self.service_request = {
+            'id': '12345',
+            'resourceType': 'ServiceRequest',
+            'status': status,
+        }
+
+    def json(self):
+        return self.service_request
+
+
+def is_hex(string):
+    return bool(re.match(r'^[0-9a-fA-F]+$', string))
