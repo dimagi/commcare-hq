@@ -412,6 +412,13 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
+    permissions_source_domain = models.CharField(max_length=128, null=True, blank=True)
+    permissions_ignore_domains = ArrayField(
+        models.CharField(max_length=128, null=True),
+        null=True,
+        blank=True,
+        default=list
+    )
 
     # Settings restricting Hubspot data
     block_hubspot_data_for_all_users = models.BooleanField(default=False)
