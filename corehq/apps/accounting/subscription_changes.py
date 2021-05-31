@@ -243,7 +243,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Set user roles using custom roles to Read Only.
         - Reset initial roles to standard permissions.
         """
-        custom_roles = [r.get_id for r in get_custom_roles_for_domain(domain.name)]
+        custom_roles = get_custom_roles_for_domain(domain.name)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
