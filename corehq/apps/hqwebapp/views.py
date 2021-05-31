@@ -94,10 +94,7 @@ from corehq.apps.hqwebapp.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
-from corehq.apps.users.landing_pages import (
-    get_cloudcare_urlname,
-    get_redirect_url,
-)
+from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -249,7 +246,7 @@ def redirect_to_default(req, domain=None):
 
         if url is None:
             if couch_user.is_commcare_user():
-                url = reverse(get_cloudcare_urlname(domain_name), args=[domain_name])
+                url = reverse('formplayer_main', args=[domain_name])
             else:
                 url = reverse("dashboard_domain", args=[domain_name])
 

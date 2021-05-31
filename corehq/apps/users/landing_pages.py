@@ -15,14 +15,9 @@ class LandingPage(namedtuple('LandingPage', ['id', 'name', 'urlname'])):
         return self.urlname
 
 
-def get_cloudcare_urlname(domain):
-    from corehq.apps.cloudcare.views import FormplayerMain
-    return FormplayerMain.urlname
-
-
 ALL_LANDING_PAGES = (
     LandingPage('dashboard', ugettext_noop('Dashboard'), 'dashboard_default'),
-    LandingPage('webapps', ugettext_noop('Web Apps'), get_cloudcare_urlname),
+    LandingPage('webapps', ugettext_noop('Web Apps'), 'formplayer_main'),
     LandingPage('reports', ugettext_noop('Reports'), 'reports_home'),
     # Only allowed if toggles.DATA_FILE_DOWNLOAD.enabled(domain)
     LandingPage('downloads', ugettext_noop('Data File Downloads'), 'download_data_files'),
