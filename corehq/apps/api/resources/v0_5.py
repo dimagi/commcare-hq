@@ -80,10 +80,8 @@ from corehq.apps.users.models import (
     CouchUser,
     Permissions,
     SQLUserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -121,10 +119,7 @@ def _set_role_for_bundle(kwargs, bundle):
         qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
-        # check for preset roles and now create them for the domain
-        preset_role_id = UserRolePresets.get_preset_role_id(bundle.data.get('role'))
-        if preset_role_id:
-            bundle.obj.set_role(kwargs['domain'], preset_role_id)
+        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -325,8 +320,6 @@ class WebUserResource(v0_1.WebUserResource):
             else:
                 if not details.get('role', None):
                     raise BadRequest("Please assign role for non admin user")
-                elif self._invalid_user_role(request, details):
-                    raise BadRequest(f"Invalid User Role '{details.get('role')}'")
 
         return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
 
@@ -393,9 +386,6 @@ class WebUserResource(v0_1.WebUserResource):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
         return bundle
-
-    def _invalid_user_role(self, request, details):
-        return details.get('role') not in get_all_role_names_for_domain(request.domain)
 
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True
