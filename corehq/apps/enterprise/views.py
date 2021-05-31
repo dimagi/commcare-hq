@@ -26,7 +26,12 @@ from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import privileges
-from corehq.apps.accounting.models import CustomerInvoice, CustomerBillingRecord
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    CustomerInvoice,
+    CustomerBillingRecord,
+    Subscription,
+)
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -331,9 +336,14 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 @require_can_edit_or_view_web_users
 @require_superuser
 def enterprise_permissions(request, domain):
+    account = BillingAccount.get_account_by_domain(domain)
+    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
+    domain_names = set(s.subscriber.domain for s in subscriptions)
     context = {
         'domain': domain,   # TODO: remove
-        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
+        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),  # TODO: remove
+        'domains': sorted(domain_names),
+        'source_domain': account.permissions_source_domain,
     }
     return render(request, "enterprise/enterprise_permissions.html", context)
 
@@ -355,16 +365,24 @@ def delete_domain_permission_mirror(request, domain, mirror):
 
 @require_superuser
 @require_POST
-def create_domain_permission_mirror(request, domain):
-    from corehq.apps.users.forms import CreateDomainPermissionsMirrorForm
-    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if not form.is_valid():
-        for field, message in form.errors.items():
-            messages.error(request, message)
-    else:
-        form.save_mirror_domain()
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        message = _('You have successfully added the project space "{mirror_domain_name}".')
-        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
+def update_enterprise_permissions_source_domain(request, domain):
+    source_domain = request.POST.get('source_domain')
     redirect = reverse("enterprise_permissions", args=[domain])
+
+    account = BillingAccount.get_account_by_domain(domain)
+    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
+    domains = set(s.subscriber.domain for s in subscriptions)
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    if source_domain and source_domain not in domains:
+        messages.error(request, _("Please select a valid domain."))
+        return HttpResponseRedirect(redirect)
+
+    if source_domain:
+        account.permissions_source_domain = source_domain
+    else:
+        account.permissions_source_domain = None
+        account.permissions_ignore_domains = []
+    account.save()
+    messages.success(request, _('Permissions saved.'))
     return HttpResponseRedirect(redirect)
