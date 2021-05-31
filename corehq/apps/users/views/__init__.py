@@ -684,7 +684,7 @@ def enterprise_permissions(request, domain):
         'domain': domain,   # TODO: remove
         'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
     }
-    return render(request, "users/domain_permissions_mirror.html", context)  # TODO: move template
+    return render(request, "enterprise/enterprise_permissions.html", context)
 
 
 @require_superuser
