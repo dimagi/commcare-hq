@@ -80,4 +80,5 @@ branches:
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
+    - sk/test_role_create_update  # Simon May 31
 submodules: { }
