@@ -354,16 +354,21 @@ def enterprise_permissions(request, domain):
 
 @require_superuser
 @require_POST
-def delete_domain_permission_mirror(request, domain, mirror):
-    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
-    if mirror_obj:
-        mirror_obj.delete()
-        message = _('You have successfully deleted the project space "{mirror}".')
-        messages.success(request, message.format(mirror=mirror))
-    else:
-        message = _('The project space you are trying to delete was not found.')
-        messages.error(request, message)
+def toggle_enterprise_permission(request, domain, mirror):
+    account = BillingAccount.get_account_by_domain(domain)
+    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
+    domains = set(s.subscriber.domain for s in subscriptions)
+
     redirect = reverse("enterprise_permissions", args=[domain])
+    if mirror not in domains:
+        messages.error(request, _("Could not update permissions."))
+        return HttpResponseRedirect(redirect)
+    if mirror in account.permissions_ignore_domains:
+        account.permissions_ignore_domains.remove(mirror)
+    else:
+        account.permissions_ignore_domains.append(mirror)
+    account.save()
+    messages.success(request, _('Permissions saved.'))
     return HttpResponseRedirect(redirect)
 
 
