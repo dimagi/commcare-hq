@@ -1,7 +1,9 @@
-from corehq.apps.users.models import Permissions, SQLUserRole, UserRolePresets
+from corehq.apps.users.models import SQLUserRole, UserRolePresets
 
 
 def get_custom_roles_for_domain(domain):
+    """Returns a list of roles for the domain excluding archived roles
+    and 'default' roles."""
     return [
         role for role in SQLUserRole.objects.get_by_domain(domain)
         if role.name not in UserRolePresets.INITIAL_ROLES
