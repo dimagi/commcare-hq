@@ -1941,18 +1941,18 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         all_case_links = []
         for case_id, case_name in cases_with_other_forms.items():
             if case_id == case_id_from_request:
-                all_case_links.append([(
-                    format_html(_("{}s (this case)"), case_name)
-                )])
+                all_case_links.append(
+                    format_html(_("{} (this case)"), case_name)
+                )
             else:
-                all_case_links.append([format_html(_(
+                all_case_links.append(format_html(_(
                     '<a href="{}#!history">{}</a>'),
                     reverse("case_data", args=[domain, case_id]),
                     case_name
-                )])
+                ))
         return all_case_links
 
-    case_links = format_html_join(", ", "{}", _get_all_case_links())
+    case_links = format_html_join(", ", "{}", ((link,) for link in _get_all_case_links()))
 
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
