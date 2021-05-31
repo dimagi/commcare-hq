@@ -23,6 +23,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // skip geocoder address
                 return true;
             }
+            if (model.get('input') === 'select') {
+                return value.join(" ");
+            }
             return value;
         },
         decodeValue = function (model, value) {
@@ -31,6 +34,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             if (model.get("input") === "daterange") {
                 return value.replace("__range__", "").replace("__", separator);
+            }
+            if (model.get('input') === 'select') {
+                return value.split(" ");
             }
             return value;
         };
@@ -45,11 +51,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
                 value = this.options.model.get('value');
-
-            // Initial values are sent from formplayer as strings, but dropdowns expect an integer
-            if (value && this.options.model.get('input') === "select1") {
-                value = parseInt(value);
-            }
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -119,14 +120,26 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 else {
                     // Set lookup table option by label
-                    var option = domElement.find("option").filter(function (_) {
-                        return $(this).text().trim() === value;
-                    });
-                    if (option.length === 1) {
-                        domElement.val(String(option.index() - 1)).trigger("change");
-                    } else {
-                        domElement.val("-1").trigger('change');
+                    var matchingOption = function(el) {
+                        return el.find("option").filter(function (_) {
+                            return $(this).text().trim() === value;
+                        });
                     }
+                    domElement.each(function () {
+                        var option = matchingOption($(this))
+                        if (this.multiple === true) {
+                            if (option.length === 1 && $(this).val().indexOf(option.val()) === -1) {
+                                $(this).val($(this).val().concat(option.val())).trigger("change");
+                            }
+                        }
+                        else {
+                            if (option.length === 1) {
+                                $(this).val(String(option.index() - 1)).trigger("change");
+                            } else {
+                                $(this).val("-1").trigger('change');
+                            }
+                        }
+                    });
                 }
             };
         },
@@ -238,8 +251,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model = this.parentModel;
             $fields.each(function (index) {
                 if (this.tagName === 'SELECT' && this.multiple) {
-                    var val = Array.from(this.selectedOptions).map(option => option.value)
-                        .join(" ");
+                    var val = $(this).val();
                 }
                 else if (this.value !== '') {
                     val = this.value
@@ -268,8 +280,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = parseInt(response.models[i].get('value'));
+                            value = response.models[i].get('value');
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
+                        if ($field.attr('multiple')) {
+                            value = value.split(" ");
+                        }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
