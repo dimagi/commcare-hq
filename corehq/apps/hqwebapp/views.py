@@ -199,48 +199,50 @@ def redirect_to_default(req, domain=None):
             url = reverse('domain_login', args=[domain])
         else:
             url = reverse('login')
-    elif domain and _two_factor_needed(domain, req):
+        return HttpResponseRedirect(url)
+
+    if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
             status=403,
         )
-    else:
-        if domain:
-            domain = normalize_domain_name(domain)
-            domains = [Domain.get_by_name(domain)]
-        else:
-            domains = Domain.active_for_user(req.user)
 
-        if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain')
-        elif 1 == len(domains):
-            from corehq.apps.users.models import DomainMembershipError
-            if domains[0]:
-                domain = domains[0].name
-                couch_user = req.couch_user
-                try:
-                    role = couch_user.get_role(domain)
-                except DomainMembershipError:
-                    # commcare users without roles should always be denied access
-                    if couch_user.is_commcare_user():
-                        raise Http404()
-                    else:
-                        # web users without roles are redirected to the dashboard default
-                        # view since some domains allow web users to request access if they
-                        # don't have it
-                        url = reverse("dashboard_domain", args=[domain])
+    if domain:
+        domain = normalize_domain_name(domain)
+        domains = [Domain.get_by_name(domain)]
+    else:
+        domains = Domain.active_for_user(req.user)
+
+    if 0 == len(domains) and not req.user.is_superuser:
+        return redirect('registration_domain')
+    elif 1 == len(domains):
+        from corehq.apps.users.models import DomainMembershipError
+        if domains[0]:
+            domain = domains[0].name
+            couch_user = req.couch_user
+            try:
+                role = couch_user.get_role(domain)
+            except DomainMembershipError:
+                # commcare users without roles should always be denied access
+                if couch_user.is_commcare_user():
+                    raise Http404()
                 else:
-                    if role and role.default_landing_page:
-                        url = get_redirect_url(role.default_landing_page, domain)
-                    elif couch_user.is_commcare_user():
-                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
-                    else:
-                        url = reverse("dashboard_domain", args=[domain])
+                    # web users without roles are redirected to the dashboard default
+                    # view since some domains allow web users to request access if they
+                    # don't have it
+                    url = reverse("dashboard_domain", args=[domain])
             else:
-                raise Http404()
+                if role and role.default_landing_page:
+                    url = get_redirect_url(role.default_landing_page, domain)
+                elif couch_user.is_commcare_user():
+                    url = reverse(get_cloudcare_urlname(domain), args=[domain])
+                else:
+                    url = reverse("dashboard_domain", args=[domain])
         else:
-            url = settings.DOMAIN_SELECT_URL
+            raise Http404()
+    else:
+        url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
 
 
