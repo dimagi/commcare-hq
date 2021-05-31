@@ -78,4 +78,5 @@ branches:
     - bmb/sso-next-redirect-test  # Biyeun 27 May
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
+    - sr/cs-multiselect  # Sravan May 31
 submodules: { }
