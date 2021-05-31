@@ -1430,19 +1430,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
-
         return menu
 
     def _get_locations_menu(self):
@@ -1584,6 +1571,18 @@ class EnterpriseSettingsTab(UITab):
                         },
                     ],
                 })
+        if self.couch_user.is_superuser:
+            from corehq.apps.users.models import DomainPermissionsMirror
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or DomainPermissionsMirror.mirror_domains(self.domain):
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 

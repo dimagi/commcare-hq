@@ -13,6 +13,7 @@ from corehq.apps.sso.views.enterprise_admin import (
     ManageSSOEnterpriseView,
     EditIdentityProviderEnterpriseView,
 )
+from corehq.apps.users.views import enterprise_permissions
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
@@ -22,6 +23,7 @@ domain_specific = [
         name='enterprise_dashboard_email'),
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
+    url(r'^permissions/$', enterprise_permissions, name="enterprise_permissions"),
     url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
     url(r'^settings/edit/$', edit_enterprise_settings, name='edit_enterprise_settings'),
     url(r'^billing_statements/$', EnterpriseBillingStatementsView.as_view(),
