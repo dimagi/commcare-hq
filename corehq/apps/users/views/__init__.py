@@ -92,7 +92,7 @@ from corehq.apps.users.forms import (
     UpdateUserRoleForm,
     CreateDomainPermissionsMirrorForm,
 )
-from corehq.apps.users.landing_pages import get_allowed_landing_pages
+from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -820,7 +820,14 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    role = _update_role_from_view(domain, role_data)
+
+    try:
+        role = _update_role_from_view(domain, role_data)
+    except ValueError as e:
+        response = HttpResponseBadRequest()
+        response.content = str(e)
+        return response
+
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
     response_data['hasUsersAssigned'] = user_count > 0
@@ -828,6 +835,10 @@ def post_user_role(request, domain):
 
 
 def _update_role_from_view(domain, role_data):
+    landing_page = role_data["default_landing_page"]
+    if landing_page:
+        validate_landing_page(domain, landing_page)
+
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -848,7 +859,7 @@ def _update_role_from_view(domain, role_data):
 
     role.domain = domain
     role.name = role_data["name"]
-    role.default_landing_page = role_data["default_landing_page"]  # TODO: validate this
+    role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
 

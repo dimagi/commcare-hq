@@ -137,3 +137,9 @@ class TestUpdateRoleFromView(TestCase):
         self.assertTrue(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
+
+    def test_landing_page_validation(self):
+        role_data = self.BASE_JSON.copy()
+        role_data["default_landing_page"] = "bad value"
+        with self.assertRaises(ValueError):
+            _update_role_from_view(self.domain, role_data)
