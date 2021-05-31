@@ -1304,31 +1304,3 @@ class UserFilterForm(forms.Form):
             domains = DomainPermissionsMirror.mirror_domains(self.domain)
             domains += [self.domain]
         return domains
-
-
-class CreateDomainPermissionsMirrorForm(forms.Form):
-    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        self.mirror_domain = None
-        super().__init__(*args, **kwargs)
-
-    def clean_mirror_domain(self):
-        mirror_domain_name = self.data.get('mirror_domain')
-        if self.domain == mirror_domain_name:
-            raise forms.ValidationError(_("""
-                Enterprise permissions cannot be granted from a project space to itself.
-            """))
-        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if not self.mirror_domain:
-            raise forms.ValidationError(_('Please enter valid project space.'))
-        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
-            message = _('"{mirror_domain_name}" has already been added.')
-            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
-        return mirror_domain_name
-
-    def save_mirror_domain(self):
-        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
-        mirror.save()
