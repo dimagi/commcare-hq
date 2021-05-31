@@ -253,7 +253,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
@@ -351,7 +351,7 @@ class WebUserResource(v0_1.WebUserResource):
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
         self._validate(bundle)
         try:
             self._meta.domain = kwargs['domain']
