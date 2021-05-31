@@ -9,7 +9,8 @@ class ModelAction(Enum):
     DELETE = HQLogEntry.DELETE
 
 
-def log_model_change(domain, user, model_object, message=None, fields_changed=None, action=ModelAction.UPDATE):
+def log_model_change(domain, user, model_object, message=None, fields_changed=None, action=ModelAction.UPDATE,
+                     can_skip_domain=False):
     """
     :param domain: domain where the update was initiated
     :param user: User making the change (couch user)
@@ -17,8 +18,9 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
     :param message: Message text
     :param fields_changed: List of model field names that have
     :param action: Action on the model
+    :param can_skip_domain: flag to allow domain less entry
     """
-    if not domain:
+    if not domain and not can_skip_domain:
         raise ValueError("Please pass domain")
 
     if message is None and fields_changed is None:

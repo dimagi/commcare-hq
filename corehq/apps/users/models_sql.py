@@ -206,7 +206,7 @@ class HQLogEntry(models.Model):
         (UPDATE, _('Update')),
         (DELETE, _('Delete')),
     )
-    domain = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True, null=True)
     object_type = models.CharField(max_length=255, db_index=True, choices=(
         ('CommCareUser', 'CommCareUser'),
         ('WebUser', 'WebUser'),

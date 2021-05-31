@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='HQLogEntry',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('domain', models.CharField(db_index=True, max_length=255)),
+                ('domain', models.CharField(db_index=True, max_length=255, null=True)),
                 ('object_type', models.CharField(choices=[('CommCareUser', 'CommCareUser'),
                                                           ('WebUser', 'WebUser')],
                                                  db_index=True, max_length=255)),

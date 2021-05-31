@@ -1453,7 +1453,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', metadata=None, **kwargs):
+               first_name='', last_name='', metadata=None, can_skip_domain=False, **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1620,7 +1620,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, domain, created_by, created_via):
+    def log_user_create(self, domain, created_by, created_via, can_skip_domain=False):
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
@@ -1630,7 +1630,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             created_by,
             self,
             message=f"created_via: {created_via}",
-            action=ModelAction.CREATE
+            action=ModelAction.CREATE,
+            can_skip_domain=can_skip_domain,
         )
 
 
@@ -1771,6 +1772,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                commit=True,
                is_account_confirmed=True,
                metadata=None,
+               can_skip_domain=False,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
@@ -1804,7 +1806,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-            commcare_user.log_user_create(domain, created_by, created_via)
+            commcare_user.log_user_create(domain, created_by, created_via, can_skip_domain=can_skip_domain)
         return commcare_user
 
     @property
@@ -2389,13 +2391,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, **kwargs):
+               metadata=None, can_skip_domain=False, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(domain, created_by, created_via)
+        web_user.log_user_create(domain, created_by, created_via, can_skip_domain=can_skip_domain)
         return web_user
 
     def is_commcare_user(self):
