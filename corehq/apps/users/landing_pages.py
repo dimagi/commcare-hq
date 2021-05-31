@@ -7,12 +7,7 @@ from django.utils.translation import ugettext_noop
 from corehq import toggles
 
 
-class LandingPage(namedtuple('LandingPage', ['id', 'name', 'urlname'])):
-
-    def get_urlname(self, domain):
-        if callable(self.urlname):
-            return self.urlname(domain)
-        return self.urlname
+LandingPage = namedtuple('LandingPage', ['id', 'name', 'urlname'])
 
 
 ALL_LANDING_PAGES = (
@@ -39,4 +34,4 @@ def get_landing_page(domain, landing_page_id):
 
 def get_redirect_url(landing_page_id, domain):
     page = get_landing_page(domain, landing_page_id)
-    return reverse(page.get_urlname(domain), args=[domain])
+    return reverse(page.urlname, args=[domain])
