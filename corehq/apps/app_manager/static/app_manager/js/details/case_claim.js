@@ -84,7 +84,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
             label: '',
             hint: '',
             appearance: '',
+            isMultiselect: false,
             defaultValue: '',
+            hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
         });
@@ -94,7 +96,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.label = ko.observable(options.label);
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
+        self.isMultiselect = ko.observable(options.isMultiselect);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -144,7 +148,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self, ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression'], saveButton);
+        subscribeToSave(self,
+            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression', 'isMultiselect'], saveButton);
 
         return self;
     };
@@ -258,7 +263,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 var label = searchProperties[i].label[lang];
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1") {
+                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
                     var uri = searchProperties[i].itemset.instance_uri;
                     if (uri !== null && uri.includes("commcare-reports")) {
                         appearance = "report_fixture";
@@ -273,12 +278,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
+                var isMultiselect = searchProperties[i].input_ === "select" ? true : false;
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
+                    isMultiselect: isMultiselect,
                     defaultValue: searchProperties[i].default_value,
+                    hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
@@ -313,7 +321,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
+                        is_multiselect: p.isMultiselect(),
                         default_value: p.defaultValue(),
+                        hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };
