@@ -202,7 +202,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -230,7 +229,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -530,7 +528,6 @@
           "lookup_name": "",
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -584,7 +581,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -660,7 +656,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -688,7 +683,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1227,7 +1221,6 @@
           "lookup_name": "Pines",
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1364,7 +1357,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -1436,7 +1428,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1464,7 +1455,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1764,7 +1754,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1839,7 +1828,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -2094,7 +2082,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -2147,7 +2134,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -2172,7 +2158,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "lookup_action": null,
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -2225,7 +2210,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,

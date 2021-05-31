@@ -73,7 +73,6 @@ hqDefine("app_manager/js/details/screen", function () {
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
             ko.observable(spec[self.columnKey].persistent_case_tile_from_module || ""));
-        self.sortNodesetColumns = ko.observable(spec[self.columnKey].sort_nodeset_columns || false);
         self.fireChange = function () {
             self.fire('change');
         };
@@ -171,9 +170,6 @@ hqDefine("app_manager/js/details/screen", function () {
             self.saveButton.fire('change');
         });
         self.enableTilePullDown.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.sortNodesetColumns.subscribe(function () {
             self.saveButton.fire('change');
         });
         self.columns.subscribe(function () {
@@ -274,7 +270,6 @@ hqDefine("app_manager/js/details/screen", function () {
             data.persistTileOnForms = self.persistTileOnForms();
             data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
             data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
-            data.sortNodesetColumns = self.sortNodesetColumns() ? self.sortNodesetColumns() : false;
 
             if (self.containsParentConfiguration) {
                 var parentSelect;
