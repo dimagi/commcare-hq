@@ -1,4 +1,4 @@
-from corehq.apps.users.models import Permissions, UserRole, UserRolePresets
+from corehq.apps.users.models import Permissions, SQLUserRole, UserRolePresets
 
 
 def get_or_create_role_with_permissions(domain, name, permissions):
@@ -8,7 +8,7 @@ def get_or_create_role_with_permissions(domain, name, permissions):
     if isinstance(permissions, dict):
         permissions = Permissions.wrap(permissions)
 
-    roles = UserRole.by_domain(domain)
+    roles = SQLUserRole.objects.get_by_domain(domain)
 
     # try to get a matching role from the db
     for role in roles:
@@ -16,13 +16,14 @@ def get_or_create_role_with_permissions(domain, name, permissions):
             return role
 
     # otherwise create it
-    role = UserRole.create(domain, name, permissions=permissions)
-    role.save()
-    return role
+    return SQLUserRole.create(domain, name, permissions=permissions)
 
 
 def get_custom_roles_for_domain(domain):
-    return [x for x in UserRole.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
+    return [
+        role for role in SQLUserRole.objects.get_by_domain(domain)
+        if role.name not in UserRolePresets.INITIAL_ROLES
+    ]
 
 
 def archive_custom_roles_for_domain(domain):
@@ -33,18 +34,20 @@ def archive_custom_roles_for_domain(domain):
 
 
 def unarchive_roles_for_domain(domain):
-    all_roles = UserRole.by_domain(domain, include_archived=True)
+    all_roles = SQLUserRole.objects.filter(domain=domain, is_archived=True)
     for role in all_roles:
-        if role.is_archived:
-            role.is_archived = False
-            role.save()
+        role.is_archived = False
+        role.save()
 
 
 def reset_initial_roles_for_domain(domain):
-    initial_roles = [x for x in UserRole.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
+    initial_roles = [
+        role for role in SQLUserRole.objects.get_by_domain(domain)
+        if role.name in UserRolePresets.INITIAL_ROLES
+    ]
     for role in initial_roles:
-        role.permissions = UserRolePresets.get_permissions(role.name)
-        role.save()
+        role.set_permissions(UserRolePresets.get_permissions(role.name).to_list())
+        role._migration_do_sync()  # sync role to couch
 
 
 def init_domain_with_presets(domain):

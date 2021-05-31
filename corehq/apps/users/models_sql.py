@@ -85,6 +85,22 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         )
 
     @classmethod
+    @transaction.atomic
+    def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
+        from corehq.apps.users.models import Permissions
+        role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
+        if permissions is None:
+            # match couch functionality and set default permissions
+            permissions = Permissions()
+        role.set_permissions(permissions.to_list())
+        if assignable_by:
+            if not isinstance(assignable_by, list):
+                assignable_by = [assignable_by]
+            role.set_assignable_by(assignable_by)
+        role._migration_do_sync()  # sync role to couch
+        return role
+
+    @classmethod
     def _migration_get_fields(cls):
         return [
             "domain",
@@ -121,6 +137,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @transaction.atomic
     def set_permissions(self, permission_infos):
+        if not permission_infos:
+            RolePermission.objects.filter(role=self).delete()
+            return
+
         permissions_by_name = {
             rp.permission: rp
             for rp in self.rolepermission_set.all()
