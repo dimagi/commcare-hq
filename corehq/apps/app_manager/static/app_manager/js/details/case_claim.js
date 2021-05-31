@@ -86,6 +86,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             appearance: '',
             isMultiselect: false,
             defaultValue: '',
+            hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
         });
@@ -97,6 +98,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.isMultiselect = ko.observable(options.isMultiselect);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -147,7 +149,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
         subscribeToSave(self,
-            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression', 'isMultiselect'], saveButton);
+            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression', 'isMultiselect'], saveButton);
 
         return self;
     };
@@ -260,6 +262,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     defaultValue: searchProperties[i].default_value,
+                    hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
@@ -296,6 +299,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         default_value: p.defaultValue(),
+                        hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };

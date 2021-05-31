@@ -953,6 +953,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['default_value'] = prop['default_value']
         if prop['hint']:
             ret['hint'] = hint
+        if prop['hidden']:
+            ret['hidden'] = prop['hidden']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'

@@ -2083,6 +2083,7 @@ class CaseSearchProperty(DocumentSchema):
     input_ = StringProperty()
     default_value = StringProperty()
     hint = DictProperty()
+    hidden = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
