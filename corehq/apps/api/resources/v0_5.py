@@ -277,6 +277,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 django_user.delete()
                 log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
                                  action=ModelAction.DELETE)
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):
