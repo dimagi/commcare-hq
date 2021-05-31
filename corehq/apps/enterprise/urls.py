@@ -1,7 +1,6 @@
 from django.conf.urls import url
 
 from corehq.apps.enterprise.views import (
-    delete_domain_permission_mirror,
     edit_enterprise_settings,
     enterprise_dashboard,
     enterprise_dashboard_download,
@@ -9,6 +8,7 @@ from corehq.apps.enterprise.views import (
     enterprise_dashboard_total,
     enterprise_permissions,
     enterprise_settings,
+    toggle_enterprise_permission,
     update_enterprise_permissions_source_domain,
 )
 from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
@@ -26,8 +26,8 @@ domain_specific = [
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
     url(r'^permissions/$', enterprise_permissions, name="enterprise_permissions"),
-    url(r'^permissions/delete/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
-        name='delete_domain_permission_mirror'),
+    url(r'^permissions/toggle/(?P<mirror>[ \w-]+)/$', toggle_enterprise_permission,
+        name='toggle_enterprise_permission'),
     url(r'^permissions/source/$', update_enterprise_permissions_source_domain,
         name='update_enterprise_permissions_source_domain'),
     url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
