@@ -676,18 +676,15 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
-@method_decorator(require_superuser, name='dispatch')
-class DomainPermissionsMirrorView(BaseUserSettingsView):
-    template_name = 'users/domain_permissions_mirror.html'
-    page_title = ugettext_lazy("Enterprise Permissions")
-    urlname = 'domain_permissions_mirror'
-
-    @property
-    def page_context(self):
-        return {
-            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
-        }
+# TODO: move these 3 views
+@require_can_edit_or_view_web_users
+@require_superuser
+def enterprise_permissions(request, domain):
+    context = {
+        'domain': domain,   # TODO: remove
+        'mirrors': sorted(DomainPermissionsMirror.mirror_domains(domain)),
+    }
+    return render(request, "users/domain_permissions_mirror.html", context)  # TODO: move template
 
 
 @require_superuser
@@ -701,7 +698,7 @@ def delete_domain_permission_mirror(request, domain, mirror):
     else:
         message = _('The project space you are trying to delete was not found.')
         messages.error(request, message)
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    redirect = reverse("enterprise_permissions", args=[domain])
     return HttpResponseRedirect(redirect)
 
 
@@ -717,7 +714,7 @@ def create_domain_permission_mirror(request, domain):
         mirror_domain_name = form.cleaned_data.get("mirror_domain")
         message = _('You have successfully added the project space "{mirror_domain_name}".')
         messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    redirect = reverse("enteprise_permissions", args=[domain])
     return HttpResponseRedirect(redirect)
 
 
