@@ -120,13 +120,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 else {
                     // Set lookup table option by label
-                    var matchingOption = function(el) {
+                    var matchingOption = function (el) {
                         return el.find("option").filter(function (_) {
                             return $(this).text().trim() === value;
                         });
                     }
                     domElement.each(function () {
-                        var option = matchingOption($(this))
+                        var option = matchingOption($(this));
                         if (this.multiple === true) {
                             if (option.length === 1 && $(this).val().indexOf(option.val()) === -1) {
                                 $(this).val($(this).val().concat(option.val())).trigger("change");
@@ -254,7 +254,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var val = $(this).val();
                 }
                 else if (this.value !== '') {
-                    val = this.value
+                    val = this.value;
                 }
                 answers[model[index].get('id')] = encodeValue(model[index], val);
             });
