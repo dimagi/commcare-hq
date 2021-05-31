@@ -10,9 +10,10 @@ NAVIGATION_EVENT_TABLE = "auditcare_navigationeventaudit"
 
 
 def _create_index_sql(table_name, index_name):
-    return "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} (couch_id)".format(
-        index_name, table_name
-    )
+    return """
+        CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} (couch_id)
+        WHERE couch_id IS NOT NULL
+    """.format(index_name, table_name)
 
 
 def _drop_index_sql(index_name):
