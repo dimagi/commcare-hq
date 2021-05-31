@@ -79,8 +79,9 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Permissions,
-    UserRole,
-    WebUser, UserRolePresets,
+    SQLUserRole,
+    UserRolePresets,
+    WebUser,
 )
 from corehq.apps.users.role_utils import get_all_role_names_for_domain
 from corehq.apps.users.util import raw_username
@@ -115,9 +116,9 @@ def user_es_call(domain, q, fields, size, start_at):
 
 def _set_role_for_bundle(kwargs, bundle):
     # check for roles associated with the domain
-    domain_roles = UserRole.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
+    domain_roles = SQLUserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
     if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()
+        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
         # check for preset roles and now create them for the domain
