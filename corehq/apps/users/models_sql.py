@@ -1,3 +1,4 @@
+import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -9,6 +10,43 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
+
+
+@attr.s(frozen=True)
+class StaticRole:
+    domain = attr.ib()
+    name = attr.ib()
+    permissions = attr.ib()
+    default_landing_page = None
+    is_non_admin_editable = False
+    is_archived = False
+    upstream_id = None
+    couch_id = None
+    assignable_by = []
+
+    @classmethod
+    def domain_admin(cls, domain):
+        from corehq.apps.users.models import Permissions
+        return StaticRole(domain, "Admin", Permissions.max())
+
+    @classmethod
+    def domain_default(cls, domain):
+        from corehq.apps.users.models import Permissions
+        return StaticRole(domain, None, Permissions())
+
+    def get_qualified_id(self):
+        return self.name.lower() if self.name else None
+
+    @property
+    def get_id(self):
+        return None
+
+    @property
+    def cache_version(self):
+        return self.name
+
+    def to_json(self):
+        return role_to_dict(self)
 
 
 class UserRoleManager(models.Manager):
@@ -70,6 +108,13 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
+
+    @property
+    def cache_version(self):
+        return self.modified_on.isoformat()
+
+    def to_json(self):
+        return role_to_dict(self)
 
     def set_permissions(self, permission_infos):
         permissions_by_name = {
@@ -238,3 +283,14 @@ def migrate_role_assignable_by_to_sql(couch_role, sql_role):
                 assignable_by_mapping[couch_id] = assignable_by_sql_role.id
 
     sql_role.set_assignable_by(list(assignable_by_mapping.values()))
+
+
+def role_to_dict(role):
+    data = {}
+    for field in SQLUserRole._migration_get_fields():
+        data[field] = getattr(role, field)
+    data["permissions"] = role.permissions.to_json()
+    data["assignable_by"] = role.assignable_by
+    if role.couch_id:
+        data["_id"] = role.couch_id
+    return data
