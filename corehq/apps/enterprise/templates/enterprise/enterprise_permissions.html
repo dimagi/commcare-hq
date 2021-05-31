@@ -3,26 +3,33 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% requirejs_main "hqwebapp/js/widgets" %}
+
 {% block page_content %}
   <p class="lead">
     {% blocktrans %}
-      View enterprise permissions.
+      Enterprise Permissions
     {% endblocktrans %}
   </p>
 
+  <!-- TODO: make help text more helpful -->
   <p class="help-block">
     {% blocktrans %}
-      Web users in this project space are automatically granted their same permissions
-      in the following spaces. They will not appear as members of these spaces.
+      Web users in the controlling project space will be automatically granted their same permissions
+      in the rest of the enterprise. They will not appear as members of these other spaces. You may also
+      exclude specific project spaces from enterprise permissions.
     {% endblocktrans %}
   </p>
 
-  <form class="well well-sm form-inline" method="POST" action="{% url "create_domain_permission_mirror" domain %}" id="create_group_form">
+  <form method="POST" action="{% url "update_enterprise_permissions_source_domain" domain %}">
     {% csrf_token %}
-    <input type="text" placeholder="{% trans "Project Space" %}" id="mirror_domain" name="mirror_domain" class="form-control" />
-    <button class="btn btn-primary" type="submit">
-      <i class="fa fa-plus"></i>
-      {% trans "Add Project Space" %}
+    <select name="source_domain" class="hqwebapp-select2" data-allow-clear="true" data-placeholder="{% trans_html_attr "Select a Project Space" %}">
+      {% for domain in domains %}
+        <option{% if domain == source_domain %} selected{% endif %}>{{ domain }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-default" type="submit">
+      {% trans "Save" %}
     </button>
   </form>
 
