@@ -376,7 +376,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, 'Field Implementer')
+        self.assertEqual(user_back.get_role(self.domain.name).name, 'Field Implementer')
         user_back.delete(deleted_by=None)
 
     def test_create_with_custom_role(self):
@@ -389,7 +389,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, new_user_role.name)
+        self.assertEqual(user_back.get_role(self.domain.name).name, new_user_role.name)
         user_back.delete(deleted_by=None)
 
     def test_create_with_invalid_admin_role(self):
