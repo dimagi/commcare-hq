@@ -21,6 +21,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import init_domain_with_presets
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
@@ -273,6 +274,11 @@ class TestWebUserResource(APIResourceTest):
         ],
         "role": "Admin"
     }
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        init_domain_with_presets(cls.domain.name)
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
