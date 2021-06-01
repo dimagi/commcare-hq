@@ -1941,12 +1941,13 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         all_case_links = []
         for case_id, case_name in cases_with_other_forms.items():
             if case_id == case_id_from_request:
-                all_case_links.append(
-                    format_html(_("{} (this case)"), case_name)
-                )
+                all_case_links.append(format_html(
+                    _("{} (this case)"),
+                    case_name
+                ))
             else:
-                all_case_links.append(format_html(_(
-                    '<a href="{}#!history">{}</a>'),
+                all_case_links.append(format_html(
+                    '<a href="{}#!history">{}</a>',
                     reverse("case_data", args=[domain, case_id]),
                     case_name
                 ))
