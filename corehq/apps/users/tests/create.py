@@ -1,4 +1,3 @@
-from datadog import initialize
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
