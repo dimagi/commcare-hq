@@ -20,8 +20,10 @@ from corehq.apps.users.models import (
     CommCareUser,
     UserRole,
     WebUser,
+    UserRolePresets,
+    SQLUserRole
 )
-from corehq.apps.users.role_utils import init_domain_with_presets
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
@@ -278,7 +280,7 @@ class TestWebUserResource(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        init_domain_with_presets(cls.domain.name)
+        initialize_domain_with_default_roles(cls.domain.name)
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -315,7 +317,8 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_users[0])
 
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
-        another_user.set_role(self.domain.name, 'field-implementer')
+        role = SQLUserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        another_user.set_role(self.domain.name, role.get_qualified_id())
         another_user.save()
         self.addCleanup(another_user.delete, deleted_by=None)
 
