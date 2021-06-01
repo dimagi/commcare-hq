@@ -90,9 +90,10 @@ def import_resource(
     case_id = uuid4().hex
     if resource_type.name == 'ServiceRequest':
         try:
-            claim_service_request(requests, resource, case_id)
+            resource = claim_service_request(requests, resource, case_id)
         except ServiceRequestNotActive:
             return  # Nothing to do
+
     # TODO:
     #   * Map resource properties to case properties
     #   * Save case
@@ -122,10 +123,10 @@ def claim_service_request(requests, service_request, case_id):
     headers = {'If-Match': etag}
     response = requests.put(endpoint, json=service_request, headers=headers)
     if 200 <= response.status < 300:
-        return
+        return service_request
     if response.status == 412:
         # ETag didn't match. Try again.
-        claim_service_request(requests, service_request, case_id)
+        return claim_service_request(requests, service_request, case_id)
     else:
         response.raise_for_status()
 

@@ -155,8 +155,12 @@ class TestClaimServiceRequest(TestCase):
                 auth_manager=self.no_auth,
                 logger=lambda level, entry: None,
             )
-            # No news is good news
-            claim_service_request(requests, self.service_request, '0f00')
+            resource = claim_service_request(
+                requests,
+                self.service_request,
+                '0f00',
+            )
+            self.assertEqual(resource, response.service_request)
 
     def test_service_request_412(self):
         response_active = ServiceRequestResponse()
