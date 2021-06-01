@@ -364,7 +364,8 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             raise AppLinkError(
                 _(
                     'This application uses mobile UCRs '
-                    'which are not available in the linked domain: {ucr_id}'
+                    'which are not available in the linked domain: {ucr_id}. '
+                    'Try linking these reports first and try again.'
                 ).format(ucr_id=str(e))
             )
 
