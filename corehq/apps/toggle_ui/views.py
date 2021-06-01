@@ -243,16 +243,26 @@ def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_e
     for entry in changed_entries:
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
-        if namespace == NAMESPACE_DOMAIN:
-            domain = entry
-            if static_toggle.save_fn is not None:
-                static_toggle.save_fn(domain, enabled)
-            toggles_enabled_for_domain.clear(domain)
-        elif namespace != NAMESPACE_EMAIL_DOMAIN:
-            # these are sent down with no namespace
-            assert ':' not in entry, entry
-            username = entry
-            toggles_enabled_for_user.clear(username)
+        _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
+        _clear_cache_for_toggle(namespace, entry)
+
+
+def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
+    if namespace == NAMESPACE_DOMAIN:
+        domain = entry
+        if static_toggle.save_fn is not None:
+            static_toggle.save_fn(domain, enabled)
+
+
+def _clear_cache_for_toggle(namespace, entry):
+    if namespace == NAMESPACE_DOMAIN:
+        domain = entry
+        toggles_enabled_for_domain.clear(domain)
+    elif namespace != NAMESPACE_EMAIL_DOMAIN:
+        # these are sent down with no namespace
+        assert ':' not in entry, entry
+        username = entry
+        toggles_enabled_for_user.clear(username)
 
 
 def _clear_caches_for_dynamic_toggle(static_toggle):
@@ -349,5 +359,7 @@ def set_toggle(request, toggle_slug):
 
     if enabled:
         _notify_on_change(static_toggle, [item], request.user.username)
+
+    _clear_cache_for_toggle(namespace, item)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
