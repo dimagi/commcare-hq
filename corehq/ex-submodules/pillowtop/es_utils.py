@@ -26,16 +26,6 @@ ANALYZERS = {
     }
 }
 
-REMOVE_SETTING = None
-
-ES_ENV_SETTINGS = {
-    'icds': {
-        'hqusers': {
-            "number_of_replicas": 1,
-        },
-    },
-}
-
 XFORM_HQ_INDEX_NAME = "xforms"
 CASE_HQ_INDEX_NAME = "hqcases"
 USER_HQ_INDEX_NAME = "hqusers"
@@ -102,15 +92,9 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
             ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
         )
 
-        overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
-            overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
-
-        for hq_index_name in ['default', self.hq_index_name]:
-            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(hq_index_name, {}).items():
-                if value is REMOVE_SETTING:
-                    del meta_settings['settings'][key]
-                else:
+            for hq_index_name in ['default', self.hq_index_name]:
+                for key, value in settings.ES_SETTINGS.get(hq_index_name, {}).items():
                     meta_settings['settings'][key] = value
 
         return meta_settings
