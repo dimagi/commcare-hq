@@ -30,7 +30,6 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     CustomerInvoice,
     CustomerBillingRecord,
-    Subscription,
 )
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
 from corehq.apps.domain.decorators import (
@@ -337,14 +336,13 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 @require_superuser
 def enterprise_permissions(request, domain):
     account = BillingAccount.get_account_by_domain(domain)
-    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
-    domains = set(s.subscriber.domain for s in subscriptions)
+    all_domains = set(account.get_domains())
     ignored_domains = set(account.permissions_ignore_domains)
-    controlled_domains = domains - ignored_domains - set([account.permissions_source_domain])
+    controlled_domains = all_domains - ignored_domains - set([account.permissions_source_domain])
 
     context = {
-        'domain': domain,   # TODO: remove
-        'domains': sorted(domains),
+        'domain': domain,
+        'all_domains': sorted(all_domains),
         'source_domain': account.permissions_source_domain,
         'ignored_domains': sorted(list(ignored_domains)),
         'controlled_domains': sorted(list(controlled_domains)),
@@ -356,8 +354,7 @@ def enterprise_permissions(request, domain):
 @require_POST
 def toggle_enterprise_permission(request, domain, mirror):
     account = BillingAccount.get_account_by_domain(domain)
-    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
-    domains = set(s.subscriber.domain for s in subscriptions)
+    domains = account.get_domains()
 
     redirect = reverse("enterprise_permissions", args=[domain])
     if mirror not in domains:
@@ -379,11 +376,7 @@ def update_enterprise_permissions_source_domain(request, domain):
     redirect = reverse("enterprise_permissions", args=[domain])
 
     account = BillingAccount.get_account_by_domain(domain)
-    subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
-    domains = set(s.subscriber.domain for s in subscriptions)
-
-    redirect = reverse("enterprise_permissions", args=[domain])
-    if source_domain and source_domain not in domains:
+    if source_domain and source_domain not in account.get_domains():
         messages.error(request, _("Please select a valid domain."))
         return HttpResponseRedirect(redirect)
 
