@@ -21,8 +21,8 @@ hqDefine('registration/js/login', [
         });
 
         // populate username field if set in the query string
-        const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username');
+        var urlParams = new URLSearchParams(window.location.search);
+        var username = urlParams.get('username');
         if (username) {
             var usernameElt = document.getElementById('id_auth-username');
             if (usernameElt) {
@@ -31,8 +31,8 @@ hqDefine('registration/js/login', [
         }
 
         if (initialPageData.get('enforce_sso_login')) {
-            let $passwordField = $('#id_auth-password');
-            let loginController = userLoginForm.loginController({
+            var $passwordField = $('#id_auth-password');
+            var loginController = userLoginForm.loginController({
                 initialUsername: $('#id_auth-username').val(),
                 passwordField: $passwordField,
                 passwordFormGroup: $passwordField.closest('.form-group'),
