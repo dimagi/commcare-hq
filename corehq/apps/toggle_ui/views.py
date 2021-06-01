@@ -341,13 +341,18 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
+    namespaced_entry = namespaced_item(item, namespace)
     if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
         action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
         ToggleAudit.objects.log_toggle_action(
-            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
+            toggle_slug, request.user.username, [namespaced_entry], action
         )
 
     if enabled:
         _notify_on_change(static_toggle, [item], request.user.username)
+
+    currently_enabled = {namespaced_entry} if enabled else set()
+    previously_enabled = set() if enabled else {namespaced_entry}
+    _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_enabled)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
