@@ -74,9 +74,7 @@ branches:
     - bmb/sso-remove-toggle  # Biyeun 25th May
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-cleanup-errors  # Biyeun 26 May
-    - bmb/sso-fix-iframe-login+orangejenny-patch-8
     - bmb/sso-fix-iframe-login  # Biyeun 27 May
-    - orangejenny-patch-8  # Jenny June 1
     - bmb/sso-next-redirect-test  # Biyeun 27 May
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
