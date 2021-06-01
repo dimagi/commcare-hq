@@ -452,7 +452,7 @@ sortedcontainers==2.3.0
     # via intervaltree
 sphinx-rtd-theme==0.5.2
     # via -r docs-requirements.in
-sphinx==3.5.4
+sphinx==4.0.2
     # via
     #   -r docs-requirements.in
     #   recommonmark

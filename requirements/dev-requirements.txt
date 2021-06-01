@@ -585,7 +585,7 @@ soupsieve==2.0.1
     # via beautifulsoup4
 sphinx-rtd-theme==0.5.2
     # via -r dev-requirements.in
-sphinx==3.5.4
+sphinx==4.0.2
     # via
     #   -r dev-requirements.in
     #   recommonmark
