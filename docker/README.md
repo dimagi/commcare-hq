@@ -147,13 +147,13 @@ ENV Vars
   * Same as normal `REUSE_DB`
 * DOCKER_HQ_OVERLAY=[**none**|overlayfs|**aufs**]
   * `none`: mounts commcare-hq directory in docker container read/write for
-    direct access.  This is the default when not specified with Travis jobs.
+    direct access.  This is the default when running in Travis.
   * `overlayfs`: mounts commcare-hq directory in docker container read-only and
     uses it as the "lowerdir" in an `overlayfs` mount to insulate the host OS
     data from being modified by the container.
   * `aufs`: [deprecated] same behavior as `overlayfs`, only using Docker's `aufs`
-    overlay engine instead of `overlayfs`. This is the default when not
-    specified with non-Travis jobs.
+    overlay engine instead of `overlayfs`. This is the default when not running
+    in Travis.
 * DOCKER_HQ_OVERLAYFS_CHMOD=[yes|**no**]
   * Perform a recursive chmod on the commcare-hq overlay to ensure read access
     for cchq user.
