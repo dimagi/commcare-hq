@@ -439,6 +439,25 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
+    def test_prompt_hidden(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].hidden = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" hidden="true">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
     def test_prompt_address_receiver_itemset(self, *args):
         """Setting the appearance to "address"
         """

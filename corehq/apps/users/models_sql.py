@@ -52,6 +52,10 @@ class UserRoleManager(models.Manager):
             query = query.filter(is_archived=False)
         return list(query.prefetch_related('rolepermission_set'))
 
+    def by_domain_and_name(self, domain, name):
+        # name is not unique so return all results
+        return list(self.filter(domain=domain, name=name))
+
     def by_couch_id(self, couch_id):
         return SQLUserRole.objects.get(couch_id=couch_id)
 
