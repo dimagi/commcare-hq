@@ -43,7 +43,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     defaultSearch: options.default_search,
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
-                    searchCommandLabel: options.search_command_label,
+                    searchLabel: options.search_label,
                     searchAgainLabel: options.search_again_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
