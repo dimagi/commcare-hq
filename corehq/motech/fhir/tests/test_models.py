@@ -25,7 +25,7 @@ from ..models import (
 DOMAIN = 'test-domain'
 
 
-class TestFHIRImporter(TestCase):
+class TestCaseWithConnectionSettings(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -40,6 +40,9 @@ class TestFHIRImporter(TestCase):
     def tearDownClass(cls):
         cls.conn.delete()
         super().tearDownClass()
+
+
+class TestFHIRImporter(TestCaseWithConnectionSettings):
 
     def tearDown(self):
         FHIRImporter.objects.filter(domain=DOMAIN).delete()
@@ -111,24 +114,15 @@ class TestFHIRImporter(TestCase):
             importer.full_clean()
 
 
-class TestFHIRImporterResourceType(TestCase):
+class TestCaseWithReferral(TestCaseWithConnectionSettings):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.conn = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='Test ConnectionSettings',
-            url='https://example.com/api/',
-        )
         cls.fhir_importer = FHIRImporter.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             owner_id='b0b',
-        )
-        cls.mother = CaseType.objects.create(
-            domain=DOMAIN,
-            name='mother',
         )
         cls.referral = CaseType.objects.create(
             domain=DOMAIN,
@@ -138,9 +132,23 @@ class TestFHIRImporterResourceType(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.referral.delete()
-        cls.mother.delete()
         cls.fhir_importer.delete()
-        cls.conn.delete()
+        super().tearDownClass()
+
+
+class TestFHIRImporterResourceType(TestCaseWithReferral):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.mother = CaseType.objects.create(
+            domain=DOMAIN,
+            name='mother',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mother.delete()
         super().tearDownClass()
 
     def test_search_params_empty(self):
