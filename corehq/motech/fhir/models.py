@@ -426,3 +426,36 @@ class JSONPathToResourceType(models.Model):
         FHIRImporterResourceType,
         on_delete=models.CASCADE,
     )
+
+
+class FHIRImporterResourceProperty(models.Model):
+    resource_type = models.ForeignKey(
+        FHIRImporterResourceType,
+        on_delete=models.CASCADE,
+        related_name='properties',
+    )
+    value_source_config: dict = JSONField(default=dict)
+
+    def __str__(self):
+        jsonpath = self.value_source_jsonpath
+        if jsonpath.startswith('$.'):
+            jsonpath = jsonpath[2:]
+        return f'{self.resource_type.name}.{jsonpath}'
+
+    @property
+    def case_type(self) -> CaseType:
+        return self.resource_type.case_type
+
+    @property
+    def value_source_jsonpath(self) -> str:
+        return self.value_source_config.get('jsonpath', '')
+
+    def get_value_source(self) -> ValueSource:
+        return as_value_source(self.value_source_config)
+
+    def save(self, *args, **kwargs):
+        try:
+            self.get_value_source()
+        except TypeError as err:
+            raise ConfigurationError from err
+        super().save(*args, **kwargs)

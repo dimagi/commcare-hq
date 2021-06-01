@@ -12,10 +12,13 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.value_source import CaseProperty as CasePropertyValueSource
+from corehq.motech.value_source import ValueSource
 
 from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
 from ..models import (
     FHIRImporter,
+    FHIRImporterResourceProperty,
     FHIRImporterResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
@@ -181,6 +184,88 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         self.assertEqual(related[0].related_resource_type.name, 'Patient')
         case_type = related[0].related_resource_type.case_type
         self.assertEqual(case_type.name, 'mother')
+
+
+class TestFHIRImporterResourceProperty(TestCaseWithReferral):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.service_request = FHIRImporterResourceType.objects.create(
+            fhir_importer=cls.fhir_importer,
+            name='ServiceRequest',
+            case_type=cls.referral,
+        )
+        cls.status_property = FHIRImporterResourceProperty.objects.create(
+            resource_type=cls.service_request,
+            value_source_config={
+                'jsonpath': '$.status',
+                'case_property': 'fhir_status',
+            }
+        )
+        cls.intent_property = FHIRImporterResourceProperty.objects.create(
+            resource_type=cls.service_request,
+            value_source_config={
+                'jsonpath': '$.intent',
+                'case_property': 'fhir_intent',
+            }
+        )
+        cls.subject_property = FHIRImporterResourceProperty.objects.create(
+            resource_type=cls.service_request,
+            value_source_config={
+                'jsonpath': '$.subject.reference',  # e.g. "Patient/12345"
+                'case_property': 'fhir_subject',
+            }
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.subject_property.delete()
+        cls.intent_property.delete()
+        cls.status_property.delete()
+        cls.service_request.delete()
+        super().tearDownClass()
+
+    def test_related_name(self):
+        properties = self.service_request.properties.all()
+        names = sorted([str(p) for p in properties])
+        self.assertEqual(names, [
+            'ServiceRequest.intent',
+            'ServiceRequest.status',
+            'ServiceRequest.subject.reference',
+        ])
+
+    def test_case_type(self):
+        properties = self.service_request.properties.all()
+        case_types = set(([str(p.case_type) for p in properties]))
+        self.assertEqual(case_types, {'referral'})
+
+    def test_jsonpath_set(self):
+        self.assertEqual(
+            self.subject_property.value_source_jsonpath,
+            '$.subject.reference',
+        )
+
+    def test_jsonpath_notset(self):
+        priority = FHIRImporterResourceProperty(
+            resource_type=self.service_request,
+            value_source_config={
+                'case_property': 'fhir_priority',
+            }
+        )
+        self.assertEqual(priority.value_source_jsonpath, '')
+
+    def test_value_source_good(self):
+        value_source = self.subject_property.get_value_source()
+        self.assertIsInstance(value_source, ValueSource)
+        self.assertIsInstance(value_source, CasePropertyValueSource)
+
+    def test_value_source_bad(self):
+        priority = FHIRImporterResourceProperty(
+            resource_type=self.service_request,
+        )
+        with self.assertRaises(ConfigurationError):
+            priority.save()
 
 
 class TestConfigurationErrors(TestCase):
