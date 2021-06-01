@@ -1193,7 +1193,7 @@ def quick_find(request):
     if not result:
         raise Http404()
 
-    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_mirroring=True)
+    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
     if is_member or request.couch_user.is_superuser:
         doc_info = get_doc_info(result.doc)
     else:

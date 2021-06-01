@@ -65,7 +65,7 @@ def select(request, do_not_redirect=False, next_view=None):
         if domain_obj and domain_obj.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain_obj, allow_mirroring=True)
+                request.couch_user.is_member_of(domain_obj, allow_enterprise=True)
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
