@@ -2040,3 +2040,10 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
