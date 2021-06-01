@@ -24,7 +24,7 @@
   <form method="POST" action="{% url "update_enterprise_permissions_source_domain" domain %}">
     {% csrf_token %}
     <select name="source_domain" class="hqwebapp-select2" data-allow-clear="true" data-placeholder="{% trans_html_attr "Select a Project Space" %}">
-      {% for domain in domains %}
+      {% for domain in all_domains %}
         <option{% if domain == source_domain %} selected{% endif %}>{{ domain }}</option>
       {% endfor %}
     </select>
