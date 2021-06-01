@@ -41,7 +41,7 @@ class TasksTest(TestCase):
         super().tearDownClass()
 
     def _last_accessed(self, user, domain):
-        domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
+        domain_membership = user.get_domain_membership(domain, allow_enterprise=False)
         if domain_membership:
             return domain_membership.last_accessed
         return None
