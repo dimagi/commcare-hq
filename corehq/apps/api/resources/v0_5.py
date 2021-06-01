@@ -344,6 +344,9 @@ class WebUserResource(v0_1.WebUserResource):
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
+            if key == "role":
+                # role handled in _set_role_for_bundle
+                continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     bundle.obj.phone_numbers = []

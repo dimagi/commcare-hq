@@ -743,14 +743,14 @@ class ActionMixin(OrderedXmlObject):
 
     stack = NodeField('stack', Stack)
     relevant = XPathField('@relevant')
+    auto_launch = StringField("@auto_launch")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
-    auto_launch = StringField("@auto_launch")
-    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):

@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from corehq.motech.utils import pformat_json
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -13,6 +14,7 @@ from corehq.motech.dhis2.models import (
     get_dataset,
     should_send_on_date,
 )
+from corehq.util.view_utils import reverse
 
 
 @periodic_task(
@@ -35,7 +37,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
 
 def send_dataset(
     dataset_map: SQLDataSetMap,
-    send_date: datetime.date,
+    send_date: datetime.date
 ) -> dict:
     """
     Sends a data set of data values in the following format. "period" is
@@ -75,7 +77,14 @@ def send_dataset(
     .. _DHIS2 API docs: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
-    with dataset_map.connection_settings.get_requests() as requests:
+    payload_id = dataset_map.ucr_id  # Allows us to filter Remote API Logs
+    response_log_url = reverse(
+        'motech_log_list_view',
+        args=[dataset_map.domain],
+        params={'filter_payload': payload_id}
+    )
+
+    with dataset_map.connection_settings.get_requests(payload_id) as requests:
         response = None
         try:
             dataset = get_dataset(dataset_map, send_date)
@@ -88,20 +97,26 @@ def send_dataset(
                 'success': False,
                 'error': _('There was an error retrieving some UCR data. '
                            'Try contacting support to help resolve this issue.'),
-                'text': None
+                'text': None,
+                'log_url': response_log_url,
             }
+
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
+            text = pformat_json(response.text if response else None)
+
             return {
                 'success': False,
                 'error': str(err),
                 'status_code': response.status_code if response else None,
-                'text': response.text if response else None,
+                'text': text,
+                'log_url': response_log_url,
             }
         else:
             return {
                 'success': True,
                 'status_code': response.status_code,
-                'text': response.text,
+                'text': pformat_json(response.text),
+                'log_url': response_log_url,
             }
