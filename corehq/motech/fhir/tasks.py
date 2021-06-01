@@ -5,9 +5,10 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq import toggles
+from corehq.motech.exceptions import RemoteAPIError
 from corehq.motech.requests import Requests
 
-from .bundle import get_bundle, iter_bundle, get_next_url
+from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID
 from .models import FHIRImporter, FHIRImporterResourceType
 
@@ -76,6 +77,16 @@ def import_resource(
     resource_type: FHIRImporterResourceType,
     resource: dict,
 ):
+    if 'resourceType' not in resource:
+        raise RemoteAPIError(
+            "FHIR resource missing required property 'resourceType'"
+        )
+    if resource['resourceType'] != resource_type.name:
+        raise RemoteAPIError(
+            f"API request for resource type {resource_type.name!r} returned "
+            f"resource type {resource['resourceType']!r}."
+        )
+
     case_id = uuid4().hex
     if resource_type.name == 'ServiceRequest':
         try:

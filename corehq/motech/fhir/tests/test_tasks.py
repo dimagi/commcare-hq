@@ -1,12 +1,13 @@
 import re
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from requests import HTTPError
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.motech.auth import AuthManager
+from corehq.motech.exceptions import RemoteAPIError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
@@ -16,6 +17,7 @@ from ..models import FHIRImporter, FHIRImporterResourceType
 from ..tasks import (
     ServiceRequestNotActive,
     claim_service_request,
+    import_resource,
     run_importer,
 )
 
@@ -193,3 +195,26 @@ class ServiceRequestResponse:
 
     def json(self):
         return self.service_request
+
+
+class TestImportResource(SimpleTestCase):
+
+    def test_bad_resource(self):
+        with self.assertRaises(RemoteAPIError):
+            import_resource(
+                requests=None,
+                resource_type=FooResourceType(),
+                resource={},
+            )
+
+    def test_bad_resource_type(self):
+        with self.assertRaises(RemoteAPIError):
+            import_resource(
+                requests=None,
+                resource_type=FooResourceType(),
+                resource={'resourceType': 'Bar'},
+            )
+
+
+class FooResourceType:
+    name = 'Foo'
