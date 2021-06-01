@@ -351,11 +351,10 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    namespaced_entry = namespaced_item(item, namespace)
     if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
         action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
         ToggleAudit.objects.log_toggle_action(
-            toggle_slug, request.user.username, [namespaced_entry], action
+            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
         )
 
     if enabled:
