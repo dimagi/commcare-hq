@@ -346,6 +346,10 @@ def enterprise_permissions(request, domain):
         'source_domain': account.permissions_source_domain,
         'ignored_domains': sorted(list(ignored_domains)),
         'controlled_domains': sorted(list(controlled_domains)),
+        'current_page': {
+            'page_name': _('Enterprise Permissions'),
+            'title': _('Enterprise Permissions'),
+        }
     }
     return render(request, "enterprise/enterprise_permissions.html", context)
 
