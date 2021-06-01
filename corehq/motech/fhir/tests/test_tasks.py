@@ -98,7 +98,7 @@ class TestClaimServiceRequest(TestCase):
             )
 
             with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request)
+                claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_500(self):
         with patch.object(Requests, 'get') as requests_get:
@@ -111,7 +111,7 @@ class TestClaimServiceRequest(TestCase):
             )
 
             with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request)
+                claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_on_hold(self):
         response = ServiceRequestResponse('on-hold')
@@ -125,7 +125,7 @@ class TestClaimServiceRequest(TestCase):
             )
 
             with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request)
+                claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_completed(self):
         response = ServiceRequestResponse('completed')
@@ -139,7 +139,7 @@ class TestClaimServiceRequest(TestCase):
             )
 
             with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request)
+                claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_claimed(self):
         response = ServiceRequestResponse()
@@ -153,9 +153,8 @@ class TestClaimServiceRequest(TestCase):
                 auth_manager=self.no_auth,
                 logger=lambda level, entry: None,
             )
-            case_id = claim_service_request(requests, self.service_request)
-
-        self.assertTrue(is_hex(case_id))
+            # No news is good news
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_412(self):
         response_active = ServiceRequestResponse()
@@ -177,7 +176,7 @@ class TestClaimServiceRequest(TestCase):
                 logger=lambda level, entry: None,
             )
             with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request)
+                claim_service_request(requests, self.service_request, '0f00')
 
 
 class ServiceRequestResponse:
@@ -194,7 +193,3 @@ class ServiceRequestResponse:
 
     def json(self):
         return self.service_request
-
-
-def is_hex(string):
-    return bool(re.match(r'^[0-9a-fA-F]+$', string))

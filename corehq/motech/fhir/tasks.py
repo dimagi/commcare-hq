@@ -76,9 +76,10 @@ def import_resource(
     resource_type: FHIRImporterResourceType,
     resource: dict,
 ):
+    case_id = uuid4().hex
     if resource_type.name == 'ServiceRequest':
         try:
-            case_id = claim_service_request(requests, resource)
+            claim_service_request(requests, resource, case_id)
         except ServiceRequestNotActive:
             return  # Nothing to do
     # TODO:
@@ -88,7 +89,7 @@ def import_resource(
     pass
 
 
-def claim_service_request(requests, service_request):
+def claim_service_request(requests, service_request, case_id):
     """
     Uses `ETag`_ to prevent a race condition.
 
@@ -101,7 +102,6 @@ def claim_service_request(requests, service_request):
     if service_request['status'] != 'active':
         raise ServiceRequestNotActive
 
-    case_id = uuid4().hex
     service_request['status'] = 'on-hold'
     service_request.setdefault('identifier', [])
     service_request['identifier'].append({
@@ -111,10 +111,10 @@ def claim_service_request(requests, service_request):
     headers = {'If-Match': etag}
     response = requests.put(endpoint, json=service_request, headers=headers)
     if 200 <= response.status < 300:
-        return case_id
+        return
     if response.status == 412:
         # ETag didn't match. Try again.
-        return claim_service_request(requests, service_request)
+        claim_service_request(requests, service_request, case_id)
     else:
         response.raise_for_status()
 
