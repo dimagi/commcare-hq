@@ -3,10 +3,12 @@ from uuid import uuid4
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from corehq import toggles
 from corehq.motech.exceptions import RemoteAPIError
 from corehq.motech.requests import Requests
+from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID
@@ -97,8 +99,7 @@ def import_resource(
     # TODO:
     #   * Map resource properties to case properties
     #   * Save case
-    #   * Don't forget to recurse related resources
-    pass
+    import_related(requests, resource_type, resource)
 
 
 def claim_service_request(requests, service_request, case_id):
@@ -129,6 +130,24 @@ def claim_service_request(requests, service_request, case_id):
         return claim_service_request(requests, service_request, case_id)
     else:
         response.raise_for_status()
+
+
+def import_related(requests, resource_type, resource):
+    for rel in resource_type.jsonpaths_to_related_resource_types.all():
+        jsonpath = jsonpath_parse(rel.jsonpath)
+        reference = simplify_list([x.value for x in jsonpath.find(resource)])
+        related_resource = get_resource(requests, reference)
+        import_resource(requests, rel.related_resource_type, related_resource)
+
+
+def get_resource(requests, reference):
+    """
+    Fetches a resource.
+
+    ``reference`` must be a relative reference. e.g. "Patient/12345"
+    """
+    response = requests.get(endpoint=reference, raise_for_status=True)
+    return response.json()
 
 
 class ServiceRequestNotActive(Exception):

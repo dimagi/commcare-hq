@@ -13,10 +13,15 @@ from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
 from ..const import FHIR_VERSION_4_0_1
-from ..models import FHIRImporter, FHIRImporterResourceType
+from ..models import (
+    FHIRImporter,
+    FHIRImporterResourceType,
+    JSONPathToResourceType,
+)
 from ..tasks import (
     ServiceRequestNotActive,
     claim_service_request,
+    import_related,
     import_resource,
     run_importer,
 )
@@ -222,3 +227,82 @@ class TestImportResource(SimpleTestCase):
 
 class FooResourceType:
     name = 'Foo'
+
+
+class TestImportRelated(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Test ConnectionSettings',
+            url='https://example.com/api/',
+        )
+        cls.fhir_importer = FHIRImporter.objects.create(
+            domain=DOMAIN,
+            connection_settings=cls.conn,
+            fhir_version=FHIR_VERSION_4_0_1,
+        )
+        cls.referral = CaseType.objects.create(
+            domain=DOMAIN,
+            name='referral',
+        )
+        cls.mother = CaseType.objects.create(
+            domain=DOMAIN,
+            name='mother',
+        )
+
+        cls.service_request = FHIRImporterResourceType.objects.create(
+            fhir_importer=cls.fhir_importer,
+            name='ServiceRequest',
+            case_type=cls.referral,
+        )
+        patient = FHIRImporterResourceType.objects.create(
+            fhir_importer=cls.fhir_importer,
+            name='Patient',
+            case_type=cls.mother,
+        )
+        JSONPathToResourceType.objects.create(
+            resource_type=cls.service_request,
+            jsonpath='$.subject.reference',
+            related_resource_type=patient,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mother.delete()
+        cls.referral.delete()
+        cls.fhir_importer.delete()
+        cls.conn.delete()
+        super().tearDownClass()
+
+    def test_import_related_calls_get_resource_with_reference(self):
+        patient = {
+            'id': '12345',
+            'resourceType': 'Patient',
+            'name': [{'text': 'Alice Apple'}]
+        }
+        service_request = {
+            'id': '67890',
+            'resourceType': 'ServiceRequest',
+            'subject': {
+                'reference': 'Patient/12345',
+                'display': 'Alice Apple',
+            },
+            'status': 'active',
+            'intent': 'directive',
+            'priority': 'routine',
+        }
+
+        with patch('corehq.motech.fhir.tasks.get_resource') as get_resource, \
+                patch('corehq.motech.fhir.tasks.import_resource'):
+            get_resource.return_value = patient
+
+            import_related(
+                requests=None,
+                resource_type=self.service_request,
+                resource=service_request,
+            )
+            call_arg_2 = get_resource.call_args[0][1]
+            self.assertEqual(call_arg_2, 'Patient/12345')
