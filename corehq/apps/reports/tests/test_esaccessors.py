@@ -975,7 +975,7 @@ class TestUserESAccessors(TestCase):
             'location_id': None
         })
 
-    def test_domain_allow_mirroring(self):
+    def test_domain_allow_enterprise(self):
         source_domain = self.domain + "-source"
         mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
         mirror.save()
@@ -985,7 +985,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
         self.assertEqual(
             ['superman'],
-            UserES().domain(self.domain, allow_mirroring=True).values_list('username', flat=True)
+            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
         )
         mirror.delete()
 

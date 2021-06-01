@@ -534,7 +534,7 @@ class DomainMembership(Membership):
 
 class IsMemberOfMixin(DocumentSchema):
 
-    def _is_member_of(self, domain, allow_mirroring):
+    def _is_member_of(self, domain, allow_enterprise):
         if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
 
@@ -542,14 +542,14 @@ class IsMemberOfMixin(DocumentSchema):
         if domain in domains:
             return True
 
-        if allow_mirroring:
+        if allow_enterprise:
             source_domain = DomainPermissionsMirror.source_domain(domain)
             if source_domain:
-                return self.is_member_of(source_domain, allow_mirroring=False)
+                return self.is_member_of(source_domain, allow_enterprise=False)
 
         return False
 
-    def is_member_of(self, domain_qs, allow_mirroring=False):
+    def is_member_of(self, domain_qs, allow_enterprise=False):
         """
         Takes either a domain name or a domain object and returns whether the user is part of that domain
         """
@@ -558,7 +558,7 @@ class IsMemberOfMixin(DocumentSchema):
             domain = domain_qs.name
         except Exception:
             domain = domain_qs
-        return self._is_member_of(domain, allow_mirroring)
+        return self._is_member_of(domain, allow_enterprise)
 
     def is_global_admin(self):
         # subclasses to override if they want this functionality
@@ -570,7 +570,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         Use either SingleMembershipMixin or MultiMembershipMixin instead of this
     """
 
-    def get_domain_membership(self, domain, allow_mirroring=True):
+    def get_domain_membership(self, domain, allow_enterprise=True):
         domain_membership = None
         try:
             for d in self.domain_memberships:
@@ -581,9 +581,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if not domain_membership:
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
-                if allow_mirroring:
+                if allow_enterprise:
                     source_domain = DomainPermissionsMirror.source_domain(domain)
-                    return self.get_domain_membership(source_domain, allow_mirroring=False)
+                    return self.get_domain_membership(source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -663,7 +663,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return False  # no domain, no admin
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
-        dm = self.get_domain_membership(domain, allow_mirroring=True)
+        dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
             return dm.is_admin
         else:
@@ -685,7 +685,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             elif self.is_domain_admin(domain):
                 return True
 
-        dm = self.get_domain_membership(domain, allow_mirroring=True)
+        dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
             # an admin has access to all features by default, restrict that if needed
             if dm.is_admin and restrict_global_admin:
@@ -694,7 +694,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return False
 
     @memoized
-    def get_role(self, domain=None, checking_global_admin=True, allow_mirroring=False):
+    def get_role(self, domain=None, checking_global_admin=True, allow_enterprise=False):
         """
         Get the role object for this user
         """
@@ -707,8 +707,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return StaticRole.domain_admin(domain)
-        if self.is_member_of(domain, allow_mirroring):
-            return self.get_domain_membership(domain, allow_mirroring).role
+        if self.is_member_of(domain, allow_enterprise):
+            return self.get_domain_membership(domain, allow_enterprise).role
         else:
             raise DomainMembershipError()
 
@@ -744,7 +744,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except DomainMembershipError:
             if self.is_global_admin():
                 return _("Dimagi User")
-            if self.is_member_of(domain, allow_mirroring=True):
+            if self.is_member_of(domain, allow_enterprise=True):
                 return _("Enterprise User")
             return _("Unauthorized User")
         except Exception:
@@ -1582,7 +1582,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             else:
                 return role.permissions.view_report_list
         else:
-            dm = self.get_domain_membership(domain, allow_mirroring=True)
+            dm = self.get_domain_membership(domain, allow_enterprise=True)
             return dm.viewable_reports() if dm else []
 
     def can_view_some_reports(self, domain):
