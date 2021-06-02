@@ -12,7 +12,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
-from ..const import FHIR_VERSION_4_0_1
+from ..const import FHIR_VERSION_4_0_1, SYSTEM_URI_CASE_ID
 from ..models import (
     FHIRImporter,
     FHIRImporterResourceType,
@@ -21,6 +21,7 @@ from ..models import (
 from ..tasks import (
     ServiceRequestNotActive,
     claim_service_request,
+    get_case_id_or_none,
     import_related,
     import_resource,
     run_importer,
@@ -306,3 +307,27 @@ class TestImportRelated(TestCase):
             )
             call_arg_2 = get_resource.call_args[0][1]
             self.assertEqual(call_arg_2, 'Patient/12345')
+
+
+class TestGetCaseIDOrNone(SimpleTestCase):
+
+    def test_no_identifier(self):
+        resource = {'resourceType': 'Patient'}
+        self.assertIsNone(get_case_id_or_none(resource))
+
+    def test_identifier_not_case_id(self):
+        resource = {
+            'resourceType': 'Patient',
+            'identifier': [{'system': 'foo', 'value': 'bar'}]
+        }
+        self.assertIsNone(get_case_id_or_none(resource))
+
+    def test_identifier_is_case_id(self):
+        resource = {
+            'resourceType': 'Patient',
+            'identifier': [
+                {'system': 'foo', 'value': 'bar'},
+                {'system': SYSTEM_URI_CASE_ID, 'value': 'abc123'},
+            ]
+        }
+        self.assertEqual(get_case_id_or_none(resource), 'abc123')

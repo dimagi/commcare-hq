@@ -132,6 +132,19 @@ def claim_service_request(requests, service_request, case_id):
         response.raise_for_status()
 
 
+def get_case_id_or_none(resource):
+    """
+    If ``resource`` has a CommCare case ID identifier, return its value,
+    otherwise return None.
+    """
+    if 'identifier' in resource:
+        case_id_identifier = [id_ for id_ in resource['identifier']
+                              if id_.get('system') == SYSTEM_URI_CASE_ID]
+        if case_id_identifier:
+            return case_id_identifier[0]['value']
+    return None
+
+
 def import_related(requests, resource_type, resource):
     for rel in resource_type.jsonpaths_to_related_resource_types.all():
         jsonpath = jsonpath_parse(rel.jsonpath)
