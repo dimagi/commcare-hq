@@ -518,6 +518,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
         return set(s.subscriber.domain for s in subscriptions)
 
+    def get_enterprise_permissions_domains(self):
+        return set(self.get_domains()) - set(self.permissions_ignore_domains)
+
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
 

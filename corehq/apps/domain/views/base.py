@@ -96,19 +96,19 @@ def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
     return _domains_to_links(Domain.active_for_user(couch_user), view_name)
 
 
-# Returns domains where given user has access only by virtue of a DomainPermissionsMirror
+# Returns domains where given user has access only by virtue of enterprise permissions
 @quickcache(['couch_user.username'])
 def get_mirror_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
-    from corehq.apps.users.models import DomainPermissionsMirror
+    from corehq.apps.accounting.models import BillingAccount
     domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
-    mirror_domain_objects_by_name = {}
+    subdomain_objects_by_name = {}
     for domain_name in domain_links_by_name:
-        for mirror_domain in DomainPermissionsMirror.mirror_domains(domain_name):
-            if mirror_domain not in domain_links_by_name:
-                mirror_domain_objects_by_name[mirror_domain] = Domain.get_by_name(mirror_domain)
+        for subdomain in BillingAccount.get_account_by_domain(domain_name).get_enterprise_permissions_domains():
+            if subdomain not in domain_links_by_name:
+                subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 
-    return _domains_to_links(mirror_domain_objects_by_name.values(), view_name)
+    return _domains_to_links(subdomain_objects_by_name.values(), view_name)
 
 
 def _domains_to_links(domain_objects, view_name):

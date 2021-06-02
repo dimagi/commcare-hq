@@ -66,8 +66,8 @@ class UserES(HQESQuery):
 def domain(domain, allow_enterprise=False):
     domains = [domain]
     if allow_enterprise:
-        from corehq.apps.users.models import DomainPermissionsMirror
-        source_domain = DomainPermissionsMirror.source_domain(domain)
+        from corehq.apps.accounting.models import BillingAccount
+        source_domain = BillingAccount.get_account_by_domain(domain).permissions_source_domain
         if source_domain:
             domains.append(source_domain)
     return filters.OR(
