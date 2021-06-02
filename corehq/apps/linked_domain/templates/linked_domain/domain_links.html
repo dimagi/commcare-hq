@@ -215,12 +215,13 @@
         </div>
         <div class="modal-body">
           <div class="ko-model">
+            <label >{% trans 'Project Space:' %}</label>
             <select class="form-control" data-bind="options: availableDomains, select2: {}, value: value"></select>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-          <button type="button" class="btn btn-primary" data-bind="enable: domainSelected" data-dismiss="modal">{% trans 'Add' %}</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: addDownstreamDomain">{% trans 'Add' %}</button>
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
