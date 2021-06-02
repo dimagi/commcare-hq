@@ -902,6 +902,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
     )
 
+    STATUS_SLUGS = {
+        STATUS_IN_PROGRESS: "in-progress",
+        STATUS_COMPLETED: "completed",
+        STATUS_NOT_COMPLETED: "not-completed",
+        STATUS_ERROR: "error",
+        STATUS_EMAIL_SENT: "email-sent",
+        STATUS_EMAIL_DELIVERED: "email-delivered",
+    }
+
     SOURCE_BROADCAST = 'BRD'
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
@@ -947,6 +956,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, ugettext_noop('Email')),
     )
+
+    CONTENT_TYPE_SLUGS = {
+        CONTENT_NONE: "none",
+        CONTENT_SMS: "sms",
+        CONTENT_SMS_CALLBACK: "sms-callback",
+        CONTENT_SMS_SURVEY: "sms-survey",
+        CONTENT_IVR_SURVEY: "ivr-survey",
+        CONTENT_PHONE_VERIFICATION: "phone-verification",
+        CONTENT_ADHOC_SMS: "manual-sms",
+        CONTENT_API_SMS: "api-sms",
+        CONTENT_CHAT_SMS: "chat-sms",
+        CONTENT_EMAIL: "email",
+    }
 
     RECIPIENT_CASE = 'CAS'
     RECIPIENT_MOBILE_WORKER = 'MOB'

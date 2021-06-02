@@ -58,6 +58,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
+from corehq.apps.reports.standard.message_event_display import get_event_display_raw
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
@@ -1102,11 +1103,13 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         return bundle
 
     def dehydrate_status(self, bundle):
-        # see corehq.apps.reports.standard.message_event_display.get_status_display
-        return bundle.obj.status  # TODO
+        event = bundle.obj
+        if event.status == MessagingEvent.STATUS_COMPLETED and event.xforms_session_id:
+            return event.xforms_session.status_api
+        return MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown')
 
     def dehydrate_content_type(self, bundle):
-        return bundle.obj.content_type  # TODO: convert to slug
+        return MessagingEvent.CONTENT_TYPE_SLUGS.get(bundle.obj.content_type, "unknown")
 
     def dehydrate_source(self, bundle):
         parent = bundle.obj.parent
