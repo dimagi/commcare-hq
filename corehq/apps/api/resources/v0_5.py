@@ -1241,6 +1241,8 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         paginator_class = NoCountingPaginator
         excludes = {
             "error_code",
+            "additional_error_text",
+            "app_id",
             "form_name",
             "form_unique_id",
             "recipient_id",

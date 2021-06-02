@@ -23,8 +23,6 @@ class TestMessagingEventResource(APIResourceTest):
 
     def _serialized_messaging_event(self):
         return {
-            "additional_error_text": None,
-            "app_id": None,
             "content_type": "sms",
             "date": "2016-01-01T12:00:00",
             "case_id": None,
