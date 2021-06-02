@@ -1,11 +1,16 @@
-import re
+from contextlib import contextmanager
 from unittest.mock import patch
+from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
 from requests import HTTPError
 
+from casexml.apps.case.mock import CaseFactory, CaseStructure
+from casexml.apps.case.tests.util import delete_all_cases
+
 from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.auth import AuthManager
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.exceptions import RemoteAPIError
@@ -26,6 +31,7 @@ from ..models import (
 )
 from ..tasks import (
     ServiceRequestNotActive,
+    build_case_block,
     claim_service_request,
     get_case_id_or_none,
     get_caseblock_kwargs,
@@ -400,7 +406,7 @@ class TestGetName(SimpleTestCase):
         self.assertEqual(get_name(resource), '')
 
 
-class TestGetCaseBlockKwargs(TestCase):
+class TestCaseWithResourceType(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -431,6 +437,9 @@ class TestGetCaseBlockKwargs(TestCase):
         cls.fhir_importer.delete()
         cls.conn.delete()
         super().tearDownClass()
+
+
+class TestGetCaseBlockKwargs(TestCaseWithResourceType):
 
     def test_update_case_name(self):
         resource = {
@@ -554,3 +563,220 @@ class TestGetCaseBlockKwargs(TestCase):
             get_caseblock_kwargs(self.patient, resource),
             {'case_name': '', 'update': {}},
         )
+
+
+class TestBuildCaseBlock(TestCaseWithResourceType):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.domain_obj.delete()
+
+    def tearDown(self):
+        delete_all_cases()
+
+    def test_resource_has_case_id(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+            }
+        ))
+        resource = {
+            'identifier': [{
+                'system': SYSTEM_URI_CASE_ID,
+                'value': case_id,
+            }],
+            'resourceType': 'Patient',
+        }
+
+        case_block = build_case_block(
+            self.patient,
+            resource,
+            suggested_case_id,
+        )
+        self.assertFalse(case_block.create)
+        self.assertEqual(case_block.case_id, case_id)
+
+    def test_resource_has_case_id_in_other_domain(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        with other_domain_factory('other-test-domain') as factory:
+            factory.create_or_update_case(CaseStructure(
+                case_id=case_id,
+                attrs={
+                    'create': True,
+                    'case_type': 'mother',
+                    'case_name': 'Alice APPLE',
+                    'owner_id': 'b0b',
+                }
+            ))
+            resource = {
+                'identifier': [{
+                    'system': SYSTEM_URI_CASE_ID,
+                    'value': case_id,
+                }],
+                'resourceType': 'Patient',
+            }
+
+            case_block = build_case_block(
+                self.patient,
+                resource,
+                suggested_case_id,
+            )
+            self.assertTrue(case_block.create)
+            self.assertEqual(case_block.case_id, suggested_case_id)
+
+    def test_resource_has_external_id(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+                'external_id': '12345',
+            }
+        ))
+        resource = {
+            'id': '12345',
+            'resourceType': 'Patient',
+        }
+
+        case_block = build_case_block(
+            self.patient,
+            resource,
+            suggested_case_id,
+        )
+        self.assertFalse(case_block.create)
+        self.assertEqual(case_block.case_id, case_id)
+
+    def test_resource_has_external_id_in_other_domain(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        with other_domain_factory('other-test-domain') as factory:
+            factory.create_or_update_case(CaseStructure(
+                case_id=case_id,
+                attrs={
+                    'create': True,
+                    'case_type': 'mother',
+                    'case_name': 'Alice APPLE',
+                    'owner_id': 'b0b',
+                    'external_id': '12345',
+                }
+            ))
+            resource = {
+                'id': '12345',
+                'resourceType': 'Patient',
+            }
+
+            case_block = build_case_block(
+                self.patient,
+                resource,
+                suggested_case_id,
+            )
+            self.assertTrue(case_block.create)
+            self.assertEqual(case_block.case_id, suggested_case_id)
+
+    def test_same_external_id_different_case_type(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case_id,
+            attrs={
+                'create': True,
+                'case_type': 'visit',
+                'case_name': 'ANC1',
+                'owner_id': 'b0b',
+                'external_id': '12345',
+            }
+        ))
+        resource = {
+            'id': '12345',
+            'resourceType': 'Patient',
+        }
+
+        case_block = build_case_block(
+            self.patient,
+            resource,
+            suggested_case_id,
+        )
+        self.assertTrue(case_block.create)
+        self.assertEqual(case_block.case_id, suggested_case_id)
+
+    def test_resource_is_new(self):
+        case_id = uuid4().hex
+        suggested_case_id = uuid4().hex
+
+        resource = {
+            'id': '12345',
+            'name': [{
+                'given': ['Alice', 'Amelia', 'Anna'],
+                'family': 'Apple',
+                'text': 'Alice APPLE',
+            }],
+            'identifier': [{
+                'system': SYSTEM_URI_CASE_ID,
+                'value': case_id,
+            }],
+            'telecom': [{
+                'system': 'phone',
+                'value': '555-1234',
+            }],
+            'resourceType': 'Patient',
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.name[0].given',
+                'case_property': 'case_name',
+                'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
+                'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+            }
+        )
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': "$.telecom[?system='phone'].value",
+                'case_property': 'phone_number',
+            }
+        )
+
+        case_block = build_case_block(
+            self.patient,
+            resource,
+            suggested_case_id,
+        )
+        self.assertTrue(case_block.create)
+        self.assertEqual(case_block.case_id, suggested_case_id)
+        self.assertEqual(case_block.external_id, '12345')
+        self.assertEqual(case_block.case_name, 'Alice Amelia Anna')
+        self.assertEqual(case_block.update, {'phone_number': '555-1234'})
+
+
+@contextmanager
+def other_domain_factory(other_domain_name):
+    domain_obj = create_domain(other_domain_name)
+    factory = CaseFactory(domain=other_domain_name)
+    try:
+        yield factory
+    finally:
+        domain_obj.delete()

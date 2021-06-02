@@ -5,13 +5,18 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
+from casexml.apps.case.mock import CaseBlock
+
 from corehq import toggles
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.exceptions import RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
-from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID
+from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
 from .models import FHIRImporter, FHIRImporterResourceType
 
 
@@ -96,9 +101,13 @@ def import_resource(
         except ServiceRequestNotActive:
             return  # Nothing to do
 
-    # TODO:
-    #   * Map resource properties to case properties
-    #   * Save case
+    case_block = build_case_block(resource_type, resource, case_id)
+    submit_case_blocks(
+        [case_block.as_text()],
+        resource_type.domain,
+        xmlns=XMLNS_FHIR,
+        device_id=f'FHIRImporter-{resource_type.fhir_importer.pk}',
+    )
     import_related(requests, resource_type, resource)
 
 
@@ -135,6 +144,31 @@ def claim_service_request(requests, service_request, case_id):
         response.raise_for_status()
 
 
+def build_case_block(resource_type, resource, suggested_case_id):
+    domain = resource_type.domain
+    case_type = resource_type.case_type.name
+    owner_id = resource_type.fhir_importer.owner_id
+    case = None
+
+    case_id = get_case_id_or_none(resource)
+    external_id = resource['id'] if 'id' in resource else CaseBlock.undefined
+    if case_id:
+        case = get_case_by_id(domain, case_id)
+    if case is None and external_id != CaseBlock.undefined:
+        case = get_case_by_external_id(domain, external_id, case_type)
+
+    caseblock_kwargs = get_caseblock_kwargs(resource_type, resource)
+    return CaseBlock(
+        create=case is None,
+        case_id=case.case_id if case else suggested_case_id,
+        owner_id=owner_id,
+        case_type=case_type,
+        date_opened=CaseBlock.undefined,
+        external_id=external_id,
+        **caseblock_kwargs,
+    )
+
+
 def get_case_id_or_none(resource):
     """
     If ``resource`` has a CommCare case ID identifier, return its value,
@@ -146,6 +180,24 @@ def get_case_id_or_none(resource):
         if case_id_identifier:
             return case_id_identifier[0]['value']
     return None
+
+
+def get_case_by_id(domain, case_id):
+    accessor = CaseAccessors(domain)
+    try:
+        case = accessor.get_case(case_id)
+    except (CaseNotFound, KeyError):
+        return None
+    return case if case.domain == domain else None
+
+
+def get_case_by_external_id(domain, external_id, case_type):
+    accessor = CaseAccessors(domain)
+    try:
+        [case] = accessor.get_cases_by_external_id(external_id, case_type)
+    except ValueError:
+        return None
+    return case
 
 
 def get_caseblock_kwargs(resource_type, resource):
