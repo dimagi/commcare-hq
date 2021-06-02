@@ -110,7 +110,7 @@ def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None
     self.addCleanup(user.delete, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()
+    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
     with context:
         response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
     self.assertEqual(response.status_code, 200)
@@ -132,7 +132,7 @@ def test_mobile_worker_landing_page(self, role, expected_urlname, enabled_toggle
     self.addCleanup(user.delete, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
-    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()
+    context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
     with context:
         response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
     self.assertEqual(response.status_code, 200)
