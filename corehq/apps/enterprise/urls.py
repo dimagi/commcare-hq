@@ -1,4 +1,5 @@
-from django.conf.urls import url
+from corehq.apps.enterprise.dispatcher import EnterpriseInterfaceDispatcher
+from django.conf.urls import include, url
 
 from corehq.apps.enterprise.views import (
     edit_enterprise_settings,
@@ -13,6 +14,10 @@ from corehq.apps.sso.views.enterprise_admin import (
     ManageSSOEnterpriseView,
     EditIdentityProviderEnterpriseView,
 )
+
+interface_urls = [
+    EnterpriseInterfaceDispatcher.url_pattern(),
+]
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
@@ -30,4 +35,6 @@ domain_specific = [
         name=ManageSSOEnterpriseView.urlname),
     url(r'^sso/(?P<idp_slug>[^/]*)/$', EditIdentityProviderEnterpriseView.as_view(),
         name=EditIdentityProviderEnterpriseView.urlname),
+
+    url(r'^interfaces/', include(interface_urls)),
 ]
