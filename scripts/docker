@@ -11,7 +11,7 @@ function usage() {
             echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
-            echo "  TEST=python|python-sharded|javascript"
+            echo "  TEST=python|python-sharded|javascript|python-sharded-and-javascript"
             echo ""
             echo "The default is python."
             echo ""

@@ -1,20 +1,19 @@
 
 function logmsg {
-    # USAGE: logmsg LEVELNAME [-n] [MESSAGE ...]
+    # USAGE: logmsg [-n] LEVELNAME [MESSAGE ...]
     #
     # Write a log message to stderr.
     # LEVELNAME  log level name (for colorization). Resulting message will be
     #            colorized (if stderr is a TTY) for common level names.
-    #        -n  Do not write a trailing newline (must be *immediately after*
-    #            LEVELNAME)
+    #        -n  Do not write a trailing newline (must be *very first* argument)
     local echo_args=( -e )
-    local script=$(basename "$0")
-    local levelname="$1"
-    shift
     if [ "x${1}" == "x-n" ]; then
         shift
         echo_args+=( -n )
     fi
+    local script=$(basename "$0")
+    local levelname="$1"
+    shift
     local msg="$*"
     local ccode=''
     local reset=''

@@ -21,11 +21,11 @@ hqDefine('registration/js/login', [
         });
 
         // populate username field if set in the query string
-        const urlParams = new URLSearchParams(window.location.search);
-        const isSessionExpiration = initialPageData.get('is_session_expiration');
+        var urlParams = new URLSearchParams(window.location.search);
+        var isSessionExpiration = initialPageData.get('is_session_expiration');
 
-        let username = urlParams.get('username');
-        let usernameElt = document.getElementById('id_auth-username');
+        var username = urlParams.get('username');
+        var usernameElt = document.getElementById('id_auth-username');
         if (username && usernameElt) {
             if (isSessionExpiration && username.endsWith("commcarehq.org")) {
                 username = username.split("@")[0];
@@ -35,8 +35,8 @@ hqDefine('registration/js/login', [
         }
 
         if (initialPageData.get('enforce_sso_login')) {
-            let $passwordField = $('#id_auth-password');
-            let loginController = userLoginForm.loginController({
+            var $passwordField = $('#id_auth-password');
+            var loginController = userLoginForm.loginController({
                 initialUsername: $('#id_auth-username').val(),
                 passwordField: $passwordField,
                 passwordFormGroup: $passwordField.closest('.form-group'),

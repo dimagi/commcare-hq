@@ -1476,7 +1476,11 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
+    """
+        Bulk user management features:
+        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
@@ -2039,4 +2043,11 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

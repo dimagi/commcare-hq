@@ -380,10 +380,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         role.save()
         return role
 
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return UserRolePresets.get_preset_role_id(name)
-
     @property
     def has_users_assigned(self):
         from corehq.apps.es.users import UserES
@@ -1179,7 +1175,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
+                log_model_change(deleted_by, user, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
@@ -2631,8 +2627,8 @@ class Invitation(models.Model):
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
     @classmethod
-    def by_domain(cls, domain):
-        return Invitation.objects.filter(domain=domain, is_accepted=False)
+    def by_domain(cls, domain, is_accepted=False, **filters):
+        return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
 
     @classmethod
     def by_email(cls, email):
