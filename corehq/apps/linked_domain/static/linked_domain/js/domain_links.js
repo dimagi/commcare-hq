@@ -20,7 +20,7 @@ hqDefine("linked_domain/js/domain_links", [
         var self = {};
         self.type = data.type;
         self.name = data.name;
-        self.last_update = ko.observable(data.last_update);
+        self.lastUpdate = ko.observable(data.last_update);
         self.detail = data.detail;
         self.showUpdate = ko.observable(data.can_update);
         self.update_url = null;
@@ -42,7 +42,7 @@ hqDefine("linked_domain/js/domain_links", [
                 if (data.error) {
                     self.error(data.error);
                 } else {
-                    self.last_update(data.last_update);
+                    self.lastUpdate(data.last_update);
                     self.hasSuccess(true);
                 }
                 self.showSpinner(false);
@@ -67,9 +67,9 @@ hqDefine("linked_domain/js/domain_links", [
             }
         }
 
-        self.domain_links = ko.observableArray(_.map(data.linked_domains, function (link) {
+        self.domain_links = _.map(data.linked_domains, function (link) {
             return DomainLink(link);
-        }));
+        });
 
         // pull content
         self.model_status = _.map(data.model_status, ModelStatus);
@@ -77,18 +77,18 @@ hqDefine("linked_domain/js/domain_links", [
         self.models = data.models;
 
         // manage downstream domains tab
-        self.paginated_domain_links = ko.observableArray([]);
+        self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-            return self.domain_links().length;
+            return self.domain_links.length;
         });
         self.currentPage = 1;
 
         self.goToPage = function (page) {
             self.currentPage = page;
-            self.paginated_domain_links.removeAll();
+            self.paginatedDomainLinks.removeAll();
             var skip = (self.currentPage - 1) * self.itemsPerPage();
-            self.paginated_domain_links(self.domain_links().slice(skip, skip + self.itemsPerPage()));
+            self.paginatedDomainLinks(self.domain_links.slice(skip, skip + self.itemsPerPage()));
         };
 
         self.onPaginationLoad = function () {
@@ -99,7 +99,9 @@ hqDefine("linked_domain/js/domain_links", [
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.linked_domain(),
             }).done(function () {
-                self.domain_links.remove(link);
+                self.domain_links = self.domain_links.filter(function(item) {
+                    return item !== link;
+                });
                 self.goToPage(self.currentPage);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
@@ -140,7 +142,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.is_remote = link.is_remote;
         self.master_domain = link.master_domain;
         self.remote_base_url = ko.observable(link.remote_base_url);
-        self.last_update = link.last_update;
+        self.lastUpdate = link.last_update;
         if (self.is_remote) {
             self.domain_link = self.linked_domain;
         } else {
