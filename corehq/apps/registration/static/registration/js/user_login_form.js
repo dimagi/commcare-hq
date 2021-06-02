@@ -14,14 +14,14 @@ hqDefine('registration/js/user_login_form', [
 ) {
     'use strict';
 
-    let loginController = function (options) {
+    var loginController = function (options) {
         assertProperties.assertRequired(options, [
             'initialUsername',
             'passwordField',
             'passwordFormGroup',
             'nextUrl',
         ]);
-        let self = {};
+        var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
         self.nextUrl = options.nextUrl;
