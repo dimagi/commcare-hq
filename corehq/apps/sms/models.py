@@ -933,6 +933,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
+    SOURCE_SLUGS= {
+        SOURCE_BROADCAST: 'broadcast',
+        SOURCE_SCHEDULED_BROADCAST: 'scheduled-broadcast',
+        SOURCE_IMMEDIATE_BROADCAST: 'immediate-broadcast',
+        SOURCE_KEYWORD: 'keyword',
+        SOURCE_REMINDER: 'reminder',
+        SOURCE_CASE_RULE: 'conditional-alert',
+        SOURCE_UNRECOGNIZED: 'unrecognized',
+        SOURCE_FORWARDED: 'forwarded-message',
+        SOURCE_OTHER: 'other',
+    }
+
     CONTENT_NONE = 'NOP'
     CONTENT_SMS = 'SMS'
     CONTENT_SMS_CALLBACK = 'CBK'

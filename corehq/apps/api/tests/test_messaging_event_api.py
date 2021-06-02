@@ -34,7 +34,7 @@ class TestMessagingEventResource(APIResourceTest):
             "messages": [],
             # "id": 1,  # ids are explicitly removed from comparison
             "recipient": {'contact': '', 'display': '', 'id': None, 'type': 'CAS'},
-            "source": {'source_id': None, 'source_name': None, 'source_type': MessagingEvent.SOURCE_OTHER},
+            "source": {'id': None, 'display': 'sms', 'type': "other"},
             "status": "completed",
         }
 

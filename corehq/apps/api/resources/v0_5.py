@@ -58,7 +58,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.reports.standard.message_event_display import get_event_display_raw
+from corehq.apps.reports.standard.message_event_display import get_event_display_api
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
@@ -1113,10 +1113,11 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
 
     def dehydrate_source(self, bundle):
         parent = bundle.obj.parent
+
         return {
-            "source_type": parent.source,  # TODO: convert to slug
-            "source_name": None,  # see corehq.apps.reports.standard.message_event_display.get_event_display
-            "source_id": parent.source_id,
+            "id": parent.source_id,
+            "type": MessagingEvent.SOURCE_SLUGS.get(parent.source, 'unknown'),
+            "display": get_event_display_api(parent),
         }
 
     def dehydrate_recipient(self, bundle):
