@@ -6,9 +6,10 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from corehq import toggles
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
-from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
+from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
 from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
@@ -65,8 +66,8 @@ class SessionDetailsView(View):
         domains = set()
         for member_domain in couch_user.domains:
             domains.add(member_domain)
-            mirror_domains = DomainPermissionsMirror.mirror_domains(member_domain)
-            domains.update(mirror_domains)
+            account = BillingAccount.get_account_by_domain(member_domain)
+            domains.update(account.get_enterprise_permissions_domains())
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         return JsonResponse({
