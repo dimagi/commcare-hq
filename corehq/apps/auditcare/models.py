@@ -178,7 +178,8 @@ class AccessAudit(AuditEvent):
 
     class Meta:
         indexes = AuditEvent._meta.indexes + [
-            models.Index(fields=['couch_id'], name="audit_access_couch_10d1b_idx"),
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+                                    name="audit_access_couch_10d1b_idx"),
         ]
 
     # Optional (django-ified) settings.AUDIT_TRACE_ID_HEADER set by AuditcareConfig
