@@ -3,10 +3,13 @@ import uuid
 from collections import namedtuple
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS, OUTGOING
 from datetime import datetime, timedelta
 
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.messaging.scheduling.models import ImmediateBroadcast, EmailContent, AlertSchedule
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, AlertScheduleInstance
 
 SmsAndDict = namedtuple('SmsAndDict', ['sms', 'sms_dict'])
 
@@ -172,3 +175,35 @@ def make_survey_sms(domain, rule_name, utcnow=None):
 
     sms, _ = _make_sms(domain, message_date, subevent, xforms_session_couch_id=xforms_session.couch_id)
     return rule, xforms_session, event, sms
+
+
+def make_email_event(domain, schedule_name, user_ids, utcnow=None):
+    message_date = utcnow or datetime.utcnow()
+    content = EmailContent(
+        subject={'*': 'New messaging API goes live!'},
+        message={'*': 'Check out the new API.'},
+    )
+    schedule = AlertSchedule.create_simple_alert(domain, content)
+    broadcast = ImmediateBroadcast.objects.create(
+        domain=domain,
+        name=schedule_name,
+        schedule=schedule,
+        recipients=[
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, user_id) for user_id in user_ids
+        ],
+    )
+    for user_id in user_ids:
+        instance = AlertScheduleInstance.create_for_recipient(
+            schedule,
+            ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+            user_id,
+            move_to_next_event_not_in_the_past=False,
+        )
+        instance.send_current_event_content_to_recipients()
+
+    event = MessagingEvent.objects.get(source_id=broadcast.id)
+    subevent = MessagingSubEvent.objects.get(parent=event)
+    handle_email_messaging_subevent({
+        "eventType": "Delivery",
+        "delivery": {"timestamp": "2021-05-27T07:09:42.318Z"}
+    }, subevent.id)

@@ -6,7 +6,9 @@ from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource, MessagingEventResourceNew
 )
 from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms
+from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms, \
+    make_email_event
+from corehq.apps.users.models import CommCareUser
 
 
 class TestMessagingEventResource(APIResourceTest):
@@ -79,7 +81,7 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(0, len(ordered_data))
 
     def test_case_rule(self):
-        rule, event, sms = make_case_rule_sms(self.domain, "case rule name", datetime(2016, 1, 1, 12, 0))
+        rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)
@@ -124,7 +126,7 @@ class TestMessagingEventResource(APIResourceTest):
             self.assertEqual(expected, result)
 
     def test_survey_sms(self):
-        rule, xforms_session, event, sms = make_survey_sms(self.domain, "test sms survey", datetime(2016, 1, 1, 12, 0))
+        rule, xforms_session, event, sms = make_survey_sms(self.domain.name, "test sms survey", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
         self.addCleanup(xforms_session.delete)
         self.addCleanup(event.delete)  # cascades to subevent
@@ -172,5 +174,52 @@ class TestMessagingEventResource(APIResourceTest):
         for result in data:
             del result['id']
             del result['source']['id']
+            print(json.dumps(result, indent=4))
+            self.assertEqual(expected, result)
+
+    def test_email(self):
+        user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
+        self.addCleanup(user.delete, deleted_by=None)
+        make_email_event(self.domain.name, "test broadcast", [user.get_id])
+
+        expected = {
+            "case_id": None,
+            "content_type": "email",
+            # "date": "2021-06-02T15:08:20.546006",
+            "domain": "qwerty",
+            "error": None,
+            "form": None,
+            "messages": [
+                {
+                    "backend": "email",
+                    "contact": "bob@email.com",
+                    "content": "Check out the new API.",
+                    # "date": "2021-06-02T15:08:20.546006",
+                    "direction": "outgoing",
+                    "status": "email-delivered",
+                    "type": "email"
+                }
+            ],
+            "recipient": {
+                "display": "bob",
+                "id": user.get_id,
+                "type": "mobile-worker"
+            },
+            "source": {
+                "display": "test broadcast",
+                "type": "immediate-broadcast"
+            },
+            "status": "email-delivered"
+        }
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)['objects']
+        self.assertEqual(1, len(data))
+        for result in data:
+            del result['id']
+            del result['source']['id']
+            del result['date']
+            del result['messages'][0]['date']
             print(json.dumps(result, indent=4))
             self.assertEqual(expected, result)
