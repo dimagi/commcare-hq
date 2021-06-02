@@ -185,6 +185,14 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         case_type = related[0].related_resource_type.case_type
         self.assertEqual(case_type.name, 'mother')
 
+    def test_domain(self):
+        service_request = FHIRImporterResourceType.objects.create(
+            fhir_importer=self.fhir_importer,
+            name='ServiceRequest',
+            case_type=self.referral,
+        )
+        self.assertEqual(service_request.domain, DOMAIN)
+
 
 class TestFHIRImporterResourceProperty(TestCaseWithReferral):
 

@@ -368,6 +368,10 @@ class FHIRImporterResourceType(models.Model):
     import_related_only = models.BooleanField(default=False)
     search_params = JSONField(default=dict)
 
+    @property
+    def domain(self):
+        return self.fhir_importer.domain
+
 
 class JSONPathToResourceType(models.Model):
     """
