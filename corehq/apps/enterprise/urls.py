@@ -26,7 +26,7 @@ domain_specific = [
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
     url(r'^permissions/$', enterprise_permissions, name="enterprise_permissions"),
-    url(r'^permissions/toggle/(?P<mirror>[ \w-]+)/$', toggle_enterprise_permission,
+    url(r'^permissions/toggle/(?P<target_domain>[ \w-]+)/$', toggle_enterprise_permission,
         name='toggle_enterprise_permission'),
     url(r'^permissions/source/$', update_enterprise_permissions_source_domain,
         name='update_enterprise_permissions_source_domain'),
