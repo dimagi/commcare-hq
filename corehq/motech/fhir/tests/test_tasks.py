@@ -22,6 +22,7 @@ from ..tasks import (
     ServiceRequestNotActive,
     claim_service_request,
     get_case_id_or_none,
+    get_name,
     import_related,
     import_resource,
     run_importer,
@@ -331,3 +332,34 @@ class TestGetCaseIDOrNone(SimpleTestCase):
             ]
         }
         self.assertEqual(get_case_id_or_none(resource), 'abc123')
+
+
+class TestGetName(SimpleTestCase):
+
+    def test_name_text(self):
+        resource = {'name': [{'text': 'Alice APPLE'}]}
+        self.assertEqual(get_name(resource), 'Alice APPLE')
+
+    def test_name_no_text(self):
+        resource = {'name': [{'family': 'Apple', 'given': ['Alice']}]}
+        self.assertEqual(get_name(resource), '')
+
+    def test_code_text(self):
+        resource = {'code': [{
+            'text': 'Negative for Chlamydia Trachomatis rRNA',
+        }]}
+        self.assertEqual(
+            get_name(resource),
+            'Negative for Chlamydia Trachomatis rRNA',
+        )
+
+    def test_code_no_text(self):
+        resource = {'code': [{
+            'system': 'http://snomed.info/sct',
+            'code': '260385009',
+        }]}
+        self.assertEqual(get_name(resource), '')
+
+    def test_got_nothing(self):
+        resource = {'foo': 'bar'}
+        self.assertEqual(get_name(resource), '')

@@ -145,6 +145,17 @@ def get_case_id_or_none(resource):
     return None
 
 
+def get_name(resource):
+    """
+    Returns a name, or a code, or an empty string.
+    """
+    if resource.get('name'):
+        return resource['name'][0].get('text', '')
+    if resource.get('code'):
+        return resource['code'][0].get('text', '')
+    return ''
+
+
 def import_related(requests, resource_type, resource):
     for rel in resource_type.jsonpaths_to_related_resource_types.all():
         jsonpath = jsonpath_parse(rel.jsonpath)
