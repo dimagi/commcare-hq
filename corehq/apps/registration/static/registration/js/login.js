@@ -31,7 +31,9 @@ hqDefine('registration/js/login', [
                 username = username.split("@")[0];
             }
             usernameElt.value = username;
-            if (isSessionExpiration) usernameElt.readOnly = true;
+            if (isSessionExpiration) {
+                usernameElt.readOnly = true;
+            }
         }
 
         if (initialPageData.get('enforce_sso_login')) {
