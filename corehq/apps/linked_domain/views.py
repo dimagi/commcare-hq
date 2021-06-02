@@ -44,11 +44,15 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
 )
 from corehq.apps.linked_domain.dbaccessors import (
+    get_available_domains_to_link,
     get_domain_master_link,
     get_linked_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    UnsupportedActionError,
+)
 from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
@@ -246,12 +250,15 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             self.domain, master_apps, master_fixtures, master_reports, master_keywords
         )
 
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
+
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'is_linked_domain': bool(master_link),
             'is_master_domain': bool(len(linked_domains)),
             'view_data': {
+                'available_domains': available_domains_to_link,
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),

@@ -147,10 +147,10 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
-    var AddDownstreamDomainModal = function () {
+    var AddDownstreamDomainModal = function (availableDomains) {
         var self = {};
         self.domainSelected = ko.observable(false);
-        self.availableDomains = ["test1", "test2"];
+        self.availableDomains = availableDomains;
         self.value = ko.observable("");
         return self;
     };
@@ -178,7 +178,7 @@ hqDefine("linked_domain/js/domain_links", [
             $("#ko-tabs-manage-downstream").koApplyBindings(model);
         }
 
-        var addDownstreamDomainModal = AddDownstreamDomainModal()
+        var addDownstreamDomainModal = AddDownstreamDomainModal(view_data.available_domains)
         if ($("#new-downstream-domain-modal").length) {
             $("#new-downstream-domain-modal").koApplyBindings(addDownstreamDomainModal);
         }
