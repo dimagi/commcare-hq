@@ -1250,11 +1250,11 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'), # TODO: convert to date.gt etc
             # "source": ('exact',),  # TODO
-            "content_type": ('exact',),
-            "status": ('exact',),
-            "error_code": ('exact',),
+            "content_type": ('exact',),  # TODO: convert from slug
+            "status": ('exact',),  # TODO: convert from slug
+            "error_code": ('exact',),  # TODO
             "case_id": ('exact',),
             # "contact": ('exact',),  # TODO
             # "parent": ('exact',),  # TODO
