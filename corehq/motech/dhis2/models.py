@@ -233,7 +233,7 @@ def get_dataset(
     send_date: date
 ) -> dict:
     if not dataset_map.ucr:
-        raise ValueError('UCR not found for {dataset_map!r}')
+        raise ValueError(f'UCR not found for {dataset_map!r}')
     date_filter = get_date_filter(dataset_map.ucr)
     date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(dataset_map.ucr, date_filter, date_range)
