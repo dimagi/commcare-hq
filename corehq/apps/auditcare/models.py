@@ -128,7 +128,7 @@ class NavigationEventAudit(AuditEvent):
 
     class Meta:
         indexes = AuditEvent._meta.indexes + [
-            models.Index(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
                          name="audit_nav_couch_875bc_idx"),
         ]
 
