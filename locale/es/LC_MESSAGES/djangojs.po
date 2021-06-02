@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-12 19:19+0000\n"
+"POT-Creation-Date: 2021-05-19 19:08+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -230,10 +230,8 @@ msgid "Advanced Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:26
-#, fuzzy
-#| msgid "Edit Form"
 msgid "Edit Graph"
-msgstr "Editar Formulario"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:558
 #: corehq/apps/reports/static/reports/js/single_form.js:105
@@ -1744,6 +1742,7 @@ msgid "Are you sure you want to perform this action?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/registration/static/registration/js/user_login_form.js:41
 msgid "Continue"
 msgstr "Continuar"
 
@@ -3337,11 +3336,11 @@ msgstr ""
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:160
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:163
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:168
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:171
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:46
 msgid "Done"
 msgstr "Listo"
@@ -4373,13 +4372,25 @@ msgstr "Enviar"
 msgid "Complete"
 msgstr "Completar"
 
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js:22
+#, fuzzy
+#| msgid "Free response"
+msgid "DHIS2 response: "
+msgstr "Respuesta libre"
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map.js:30
+msgid "CommCare HQ was unable to send the DataSet: "
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dataset_map_json.js:27
+#, fuzzy
+#| msgid "Unable to save DataSet maps"
+msgid "Unable to save DataSet map"
+msgstr "No es posible guardar los mapas DataSet"
+
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js:60
 msgid "Unable to save case configs"
 msgstr ""
-
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:161
-msgid "Unable to save DataSet maps"
-msgstr "No es posible guardar los mapas DataSet"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
 msgid "Daily"

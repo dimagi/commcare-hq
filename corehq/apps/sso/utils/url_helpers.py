@@ -15,10 +15,6 @@ def get_saml_login_url(identity_provider):
     return _get_full_sso_url("sso_saml_login", identity_provider)
 
 
-def get_saml_sls_url(identity_provider):
-    return _get_full_sso_url("sso_saml_sls", identity_provider)
-
-
 def get_dashboard_link(identity_provider):
     from corehq.apps.accounting.models import Subscription
     from corehq.apps.sso.views.enterprise_admin import EditIdentityProviderEnterpriseView

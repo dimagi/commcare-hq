@@ -50,6 +50,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseListForm,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
@@ -953,6 +955,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['default_value'] = prop['default_value']
         if prop['hint']:
             ret['hint'] = hint
+        if prop['hidden']:
+            ret['hidden'] = prop['hidden']
         if prop.get('appearance', '') == 'fixture':
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
@@ -1005,7 +1009,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
-    sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
@@ -1078,9 +1081,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             )
         detail.long.custom_variables = custom_variables['long']
 
-    if sort_nodeset_columns is not None:
-        detail.long.sort_nodeset_columns = sort_nodeset_columns
-
     if sort_elements is not None:
         # Attempt to map new elements to old so we don't lose translations
         # Imperfect because the same field may be used multiple times, or user may change field
@@ -1129,6 +1129,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 command_label=command_label,
                 again_label=again_label,
+                search_label=CaseSearchLabel(label=command_label),
+                search_again_label=CaseSearchAgainLabel(label=again_label),
                 properties=properties,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),

@@ -1388,6 +1388,7 @@ class ProjectUsersTab(UITab):
                 EditWebUserView,
                 ListWebUsersView,
             )
+            from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
             menu.append({
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
@@ -1404,9 +1405,13 @@ class ProjectUsersTab(UITab):
                         'urlname': EditWebUserView.urlname
                     },
                     {
+                        'title': FilteredWebUserDownload.page_title,
+                        'urlname': FilteredWebUserDownload.urlname,
+                    },
+                    {
                         'title': _("Bulk Upload"),
-                        'urlname': 'upload_web_users'
-                    }
+                        'urlname': 'upload_web_users',
+                    },
                 ],
                 'show_in_dropdown': True,
             })

@@ -1276,7 +1276,6 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         resume_key,
         data_function,
         args_provider,
-        item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
     if rows.state.is_resume() and rows.state.to_json().get("kwargs"):
@@ -1466,8 +1465,8 @@ class MissingFormLoader:
 
 def get_main_forms_iteration_stop_date(statedb):
     resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
-    itr = ResumableFunctionIterator(resume_key, None, None, None)
-    if itr.state.complete:
+    itr = ResumableFunctionIterator(resume_key, None, None)
+    if getattr(itr.state, "complete", False):
         return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"

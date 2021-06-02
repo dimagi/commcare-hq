@@ -1792,9 +1792,15 @@ class DetailTab(IndexedSchema):
     starting_index = IntegerProperty()
 
     # A tab may be associated with a nodeset, resulting in a detail that
-    # iterates through sub-nodes of an entity rather than a single entity
+    # iterates through a set of entities rather than a single entity.
+    # A nodeset is represented by one of the two properties:
+    #   nodeset: An absolute xpath expression to iterate over
+    #   nodeset_case_type: Iterate over all child cases of this type
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    nodeset_case_type = StringProperty()
+
+    # Display condition for the tab
     relevant = StringProperty()
 
 
@@ -1965,7 +1971,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     instance_name = StringProperty(default='casedb')
@@ -2016,9 +2021,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def sort_nodeset_columns_for_detail(self):
         return (
-            self.display == "long" and
-            self.sort_nodeset_columns and
-            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+            self.display == "long"
+            and any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
     def has_persistent_tile(self):
@@ -2083,6 +2087,7 @@ class CaseSearchProperty(DocumentSchema):
     input_ = StringProperty()
     default_value = StringProperty()
     hint = DictProperty()
+    hidden = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
@@ -2095,12 +2100,22 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
+class CaseSearchLabel(DocumentSchema):
+    label = DictProperty(default={'en': 'Search All Cases'})
+
+
+class CaseSearchAgainLabel(DocumentSchema):
+    label = DictProperty(default={'en': 'Search Again'})
+
+
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     again_label = DictProperty(default={'en': 'Search Again'})
+    search_label = SchemaProperty(CaseSearchLabel)
+    search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen

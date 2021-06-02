@@ -63,9 +63,7 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
             for doc in super(ResumableModelIterator, self).__iter__():
                 yield transform(doc)
 
-    item_getter = reindex_accessor.get_doc
-
-    return ResumableModelIterator(iteration_key, data_function, args_provider, item_getter, event_handler)
+    return ResumableModelIterator(iteration_key, data_function, args_provider, event_handler)
 
 
 class SqlDocumentProvider(DocumentProvider):

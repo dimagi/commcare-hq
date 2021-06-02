@@ -53,7 +53,7 @@ class IterationState:
     def __attrs_post_init__(self):
         migration_id = self.statedb.unique_id
         resume_key = "%s.%s.%s" % (self.domain, self.doc_type, migration_id)
-        self.itr = ResumableFunctionIterator(resume_key, None, None, None)
+        self.itr = ResumableFunctionIterator(resume_key, None, None)
 
     @property
     def value(self):
