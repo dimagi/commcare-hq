@@ -25,7 +25,7 @@ class WorkflowHelper(PostProcessor):
 
     @property
     @memoized
-    def root_module_datums(self):
+    def _root_module_datums(self):
         root_modules = [module for module in self.modules if module.put_in_root]
         return [
             datum for module in root_modules
@@ -47,7 +47,7 @@ class WorkflowHelper(PostProcessor):
                 else:
                     stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
 
-                self.create_workflow_stack(form_command, stack_frames)
+                self._create_workflow_stack(form_command, stack_frames)
 
     def get_frame_children(self, command, target_module, module_only=False, include_target_root=False):
         """
@@ -91,7 +91,7 @@ class WorkflowHelper(PostProcessor):
         frame_children = []
 
         if module_command == id_strings.ROOT:
-            datums_list = self.root_module_datums
+            datums_list = self._root_module_datums
         else:
             datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = target_module.root_module
@@ -113,12 +113,12 @@ class WorkflowHelper(PostProcessor):
 
         return frame_children
 
-    def create_workflow_stack(self, form_command, frame_metas):
+    def _create_workflow_stack(self, form_command, frame_metas):
         frames = [_f for _f in [meta.to_frame() for meta in frame_metas if meta is not None] if _f]
         if not frames:
             return
 
-        entry = self.get_form_entry(form_command)
+        entry = self._get_form_entry(form_command)
         if not entry.stack:
             entry.stack = Stack()
 
@@ -139,7 +139,7 @@ class WorkflowHelper(PostProcessor):
         _, datums = self._get_entries_datums()
         return datums[module_id]
 
-    def get_form_entry(self, form_command):
+    def _get_form_entry(self, form_command):
         entries, _ = self._get_entries_datums()
         return entries[form_command]
 
@@ -193,44 +193,44 @@ class WorkflowHelper(PostProcessor):
                     entry_datum.case_type = form_datum.case_type
                     entry_datum.from_parent_module = form_datum.from_parent
 
-    @staticmethod
-    def get_datums_matched_to_source(target_frame_elements, source_datums):
-        """
-        Attempt to match the target session variables with ones in the source session.
-        Making some large assumptions about how people will actually use this feature
-        """
-        unused_source_datums = list(source_datums)
-        for target_datum in target_frame_elements:
-            if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
-                yield target_datum
-            else:
-                match = WorkflowHelper.find_best_match(target_datum, unused_source_datums)
-                if match:
-                    unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
 
-                yield match if match else target_datum
+def get_datums_matched_to_source(target_frame_elements, source_datums):
+    """
+    Attempt to match the target session variables with ones in the source session.
+    Making some large assumptions about how people will actually use this feature
+    """
+    unused_source_datums = list(source_datums)
+    for target_datum in target_frame_elements:
+        if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
+            yield target_datum
+        else:
+            match = _find_best_match(target_datum, unused_source_datums)
+            if match:
+                unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
 
-    @staticmethod
-    def find_best_match(target_datum, source_datums):
-        """Find the datum in the list of source datums that best matches the target datum (if any)
-        """
-        candidate = None
-        for source_datum in source_datums:
-            if source_datum.from_parent_module:
-                # if the datum is only there as a placeholder then we should ignore it
-                continue
-            if target_datum.id == source_datum.id:
-                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
-                    # same ID, same case type
-                    candidate = target_datum
-                    break
-            else:
-                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
-                    # different ID, same case type
-                    candidate = target_datum.clone_to_match(source_id=source_datum.id)
-                    break
+            yield match if match else target_datum
 
-        return candidate
+
+def _find_best_match(target_datum, source_datums):
+    """Find the datum in the list of source datums that best matches the target datum (if any)
+    """
+    candidate = None
+    for source_datum in source_datums:
+        if source_datum.from_parent_module:
+            # if the datum is only there as a placeholder then we should ignore it
+            continue
+        if target_datum.id == source_datum.id:
+            if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                # same ID, same case type
+                candidate = target_datum
+                break
+        else:
+            if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                # different ID, same case type
+                candidate = target_datum.clone_to_match(source_id=source_datum.id)
+                break
+
+    return candidate
 
 
 class EndOfFormNavigationWorkflow(object):
@@ -314,7 +314,7 @@ class EndOfFormNavigationWorkflow(object):
                         target_frame_children, link.datums, form
                     )
                 else:
-                    frame_children = WorkflowHelper.get_datums_matched_to_source(
+                    frame_children = get_datums_matched_to_source(
                         target_frame_children, source_form_datums
                     )
 
@@ -452,7 +452,7 @@ class CaseListFormWorkflow(object):
         if command:
             target_frame_children = self.helper.get_frame_children(command, target_module, module_only=True)
             remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
-            frame_children = WorkflowHelper.get_datums_matched_to_source(
+            frame_children = get_datums_matched_to_source(
                 remaining_target_frame_children, source_form_datums
             )
             stack_frames.add_children(frame_children)
