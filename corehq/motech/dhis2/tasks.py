@@ -85,11 +85,14 @@ def send_dataset(
     )
 
     with dataset_map.connection_settings.get_requests(payload_id) as requests:
-        response = None
         try:
-            dataset = get_dataset(dataset_map, send_date)
-            response = requests.post('/api/dataValueSets', json=dataset,
-                                     raise_for_status=True)
+            datasets = get_dataset(dataset_map, send_date)
+
+            # Consider other way of sending? This is brute forcing
+            for dataset in datasets:
+                requests.post('/api/dataValueSets', json=dataset,
+                                         raise_for_status=True)
+
         except DatabaseError as db_err:
             requests.notify_error(message=str(db_err),
                                   details=traceback.format_exc())
@@ -104,19 +107,18 @@ def send_dataset(
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
-            text = pformat_json(response.text if response else None)
 
             return {
                 'success': False,
                 'error': str(err),
-                'status_code': response.status_code if response else None,
-                'text': text,
+                'status_code': None,
+                'text': _('Could not send data, DHIS2 reported an issue.'),
                 'log_url': response_log_url,
             }
         else:
             return {
                 'success': True,
-                'status_code': response.status_code,
-                'text': pformat_json(response.text),
+                'status_code': None,
+                'text': _('Successfully send to DHIS2'),
                 'log_url': response_log_url,
             }
