@@ -39,23 +39,26 @@ class WorkflowHelper(PostProcessor):
         """
         for module in self.modules:
             for form in module.get_suite_forms():
-                form_command = id_strings.form_command(form, module)
-                stack_frames = []
-                end_of_form_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(module, form)
-                if end_of_form_frames:
-                    stack_frames.extend(end_of_form_frames)
-                else:
-                    stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
-
-                frames = [_f for _f in [meta.to_frame() for meta in stack_frames if meta is not None] if _f]
+                frames = self._get_stack_frames(form, module)
                 if frames:
+                    entry = self._get_form_entry(id_strings.form_command(form, module))
+                    self._add_frames_to_entry(entry, frames)
 
-                    entry = self._get_form_entry(form_command)
-                    if not entry.stack:
-                        entry.stack = Stack()
+    def _get_stack_frames(self, form, module):
+        end_of_form_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(module, form)
+        if end_of_form_frames:
+            stack_frames = end_of_form_frames
+        else:
+            stack_frames = CaseListFormWorkflow(self).case_list_forms_frames(form)
 
-                    for frame in frames:
-                        entry.stack.add_frame(frame)
+        return [_f for _f in [meta.to_frame() for meta in stack_frames if meta is not None] if _f]
+
+    @staticmethod
+    def _add_frames_to_entry(entry, frames):
+        if not entry.stack:
+            entry.stack = Stack()
+        for frame in frames:
+            entry.stack.add_frame(frame)
 
     def get_frame_children(self, command, target_module, module_only=False, include_target_root=False):
         """
