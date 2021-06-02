@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
+from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -30,6 +31,7 @@ from corehq.apps.sso.utils.session_helpers import (
     get_sso_username_from_session,
     prepare_session_with_sso_username,
 )
+from corehq.apps.sso.utils.url_helpers import get_saml_login_url
 from corehq.apps.users.models import Invitation
 
 
@@ -122,6 +124,15 @@ def sso_saml_acs(request, idp_slug):
                 )
 
         AsyncSignupRequest.clear_data_for_username(user.username)
+        relay_state = request.saml2_request_data['post_data'].get('RelayState')
+        if relay_state not in [
+            OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
+            get_saml_login_url(request.idp),
+        ]:
+            return HttpResponseRedirect(
+                request.saml2_auth.redirect_to(relay_state)
+            )
+
         return redirect("homepage")
 
     return render(request, error_template, {
@@ -152,7 +163,7 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    login_url = request.saml2_auth.login()
+    login_url = request.saml2_auth.login(return_to=request.GET.get('next', None))
     username = get_sso_username_from_session(request) or request.GET.get('username')
     if username:
         # verify that the stored user data actually the current IdP
