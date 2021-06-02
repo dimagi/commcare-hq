@@ -13,6 +13,7 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -20,7 +21,7 @@ from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
 from corehq.util.metrics import metrics_counter, metrics_histogram
@@ -39,14 +40,14 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
     if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+        allowed_domains = BillingAccount.get_account_by_domain(domain).get_enterprise_permissions_domains()
         sub_domains = set()
         import_results = _ImportResults()
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
             if row_num == 1:
                 continue  # skip first row (header row)
             sheet_domain = row.get('domain')
-            if sheet_domain != domain and sheet_domain not in mirror_domains:
+            if sheet_domain != domain and sheet_domain not in allowed_domains:
                 err = exceptions.CaseRowError(column_name='domain')
                 err.title = _('Invalid domain')
                 err.message = _('Following rows contain invalid value for domain column.')
