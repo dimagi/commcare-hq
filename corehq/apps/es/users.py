@@ -67,10 +67,10 @@ class UserES(HQESQuery):
 def domain(domain, allow_enterprise=False):
     domain_list = [domain]
     if allow_enterprise:
-        from corehq.apps.users.models import DomainPermissionsMirror
-        source_domain = DomainPermissionsMirror.source_domain(domain)
-        if source_domain:
-            domain_list.append(source_domain)
+        from corehq.apps.accounting.models import BillingAccount
+        if domain in BillingAccount.get_enterprise_permissions_domains(domain):
+            account = BillingAccount.get_account_by_domain(domain)
+            domain_list.append(account.permissions_source_domain)
     return domains(domain_list)
 
 

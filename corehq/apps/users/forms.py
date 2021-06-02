@@ -22,6 +22,7 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -39,7 +40,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
@@ -1224,10 +1225,11 @@ class UserFilterForm(forms.Form):
             (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
+        account = BillingAccount.get_account_by_domain(self.domain)
+        subdomains = account.get_enterprise_permissions_domains()
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
-                                         [(domain, domain) for domain in
-                                          DomainPermissionsMirror.mirror_domains(self.domain)]
+                                         [(domain, domain) for domain in subdomains]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1240,7 +1242,7 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = []
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+        if subdomains:
             fields += [crispy.Field("domains", data_bind="value: domains")]
         fields += [
             crispy.Div(
@@ -1301,6 +1303,7 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            account = BillingAccount.get_account_by_domain(self.domain)
+            domains = account.get_enterprise_permissions_domains()
             domains += [self.domain]
         return domains
