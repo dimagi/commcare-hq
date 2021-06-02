@@ -82,7 +82,7 @@ def get_status_display(event, sms=None):
 def get_sms_status_display(sms):
     slug, detail = get_sms_status_display_raw(sms)
     display = SMS.STATUS_DISPLAY[slug]
-    detail = f" {detail}" if detail else ""
+    detail = f" - {detail}" if detail else ""
     return f"{display}{detail}"
 
 
@@ -91,7 +91,7 @@ def get_sms_status_display_raw(sms):
         error = sms.system_error_message
         if error:
             error_message = SMS.ERROR_MESSAGES.get(error, error)
-            return SMS.STATUS_DISPLAY, _(error_message)
+            return SMS.STATUS_ERROR, _(error_message)
         return SMS.STATUS_ERROR, None
     if not sms.processed:
         return SMS.STATUS_QUEUED, None
