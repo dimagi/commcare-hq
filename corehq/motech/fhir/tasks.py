@@ -117,10 +117,13 @@ def claim_service_request(requests, service_request, case_id):
 
     service_request['status'] = 'on-hold'
     service_request.setdefault('identifier', [])
-    service_request['identifier'].append({
-        'system': SYSTEM_URI_CASE_ID,
-        'value': case_id,
-    })
+    has_case_id = any(id_.get('system') == SYSTEM_URI_CASE_ID
+                      for id_ in service_request['identifier'])
+    if not has_case_id:
+        service_request['identifier'].append({
+            'system': SYSTEM_URI_CASE_ID,
+            'value': case_id,
+        })
     headers = {'If-Match': etag}
     response = requests.put(endpoint, json=service_request, headers=headers)
     if 200 <= response.status < 300:

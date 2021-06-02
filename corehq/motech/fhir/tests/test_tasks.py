@@ -198,6 +198,34 @@ class TestClaimServiceRequest(TestCase):
             with self.assertRaises(ServiceRequestNotActive):
                 claim_service_request(requests, self.service_request, '0f00')
 
+    def test_service_request_has_case_id(self):
+        response = ServiceRequestResponse()
+        response.service_request['identifier'] = [{
+            'system': SYSTEM_URI_CASE_ID,
+            'value': 'abcde',
+        }]
+        with patch.object(Requests, 'get') as requests_get, \
+                patch.object(Requests, 'put') as requests_put:
+            requests_get.return_value = response
+            requests_put.return_value = response
+            requests = Requests(
+                DOMAIN,
+                'https://example.com/api',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            resource = claim_service_request(
+                requests,
+                self.service_request,
+                '0f00',
+            )
+            self.assertEqual(
+                resource['identifier'], [{
+                    'system': SYSTEM_URI_CASE_ID,
+                    'value': 'abcde',
+                }],
+            )
+
 
 class ServiceRequestResponse:
 
