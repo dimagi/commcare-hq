@@ -25,5 +25,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(migrate_mirrors, reverse_code=migrations.RunPython.noop, elidable=True),
-        # TODO: delete table
+        migrations.DeleteModel(
+            name='DomainPermissionsMirror',
+        ),
     ]
