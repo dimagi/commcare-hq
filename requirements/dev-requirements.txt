@@ -28,9 +28,9 @@ billiard==3.5.0.4
     # via
     #   -r base-requirements.in
     #   celery
-boto3==1.15.12
+boto3==1.17.85
     # via -r base-requirements.in
-botocore==1.18.12
+botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
@@ -500,7 +500,7 @@ requests-mock==1.9.3
     # via -r test-requirements.in
 requests-oauthlib==1.3.0
     # via -r base-requirements.in
-requests==2.24.0
+requests==2.25.1
     # via
     #   -r base-requirements.in
     #   cloudant
@@ -517,7 +517,7 @@ requests==2.24.0
     #   twilio
 rjsmin==1.1.0
     # via django-compressor
-s3transfer==0.3.3
+s3transfer==0.4.2
     # via boto3
 schema==0.7.2
     # via -r base-requirements.in
@@ -645,7 +645,7 @@ twilio==6.5.1
     # via -r base-requirements.in
 ua-parser==0.10.0
     # via user-agents
-urllib3==1.25.10
+urllib3==1.26.5
     # via
     #   botocore
     #   elasticsearch

@@ -1,7 +1,7 @@
 alembic==1.4.3
 architect==0.5.6
 attrs~=18.1
-boto3~=1.15
+boto3~=1.17
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
