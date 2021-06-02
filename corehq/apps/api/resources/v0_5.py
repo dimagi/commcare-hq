@@ -19,7 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -554,12 +554,14 @@ class GroupResource(v0_4.GroupResource):
         group.soft_delete()
         return bundle
 
+
 class DomainAuthorization(ReadOnlyAuthorization):
 
     def __init__(self, domain_key='domain', *args, **kwargs):
         self.domain_key = domain_key
 
     def read_list(self, object_list, bundle):
+        print(self.domain_key, bundle.request.domain)
         return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
@@ -1088,6 +1090,117 @@ class ODataFormResource(BaseODataResource):
         ]
 
 
+class MessagingEventResourceNew(HqBaseResource, ModelResource):
+    source = fields.DictField()
+    recipient = fields.DictField()
+    form = fields.DictField()
+    error = fields.DictField()
+    messages = fields.ListField()
+
+    def dehydrate(self, bundle):
+        bundle.data["domain"] = bundle.obj.parent.domain
+        return bundle
+
+    def dehydrate_status(self, bundle):
+        # see corehq.apps.reports.standard.message_event_display.get_status_display
+        return bundle.obj.status  # TODO
+
+    def dehydrate_content_type(self, bundle):
+        return bundle.obj.content_type  # TODO: convert to slug
+
+    def dehydrate_source(self, bundle):
+        parent = bundle.obj.parent
+        return {
+            "source_type": parent.source,  # TODO: convert to slug
+            "source_name": None,  # see corehq.apps.reports.standard.message_event_display.get_event_display
+            "source_id": parent.source_id,
+        }
+
+    def dehydrate_recipient(self, bundle):
+        return {
+            "id": bundle.obj.recipient_id,
+            "type": bundle.obj.recipient_type,  # TODO: convert to slug
+            "display": "",  # See corehq.apps.reports.standard.sms.MessagingEventsReport._fmt_recipient
+            "contact": "",  # TODO: email / phone number
+        }
+
+    def dehydrate_form(self, bundle):
+        event = bundle.obj
+        if event.content_type not in (MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY):
+            return None
+
+        submission_id = None
+        if event.xforms_session_id:
+            submission_id = event.xform_session.submission_id
+        return {
+            "app_id": bundle.obj.app_id,
+            "form_unique_id": bundle.obj.form_unique_id,
+            "form_name": bundle.obj.form_name,
+            "form_submission_id": submission_id,
+        }
+
+    def dehydrate_error(self, bundle):
+        event = bundle.obj
+        if not event.error_code:
+            return None
+
+        return {
+            "code": event.error_code,
+            "message": MessagingEvent.ERROR_MESSAGES.get(event.error_code, None),
+            "message_detail": event.additional_error_text
+        }
+
+    def dehydrate_messages(self, bundle):
+        # return [
+        #     {
+        #         "type": "",
+        #         "direction": "",
+        #         "content": "",
+        #         "date": "",
+        #         "status": "",
+        #         "backend": "",
+        #     }
+        # ]
+        return []  # see corehq.apps.reports.standard.sms.MessageEventDetailReport.rows
+
+    def build_filters(self, filters=None, **kwargs):
+        # Custom filtering for date etc
+        # see corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        return super(MessagingEventResourceNew, self).build_filters(filters, **kwargs)
+
+    class Meta(object):
+        queryset = MessagingSubEvent.objects.all()
+        include_resource_uri = False
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'messaging-event'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization('parent__domain')
+        paginator_class = NoCountingPaginator
+        excludes = {
+            "error_code",
+            "form_name",
+            "form_unique_id",
+            "recipient_id",
+            "recipient_type",
+        }
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            # "source": ('exact',),  # TODO
+            "content_type": ('exact',),
+            "status": ('exact',),
+            "error_code": ('exact',),
+            "case_id": ('exact',),
+            # "contact": ('exact',),  # TODO
+            # "parent": ('exact',),  # TODO
+        }
+        ordering = [
+            'date',
+        ]
+
+
 class MessagingEventResource(HqBaseResource, ModelResource):
     content_type_display = fields.CharField(attribute='get_content_type_display')
     recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
@@ -1098,7 +1211,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         queryset = MessagingEvent.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
-        resource_name = 'messaging-event'
+        resource_name = 'messaging-event-old'
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         authorization = DomainAuthorization()
         paginator_class = NoCountingPaginator

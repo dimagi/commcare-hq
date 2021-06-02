@@ -2,14 +2,14 @@ import json
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import (
-    MessagingEventResource
+    MessagingEventResource, MessagingEventResourceNew
 )
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms
 
 
 class TestMessagingEventResource(APIResourceTest):
-    resource = MessagingEventResource
+    resource = MessagingEventResourceNew
     api_name = 'v0.5'
 
     @classmethod
@@ -26,22 +26,16 @@ class TestMessagingEventResource(APIResourceTest):
             "additional_error_text": None,
             "app_id": None,
             "content_type": MessagingEvent.CONTENT_SMS,
-            "content_type_display": 'SMS Message',
             "date": "2016-01-01T12:00:00",
+            "case_id": None,
             "domain": "qwerty",
-            "error_code": None,
-            "form_name": None,
-            "form_unique_id": None,
+            "error": None,
+            "form": None,
+            "messages": [],
             # "id": 1,  # ids are explicitly removed from comparison
-            "recipient_id": None,
-            "recipient_type": None,
-            "recipient_type_display": None,
-            "resource_uri": "",
-            "source": MessagingEvent.SOURCE_OTHER,
-            "source_display": 'Other',
-            "source_id": None,
+            "recipient": {'contact': '', 'display': '', 'id': None, 'type': 'CAS'},
+            "source": {'source_id': None, 'source_name': None, 'source_type': MessagingEvent.SOURCE_OTHER},
             "status": MessagingEvent.STATUS_COMPLETED,
-            "status_display": 'Completed',
         }
 
     def test_get_list_simple(self):
