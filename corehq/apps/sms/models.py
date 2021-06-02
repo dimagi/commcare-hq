@@ -1516,6 +1516,12 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
+    RECIPIENT_SLUGS = {
+        MessagingEvent.RECIPIENT_CASE: 'case',
+        MessagingEvent.RECIPIENT_MOBILE_WORKER: 'mobile-worker',
+        MessagingEvent.RECIPIENT_WEB_USER: 'web-user',
+    }
+
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)

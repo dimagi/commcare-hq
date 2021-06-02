@@ -49,6 +49,7 @@ from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.transforms import case_or_user_id_to_name
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
@@ -1121,11 +1122,15 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         }
 
     def dehydrate_recipient(self, bundle):
+        display_value = None
+        if bundle.obj.recipient_id:
+            display_value = case_or_user_id_to_name(bundle.obj.recipient_id, {
+                "couch_recipient_doc_type": bundle.obj.get_recipient_doc_type()
+            })
         return {
             "id": bundle.obj.recipient_id,
-            "type": bundle.obj.recipient_type,  # TODO: convert to slug
-            "display": "",  # See corehq.apps.reports.standard.sms.MessagingEventsReport._fmt_recipient
-            "contact": "",  # TODO: email / phone number
+            "type": MessagingSubEvent.RECIPIENT_SLUGS.get(bundle.obj.recipient_type, "unknown"),
+            "display": display_value or "unknown",
         }
 
     def dehydrate_form(self, bundle):
@@ -1161,8 +1166,9 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         #         "direction": "",
         #         "content": "",
         #         "date": "",
-        #         "status": "",
+        #         "status": "",  corehq.apps.reports.standard.message_event_display.get_sms_status_display_raw
         #         "backend": "",
+        #         "contact": "", phone number / email
         #     }
         # ]
         return []  # see corehq.apps.reports.standard.sms.MessageEventDetailReport.rows
