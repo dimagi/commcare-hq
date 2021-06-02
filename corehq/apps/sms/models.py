@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.encoding import force_str
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop, ugettext as _
 
 import jsonfield
 from memoized import memoized
@@ -181,7 +181,28 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
-    STATUS_PENDING = 'STATUS_PENDING'
+    STATUS_PENDING = 'STATUS_PENDING'  # special value for pending status
+
+    STATUS_SENT = "sent"
+    STATUS_ERROR = "error"
+    STATUS_QUEUED = "queued"
+    STATUS_RECEIVED = "received"
+    STATUS_FORWARDED = "forwarded"
+    STATUS_UNKNOWN = "unknown"
+
+    STATUS_DISPLAY = {
+        STATUS_SENT: _('Sent'),
+        STATUS_ERROR: _('Error'),
+        STATUS_QUEUED: _('Queued'),
+        STATUS_RECEIVED: _('Received'),
+        STATUS_FORWARDED: _('Forwarded'),
+        STATUS_UNKNOWN: _('Unknown'),
+    }
+
+    DIRECTION_SLUGS = {
+        INCOMING: "incoming",
+        OUTGOING: "outgoing",
+    }
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:

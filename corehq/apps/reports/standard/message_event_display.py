@@ -80,25 +80,33 @@ def get_status_display(event, sms=None):
 
 
 def get_sms_status_display(sms):
+    slug, detail = get_sms_status_display_raw(sms)
+    display = SMS.STATUS_DISPLAY[slug]
+    detail = f" {detail}" if detail else ""
+    return f"{display}{detail}"
+
+
+def get_sms_status_display_raw(sms):
     if sms.error:
         error = sms.system_error_message
         if error:
             error_message = SMS.ERROR_MESSAGES.get(error, error)
-            return '%s - %s' % (_('Error'), _(error_message))
-        return _('Error')
+            return SMS.STATUS_DISPLAY, _(error_message)
+        return SMS.STATUS_ERROR, None
     if not sms.processed:
-        return _('Queued')
+        return SMS.STATUS_QUEUED, None
     if sms.direction == INCOMING:
-        return _('Received')
+        return SMS.STATUS_RECEIVED, None
+
+    detail = ""
     if sms.is_status_pending():
-        detail = " " + _("message ID: {id}").format(id=sms.backend_message_id)
-    else:
-        detail = ""
+        detail = _("message ID: {id}").format(id=sms.backend_message_id)
+
     if sms.direction == OUTGOING:
         if sms.workflow == WORKFLOW_FORWARD:
-            return _('Forwarded') + detail
-        return _('Sent') + detail
-    return _('Unknown') + detail
+            return SMS.STATUS_FORWARDED, detail
+        return SMS.STATUS_SENT, detail
+    return SMS.STATUS_UNKNOWN, detail
 
 
 def _get_keyword_display_raw(keyword_id):

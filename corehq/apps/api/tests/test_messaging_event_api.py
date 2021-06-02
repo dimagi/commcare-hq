@@ -31,7 +31,17 @@ class TestMessagingEventResource(APIResourceTest):
             "domain": "qwerty",
             "error": None,
             "form": None,
-            "messages": [],
+            'messages': [
+                {
+                    'backend': 'fake-backend-id',
+                    'contact': '99912345678',
+                    'content': 'test sms text',
+                    'date': '2016-01-01T12:00:00',
+                    'direction': 'outgoing',
+                    'status': 'sent',
+                    'type': 'sms'
+                }
+            ],
             # "id": 1,  # ids are explicitly removed from comparison
             "recipient": {'display': 'unknown', 'id': None, 'type': 'case'},
             "source": {'id': None, 'display': 'sms', 'type': "other"},

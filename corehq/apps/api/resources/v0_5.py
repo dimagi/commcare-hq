@@ -19,7 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email, SMS
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -59,8 +59,8 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.reports.standard.message_event_display import get_event_display_api
-from corehq.apps.sms.util import strip_plus
+from corehq.apps.reports.standard.message_event_display import get_event_display_api, get_sms_status_display_raw
+from corehq.apps.sms.util import strip_plus, get_backend_name
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -1160,18 +1160,70 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         }
 
     def dehydrate_messages(self, bundle):
-        # return [
-        #     {
-        #         "type": "",
-        #         "direction": "",
-        #         "content": "",
-        #         "date": "",
-        #         "status": "",  corehq.apps.reports.standard.message_event_display.get_sms_status_display_raw
-        #         "backend": "",
-        #         "contact": "", phone number / email
-        #     }
-        # ]
+        event = bundle.obj
+        if event.content_type == MessagingEvent.CONTENT_EMAIL:
+            return self._get_messages_for_email(event)
+
+        if event.content_type in (MessagingEvent.CONTENT_SMS, MessagingEvent.CONTENT_SMS_CALLBACK):
+            return self._get_messages_for_sms(event)
+
+        if event.content_type in (MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY):
+            return self._get_messages_for_survey(event)
         return []  # see corehq.apps.reports.standard.sms.MessageEventDetailReport.rows
+
+    def _get_messages_for_email(self, event):
+        try:
+            email = Email.objects.get(messaging_subevent=event.pk)
+            content = email.body
+            recipient_address = email.recipient_address
+        except Email.DoesNotExist:
+            content = '-'
+            recipient_address = '-'
+
+        return [{
+            "date": event.date,
+            "type": "email",
+            "direction": "outgoing",
+            "content": content,
+            "status": MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown'),
+            "backend": "email",
+            "contact": recipient_address
+        }]
+
+    def _get_messages_for_sms(self, event):
+        messages = SMS.objects.filter(messaging_subevent_id=event.pk)
+        return self._get_message_dicts_for_sms(event, messages, "sms")
+
+    def _get_messages_for_survey(self, event):
+        if not event.xforms_session_id:
+            return []
+
+        xforms_session = event.xforms_session
+        if not xforms_session:
+            return []
+
+        messages = SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id)
+        type_ = "ivr" if event.content_type == MessagingEvent.CONTENT_IVR_SURVEY else "sms"
+        return self._get_message_dicts_for_sms(event, messages, type_)
+
+    def _get_message_dicts_for_sms(self, event, messages, type_):
+        message_dicts = []
+        for sms in messages:
+            if event.status != MessagingEvent.STATUS_ERROR:
+                status, _ = get_sms_status_display_raw(sms)
+            else:
+                status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
+
+            message_dicts.append({
+                "date": sms.date,
+                "type": type_,
+                "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
+                "content": sms.text,
+                "status": status,
+                "backend": get_backend_name(sms.backend_id) or sms.backend_id,
+                "contact": sms.phone_number
+            })
+        return message_dicts
 
     def build_filters(self, filters=None, **kwargs):
         # Custom filtering for date etc
