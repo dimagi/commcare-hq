@@ -147,6 +147,14 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
+    var AddDownstreamDomainModal = function () {
+        var self = {};
+        self.domainSelected = ko.observable(false);
+        self.availableDomains = ["test1", "test2"];
+        self.value = ko.observable("");
+        return self;
+    };
+
     var setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);
         _private.RMI = function (remoteMethod, data) {
@@ -169,5 +177,11 @@ hqDefine("linked_domain/js/domain_links", [
         if ($("#ko-tabs-manage-downstream").length) {
             $("#ko-tabs-manage-downstream").koApplyBindings(model);
         }
+
+        var addDownstreamDomainModal = AddDownstreamDomainModal()
+        if ($("#new-downstream-domain-modal").length) {
+            $("#new-downstream-domain-modal").koApplyBindings(addDownstreamDomainModal);
+        }
+
     });
 });
