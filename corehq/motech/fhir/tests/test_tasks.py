@@ -7,14 +7,20 @@ from requests import HTTPError
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.motech.auth import AuthManager
+from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.exceptions import RemoteAPIError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
-from ..const import FHIR_VERSION_4_0_1, SYSTEM_URI_CASE_ID
+from ..const import (
+    FHIR_DATA_TYPE_LIST_OF_STRING,
+    FHIR_VERSION_4_0_1,
+    SYSTEM_URI_CASE_ID,
+)
 from ..models import (
     FHIRImporter,
+    FHIRImporterResourceProperty,
     FHIRImporterResourceType,
     JSONPathToResourceType,
 )
@@ -22,6 +28,7 @@ from ..tasks import (
     ServiceRequestNotActive,
     claim_service_request,
     get_case_id_or_none,
+    get_caseblock_kwargs,
     get_name,
     import_related,
     import_resource,
@@ -363,3 +370,159 @@ class TestGetName(SimpleTestCase):
     def test_got_nothing(self):
         resource = {'foo': 'bar'}
         self.assertEqual(get_name(resource), '')
+
+
+class TestGetCaseBlockKwargs(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Test ConnectionSettings',
+            url='https://example.com/api/',
+        )
+        cls.fhir_importer = FHIRImporter.objects.create(
+            domain=DOMAIN,
+            connection_settings=cls.conn,
+            fhir_version=FHIR_VERSION_4_0_1,
+        )
+        cls.mother = CaseType.objects.create(
+            domain=DOMAIN,
+            name='mother',
+        )
+        cls.patient = FHIRImporterResourceType.objects.create(
+            fhir_importer=cls.fhir_importer,
+            name='Patient',
+            case_type=cls.mother,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mother.delete()
+        cls.fhir_importer.delete()
+        cls.conn.delete()
+        super().tearDownClass()
+
+    def test_update_case_name(self):
+        resource = {
+            'name': [{
+                'given': ['Alice', 'Amelia', 'Anna'],
+                'family': 'Apple',
+                'text': 'Alice APPLE',
+            }],
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.name[0].given',
+                'case_property': 'case_name',
+                'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
+                'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': 'Alice Amelia Anna', 'update': {}},
+        )
+
+    def test_default_case_name(self):
+        resource = {
+            'name': [{
+                'given': ['Alice', 'Amelia', 'Anna'],
+                'family': 'Apple',
+                'text': 'Alice APPLE',
+            }],
+        }
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': 'Alice APPLE', 'update': {}},
+        )
+
+    def test_missing_value(self):
+        resource = {
+            'name': [{
+                'text': 'John',
+            }],
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.name[0].given',
+                'case_property': 'case_name',
+                'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
+                'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': 'John', 'update': {}},
+        )
+
+    def test_non_case_property(self):
+        resource = {
+            'telecom': [{
+                'system': 'phone',
+                'value': '555-1234',
+            }],
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.telecom[0].system',
+                'value': 'phone',
+            }
+        )
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.telecom[0].value',
+                'case_property': 'phone_number',
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': '', 'update': {'phone_number': '555-1234'}},
+        )
+
+    def test_case_id(self):
+        resource = {
+            'identifier': [{
+                'system': SYSTEM_URI_CASE_ID,
+                'value': '12345'
+            }]
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.identifier[0].system',
+                'value': SYSTEM_URI_CASE_ID,
+            }
+        )
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.identifier[0].value',
+                'case_property': 'case_id',
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': '', 'update': {}},
+        )
+
+    def test_external_id(self):
+        resource = {
+            'id': '12345',
+        }
+        FHIRImporterResourceProperty.objects.create(
+            resource_type=self.patient,
+            value_source_config={
+                'jsonpath': '$.id',
+                'case_property': 'external_id',
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient, resource),
+            {'case_name': '', 'update': {}},
+        )

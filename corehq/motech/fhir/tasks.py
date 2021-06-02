@@ -145,6 +145,27 @@ def get_case_id_or_none(resource):
     return None
 
 
+def get_caseblock_kwargs(resource_type, resource):
+    reserved = {'case_id', 'external_id', 'owner_id', 'user_id', 'case_type'}
+    kwargs = {
+        'case_name': get_name(resource),
+        'update': {}
+    }
+    for resource_property in resource_type.properties.all():
+        if 'case_property' in resource_property.value_source_config:
+            case_property = resource_property.value_source_config['case_property']
+            if case_property in reserved:
+                continue
+            value_source = resource_property.get_value_source()
+            value = value_source.get_import_value(resource)
+            if value is not None:
+                if case_property == 'case_name':
+                    kwargs[case_property] = value
+                else:
+                    kwargs['update'][case_property] = value
+    return kwargs
+
+
 def get_name(resource):
     """
     Returns a name, or a code, or an empty string.
