@@ -50,9 +50,15 @@ class BaseFHIRViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
-        cls.user.delete(deleted_by=None)
+        delete_username(USERNAME)
         cls.domain_obj.delete()
         super().tearDownClass()
+
+
+def delete_username(username):
+    user = WebUser.get_by_username(username)
+    if user:
+        user.delete(deleted_by=None)
 
 
 class TestFHIRGetView(BaseFHIRViewTest):
