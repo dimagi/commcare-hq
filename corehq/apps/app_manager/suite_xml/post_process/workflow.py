@@ -47,7 +47,15 @@ class WorkflowHelper(PostProcessor):
                 else:
                     stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
 
-                self._create_workflow_stack(form_command, stack_frames)
+                frames = [_f for _f in [meta.to_frame() for meta in stack_frames if meta is not None] if _f]
+                if frames:
+
+                    entry = self._get_form_entry(form_command)
+                    if not entry.stack:
+                        entry.stack = Stack()
+
+                    for frame in frames:
+                        entry.stack.add_frame(frame)
 
     def get_frame_children(self, command, target_module, module_only=False, include_target_root=False):
         """
@@ -112,18 +120,6 @@ class WorkflowHelper(PostProcessor):
             frame_children.extend(remaining_datums)
 
         return frame_children
-
-    def _create_workflow_stack(self, form_command, frame_metas):
-        frames = [_f for _f in [meta.to_frame() for meta in frame_metas if meta is not None] if _f]
-        if not frames:
-            return
-
-        entry = self._get_form_entry(form_command)
-        if not entry.stack:
-            entry.stack = Stack()
-
-        for frame in frames:
-            entry.stack.add_frame(frame)
 
     def get_form_datums(self, form):
         """
