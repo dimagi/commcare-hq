@@ -388,6 +388,18 @@ class TestWebUserResource(APIResourceTest):
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.get_role(self.domain.name).name, 'Field Implementer')
 
+    def test_create_with_preset_role_deleted(self):
+        SQLUserRole.objects.filter(domain=self.domain, name=UserRolePresets.APP_EDITOR).delete()
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = UserRolePresets.APP_EDITOR
+        user_json["is_admin"] = False
+        self.addCleanup(self._delete_user, user_json["username"])
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'App Editor\'"}')
+
     def test_create_with_custom_role(self):
         new_user_role = UserRole.create(self.domain.name, 'awesomeness')
         user_json = deepcopy(self.default_user_json)
