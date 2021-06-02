@@ -228,10 +228,10 @@ def get_datavalues(
     return datavalues
 
 
-def get_dataset(
+def parse_dataset_for_request(
     dataset_map: Union[DataSetMap, SQLDataSetMap],
     send_date: date
-) -> dict:
+) -> list:
     if not dataset_map.ucr:
         raise ValueError(f'UCR not found for {dataset_map!r}')
     date_filter = get_date_filter(dataset_map.ucr)
@@ -255,27 +255,23 @@ def get_dataset(
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
 
-    datasets = process_complete_date(dataset_map, dataset, datavalues_list)
+    if dataset_map.complete_date:
+        dataset['completeDate'] = str(dataset_map.complete_date)
+        datavalues_sets = group_dataset_datavalues(dataset, datavalues_list)
+    else:
+        datavalues_sets = [dataset]
 
-    return datasets
+    return datavalues_sets
 
 
-def process_complete_date(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
+def group_dataset_datavalues(
     dataset,
     datavalues_list
 ) -> list:
     """
-        This function evaluates a few cases regarding the 'completeDate':
-        1)
-            Evaluation: 'completeDate' is not specified
-            Considerations: None
-            Process: None
-            Response: return `dataset` as a list
-        2)
-            Evaluation: 'completeDate' is specified
+        This function evaluates a few cases regarding the 'period' and 'orgUnit':
             Considerations:
-                 In this case the 'period' and 'orgUnit' must be on specified on the same level as the 'completeDate',
+                 The 'period' and 'orgUnit' must be on specified on the same level as the 'completeDate',
                  thus the payload MUST be in the following format:
                     {
                         "completeDate": <completeDate>,
@@ -283,58 +279,56 @@ def process_complete_date(
                         "period": <period>,
                         "dataValues": [...]
                     }
+
+                Since 'completeDate' is specified directly on the `dataset` dictionary, we look there.
                 Several cases should be considered:
-                A) 'orgUnit' and 'period' is static, i.e. already on same level as 'completeDate'
-                B) 'orgUnit' is static and 'period' is dynamic, i.e. 'period' is specified in datavalues_list
-                C) 'period' is static and 'orgUnit' is dynamic, i.e. 'period' is specified in datavalues_list
-                D) both 'period' and 'orgUnit' is dynamic
-
-            Process:
-                A) No further processing, simply add 'dataValues' to dataset and return dataset as is.
-                B) Go through 'datavalues_list' and group by 'period' so that a list of items can be constructed
+                A) 'orgUnit' and 'period' is static, i.e. already on same level as 'completeDate'.
+                    - No further processing, simply add 'dataValues' to dataset and return dataset as is.
+                B) 'orgUnit' is static and 'period' is dynamic, i.e. 'period' is specified in `datavalues_list`.
+                    - Go through 'datavalues_list' and group by 'period' so that a list of items can be constructed
                     such that 'period' sits on the same level as 'completeDate'
-                C) Same as B), except 'period' is not 'orgUnit'.
-                D) Same as B and C, except both 'orgUnit' and 'period' should be considered.
+                C) 'period' is static and 'orgUnit' is dynamic, i.e. 'period' is specified in `datavalues_list`.
+                    - Same as B), except 'period' is not 'orgUnit'.
+                D) both 'period' and 'orgUnit' is dynamic.
+                    - Same as B and C, except both 'orgUnit' and 'period' should be considered.
 
-            Return: list of items, where each item corresponds to the format specified in "Considerations"
+            Return:
+                A list of grouped 'datavalues_sets', where each 'set' corresponds to the format
+                specified in "Considerations" above.
     """
-    if dataset_map.complete_date:
-        dataset['completeDate'] = str(dataset_map.complete_date)
-
-        if dataset.get('orgUnit') and dataset.get('period'):
-            dataset['dataValues'] = datavalues_list
-            return [dataset]
-
-        group_by = None
-        if dataset.get('orgUnit') and not dataset.get('period'):
-            # Group datavalues_list by period and apply dataset_template
-            group_by = ['period']
-
-        if dataset.get('period') and not dataset.get('orgUnit'):
-            # Group by orgUnit
-            group_by = ['orgUnit']
-
-        if not dataset.get('orgUnit') and not dataset.get('period'):
-            # Group by orgUnit and period
-            group_by = ['orgUnit', 'period']
-
-        grouped_datasets = get_grouped_datasets_with_template(
-            group_by=group_by,
-            template_dataset=dataset,
-            data_list=datavalues_list
-        )
-        return grouped_datasets
-
-    else:
+    if dataset.get('orgUnit') and dataset.get('period'):
+        dataset['dataValues'] = datavalues_list
         return [dataset]
 
+    group_by_items = []
+    if dataset.get('orgUnit') and not dataset.get('period'):
+        # Need to group datavalues_list by period
+        group_by_items = ['period']
 
-def get_grouped_datasets_with_template(group_by, template_dataset, data_list):
+    if dataset.get('period') and not dataset.get('orgUnit'):
+        # Need to group datavalues_list by orgUnit
+        group_by_items = ['orgUnit']
+
+    if not dataset.get('orgUnit') and not dataset.get('period'):
+        # Need to group datavalues_list by orgUnit and period
+        group_by_items = ['orgUnit', 'period']
+
+    return get_grouped_datavalues_sets(
+        group_by=group_by_items,
+        template_dataset=dataset,
+        data_list=datavalues_list
+    )
+
+
+def get_grouped_datavalues_sets(group_by, template_dataset, data_list):
+    """
+        'group_by' will mostly be a list containing just 1 item, but in one instance it contains 2 items, thus
+        all list operations concerning the 'group_by' argument would take a very short time to execute.
+    """
     def get_grouped_data(data, group_by_keys):
         data_list_temp = copy.deepcopy(data)
 
         while len(data_list_temp) > 0:
-            # group_by_keys will be at most 2 items
             group_by_values_ = [data_list_temp[0][group_by_key] for group_by_key in group_by_keys]
 
             grouped_data = []

@@ -11,7 +11,7 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 from corehq import toggles
 from corehq.motech.dhis2.models import (
     SQLDataSetMap,
-    get_dataset,
+    parse_dataset_for_request,
     should_send_on_date,
 )
 from corehq.util.view_utils import reverse
@@ -85,13 +85,13 @@ def send_dataset(
     )
 
     with dataset_map.connection_settings.get_requests(payload_id) as requests:
+        response = None
         try:
-            datasets = get_dataset(dataset_map, send_date)
+            datavalues_sets = parse_dataset_for_request(dataset_map, send_date)
 
-            # Consider other way of sending? This is brute forcing
-            for dataset in datasets:
-                requests.post('/api/dataValueSets', json=dataset,
-                                         raise_for_status=True)
+            for datavalues_set in datavalues_sets:
+                response = requests.post('/api/dataValueSets', json=datavalues_set,
+                              raise_for_status=True)
 
         except DatabaseError as db_err:
             requests.notify_error(message=str(db_err),
@@ -111,14 +111,14 @@ def send_dataset(
             return {
                 'success': False,
                 'error': str(err),
-                'status_code': None,
+                'status_code': response.status_code if response else None,
                 'text': _('Could not send data, DHIS2 reported an issue.'),
                 'log_url': response_log_url,
             }
         else:
             return {
                 'success': True,
-                'status_code': None,
+                'status_code': response.status_code if response else None,
                 'text': _('Successfully send to DHIS2'),
                 'log_url': response_log_url,
             }
