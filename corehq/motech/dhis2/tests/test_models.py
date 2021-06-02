@@ -24,7 +24,7 @@ from ..models import (
     get_previous_week,
     get_quarter_start_month,
     should_send_on_date,
-    get_grouped_datasets_with_template
+    get_grouped_datavalues_sets
 )
 
 
@@ -306,7 +306,7 @@ class TestGetGroupedDatasets(TestCase):
             {'dataElement': 'dataElementID7', 'period': '202102', 'value': 90210}
         ]
 
-        grouped_result = get_grouped_datasets_with_template(
+        grouped_result = get_grouped_datavalues_sets(
             group_by=['period'],
             template_dataset=template_dataset,
             data_list=data_list
@@ -349,7 +349,7 @@ class TestGetGroupedDatasets(TestCase):
             {'dataElement': 'dataElementID4', 'orgUnit': 'orgUnit3', 'value': 135}
         ]
 
-        grouped_result = get_grouped_datasets_with_template(
+        grouped_result = get_grouped_datavalues_sets(
             group_by=['orgUnit'],
             template_dataset=template_dataset,
             data_list=data_list
@@ -386,7 +386,7 @@ class TestGetGroupedDatasets(TestCase):
             {'dataElement': 'dataElementID5', 'orgUnit': 'orgUnit3', 'period': '202103', 'value': 135}
         ]
 
-        grouped_result = get_grouped_datasets_with_template(
+        grouped_result = get_grouped_datavalues_sets(
             group_by=['orgUnit', 'period'],
             template_dataset=template_dataset,
             data_list=data_list
