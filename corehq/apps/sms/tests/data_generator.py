@@ -1,8 +1,12 @@
 import random
+import uuid
 from collections import namedtuple
 
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS, OUTGOING
 from datetime import datetime, timedelta
+
+from corehq.apps.smsforms.models import SQLXFormsSession
 
 SmsAndDict = namedtuple('SmsAndDict', ['sms', 'sms_dict'])
 
@@ -51,6 +55,11 @@ def create_fake_sms(domain, randomize=False):
         error_code=None,
         additional_error_text=None
     )
+    sms, sms_dict = _make_sms(domain, message_date, subevent)
+    return SmsAndDict(sms=sms, sms_dict=sms_dict)
+
+
+def _make_sms(domain, message_date, subevent, **kwargs):
     # Some of the values here don't apply for a simple outgoing SMS,
     # but the point of this is to just test the serialization and that
     # everything makes it to elasticsearch
@@ -90,7 +99,68 @@ def create_fake_sms(domain, randomize=False):
         fri_risk_profile='X',
         custom_metadata={'a': 'b'},
     )
-    sms = SMS.objects.create(
+    sms_dict.update(kwargs)
+    return SMS.objects.create(
         **sms_dict
+    ), sms_dict
+
+
+def make_simple_sms(domain, message, error_message=None, **kwargs):
+    return SMS.objects.create(
+        domain=domain,
+        date=datetime.utcnow(),
+        direction=OUTGOING,
+        text=message,
+        error=bool(error_message),
+        system_error_message=error_message,
+        **kwargs
     )
-    return SmsAndDict(sms=sms, sms_dict=sms_dict)
+
+
+def make_case_rule_sms(domain, rule_name, utcnow=None):
+    rule = AutomaticUpdateRule.objects.create(domain=domain, name=rule_name)
+    message_date = utcnow or datetime.utcnow()
+    event = MessagingEvent.objects.create(
+        domain=domain,
+        date=message_date,
+        source=MessagingEvent.SOURCE_CASE_RULE,
+        source_id=rule.pk,
+    )
+    subevent = event.create_subevent_for_single_sms(
+        recipient_doc_type="CommCareCase",
+        recipient_id="case_id_123",
+    )
+    if utcnow:
+        subevent.date = utcnow
+        subevent.save()
+
+    sms, _ = _make_sms(domain, message_date, subevent)
+    return rule, subevent, sms
+
+
+def make_survey_sms(domain, rule_name, utcnow=None):
+    # It appears that in production, many SMSs don't have a direct link to the
+    # triggering event - the connection is roundabout via the xforms_session
+    rule = AutomaticUpdateRule.objects.create(domain=domain, name=rule_name)
+    xforms_session = SQLXFormsSession.objects.create(
+        domain=domain,
+        couch_id=uuid.uuid4().hex,
+        start_time=datetime.utcnow(),
+        modified_time=datetime.utcnow(),
+        current_action_due=datetime.utcnow(),
+        expire_after=3,
+    )
+    message_date = utcnow or datetime.utcnow()
+    event = MessagingEvent.objects.create(
+        domain=domain,
+        date=message_date,
+        source=MessagingEvent.SOURCE_CASE_RULE,
+        source_id=rule.pk,
+    )
+    subevent = event.create_subevent_for_single_sms()
+    subevent.date = message_date
+    subevent.xforms_session = xforms_session
+    subevent.save()
+
+    sms, _ = _make_sms(domain, message_date, subevent, xforms_session_couch_id=xforms_session.couch_id)
+    return rule, xforms_session, event, sms

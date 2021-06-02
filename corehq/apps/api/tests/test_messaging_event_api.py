@@ -1,11 +1,12 @@
 import json
+from datetime import datetime
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource, MessagingEventResourceNew
 )
 from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.sms.tests.data_generator import create_fake_sms
+from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms
 
 
 class TestMessagingEventResource(APIResourceTest):
@@ -76,3 +77,48 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(0, len(ordered_data))
+
+    def test_case_rule(self):
+        rule, event, sms = make_case_rule_sms(self.domain, "case rule name", datetime(2016, 1, 1, 12, 0))
+        self.addCleanup(rule.delete)
+        self.addCleanup(event.delete)  # cascades to subevent
+        self.addCleanup(sms.delete)
+
+        expected = {
+            "case_id": None,
+            "content_type": "sms",
+            "date": "2016-01-01T12:00:00",
+            "domain": "qwerty",
+            "error": None,
+            "form": None,
+            "messages": [
+                {
+                    "backend": 'fake-backend-id',
+                    "contact": "99912345678",
+                    "content": "test sms text",
+                    "date": "2016-01-01T12:00:00",
+                    "direction": "outgoing",
+                    "status": "sent",
+                    "type": "sms"
+                }
+            ],
+            "recipient": {
+                "display": "unknown",
+                "id": "case_id_123",
+                "type": "case"
+            },
+            "source": {
+                "display": "case rule name",
+                "type": "conditional-alert"
+            },
+            "status": "in-progress"
+        }
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)['objects']
+        self.assertEqual(1, len(data))
+        for result in data:
+            del result['id']
+            del result['source']['id']
+            self.assertEqual(expected, result)
