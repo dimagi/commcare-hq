@@ -65,6 +65,7 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - jls/cross-domain-web-user-download # Jenny April 24
     - smh/embedded-tableau # Steph May 7
+    - rp/enterprize-sms-report #Rynhard June 2
     - gh/add-app-id-to-downstream-report # Graham May 18
     - mk/case_search_labels/migrate # MK May 21
     - mk/case_search_labels/multimedia # MK May 21
@@ -80,6 +81,5 @@ branches:
     # - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
     # - sk/test_role_create_update  # Simon May 31
-    - rp/enterprize-sms-report #Rynhard June 2
     - gh/clear-cache-in-set-toggle # Graham June 1
 submodules: { }
