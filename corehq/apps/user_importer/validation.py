@@ -336,7 +336,7 @@ class ExistingUserValidator(ImportValidator):
 
 
 class TargetDomainValidator(ImportValidator):
-    error_message = _("Target domain {} is not a mirror of {}")
+    error_message = _("Target domain {} does not use enterprise permissions of {}")
 
     def validate_spec(self, spec):
         target_domain = spec.get('domain')

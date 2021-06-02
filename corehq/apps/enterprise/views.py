@@ -356,18 +356,18 @@ def enterprise_permissions(request, domain):
 
 @require_superuser
 @require_POST
-def toggle_enterprise_permission(request, domain, mirror):
+def toggle_enterprise_permission(request, domain, target_domain):
     account = BillingAccount.get_account_by_domain(domain)
     domains = account.get_domains()
 
     redirect = reverse("enterprise_permissions", args=[domain])
-    if mirror not in domains:
+    if target_domain not in domains:
         messages.error(request, _("Could not update permissions."))
         return HttpResponseRedirect(redirect)
-    if mirror in account.permissions_ignore_domains:
-        account.permissions_ignore_domains.remove(mirror)
+    if target_domain in account.permissions_ignore_domains:
+        account.permissions_ignore_domains.remove(target_domain)
     else:
-        account.permissions_ignore_domains.append(mirror)
+        account.permissions_ignore_domains.append(target_domain)
     account.save()
     messages.success(request, _('Permissions saved.'))
     return HttpResponseRedirect(redirect)
