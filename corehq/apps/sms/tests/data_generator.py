@@ -149,6 +149,7 @@ def make_survey_sms(domain, rule_name, utcnow=None):
         modified_time=datetime.utcnow(),
         current_action_due=datetime.utcnow(),
         expire_after=3,
+        submission_id="fake_form_submission_id"
     )
     message_date = utcnow or datetime.utcnow()
     event = MessagingEvent.objects.create(
@@ -157,7 +158,14 @@ def make_survey_sms(domain, rule_name, utcnow=None):
         source=MessagingEvent.SOURCE_CASE_RULE,
         source_id=rule.pk,
     )
-    subevent = event.create_subevent_for_single_sms()
+    subevent = event.create_subevent_for_single_sms(
+        recipient_doc_type="CommCareUser",
+        recipient_id="user_id_xyz",
+    )
+    subevent.app_id = "fake_app_id"
+    subevent.form_name = "fake form name"
+    subevent.form_unique_id = "fake_form_id"
+    subevent.content_type = MessagingEvent.CONTENT_IVR_SURVEY
     subevent.date = message_date
     subevent.xforms_session = xforms_session
     subevent.save()

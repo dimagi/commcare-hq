@@ -6,7 +6,7 @@ from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource, MessagingEventResourceNew
 )
 from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms
+from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms
 
 
 class TestMessagingEventResource(APIResourceTest):
@@ -121,4 +121,56 @@ class TestMessagingEventResource(APIResourceTest):
         for result in data:
             del result['id']
             del result['source']['id']
+            self.assertEqual(expected, result)
+
+    def test_survey_sms(self):
+        rule, xforms_session, event, sms = make_survey_sms(self.domain, "test sms survey", datetime(2016, 1, 1, 12, 0))
+        self.addCleanup(rule.delete)
+        self.addCleanup(xforms_session.delete)
+        self.addCleanup(event.delete)  # cascades to subevent
+        self.addCleanup(sms.delete)
+
+        expected = {
+            "case_id": None,
+            "content_type": "ivr-survey",
+            "date": "2016-01-01T12:00:00",
+            "domain": "qwerty",
+            "error": None,
+            "form": {
+                "app_id": "fake_app_id",
+                "form_name": "fake form name",
+                "form_submission_id": "fake_form_submission_id",
+                "form_unique_id": "fake_form_id"
+            },
+            "messages": [
+                {
+                    "backend": "fake-backend-id",
+                    "contact": "99912345678",
+                    "content": "test sms text",
+                    "date": "2016-01-01T12:00:00",
+                    "direction": "outgoing",
+                    "status": "sent",
+                    "type": "ivr"
+                }
+            ],
+            "recipient": {
+                "display": "unknown",
+                "id": "user_id_xyz",
+                "type": "mobile-worker"
+            },
+            "source": {
+                "display": "test sms survey",
+                "type": "conditional-alert"
+            },
+            "status": "in-progress"
+        }
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)['objects']
+        self.assertEqual(1, len(data))
+        for result in data:
+            del result['id']
+            del result['source']['id']
+            print(json.dumps(result, indent=4))
             self.assertEqual(expected, result)

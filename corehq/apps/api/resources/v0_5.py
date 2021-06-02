@@ -563,7 +563,6 @@ class DomainAuthorization(ReadOnlyAuthorization):
         self.domain_key = domain_key
 
     def read_list(self, object_list, bundle):
-        print(self.domain_key, bundle.request.domain)
         return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
@@ -1140,7 +1139,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
 
         submission_id = None
         if event.xforms_session_id:
-            submission_id = event.xform_session.submission_id
+            submission_id = event.xforms_session.submission_id
         return {
             "app_id": bundle.obj.app_id,
             "form_unique_id": bundle.obj.form_unique_id,
