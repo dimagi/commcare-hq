@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/OperationDefinition",
+  "id": "file:OperationDefinition.schema.json",
   "$ref": "#/definitions/OperationDefinition",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "OperationDefinition": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A formal computable definition of an operation (on the RESTful interface) or a named query (using the search interaction).",
@@ -223,7 +223,7 @@
     "OperationDefinition_Parameter": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of an operation (on the RESTful interface) or a named query (using the search interaction).",
@@ -323,7 +323,7 @@
     "OperationDefinition_Binding": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of an operation (on the RESTful interface) or a named query (using the search interaction).",
@@ -361,7 +361,7 @@
     "OperationDefinition_Overload": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal computable definition of an operation (on the RESTful interface) or a named query (using the search interaction).",

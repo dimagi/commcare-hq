@@ -101,7 +101,7 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
 )
 from corehq.elastic import ESError
@@ -350,7 +350,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user)
 
 
 def get_apps_base_context(request, domain, app):
@@ -474,14 +474,14 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
         messages.error(request, _("Creating linked app failed. {}").format(error))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[from_domain, app_id]))
 
-    linked_app = create_linked_app(from_domain, from_app.master_id, to_domain, link_app_name)
+    linked_app = create_linked_app(from_domain, from_app.origin_id, to_domain, link_app_name)
     try:
         update_linked_app(linked_app, from_app, request.couch_user.get_id)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                 args=[from_domain, from_app.master_id]))
+                                                 args=[from_domain, from_app.origin_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[to_domain, linked_app.get_id]))
@@ -981,7 +981,7 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-def drop_user_case(request, domain, app_id):
+def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
         for form in module.get_forms():
@@ -1025,13 +1025,3 @@ def pull_master_app(request, domain, app_id):
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def update_linked_whitelist(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    new_whitelist = json.loads(request.POST.get('whitelist'))
-    app.linked_whitelist = new_whitelist
-    app.save()
-    return HttpResponse()

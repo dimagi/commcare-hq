@@ -1,4 +1,5 @@
 from collections import defaultdict
+from corehq.apps.users.models import DomainMembershipError
 
 from django.conf import settings
 from django.core.cache import cache
@@ -230,13 +231,20 @@ class UITab(object):
         return urls
 
     @classmethod
-    def clear_dropdown_cache(cls, domain, user_id):
+    def clear_dropdown_cache(cls, domain, user):
+        user_id = user.get_id
+        try:
+            user_role = user.get_role(domain, allow_mirroring=True)
+            role_version = user_role.cache_version if user_role else None
+        except DomainMembershipError:
+            role_version = None
         for is_active in True, False:
             key = make_template_fragment_key('header_tab', [
                 cls.class_name(),
                 domain,
                 is_active,
                 user_id,
+                role_version,
                 get_language(),
             ])
             cache.delete(key)
@@ -245,7 +253,8 @@ class UITab(object):
     def clear_dropdown_cache_for_all_domain_users(cls, domain):
         from corehq.apps.users.models import CouchUser
         for user_id in CouchUser.ids_by_domain(domain):
-            cls.clear_dropdown_cache(domain, user_id)
+            user = CouchUser.get_by_user_id(user_id)
+            cls.clear_dropdown_cache(domain, user)
 
     @property
     def css_id(self):

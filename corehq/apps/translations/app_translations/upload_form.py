@@ -98,7 +98,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 except BulkAppTranslationsException as e:
                     self.msgs.append((messages.warning, str(e)))
 
-        save_xform(self.app, self.form, etree.tostring(self.xform.xml))
+        save_xform(self.app, self.form, etree.tostring(self.xform.xml, encoding='utf-8'))
 
         return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 

@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
@@ -41,7 +42,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     FormExportInstance,
 )
-from corehq.apps.export.utils import get_default_export_settings_for_domain
+from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
@@ -51,7 +52,7 @@ from corehq.apps.export.views.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 
 
 class BaseExportView(BaseProjectDataView):
@@ -90,7 +91,8 @@ class BaseExportView(BaseProjectDataView):
     def terminology(self):
         return {
             'page_header': _("Export Settings"),
-            'help_text': mark_safe(_("""
+            'help_text': mark_safe(  # nosec: no user input
+                _("""
                 Learn more about exports on our <a
                 href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
                 target="_blank">Help Site</a>.
@@ -124,6 +126,7 @@ class BaseExportView(BaseProjectDataView):
             'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+            'has_api_access': domain_has_privilege(self.domain, API_ACCESS),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
@@ -192,11 +195,7 @@ class BaseExportView(BaseProjectDataView):
         export.save()
         messages.success(
             request,
-            mark_safe(
-                _("Export <strong>{}</strong> saved.").format(
-                    export.name
-                )
-            )
+            format_html(_("Export <strong>{}</strong> saved."), export.name)
         )
         return export._id
 
@@ -253,15 +252,16 @@ class CreateNewCustomFormExportView(BaseExportView):
         from corehq.apps.export.views.list import FormExportListView
         return FormExportListView
 
-    def create_new_export_instance(self, schema):
-        return self.export_instance_cls.generate_instance_from_schema(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
         xmlns = request.GET.get('export_tag').strip('"')
 
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, app_id, xmlns)
-        self.export_instance = self.create_new_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -278,14 +278,15 @@ class CreateNewCustomCaseExportView(BaseExportView):
         from corehq.apps.export.views.list import CaseExportListView
         return CaseExportListView
 
-    def create_new_export_instance(self, schema):
-        return self.export_instance_cls.generate_instance_from_schema(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, None, case_type)
-        self.export_instance = self.create_new_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
@@ -317,8 +318,11 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
 
-    def create_new_export_instance(self, schema):
-        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         clean_odata_columns(export_instance)
         return export_instance
 
@@ -328,12 +332,13 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
 
-    def create_new_export_instance(self, schema):
-        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         # odata settings only apply to form exports
-        export_settings = get_default_export_settings_for_domain(schema.domain)
         if export_settings:
-            export_instance.include_errors = export_settings.odata_include_duplicates
             export_instance.split_multiselects = export_settings.odata_expand_checkbox
         clean_odata_columns(export_instance)
         return export_instance
@@ -363,11 +368,7 @@ class DeleteNewCustomExportView(BaseExportView):
         export.delete()
         messages.success(
             request,
-            mark_safe(
-                _("Export <strong>{}</strong> was deleted.").format(
-                    export.name
-                )
-            )
+            format_html(_("Export <strong>{}</strong> was deleted."), export.name)
         )
         return export._id
 
@@ -419,11 +420,7 @@ class CopyExportView(View):
             new_export.save()
             messages.success(
                 request,
-                mark_safe(
-                    _("Export <strong>{}</strong> created.").format(
-                        new_export.name
-                    )
-                )
+                format_html(_("Export <strong>{}</strong> created."), new_export.name)
             )
         redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(redirect)

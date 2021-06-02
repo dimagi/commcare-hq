@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Contract",
+  "id": "file:Contract.schema.json",
   "$ref": "#/definitions/Contract",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Contract": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -180,7 +180,7 @@
     "Contract_Agent": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -206,7 +206,7 @@
     "Contract_Signer": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -238,7 +238,7 @@
     "Contract_ValuedItem": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -301,7 +301,7 @@
     "Contract_Term": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -395,7 +395,7 @@
     "Contract_Agent1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -421,7 +421,7 @@
     "Contract_ValuedItem1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -484,7 +484,7 @@
     "Contract_Friendly": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -504,7 +504,7 @@
     "Contract_Legal": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",
@@ -524,7 +524,7 @@
     "Contract_Rule": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A formal agreement between parties regarding the conduct of business, exchange of information or other matters.",

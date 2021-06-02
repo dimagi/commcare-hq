@@ -70,7 +70,7 @@ class ExplodeCasesDbTest(TestCase):
             self.assertEqual(self.user_id, case.owner_id)
 
     @run_with_all_backends
-    def test_skip_user_case(self):
+    def test_skip_usercase(self):
         caseblock = CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/AllergyIntolerance",
+  "id": "file:AllergyIntolerance.schema.json",
   "$ref": "#/definitions/AllergyIntolerance",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "AllergyIntolerance": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Risk of harmful or undesirable, physiological response which is unique to an individual and associated with exposure to a substance.",
@@ -186,7 +186,7 @@
     "AllergyIntolerance_Reaction": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Risk of harmful or undesirable, physiological response which is unique to an individual and associated with exposure to a substance.",

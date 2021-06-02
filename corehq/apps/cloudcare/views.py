@@ -25,6 +25,7 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from text_unidecode import unidecode
 
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
@@ -124,15 +125,6 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = None
-        try:
-            role = user.get_role(domain)
-        except DomainMembershipError:
-            # User has access via domain mirroring
-            pass
-        if role:
-            apps = [app for app in apps
-                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
@@ -216,12 +208,12 @@ class FormplayerMain(View):
             "domain_is_on_trial": domain_is_on_trial(domain),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -256,10 +248,6 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
-        role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app.master_id):
-            raise Http404()
-
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -278,12 +266,12 @@ class FormplayerPreviewSingleApp(View):
             "apps": [_format_app_doc(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(for_js=True),
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -298,12 +286,19 @@ class PreviewAppView(TemplateView):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
-            'formplayer_url': settings.FORMPLAYER_URL,
+            'formplayer_url': get_formplayer_url(for_js=True),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
-            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(request.domain),
         })
+
+
+def has_geocoder_privs(domain):
+    return (
+        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        and domain_has_privilege(domain, privileges.GEOCODER)
+    )
 
 
 @location_safe
@@ -407,7 +402,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     root_context = {
         'form_url': form_url,
-        'formplayer_url': settings.FORMPLAYER_URL,
+        'formplayer_url': get_formplayer_url(for_js=True),
     }
     if instance_id:
         try:

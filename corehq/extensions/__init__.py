@@ -38,7 +38,16 @@ Create an extension point
     @extensions.extension_point
     def get_things(arg1: int, domain: str, keyword: bool = False) -> List[str]:
         '''Docs for the extension point'''
+        pass
 
+
+    @extensions.extension_point
+    def get_other_things():
+        '''Default implementation of ``get_other_things``. May be overridden by an extension'''
+        return ["default1", "default2"]
+
+The extension point function is called if there are no registered extensions or none that match
+ the call args.
 
 Registering an extension point implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -19,6 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
+from corehq.apps.sms.models import MessagingEvent
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -40,7 +41,6 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -72,14 +72,14 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Permissions,
-    UserRole,
+    SQLUserRole,
     WebUser,
 )
 from corehq.apps.users.util import raw_username
@@ -114,15 +114,12 @@ def user_es_call(domain, q, fields, size, start_at):
 
 def _set_role_for_bundle(kwargs, bundle):
     # check for roles associated with the domain
-    domain_roles = UserRole.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
+    domain_roles = SQLUserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
     if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()
+        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
         bundle.obj.set_role(kwargs['domain'], qualified_role_id)
     else:
-        # check for preset roles and now create them for the domain
-        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
-        if permission_preset_name:
-            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -256,7 +253,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
@@ -271,15 +268,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
+                bundle.obj.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
                 django_user.delete()
-                log_model_change(request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
+                log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
                                  action=ModelAction.DELETE)
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -311,23 +309,6 @@ class WebUserResource(v0_1.WebUserResource):
             data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
-    def dispatch(self, request_type, request, **kwargs):
-        """
-        Override dispatch to check for proper params for user create : role and admin permissions
-        """
-        if request.method == 'POST':
-            details = self._meta.serializer.deserialize(request.body)
-            if details.get('is_admin', False):
-                if self._admin_assigned_another_role(details):
-                    raise BadRequest("An admin can have only one role : Admin")
-            else:
-                if not details.get('role', None):
-                    raise BadRequest("Please assign role for non admin user")
-                elif self._invalid_user_role(request, details):
-                    raise BadRequest("Invalid User Role %s" % details.get('role', None))
-
-        return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
-
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
             domain = bundle_or_obj.request.domain
@@ -340,9 +321,21 @@ class WebUserResource(v0_1.WebUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
+    def _validate(self, bundle):
+        if bundle.data.get('is_admin', False):
+            # default value Admin since that will be assigned later anyway since is_admin is True
+            if bundle.data.get('role', 'Admin') != 'Admin':
+                raise BadRequest("An admin can have only one role : Admin")
+        else:
+            if not bundle.data.get('role', None):
+                raise BadRequest("Please assign role for non admin user")
+
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
+            if key == "role":
+                # role handled in _set_role_for_bundle
+                continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     bundle.obj.phone_numbers = []
@@ -359,7 +352,8 @@ class WebUserResource(v0_1.WebUserResource):
                     should_save = True
         return should_save
 
-    def obj_create(self, bundle, request=None, **kwargs):
+    def obj_create(self, bundle, **kwargs):
+        self._validate(bundle)
         try:
             self._meta.domain = kwargs['domain']
             bundle.obj = WebUser.create(
@@ -378,23 +372,28 @@ class WebUserResource(v0_1.WebUserResource):
                 _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.delete()
+            if bundle.obj._id:
+                bundle.obj.delete(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+            else:
+                try:
+                    django_user = bundle.obj.get_django_user()
+                except User.DoesNotExist:
+                    pass
+                else:
+                    django_user.delete()
+                    log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
+                                     action=ModelAction.DELETE)
+            raise
         return bundle
 
     def obj_update(self, bundle, **kwargs):
+        self._validate(bundle)
         bundle.obj = WebUser.get(kwargs['pk'])
         assert kwargs['domain'] in bundle.obj.domains
         if self._update(bundle):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
         return bundle
-
-    def _invalid_user_role(self, request, details):
-        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
-
-    def _admin_assigned_another_role(self, details):
-        # default value Admin since that will be assigned later anyway since is_admin is True
-        return details.get('role', 'Admin') != 'Admin'
 
 
 class AdminWebUserResource(v0_1.UserResource):
@@ -1086,4 +1085,31 @@ class ODataFormResource(BaseODataResource):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
+        ]
+
+
+class MessagingEventResource(HqBaseResource, ModelResource):
+    content_type_display = fields.CharField(attribute='get_content_type_display')
+    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
+    status_display = fields.CharField(attribute='get_status_display')
+    source_display = fields.CharField(attribute='get_source_display')
+
+    class Meta(object):
+        queryset = MessagingEvent.objects.all()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'messaging-event'
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authorization = DomainAuthorization()
+        paginator_class = NoCountingPaginator
+        filtering = {
+            # this is needed for the domain filtering but any values passed in via the URL get overridden
+            "domain": ('exact',),
+            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
+            "source": ('exact',),
+            "content_type": ('exact',),
+            "status": ('exact',),
+        }
+        ordering = [
+            'date',
         ]

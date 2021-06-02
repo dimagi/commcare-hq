@@ -151,9 +151,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
         restore_user = Mock(domain='mock-domain', user_id='mock-user-id')
         report_index_fixture = _get_report_index_fixture(restore_user)
-        print(etree.tostring(report_index_fixture, pretty_print=True).decode('utf-8'))
         self.assertXMLEqual(
-            etree.tostring(report_index_fixture, pretty_print=True).decode('utf-8'),
+            etree.tostring(report_index_fixture, pretty_print=True, encoding='utf-8').decode('utf-8'),
             """
             <fixture id="commcare-reports:index" user_id="mock-user-id">
               <report_index>

@@ -80,10 +80,6 @@ CELERY_TASK_ALWAYS_EAGER = True
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
 
-# required by auditcare tests
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
-AUDIT_ADMIN_VIEWS = False
-
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
@@ -97,10 +93,12 @@ def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
         logging.getLogger(path).setLevel(level)
+
+
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
     'alembic': 'WARNING',
-    'auditcare': 'INFO',
+    'corehq.apps.auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
@@ -127,14 +125,6 @@ LOGGING = {
     'loggers': {},
 }
 
-# Default custom databases to use the same configuration as the default
-# This is so that all devs don't have to run citus locally
-if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
-    # use a different name otherwise migrations don't get run
-    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
-    del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
-
 helper.assign_test_db_names(DATABASES)
 
 # See comment under settings.SMS_QUEUE_ENABLED
@@ -149,16 +139,4 @@ METRICS_PROVIDERS = [
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
-# icds version = ab702b37a1  (to force a build)
-if os.path.exists("extensions/icds/custom/icds"):
-    icds_apps = [
-        "custom.icds",
-        "custom.icds_reports"
-    ]
-    for app in icds_apps:
-        if app not in INSTALLED_APPS:
-            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
-
-    if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
-        COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
-        CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"
+FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

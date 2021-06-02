@@ -1,8 +1,9 @@
 hqDefine('users/js/roles',[
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/alert_user',
-], function ($, ko, alertUser) {
+], function ($, _, ko, alertUser) {
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -21,28 +22,6 @@ hqDefine('users/js/roles',[
                             slug: report.slug,
                             name: report.name,
                             value: data.permissions.view_report_list.indexOf(report.path) !== -1,
-                        };
-                    }),
-                };
-
-                data.webAppsPermissions = {
-                    all: data.permissions.view_web_apps,
-                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
-                        };
-                    }),
-                };
-
-                data.manageAppReleasePermissions = {
-                    all: data.permissions.manage_releases,
-                    specific: ko.utils.arrayMap(root.appsList, function (app) {
-                        return {
-                            path: app._id,
-                            name: app.name,
-                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
                         };
                     }),
                 };
@@ -281,19 +260,6 @@ hqDefine('users/js/roles',[
                     return report.path;
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
-
-                data.permissions.view_web_apps = data.webAppsPermissions.all;
-                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
-                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
-                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
-                    return app.value;
-                }), function (app) {
-                    return app.path;
-                });
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
                     return role.value;
@@ -308,8 +274,6 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
-        self.webAppsList = o.webAppsList;
-        self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
@@ -367,7 +331,7 @@ hqDefine('users/js/roles',[
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(
-                    "Are you sure you want to delete the role <%= role %>?"
+                    "Are you sure you want to delete the role <%- role %>?"
                 ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
 

@@ -80,6 +80,7 @@ domain_specific = [
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
@@ -98,7 +99,7 @@ for url_module in extension_points.domain_specific_urls():
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
-    url(r'^auditcare/', include('auditcare.urls')),
+    url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^api/', include(user_api_urlpatterns)),
@@ -106,7 +107,6 @@ urlpatterns = [
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'^sso/(?P<idp_slug>[\w-]+)/', include('corehq.apps.sso.urls')),
-    url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),

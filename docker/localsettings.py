@@ -113,7 +113,7 @@ WS4REDIS_CONNECTION = {
 }
 
 ELASTICSEARCH_HOST = 'elasticsearch2'
-ELASTICSEARCH_PORT = 6200  # ES 2 port
+ELASTICSEARCH_PORT = 9200  # ES 2 port
 ELASTICSEARCH_MAJOR_VERSION = 2
 # to enable v7 ES tests
 if os.environ.get('ELASTICSEARCH_7_PORT'):
@@ -141,8 +141,6 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 ALLOWED_HOSTS = ['*']
 #FIX_LOGGER_ERROR_OBFUSCATION = True
 
-# faster compressor that doesn't do source maps
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
@@ -173,39 +171,39 @@ JAR_SIGN = {
     "key_pass": "onetwothreefourfive",
 }
 
-AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
-
-AUDIT_ADMIN_VIEWS = False
-
 SECRET_KEY = 'secrettravis'
 
 # No logging
+
 LOCAL_LOGGING_CONFIG = {
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
-        }
-    },
     'loggers': {
         '': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
-        'pillowtop': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+        'django': {
+            'handler': 'console',
+            'level': 'ERROR',
+            'propagate': False,
         },
         'notify': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': True,
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
         },
+        'kafka': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        },
+        'commcare_auth': {
+            'level': 'ERROR',
+            'handler': 'console',
+            'propagate': False,
+        }
     }
 }
-
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
@@ -230,7 +228,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     COMPRESS_OFFLINE = False
 
-    FORMPLAYER_URL = 'http://formplayer:8010'
+    FORMPLAYER_URL = 'http://formplayer:8080'
+    FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10
@@ -246,16 +245,3 @@ REPORTING_DATABASES = {
     'aaa-data': 'default',
     'icds-ucr-citus': 'icds-ucr'
 }
-
-if os.path.exists("extensions/icds/custom/icds"):
-    # code is not present in fork PR builds
-    LOCAL_APPS = (
-        # these are necessary to facilitate ICDS tests
-        "custom.icds",
-        "custom.icds_reports",
-    )
-    COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
-
-    LOCAL_CUSTOM_DB_ROUTING = {
-        "icds_reports": "icds-ucr-citus"
-    }

@@ -189,12 +189,12 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
         if 'sp_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_cert_public,
-                f"{self.identity_provider.slug}_sp_public.cert"
+                f"{self.identity_provider.slug}_sp_public.cer"
             )
         if 'sp_rollover_cert_public' in request.GET:
             return get_certificate_response(
                 self.identity_provider.sp_rollover_cert_public,
-                f"{self.identity_provider.slug}_sp_rollover_public.cert"
+                f"{self.identity_provider.slug}_sp_rollover_public.cer"
             )
         return super().get(request, args, kwargs)
 

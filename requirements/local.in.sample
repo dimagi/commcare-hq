@@ -1,0 +1,16 @@
+# This file is meant to be customized for personal development environments.
+# Feel free make a copy without the .sample extension to use locally.
+# requirements/local.{in,txt} are in .gitignore so you will not be prompted to
+# (nor should you) commit it.
+#
+# After adding your custom requirements you can run these commands to keep
+# your virtualenv up to date:
+#
+#   rm requirements/local.txt  # optional, to upgrade all local requirements
+#   pip-compile -o requirements/local.txt requirements/local.in --allow-unsafe
+#   pip-sync requirements/local.txt [--dry-run]
+
+-r dev-requirements.txt
+
+django-debug-toolbar
+pdbpp

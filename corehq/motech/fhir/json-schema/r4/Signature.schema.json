@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Signature",
+  "id": "file:Signature.schema.json",
   "$ref": "#/definitions/Signature",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Signature": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "A digital signature along with supporting context. The signature may be electronic/cryptographic in nature, or a graphical image representing a hand-written signature, or a signature process. Different signature approaches have different utilities.",

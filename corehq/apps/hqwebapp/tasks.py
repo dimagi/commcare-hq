@@ -3,6 +3,7 @@ from smtplib import SMTPDataError
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
+from django.core.management import call_command
 from django.utils.translation import ugettext as _
 
 from celery.exceptions import MaxRetriesExceededError
@@ -242,3 +243,9 @@ def get_maintenance_alert_active():
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
                    run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=4))
+def clear_expired_oauth_tokens():
+    # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
+    call_command('cleartokens')

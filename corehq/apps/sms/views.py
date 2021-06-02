@@ -128,7 +128,6 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.messaging.util import show_messaging_dashboard
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -145,11 +144,8 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    if show_messaging_dashboard(domain, request.couch_user):
-        from corehq.messaging.scheduling.views import MessagingDashboardView
-        return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
-    else:
-        return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
+    from corehq.messaging.scheduling.views import MessagingDashboardView
+    return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -1559,8 +1555,8 @@ class SubscribeSMSView(BaseMessagingSectionView):
         if self.request.method == 'POST':
             return SubscribeSMSForm(self.request.POST)
 
-        if self.commtrack_settings and self.commtrack_settings.alert_config:
-            alert_config = self.commtrack_settings.alert_config
+        if self.commtrack_settings and hasattr(self.commtrack_settings, 'alertconfig'):
+            alert_config = self.commtrack_settings.alertconfig
         else:
             alert_config = AlertConfig()
         initial = {

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/CodeableConcept",
+  "id": "file:CodeableConcept.schema.json",
   "$ref": "#/definitions/CodeableConcept",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "CodeableConcept": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "A concept that may be defined by a formal reference to a terminology or ontology or may be provided by text.",

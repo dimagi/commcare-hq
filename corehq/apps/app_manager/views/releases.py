@@ -52,6 +52,7 @@ from corehq.apps.app_manager.exceptions import (
     BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
@@ -83,7 +84,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -203,7 +203,6 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id),
         'can_edit_apps': request.couch_user.can_edit_apps(),
     }
     if not app.is_remote_app():
@@ -308,6 +307,10 @@ def save_copy(request, domain, app_id):
         except BuildConflictException:
             return JsonResponse({
                 'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
+        except XFormValidationFailed:
+            return JsonResponse({
+                'error': _("Unable to validate forms.")
             }, status=400)
         finally:
             # To make a RemoteApp always available for building

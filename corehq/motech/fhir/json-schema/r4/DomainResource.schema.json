@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/DomainResource",
+  "id": "file:DomainResource.schema.json",
   "$ref": "#/definitions/DomainResource",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "DomainResource": {
       "allOf": [
         {
-          "$ref": "Resource#/definitions/Resource"
+          "$ref": "Resource.schema.json#/definitions/Resource"
         },
         {
           "description": "A resource that includes narrative, extensions, and contained resources.",

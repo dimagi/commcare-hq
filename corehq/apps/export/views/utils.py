@@ -145,8 +145,11 @@ class DailySavedExportMixin(object):
         self._priv_check()
         return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
 
-    def create_new_export_instance(self, schema):
-        instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(DailySavedExportMixin, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         instance.is_daily_saved_export = True
 
         span = datespan_from_beginning(self.domain_object, get_timezone(self.domain, self.request.couch_user))
@@ -177,8 +180,11 @@ class DashboardFeedMixin(DailySavedExportMixin):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
 
-    def create_new_export_instance(self, schema):
-        instance = super(DashboardFeedMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(DashboardFeedMixin, self).create_new_export_instance(
+            schema,
+            export_settings=export_settings
+        )
         instance.export_format = "html"
         return instance
 
@@ -213,8 +219,8 @@ class ODataFeedMixin(object):
             """),
         }
 
-    def create_new_export_instance(self, schema):
-        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+    def create_new_export_instance(self, schema, export_settings=None):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema, export_settings=export_settings)
         instance.is_odata_config = True
         instance.transform_dates = False
         return instance

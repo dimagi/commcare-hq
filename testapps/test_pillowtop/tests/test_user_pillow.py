@@ -8,7 +8,7 @@ from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_off
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_publishers import change_meta_from_sql_form

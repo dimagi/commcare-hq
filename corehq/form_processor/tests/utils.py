@@ -1,6 +1,7 @@
 import functools
 import logging
 from datetime import datetime
+from unittest.mock import patch
 from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
@@ -10,7 +11,7 @@ from django.test.utils import override_settings
 from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
-from unittest2 import skipIf, skipUnless
+from unittest import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLogSQL
@@ -367,3 +368,38 @@ def set_case_property_directly(case, property_name, value):
         case.case_json[property_name] = value
     else:
         setattr(case, property_name, value)
+
+
+def create_case(case) -> CommCareCaseSQL:
+    form = XFormInstanceSQL(
+        form_id=uuid4().hex,
+        xmlns='http://commcarehq.org/formdesigner/form-processor',
+        received_on=case.server_modified_on,
+        user_id=case.owner_id,
+        domain=case.domain,
+    )
+    transaction = CaseTransaction(
+        type=CaseTransaction.TYPE_FORM,
+        form_id=form.form_id,
+        case=case,
+        server_date=case.server_modified_on,
+    )
+    with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+        case.track_create(transaction)
+        processed_forms = ProcessedForms(form, [])
+        FormProcessorSQL.save_processed_models(processed_forms, [case])
+    return CaseAccessorSQL.get_case(case.case_id)
+
+
+def create_case_with_index(case, index) -> CommCareCaseSQL:
+    case = create_case(case)
+    index.case = case
+    case.track_create(index)
+    CaseAccessorSQL.save_case(case)
+    return case
+
+
+def delete_all_xforms_and_cases(domain):
+    assert settings.UNIT_TESTING
+    FormProcessorTestUtils.delete_all_xforms(domain)
+    FormProcessorTestUtils.delete_all_cases(domain)

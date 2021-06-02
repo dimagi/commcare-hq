@@ -61,7 +61,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             ('abc < def > abc', '<value>abc &lt; def &gt; abc</value>'),
             ("bee's knees", "<value>bee's knees</value>"),
             ('unfortunate <xml expression', '<value>unfortunate &lt;xml expression</value>'),
-            ('क्लिक', '<value>&#2325;&#2381;&#2354;&#2367;&#2325;</value>'),
+            ('क्लिक', '<value>क्लिक</value>'),
             ('&#39', '<value>&amp;#39</value>'),
             ('question1 is <output value="/data/question1" vellum:value="#form/question1"/> !',
              '<value>question1 is &lt;output value="/data/question1" vellum:value="#form/question1"/&gt; !</value>'),
@@ -71,7 +71,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         ]
         for input, expected_output in test_cases:
             escaped_input = BulkAppTranslationFormUpdater.escape_output_value(input)
-            self.assertEqual(expected_output, etree.tostring(escaped_input).decode('utf-8'))
+            self.assertEqual(expected_output, etree.tostring(escaped_input, encoding='utf-8').decode('utf-8'))
 
     def test_language_names(self):
         factory = AppFactory(build_version='2.40.0')

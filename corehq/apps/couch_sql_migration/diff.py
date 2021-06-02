@@ -52,6 +52,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'server_modified_on', old=None),
 
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=has_equivalent_times),
         Ignore('diff', check=sql_number_has_leading_zero),
         Ignore(check=is_text_xmlns),
     ],
@@ -66,7 +67,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     ],
     'HQSubmission': [],
     'XFormArchived': [],
-    'XFormError': [],
+    'XFormError': [
+        Ignore('diff', 'doc_type', old='XFormError', new='XFormInstance'),
+    ],
     'XFormDuplicate': [],
     'XFormDeprecated': [
         ignore_renamed('deprecated_date', 'edited_on'),
@@ -137,10 +140,14 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
         Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
 
+        # Deleted indices are no longer removed from the model
+        Ignore('missing', ('indices', '[*]'), old=MISSING, check=deleted_index),
+
         Ignore(path=('actions', '[*]')),
 
         Ignore('diff', 'name', check=is_truncated_255),
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=has_equivalent_times),
         Ignore('diff', check=sql_number_has_leading_zero),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
@@ -196,6 +203,8 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 
 def filter_case_diffs(couch_case, sql_case, diffs, statedb=None):
     doc_type = couch_case['doc_type']
+    while doc_type.endswith("-Deleted-Deleted"):
+        doc_type = doc_type[:-8]
     doc_types = [doc_type, 'CommCareCase*']
     diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
     if statedb is not None:
@@ -341,6 +350,19 @@ def has_close_dates(old_obj, new_obj, rule, diff):
 
 def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
+
+
+def has_equivalent_times(old_obj, new_obj, rule, diff):
+    return normalize_time(diff.old_value) == diff.new_value
+
+
+def normalize_time(value):
+    if isinstance(value, str) and TIME_FORMAT.match(value):
+        return value + ".000"
+    return value
+
+
+TIME_FORMAT = re.compile(r"^\d\d:\d\d:\d\d$")
 
 
 def sql_number_has_leading_zero(old_obj, new_obj, rule, diff):
@@ -524,3 +546,7 @@ def has_malformed_date(old_obj, new_obj, rule, diff):
             return diff.new_value == f"20{old[6:8]}-{old[:5]} 00:00:00"
         raise ValueError(f"unexpected date format: {old}")
     return False
+
+
+def deleted_index(old_obj, new_obj, rule, diff):
+    return not diff.new_value.get('referenced_id')

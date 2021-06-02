@@ -3,20 +3,20 @@
 <ul class="list-unstyled">
 {% for attempt_number, attempt in record.get_numbered_attempts %}
     <li><strong>Attempt #{{ attempt_number }}</strong>
-    {% if attempt.succeeded %}
+    {% if attempt.state == 'SUCCESS' %}
         <br/><i class="fa fa-check"></i> {% trans "Success" %}
-        <a href="#" class="toggle-next-attempt">…</a>
-        <div class="well record-attempt" style="display: none; font-family: monospace;">
-            {{ attempt.success_response }}
-        </div>
-    {% elif attempt.failure_reason %}
+    {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
         <br/><i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
+    {% elif attempt.state == 'PENDING' %}
+        <br/><i class="fa fa-spinner"></i> {% trans "Unsent" %}
+    {% endif %}
+    {% if attempt.message %}
         <a href="#" class="toggle-next-attempt">…</a>
         <div class="well record-attempt" style="display: none; font-family: monospace;">
-            {{ attempt.failure_reason }}
+            {{ attempt.message }}
         </div>
     {% endif %}
-    {% if attempt.cancelled %}
+    {% if attempt.state == 'CANCELLED' %}
         <br/><i class="fa fa-remove"></i> {% trans "Cancelled" %}
     {% endif %}
     </li>

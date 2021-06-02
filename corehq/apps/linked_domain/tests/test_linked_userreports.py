@@ -19,7 +19,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_report_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 

@@ -29,5 +29,22 @@ How to support another FHIR version
         -C corehq/motech/fhir/json-schema/r4/
       $ chmod -x corehq/motech/fhir/json-schema/r4/*
 
+#. In their original form, there are two aspects of the schema files
+   that prevent them from being used to validate FHIR resource JSON
+   documents:
+
+   #. The schema's "id" value points to an HTTP URL that does not exist.
+      It should point to the schema file.
+
+   #. Some of the "$ref" values use resource type names, and some use
+      schema filenames. They all need to use schema filenames.
+
+   Use the ``fix-schema-files`` command in this directory to resolve
+   those:
+
+   .. code:: bash
+
+      $ ./fix-schema-files r4/*
+
 
 .. _directory of FHIR specifications: http://hl7.org/fhir/directory.html

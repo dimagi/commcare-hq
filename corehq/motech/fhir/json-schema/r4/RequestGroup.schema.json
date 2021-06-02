@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/RequestGroup",
+  "id": "file:RequestGroup.schema.json",
   "$ref": "#/definitions/RequestGroup",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "RequestGroup": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A group of related requests that can be used to capture intended activities that have inter-dependencies such as \"give this medication after that one\".",
@@ -131,7 +131,7 @@
     "RequestGroup_Action": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A group of related requests that can be used to capture intended activities that have inter-dependencies such as \"give this medication after that one\".",
@@ -295,7 +295,7 @@
     "RequestGroup_Condition": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A group of related requests that can be used to capture intended activities that have inter-dependencies such as \"give this medication after that one\".",
@@ -340,7 +340,7 @@
     "RequestGroup_RelatedAction": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A group of related requests that can be used to capture intended activities that have inter-dependencies such as \"give this medication after that one\".",

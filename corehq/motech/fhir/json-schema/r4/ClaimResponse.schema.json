@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ClaimResponse",
+  "id": "file:ClaimResponse.schema.json",
   "$ref": "#/definitions/ClaimResponse",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ClaimResponse": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -156,7 +156,7 @@
     "ClaimResponse_Item": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -206,7 +206,7 @@
     "ClaimResponse_Adjudication": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -242,7 +242,7 @@
     "ClaimResponse_Detail": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -292,7 +292,7 @@
     "ClaimResponse_SubDetail": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -335,7 +335,7 @@
     "ClaimResponse_AddItem": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -414,7 +414,7 @@
     "ClaimResponse_Detail1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -471,7 +471,7 @@
     "ClaimResponse_Error": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -517,7 +517,7 @@
     "ClaimResponse_Payment": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -558,7 +558,7 @@
     "ClaimResponse_ProcessNote": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",
@@ -595,7 +595,7 @@
     "ClaimResponse_Insurance": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "This resource provides the adjudication details from the processing of a Claim resource.",

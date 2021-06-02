@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -25,6 +26,9 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+
+#TODO: replace with common code
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -210,8 +214,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = ugettext_lazy(mark_safe(
-        '<i class="fa fa-info-circle"></i> '
+    location_search_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
         'target="_blank">Advanced Search:</a> '
         'Put your location name in quotes to show only exact matches. To more '
@@ -225,11 +228,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = ugettext_lazy(mark_safe("""
-        <i class="fa fa-info-circle"></i> See
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions</a>.
-    """))
+    filter_help_inline = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '<i class="fa fa-info-circle"></i> See '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions</a>.'))
 
     @property
     @memoized
@@ -352,6 +354,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
+        has_user_ids = bool(user_ids)
+
+        if has_user_ids:
+            # if userid are passed then remove default active filter
+            # and move it with mobile worker filter
+            q = q.remove_default_filter('active')
+            has_user_ids = True
+            if HQUserType.DEACTIVATED in user_types:
+                deactivated_mbwf = filters.AND(user_es.is_active(False), user_es.mobile_users())
+                user_type_filters.append(deactivated_mbwf)
+            if HQUserType.ACTIVE in user_types:
+                activated_mbwf = filters.AND(user_es.is_active(), user_es.mobile_users())
+                user_type_filters.append(activated_mbwf)
+        elif HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = q.show_inactive()
+        elif HQUserType.DEACTIVATED in user_types:
+            q = q.show_only_inactive()
+
         if HQUserType.ADMIN in user_types:
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
@@ -360,11 +380,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
-
-        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
-        elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
 
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
@@ -377,9 +392,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
 
         if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            # return all users with selected user_types
-            user_type_filters.append(user_es.mobile_users())
-            return q.OR(*user_type_filters)
+            if has_user_ids:
+                return q.OR(*user_type_filters, filters.OR(filters.term("_id", user_ids)))
+            else:
+                return q.OR(*user_type_filters, user_es.mobile_users())
 
         # return matching user types and exact matches
         location_ids = list(SQLLocation.active_objects

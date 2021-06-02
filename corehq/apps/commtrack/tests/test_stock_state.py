@@ -33,13 +33,14 @@ class StockStateTest(TestCase):
         util.bootstrap_products(cls.domain)
         cls.ct_settings = CommtrackConfig.for_domain(cls.domain)
         cls.ct_settings.use_auto_consumption = True
-        cls.ct_settings.consumption_config = ConsumptionConfig(
+        cls.ct_settings.consumptionconfig = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
-            min_periods=0,
         )
         cls.ct_settings.save()
+        cls.ct_settings.consumptionconfig.commtrack_settings = cls.ct_settings
+        cls.ct_settings.consumptionconfig.save()
 
         cls.loc = util.make_loc('loc1', domain=cls.domain)
         cls.sp = cls.loc.linked_supply_point()
@@ -229,10 +230,13 @@ class StockStateConsumptionTest(StockStateTest):
         commtrack_settings = self.domain_obj.commtrack_settings
 
         def _update_consumption_config(min_transactions, min_window, optimal_window):
-            commtrack_settings.consumption_config.min_transactions = min_transactions
-            commtrack_settings.consumption_config.min_window = min_window
-            commtrack_settings.consumption_config.optimal_window = optimal_window
-            commtrack_settings.save()
+            if not hasattr(commtrack_settings, 'consumptionconfig'):
+                commtrack_settings.consumptionconfig = ConsumptionConfig()
+                commtrack_settings.consumptionconfig.commtrack_settings = commtrack_settings
+            commtrack_settings.consumptionconfig.min_transactions = min_transactions
+            commtrack_settings.consumptionconfig.min_window = min_window
+            commtrack_settings.consumptionconfig.optimal_window = optimal_window
+            commtrack_settings.consumptionconfig.save()
 
         _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
 

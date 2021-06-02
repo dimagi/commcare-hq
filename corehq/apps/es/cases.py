@@ -29,6 +29,7 @@ class CaseES(HQESQuery):
             closed_range,
             modified_range,
             server_modified_range,
+            case_name,
             is_closed,
             case_type,
             owner,
@@ -55,6 +56,10 @@ def modified_range(gt=None, gte=None, lt=None, lte=None):
 
 def server_modified_range(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('server_modified_on', gt, gte, lt, lte)
+
+
+def case_name(name):
+    return filters.term('name.exact', name)
 
 
 def is_closed(closed=True):

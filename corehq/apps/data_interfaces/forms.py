@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -146,7 +146,7 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                format_html('<i class="fa fa-plus"></i> {}', _("Add Group")),
                 css_class='btn-primary',
                 type="submit"
             )
@@ -215,7 +215,7 @@ class AddCaseToGroupForm(forms.Form):
                 'case_identifier'
             ),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
+                format_html('<i class="fa fa-plus"></i> {}', _("Add Case")),
                 css_class='btn-primary',
                 type="submit"
             )

@@ -8,6 +8,7 @@
   <script src="{% static 'backbone.radio/build/backbone.radio.min.js' %}"></script>
   <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
   <script src="{% static 'marionette.approuter/lib/marionette.approuter.min.js' %}"></script>
+  <script src="{% static 'marionette.templatecache/lib/marionette.templatecache.min.js' %}"></script>
   <script src="{% static 'nprogress/nprogress.js' %}"></script>
   <script src="{% static 'moment/min/moment.min.js' %}"></script>
   <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
@@ -16,6 +17,14 @@
   <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
   <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
   <script src="{% static 'bootstrap-switch/dist/js/bootstrap-switch.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars-am.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.plus.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.plugin.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.picker.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.picker-am.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.ethiopian.js' %}"></script>
+  <script src="{% static 'calendars/dist/js/jquery.calendars.ethiopian-am.js' %}"></script>
   <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
   <script src="{% static 'crypto-js/crypto-js.js' %}"></script>
   <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
@@ -46,6 +55,7 @@
   <!-- The ordering of the cloudcare/js/* files matters, as many of them depend on each other. -->
 
   <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/utils/calendar-picker-translations.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/hq.events.js' %}"></script>
@@ -97,3 +107,9 @@
     href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}"
     type="text/css"
   />
+
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'calendars/dist/css/jquery.calendars.picker.css' %}"
+/>

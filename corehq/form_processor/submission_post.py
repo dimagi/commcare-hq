@@ -36,6 +36,7 @@ from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
+from corehq.util.timer import TimingContext
 from couchforms import openrosa_response
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
@@ -66,7 +67,8 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False, case_db=None, force_logs=False):
+                 partial_submission=False, case_db=None, force_logs=False,
+                 timing_context=None):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -96,6 +98,7 @@ class SubmissionPost(object):
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
+        self.timing_context = timing_context or TimingContext()
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -212,45 +215,48 @@ class SubmissionPost(object):
 
     def run(self):
         self.track_load()
-        report_submission_usage(self.domain)
-        failure_response = self._handle_basic_failure_modes()
-        if failure_response:
-            return FormProcessingResult(failure_response, None, [], [], 'known_failures')
+        with self.timing_context("process_xml"):
+            report_submission_usage(self.domain)
+            failure_response = self._handle_basic_failure_modes()
+            if failure_response:
+                return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
-        submitted_form = result.submitted_form
+            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            submitted_form = result.submitted_form
 
-        self._post_process_form(submitted_form)
-        self._invalidate_caches(submitted_form)
+            self._post_process_form(submitted_form)
+            self._invalidate_caches(submitted_form)
 
-        if submitted_form.is_submission_error_log:
-            logging.info('Processing form %s as a submission error', submitted_form.form_id)
-            self.formdb.save_new_form(submitted_form)
+            if submitted_form.is_submission_error_log:
+                logging.info('Processing form %s as a submission error', submitted_form.form_id)
+                self.formdb.save_new_form(submitted_form)
 
-            response = None
-            try:
-                xml = self.instance.decode()
-            except UnicodeDecodeError:
-                pass
-            else:
-                if 'log_subreport' in xml:
+                response = None
+                try:
+                    xml = self.instance.decode()
+                except UnicodeDecodeError:
+                    pass
+                else:
+                    if 'log_subreport' in xml:
+                        response = self.get_exception_response_and_log(
+                            'Badly formed device log', submitted_form, self.path
+                        )
+
+                if not response:
                     response = self.get_exception_response_and_log(
-                        'Badly formed device log', submitted_form, self.path
+                        'Problem receiving submission', submitted_form, self.path
                     )
-
-            if not response:
-                response = self.get_exception_response_and_log(
-                    'Problem receiving submission', submitted_form, self.path
-                )
-            return FormProcessingResult(response, None, [], [], 'submission_error_log')
+                return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
             logging.info('Processing form %s as a system action', submitted_form.form_id)
-            return self.handle_system_action(submitted_form)
+            with self.timing_context("process_system_action"):
+                return self.handle_system_action(submitted_form)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             logging.info('Processing form %s as a device log', submitted_form.form_id)
-            return self.process_device_log(submitted_form)
+            with self.timing_context("process_device_log"):
+                return self.process_device_log(submitted_form)
 
         # Begin Normal Form Processing
         self._log_form_details(submitted_form)
@@ -275,7 +281,7 @@ class SubmissionPost(object):
                 instance = xforms[0]
 
                 if instance.is_duplicate:
-                    with tracer.trace('submission.process_duplicate'):
+                    with self.timing_context("process_duplicate"), tracer.trace('submission.process_duplicate'):
                         submission_type = 'duplicate'
                         existing_form = xforms[1]
                         stub = UnfinishedSubmissionStub.objects.filter(
@@ -302,7 +308,7 @@ class SubmissionPost(object):
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
-                        case_stock_result = self.process_xforms_for_cases(xforms, case_db)
+                        case_stock_result = self.process_xforms_for_cases(xforms, case_db, self.timing_context)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
@@ -396,7 +402,7 @@ class SubmissionPost(object):
     def save_processed_models(self, case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
-            with unfinished_submission(instance) as unfinished_submission_stub:
+            with self.timing_context("save_models"), unfinished_submission(instance) as unfinished_submission_stub:
                 try:
                     self.interface.save_processed_models(
                         xforms,
@@ -411,7 +417,8 @@ class SubmissionPost(object):
                 else:
                     unfinished_submission_stub.submission_saved()
 
-                self.do_post_save_actions(case_db, xforms, case_stock_result)
+                with self.timing_context("post_save_actions"):
+                    self.do_post_save_actions(case_db, xforms, case_stock_result)
         except PostSaveError:
             return "Error performing post save operations"
 
@@ -442,20 +449,26 @@ class SubmissionPost(object):
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
-    def process_xforms_for_cases(xforms, case_db):
+    def process_xforms_for_cases(xforms, case_db, timing_context=None):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
+        timing_context = timing_context or TimingContext()
+
         instance = xforms[0]
 
-        case_result = process_cases_with_casedb(xforms, case_db)
-        stock_result = process_stock(xforms, case_db)
+        with timing_context("process_cases"):
+            case_result = process_cases_with_casedb(xforms, case_db)
+        with timing_context("process_ledgers"):
+            stock_result = process_stock(xforms, case_db)
+            stock_result.populate_models()
 
         modified_on_date = instance.received_on
         if getattr(instance, 'edited_on', None) and instance.edited_on > instance.received_on:
             modified_on_date = instance.edited_on
-        cases = case_db.get_cases_for_saving(modified_on_date)
-        stock_result.populate_models()
+
+        with timing_context("check_cases_before_save"):
+            cases = case_db.get_cases_for_saving(modified_on_date)
 
         return CaseStockProcessingResult(
             case_result=case_result,

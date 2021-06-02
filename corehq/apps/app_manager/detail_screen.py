@@ -9,7 +9,7 @@ from corehq.apps.app_manager.xpath import (
     IndicatorXpath,
     LedgerdbXpath,
     LocationXpath,
-    UserCaseXPath,
+    UsercaseXPath,
     XPath,
     dot_interpolate,
 )
@@ -591,10 +591,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
             case = CaseXPath('')
 
         if indexes and indexes[0] == 'user':
-            case = CaseXPath(UserCaseXPath().case())
+            case = CaseXPath(UsercaseXPath().case())
         else:
             for index in indexes:
-                case = case.index_id(index).case()
+                case = case.index_id(index).case(instance_name=self.detail.instance_name)
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))

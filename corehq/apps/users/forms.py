@@ -10,9 +10,6 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils.functional import lazy
-from django.utils.safestring import mark_safe
-from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -24,8 +21,6 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from dimagi.utils.django.fields import TrimmedCharField
-
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
@@ -35,19 +30,24 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import DomainMembershipError, UserRole, DomainPermissionsMirror
-from corehq.apps.users.util import cc_user_domain, format_username, log_user_role_update
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.users.dbaccessors import user_exists
+from corehq.apps.users.models import DomainPermissionsMirror, UserRole
+from corehq.apps.users.util import (
+    cc_user_domain,
+    format_username,
+    log_user_role_update,
+)
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds_core.view_utils import is_icds_cas_project
-
-mark_safe_lazy = lazy(mark_safe, str)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -99,8 +99,8 @@ def wrapped_language_validation(value):
 
 
 def generate_strong_password():
-    import string
     import random
+    import string
     possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
     password = ''
     password += random.choice(string.punctuation)
@@ -219,13 +219,11 @@ class BaseUserInfoForm(forms.Form):
         choices=(),
         initial=None,
         required=False,
-        help_text=mark_safe_lazy(
-            ugettext_lazy(
-                "<i class=\"fa fa-info-circle\"></i> "
-                "Becomes default language seen in Web Apps and reports (if applicable), "
-                "but does not affect mobile applications. "
-                "Supported languages for reports are en, fr (partial), and hin (partial)."
-            )
+        help_text=ugettext_lazy(
+            "<i class=\"fa fa-info-circle\"></i> "
+            "Becomes default language seen in Web Apps and reports (if applicable), "
+            "but does not affect mobile applications. "
+            "Supported languages for reports are en, fr (partial), and hin (partial)."
         )
     )
 
@@ -250,6 +248,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
+        self.is_using_sso = (
+            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
+            and is_request_using_sso(kwargs['request'])
+        )
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -274,8 +276,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             crispy.Div(*username_controls),
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
-            hqcrispy.Field('email'),
         ]
+
+        if self.is_using_sso:
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            self.fields['email'].initial = self.user.email
+            self.fields['email'].help_text = _(
+                "This email is managed by {} and cannot be edited."
+            ).format(idp.name)
+
+            # It is the presence of the "readonly" attribute that determines
+            # whether an input is readonly. Its value does not matter.
+            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+        else:
+            basic_fields.append(hqcrispy.Field('email'))
+
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
@@ -289,10 +306,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 hqcrispy.Field('language'),
                 crispy.Div(hqcrispy.StaticField(
                     ugettext_lazy('API Key'),
-                    mark_safe(
-                        ugettext_lazy('API key management has moved <a href="{}">here</a>.')
-                        .format(reverse(ApiKeyView.urlname))
-                    ),
+                    format_html_lazy(
+                        ugettext_lazy('API key management has moved <a href="{}">here</a>.'),
+                        reverse(ApiKeyView.urlname)),
                 )),
             ),
             hqcrispy.FormActions(
@@ -315,6 +331,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         result = list(self.fields)
+        if self.is_using_sso:
+            result.remove('email')
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         return result
@@ -338,12 +356,12 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
-        self.fields['role'].help_text = _(mark_safe(
+        self.fields['role'].help_text = _(
             '<i class="fa fa-info-circle"></i> '
             'Only applies to mobile workers who will be entering data using '
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
-        ))
+        )
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
@@ -378,15 +396,12 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe_lazy(
-                format_lazy(
-                    ('<i class="fa fa-warning"></i>{}<br />'
-                     '<span data-bind="text: passwordHelp, css: color">'),
-                    ugettext_lazy(
-                        "This password is automatically generated. "
-                        "Please copy it or create your own. It will not be shown again."),
-                )
-            )
+            self.fields['new_password1'].help_text = format_html_lazy(
+                ('<i class="fa fa-warning"></i>{}<br />'
+                    '<span data-bind="text: passwordHelp, css: color">'),
+                ugettext_lazy(
+                    "This password is automatically generated. "
+                    "Please copy it or create your own. It will not be shown again."))
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -570,14 +585,11 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
             self.fields['new_password'].widget = forms.TextInput()
-            self.fields['new_password'].help_text = mark_safe_lazy(
-                format_lazy(
-                    '<i class="fa fa-warning"></i>{}<br />',
-                    ugettext_lazy(
-                        'This password is automatically generated. '
-                        'Please copy it or create your own. It will not be shown again.'),
-                )
-            )
+            self.fields['new_password'].help_text = format_html_lazy(
+                '<i class="fa fa-warning"></i>{}<br />',
+                ugettext_lazy(
+                    'This password is automatically generated. '
+                    'Please copy it or create your own. It will not be shown again.'))
 
         if project.uses_locations:
             self.fields['location_id'].widget = forms.Select()
@@ -1138,7 +1150,9 @@ class CommCareUserFormSet(object):
     @property
     @memoized
     def custom_data(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
@@ -1156,7 +1170,7 @@ class CommCareUserFormSet(object):
         return self.user_form.update_user()
 
 
-class CommCareUserFilterForm(forms.Form):
+class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
         ('all', ugettext_noop('All')),
@@ -1164,7 +1178,7 @@ class CommCareUserFilterForm(forms.Form):
     )
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
-        label=ugettext_lazy('Search by username'),
+        label=ugettext_lazy('Name or Username'),
         max_length=30,
         required=False
     )
@@ -1176,89 +1190,91 @@ class CommCareUserFilterForm(forms.Form):
         required=False,
         label=ugettext_noop("Columns"),
         choices=COLUMNS_CHOICES,
-        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
+        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=False),
     )
     domains = forms.MultipleChoiceField(
         required=False,
         label=_('Project Spaces'),
         widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-        help_text=_('Add project spaces containing the desired mobile workers'),
     )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
-        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
         self.couch_user = kwargs.pop('couch_user')
-        super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+        self.user_type = kwargs.pop('user_type')
+        if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
+            raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
+        super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
-            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
-                                              use_qualified_id=False)
-            self.fields['role_id'].choices = roles
-        else:
-            roles = UserRole.by_domain(self.domain)
-            self.fields['role_id'].choices = [('', _('All Roles'))] + [
-                (role._id, role.name or _('(No Name)')) for role in roles]
+        roles = UserRole.by_domain(self.domain)
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles
+        ]
 
-        self.fields['domains'].choices = [(self.domain, self.domain)]
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
-            self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
-                                             [(self.domain, self.domain)] + \
-                                             [(domain, domain) for domain in
-                                              DomainPermissionsMirror.mirror_domains(self.domain)]
+        self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
+                                         [(self.domain, self.domain)] + \
+                                         [(domain, domain) for domain in
+                                          DomainPermissionsMirror.mirror_domains(self.domain)]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
         self.helper.form_class = 'form-horizontal'
-        self.helper.form_action = reverse('download_commcare_users', args=[self.domain])
+        view_name = 'download_commcare_users' if self.user_type == MOBILE_USER_TYPE else 'download_web_users'
+        self.helper.form_action = reverse(view_name, args=[self.domain])
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
+        fields = []
+        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+            fields += [crispy.Field("domains", data_bind="value: domains")]
+        fields += [
+            crispy.Div(
+                crispy.Field(
+                    "role_id",
+                    css_class="hqwebapp-select2",
+                    data_bind="value: role_id",
+                ),
+                data_bind="slideVisible: !isCrossDomain()",
+            ),
+            crispy.Field("search_string", data_bind="value: search_string"),
+        ]
+        if self.user_type == MOBILE_USER_TYPE:
+            fields += [
+                crispy.Div(
+                    crispy.Field("location_id", data_bind="value: location_id"),
+                    data_bind="slideVisible: !isCrossDomain()",
+                ),
+                crispy.Field("columns", data_bind="value: columns"),
+            ]
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Users"),
-                crispy.Field('role_id', css_class="hqwebapp-select2"),
-                crispy.Field('search_string'),
-                crispy.Field('location_id'),
-                crispy.Field('columns'),
-                crispy.Field('domains'),
+                *fields,
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Download All Users"),
                     type="submit",
-                    css_class="btn btn-primary submit_button",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
                 )
             ),
         )
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
-        restricted_role_access = (
-            is_icds_cas_project(self.domain)
-            and not self.couch_user.is_domain_admin(self.domain)
-        )
         if not role_id:
-            if restricted_role_access:
-                raise forms.ValidationError(_("Please select a role"))
-            else:
-                return None
+            return None
 
         role = UserRole.get(role_id)
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
-        if restricted_role_access:
-            try:
-                user_role_id = self.couch_user.get_role(self.domain).get_id
-            except DomainMembershipError:
-                user_role_id = None
-            if not role.accessible_by_non_admin_role(user_role_id):
-                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):
@@ -1281,3 +1297,27 @@ class CommCareUserFilterForm(forms.Form):
 
 class CreateDomainPermissionsMirrorForm(forms.Form):
     mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain', None)
+        self.mirror_domain = None
+        super().__init__(*args, **kwargs)
+
+    def clean_mirror_domain(self):
+        mirror_domain_name = self.data.get('mirror_domain')
+        if self.domain == mirror_domain_name:
+            raise forms.ValidationError(_("""
+                Enterprise permissions cannot be granted from a project space to itself.
+            """))
+        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
+        if not self.mirror_domain:
+            raise forms.ValidationError(_('Please enter valid project space.'))
+        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
+            message = _('"{mirror_domain_name}" has already been added.')
+            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
+        return mirror_domain_name
+
+    def save_mirror_domain(self):
+        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
+        mirror.save()

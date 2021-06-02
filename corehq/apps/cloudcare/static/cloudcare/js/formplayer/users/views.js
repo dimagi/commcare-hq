@@ -41,6 +41,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         tagName: 'tr',
         events: {
             'click': 'onClickUser',
+            'keydown': 'onKeyActionUser',
+        },
+        attributes: function () {
+            return {
+                "role": "link",
+                "tabindex": "0",
+                "aria-label": this.model.get('username'),
+            };
         },
         onClickUser: function () {
             Util.confirmationModal({
@@ -60,6 +68,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 }.bind(this),
             });
         },
+        onKeyActionUser: function (e) {
+            if (e.keyCode === 13) {
+                this.onClickUser();
+            }
+        },
     });
 
     /**
@@ -72,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         childView: UserRowView,
         childViewContainer: 'tbody',
         template: _.template($("#restore-as-view-template").html() || ""),
-        limit: 10,
+        limit: parseInt($.cookie("users-per-page-limit")) || 10,
         maxPagesShown: 10,
         initialize: function (options) {
             this.model = new Backbone.Model({
@@ -86,24 +99,35 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.fetchUsers();
         },
         ui: {
-            next: '.js-user-next',
-            prev: '.js-user-previous',
             search: '.js-user-search',
             query: '.js-user-query',
             page: '.js-page',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoText: '#goText',
+            paginationGoTextBox: '.module-go-container',
+            usersPerPageLimit: '.per-page-limit',
         },
         events: {
-            'click @ui.next': 'onClickNext',
-            'click @ui.prev': 'onClickPrev',
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
+            'click @ui.paginationGoButton': 'paginationGoAction',
+            'change @ui.usersPerPageLimit': 'onPerPageLimitChange',
+            'keypress @ui.page': 'paginateKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+            var paginationOptions = paginateItems.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
-                // Subtract 1 from page so that it is 0 indexed
-                pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
+                limit: this.limit,
+                rowRange: [10, 25, 50, 100],
+                startPage: paginationOptions.startPage,
+                endPage: paginationOptions.endPage,
+                pageCount: paginationOptions.pageCount,
+                currentPage: this.model.get('page') - 1,
+                pageNumLabel: _.template(gettext("Page <%- num %>")),
             };
         },
         navigate: function () {
@@ -130,26 +154,16 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
         },
-        onClickNext: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === this.totalPages()) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') + 1);
-        },
-        onClickPrev: function (e) {
-            e.preventDefault();
-            if (this.model.get('page') === 1) {
-                window.console.warn('Attempted to non existant page');
-                return;
-            }
-            this.model.set('page', this.model.get('page') - 1);
-        },
         onClickPage: function (e) {
             e.preventDefault();
-            var page = $(e.currentTarget).data().page;
-            this.model.set('page', page);
+            var page = $(e.currentTarget).data().id;
+            this.model.set('page', page + 1);
+        },
+        paginateKeyAction: function (e) {
+            // Pressing Enter on a pagination control activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.onClickPage(e);
+            }
         },
         onSubmitUserSearch: function (e) {
             e.preventDefault();
@@ -157,6 +171,27 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 'query': this.ui.query.val(),
                 'page': 1,  // Reset page to one when doing a query
             });
+        },
+        paginationGoAction: function (e) {
+            var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+            e.preventDefault();
+            var page = Number(this.ui.paginationGoText.val());
+            var pageNo = paginateItems.paginationGoPageNumber(page, this.totalPages());
+            this.model.set('page', pageNo);
+        },
+        paginationGoKeyAction: function (e) {
+            // Pressing Enter in the go box activates it.
+            if (event.which === 13 || event.keyCode === 13) {
+                this.paginationGoAction(e);
+            }
+        },
+        onPerPageLimitChange: function (e) {
+            e.preventDefault();
+            var rowCount = this.ui.usersPerPageLimit.val();
+            this.limit = Number(rowCount);
+            this.fetchUsers();
+            this.model.set('page', 1);
+            Util.savePerPageLimitCookie('users', this.limit);
         },
     });
 

@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict, deque, namedtuple
+from itertools import chain
 
 from memoized import memoized
 
@@ -187,18 +188,6 @@ def _flatten_case_properties(case_properties_by_case_type):
                 case_property=case_property_parts[-1]
             ))
     return result
-
-
-def _clean_case_type_properties(case_properties_by_case_type):
-    for case_properties in case_properties_by_case_type.values():
-        _replace_properties_with_attributes(case_properties)
-
-
-def _replace_properties_with_attributes(case_properties):
-    for prop in list(case_properties):
-        if prop == 'owner_id':
-            case_properties.remove(prop)
-            case_properties.add('@owner_id')
 
 
 def _propagate_and_normalize_case_properties(case_properties_by_case_type, parent_type_map,
@@ -414,8 +403,6 @@ class ParentCasePropertyBuilder(object):
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
 
-        _clean_case_type_properties(case_properties_by_case_type)
-
         if self.exclude_invalid_properties:
             from corehq.apps.app_manager.helpers.validators import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
@@ -495,9 +482,11 @@ def get_case_properties(app, case_types, defaults=(), include_parent_properties=
     return builder.get_case_property_map(case_types)
 
 
-@quickcache(vary_on=['app.get_id'])
-def get_all_case_properties(app):
-    return get_case_properties(app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=True)
+@quickcache(vary_on=['app.get_id', 'exclude_invalid_properties'])
+def get_all_case_properties(app, exclude_invalid_properties=True):
+    return get_case_properties(
+        app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=exclude_invalid_properties
+    )
 
 
 def get_all_case_properties_for_case_type(domain, case_type):

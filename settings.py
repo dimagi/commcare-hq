@@ -21,6 +21,7 @@ VELLUM_DEBUG = None
 
 # For Single Sign On (SSO) Implementations
 SAML2_DEBUG = False
+ENFORCE_SSO_LOGIN = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -162,7 +163,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
-    'auditcare.middleware.AuditMiddleware',
+    'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
@@ -183,6 +184,7 @@ ADD_CAPTCHA_FIELD_TO_FORMS = False
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+    'corehq.apps.sso.backends.SsoBackend',
 ]
 
 PASSWORD_HASHERS = (
@@ -236,7 +238,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'auditcare',
+    'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',
@@ -459,6 +461,7 @@ EMAIL_USE_TLS = True
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
+SAAS_OPS_EMAIL = "saas-ops@example.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
@@ -533,7 +536,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    "corehq.apps.locations.fixtures.related_locations_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -746,26 +748,10 @@ LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 
 ####### auditcare parameters #######
-AUDIT_MODEL_SAVE = [
-    'corehq.apps.app_manager.Application',
-    'corehq.apps.app_manager.RemoteApp',
-]
-
-AUDIT_VIEWS = [
-    'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.users.AuthenticateAs',
-]
-
-AUDIT_MODULES = [
-    'corehq.apps.reports',
-    'corehq.apps.userreports',
-    'corehq.apps.data',
-    'corehq.apps.registration',
-    'corehq.apps.hqadmin',
-    'corehq.apps.accounting',
-    'corehq.apps.cloudcare',
-    'tastypie',
-]
+AUDIT_ALL_VIEWS = False
+AUDIT_VIEWS = []
+AUDIT_MODULES = []
+AUDIT_ADMIN_VIEWS = False
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -816,6 +802,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.fhir.repeaters.FHIRRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
@@ -841,20 +828,31 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 1
+ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
+
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
+
+def _pkce_required(client_id):
+    from corehq.apps.hqwebapp.models import pkce_required
+    return pkce_required(client_id)
+
 
 OAUTH2_PROVIDER = {
     # until we have clearer project-level checks on this, just expire the token every
     # 15 minutes to match HIPAA constraints.
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
+    'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 
 
@@ -883,10 +881,12 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 # using the local DEBUG value (which we don't have access to here yet)
 COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
-# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
-COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
-'compressor.filters.cssmin.rCSSMinFilter']
+COMPRESS_FILTERS = {
+    'css': [
+        'compressor.filters.css_default.CssAbsoluteFilter',
+        'compressor.filters.cssmin.rCSSMinFilter',
+    ]
+}
 
 LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
@@ -1222,7 +1222,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(task_name)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'formplayer_timing': {
             'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
@@ -1244,8 +1244,11 @@ LOGGING = {
         },
     },
     'filters': {
-        'hqcontext': {
+        'hqrequest': {
             '()': 'corehq.util.log.HQRequestFilter',
+        },
+        'celerytask': {
+            '()': 'corehq.util.log.CeleryTaskFilter',
         },
         'exclude_static': {
             '()': 'corehq.util.log.SuppressStaticLogs',
@@ -1274,7 +1277,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'couch-request-formatter',
-            'filters': ['hqcontext'],
+            'filters': ['hqrequest', 'celerytask'],
             'filename': COUCH_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
@@ -1900,6 +1903,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'polio_rdc', 'ucr', 'data_sources', 'users.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 
@@ -1992,6 +1996,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
     'vectorlink-senegal': 'custom.abt',
+    'vectorlink-sierra-leone': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
@@ -2002,6 +2007,8 @@ DOMAIN_MODULE_MAP = {
     'inddex-multi-vn': 'custom.inddex',
     'iita-fcms-nigeria': 'custom.inddex',
     'cambodia-arch-3-study': 'custom.inddex',
+    'senegal-arch-3-study': 'custom.inddex',
+    'inddex24-dev': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

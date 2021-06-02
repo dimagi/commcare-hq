@@ -20,13 +20,12 @@ def needs_update(case):
         case.get_case_property('is_assigned_temp') == 'yes'
 
 
-def find_owner_id(case, accessor):
+def find_owner_id(case, accessor, case_property):
     try:
-        checkin_case = accessor.get_case(case.get_case_property('assigned_to_primary_checkin_case_id'))
+        checkin_case = accessor.get_case(case.get_case_property(case_property))
         return checkin_case.get_case_property('hq_user_id')
     except CaseNotFound:
-        print("CaseNotFound: case:{} no matching case for this case's "
-              "assigned_to_primary_checkin_case_id".format(case.case_id))
+        print("CaseNotFound: case:{} no matching case for this case's {}".format(case.case_id, case_property))
         return None
 
 
@@ -54,19 +53,28 @@ class Command(CaseUpdateCommand):
             case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[location_id])
 
         case_blocks = []
+        errors = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             if case.get_case_property('current_status') == 'closed':
                 skip_count += 1
             elif needs_update(case):
-                new_owner_id = find_owner_id(case, accessor)
-                if new_owner_id is None:
+                new_primary_owner_id = find_owner_id(case, accessor, 'assigned_to_primary_checkin_case_id')
+                new_temp_owner_id = find_owner_id(case, accessor, 'assigned_to_temp_checkin_case_id')
+                case_created = False
+                if case.get_case_property('is_assigned_primary') == 'yes' and new_primary_owner_id:
+                    case_blocks.append(self.case_block(case, new_primary_owner_id, 'primary'))
+                    case_created = True
+                if case.get_case_property('is_assigned_temp') == 'yes' and new_temp_owner_id:
+                    case_blocks.append(self.case_block(case, new_temp_owner_id, 'temp'))
+                    case_created = True
+                if not case_created:
+                    invalid_primary_id = case.get_case_property('assigned_to_primary_checkin_case_id')
+                    invalid_temp_id = case.get_case_property('assigned_to_temp_checkin_case_id')
+                    errors.append("CaseNotFound: case:{} no matching case for this case's "
+                                  "assigned_to_primary_checkin_case_id:{} or assigned_to_temp_checkin_case_id:"
+                                  "{}".format(case.case_id, invalid_primary_id, invalid_temp_id))
                     skip_count += 1
-                else:
-                    if case.get_case_property('is_assigned_primary') == 'yes':
-                        case_blocks.append(self.case_block(case, new_owner_id, 'primary'))
-                    elif case.get_case_property('is_assigned_temp') == 'yes':
-                        case_blocks.append(self.case_block(case, new_owner_id, 'temp'))
         print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped because they're closed"
               f" or in an inactive location")
 
@@ -75,6 +83,8 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "add_assignment_cases", case_type, len(case_ids), total, errors, loc_id=location_id)
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

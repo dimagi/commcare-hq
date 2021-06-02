@@ -49,7 +49,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm,
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
@@ -65,42 +64,6 @@ from corehq.util.timer import TimingContext
 
 class UserAdministration(BaseAdminSectionView):
     section_name = ugettext_lazy("User Administration")
-
-
-class AuthenticateAs(UserAdministration):
-    urlname = 'authenticate_as'
-    page_title = _("Login as Other User")
-    template_name = 'hqadmin/authenticate_as.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, *args, **kwargs):
-        return super(AuthenticateAs, self).dispatch(*args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'hide_filters': True,
-            'form': AuthenticateAsForm(initial=self.request.POST),
-            'root_page_url': reverse('authenticate_as'),
-        }
-
-    def post(self, request, *args, **kwargs):
-        form = AuthenticateAsForm(self.request.POST)
-        if form.is_valid():
-            request.user = User.objects.get(username=form.full_username)
-
-            # http://stackoverflow.com/a/2787747/835696
-            # This allows us to bypass the authenticate call
-            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
-            login(request, request.user)
-            return HttpResponseRedirect('/')
-        all_errors = form.errors.pop('__all__', None)
-        if all_errors:
-            messages.error(request, ','.join(all_errors))
-        if form.errors:
-            messages.error(request, form.errors)
-        return self.get(request, *args, **kwargs)
-
 
 class SuperuserManagement(UserAdministration):
     urlname = 'superuser_management'
@@ -221,7 +184,7 @@ class AdminRestoreView(TemplateView):
     def _get_restore_response(self):
         return get_restore_response(
             self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request)
+            **get_restore_params(self.request, self.user.domain)
         )
 
     @staticmethod

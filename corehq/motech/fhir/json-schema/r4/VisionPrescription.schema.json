@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/VisionPrescription",
+  "id": "file:VisionPrescription.schema.json",
   "$ref": "#/definitions/VisionPrescription",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "VisionPrescription": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "An authorization for the supply of glasses and/or contact lenses to a patient.",
@@ -81,7 +81,7 @@
     "VisionPrescription_Dispense": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "An authorization for the supply of glasses and/or contact lenses to a patient.",

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Ratio",
+  "id": "file:Ratio.schema.json",
   "$ref": "#/definitions/Ratio",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Ratio": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "A relationship of two Quantity values - expressed as a numerator and a denominator.",

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Count",
+  "id": "file:Count.schema.json",
   "$ref": "#/definitions/Count",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Count": {
       "allOf": [
         {
-          "$ref": "Quantity#/definitions/Quantity"
+          "$ref": "Quantity.schema.json#/definitions/Quantity"
         },
         {
           "description": "A measured amount (or an amount that can potentially be measured). Note that measured amounts include amounts that are not precisely quantified, including amounts involving arbitrary units and floating currencies.",

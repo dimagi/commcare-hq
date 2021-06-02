@@ -44,7 +44,7 @@ def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
 
     if domain_can_forward(domain):
-        repeaters = repeater_cls.by_domain(domain)
+        repeaters = repeater_cls.by_domain(domain, stale_query=True)
         for repeater in repeaters:
             repeater.register(payload)
 

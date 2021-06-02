@@ -1,23 +1,18 @@
 import datetime
 
-from django.urls import reverse
 from django.conf import settings
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 
 from dimagi.utils.web import get_url_base
-from corehq.apps.sso import utils
+from corehq.apps.sso.utils import url_helpers
 
 
 def get_saml2_config(identity_provider):
     sp_settings = {
-        "entityId": utils.get_saml_entity_id(identity_provider),
+        "entityId": url_helpers.get_saml_entity_id(identity_provider),
         "assertionConsumerService": {
-            "url": utils.get_saml_acs_url(identity_provider),
+            "url": url_helpers.get_saml_acs_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_POST,
-        },
-        "singleLogoutService": {
-            "url": utils.get_saml_sls_url(identity_provider),
-            "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
         "attributeConsumingService": {
             "serviceName": "CommCare HQ",
@@ -58,11 +53,11 @@ def get_saml2_config(identity_provider):
         },
     }
 
-    saml_config.update(_get_advanced_saml2_settings())
+    saml_config.update(_get_advanced_saml2_settings(identity_provider))
     return saml_config
 
 
-def _get_advanced_saml2_settings():
+def _get_advanced_saml2_settings(identity_provider):
     metadata_valid_until = datetime.datetime.utcnow() + datetime.timedelta(days=3)
     return {
         "security": {
@@ -70,17 +65,11 @@ def _get_advanced_saml2_settings():
             "authnRequestsSigned": True,
             "logoutRequestSigned": True,
             "logoutResponseSigned": True,
-            "signMetadata": False,
-
-            # Signing/encrypting assertions and responses is a Premium feature offered
-            # by Azure AD (see: Token encryption) and is not available by default.
-            # Turning this off for now as HTTPS makes the handshake secure
-            # todo to discuss to make this a configurable parameter
-            "wantAssertionsSigned": False,
-            "wantMessagesSigned": False,
-            "wantAssertionsEncrypted": False,
-
+            "signMetadata": True,
+            "wantAssertionsSigned": True,
+            "wantAssertionsEncrypted": identity_provider.require_encrypted_assertions,
             "wantNameId": True,
+            "wantMessagesSigned": False,  # Azure does not support this, premium or standard
             "wantNameIdEncrypted": False,  # Azure will not accept if True
             "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",

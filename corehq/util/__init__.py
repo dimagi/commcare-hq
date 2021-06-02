@@ -1,3 +1,4 @@
+import json as stdlib_json  # Don't conflict with `corehq.util.json`
 from traceback import format_exception_only
 
 from django.utils.functional import Promise
@@ -46,3 +47,14 @@ def as_text(value):
         lines = format_exception_only(type(value), value)
         return "\n".join(x.rstrip("\n") for x in lines)
     return repr(value)
+
+
+def as_json_text(value):
+    if value is None:
+        return ''
+    if isinstance(value, dict):
+        try:
+            return stdlib_json.dumps(value, indent=2)
+        except TypeError:
+            pass
+    return as_text(value)

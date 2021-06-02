@@ -77,7 +77,7 @@ class DatadogMetrics(HqMetrics):
 
             h = metrics_histogram(
                 'commcare.request.duration', 1.4,
-                bucket_tag='duration', buckets=[1,2,3], bucket_units='ms',
+                bucket_tag='duration', buckets=[1, 2, 3], bucket_unit='ms',
                 tags=tags
             )
 

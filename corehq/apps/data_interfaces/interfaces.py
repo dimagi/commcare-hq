@@ -1,6 +1,7 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -64,7 +65,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(mark_safe(
+            DataTablesColumn(mark_safe(  # nosec: no user input
                 'Select  <a href="#" class="select-all btn btn-xs btn-default">all'
                 '</a> <a href="#" class="select-none btn btn-xs btn-default">'
                 'none</a>'), sortable=False, span=2),
@@ -77,12 +78,18 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
     @property
     def rows(self):
-        checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
+        checkbox_format = ('<input type="checkbox" class="selected-commcare-case"'
+            ' data-caseid="{case_id}" data-owner="{owner}" data-ownertype="{owner_type}" />')
+
         for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
-            display = CaseDisplay(self, case)
+            display = CaseDisplay(case, self.timezone, self.individual)
             yield [
-                checkbox % dict(case_id=case['_id'], owner=display.owner_id, owner_type=display.owner_type),
+                format_html(
+                    checkbox_format,
+                    case_id=case['_id'],
+                    owner=display.owner_id,
+                    owner_type=display.owner_type),
                 display.case_link,
                 display.case_type,
                 display.owner_display,
@@ -143,12 +150,13 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     placeholder = ''
     default_text = None
     label = ugettext_lazy('Archived/Restored')
-    help_text = mark_safe("Archived forms are removed from reports and exports and "
-                          "any case changes they make are reversed. Archiving forms "
-                          "can remove accidental form submissions. Use this report "
-                          "to bulk archive forms or restore a set of archived forms. "
-                          "<a href='https://confluence.dimagi.com/display/commcarepublic/Archive+Forms'>"
-                          "Learn more</a>")
+    help_text = mark_safe(  # nosec: no user input
+        "Archived forms are removed from reports and exports and "
+        "any case changes they make are reversed. Archiving forms "
+        "can remove accidental form submissions. Use this report "
+        "to bulk archive forms or restore a set of archived forms. "
+        "<a href='https://confluence.dimagi.com/display/commcarepublic/Archive+Forms'>"
+        "Learn more</a>")
     help_style_bubble = True
 
     @property
@@ -193,7 +201,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
     def headers(self):
         h = [
             DataTablesColumn(
-                mark_safe(
+                mark_safe(  # nosec: no user input
                     """
                     Select  <a class="select-visible btn btn-xs btn-default">all</a>
                     <a class="select-none btn btn-xs btn-default">none</a>
@@ -215,14 +223,12 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
 
     @property
     def rows(self):
+        checkbox_format = '<input type="checkbox" class="xform-checkbox" value="{}" name="xform_ids"/>'
+
         for form in self.es_query_result.hits:
             display = FormDisplay(form, self)
-            checkbox = mark_safe(
-                """<input type="checkbox" class="xform-checkbox"
-                value="{form_id}" name="xform_ids"/>"""
-            )
             yield [
-                checkbox.format(form_id=form["_id"]),
+                format_html(checkbox_format, form["_id"]),
                 display.form_data_link,
                 display.username,
                 display.submission_or_completion_time,

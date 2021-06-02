@@ -22,6 +22,7 @@
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/detail_tab_nodeset.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
   {% endcompress %}
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
@@ -45,6 +46,13 @@
     <script src="{% static 'app_manager/js/details/case_detail_print.js' %}"></script>
     <script src="{% static 'app_manager/js/details/case_claim.js' %}"></script>
     <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/column.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/screen.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/sort_rows.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/filter.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/parent_select.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/fixture_select.js' %}"></script>
     <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
   {% endcompress %}
@@ -74,8 +82,6 @@
   {% initial_page_data 'print_ref' print_ref %}
   {% initial_page_data 'print_uploader_js' print_uploader_js %}
   {% initial_page_data 'shadow_module_options' shadow_module_options %}
-  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'default_language' app.default_language %}
   {% initial_page_data 'current_language' lang %}
   {% registerurl "view_form" domain app.id '---' %}

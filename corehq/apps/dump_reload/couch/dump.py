@@ -12,14 +12,13 @@ from corehq.apps.dump_reload.couch.id_providers import (
 )
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
+from corehq.apps.users.dbaccessors import get_all_usernames_by_domain
 from corehq.feature_previews import all_previews
 from dimagi.utils.couch.database import iter_docs
 
 DOC_PROVIDERS = {
     DocTypeIDProvider('Application'),
     DocTypeIDProvider('LinkedApplication'),
-    DocTypeIDProvider('CommtrackConfig'),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider('MobileAuthKeyRecord'),
     DocTypeIDProvider('Product'),
@@ -56,7 +55,7 @@ class CouchDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes):
+        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes, self.includes):
             stats += self._dump_docs(doc_class, doc_ids, output_stream)
         return stats
 
@@ -72,11 +71,13 @@ class CouchDataDumper(DataDumper):
         return Counter({model_label: count})
 
 
-def get_doc_ids_to_dump(domain, exclude_doc_types=None):
+def get_doc_ids_to_dump(domain, exclude_doc_types=None, include_doc_types=None):
     """
     :return: A generator of (doc_class, list(doc_ids))
     """
     for id_provider in DOC_PROVIDERS:
+        if include_doc_types and id_provider.doc_type not in include_doc_types:
+            continue
         if exclude_doc_types and id_provider.doc_type in exclude_doc_types:
             continue
 
@@ -89,8 +90,7 @@ class ToggleDumper(DataDumper):
 
     def dump(self, output_stream):
         count = 0
-        usernames = get_all_usernames_by_domain(self.domain)
-        for toggle in _get_toggles_to_migrate(self.domain, usernames):
+        for toggle in _get_toggles_to_migrate(self.domain):
             count += 1
             output_stream.write(json.dumps(toggle))
             output_stream.write('\n')
@@ -99,12 +99,13 @@ class ToggleDumper(DataDumper):
         return Counter({'Toggle': count})
 
 
-def _get_toggles_to_migrate(domain, usernames):
+def _get_toggles_to_migrate(domain):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
     from toggle.models import Toggle
     from toggle.shortcuts import namespaced_item
 
     domain_item = namespaced_item(domain, NAMESPACE_DOMAIN)
+    usernames = set(get_all_usernames_by_domain(domain))
 
     for toggle in all_toggles() + all_previews():
         try:

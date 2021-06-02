@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
@@ -66,7 +66,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 
     @property
     def page_name(self):
-        return mark_safe("%s <small>Internal</small>" % self.page_title)
+        return format_html("{} <small>Internal</small>", self.page_title)
 
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
@@ -264,6 +264,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'toggles': self._get_toggles(),
+            'use_livequery': self.domain_object.use_livequery,
             'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }

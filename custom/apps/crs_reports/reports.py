@@ -1,7 +1,10 @@
+# WARNING this module looks up cases in Couch, but the domain (crs-remind) has
+# been migrated to SQL, so any cases created or updated after the migration was
+# completed (2021-05-12) will either cause errors or incorrect report output.
 from datetime import timedelta
 import datetime
 from django.utils.translation import ugettext_noop
-from django.utils import html
+from django.utils.html import format_html
 from casexml.apps.case.models import CommCareCase
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
@@ -48,13 +51,18 @@ def visit_completion_counter(case):
 
 
 class HNBCReportDisplay(CaseDisplay):
+    date_format = "'%d-%m-%Y'"
+
+    def __init__(self, report, case):
+        super().__init__(case, report.timezone, report.individual)
+        self.report = report
 
     @property
     def dob(self):
         if 'date_birth' not in self.case:
             return '---'
         else:
-            return self.report.date_to_json(self.case['date_birth'])
+            return self._dateprop('date_birth')
 
     @property
     def visit_completion(self):
@@ -76,10 +84,11 @@ class HNBCReportDisplay(CaseDisplay):
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['mother_name']
         try:
-            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
-                html.escape(reverse('crs_details_report', args=[self.report.domain, case_id, self.report.slug])),
-                html.escape(case_name),
-            ))
+            return format_html(
+                "<a class='ajax_dialog' href='{}'>{}</a>",
+                reverse('crs_details_report', args=[self.case["domain"], case_id, self.report.slug]),
+                case_name,
+            )
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 
@@ -172,17 +181,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
         if individual:
             filters.append({'term': {'owner_id': individual}})
         return filters
-
-    def date_to_json(self, date):
-        if date:
-            try:
-                date = force_to_datetime(date)
-                return (PhoneTime(date, self.timezone).user_time(self.timezone)
-                        .ui_string('%d-%m-%Y'))
-            except ValueError:
-                return ''
-        else:
-            return ''
 
 
 class HBNCMotherReport(BaseHNBCReport):

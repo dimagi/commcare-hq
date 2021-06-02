@@ -20,6 +20,7 @@ from corehq.form_processor.exceptions import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
+CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 

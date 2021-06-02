@@ -10,6 +10,7 @@ IGNORE_APPS = {
     'aaa',
     'accounting',
     'admin',
+    'auditcare',
     'captcha',
     'contenttypes',
     'django_celery_results',
@@ -55,6 +56,7 @@ IGNORE_MODELS = {
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
+    'registration.AsyncSignupRequest',
 }
 
 

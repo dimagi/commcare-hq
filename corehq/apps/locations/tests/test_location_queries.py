@@ -1,8 +1,6 @@
 import pickle
 
-from django.test.utils import override_settings
-
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 
 from ..models import SQLLocation

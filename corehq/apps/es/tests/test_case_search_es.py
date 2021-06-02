@@ -5,14 +5,26 @@ from django.test.testcases import SimpleTestCase
 from django.test import TestCase
 from mock import MagicMock, patch
 
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.models import (
+    Application,
+    CaseSearchProperty,
+    DetailColumn,
+    Module,
+)
 from corehq.apps.case_search.const import RELEVANCE_SCORE
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.case_search.utils import (
+    CaseSearchCriteria,
+    get_related_case_relationships,
+    get_related_case_results,
+)
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
+    CaseSearchES,
     case_property_missing,
-    case_property_text_query
+    case_property_text_query,
+    flatten_result,
 )
 from corehq.elastic import get_es_new, SIZE_LIMIT
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -253,26 +265,29 @@ class TestCaseSearchLookups(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         super(TestCaseSearchLookups, self).tearDown()
 
-    def _make_case(self, domain, case_properties):
+    def _make_case(self, domain, case_properties, index=None):
         # make a case
         case_properties = case_properties or {}
         case_id = case_properties.pop('_id')
+        case_type = case_properties.pop('case_type', self.case_type)
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         owner_id = case_properties.pop('owner_id', None)
         case = create_and_save_a_case(
-            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=self.case_type)
+            domain, case_id, case_name, case_properties, owner_id=owner_id, case_type=case_type, index=index
+        )
         return case
 
-    def _bootstrap_cases_in_es_for_domain(self, domain):
+    def _bootstrap_cases_in_es_for_domain(self, domain, input_cases):
+        for case in input_cases:
+            index = case.pop('index', None)
+            self._make_case(domain, case, index=index)
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
 
     def _assert_query_runs_correctly(self, domain, input_cases, query, xpath_query, output):
-        for case in input_cases:
-            self._make_case(domain, case)
-        self._bootstrap_cases_in_es_for_domain(domain)
-        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        self._bootstrap_cases_in_es_for_domain(domain, input_cases)
         self.assertItemsEqual(
             query.get_ids(),
             output
@@ -432,3 +447,64 @@ class TestCaseSearchLookups(TestCase):
             ['c2', 'c3']
         )
         config.delete()
+
+    def test_get_related_case_relationships(self):
+        app = Application.new_app(self.domain, "Case Search App")
+        module = app.add_module(Module.new_module("Search Module", "en"))
+        module.case_type = self.case_type
+        detail = module.case_details.short
+        detail.columns.extend([
+            DetailColumn(header={"en": "x"}, model="case", field="x", format="plain"),
+            DetailColumn(header={"en": "y"}, model="case", field="parent/parent/y", format="plain"),
+            DetailColumn(header={"en": "z"}, model="case", field="host/z", format="plain"),
+        ])
+        module.search_config.properties = [CaseSearchProperty(
+            name="texture",
+            label={"en": "Texture"},
+        )]
+
+        module = app.add_module(Module.new_module("Non-Search Module", "en"))
+        module.case_type = self.case_type
+        detail = module.case_details.short
+        detail.columns.append(
+            DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
+        )
+
+        self.assertEqual(get_related_case_relationships(app, self.case_type), {"parent/parent", "host"})
+        self.assertEqual(get_related_case_relationships(app, "monster"), set())
+
+    def test_get_related_case_results(self):
+        # Note that cases must be defined before other cases can reference them
+        cases = [
+            {'_id': 'c1', 'case_type': 'monster', 'description': 'grandparent of first person'},
+            {'_id': 'c2', 'case_type': 'monster', 'description': 'parent of first person', 'index': {
+                'parent': ('monster', 'c1')
+            }},
+            {'_id': 'c3', 'case_type': 'monster', 'description': 'parent of host'},
+            {'_id': 'c4', 'case_type': 'monster', 'description': 'host of second person', 'index': {
+                'parent': ('monster', 'c3')
+            }},
+            {'_id': 'c5', 'description': 'first person', 'index': {
+                'parent': ('monster', 'c2')
+            }},
+            {'_id': 'c6', 'description': 'second person', 'index': {
+                'host': ('monster', 'c4')
+            }},
+        ]
+        self._bootstrap_cases_in_es_for_domain(self.domain, cases)
+
+        hits = CaseSearchES().domain(self.domain).case_type(self.case_type).run().hits
+        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+        self.assertEqual({case.case_id for case in cases}, {'c5', 'c6'})
+
+        self._assert_related_case_ids(cases, set(), set())
+        self._assert_related_case_ids(cases, {"parent"}, {"c2"})
+        self._assert_related_case_ids(cases, {"host"}, {"c4"})
+        self._assert_related_case_ids(cases, {"parent/parent"}, {"c1"})
+        self._assert_related_case_ids(cases, {"host/parent"}, {"c3"})
+        self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
+        self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
+
+    def _assert_related_case_ids(self, cases, paths, ids):
+        results = get_related_case_results(self.domain, cases, paths)
+        self.assertEqual(ids, {result['_id'] for result in results})

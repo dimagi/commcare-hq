@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
@@ -111,7 +112,7 @@ class RemoteRequestFactory(object):
     def _build_remote_request_queries(self):
         return [
             RemoteRequestQuery(
-                url=absolute_reverse('remote_search', args=[self.app.domain]),
+                url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
                 data=self._get_remote_request_query_datums(),
@@ -124,11 +125,13 @@ class RemoteRequestFactory(object):
         details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
+            long_detail_id = 'case_long'
         else:
             short_detail_id = 'search_short'
+            long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
-        if self.module.search_config.search_filter:
+        if self.module.search_config.search_filter and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
@@ -136,7 +139,7 @@ class RemoteRequestFactory(object):
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
-            detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
+            detail_confirm=details_helper.get_detail_id_safe(self.module, long_detail_id),
         )]
 
     def _get_remote_request_query_datums(self):
@@ -175,8 +178,15 @@ class RemoteRequestFactory(object):
                 'key': prop.name,
                 'display': display
             }
+            if not prop.appearance or prop.itemset.nodeset:
+                kwargs['receive'] = prop.receiver_expression
+            if prop.hidden:
+                kwargs['hidden'] = prop.hidden
             if prop.appearance and self.app.enable_search_prompt_appearance:
-                kwargs['appearance'] = prop.appearance
+                if prop.appearance == 'address':
+                    kwargs['input_'] = prop.appearance
+                else:
+                    kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
             if prop.default_value and self.app.enable_default_value_expression:

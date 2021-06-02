@@ -8,37 +8,9 @@ import os
 import re
 from io import RawIOBase
 
-from jsonfield import JSONField
-
 from corehq.blobs.exceptions import BadName, GzipStreamError
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
-
-
-class NullJsonField(JSONField):
-    """A JSONField that stores null when its value is empty
-
-    Any value stored in this field will be discarded and replaced with
-    the default if it evaluates to false during serialization.
-    """
-
-    def __init__(self, **kw):
-        kw.setdefault("null", True)
-        super(NullJsonField, self).__init__(**kw)
-        assert self.null
-
-    def get_db_prep_value(self, value, *args, **kw):
-        if not value:
-            value = None
-        return super(NullJsonField, self).get_db_prep_value(value, *args, **kw)
-
-    def to_python(self, value):
-        value = super(NullJsonField, self).to_python(value)
-        return self.get_default() if value is None else value
-
-    def pre_init(self, value, obj):
-        value = super(NullJsonField, self).pre_init(value, obj)
-        return self.get_default() if value is None else value
 
 
 class GzipStream:

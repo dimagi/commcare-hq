@@ -130,6 +130,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
+    Util.getCurrentQueryInputs = function () {
+        var queryData = Util.currentUrlToObject().queryData[sessionStorage.queryKey];
+        if (queryData) {
+            return queryData.inputs || {};
+        }
+        return {};
+    };
+
     Util.getStickyQueryInputs = function () {
         if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
             return {};
@@ -154,6 +162,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.steps = options.steps;
         this.page = options.page;
         this.search = options.search;
+        this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
@@ -167,14 +176,23 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.steps) {
                 this.steps = [];
             }
-            this.steps.push(step);
-            //clear out pagination and search when we take a step
+
+            // Steps only deal with strings, because formplayer will send them back as strings
+            this.steps.push(String(step));
+
+            // clear out pagination and search when we take a step
             this.page = null;
             this.search = null;
         };
 
         this.setPage = function (page) {
             this.page = page;
+        };
+
+        this.setCasesPerPage = function (casesPerPage) {
+            this.casesPerPage = casesPerPage;
+            this.page = null;
+            this.sortIndex = null;
         };
 
         this.setSort = function (sortIndex) {
@@ -192,10 +210,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.queryData) {
                 this.queryData = {};
             }
+            var steps = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().steps;
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
                 execute: execute,
+                selections: steps,
             };
+            this.page = null;
+            this.search = null;
         };
 
         this.setForceManualAction = function (force) {
@@ -227,11 +249,18 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 this.sessionId = null;
             } else {
                 this.steps = this.steps.splice(0, index);
+                var stepsKey = this.steps.join(",");
+                // Query data is necessary to formplayer navigation, so keep it,
+                // but only for the steps that are still relevant to the session.
+                this.queryData = _.pick(this.queryData, function (value) {
+                    var valueKey = value.selections.join(",");
+                    return stepsKey.startsWith(valueKey) && stepsKey !== valueKey;
+                });
             }
             this.page = null;
             this.search = null;
-            this.queryData = null;
             this.sortIndex = null;
+            this.queryData = null;
             this.forceManualAction = null;
         };
     };
@@ -314,6 +343,16 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             return result;
         };
     }
+
+    Util.savePerPageLimitCookie = function (name, perPageLimit) {
+        var savedPath = window.location.pathname;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        $.cookie(name + '-per-page-limit', perPageLimit, {
+            expires: 365,
+            path: savedPath,
+            secure: initialPageData.get('secure_cookies'),
+        });
+    };
 
     return Util;
 });

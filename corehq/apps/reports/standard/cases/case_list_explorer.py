@@ -171,7 +171,7 @@ class CaseListExplorer(CaseListReport):
         )
         with timer:
             for case in data:
-                case_display = SafeCaseDisplay(self, case)
+                case_display = SafeCaseDisplay(case, self.timezone, self.individual)
                 yield [
                     case_display.get(column.prop_name)
                     for column in self.columns

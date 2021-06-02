@@ -44,7 +44,9 @@ class SyncCouchToSQLMixin(object):
     each doc, you can incrementally change the code to use to SQL model
     instead of the Couch model, and eventually remove the Couch model entirely.
 
-    If you have a custom sync process, just override _migration_sync_to_sql.
+    If you have a custom sync process, just override `_migration_get_custom_functions` to
+    pass additional migration functions or override _migration_sync_to_sql for a completely
+    custom migration.
     """
 
     @classmethod
@@ -60,6 +62,14 @@ class SyncCouchToSQLMixin(object):
         """
         Should return a list of SubModelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
+        """
+        return []
+
+    @classmethod
+    def _migration_get_custom_couch_to_sql_functions(cls):
+        """
+        Should return a list of functions with args: (couch_object, sql_object)
+        These will be called in turn when syncing couch model to SQL
         """
         return []
 
@@ -104,9 +114,18 @@ class SyncCouchToSQLMixin(object):
         return obj
 
     def _migration_sync_to_sql(self, sql_object):
+        """Copy data from the Couch model to the SQL model and save it"""
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
+        self._migration_sync_submodels_to_sql(sql_object)
+        for custom_func in self._migration_get_custom_couch_to_sql_functions():
+            custom_func(self, sql_object)
+        sql_object.save(sync_to_couch=False)
+
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        """Migrate submodels from the Couch model to the SQL model. This is called
+        as part of ``_migration_sync_to_sql``"""
         for spec in self._migration_get_submodels():
             sql_submodels = []
             for couch_submodel in getattr(self, spec.couch_attr):
@@ -118,11 +137,11 @@ class SyncCouchToSQLMixin(object):
             sql_attr = getattr(sql_object, spec.sql_attr)
             sql_attr.all().delete()
             sql_attr.set(sql_submodels, bulk=False)
-        sql_object.save(sync_to_couch=False)
 
     def _migration_do_sync(self):
         sql_object = self._migration_get_or_create_sql_object()
         self._migration_sync_to_sql(sql_object)
+        return sql_object
 
     def save(self, *args, **kwargs):
         sync_to_sql = kwargs.pop('sync_to_sql', True)
@@ -181,6 +200,14 @@ class SyncSQLToCouchMixin(object):
         return []
 
     @classmethod
+    def _migration_get_custom_sql_to_couch_functions(cls):
+        """
+        Should return a list of functions with args: (sql_object, couch_object)
+        These will be called in turn when syncing SQL model to couch
+        """
+        return []
+
+    @classmethod
     def _migration_get_couch_model_class(cls):
         """
         Should return the class of the Couch model.
@@ -207,9 +234,18 @@ class SyncSQLToCouchMixin(object):
         return obj
 
     def _migration_sync_to_couch(self, couch_object):
+        """Copy data from the SQL model to the Couch model and save it"""
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(couch_object, field_name, value)
+        self._migration_sync_submodels_to_couch(couch_object)
+        for custom_func in self._migration_get_custom_sql_to_couch_functions():
+            custom_func(self, couch_object)
+        couch_object.save(sync_to_sql=False)
+
+    def _migration_sync_submodels_to_couch(self, couch_object):
+        """Migrate submodels from the SQL model to the Couch model. This is called
+        as part of ``_migration_sync_to_couch``"""
         for spec in self._migration_get_submodels():
             couch_submodels = []
             for sql_submodel in getattr(self, spec.sql_attr).all():
@@ -219,7 +255,6 @@ class SyncSQLToCouchMixin(object):
                 }
                 couch_submodels.append(spec.couch_class(**couch_fields))
             setattr(couch_object, spec.couch_attr, couch_submodels)
-        couch_object.save(sync_to_sql=False)
 
     def _migration_do_sync(self):
         couch_object = self._migration_get_or_create_couch_object()

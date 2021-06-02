@@ -1,49 +1,77 @@
 hqDefine('users/js/filtered_download', [
     'jquery',
+    'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets',      // role selection
     'locations/js/widgets',     // location search
     'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/knockout_bindings.ko', // slideVisible binding
 ], function (
     $,
+    ko,
     _,
     initialPageData
 ) {
-    function getFilters() {
-        return {
-            'role_id': $("#id_role_id").val(),
-            'search_string': $("#id_search_string").val(),
-            'location_id': $("[name=location_id]").val(),
-            'domains': $("#id_domains").val(),
-        };
-    }
+    function FiltersModel(options) {
+        var self = {};
 
-    function countUsers(currentFilters) {
-        var countUsersUrl = initialPageData.get('count_users_url');
-        $.get({
-            url: countUsersUrl,
-            data: currentFilters,
-            success: function (data) {
-                var count = data.count;
-                var template = count === 1 ? gettext("Download <%= count %> user") : gettext("Download <%= count %> users");
-                $('.submit_button').text(_.template(template)({count: count}));
-            },
-            error: function () {
-                alert("Error determining number of matching users");
-            },
+        self.role_id = ko.observable();
+        self.search_string = ko.observable();
+        self.location_id = ko.observable();
+        self.columns = ko.observable();
+        self.domains = ko.observableArray();
+
+        self.isCrossDomain = ko.computed(function () {
+            return self.domains() && self.domains().length > 0;
         });
+
+        self.count = ko.observable(null);
+        self.buttonHTML = ko.computed(function () {
+            if (self.count() === null) {
+                return "<i class='fa fa-spin fa-spinner'></i>";
+            }
+            var template = self.count() === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> users");
+            return _.template(template)({
+                count: self.count(),
+            });
+        });
+
+        self.countUsers = function () {
+            self.count(null);
+            var data = {
+                search_string: self.search_string(),
+                domains: self.domains(),
+            };
+            if (!self.isCrossDomain()) {
+                data = _.extend(data, {
+                    role_id: self.role_id(),
+                    location_id: self.location_id(),
+                });
+            }
+            $.get({
+                url: options.url,
+                data: data,
+                success: function (data) {
+                    self.count(data.count);
+                },
+                error: function () {
+                    alert(gettext("Error determining number of matching users"));
+                },
+            });
+        };
+        self.role_id.subscribe(self.countUsers);
+        self.search_string.subscribe(self.countUsers);
+        self.location_id.subscribe(self.countUsers);
+        self.columns.subscribe(self.countUsers);
+        self.domains.subscribe(self.countUsers);
+
+        return self;
     }
 
     $(function () {
-        var prevFilters = getFilters();
-        $("#user-filters").change(function () {
-            var currentFilters = getFilters();
-            if (!_.isEqual(currentFilters, prevFilters)) {
-                countUsers(currentFilters);
-            }
-            prevFilters = currentFilters;
-        });
-        countUsers(getFilters());
+        $("#user-filters").koApplyBindings(FiltersModel({
+            'url': initialPageData.get('count_users_url'),
+        }));
     });
 });

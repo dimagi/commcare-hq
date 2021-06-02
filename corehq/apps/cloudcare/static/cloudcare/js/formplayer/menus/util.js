@@ -117,6 +117,9 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
         };
+        var Util = hqImport("cloudcare/js/formplayer/utils/util");
+        var urlObject = Util.currentUrlToObject();
+
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
@@ -130,21 +133,24 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
             }
             sessionStorage.queryKey = menuResponse.queryKey;
+            urlObject.setQueryData({}, false);
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
-                var Util = hqImport("cloudcare/js/formplayer/utils/util");
-                var urlObject = Util.currentUrlToObject();
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
-                var eventData = menuResponse.title;
                 if (searchText) {
                     event = "Searched Case List";
                 }
-                hqImport('analytix/js/kissmetrix').track.event(event, {
+                var eventData = {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                    name: eventData,
-                });
+                    name: menuResponse.title,
+                };
+                var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
+                if (!_.isEmpty(fields)) {
+                    eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
+                }
+                hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);

@@ -84,25 +84,23 @@ describe('Entries', function () {
         assert.isTrue(spy.calledTwice);
     });
 
-    it('Should clear Dropdown on options change', function () {
+    it('Should retain Dropdown value on options change', function () {
+        // This behavior is necessary for changing the in-form language
         var entry,
             question;
         questionJSON.datatype = Const.SELECT;
         questionJSON.style = { raw: Const.MINIMAL };
-        questionJSON.choices = ['a', 'b'];
+        questionJSON.choices = ['one', 'two'];
         question = UI.Question(questionJSON);
 
         entry = question.entry;
         assert.isTrue(entry instanceof Controls.DropdownEntry);
 
-        entry.rawAnswer(2);     // 'b'
+        entry.rawAnswer(2);     // 'two'
         assert.equal(entry.answer(), 2);
 
-        question.choices(['b', 'c', 'd']);
-        assert.equal(entry.answer(), Const.NO_ANSWER);
-
-        question.choices(['e', 'f']);
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        question.choices(['un', 'deux']);
+        assert.equal(entry.answer(), 2);
     });
 
     it('Should return FloatEntry', function () {
@@ -144,25 +142,23 @@ describe('Entries', function () {
         assert.equal(entry.answer(), Const.NO_ANSWER);
     });
 
-    it('Should clear Combobox on options change', function () {
+    it('Should retain Combobox value on options change', function () {
+        // This behavior is necessary for changing the in-form language
         var entry,
             question;
         questionJSON.datatype = Const.SELECT;
         questionJSON.style = { raw: Const.COMBOBOX };
-        questionJSON.choices = ['a', 'b'];
+        questionJSON.choices = ['one', 'two'];
         question = UI.Question(questionJSON);
 
         entry = question.entry;
         assert.isTrue(entry instanceof Controls.ComboboxEntry);
 
-        entry.rawAnswer(2);     // 'b'
+        entry.rawAnswer(2);     // 'two'
         assert.equal(entry.answer(), 2);
 
-        question.choices(['b', 'c', 'd']);
-        assert.equal(entry.answer(), Const.NO_ANSWER);
-
-        question.choices(['e', 'f']);
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        question.choices(['moja', 'mbili', 'tatu']);
+        assert.equal(entry.answer(), 2);
     });
 
     it('Should properly filter combobox', function () {
@@ -272,6 +268,32 @@ describe('Entries', function () {
         entry.rawAnswer('12:45');
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
+    });
+
+    it('Should return EthiopanDateEntry', function () {
+        questionJSON.datatype = Const.DATE;
+        questionJSON.answer = '2021-01-29'; // 2013-05-21 in Ethiopian
+        questionJSON.style = { raw: 'ethiopian' };
+
+        var entry = UI.Question(questionJSON).entry;
+        entry.entryId = 'date-entry-ethiopian';
+        assert.isTrue(entry instanceof Controls.EthiopianDateEntry);
+        assert.equal(entry.templateType, 'ethiopian-date');
+
+        entry.afterRender();
+
+        // the date is set correctly to ethiopian
+        assert.equal(entry.$picker.calendarsPicker('getDate').toString(), '2013-05-21');
+
+        // select a new date, ensure the correct gregorian date is saved as the answer
+        entry.$picker.calendarsPicker('selectDate', $("[title='Select Kidame, Tir 22, 2013']")[0]);
+        assert.equal(entry.answer(), '2021-01-30');
+
+        entry.$picker.calendarsPicker('clear');
+        assert.equal(entry.answer(), Const.NO_ANSWER);
+
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledTwice);
     });
 
     it('Should return InfoEntry', function () {

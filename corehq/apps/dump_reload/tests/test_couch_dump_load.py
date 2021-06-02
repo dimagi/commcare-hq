@@ -54,7 +54,7 @@ class CouchDumpLoadTest(TestCase):
 
     def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
         output_stream = StringIO()
-        CouchDataDumper(self.domain_name, []).dump(output_stream)
+        CouchDataDumper(self.domain_name, [], []).dump(output_stream)
 
         self._delete_couch_data()
 
@@ -220,8 +220,8 @@ class TestDumpLoadToggles(SimpleTestCase):
         super(TestDumpLoadToggles, self).tearDown()
 
     def test_dump_toggles(self):
-        dumper = ToggleDumper(self.domain_name, [])
-        users = {'user1', 'user2', 'user3'}
+        dumper = ToggleDumper(self.domain_name, [], [])
+        users = iter(['user1', 'user2', 'user3'])
 
         output_stream = StringIO()
 

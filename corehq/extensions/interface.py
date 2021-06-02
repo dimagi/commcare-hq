@@ -2,9 +2,11 @@ import importlib
 import inspect
 import itertools
 import logging
+from contextlib import contextmanager
 from enum import Enum
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 
 logger = logging.getLogger("commcare.extensions")
 
@@ -94,7 +96,13 @@ class ExtensionPoint:
             extension for extension in self.extensions
             if not domain or extension.should_call_for_domain(domain)
         ]
-        results = self._get_results(extensions, *args, **kwargs)
+
+        if not extensions:
+            result = self.definition_function(*args, **kwargs)
+            results = iter([result] if result is not None else [])
+        else:
+            results = self._get_results(extensions, *args, **kwargs)
+
         if self.result_formatter:
             return self.result_formatter(self, results)
         return list(results)
@@ -148,3 +156,15 @@ class CommCareExtensions:
     def resolve_module(self, module_or_name):
         if isinstance(module_or_name, str):
             importlib.import_module(module_or_name)
+
+
+@contextmanager
+def disable_extensions(ext_point):
+    if isinstance(ext_point, str):
+        ext_point = to_function(ext_point)
+    extensions = ext_point.extensions
+    ext_point.extensions = []
+    try:
+        yield
+    finally:
+        ext_point.extensions = extensions

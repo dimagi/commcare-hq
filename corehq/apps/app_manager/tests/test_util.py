@@ -99,7 +99,7 @@ class TestGlobalAppConfig(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
                 config.get_latest_apk_version(),
                 response
@@ -119,7 +119,7 @@ class TestGlobalAppConfig(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
                 config.get_latest_apk_version(),
                 response
@@ -140,7 +140,7 @@ class TestGlobalAppConfig(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
                 config.get_latest_app_version(build_profile_id),
                 response
@@ -160,7 +160,7 @@ class TestGlobalAppConfig(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
                 config.get_latest_app_version(build_profile_id=''),
                 response

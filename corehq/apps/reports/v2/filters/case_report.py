@@ -5,9 +5,9 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.es import cases as case_es
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.standard.cases.utils import (
+    all_project_data_filter,
+    deactivated_case_owners,
     get_case_owners,
-    query_all_project_data,
-    query_deactivated_data,
 )
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
@@ -31,10 +31,10 @@ class CaseOwnerReportFilter(BaseReportFilter):
             return query
 
         if self.request.can_access_all_locations and EMWF.show_project_data(self.value):
-            return query_all_project_data(query, self.domain, self.value)
+            return query.filter(all_project_data_filter(self.domain, self.value))
 
         if self.request.can_access_all_locations and EMWF.show_deactivated_data(self.value):
-            return query_deactivated_data(query, self.domain)
+            return query.filter(deactivated_case_owners(self.domain))
 
         selected_user_types = [v['id'] for v in self.value]
         case_owners = get_case_owners(self.request, self.domain, selected_user_types)

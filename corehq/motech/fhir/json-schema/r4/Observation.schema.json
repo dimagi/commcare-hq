@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Observation",
+  "id": "file:Observation.schema.json",
   "$ref": "#/definitions/Observation",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Observation": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Measurements and simple assertions made about a patient, device or other subject.",
@@ -224,7 +224,7 @@
     "Observation_ReferenceRange": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Measurements and simple assertions made about a patient, device or other subject.",
@@ -267,7 +267,7 @@
     "Observation_Related": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Measurements and simple assertions made about a patient, device or other subject.",
@@ -302,7 +302,7 @@
     "Observation_Component": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Measurements and simple assertions made about a patient, device or other subject.",

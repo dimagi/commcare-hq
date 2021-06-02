@@ -5,7 +5,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO

@@ -45,14 +45,14 @@ hqDefine("app_manager/js/forms/form_view", function () {
             return false;
         });
 
-        self.userCaseReferenceNotAllowed = ko.computed(function () {
+        self.usercaseReferenceNotAllowed = ko.computed(function () {
             return !initialPageData('is_usercase_in_use') && formFilterMatches(
                 self.formFilter(), patterns.usercase_substring
             );
         });
 
         self.allowed = ko.computed(function () {
-            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
+            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
         });
 
         return self;

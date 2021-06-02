@@ -3,6 +3,7 @@ from collections import Counter
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
+from django.utils.functional import lazy
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -13,11 +14,14 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
+# TODO: Replace with library method
+mark_safe_lazy = lazy(mark_safe, str)
+
 
 class CaseSearchFilter(BaseSimpleFilter):
     slug = 'search_query'
     label = ugettext_lazy("Search")
-    help_inline = mark_safe(ugettext_lazy(
+    help_inline = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
         'Search any text, or use a targeted query. For more info see the '
         '<a href="https://wiki.commcarehq.org/display/commcarepublic/'
         'Advanced+Case+Search" target="_blank">Case Search</a> help page'

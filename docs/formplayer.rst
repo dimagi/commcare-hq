@@ -32,7 +32,7 @@ Relevant Architectural Decisions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 While a full detailing of formplayer's architecture is beyond the scope of this document, a few architectural
-decisions are particularly useful for HQ devs who are new to fromplayer to understand.
+decisions are particularly useful for HQ devs who are new to formplayer to understand.
 
 Sandboxes
 +++++++++

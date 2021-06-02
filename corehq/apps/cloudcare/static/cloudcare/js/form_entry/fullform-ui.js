@@ -83,6 +83,22 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         }
     }
 
+    function getQuestions(o) {
+        if (ko.utils.unwrapObservable(o.type) === 'question') {
+            return [o];
+        } else {
+            var qs = [];
+            for (var i = 0; i < o.children().length; i++) {
+                if (ko.utils.unwrapObservable(o.children()[i].type) === 'question') {
+                    qs.push(o.children()[i]);
+                } else {
+                    qs = qs.concat(getQuestions(o.children()[i]));
+                }
+            }
+            return qs;
+        }
+    }
+
     function parseMeta(type, style) {
         var meta = {};
 
@@ -270,8 +286,44 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
+        self.erroredQuestions = ko.computed(function () {
+            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
+                return [];
+            }
+
+            var questions = getQuestions(self);
+            var qs = [];
+            for (var i = 0; i < questions.length; i++) {
+                // eslint-disable-next-line
+                if (questions[i].error() != null || questions[i].serverError() != null || questions[i].requiredNotAnswered()) {
+                    qs.push(questions[i]);
+                }
+            }
+            return qs;
+        });
+
+        self.currentJumpPoint = null;
+        self.jumpToErrors = function () {
+            var erroredQuestions = self.erroredQuestions();
+            for (var i = erroredQuestions.length - 1; i >= 0; i--) {
+                if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)) {
+                    self.currentJumpPoint = erroredQuestions[i];
+                    break;
+                }
+                if (self.currentJumpPoint.entry.entryId === erroredQuestions[i].entry.entryId) {
+                    if (i === erroredQuestions.length - 1) {
+                        self.currentJumpPoint = erroredQuestions[0];
+                    } else {
+                        self.currentJumpPoint = erroredQuestions[i + 1];
+                    }
+                    break;
+                }
+            }
+            self.currentJumpPoint.navigateTo();
+        };
+
         self.enableSubmitButton = ko.computed(function () {
-            return !self.isSubmitting();
+            return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
         self.submitText = ko.computed(function () {
@@ -459,6 +511,22 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             $.publish('formplayer.dirty');
         };
 
+        self.getTranslation = function (translationKey, defaultTranslation) {
+            // Find the root level element which contains the translations.
+            var curParent = self.parent;
+            while (curParent.parent) {
+                curParent = curParent.parent;
+            }
+            var translations = curParent.translations;
+
+            if (translations) {
+                var addNewRepeatTranslation = ko.toJS(translations[translationKey]);
+                if (addNewRepeatTranslation) {
+                    return addNewRepeatTranslation;
+                }
+            }
+            return defaultTranslation;
+        };
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
@@ -533,6 +601,29 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
             return Utils.resourceMap(resourceType);
         };
+
+        self.requiredNotAnswered = ko.computed(function () {
+            return self.required() && self.answer() === Const.NO_ANSWER;
+        });
+
+        self.navigateTo = function () {
+            // toggle nested collapsible Groups
+            var hasParent = self.parent !== undefined;
+            var currentNode = self;
+            while (hasParent) {
+                hasParent = currentNode.parent !== undefined;
+                var parent = currentNode.parent;
+                if (parent !== undefined && parent.collapsible !== undefined && !parent.showChildren()) {
+                    parent.toggleChildren();
+                }
+                currentNode = parent;
+            }
+            var el = $("label[for='" + self.entry.entryId + "']");
+            $('html, body').animate({
+                scrollTop: $(el).offset().top - 60,
+            });
+            el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
+        };
     }
 
     /**
@@ -551,6 +642,11 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             caption_markdown: {
                 update: function (options) {
                     return options.data ? md.render(options.data) : null;
+                },
+            },
+            help: {
+                update: function (options) {
+                    return options.data ? md.render(DOMPurify.sanitize(options.data)) : null;
                 },
             },
         };

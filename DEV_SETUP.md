@@ -43,7 +43,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
   you will also need to install the modules for pip and venv explicitly.
 
-      $ sudo apt install python3-dev python3-pip python3-venv
+      $ sudo apt install python3.6-dev python3-pip python3-venv
 
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
@@ -51,7 +51,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
+      $ sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
 
 
 ##### macOS Notes
@@ -68,7 +68,6 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - Additional requirements:
   - [Homebrew](https://brew.sh)
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
-  - [pango](https://www.pango.org/) (available via homebrew)
   - libxmlsec1 (install with homebrew)
 
   
@@ -117,6 +116,10 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
        $ workon cchq
 
+1. Ensure your vitualenv `pip` is up-to-date:
+
+       $ python3 -m pip install --upgrade pip
+
 
 #### Clone repo and install requirements
 
@@ -134,6 +137,14 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/dev-requirements.txt
 
+* Recommended for developers or others with custom requirements. Use this
+  `pip install ...` workflow for initial setup only. Then use commands in
+  `local.in`.
+
+      $ cp requirements/local.in.sample requirements/local.in
+      # customize requirements/local.in as desired
+      $ pip install -r requirements/local.in
+
 * For production environments
 
       $ pip install -r requirements/prod-requirements.txt
@@ -142,7 +153,7 @@ Next, install the appropriate requirements (only one is necessary).
 
       $ pip install -r requirements/requirements.txt
 
-(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
+(If this fails you may need to [install the prerequisite system dependencies](#prerequisites).)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
@@ -167,28 +178,70 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build
 and run all of the service containers. There are detailed instructions
 for setting up Docker in the [docker folder](docker/README.md). But the
-following should cover the needs of most developers:
+following should cover the needs of most developers.
 
+
+1. Install docker packages.
+
+    **Mac**: see [Install Docker Desktop on
+    Mac](https://docs.docker.com/docker-for-mac/install/) for docker
+    installation and setup.
+
+    **Linux**:
+
+    ```sh
+    # install docker
     $ sudo apt install docker.io
-    $ pip install docker-compose
+
+    # ensure docker is running
+    $ systemctl is-active docker || sudo systemctl start docker
+    # add your user to the `docker` group
     $ sudo adduser $USER docker
-
-Log in as yourself again, to activate membership of the "docker" group:
-
+    # login as yourself again to activate membership of the "docker" group
     $ su - $USER
 
-Ensure the Docker service is running:
+    # re-activate your virtualenv (with your venv tool of choice)
+    # (virtualenvwrapper)
+    $ workon cchq
 
-    $ sudo service docker status
+    # or (pyenv)
+    $ pyenv activate cchq
 
-Bring up the Docker containers for the services you probably need:
+    # or (virtualenv)
+    $ source $WORKON_HOME/cchq/bin/activate
+    ```
 
-    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+1. Install the `docker-compose` python library.
 
-or, to detach and run in the background, use the `-d` option:
+    ```sh
+    $ pip install docker-compose
+    ```
 
-    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+1. Ensure the elasticsearch config files are world-readable (their containers
+   will fail to start otherwise).
 
+    ```sh
+    chmod 0644 ./docker/files/elasticsearch*.yml
+    ```
+
+1. Bring up the docker containers.
+
+    ```sh
+    $ ./scripts/docker up -d
+    # Or, omit the '-d' option to keep the containers attached in the foreground
+    $ ./scripts/docker up
+    # Optionally, bring up only specific containers (add '-d' to detach)
+    # Note that elasticsearch2 is for ES2, whereas elasticsearch is for ES7.
+    # Which container you use should match the version set with ELASTICSEARCH_MAJOR_VERSION
+    $ ./scripts/docker up postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
+    ```
+
+1. If you are planning on running Formplayer from source, stop the formplayer
+   container.
+
+    ```sh
+    $ ./scripts/docker stop formplayer
+    ```
 
 ### (Optional) Copying data from an existing HQ install
 

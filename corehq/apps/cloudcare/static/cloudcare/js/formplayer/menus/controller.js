@@ -1,8 +1,9 @@
-/*global Backbone */
+/*global Backbone, DOMPurify */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Util = hqImport("cloudcare/js/formplayer/utils/util"),
+        md = window.markdownit();
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -29,11 +30,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             // If redirect was set, clear and go home.
             if (menuResponse.clearSession) {
                 FormplayerFrontend.trigger("apps:currentApp");
-                return;
-            }
-
-            if (menuResponse.autolaunch) {
-                FormplayerFrontend.trigger("menu:select", menuResponse.autolaunch);
                 return;
             }
 
@@ -176,6 +172,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
+        var templateForms = detailObject.get('templateForms') || [];
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -183,7 +180,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
+            obj.templateForm = templateForms[i];
             obj.id = i;
+            if (obj.templateForm === 'markdown') {
+                obj.html = DOMPurify.sanitize(md.render(details[i]));
+            }
             detailModel.push(obj);
         }
         var detailCollection = new Backbone.Collection();

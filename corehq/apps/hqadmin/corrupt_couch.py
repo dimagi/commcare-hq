@@ -12,7 +12,6 @@ from dateutil.parser import parse as parse_date
 from django.conf import settings
 from memoized import memoized
 
-from auditcare.models import AuditEvent
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from custom.m4change.models import FixtureReportResult
@@ -22,6 +21,7 @@ from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.auditcare.models import AuditEvent
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
@@ -262,7 +262,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
-    return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+    return ResumableFunctionIterator(resume_key, data_function, args_provider)
 
 
 def repair_couch_docs(db, missing, get_doc_ids, min_tries):

@@ -7,7 +7,7 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.userreports.util import get_table_name
 from custom.succeed.reports.patient_details import PatientDetailsReport
-from django.utils import html
+from django.utils.html import format_html
 
 
 class PatientSubmissionData(SqlData):
@@ -87,8 +87,10 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
 
     def submit_history_form_link(self, form_id, form_name):
         url = reverse('render_form_data', args=[self.domain, form_id])
-        return html.mark_safe("<a class='ajax_dialog' href='%s'"
-                              "target='_blank'>%s</a>" % (url, html.escape(form_name)))
+        return format_html(
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+            url,
+            form_name)
 
     @property
     def report_context(self):

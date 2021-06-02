@@ -56,7 +56,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
         self.previousAnswer = self.answer();
-
     }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
@@ -245,41 +244,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.rawAnswer(item.place_name);
             self.editing = false;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = {
-                    full: item.place_name,
-                };
-                item.context.forEach(function (contextValue) {
-                    try {
-                        if (contextValue.id.startsWith('postcode')) {
-                            broadcastObj.zipcode = contextValue.text;
-                        } else if (contextValue.id.startsWith('place')) {
-                            broadcastObj.city = contextValue.text;
-                        } else if (contextValue.id.startsWith('country')) {
-                            broadcastObj.country = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.country_short = contextValue.short_code;
-                            }
-                        } else if (contextValue.id.startsWith('region')) {
-                            broadcastObj.region = contextValue.text;
-                            // TODO: Deprecate state_short and state_long.
-                            broadcastObj.state_long = contextValue.text;
-                            if (contextValue.short_code) {
-                                broadcastObj.state_short = contextValue.short_code.replace('US-', '');
-                            }
-                            // If US region, it's actually a state so add us_state.
-                            if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
-                                broadcastObj.us_state = contextValue.text;
-                                broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
-                            }
-                        }
-                    } catch (err) {
-                        // Swallow error, broadcast best effort. Consider logging.
-                    }
-                });
-                // street composed of (optional) number and street name.
-                broadcastObj.street = item.address || '';
-                broadcastObj.street += ' ' + item.text;
-
+                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             // The default full address returned to the search bar
@@ -306,22 +271,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 });
             }
 
-            var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
-            var geocoder = new MapboxGeocoder({
-                accessToken: initialPageData.get("mapbox_access_token"),
-                types: 'address',
-                enableEventLogging: false,
-                getItemValue: self.geocoderItemCallback,
-            });
-            if (defaultGeocoderLocation.coordinates) {
-                geocoder.setProximity(defaultGeocoderLocation.coordinates);
-            }
-            geocoder.on('clear', self.geocoderOnClearCallback);
-            geocoder.addTo('#' + self.entryId);
-            // Must add the form-control class to the input created by mapbox in order to edit.
-            var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
-            inputEl.addClass('form-control');
-            inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+            Utils.renderMapboxInput(
+                self.entryId,
+                self.geocoderItemCallback,
+                self.geocoderOnClearCallback,
+                initialPageData
+            );
         };
 
         self._inputOnKeyDown = function (event) {
@@ -446,6 +401,36 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
 
     /**
+     * Represents a select2 for multiple options
+     */
+    function MultiDropdownEntry(question, options) {
+        var self = this;
+        MultiSelectEntry.call(this, question, options);
+        self.templateType = 'multidropdown';
+        self.placeholderText = gettext('Please choose an item');
+
+        self.helpText = function () {
+            return "";
+        };
+
+        self.options = ko.computed(function () {
+            return _.map(question.choices(), function (choice, idx) {
+                return {
+                    text: choice,
+                    id: idx + 1,
+                };
+            });
+        });
+
+        self.afterRender = function () {
+            select2ify(self, {});
+        };
+    }
+    MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
+    MultiDropdownEntry.prototype.constructor = MultiSelectEntry;
+    MultiDropdownEntry.prototype.onAnswerChange = select2AnswerChange(MultiSelectEntry);
+
+    /**
      * Represents multiple radio button entries
      */
     function SingleSelectEntry(question, options) {
@@ -550,36 +535,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             }));
         });
 
-        self.options.subscribe(function () {
-            // Clear answer if options change
-            self.rawAnswer(undefined);
-        });
-
         self.additionalSelect2Options = function () {
             return {};
         };
-        self.renderSelect2 = function () {
-            var $input = $('#' + self.entryId);
-            $input.select2(_.extend({
-                allowClear: true,
-                placeholder: self.placeholderText,
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
-            }, self.additionalSelect2Options()));
-        };
 
         self.afterRender = function () {
-            self.renderSelect2();
+            select2ify(self, self.additionalSelect2Options());
         };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     DropdownEntry.prototype.constructor = EntrySingleAnswer;
-    DropdownEntry.prototype.onAnswerChange = function (newValue) {
-        var self = this;
-        EntrySingleAnswer.prototype.onAnswerChange.call(self, newValue);
-        _.delay(function () {
-            $("#" + self.entryId).trigger("change.select2");
-        });
-    };
+    DropdownEntry.prototype.onAnswerChange = select2AnswerChange(EntrySingleAnswer);
     DropdownEntry.prototype.onPreProcess = function (newValue) {
         // When newValue is undefined it means we've unset the select question.
         if (newValue === Const.NO_ANSWER || newValue === undefined) {
@@ -837,6 +803,71 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
 
+    function EthiopianDateEntry(question, options) {
+        var self = this,
+            ethiopianLanguageMap = {
+                am: 'amh',
+                amh: 'amh',
+                ti: 'tir',
+                tir: 'tir',
+                or: 'orm',
+                orm: 'orm',
+            },
+            calendarLanguage = ethiopianLanguageMap[initialPageData.get('language')] ? ethiopianLanguageMap[initialPageData.get('language')] : 'en';
+
+        self.templateType = 'ethiopian-date';
+
+        EntrySingleAnswer.call(self, question, options);
+
+        self._calendarInstance = $.calendars.instance('ethiopian', calendarLanguage);
+        if (calendarLanguage === 'en') {
+            $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions['']);
+        } else {
+            $.calendarsPicker.setDefaults($.calendarsPicker.regionalOptions[calendarLanguage]);
+        }
+
+        self._formatDateForAnswer = function (newDate) {
+            return moment(newDate).format('YYYY-MM-DD');
+        };
+
+        self.afterRender = function () {
+            self.$picker = $('#' + self.entryId);
+            self.$picker.calendarsPicker({
+                calendar: self._calendarInstance,
+                showAnim: '',
+                onSelect: function (dates) {
+                    // transform date to gregorian to store as the answer
+                    if (dates.length) {
+                        self.answer(self._formatDateForAnswer(dates[0].toJSDate()));
+                    } else {
+                        self.answer(Const.NO_ANSWER);
+                    }
+                },
+            });
+
+            self.$picker.blur(function (change) {
+                // calendarsPicker doesn't pick up changes if you don't actively select them in the widget
+                var changedPicker = $(change.target)[0],
+                    newDate = self._calendarInstance.parseDate(
+                        self._calendarInstance.local.dateFormat,
+                        changedPicker.value
+                    );
+
+                if (newDate && (self.answer() !== self._formatDateForAnswer(newDate.toJSDate()))) {
+                    self.$picker.calendarsPicker('setDate', changedPicker.value);
+                }
+            });
+
+            if (self.answer()) {
+                // convert any default values to ethiopian and set it
+                var ethiopianDate = self._calendarInstance.fromJSDate(moment(self.answer()).toDate());
+                self.$picker.calendarsPicker('setDate', ethiopianDate);
+            }
+        };
+
+    }
+    EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1027,10 +1058,19 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 }
                 break;
             case Const.MULTI_SELECT:
-                entry = new MultiSelectEntry(question, {});
+                isMinimal = style === Const.MINIMAL;
+                if (isMinimal) {
+                    entry = new MultiDropdownEntry(question, {});
+                } else {
+                    entry = new MultiSelectEntry(question, {});
+                }
                 break;
             case Const.DATE:
-                entry = new DateEntry(question, {});
+                if (style === Const.ETHIOPIAN) {
+                    entry = new EthiopianDateEntry(question, {});
+                } else {
+                    entry = new DateEntry(question, {});
+                }
                 break;
             case Const.TIME:
                 entry = new TimeEntry(question, {});
@@ -1076,17 +1116,46 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         return form.displayOptions || {};
     }
 
+    /**
+     * Utility to render question as select2
+     * additionalOptions is passed as object to select2 constructor
+     */
+    function select2ify(entry, additionalOptions) {
+        var $input = $('#' + entry.entryId);
+        $input.select2(_.extend({
+            allowClear: true,
+            placeholder: entry.placeholderText,
+            escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+        }, additionalOptions));
+
+    }
+
+    /**
+     * Function to handle answer changes for entries using selct2
+     */
+    function select2AnswerChange(parentClass) {
+        return function(newValue) {
+            var self = this;
+            parentClass.prototype.onAnswerChange.call(self, newValue);
+            _.delay(function () {
+                $("#" + self.entryId).trigger("change.select2");
+            });
+        };
+    }
+
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
+        EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
+        MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
         TimeEntry: TimeEntry,

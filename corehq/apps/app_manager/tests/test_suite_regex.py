@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.xpath import (
-    UserCaseXPath,
+    UsercaseXPath,
     dot_interpolate,
     interpolate_xpath,
 )
@@ -31,7 +31,7 @@ class RegexTest(SimpleTestCase):
     def test_interpolate_xpath(self):
         replacements = {
             'case': "<casedb stuff>",
-            'user': UserCaseXPath().case(),
+            'user': UsercaseXPath().case(),
             'session': "instance('commcaresession')/session",
         }
         cases = [

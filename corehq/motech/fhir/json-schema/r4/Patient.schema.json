@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Patient",
+  "id": "file:Patient.schema.json",
   "$ref": "#/definitions/Patient",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Patient": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
@@ -169,7 +169,7 @@
     "Patient_Contact": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
@@ -225,7 +225,7 @@
     "Patient_Animal": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
@@ -252,7 +252,7 @@
     "Patient_Communication": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
@@ -279,7 +279,7 @@
     "Patient_Link": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",

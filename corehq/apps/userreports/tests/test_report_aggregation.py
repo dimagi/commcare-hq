@@ -1013,51 +1013,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
         with self.assertRaises(BadSpecError):
             view.export_table
 
-    def test_age_in_months_buckets(self):
-        report_config = self._create_report(
-            aggregation_columns=[
-                'indicator_col_id_state',
-                'months_ago',
-            ],
-            columns=[
-                {
-                    'type': 'field',
-                    'display': 'state',
-                    'field': 'indicator_col_id_state',
-                    'column_id': 'state',
-                    'aggregation': 'simple'
-                },
-                {
-                    'type': 'age_in_months_buckets',
-                    'display': 'months_ago',
-                    'column_id': 'months_ago',
-                    'field': 'date',
-                    'ranges': {
-                        '0-12': [0, 12],
-                        '12-24': [12, 24],
-                    },
-                    'else_': '24+'
-                },
-                {
-                    'type': 'field',
-                    'display': 'report_column_display_number',
-                    'field': 'indicator_col_id_number',
-                    'column_id': 'report_column_col_id_number',
-                    'aggregation': 'sum'
-                }
-            ],
-            filters=None,
-        )
-        view = self._create_view(report_config)
-        table = view.export_table[0][1]
-        self.assertEqual(len(table), 3)
-        for table_row in [
-            ['state', 'months_ago', 'report_column_display_number'],
-            ['MA', '12-24', 9],
-            ['TN', '24+', 1],
-        ]:
-            self.assertIn(table_row, table)
-
     def test_sum_when(self):
         report_config = self._create_report(
             aggregation_columns=[

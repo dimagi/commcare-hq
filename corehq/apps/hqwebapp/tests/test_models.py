@@ -29,7 +29,7 @@ class TestUserAccessLogManager(TestCase):
         self.assertEqual(record.action, 'login')
         self.assertEqual(record.ip, '127.0.0.1')
         self.assertEqual(record.path, '/login')
-        self.assertEqual(record.user_agent.value, 'Mozilla')
+        self.assertEqual(record.user_agent, 'Mozilla')
         self.assertEqual(record.timestamp, current_time)
 
     def test_create_generates_record_in_database(self):
@@ -52,5 +52,5 @@ class TestUserAccessLogManager(TestCase):
         record = UserAccessLog.objects.create(**kwargs)
         expected_agent = ('a' * 255)  # All the b's should have been truncated
 
-        self.assertEqual(len(record.user_agent.value), 255)
-        self.assertEqual(record.user_agent.value, expected_agent)
+        self.assertEqual(len(record.user_agent), 255)
+        self.assertEqual(record.user_agent, expected_agent)

@@ -48,7 +48,7 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 
 LOCATIONS = 'locations'
 
-USER_CASE = 'user_case'
+USERCASE = 'user_case'
 DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto update cases, etc.
 
 TEMPLATED_INTENTS = 'templated_intents'
@@ -79,6 +79,8 @@ PROJECT_ACCESS = 'project_access'
 
 APP_USER_PROFILES = 'app_user_profiles'
 
+DEFAULT_EXPORT_SETTINGS = 'default_export_settings'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -104,7 +106,7 @@ MAX_PRIVILEGES = [
     REPORT_BUILDER_5,
     REPORT_BUILDER_15,
     REPORT_BUILDER_30,
-    USER_CASE,
+    USERCASE,
     DATA_CLEANUP,
     TEMPLATED_INTENTS,
     CUSTOM_INTENTS,
@@ -122,6 +124,7 @@ MAX_PRIVILEGES = [
     PROJECT_ACCESS,
     APP_USER_PROFILES,
     GEOCODER,
+    DEFAULT_EXPORT_SETTINGS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -177,4 +180,5 @@ class Titles(object):
             PROJECT_ACCESS: _("Project Features"),
             APP_USER_PROFILES: _("App User Profiles"),
             GEOCODER: _("Geocoder"),
+            DEFAULT_EXPORT_SETTINGS: _("Default Export Settings"),
         }.get(privilege, privilege)

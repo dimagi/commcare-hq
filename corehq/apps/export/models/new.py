@@ -89,10 +89,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.utils import (
-    get_default_export_settings_for_domain,
-    is_occurrence_deleted,
-)
+from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -765,6 +762,8 @@ class ExportInstance(BlobMixin, Document):
     is_daily_saved_export = BooleanProperty(default=False)
     auto_rebuild_enabled = BooleanProperty(default=True)
 
+    show_det_config_download = BooleanProperty(default=False)
+
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
@@ -828,16 +827,16 @@ class ExportInstance(BlobMixin, Document):
         return None
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
+    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True, export_settings=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
         else:
-            instance = cls._new_from_schema(schema)
+            instance = cls._new_from_schema(schema, export_settings)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
         instance.app_id = schema.app_id
@@ -1121,14 +1120,13 @@ class CaseExportInstance(ExportInstance):
         return self.case_type
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        settings = get_default_export_settings_for_domain(schema.domain)
-        if settings is not None:
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
             return cls(
                 domain=schema.domain,
                 case_type=schema.case_type,
-                export_format=settings.cases_filetype,
-                transform_dates=settings.cases_auto_convert,
+                export_format=export_settings.cases_filetype,
+                transform_dates=export_settings.cases_auto_convert,
             )
         else:
             return cls(
@@ -1199,18 +1197,16 @@ class FormExportInstance(ExportInstance):
         return xmlns_to_name(self.domain, self.xmlns, self.app_id)
 
     @classmethod
-    def _new_from_schema(cls, schema):
-        settings = get_default_export_settings_for_domain(schema.domain)
-        if settings is not None:
+    def _new_from_schema(cls, schema, export_settings=None):
+        if export_settings is not None:
             return cls(
                 domain=schema.domain,
                 xmlns=schema.xmlns,
                 app_id=schema.app_id,
-                export_format=settings.forms_filetype,
-                transform_dates=settings.forms_auto_convert,
-                format_data_in_excel=settings.forms_auto_format_cells,
-                include_errors=settings.forms_include_duplicates,
-                split_multiselects=settings.forms_expand_checkbox,
+                export_format=export_settings.forms_filetype,
+                transform_dates=export_settings.forms_auto_convert,
+                format_data_in_excel=export_settings.forms_auto_format_cells,
+                split_multiselects=export_settings.forms_expand_checkbox,
             )
         else:
             return cls(
@@ -1243,7 +1239,7 @@ class SMSExportInstance(ExportInstance):
     name = "Messages"
 
     @classmethod
-    def _new_from_schema(cls, schema):
+    def _new_from_schema(cls, schema, export_settings=None):
         main_table = TableConfiguration(
             label='Messages',
             path=MAIN_TABLE,
@@ -1852,7 +1848,7 @@ class FormExportDataSchema(ExportDataSchema):
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app.master_id,  # If it's not a copy, must be current
+            app.origin_id,  # If it's not a copy, must be current
             app.version,
         )
 
@@ -2161,18 +2157,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.master_id,  # If not copy, must be current app
+            app.origin_id,  # If not copy, must be current app
             app.version,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.master_id,
+                app.origin_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.master_id,
+            app.origin_id,
             app.version,
         ))
         case_schemas.append(current_schema)
@@ -2619,7 +2615,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
+        case_ids = [index.get('referenced_id') for index in indices if index.get('referenced_type') == case_type]
         return ' '.join(case_ids)
 
 

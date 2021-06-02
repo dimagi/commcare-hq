@@ -19,7 +19,11 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
+from corehq.motech.openmrs.forms import (
+    OpenmrsConfigForm,
+    OpenmrsImporterForm,
+    OpenmrsRepeaterForm,
+)
 from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
@@ -32,6 +36,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_encrypt
 
 
@@ -200,3 +205,23 @@ class OpenmrsImporterView(BaseProjectSettingsView):
             'openmrs_importers': openmrs_importers,
             'form': OpenmrsImporterForm(),  # Use an unbound form to render openmrs_importer_template.html
         }
+
+
+class AddOpenmrsRepeaterView(AddCaseRepeaterView):
+    urlname = 'new_openmrs_repeater$'
+    repeater_form_class = OpenmrsRepeaterForm
+    page_title = ugettext_lazy("Forward to OpenMRS")
+    page_name = ugettext_lazy("Forward to OpenMRS")
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super().set_repeater_attr(repeater, cleaned_data)
+        repeater.location_id = (self.add_repeater_form
+                                .cleaned_data['location_id'])
+        repeater.atom_feed_enabled = (self.add_repeater_form
+                                      .cleaned_data['atom_feed_enabled'])
+        return repeater
+
+
+class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
+    urlname = 'edit_openmrs_repeater'
+    page_title = ugettext_lazy("Edit OpenMRS Repeater")

@@ -971,9 +971,25 @@ class XForm(WrappedNode):
 
         return list(self.translations().keys())
 
+    def get_external_instances(self):
+        """
+        Get a dictionary of all "external" instances, like:
+        {
+          "country": "jr://fixture/item-list:country"
+        }
+        """
+        instance_nodes = self.model_node.findall('{f}instance')
+        instance_dict = {}
+        for instance_node in instance_nodes:
+            instance_id = instance_node.attrib.get('id')
+            src = instance_node.attrib.get('src')
+            if instance_id and src:
+                instance_dict[instance_id] = src
+        return instance_dict
+
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False):
+                      exclude_select_with_itemsets=False, include_fixtures=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -987,8 +1003,9 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
+        :param include_fixtures: add fixture data for questions that we can infer it from
         """
-        from corehq.apps.app_manager.util import first_elem
+        from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
             translation = self._get_label_text(item, langs)
@@ -1016,6 +1033,7 @@ class XForm(WrappedNode):
         # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self._get_control_nodes()
         leaf_data_nodes = self._get_leaf_data_nodes()
+        external_instances = self.get_external_instances()
 
         for cnode in control_nodes:
             node = cnode.node
@@ -1050,6 +1068,24 @@ class XForm(WrappedNode):
             }
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
+
+            if include_fixtures and cnode.node.find('{f}itemset').exists():
+                itemset_node = cnode.node.find('{f}itemset')
+                nodeset = itemset_node.attrib.get('nodeset')
+                fixture_data = {
+                    'nodeset': nodeset,
+                }
+                if itemset_node.find('{f}label').exists():
+                    fixture_data['label_ref'] = itemset_node.find('{f}label').attrib.get('ref')
+                if itemset_node.find('{f}value').exists():
+                    fixture_data['value_ref'] = itemset_node.find('{f}value').attrib.get('ref')
+
+                fixture_id = extract_instance_id_from_nodeset_ref(nodeset)
+                if fixture_id:
+                    fixture_data['instance_id'] = fixture_id
+                    fixture_data['instance_ref'] = external_instances.get(fixture_id)
+
+                question['data_source'] = fixture_data
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
@@ -1292,6 +1328,7 @@ class XForm(WrappedNode):
     def _get_leaf_data_nodes(self):
         return self._get_flattened_data_nodes(leaves_only=True)
 
+    @memoized
     def _get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
             return {}

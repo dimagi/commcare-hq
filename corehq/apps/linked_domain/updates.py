@@ -81,6 +81,7 @@ from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
@@ -214,13 +215,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.view(
-        'users/roles_by_domain',
-        startkey=[domain_link.linked_domain],
-        endkey=[domain_link.linked_domain, {}],
-        include_docs=True,
-        reduce=False,
-    )
+    local_roles = UserRole.by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:
@@ -240,18 +235,24 @@ def update_user_roles(domain_link):
         upstream_role = copy(role_def)
         upstream_role.pop('_id')
         upstream_role.pop('upstream_id')
+        upstream_role.pop('assignable_by')  # handled below
         role_json.update(upstream_role)
-        local_roles_by_upstream_id[role_json['upstream_id']] = role_json
-        UserRole.wrap(role_json).save()
+        role = UserRole.wrap(role_json)
+        role.save()
+        local_roles_by_upstream_id[role_json['upstream_id']] = role.to_json()
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role in local_roles_by_upstream_id.values():
-        if role['assignable_by']:
-            role['assignable_by'] = [
+    for role_def in master_results:
+        role_json = local_roles_by_upstream_id[role_def['_id']]
+        if role_def['assignable_by']:
+            role_json['assignable_by'] = [
                 local_roles_by_upstream_id[role_id]['_id']
-                for role_id in role['assignable_by']
+                for role_id in role_def['assignable_by']
             ]
-            UserRole.wrap(role).save()
+            UserRole.wrap(role_json).save()
+        elif role_json['assignable_by']:
+            role_json['assignable_by'] = None
+            UserRole.wrap(role_json).save()
 
 
 def update_case_search_config(domain_link):
@@ -347,6 +348,11 @@ def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.
     """
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
+    report_map.update({
+        c.report_meta.master_id: c._id
+        for c in get_report_configs_for_domain(domain_link.linked_domain)
+    })
+
     for role_def in master_results:
         new_report_perms = [
             perm for perm in role_def['permissions']['view_report_list']

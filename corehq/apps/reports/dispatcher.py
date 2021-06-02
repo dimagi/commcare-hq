@@ -113,9 +113,10 @@ class ReportDispatcher(View):
                 if report.slug == report_slug:
                     return report
 
+    @classmethod
     @quickcache(['domain', 'report_slug'], timeout=300)
-    def get_report_class_name(self, domain, report_slug):
-        report_cls = self.get_report(domain, report_slug)
+    def get_report_class_name(cls, domain, report_slug):
+        report_cls = cls.get_report(domain, report_slug)
         return report_cls.__module__ + '.' + report_cls.__name__ if report_cls else ''
 
     def _redirect_slug(self, slug):

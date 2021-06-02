@@ -1,6 +1,7 @@
 {
   "domains": [
-    "india-nutrition-project"
+    "india-nutrition-project",
+    "mh-mis-staging"
   ],
   "server_environment": [
     "india"
@@ -36,15 +37,6 @@
           ]
         },
         {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "property_name",
-            "property_name": "app_id"
-          },
-          "property_value": "b3c758f7c79e47e3a503115894f18503"
-        },
-        {
           "type": "or",
           "filters": [
             {
@@ -54,7 +46,7 @@
                 "type": "property_path",
                 "property_path": [
                   "form",
-                  "lunch_served_check"
+                  "food_served_check"
                 ]
               },
               "property_value": "yes"
@@ -66,7 +58,7 @@
                 "type": "property_path",
                 "property_path": [
                   "form",
-                  "lunch_served_to_adolescents_check"
+                  "food_served_to_adolescents_check"
                 ]
               },
               "property_value": "yes"
@@ -165,6 +157,46 @@
             "meta",
             "timeEnd"
           ]
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_adolescent_beneficiaries",
+        "display_name": "number_of_adolescent_beneficiaries",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_adolescent_beneficiaries"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "number_of_children",
+        "display_name": "number_of_children",
+        "datatype": "integer",
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "number_of_children"
+            ]
+          },
+          "default_expression": {
+            "type": "constant",
+            "constant": 0
+          }
         }
       }
     ],

@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/DeviceUseStatement",
+  "id": "file:DeviceUseStatement.schema.json",
   "$ref": "#/definitions/DeviceUseStatement",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "DeviceUseStatement": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A record of a device being used by a patient where the record is the result of a report from the patient or another clinician.",

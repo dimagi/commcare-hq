@@ -27,7 +27,7 @@ from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, lazy
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -42,7 +42,6 @@ from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
-from pyzxcvbn import zxcvbn
 
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
@@ -94,10 +93,7 @@ from corehq.apps.callcenter.views import (
     CallCenterOwnerOptionsView,
 )
 from corehq.apps.domain.auth import get_active_users_by_email
-from corehq.apps.domain.extension_points import (
-    custom_clean_password,
-    has_custom_clean_password,
-)
+from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -113,11 +109,14 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
+    SECURE_SESSION_TIMEOUT
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
+
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
+
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -585,7 +584,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
         required=False,
-        help_text=ugettext_lazy(mark_safe(
+        help_text=mark_safe_lazy(ugettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers."
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -670,13 +669,7 @@ class PrivacySecurityForm(forms.Form):
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
-
-        new_two_factor_auth_setting = self.cleaned_data.get('two_factor_auth', False)
-        if domain.two_factor_auth != new_two_factor_auth_setting and MONITOR_2FA_CHANGES.enabled(domain.name):
-            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
-            status = "ON" if new_two_factor_auth_setting else "OFF"
-            monitor_2fa_soft_assert(False, f'{domain.name} turned 2FA {status}')
-        domain.two_factor_auth = new_two_factor_auth_setting
+        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
 
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
@@ -1158,19 +1151,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
 def clean_password(txt):
-    if has_custom_clean_password():
-        message = custom_clean_password(txt)
-    else:
-        message = _clean_password(txt)
+    message = validate_password_rules(txt)
     if message:
         raise forms.ValidationError(message)
     return txt
-
-
-def _clean_password(txt):
-    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    if strength['score'] < 2:
-        return _('Password is not strong enough. Try making your password more complex.')
 
 
 class NoAutocompleteMixin(object):
@@ -1299,12 +1283,11 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 
 class HQSetPasswordForm(SetPasswordForm):
-    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
-                                    widget=forms.PasswordInput(
-                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
-                                    help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
-                                    """))
+    new_password1 = forms.CharField(
+        label=ugettext_lazy("New password"),
+        widget=forms.PasswordInput(attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')  # nosec: no user input
+    )
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
@@ -2469,11 +2452,6 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
-        app_id = self.cleaned_data.get('app_id')
-        if app_id:
-            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
-                self.add_error('app_id',
-                               _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
         return self.data.getlist('build_profile_id')

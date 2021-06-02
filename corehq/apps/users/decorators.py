@@ -4,13 +4,12 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
 
+from corehq import toggles
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     redirect_for_login_or_domain,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_deleted_user_by_username,
-)
+from corehq.apps.users.dbaccessors import get_deleted_user_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
 
 
@@ -170,6 +169,23 @@ def require_permission_to_edit_user(view_func):
         else:
             return redirect_for_login_or_domain(request)
     return _inner
+
+
+def require_can_use_filtered_user_download(view_func):
+    @wraps(view_func)
+    def _inner(request, domain, *args, **kwargs):
+        if can_use_filtered_user_download(request.domain):
+            return view_func(request, domain, *args, **kwargs)
+        raise Http404()
+    return _inner
+
+
+def can_use_filtered_user_download(domain):
+    if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(domain):
+        return True
+    if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
+        return True
+    return False
 
 
 def ensure_active_user_by_username(username):

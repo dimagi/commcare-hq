@@ -12,27 +12,29 @@ url_re = re.compile(
 )
 
 
+def _wrap_url(url):
+    return format_html('<a href="{url}">{url}</a>', url=url)
+
+
+def _get_url_segments(text):
+    for chunk in url_re.split(text):
+        # The match pattern contains multiple capture groups;
+        # Because only one will be populated, we need to ignore the Nones
+        if not chunk:
+            continue
+        elif url_re.match(chunk):
+            yield _wrap_url(chunk)
+        else:
+            yield escape(chunk)
+
+
 def mark_up_urls(text):
     """
-    >>> mark_up_urls("Please see http://google.com for more info.")
-    u'Please see <a href="http://google.com">http://google.com</a> for more info.'
-    >>> mark_up_urls("http://commcarehq.org redirects to https://commcarehq.org.")
-    u'<a href="http://commcarehq.org">http://commcarehq.org</a> redirects to <a href="https://commcarehq.org">https://commcarehq.org</a>.'
-
+    Add HTML markup to any links within the text.
+    I.e. 'Go to http://www.google.com'
+    becomes 'Go to <a href="http://www.google.com">http://www.google.com</a>'.
     """
-    def wrap_url(url):
-        return format_html('<a href="{url}">{url}</a>', url=url)
-
-    def parts():
-        for chunk in url_re.split(text):
-            if not chunk:
-                continue
-            elif url_re.match(chunk):
-                yield wrap_url(chunk)
-            else:
-                yield escape(chunk)
-
-    return mark_safe(''.join(parts()))
+    return mark_safe(''.join(_get_url_segments(text)))  # nosec: all segments are sanitized
 
 
 def _shell_color_template(color_code):

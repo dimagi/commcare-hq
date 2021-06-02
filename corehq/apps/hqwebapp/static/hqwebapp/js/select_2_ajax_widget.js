@@ -10,7 +10,6 @@ hqDefine("hqwebapp/js/select_2_ajax_widget", [
 
             $select.select2({
                 multiple: htmlData.multiple,
-                escapeMarkup: function (m) { return m; },
                 width: '100%',
                 ajax: {
                     url: htmlData.endpoint,

@@ -8,9 +8,11 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.toggles import DEFAULT_EXPORT_SETTINGS
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.export.models.export_settings import ExportFileType
+from corehq.privileges import DEFAULT_EXPORT_SETTINGS
 
 
 class EnterpriseSettingsForm(forms.Form):
@@ -40,7 +42,12 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     forms_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Automatically convert dates and multimedia links for Excel"),
+        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Automatically convert dates and multimedia links for Excel"
+            ),
+        ),
         required=False,
         help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
                                 "Otherwise they will appear as a normal text format. This also allows "
@@ -48,20 +55,25 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     forms_auto_format_cells = forms.BooleanField(
-        label=ugettext_lazy("Automatically format cells for Excel 2007+"),
+        label=ugettext_lazy("Excel Cell Format"),
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Automatically format cells for Excel 2007+"
+            ),
+        ),
         required=False,
         help_text=ugettext_lazy("If this setting is not selected, your export will be in Excel's generic format. "
                                 "If you enable this setting, Excel will format dates, integers, decimals, "
                                 "boolean values (True/False), and currencies.")
     )
 
-    forms_include_duplicates = forms.BooleanField(
-        label=ugettext_lazy("Include duplicates and other unprocessed forms"),
-        required=False,
-    )
-
     forms_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Expand checkbox questions"),
+        label=ugettext_lazy("Checkbox Format"),
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Expand checkbox questions"
+            ),
+        ),
         required=False,
     )
 
@@ -73,26 +85,33 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     cases_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Automatically convert dates and multimedia links for Excel"),
+        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Automatically convert dates and multimedia links for Excel"
+            ),
+        ),
         required=False,
         help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
                                 "Otherwise they will appear as a normal text format. This also allows "
                                 "for hyperlinks to the multimedia captured by your form submission.")
     )
 
-    odata_include_duplicates = forms.BooleanField(
-        label=ugettext_lazy("Include duplicates and other unprocessed forms"),
-        required=False,
-    )
-
     odata_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Expand checkbox questions"),
+        label=ugettext_lazy("Checkbox Format"),
+        widget=BootstrapCheckboxInput(
+            inline_label=ugettext_lazy(
+                "Expand checkbox questions"
+            ),
+        ),
+        help_text=ugettext_lazy("Only applies to form exports."),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
         self.account = kwargs.pop('account', None)
+        self.username = kwargs.pop('username', None)
         self.export_settings = kwargs.pop('export_settings', None)
         kwargs['initial'] = {
             "restrict_domain_creation": self.account.restrict_domain_creation,
@@ -100,7 +119,7 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_signup_message": self.account.restrict_signup_message,
         }
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if self.export_settings and domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
@@ -124,7 +143,7 @@ class EnterpriseSettingsForm(forms.Form):
             )
         )
 
-        if DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             self.helper.layout.append(
                 crispy.Div(
                     crispy.Fieldset(
@@ -132,36 +151,20 @@ class EnterpriseSettingsForm(forms.Form):
                         crispy.Div(
                             crispy.Field('forms_filetype'),
                         ),
-                        crispy.Div(
-                            crispy.Field('forms_auto_convert'),
-                        ),
-                        crispy.Div(
-                            crispy.Field('forms_auto_format_cells')
-                        ),
-                        crispy.Div(
-                            crispy.Field('forms_include_duplicates')
-                        ),
-                        crispy.Div(
-                            crispy.Field('forms_expand_checkbox')
-                        ),
+                        PrependedText('forms_auto_convert', ''),
+                        PrependedText('forms_auto_format_cells', ''),
+                        PrependedText('forms_expand_checkbox', ''),
                     ),
                     crispy.Fieldset(
                         _("Edit Default Case Export Settings"),
                         crispy.Div(
                             crispy.Field('cases_filetype')
                         ),
-                        crispy.Div(
-                            crispy.Field('cases_auto_convert'),
-                        ),
+                        PrependedText('cases_auto_convert', ''),
                     ),
                     crispy.Fieldset(
                         _("Edit Default OData Export Settings"),
-                        crispy.Div(
-                            crispy.Field('odata_include_duplicates')
-                        ),
-                        crispy.Div(
-                            crispy.Field('odata_expand_checkbox'),
-                        ),
+                        PrependedText('odata_expand_checkbox', ''),
                     ),
                 )
             )
@@ -188,7 +191,7 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
 
-        if self.export_settings and DEFAULT_EXPORT_SETTINGS.enabled(self.domain):
+        if self.export_settings and domain_has_privilege(self.domain, DEFAULT_EXPORT_SETTINGS):
             # forms
             self.export_settings.forms_filetype = self.cleaned_data.get(
                 'forms_filetype',
@@ -201,10 +204,6 @@ class EnterpriseSettingsForm(forms.Form):
             self.export_settings.forms_auto_format_cells = self.cleaned_data.get(
                 'forms_auto_format_cells',
                 self.export_settings.forms_auto_format_cells
-            )
-            self.export_settings.forms_include_duplicates = self.cleaned_data.get(
-                'forms_include_duplicates',
-                self.export_settings.forms_include_duplicates
             )
             self.export_settings.forms_expand_checkbox = self.cleaned_data.get(
                 'forms_expand_checkbox',
@@ -220,10 +219,6 @@ class EnterpriseSettingsForm(forms.Form):
                 self.export_settings.cases_auto_convert
             )
             # odata
-            self.export_settings.odata_include_duplicates = self.cleaned_data.get(
-                'odata_include_duplicates',
-                self.export_settings.odata_include_duplicates
-            )
             self.export_settings.odata_expand_checkbox = self.cleaned_data.get(
                 'odata_expand_checkbox',
                 self.export_settings.odata_expand_checkbox

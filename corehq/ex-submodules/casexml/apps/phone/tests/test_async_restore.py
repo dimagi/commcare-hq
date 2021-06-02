@@ -23,7 +23,7 @@ from casexml.apps.phone.restore import (
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache

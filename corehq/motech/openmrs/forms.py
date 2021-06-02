@@ -1,10 +1,14 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
@@ -13,6 +17,7 @@ from corehq.motech.openmrs.const import (
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
 )
+from corehq.motech.repeaters.forms import CaseRepeaterForm
 
 
 class OpenmrsConfigForm(forms.Form):
@@ -99,3 +104,54 @@ class OpenmrsImporterForm(forms.Form):
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
+
+
+class OpenmrsRepeaterForm(CaseRepeaterForm):
+    location_id = forms.CharField(
+        label=ugettext_lazy("Location"),
+        required=False,
+        help_text=ugettext_lazy(
+            'Cases at this location and below will be forwarded. '
+            'Leave empty if this is the only OpenMRS Forwarder'
+        ),
+    )
+    atom_feed_enabled = forms.BooleanField(
+        label=ugettext_lazy('Atom feed enabled'),
+        required=False,
+        help_text=ugettext_lazy(
+            'Poll Atom feed for changes made in OpenMRS/Bahmni'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain, id='id_location_id')
+        self.fields['location_id'].help_text = (
+            ExpandedMobileWorkerFilter.location_search_help)
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + [
+            'location_id',
+            twbscrispy.PrependedText('atom_feed_enabled', ''),
+        ]
+
+    def clean(self):
+        cleaned_data = super(OpenmrsRepeaterForm, self).clean()
+        white_listed_case_types = cleaned_data.get('white_listed_case_types', [])
+        atom_feed_enabled = cleaned_data.get('atom_feed_enabled', False)
+        location_id = cleaned_data.get('location_id', None)
+        if atom_feed_enabled:
+            if len(white_listed_case_types) != 1:
+                raise ValidationError(ugettext_lazy(
+                    'Specify a single case type so that CommCare can add '
+                    'cases using the Atom feed for patients created in '
+                    'OpenMRS/Bahmni.'
+                ))
+            if not location_id:
+                raise ValidationError(ugettext_lazy(
+                    'Specify a location so that CommCare can set an owner for '
+                    'cases added via the Atom feed.'
+                ))
+        return cleaned_data

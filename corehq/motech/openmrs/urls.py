@@ -8,7 +8,6 @@ from corehq.motech.openmrs.views import (
     openmrs_raw_api,
     openmrs_test_fire,
 )
-from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
 
 urlpatterns = [
     url(

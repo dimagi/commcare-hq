@@ -19,6 +19,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner,
+    get_case_ids_that_exist,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
     get_all_case_owner_ids)
@@ -198,6 +199,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def case_exists(case_id):
         return CommCareCase.get_db().doc_exist(case_id)
+
+    @staticmethod
+    def get_case_ids_that_exist(domain, case_ids):
+        return get_case_ids_that_exist(domain, case_ids)
 
     @staticmethod
     def get_case_xform_ids(case_id):

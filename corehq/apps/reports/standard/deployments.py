@@ -5,6 +5,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -508,11 +509,12 @@ def _fmt_date(date, include_sort_key=True):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        text = '<span class="label label-default">{0}</span>'.format(_("Never"))
+        text = format_html('<span class="label label-default">{}</span>', _("Never"))
     else:
-        text = '<span class="{cls}">{text}</span>'.format(
-                cls=_timedelta_class(datetime.utcnow() - date),
-                text=_(_naturaltime_with_hover(date)),
+        text = format_html(
+            '<span class="{cls}">{text}</span>',
+            cls=_timedelta_class(datetime.utcnow() - date),
+            text=_(_naturaltime_with_hover(date)),
         )
     if include_sort_key:
         return format_datatables_data(text, _get_sort_key(date))
@@ -521,7 +523,7 @@ def _fmt_date(date, include_sort_key=True):
 
 
 def _naturaltime_with_hover(date):
-    return '<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
+    return format_html('<span title="{}">{}</span>', date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):

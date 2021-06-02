@@ -10,7 +10,6 @@ from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
-    CaseDETSchemaHelper,
     FormDETSchemaHelper)
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
@@ -50,9 +49,30 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             self.assertEqual('domain', domain_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
+
+            expected_paths = {
+                "_id": "id",
+                "activity_name": "properties.activity_name",
+                "closed": "closed",
+                "closed_by": "properties.closed_by",
+                "closed_on": "date_closed",
+                "event_date": "properties.event_date",
+                "event_duration": "properties.event_duration",
+                "event_score": "properties.event_score",
+                "indices.activity": "indices.parent.case_id",
+                "indices.foo": "indices.sibling.case_id",
+                "location": "properties.location",
+                "modified_on": "properties.modified_on",
+                "name": "properties.case_name",
+                "number": "properties.number",
+                "opened_by": "opened_by",
+                "opened_on": "properties.date_opened",
+                "owner_id": "properties.owner_id",
+                "user_id": "user_id"
+            }
             for i, input_column in enumerate(main_table.selected_columns):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])
-                self.assertEqual(CaseDETSchemaHelper.transform_path(input_column.item.readable_path),
+                self.assertEqual(expected_paths[input_column.item.readable_path],
                                  data_by_headings[i]['Source Field'])
 
             # test individual fields / types
@@ -118,7 +138,7 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             headings = all_data.pop(0)
             data_by_headings = [dict(zip(headings, row)) for row in all_data]
             id_row = data_by_headings.pop(0)
-            self.assertEqual('form.meta.instanceID', id_row['Source Field'])
+            self.assertEqual('id', id_row['Source Field'])
             self.assertEqual('id', id_row['Field'])
             domain_row = data_by_headings.pop(0)
             self.assertEqual('domain', domain_row['Source Field'])

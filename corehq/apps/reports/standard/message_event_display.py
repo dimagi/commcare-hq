@@ -2,6 +2,7 @@ import cgi
 from collections import namedtuple
 
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -114,7 +115,7 @@ def _get_keyword_display(keyword_id, content_cache):
     else:
         urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
                    else EditNormalKeywordView.urlname)
-        display = '<a target="_blank" href="%s">%s</a>' % (
+        display = format_html('<a target="_blank" href="{}">{}</a>',
             reverse(urlname, args=[keyword.domain, keyword_id]),
             keyword.description,
         )
@@ -156,7 +157,7 @@ def _get_scheduled_broadcast_display(domain, broadcast_id, content_cache):
         if broadcast.deleted:
             result = _("(Deleted Broadcast)")
         else:
-            result = '<a target="_blank" href="%s">%s</a>' % (
+            result = format_html('<a target="_blank" href="{}">{}</a>',
                 reverse(EditScheduleView.urlname,
                         args=[domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id]),
                 broadcast.name,
@@ -179,7 +180,7 @@ def _get_immediate_broadcast_display(domain, broadcast_id, content_cache):
         if broadcast.deleted:
             result = _("(Deleted Broadcast)")
         else:
-            result = '<a target="_blank" href="%s">%s</a>' % (
+            result = format_html('<a target="_blank" href="{}">{}</a>',
                 reverse(EditScheduleView.urlname,
                         args=[domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id]),
                 broadcast.name,
@@ -202,7 +203,7 @@ def _get_case_rule_display(domain, rule_id, content_cache):
         if rule.deleted:
             result = _("(Deleted Conditional Alert)")
         else:
-            result = '<a target="_blank" href="%s">%s</a>' % (
+            result = format_html('<a target="_blank" href="{}">{}</a>',
                 reverse(EditConditionalAlertView.urlname,
                         args=[domain, rule_id]),
                 rule.name,

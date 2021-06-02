@@ -37,7 +37,7 @@ hqDefine("app_manager/js/section_changer", function () {
     // page is something like "module-view"
     // section is something like "logic"
     var getKey = function (page, section) {
-        return _.template("app-manager-collapse-<%= page %>-<%= section %>")({
+        return _.template("app-manager-collapse-<%- page %>-<%- section %>")({
             page: page,
             section: section,
         });

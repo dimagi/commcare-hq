@@ -32,7 +32,6 @@ from corehq.util.quickcache import quickcache
 
 from .models import (
     LocationFixtureConfiguration,
-    LocationRelation,
     LocationType,
     SQLLocation,
 )
@@ -529,80 +528,6 @@ class LocationFixtureForm(forms.ModelForm):
                 type="submit",
                 css_class='btn-primary',
             )
-        )
-
-
-class RelatedLocationForm(forms.Form):
-    related_locations = forms.Field(
-        label=ugettext_lazy("Related Locations"),
-        required=False,
-    )
-
-    def __init__(self, domain, location, *args, **kwargs):
-        self.location = location
-        self.related_location_ids = LocationRelation.from_locations([self.location])
-        kwargs['initial'] = {'related_locations': self.related_location_ids}
-        super(RelatedLocationForm, self).__init__(*args, **kwargs)
-
-        self.fields['related_locations'].widget = LocationSelectWidget(
-            domain, id='id_related_locations', multiselect=True
-        )
-
-        locations = (
-            SQLLocation.objects
-            .filter(location_id__in=self.related_location_ids)
-        )
-
-        distance_dict = LocationRelation.relation_distance_dictionary([self.location])
-
-        for loc in locations:
-            distance = distance_dict[loc.location_id].get(self.location.location_id)
-            self.fields['relation_distance_%s' % loc.location_id] = forms.IntegerField(
-                label=ugettext_lazy('{location} Distance').format(location=loc.name),
-                required=False, initial=distance
-            )
-
-        self.helper = FormHelper()
-
-        self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.form_tag = False
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
-    def clean(self):
-        cleaned_data = super(RelatedLocationForm, self).clean()
-        for name, value in cleaned_data.items():
-            if name.startswith('relation_distance_') and value and value < 0:
-                raise forms.ValidationError("The distance cannot be a negative value")
-
-    def save(self):
-        selected_location_ids = self.cleaned_data['related_locations']
-        selected_location_ids = set(list(filter(None, selected_location_ids)))
-
-        previous_location_ids = self.related_location_ids
-        locations_to_remove = previous_location_ids - selected_location_ids
-
-        LocationRelation.objects.filter(
-            (Q(location_a=self.location) & Q(location_b__location_id__in=locations_to_remove)) |
-            (Q(location_b=self.location) & Q(location_a__location_id__in=locations_to_remove))
-        ).delete()
-
-        locations_to_add = selected_location_ids - previous_location_ids
-        for location_id in locations_to_add:
-            LocationRelation.objects.get_or_create(
-                location_a=self.location,
-                location_b=SQLLocation.objects.get(location_id=location_id)
-            )
-
-        LocationRelation.update_location_distances(
-            self.location.location_id,
-            {
-                name.lstrip('relation_distance'): value
-                for name, value in self.cleaned_data.items()
-                if name.startswith('relation_distance_')
-            }
         )
 
 

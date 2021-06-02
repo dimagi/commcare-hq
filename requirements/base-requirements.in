@@ -19,13 +19,13 @@ django-angular~=2.2.0
 django-braces==1.14.0
 django-bulk-update~=2.0
 django-celery-results~=1.0.0
-django-compressor==2.1
+django-compressor==2.4
 django-countries==4.6
 django-crispy-forms==1.10.0
 django-cte==1.1.4
 django-formtools==2.1
 django-logentry-admin==1.0.6
-django-oauth-toolkit==1.3.2
+django-oauth-toolkit==1.5.0
 django-otp~=0.9.3
 django-partial-index~=0.6.0
 django-phonenumber-field==2.3.1  # remove after upgrade >=3.0.1 is deemed safe
@@ -39,7 +39,7 @@ django-transfer==0.4
 django-two-factor-auth~=1.12
 django-user-agents==0.4.0
 django-websocket-redis==0.6.0
-django~=2.2.16
+django~=2.2.20
 djangorestframework~=3.12.2
 dnspython==1.15.0
 dropbox==9.3.0
@@ -58,7 +58,7 @@ gunicorn
 hiredis==1.1.0
 httpagentparser~=1.7
 iso8601==0.1.13
-Jinja2~=2.10
+Jinja2~=2.11.3
 json-delta==2.0
 jsonfield==2.1.1
 jsonobject-couchdbkit~=1.0.1
@@ -66,16 +66,17 @@ jsonobject==0.9.9
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonschema~=3.2
 kafka-python==1.4.7
 kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 laboratory==0.2.0
-lxml~=4.6.2
+lxml~=4.6.3
 markdown==2.2.1
 mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
-Pillow>=7.1.0
+Pillow>=8.1.2
 polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
@@ -84,14 +85,14 @@ py-KISSmetrics==1.1.0
 Pycco==0.5.1
 pycryptodome>=3.6.6  # security update
 PyGithub==1.54.1
-Pygments~=2.0
+Pygments==2.8.1
 pygooglechart==0.4.0
 python-dateutil~=2.6
 python-imap==1.0.0
-python-Levenshtein
-python-magic~=0.4.13
+python-levenshtein>=0.12.1
+python-magic~=0.4.22
 pytz>=2017.2
-PyYAML~=5.1
+PyYAML~=5.4.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache~=0.5
@@ -115,7 +116,6 @@ tinys3==0.1.12
 tropo-webapi-python==0.1.3
 turn-python==0.0.1
 twilio==6.5.1
-WeasyPrint==51
 werkzeug==1.0.1
 xlrd==1.0.0
 xlwt==1.3.0

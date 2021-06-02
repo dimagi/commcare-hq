@@ -20,6 +20,7 @@ from crispy_forms.layout import Div
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -1172,7 +1173,7 @@ class InitiateAddSMSBackendForm(Form):
                 InlineField('action'),
                 Div(InlineField('hq_api_id', css_class="ko-select2"), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
-                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
+                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),  # nosec: no user input
                     css_class='btn-primary',
                     type='submit',
                     style="margin-left:5px;"
@@ -1236,13 +1237,17 @@ class SubscribeSMSForm(Form):
         )
 
     def save(self, commtrack_settings):
-        alert_config = commtrack_settings.alert_config
+        if not hasattr(commtrack_settings, 'alertconfig'):
+            commtrack_settings.alertconfig = AlertConfig()
+
+        alert_config = commtrack_settings.alertconfig
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
         alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
         alert_config.stock_out_rates = self.cleaned_data.get("stock_out_rates", False)
         alert_config.non_report = self.cleaned_data.get("non_report", False)
 
-        commtrack_settings.save()
+        alert_config.commtrack_settings = commtrack_settings
+        alert_config.save()
 
 
 class ComposeMessageForm(forms.Form):

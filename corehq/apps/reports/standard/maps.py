@@ -27,19 +27,16 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 
     report_partial_path = "reports/partials/maps.html"
     flush_layout = True
-    #asynchronous = False
+
+    # override on subclass. It must be a dict with keys:
+    # * report: fully qualified path to a ReportDataSource class
+    # * report_params (optional): params to pass to the data source. This get's
+    #     augmented with the `domain` and `request` params.
+    data_source = None
 
     def _get_data(self):
-        adapter = self.data_source['adapter']
-        geo_col = self.data_source.get('geo_column', 'geo')
-
-        try:
-            loader = getattr(self, '_get_data_%s' % adapter)
-        except AttributeError:
-            raise RuntimeError('unknown adapter [%s]' % adapter)
-        data = loader(self.data_source, dict(self.request.GET.items()))
-
-        return self._to_geojson(data, geo_col)
+        data = self._get_data_report(self.data_source, dict(self.request.GET.items()))
+        return self._to_geojson(data, "geo")
 
     def _to_geojson(self, data, geo_col):
         def _parse_geopoint(raw):
@@ -119,104 +116,8 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         DataSource = to_function(params['report'])
 
         assert issubclass(DataSource, ReportDataSource), '[%s] does not implement the ReportDataSource API!' % params['report']
-        assert not issubclass(DataSource, GenericReportView), '[%s] cannot be a ReportView (even if it is also a ReportDataSource)! You must separate your code into a class of each type, or use the "legacyreport" adapater.' % params['report']
 
         return DataSource(config).get_data()
-
-    def _get_data_legacyreport(self, params, filters):
-        Report = to_function(params['report'])
-        assert issubclass(Report, GenericTabularReport), '[%s] must be a GenericTabularReport!' % params['report']
-
-        # TODO it would be nice to indicate to the report that it was being used in a map context, (so
-        # that it could add a geo column) but it does not seem like reports can be arbitrarily
-        # parameterized in this way
-        report = Report(request=self.request, domain=self.domain, **params.get('report_params', {}))
-
-        def _headers(e, root=[]):
-            if hasattr(e, '__iter__'):
-                if hasattr(e, 'html'):
-                    root = list(root) + [str(e.html)]
-                for sub in e:
-                    for k in _headers(sub, root):
-                        yield k
-            else:
-                yield root + [str(e.html)]
-        headers = ['::'.join(k) for k in _headers(report.headers)]
-
-        for row in report.rows:
-            yield dict(zip(headers, row))
-
-    def _get_data_case(self, params, filters):
-        MAX_RESULTS = 200 # TODO vary by domain (cc-plus gets a higher limit?)
-        # bleh
-        _get = self.request.GET.copy()
-        _get['iDisplayStart'] = '0'
-        _get['iDisplayLength'] = str(MAX_RESULTS)
-        self.request.GET = _get
-
-        source = CaseListReport(self.request, domain=self.domain)
-
-        total_count = source.es_results['hits']['total']
-        if total_count > MAX_RESULTS:
-            # can't really think of a better way to return out-of-band
-            # metadata from a generator
-            yield {'_meta': {
-                    'total_rows': total_count,
-                    'capped_rows': MAX_RESULTS,
-                }}
-
-        # TODO ideally we'd want access to all the data shown on the
-        # case detail report. certain case types can override this via
-        # case.to_full_dict(). however, there is currently no efficient
-        # way to call this over a large block of cases. so now we (via the
-        # CaseListReport/DataSource) limit ourselves only to that which
-        # can be queried in bulk
-
-        for data in source.get_data():
-            case = CommCareCase.wrap(data['_case']).to_api_json()
-            del data['_case']
-
-            data['num_forms'] = len(case['xform_ids'])
-            standard_props = (
-                'case_name',
-                'case_type',
-                'date_opened',
-                'external_id',
-                'owner_id',
-             )
-            data.update(('prop_%s' % k, v) for k, v in case['properties'].items() if k not in standard_props)
-
-            GEO_DEFAULT = 'gps' # case property
-            geo = None
-            geo_directive = params['geo_fetch'].get(data['case_type'], GEO_DEFAULT)
-            if geo_directive.startswith('link:'):
-                # TODO use linked case
-                pass
-            elif geo_directive == '_random':
-                # for testing -- just map the case to a random point
-                import random
-                import math
-                geo = '%s %s' % (math.degrees(math.asin(random.uniform(-1, 1))), random.uniform(-180, 180))
-            elif geo_directive:
-                # case property
-                geo = data.get('prop_%s' % geo_directive)
-
-            if geo:
-                data['geo'] = geo
-                yield data
-
-    def _get_data_csv(self, params, filters):
-        with open(params['path'], encoding='utf-8') as f:
-            return list(csv.DictReader(f))
-
-    def _get_data_geojson(self, params, filters):
-        with open(params['path'], encoding='utf-8') as f:
-            data = json.load(f)
-
-        for feature in data['features']:
-            item = dict(feature['properties'])
-            item['geo'] = feature['geometry']['coordinates']
-            yield item
 
     @property
     def report_context(self):

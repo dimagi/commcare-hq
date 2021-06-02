@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ContactPoint",
+  "id": "file:ContactPoint.schema.json",
   "$ref": "#/definitions/ContactPoint",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ContactPoint": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "Details for all kinds of technology mediated contact points for a person or organization, including telephone, email, etc.",

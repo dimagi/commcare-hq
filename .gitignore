@@ -22,6 +22,8 @@ bad/
 startover.sh
 celery.db
 tmp.sh
+/requirements/local.in
+/requirements/local.txt
 /resource_versions.yaml
 /loadtest/results/
 /loadtest/localsettings.py

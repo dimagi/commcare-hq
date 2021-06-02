@@ -71,7 +71,8 @@ MIN = 'min'
 MAX = 'max'
 FIRST_ITEM = 'first_item'
 LAST_ITEM = 'last_item'
-SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, MIN, MAX, FIRST_ITEM, LAST_ITEM]
+JOIN = 'join'
+SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, MIN, MAX, FIRST_ITEM, LAST_ITEM, JOIN]
 
 
 def aggregate_items(items, fn_name):
@@ -83,6 +84,7 @@ def aggregate_items(items, fn_name):
         MAX: _max,
         FIRST_ITEM: _first_item,
         LAST_ITEM: _last_item,
+        JOIN: _join,
     }
 
     if not isinstance(items, list):
@@ -132,3 +134,7 @@ def _last_item(items):
         return items[-1]
     except (IndexError, TypeError):
         return None
+
+
+def _join(items):
+    return ''.join(str(i) if i is not None else '' for i in items)

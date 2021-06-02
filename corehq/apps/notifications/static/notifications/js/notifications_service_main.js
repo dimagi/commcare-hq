@@ -13,7 +13,7 @@ hqDefine('notifications/js/notifications_service_main', [
     notificationsService,
     googleAnalytics
 ) {
-    $(function () {
+    var initNotifications = function () {
         var csrfToken = $("#csrfTokenContainer").val();
         notificationsService.setRMI(initialPageData.reverse('notifications_service'), csrfToken);
         notificationsService.initService('#js-settingsmenu-notifications');
@@ -24,5 +24,9 @@ hqDefine('notifications/js/notifications_service_main', [
             googleAnalytics.track.event('Notification', 'Opened Message', this.href);
         });
         googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
-    });
+    };
+    $(document).ready(initNotifications);
+    return {
+        'initNotifications': initNotifications,
+    };
 });

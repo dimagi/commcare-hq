@@ -1,0 +1,180 @@
+{% load i18n %}
+
+<tr>
+  <td class="text-center">
+    <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
+  </td>
+  <td>
+    <input class="form-control" type="text" data-bind="value: name"/>
+  </td>
+  <td>
+    <input class="form-control" type="text" data-bind="value: label"/>
+  </td>
+  {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
+  <td>
+    <button type="button"
+            class="btn btn-default"
+            data-bind="
+                attr: {'data-target': '#lookup-table-prompt-' +   uniqueId}"
+            data-toggle="modal">
+      <i class="fa fa-pencil"></i>
+      {% trans "Configure" %}
+    </button>
+    <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + uniqueId}">
+      <div class="modal-dialog modal-md">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">
+              {% trans "Options for:" %}
+              <!-- ko text: label --><!-- /ko -->
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-horizontal">
+              <fieldset>
+                <legend>{% trans "Basic" %}</legend>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">
+                    {% trans "Help Text" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <textarea class="form-control vertical-resize" type="text" data-bind="value: hint">
+                    </textarea>
+                  </div>
+                </div>
+                {% if js_options.default_value_expression_enabled %}
+                <div class="form-group" data-bind="visible: appearance() != 'address'">
+                  <label class="control-label col-xs-12 col-sm-3">
+                    {% trans "Default Value Expression" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: defaultValue"/>
+                    <p class="help-block" data-bind="visible: appearance() == 'daterange'">
+                      {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
+                    </p>
+                  </div>
+                </div>
+                {% endif %}
+                {% if js_options.search_prompt_appearance_enabled %}
+                  <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">
+                      {% trans "Format" %}
+                    </label>
+                    <div class="col-xs-12 col-sm-9">
+                      <select class="form-control" data-bind="value: appearance">
+                        <option value="">{% trans "Text" %}</option>
+                        <option value="daterange">{% trans "Date Range" %}</option>
+                        <option value="barcode_scan">{% trans "Barcode" %}</option>
+                        {% if js_options.has_lookup_tables %}
+                        <option value="lookup_table_fixture">{% trans "Lookup Table Selection" %}</option>
+                        {% endif %}
+                        {% if js_options.has_mobile_ucr %}
+                          <option value="report_fixture">{% trans "Mobile UCR Selection" %}</option>
+                        {% endif %}
+                        {% if js_options.has_geocoder_privs %}
+                          <option value="address">{% trans "Geocoder Broadcast" %}</option>
+                        {% endif %}
+                      </select>
+                    </div>
+                  </div>
+                {% endif %}
+              </fieldset>
+              {% if js_options.search_prompt_appearance_enabled %}
+              <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
+                <legend data-bind="text: dropdownLabels().optionsLabel"></legend>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3"
+                         data-bind="text: dropdownLabels().tableLabel">
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <select class="form-control" data-bind="
+                      value: itemset.lookupTableNodeset,
+                      options: itemListOptions(),
+                      optionsText: 'name',
+                      optionsValue: 'value',
+                      optionsCaption: dropdownLabels().selectLabel">
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">{% trans "Label Field" %}</label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: itemset.label, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">{% trans "Value Field" %}</label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: itemset.value, attr:{placeholder:dropdownLabels().valuePlaceholder}"/>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">{% trans "Sort Field" %}</label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: itemset.sort, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
+                  </div>
+                </div>
+                </fieldset>
+                {% if js_options.has_geocoder_privs %}
+                    <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearance() == ''">
+                      <legend>{% trans "Advanced Options" %}</legend>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Geocoder Receiver Expression" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
+                          <input class="form-control" type="text" data-bind="value: receiverExpression"/>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Hide in Search Screen" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
+                          <input type="checkbox" data-bind="checked: hidden" />
+                        </div>
+                      </div>
+                  </fieldset>
+                {% endif %}
+                <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
+                  <legend  data-bind="text: dropdownLabels().advancedLabel"></legend>
+                  <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">
+                      {% trans "Instance URI" %}
+                    </label>
+                    <div class="col-xs-12 col-sm-9">
+                      <input class="form-control" type="text" data-bind="value: itemset.instance_uri"/>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">
+                      {% trans "Instance Nodeset" %}
+                    </label>
+                    <div class="col-xs-12 col-sm-9">
+                      <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
+                      <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
+                        {% trans "This refers to data other than selected report/lookup-table." %}
+                      </p>
+                    </div>
+                  </div>
+              </fieldset>
+              {% endif %}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" type="button" data-dismiss="modal">
+              {% trans "Done" %}
+            </button>
+          </div>
+            </form>
+        </div>
+      </div>
+    </div>
+  </td>
+  {% endif %}
+  <td>
+    <i style="cursor: pointer;" class="fa fa-remove"
+       data-bind="click: $parent.removeProperty"></i>
+  </td>
+</tr>

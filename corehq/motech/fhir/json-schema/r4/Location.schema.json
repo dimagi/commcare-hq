@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Location",
+  "id": "file:Location.schema.json",
   "$ref": "#/definitions/Location",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Location": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "Details and position information for a physical place where services are provided  and resources and participants may be stored, found, contained or accommodated.",
@@ -133,7 +133,7 @@
     "Location_Position": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "Details and position information for a physical place where services are provided  and resources and participants may be stored, found, contained or accommodated.",

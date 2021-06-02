@@ -24,14 +24,17 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
+
     FilteredModelIteratorBuilder('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
+
     FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CaseAttachmentSQL', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
@@ -123,13 +126,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
+    FilteredModelIteratorBuilder('users.SQLUserRole', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLCommtrackConfig', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLActionConfig', SimpleFilter('commtrack_config__domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLAlertConfig', SimpleFilter('commtrack_config__domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLConsumptionConfig', SimpleFilter('commtrack_config__domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLStockLevelsConfig', SimpleFilter('commtrack_config__domain')),
-    FilteredModelIteratorBuilder('commtrack.SQLStockRestoreConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.CommtrackConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('commtrack.ActionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.AlertConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.ConsumptionConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.StockLevelsConfig', SimpleFilter('commtrack_config__domain')),
+    FilteredModelIteratorBuilder('commtrack.StockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
@@ -160,7 +164,7 @@ class SqlDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats, stdout=self.stdout)
+        objects = get_objects_to_dump(self.domain, self.excludes, self.includes, stats_counter=stats, stdout=self.stdout)
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,
@@ -170,14 +174,14 @@ class SqlDataDumper(DataDumper):
         return stats
 
 
-def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
+def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
     :return: generator yielding models objects
     """
-    builders = get_model_iterator_builders_to_dump(domain, excludes)
+    builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
     yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
 
 
@@ -194,18 +198,21 @@ def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None)
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
-def get_model_iterator_builders_to_dump(domain, excludes, limit_to_db=None):
+def get_model_iterator_builders_to_dump(domain, excludes, includes, limit_to_db=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
     :return: generator yielding query sets
     """
-    excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
-    app_config_models = _get_app_list(excluded_apps)
+    excluded_apps, excluded_models = get_apps_and_models(excludes)
+    included_apps, included_models = get_apps_and_models(includes)
+    app_config_models = _get_app_list(excluded_apps, included_apps)
 
     # Collate the objects to be serialized.
     for model_class in serializers.sort_dependencies(list(app_config_models.items())):
+        if included_models and model_class not in included_models:
+            continue
         if model_class in excluded_models:
             continue
 
@@ -240,42 +247,44 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, builders, l
             yield model_class, builder.build(domain, model_class, db_alias)
 
 
-def get_excluded_apps_and_models(excludes):
+def get_apps_and_models(app_or_model_label):
     """
-    :param excludes: list of app labels ("app_label.model_name" or "app_label") to exclude
-    :return: Tuple containing two sets: Set of AppConfigs to exclude, Set of model classes to excluded.
+    :param app_or_model_label: list of app labels ("app_label.model_name" or "app_label")
+    :return: Tuple containing two sets: Set of AppConfigs, Set of model classes
     """
-    excluded_apps = set()
-    excluded_models = set()
-    for exclude in excludes:
-        if '.' in exclude:
+    specified_apps = set()
+    specified_models = set()
+    for label in app_or_model_label:
+        if '.' in label:
             try:
-                model = apps.get_model(exclude)
+                model = apps.get_model(label)
             except LookupError:
-                raise DomainDumpError('Unknown model in excludes: %s' % exclude)
-            excluded_models.add(model)
+                raise DomainDumpError('Unknown model: %s' % label)
+            specified_models.add(model)
         else:
             try:
-                app_config = apps.get_app_config(exclude)
+                app_config = apps.get_app_config(label)
             except LookupError:
                 from corehq.util.couch import get_document_class_by_doc_type
                 from corehq.util.exceptions import DocumentClassNotFound
                 # ignore this if it's a couch doc type
                 try:
-                    get_document_class_by_doc_type(exclude)
+                    get_document_class_by_doc_type(label)
                 except DocumentClassNotFound:
-                    raise DomainDumpError('Unknown app in excludes: %s' % exclude)
-            excluded_apps.add(app_config)
-    return excluded_apps, excluded_models
+                    raise DomainDumpError('Unknown app in excludes: %s' % label)
+            specified_apps.add(app_config)
+    return specified_apps, specified_models
 
 
-def _get_app_list(excluded_apps):
+def _get_app_list(excluded_apps, included_apps):
     """
     :return: OrderedDict(app_config, model), ...)
     """
     app_list = OrderedDict()
     for label in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP:
         app_config, model = get_model_class(label)
+        if included_apps and app_config not in included_apps:
+            continue
         if app_config in excluded_apps:
             continue
 

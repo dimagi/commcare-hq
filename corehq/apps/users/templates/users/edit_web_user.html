@@ -5,6 +5,33 @@
 {% load i18n %}
 
 {% block page_content %}
+  {% if request|toggle_enabled:"ENTERPRISE_SSO" and has_untrusted_identity_provider %}
+    <div class="alert alert-setting">
+      <p class="lead">
+        <i class="fa fa-lock"></i>
+        {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+          The SSO Identity Provider for {{ friendly_name }}, "{{ idp_name }}",
+          is not trusted by this project space.
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          Click Trust Provider below to restore access for this user.
+          <a href="#">Learn more</a> about SSO on CommCare HQ.
+        {% endblocktrans %}
+      </p>
+      <form class="form form" name="trust_identity_provider" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="trust-identity-provider" />
+        <p style="margin-top: 10px;">
+          <button type="submit"
+                  class="btn btn-confirm">
+            {% trans "Trust Identity Provider" %}
+          </button>
+        </p>
+      </form>
+    </div>
+  {% endif %}
   <div class="form form-horizontal">
     <fieldset>
       <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>

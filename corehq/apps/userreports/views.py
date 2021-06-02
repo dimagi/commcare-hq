@@ -659,7 +659,7 @@ class ConfigureReport(ReportBuilderView):
                     })
                     return self.get(request, domain, *args, **kwargs)
                 else:
-                    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+                    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
             self._delete_temp_data_source(report_data)
             send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
@@ -799,7 +799,7 @@ def delete_report(request, domain, report_id):
             _("This report was used in one or more applications. "
               "It has been removed from there too.")
         )
-    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])

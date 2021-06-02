@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/ImmunizationRecommendation",
+  "id": "file:ImmunizationRecommendation.schema.json",
   "$ref": "#/definitions/ImmunizationRecommendation",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "ImmunizationRecommendation": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
@@ -49,7 +49,7 @@
     "ImmunizationRecommendation_Recommendation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
@@ -119,7 +119,7 @@
     "ImmunizationRecommendation_DateCriterion": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",
@@ -147,7 +147,7 @@
     "ImmunizationRecommendation_Protocol": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A patient\u0027s point-in-time immunization and recommendation (i.e. forecasting a patient\u0027s immunization eligibility according to a published schedule) with optional supporting justification.",

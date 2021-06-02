@@ -49,21 +49,11 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
     from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
     errors = []
     try:
+        args = [domain, download_id, user_filters, bulk_download_users_async, owner_id]
         if is_web_download:
-            dump_web_users(
-                domain,
-                download_id,
-                bulk_download_users_async,
-                owner_id,
-            )
+            dump_web_users(*args)
         else:
-            dump_users_and_groups(
-                domain,
-                download_id,
-                user_filters,
-                bulk_download_users_async,
-                owner_id,
-            )
+            dump_users_and_groups(*args)
     except GroupNameError as e:
         group_urls = [
             reverse('group_members', args=[domain, group.get_id])
@@ -86,7 +76,7 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
                 'The following groups have no name. '
                 'Please name them before continuing: {}'
             ),
-            mark_safe(', '.join(group_links))
+            mark_safe(', '.join(group_links))  # nosec: no user input
         ))
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))

@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 
 from corehq.apps.users.models import CouchUser
-from corehq.util.argparse_types import validate_integer
+from corehq.util.argparse_types import validate_range
 from custom.covid.tasks import get_users_for_priming, get_prime_restore_user_params, prime_formplayer_db_for_user
 
 
@@ -46,19 +46,21 @@ class Command(BaseCommand):
                                  'only users in this file will be synced.')
 
         parser.add_argument('--domains', nargs='+', help='Match users in these domains.')
-        parser.add_argument('--last-synced-hours', action=validate_integer(gt=0, lt=673), default=48,
+        parser.add_argument('--last-synced-hours', type=int, action=validate_range(gt=0, lt=673), default=48,
                             help='Match users who have synced within the given window. '
-                                 'Defaults to 48 hours. Max = 673 (4 weeks).')
-        parser.add_argument('--not-synced-hours', action=validate_integer(gt=-1, lt=169),
+                                 'Defaults to %(default)s hours. Max = 673 (4 weeks).')
+        parser.add_argument('--not-synced-hours', type=int, action=validate_range(gt=-1, lt=169),
                             help='Exclude users who have synced within the given window. '
                                  'Max = 168 (1 week).')
-        parser.add_argument('--min-cases', action=validate_integer(gt=0),
+        parser.add_argument('--min-cases', type=int, action=validate_range(gt=0),
                             help='Match users with this many cases or more.')
 
-        parser.add_argument('--limit', action=validate_integer(gt=0), help='Limit the number of users matched.')
+        parser.add_argument('--limit', type=int, action=validate_range(gt=0),
+                            help='Limit the number of users matched.')
         parser.add_argument('--dry-run', action='store_true', help='Only print the list of users.')
         parser.add_argument('--dry-run-count', action='store_true', help='Only print the count of matched users.')
-        parser.add_argument('--clear-user-data', action='store_true', help='Clear user data prior to performing sync.')
+        parser.add_argument('--clear-user-data', action='store_true',
+                            help='Clear user data prior to performing sync.')
 
     def handle(self,
                from_csv=None,

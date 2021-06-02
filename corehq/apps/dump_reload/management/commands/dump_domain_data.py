@@ -24,6 +24,11 @@ class Command(BaseCommand):
                  '(use multiple --exclude to exclude multiple apps/models).'
         )
         parser.add_argument(
+            '-i', '--include', dest='include', action='append', default=[],
+            help='An app_label, app_label.ModelName or CouchDB doc_type to include '
+                 '(use multiple --include to include multiple apps/models).'
+        )
+        parser.add_argument(
             '--console', action='store_true', default=False, dest='console',
             help='Write output to the console instead of to file.'
         )
@@ -32,6 +37,7 @@ class Command(BaseCommand):
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
+        includes = options.get('include')
         console = options.get('console')
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
@@ -49,7 +55,7 @@ class Command(BaseCommand):
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
-                meta[dumper.slug] = dumper(domain_name, excludes).dump(stream)
+                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
             except Exception as e:
                 if show_traceback:
                     raise
@@ -66,7 +72,7 @@ class Command(BaseCommand):
 
         if not console:
             with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                z.writestr('meta.json', json.dumps(meta))
+                z.writestr('meta.json', json.dumps(meta, indent=4))
 
         self._print_stats(meta)
         self.stdout.write('\nData dumped to file: {}'.format(zipname))

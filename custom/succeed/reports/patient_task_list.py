@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils import html
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
@@ -38,14 +38,15 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def get_link(self, url, field, doc_id):
         if url:
-            return html.mark_safe("<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
-                url, html.escape(field)))
+            return format_html(
+                "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>",
+                url,
+                field)
         else:
             return "%s (bad ID format)" % doc_id
 
     def case_link(self, referenced_id, full_name):
-        url = html.escape(
-            PatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % referenced_id)
+        url = PatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % referenced_id
         return self.get_link(url, full_name, referenced_id)
 
     def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
@@ -55,11 +56,12 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
         except IndexError:
             form_idx = None
 
-        return html.escape(webapps_module_case_form(domain=self.domain,
-                                                    app_id=app_build_id,
-                                                    module_id=module_idx,
-                                                    form_id=form_idx,
-                                                    case_id=case_id))
+        return webapps_module_case_form(
+            domain=self.domain,
+            app_id=app_build_id,
+            module_id=module_idx,
+            form_id=form_idx,
+            case_id=case_id)
 
     def name_link(self, name, doc_id, is_closed):
         if is_closed == 0:

@@ -76,7 +76,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 )
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_SUBSTRING_MATCHES,
+    USERCASE_XPATH_SUBSTRING_MATCHES,
     actions_use_usercase,
     advanced_actions_use_usercase,
     enable_usercase,
@@ -93,6 +93,8 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
+    InvalidSessionEndpoint,
+    set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -288,7 +290,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform.exists():
                 xform.set_name(name)
                 save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
+        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
 
     if should_edit('comment'):
         form.comment = request.POST['comment']
@@ -437,6 +439,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit('session_endpoint_id'):
+        raw_endpoint_id = request.POST['session_endpoint_id']
+        try:
+            set_session_endpoint(form, raw_endpoint_id, app)
+        except InvalidSessionEndpoint as e:
+            return json_response({'message': str(e)}, status_code=400)
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -710,7 +720,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         form.get_unique_id()
         app.save()
 
-    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
+    allow_usercase = domain_has_privilege(request.domain, privileges.USERCASE)
     valid_index_names = list(DEFAULT_CASE_INDEX_IDENTIFIERS.values())
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
@@ -754,7 +764,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
+            'usercase_substring': USERCASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
@@ -765,6 +775,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             for assertion in form.custom_assertions
         ],
         'form_icon': None,
+        'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):

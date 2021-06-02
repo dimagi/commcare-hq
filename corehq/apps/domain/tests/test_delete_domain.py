@@ -53,7 +53,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.commtrack.models import SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
@@ -65,7 +65,6 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -100,7 +99,10 @@ from corehq.apps.sms.models import (
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest, Invitation
+from corehq.apps.users.models import (
+    DomainRequest, Invitation, PermissionInfo, Permissions,
+    SQLUserRole, RolePermission, RoleAssignableBy
+)
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
@@ -875,6 +877,32 @@ class TestDeleteDomain(TestCase):
         self._assert_users_counts(self.domain.name, 0)
         self._assert_users_counts(self.domain2.name, 1)
 
+    def _assert_role_counts(self, domain_name, roles, permissions, assignments):
+        self.assertEqual(SQLUserRole.objects.filter(domain=domain_name).count(), roles)
+        self.assertEqual(RolePermission.objects.filter(role__domain=domain_name).count(), permissions)
+        self.assertEqual(RoleAssignableBy.objects.filter(role__domain=domain_name).count(), assignments)
+
+    def test_roles_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            role1 = SQLUserRole.objects.create(
+                domain=domain_name,
+                name="role1"
+            )
+            role = SQLUserRole.objects.create(
+                domain=domain_name,
+                name="role2"
+            )
+            role.set_permissions([
+                PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
+            ])
+            role.set_assignable_by([role1.id])
+            self._assert_role_counts(domain_name, 2, 1, 1)
+
+        self.domain.delete()
+
+        self._assert_role_counts(self.domain.name, 0, 0, 0)
+        self._assert_role_counts(self.domain2.name, 2, 1, 1)
+
     def _assert_zapier_counts(self, domain_name, count):
         self._assert_queryset_count([
             ZapierSubscription.objects.filter(domain=domain_name),
@@ -959,10 +987,10 @@ class TestDeleteDomain(TestCase):
         self._assert_couchforms_counts(self.domain2.name, 1)
 
     def test_delete_commtrack_config(self):
-        SQLCommtrackConfig.for_domain(self.domain.name) or SQLCommtrackConfig(domain=self.domain.name).save()
-        self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        # Config will have been created by convert_to_commtrack in setUp
+        self.assertIsNotNone(CommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
-        self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
     def tearDown(self):
         self.domain2.delete()

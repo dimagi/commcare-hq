@@ -1,0 +1,291 @@
+{
+    "domains": [
+        "polio-rdc"
+    ],
+    "server_environment": [
+        "production"
+    ],
+    "config": {
+        "table_id": "commcare_users",
+        "display_name": "Users",
+        "referenced_doc_type": "CommCareUser",
+        "description": "Data from the User Model",
+        "base_item_expression": {},
+        "configured_filter": {},
+        "validations": [],
+        "configured_indicators": [
+            {
+                "column_id": "username",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "username",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "username"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "first_name",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "first_name",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "first_name"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "last_name",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "last_name",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "last_name"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "email",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "email",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "email"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "language",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "language",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "language"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "last_sync",
+                "comment": null,
+                "create_index": false,
+                "datatype": "datetime",
+                "display_name": "last_sync",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "reporting_metadata",
+                        "last_sync_for_user",
+                        "sync_date"
+                    ],
+                    "type": "property_path"
+                },
+                "type": "expression"
+            },
+            {
+                "column_id": "last_app_version",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "last_app_version",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "reporting_metadata",
+                        "last_build_for_user",
+                        "build_version"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "is_active",
+                "comment": null,
+                "create_index": false,
+                "datatype": "small_integer",
+                "display_name": "is_active",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "is_active"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "report_group_name",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "report_group_name",
+                "expression": {
+                    "argument_expression": {
+                        "array_expression": {
+                            "type": "get_reporting_groups",
+                            "user_id_expression": {
+                                "datatype": null,
+                                "property_name": "doc_id",
+                                "type": "property_name"
+                            }
+                        },
+                        "index_expression": {
+                            "constant": 0,
+                            "type": "constant"
+                        },
+                        "type": "array_index"
+                    },
+                    "type": "nested",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_name": "name",
+                        "type": "property_name"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "administrateur",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "administrateur",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "user_data",
+                        "administrateur"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "formateur",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "formateur",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "user_data",
+                        "formateur"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "recruteur",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "recruteur",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "user_data",
+                        "recruteur"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "superviseur",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "superviseur",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "user_data",
+                        "superviseur"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "count",
+                "comment": null,
+                "create_index": false,
+                "datatype": "small_integer",
+                "display_name": "count",
+                "expression": {
+                    "constant": 1,
+                    "type": "constant"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            }
+        ],
+        "named_expressions": {},
+        "named_filters": {}
+    }
+}

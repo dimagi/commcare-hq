@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpResponseNotFound, StreamingHttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
@@ -177,27 +177,29 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
 
         for checkpoint in self._get_paged_checkpoints():
             if checkpoint.status == 1:
-                status = f'<span class="label label-success">{_("Success")}</span>'
+                status = format_html('<span class="label label-success">{}</span>', _("Success"))
             else:
-                status = f'<span class="label label-danger">{_("Failure")}</span>'
+                status = format_html('<span class="label label-danger">{}</span>', _("Failure"))
 
             log_url = reverse(MotechLogDetailView.urlname, args=[self.domain, checkpoint.request_log_id])
             file_url = reverse("incremental_export_checkpoint_file", args=[self.domain, checkpoint.id])
             reset_url = reverse("incremental_export_reset_checkpoint", args=[self.domain, checkpoint.id])
             if checkpoint.blob_exists():
-                download = f'<a href="{file_url}"><i class="fa fa-download"></i></a>'
+                download = format_html('<a href="{}"><i class="fa fa-download"></i></a>', file_url)
             else:
                 download = _("File Expired")
             rows.append(
                 [
-                    mark_safe(status),
+                    status,
                     checkpoint.incremental_export.name,
                     checkpoint.date_created.strftime("%Y-%m-%d %H:%M:%S"),
                     checkpoint.doc_count,
-                    mark_safe(download),
-                    mark_safe(f'<a href="{log_url}">{_("Request Details")}</a>'),
-                    mark_safe(
-                        f'<a href="{reset_url}">{_("Resend all cases after this checkpoint")}</a>'
+                    download,
+                    format_html('<a href="{}">{}</a>', log_url, _("Request Details")),
+                    format_html(
+                        '<a href="{}">{}</a>',
+                        reset_url,
+                        _("Resend all cases after this checkpoint")
                     ),
                 ]
             )

@@ -3,6 +3,7 @@ import re
 from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -12,8 +13,9 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import sanitize_user_input_url_for_repeaters
-from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from corehq.motech.requests import validate_user_input_url_for_repeaters
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -69,8 +71,6 @@ class ConnectionSettingsForm(forms.ModelForm):
         ]
 
     def __init__(self, domain, *args, **kwargs):
-        from corehq.motech.views import ConnectionSettingsListView
-
         if kwargs.get('instance'):
             # `plaintext_password` is not a database field, and so
             # super().__init__() will not update `initial` with it. We
@@ -95,8 +95,13 @@ class ConnectionSettingsForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.domain = domain
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
+
+    @cached_property
+    def helper(self):
+        from corehq.motech.views import ConnectionSettingsListView
+
+        helper = hqcrispy.HQFormHelper()
+        helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
             crispy.Field('url'),
@@ -126,6 +131,8 @@ class ConnectionSettingsForm(forms.ModelForm):
             ),
         )
 
+        return helper
+
     @property
     def test_connection_button(self):
         return crispy.Div(
@@ -153,7 +160,14 @@ class ConnectionSettingsForm(forms.ModelForm):
     def clean_url(self):
         url = self.cleaned_data['url']
         try:
-            sanitize_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+            validate_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+        except CannotResolveHost:
+            # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
+            # The reason this is important is because we want to accept configurations where the host has not
+            # been set up yet. Wrapping this value lets consumers check whether or not the host is recognized
+            # before making a potentially unsafe request to it (i.e. '::1' looks unresolvable to IPv4,
+            # but is actually the loopback address for IPv6)
+            return UnrecognizedHost(url)
         except PossibleSSRFAttempt:
             raise forms.ValidationError(_("Invalid URL"))
         return url
@@ -164,3 +178,11 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
         return super().save(commit)
+
+
+class UnrecognizedHost:
+    def __init__(self, hostname):
+        self.hostname = hostname
+
+    def __repr__(self):
+        return self.hostname

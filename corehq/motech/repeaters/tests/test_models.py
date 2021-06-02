@@ -24,6 +24,7 @@ from ..const import (
 from ..models import (
     FormRepeater,
     RepeaterStub,
+    are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -297,7 +298,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeat_record.attempts[0].message)
+        self.assertEqual(self.repeat_record.attempts[0].message, '')
 
     def test_add_success_attempt_200(self):
         resp = ResponseMock()
@@ -324,7 +325,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
-        self.assertIsNone(self.repeat_record.attempts[0].traceback)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_server_failure_attempt_cancel(self):
         message = '504: Gateway Timeout'
@@ -342,7 +343,7 @@ class AddAttemptsTests(RepeaterTestCase):
                            + [RECORD_CANCELLED_STATE])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
-        self.assertIsNone(attempts[-1].traceback)
+        self.assertEqual(attempts[-1].traceback, '')
 
     def test_add_client_failure_attempt_fail(self):
         message = '409: Conflict'
@@ -354,7 +355,7 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
-        self.assertIsNone(self.repeat_record.attempts[0].traceback)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_client_failure_attempt_cancel(self):
         message = '409: Conflict'
@@ -369,7 +370,18 @@ class AddAttemptsTests(RepeaterTestCase):
                            + [RECORD_CANCELLED_STATE])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
-        self.assertIsNone(attempts[-1].traceback)
+        self.assertEqual(attempts[-1].traceback, '')
+
+    def test_add_client_failure_attempt_no_retry(self):
+        message = '422: Unprocessable Entity'
+        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+            self.repeat_record.add_client_failure_attempt(message=message, retry=False)
+        self.assertIsNone(self.repeater_stub.last_attempt_at)
+        self.assertIsNone(self.repeater_stub.next_attempt_at)
+        self.assertEqual(self.repeat_record.num_attempts, 1)
+        self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
+        self.assertEqual(self.repeat_record.attempts[0].message, message)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_payload_exception_attempt(self):
         message = 'ValueError: Schema validation failed'
@@ -385,3 +397,19 @@ class AddAttemptsTests(RepeaterTestCase):
                          RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
+
+
+class TestAreRepeatRecordsMigrated(RepeaterTestCase):
+
+    def setUp(self):
+        super().setUp()
+        are_repeat_records_migrated.clear(DOMAIN)
+
+    def test_no(self):
+        is_migrated = are_repeat_records_migrated(DOMAIN)
+        self.assertFalse(is_migrated)
+
+    def test_yes(self):
+        with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE):
+            is_migrated = are_repeat_records_migrated(DOMAIN)
+        self.assertTrue(is_migrated)

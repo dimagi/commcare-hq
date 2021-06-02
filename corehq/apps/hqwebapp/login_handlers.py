@@ -8,22 +8,25 @@ from dimagi.utils.web import get_ip
 
 @receiver(user_login_failed)
 def handle_failed_login(sender, credentials, request, token_failure=False, **kwargs):
-    handle_access_event(UserAccessLog.TYPE_FAILURE, request, credentials['username'])
+    _handle_access_event(UserAccessLog.TYPE_FAILURE, request, credentials['username'])
 
 
 @receiver(user_logged_in)
 def handle_login(sender, request, user, **kwargs):
-    handle_access_event(UserAccessLog.TYPE_LOGIN, request, user.username)
+    _handle_access_event(UserAccessLog.TYPE_LOGIN, request, user.username)
 
 
 @receiver(user_logged_out)
 def handle_logout(sender, request, user, **kwargs):
-    handle_access_event(UserAccessLog.TYPE_LOGOUT, request, user.username)
+    # User can be None when the user is not authorized.
+    # See: https://docs.djangoproject.com/en/3.1/ref/contrib/auth/#django.contrib.auth.signals.user_logged_out
+    user_id = user.username if user else ''
+    _handle_access_event(UserAccessLog.TYPE_LOGOUT, request, user_id)
 
 
-def handle_access_event(event_type, request, user_id):
+def _handle_access_event(event_type, request, user_id):
     ip_address = ''
-    agent = ''
+    agent = None
     path = ''
 
     if request:

@@ -1,5 +1,6 @@
-from django.conf import settings
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -37,6 +38,9 @@ PARAM_SLUG_XMLNS = 'xmlns'
 
 PARAM_VALUE_STATUS_ACTIVE = 'active'
 PARAM_VALUE_STATUS_DELETED = 'deleted'
+
+# TODO: Replace with library method
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class FormsByApplicationFilterParams(object):
@@ -607,13 +611,19 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"
     label = ugettext_lazy("Filter Dates By")
     css_class = "span2"
-    help_text = mark_safe(
-        "%s<br />%s" % (ugettext_lazy(
-                        "<strong>Completion</strong> time is when the form is completed on the phone."),
-                        ugettext_lazy(
-                        "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
-                            hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))))
     default_text = ugettext_lazy("Completion Time")
+
+    def _generate_help_message():
+        completion_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+            "<strong>Completion</strong> time is when the form is completed on the phone."))
+
+        submission_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+            "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
+                hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
+
+        return format_html("{}<br />{}", completion_help, submission_help)
+
+    help_text = _generate_help_message()
 
     @property
     def options(self):

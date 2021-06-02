@@ -11,7 +11,7 @@ function usage() {
             echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
-            echo "  TEST=python|python-sharded|javascript"
+            echo "  TEST=python|python-sharded|javascript|python-sharded-and-javascript"
             echo ""
             echo "The default is python."
             echo ""
@@ -220,9 +220,11 @@ export REUSE_DB="$REUSE_DB"
 export TRAVIS_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
 export TRAVIS_BUILD_ID="$TRAVIS_BUILD_ID"
 export TRAVIS_BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
+export TRAVIS_EVENT_TYPE="$TRAVIS_EVENT_TYPE"
 export TRAVIS_HQ_USERNAME="$TRAVIS_HQ_USERNAME"
 export TRAVIS_HQ_PASSWORD="$TRAVIS_HQ_PASSWORD"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
+export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export UCR_CITUS_DB="${UCR_CITUS_DB:-commcare_ucr_citus}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 
@@ -232,6 +234,7 @@ if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
+    # TODO: use overlayfs and drop support for aufs
     export RO=":ro"
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi

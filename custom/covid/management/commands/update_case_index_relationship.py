@@ -16,7 +16,7 @@ DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
 def should_skip(case, traveler_location_id, inactive_location):
-    if len(case.indices) != 1:
+    if len(case.live_indices) != 1:
         return True
     if case.type == 'contact' and case.get_case_property('has_index_case') == 'no':
         return True
@@ -29,7 +29,9 @@ def should_skip(case, traveler_location_id, inactive_location):
 
 def needs_update(case):
     index = case.indices[0]
-    return index.referenced_type == "patient" and index.relationship == "child"
+    if index.referenced_type == "'patient'":
+        return True
+    return index.relationship == "child" and index.referenced_type == "patient"
 
 
 def get_owner_id(case_type):
@@ -47,7 +49,7 @@ class Command(CaseUpdateCommand):
             create=False,
             case_id=case.case_id,
             owner_id=owner_id,
-            index={index.identifier: (index.referenced_type, index.referenced_id, "extension")},
+            index={index.identifier: ("patient", index.referenced_id, "extension")},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
@@ -73,6 +75,8 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "update_case_index_relationship", case_type, len(case_ids), total, [])
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

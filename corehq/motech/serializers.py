@@ -48,7 +48,7 @@ def to_boolean(value: Any) -> bool:
 def to_decimal(value):
     try:
         return float(value)
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
 

@@ -13,7 +13,8 @@ from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.views import ConnectionSettingsListView
-from corehq.util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.view_utils import absolute_reverse
 
 BASE_URL = 'http://www.example.com/2.3.4/'
@@ -78,6 +79,15 @@ class SendRequestTests(SimpleTestCase):
             logger=noop_logger
         )
         with self.assertRaises(PossibleSSRFAttempt):
+            req.post('/api/dataValueSets', json=payload)
+
+    def test_unknown_url(self):
+        payload = {'ham': ['spam', 'spam', 'spam']}
+        req = get_basic_requests(
+            DOMAIN, 'http://not-a-valid-host.com', USERNAME, PASSWORD,
+            logger=noop_logger
+        )
+        with self.assertRaises(CannotResolveHost):
             req.post('/api/dataValueSets', json=payload)
 
 

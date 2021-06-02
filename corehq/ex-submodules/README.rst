@@ -10,10 +10,6 @@ these are actively used, especially casexml, pillowtop, soil, and toggle.
 
 All of the pillow-y names were created as riffs on the "couch" in CouchDB.
 
-auditcare
-    A couch-based set of auditing tools. All page views in CommCare HQ are recorded in auditcare.
-    This backs the User Audit Log report, which allows admins to view a given user's historical actions.
-    Doing non-user-based queries is prohibitively slow.
 casexml
     An application for working with `CaseXML <https://github.com/dimagi/commcare-core/wiki/casexml20>`_.
 couchexport

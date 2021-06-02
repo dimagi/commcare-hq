@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from django.db.models import (
     BigIntegerField,
-    NullBooleanField,
     CharField,
     DateTimeField,
     IntegerField,
@@ -14,8 +13,9 @@ from memoized import memoized
 from partial_index import PartialIndex, PQ
 
 from corehq.sql_db.models import PartitionedModel
+from corehq.util.models import NullJsonField
 
-from .util import get_content_md5, NullJsonField
+from .util import get_content_md5
 
 
 def uuid4_hex():

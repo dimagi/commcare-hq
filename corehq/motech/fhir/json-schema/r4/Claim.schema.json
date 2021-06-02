@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/Claim",
+  "id": "file:Claim.schema.json",
   "$ref": "#/definitions/Claim",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "Claim": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -196,7 +196,7 @@
     "Claim_Related": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -220,7 +220,7 @@
     "Claim_Payee": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -247,7 +247,7 @@
     "Claim_CareTeam": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -291,7 +291,7 @@
     "Claim_Information": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -360,7 +360,7 @@
     "Claim_Diagnosis": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -400,7 +400,7 @@
     "Claim_Procedure": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -438,7 +438,7 @@
     "Claim_Insurance": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -500,7 +500,7 @@
     "Claim_Accident": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -533,7 +533,7 @@
     "Claim_Item": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -718,7 +718,7 @@
     "Claim_Detail": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",
@@ -800,7 +800,7 @@
     "Claim_SubDetail": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A provider issued list of services and products provided, or to be provided, to a patient which is provided to an insurer for payment recovery.",

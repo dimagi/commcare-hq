@@ -1,7 +1,7 @@
 {% load i18n %}
-<tr id="<%= unique_id %>">
-  <td><%= file_name %></td>
-  <td><%= file_size %> MB</td>
+<tr id="<%- unique_id %>">
+  <td><%- file_name %></td>
+  <td><%- file_size %> MB</td>
   <td class="hqm-progress">
     <div class="progress" style="margin-bottom: 5px;">
       <div class="progress-bar progress-bar-striped active" style="width: 0%;"></div>

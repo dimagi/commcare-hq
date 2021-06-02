@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/TestReport",
+  "id": "file:TestReport.schema.json",
   "$ref": "#/definitions/TestReport",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "TestReport": {
       "allOf": [
         {
-          "$ref": "DomainResource#/definitions/DomainResource"
+          "$ref": "DomainResource.schema.json#/definitions/DomainResource"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -122,7 +122,7 @@
     "TestReport_Participant": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -163,7 +163,7 @@
     "TestReport_Setup": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -185,7 +185,7 @@
     "TestReport_Action": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -205,7 +205,7 @@
     "TestReport_Operation": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -248,7 +248,7 @@
     "TestReport_Assert": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -291,7 +291,7 @@
     "TestReport_Test": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -329,7 +329,7 @@
     "TestReport_Action1": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -349,7 +349,7 @@
     "TestReport_Teardown": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",
@@ -371,7 +371,7 @@
     "TestReport_Action2": {
       "allOf": [
         {
-          "$ref": "BackboneElement#/definitions/BackboneElement"
+          "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"
         },
         {
           "description": "A summary of information based on the results of executing a TestScript.",

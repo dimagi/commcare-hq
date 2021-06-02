@@ -1,15 +1,16 @@
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import attr
 from jsonobject.containers import JsonDict
 from jsonpath_ng.ext.parser import parse as parse_jsonpath
 from schema import Optional as SchemaOptional
-from schema import Or, Schema, SchemaError
+from schema import And, Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
@@ -21,8 +22,10 @@ from corehq.motech.const import (
     DIRECTION_IMPORT,
     DIRECTIONS,
 )
-from corehq.motech.exceptions import ConfigurationError, JsonpathError
-from corehq.motech.serializers import serializers
+
+from .exceptions import ConfigurationError, JsonpathError
+from .serializers import serializers
+from .utils import simplify_list
 
 
 @attr.s
@@ -136,12 +139,7 @@ class ValueSource:
             raise JsonpathError from err
         matches = jsonpath.find(external_data)
         values = [m.value for m in matches]
-        if not values:
-            return None
-        elif len(values) == 1:
-            return values[0]
-        else:
-            return values
+        return simplify_list(values)
 
     def set_external_value(self, external_data: dict, info: CaseTriggerInfo):
         """
@@ -154,6 +152,9 @@ class ValueSource:
             raise ConfigurationError(f"{self} is not configured to navigate "
                                      "external data")
         value = self.get_value(info)
+        if value is None:
+            # Don't set external value if CommCare has no value
+            return
         try:
             jsonpath = parse_jsonpath(self.jsonpath)
         except Exception as err:
@@ -204,16 +205,10 @@ class CaseProperty(ValueSource):
     """
     case_property: str
 
-    class IsNotBlank:
-        def validate(self, data):
-            if isinstance(data, str) and len(data):
-                return data
-            raise SchemaError(f"Value cannot be blank.")
-
     @classmethod
     def get_schema_params(cls) -> Tuple[Tuple, Dict]:
         (schema, *other_args), kwargs = super().get_schema_params()
-        schema.update({"case_property": cls.IsNotBlank()})
+        schema.update({"case_property": And(str, len)})
         return (schema, *other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
@@ -451,6 +446,124 @@ class CasePropertyConstantValue(ConstantValue, CaseProperty):
     pass
 
 
+@attr.s(auto_attribs=True, kw_only=True)
+class SupercaseValueSource(ValueSource):
+    """
+    A reference to a list of parent/host cases.
+
+    Evaluates nested ValueSource config, allowing for recursion.
+    """
+    supercase_value_source: dict
+
+    # Optional filters for indices
+    identifier: Optional[str] = None
+    referenced_type: Optional[str] = None
+    # relationship: Optional[Literal['child', 'extension']] = None  # Py3.8+
+    relationship: Optional[str] = None
+
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({
+            'supercase_value_source': And(dict, len),
+            SchemaOptional('identifier'): str,
+            SchemaOptional('referenced_type'): str,
+            SchemaOptional('relationship'): lambda r: r in ('child', 'extension'),
+        })
+        return (schema, *other_args), kwargs
+
+    def get_commcare_value(self, info):
+        values = []
+        for supercase_info in self._iter_supercase_info(info):
+            value_source = as_value_source(self.supercase_value_source)
+            value = value_source.get_commcare_value(supercase_info)
+            values.append(value)
+        return values
+
+    def get_import_value(self, external_data):
+        # OpenMRS Atom feed and FHIR API must build case blocks for
+        # related cases for this to be implemented
+        raise NotImplementedError
+
+    def set_external_value(self, external_data, info):
+        for i, supercase_info in enumerate(self._iter_supercase_info(info)):
+            value_source = as_value_source(self.supercase_value_source)
+            _subs_counters(value_source, i)
+            value_source.set_external_value(external_data, supercase_info)
+
+    def _iter_supercase_info(self, info: CaseTriggerInfo):
+
+        def filter_index(idx):
+            return (
+                (not self.identifier or idx.identifier == self.identifier)
+                and (not self.referenced_type or idx.referenced_type == self.referenced_type)
+                and (not self.relationship or idx.relationship == self.relationship)
+            )
+
+        case_accessor = CaseAccessors(info.domain)
+        case = case_accessor.get_case(info.case_id)
+        for index in case.live_indices:
+            if filter_index(index):
+                supercase = case_accessor.get_case(index.referenced_id)
+                yield get_case_trigger_info_for_case(
+                    supercase,
+                    [self.supercase_value_source],
+                )
+
+
+@attr.s(auto_attribs=True, kw_only=True)
+class SubcaseValueSource(ValueSource):
+    """
+    A reference to a list of child/extension cases.
+
+    Evaluates nested ValueSource config, allowing for recursion.
+    """
+    subcase_value_source: dict
+    case_types: Optional[List[str]] = None
+    is_closed: Optional[bool] = None
+
+    @classmethod
+    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+        (schema, *other_args), kwargs = super().get_schema_params()
+        schema.update({
+            'subcase_value_source': And(dict, len),
+            SchemaOptional('case_types'): list,
+            SchemaOptional('is_closed'): bool,
+        })
+        return (schema, *other_args), kwargs
+
+    def get_commcare_value(self, info: CaseTriggerInfo) -> Any:
+        values = []
+        for subcase_info in self._iter_subcase_info(info):
+            value_source = as_value_source(self.subcase_value_source)
+            value = value_source.get_commcare_value(subcase_info)
+            values.append(value)
+        return values
+
+    def get_import_value(self, external_data):
+        # OpenMRS Atom feed and FHIR API must build case blocks for
+        # related cases for this to be implemented
+        raise NotImplementedError
+
+    def set_external_value(self, external_data, info):
+        for i, subcase_info in enumerate(self._iter_subcase_info(info)):
+            value_source = as_value_source(self.subcase_value_source)
+            _subs_counters(value_source, i)
+            value_source.set_external_value(external_data, subcase_info)
+
+    def _iter_subcase_info(self, info: CaseTriggerInfo):
+        subcases = CaseAccessors(info.domain).get_reverse_indexed_cases(
+            [info.case_id],
+            self.case_types,
+            self.is_closed,
+        )
+        for subcase in subcases:
+            yield get_case_trigger_info_for_case(
+                subcase,
+                [self.subcase_value_source],
+            )
+
+
 def as_value_source(
     value_source_config: Union[dict, JsonDict],
 ) -> ValueSource:
@@ -575,3 +688,46 @@ def get_owner_location(domain, owner_id):
         return owner
     location_id = owner.get_location_id(domain)
     return SQLLocation.by_location_id(location_id) if location_id else None
+
+
+def get_case_trigger_info_for_case(case, value_source_configs):
+    case_properties = [c['case_property'] for c in value_source_configs
+                       if 'case_property' in c]
+    extra_fields = {p: case.get_case_property(p) for p in case_properties}
+    return CaseTriggerInfo(
+        domain=case.domain,
+        case_id=case.case_id,
+        type=case.type,
+        name=case.name,
+        owner_id=case.owner_id,
+        modified_by=case.modified_by,
+        extra_fields=extra_fields,
+    )
+
+
+def _subs_counters(value_source, counter0):
+    """
+    Substitutes "{counter0}" and "{counter1}" in value_source.jsonpath.
+
+    counter0 is a 0-indexed counter and counter1 is a 1-indexed counter.
+    They are used for incrementing indices.
+
+    >>> vs = as_value_source({
+    ...     'case_property': 'name',
+    ...     'jsonpath': '$.name[{counter0}].text',
+    ... })
+    >>> _subs_counters(vs, 3)
+    >>> vs.jsonpath
+    '$.name[3].text'
+
+    """
+    if counter0 is None:
+        return
+    if value_source.jsonpath and (
+        '{counter0}' in value_source.jsonpath
+        or '{counter1}' in value_source.jsonpath
+    ):
+        value_source.jsonpath = value_source.jsonpath.format(
+            counter0=counter0,
+            counter1=counter0 + 1,
+        )

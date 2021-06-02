@@ -68,8 +68,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         showDetail: function (caseId, detailTabIndex, isPersistent) {
             menusController.selectDetail(caseId, detailTabIndex, isPersistent);
         },
-        listSessions: function () {
-            sessionsController.listSessions();
+        listSessions: function (pageNumber, pageSize) {
+            sessionsController.listSessions(pageNumber, pageSize);
         },
         getSession: function (sessionId) {
             FormplayerFrontend.getChannel().request("getSession", sessionId);
@@ -92,6 +92,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             response.appId = urlObject.appId;
+
+             if (response.notification) {
+                FormplayerFrontend.getChannel().request("handleNotification", response.notification);
+             }
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
@@ -158,6 +162,14 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
+    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setCasesPerPage(casesPerPage);
+        Util.setUrlToObject(urlObject);
+        Util.savePerPageLimitCookie('cases', casesPerPage);
+        API.listMenus();
+    });
+
     FormplayerFrontend.on("menu:sort", function (newSortIndex) {
         var urlObject = Util.currentUrlToObject();
         var currentSortIndex = urlObject.sortIndex;
@@ -198,9 +210,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.showDetail(caseId, detailTabIndex, isPersistent);
     });
 
-    FormplayerFrontend.on("sessions", function () {
-        FormplayerFrontend.navigate("/sessions");
-        API.listSessions();
+    FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
+        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {
@@ -220,6 +232,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         var options = {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
+            'queryData': urlObject.queryData,
         };
         hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
     });

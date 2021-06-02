@@ -70,6 +70,6 @@ def should_exclude_invalid_periods(domain):
     from corehq.apps.commtrack.models import CommtrackConfig
     if domain:
         config = CommtrackConfig.for_domain(domain)
-        if config:
-            return config.consumption_config.exclude_invalid_periods
+        if config and hasattr(config, 'consumptionconfig'):
+            return config.consumptionconfig.exclude_invalid_periods
     return False

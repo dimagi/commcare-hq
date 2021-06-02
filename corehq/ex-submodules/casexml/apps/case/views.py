@@ -1,4 +1,6 @@
 from django.utils.translation import ugettext as _
+
+from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
 from corehq.apps.users.util import cached_owner_id_to_display
 
 
@@ -30,51 +32,16 @@ class CaseDisplayWrapper(object):
             {
                 "layout": [
                     [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                            "has_history": True,
-                        },
-                        {
-                            "expr": "opened_on",
-                            "name": _("Opened On"),
-                            "parse_date": True,
-                            'is_phone_time': True,
-                        },
-                        {
-                            "expr": "modified_on",
-                            "name": _("Modified On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
-                        {
-                            "expr": "closed_on",
-                            "name": _("Closed On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
+                        DisplayConfig(name=_("Name"), expr="name", has_history=True),
+                        DisplayConfig(name=_("Opened On"), expr="opened_on", process="date", is_phone_time=True),
+                        DisplayConfig(name=_("Modified On"), expr="modified_on", process="date", is_phone_time=True),
+                        DisplayConfig(name=_("Closed On"), expr="closed_on", process="date", is_phone_time=True),
                     ],
                     [
-                        {
-                            "expr": "type",
-                            "name": _("Case Type"),
-                            "format": '<code>{0}</code>',
-                        },
-                        {
-                            "expr": "user_id",
-                            "name": _("Last Submitter"),
-                            "process": 'doc_info',
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Owner"),
-                            "process": 'doc_info',
-                            "has_history": True,
-                        },
-                        {
-                            "expr": "_id",
-                            "name": _("Case ID"),
-                        },
+                        DisplayConfig(name=_("Case Type"), expr="type", format="<code>{0}</code>"),
+                        DisplayConfig(name=_("Last Submitter"), expr="user_id", process="doc_info"),
+                        DisplayConfig(name=_("Owner"), expr="owner_id", process="doc_info", has_history=True),
+                        DisplayConfig(name=_("Case ID"), expr="_id"),
                     ],
                 ],
             }
@@ -93,30 +60,11 @@ class CaseDisplayWrapper(object):
     @property
     def related_cases_columns(self):
         return [
-            {
-                'name': _('Status'),
-                'expr': "status"
-            },
-            {
-                'name': _('Case Type'),
-                'expr': "type",
-            },
-            {
-                'name': _('Owner'),
-                'expr': lambda c: cached_owner_id_to_display(c.get('owner_id')),
-            },
-            {
-                'name': _('Date Opened'),
-                'expr': "opened_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            }
+            DisplayConfig(name=_('Status'), expr='status'),
+            DisplayConfig(name=_('Case Type'), expr='type'),
+            DisplayConfig(name=_('Owner'), expr=lambda c: cached_owner_id_to_display(c.get('owner_id'))),
+            DisplayConfig(name=_('Date Opened'), expr='opened_on', process="date", is_phone_time=True),
+            DisplayConfig(name=_('Date Modified'), expr='modified_on', process="date", is_phone_time=True),
         ]
 
     @property
@@ -151,29 +99,14 @@ class SupplyPointDisplayWrapper(CaseDisplayWrapper):
             {
                 "layout": [
                     [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                        },
-                        {
-                            "expr": "location_type",
-                            "name": _("Type"),
-                        },
-                        {
-                            "expr": "location_site_code",
-                            "name": _("Code"),
-                        },
+                        DisplayConfig(name=_("Name"), expr="name"),
+                        DisplayConfig(name=_("Type"), expr="location_type"),
+                        DisplayConfig(name=_("Code"), expr="location_site_code"),
                     ],
                     [
-                        {
-                            "expr": "location_parent_name",
-                            "name": _("Parent Location"),
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Location"),
-                            "process": "doc_info",
-                        },
+                        DisplayConfig(name=_("Parent Location"), expr="location_parent_name"),
+                        DisplayConfig(name=_("Location"), expr="owner_id"),
+                        DisplayConfig(name=_("Location"), expr="owner_id", process="doc_info"),
                     ],
                 ],
             }

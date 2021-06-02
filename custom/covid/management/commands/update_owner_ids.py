@@ -30,13 +30,20 @@ class Command(CaseUpdateCommand):
 
         locations_objects = {}
         case_blocks = []
+        errors = []
         skip_count = 0
         for case in accessor.iter_cases(case_ids):
             owner_id = case.get_case_property('owner_id')
             if owner_id in locations_objects:
                 location_obj = locations_objects[owner_id]
             else:
-                location_obj = SQLLocation.objects.get(location_id=owner_id)
+                try:
+                    location_obj = SQLLocation.objects.get(location_id=owner_id)
+                except SQLLocation.DoesNotExist:
+                    errors.append("Location does not exist associated with the owner_id:{}. "
+                                  "Case:{}".format(owner_id, case.case_id))
+                    skip_count += 1
+                    continue
                 locations_objects[owner_id] = location_obj
             if location_obj:
                 children = location_obj.get_children()
@@ -58,3 +65,5 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(chunk, domain, device_id=DEVICE_ID, user_id=user_id)
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
+
+        self.log_data(domain, "update_owner_ids", case_type, len(case_ids), total, errors)

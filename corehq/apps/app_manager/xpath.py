@@ -85,7 +85,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         # If that changes, amend the error message accordingly.
         raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
-        '#user': UserCaseXPath().case(),
+        '#user': UsercaseXPath().case(),
         '#session/': session_var('', path=''),
     }
     if fixture_xpath:
@@ -219,7 +219,7 @@ class CaseTypeXpath(CaseSelectionXPath):
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
 
-class UserCaseXPath(XPath):
+class UsercaseXPath(XPath):
 
     def case(self):
         user_id = session_var(var='userid', path='context')

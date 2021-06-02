@@ -1,9 +1,14 @@
 import datetime
+from collections import namedtuple
+from functools import lru_cache
 
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.utils.functional import cached_property
 from django.db import models
-from collections import namedtuple
 
+from jsonfield import JSONField as jsonfield_JSONField
+
+from dimagi.utils.logging import notify_exception
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
@@ -106,8 +111,7 @@ class BouncedEmail(models.Model):
 
         for email_address in list_of_emails:
             if (BLOCKED_EMAIL_DOMAIN_RECIPIENTS.enabled(email_address)
-                or cls.is_bad_email_format(email_address)
-            ):
+                    or cls.is_bad_email_format(email_address)):
                 bad_emails.add(email_address)
 
         list_of_emails = set(list_of_emails).difference(bad_emails)
@@ -215,3 +219,146 @@ class ComplaintBounceMeta(models.Model):
     feedback_type = models.CharField(max_length=50, blank=True, null=True)
     sub_type = models.CharField(max_length=50, blank=True, null=True)
     destination = ArrayField(models.EmailField(), default=list, blank=True, null=True)
+
+
+class NullJsonField(jsonfield_JSONField):
+    """A JSONField that stores null when its value is empty
+
+    Any value stored in this field will be discarded and replaced with
+    the default if it evaluates to false during serialization.
+    """
+
+    def __init__(self, **kw):
+        kw.setdefault("null", True)
+        super(NullJsonField, self).__init__(**kw)
+        assert self.null
+
+    def get_db_prep_value(self, value, *args, **kw):
+        if not value:
+            value = None
+        return super(NullJsonField, self).get_db_prep_value(value, *args, **kw)
+
+    def to_python(self, value):
+        value = super(NullJsonField, self).to_python(value)
+        return self.get_default() if value is None else value
+
+    def pre_init(self, value, obj):
+        value = super(NullJsonField, self).pre_init(value, obj)
+        return self.get_default() if value is None else value
+
+
+class TruncatingCharField(models.CharField):
+    """
+    http://stackoverflow.com/a/3460942
+    """
+
+    def get_prep_value(self, value):
+        value = super().get_prep_value(value)
+        if value:
+            return value[:self.max_length]
+        return value
+
+
+class ForeignValue:
+    """Property descriptor for Django foreign key refs with a primitive value
+
+    This is useful for cases where the object referenced by the foreign
+    key holds a single primitive value named `value`. It eliminates
+    boilerplate indirection imposed by the foreign key, allowing the
+    value to be referenced as a simple attribute. This pattern is used
+    to save space when the set of values is relatively small while each
+    value is much larger than a (usually integer) foreign key.
+
+    An LRU cache is used to keep recently fetched related objects in
+    memory rather than fetching from the database each time a new value
+    is set or fetched. Pass `cache_size=0` disable the LRU-cache. Note that the
+    `__set__` and `__get__` use different caches (each of the same size).
+
+    Note: corehq.util.test_utils.patch_foreign_value_caches for how the caches
+    are cleared in tests.
+    """
+
+    def __init__(self, foreign_key: models.ForeignKey, truncate=False, cache_size=1000):
+        self.fk = foreign_key
+        self.truncate = truncate
+        self.cache_size = cache_size
+
+    def __set_name__(self, owner, name):
+        other_names = getattr(owner, "_ForeignValue_names", [])
+        owner._ForeignValue_names = other_names + [name]
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        fobj_id = getattr(obj, f"{self.fk.name}_id")
+        if fobj_id is None:
+            fobj = getattr(obj, self.fk.name)
+            return fobj.value if fobj is not None else None
+        return self.get_value(fobj_id)
+
+    @cached_property
+    def get_value(self):
+        def get_value(fk_id):
+            try:
+                return manager.filter(pk=fk_id).values_list('value', flat=True)[0]
+            except IndexError:
+                return None
+        manager = self.fk.related_model.objects
+        if self.cache_size:
+            get_value = lru_cache(self.cache_size)(get_value)
+        return get_value
+
+    def __set__(self, obj, value):
+        if value is None:
+            if getattr(obj, self.fk.name) is not None:
+                setattr(obj, self.fk.name, None)
+            return
+        if self.truncate:
+            value = value[:self.max_length]
+        fobj = self.get_related(value)
+        setattr(obj, self.fk.name, fobj)
+
+    @cached_property
+    def max_length(self):
+        return self.fk.related_model._meta.get_field("value").max_length
+
+    @cached_property
+    def get_related(self):
+        def get_related(value):
+            try:
+                return manager.get_or_create(value=value)[0]
+            except model.MultipleObjectsReturned:
+                notify_exception(None, f"{model} multiple objects returned. "
+                    "Does your 'value' field have a unique constraint?")
+                return manager.filter(value=value).order_by("id").first()
+        model = self.fk.related_model
+        manager = self.fk.related_model.objects
+        if self.cache_size:
+            get_related = lru_cache(self.cache_size)(get_related)
+        return get_related
+
+    @staticmethod
+    def get_names(cls):
+        """Get a list of ForeignValue attribute names of the given class
+
+        Raises `AttributeError` if the class has no `ForeignValue` attributes.
+        """
+        return cls._ForeignValue_names
+
+
+def foreign_value_init(cls):
+    """Class decorator that adds a ForeignValue-compatible __init__ method
+
+    Use this on classes with `ForeignValue` attributes that want to
+    accept values for those attributes passed to their constructor.
+    """
+    def __init__(self, *args, **kw):
+        values = {n: kw.pop(n) for n in names if n in kw}
+        super_init(self, *args, **kw)
+        for name, value in values.items():
+            setattr(self, name, value)
+
+    names = ForeignValue.get_names(cls)
+    super_init = cls.__init__
+    cls.__init__ = __init__
+    return cls

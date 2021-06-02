@@ -19,7 +19,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
     get_web_user_count,

@@ -499,30 +499,33 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
             self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
-    def test_case_detail_tabs_with_nodesets_for_sorting(self, *args):
-        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
-        app.modules[0].case_details.long.sort_nodeset_columns = True
-        xml_partial = """
-        <partial>
-          <field>
-            <header width="0">
-              <text/>
-            </header>
-            <template width="0">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </template>
-            <sort direction="ascending" order="1" type="string">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </sort>
-          </field>
-        </partial>"""
+    def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
+        app_json = self.get_json("app_case_detail_tabs_with_nodesets")
+        app = Application.wrap(app_json)
+
+        # update app to add in 2 new columns both with the field 'gender'
+
+        # 1. add a column to the 2nd tab that is marked as 'search only'.
+        #    This should get sorting applied to it
+        tab_spans = app.modules[0].case_details.long.get_tab_spans()
+
+        # 2. add a second column to the last tab which already has a 'gender' field
+        #    This should result in the 'gender' field being displayed as well
+        #    as being used for sorting
+        sorted_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        app.modules[0].case_details.long.columns.insert(tab_spans[1][1] - 1, sorted_gender_col)
+        plain_gender_col = DetailColumn.from_json(
+            app_json["modules"][0]["case_details"]["long"]["columns"][-1]
+        )
+        plain_gender_col.format = "plain"
+        index = len(app.modules[0].case_details.long.columns) - 1
+        app.modules[0].case_details.long.columns.insert(index, plain_gender_col)
         self.assertXmlPartialEqual(
-            xml_partial, app.create_suite(),
-            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
+            self.get_xml("suite-case-detail-tabs-with-nodesets-for-sorting-search-only"),
+            app.create_suite(),
+            './detail[@id="m0_case_long"]')
 
     def test_case_detail_instance_adding(self, *args):
         # Tests that post-processing adds instances used in calculations

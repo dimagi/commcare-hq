@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://hl7.org/fhir/json-schema/BackboneElement",
+  "id": "file:BackboneElement.schema.json",
   "$ref": "#/definitions/BackboneElement",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
     "BackboneElement": {
       "allOf": [
         {
-          "$ref": "Element#/definitions/Element"
+          "$ref": "Element.schema.json#/definitions/Element"
         },
         {
           "description": "Base definition for all elements that are defined inside a resource - but not those in a data type.",

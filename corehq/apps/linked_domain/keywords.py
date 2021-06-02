@@ -1,12 +1,10 @@
 import uuid
 
-from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.dbaccessors import get_brief_app_docs_in_domain
-from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.apps.linked_domain.applications import get_downstream_app_id
+from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
 from corehq.apps.sms.models import Keyword
-from corehq.util.quickcache import quickcache
 
 
 def create_linked_keyword(domain_link, keyword_id):
@@ -43,9 +41,9 @@ def create_linked_keyword(domain_link, keyword_id):
     return keyword.id
 
 
-def update_keyword(domain_link, linked_keyword_id):
+def update_keyword(domain_link, keyword_id):
     try:
-        linked_keyword = Keyword.objects.get(id=linked_keyword_id)
+        linked_keyword = Keyword.objects.get(id=keyword_id)
     except Keyword.DoesNotExist:
         raise DomainLinkError(
             _("Linked keyword could not be found")
@@ -72,21 +70,35 @@ def _update_actions(domain_link, linked_keyword, keyword_actions):
         keyword_action.keyword = linked_keyword
         if keyword_action.app_id is not None:
             try:
-                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
-                    keyword_action.app_id
-                ]
-            except KeyError:
+                app_id = get_downstream_app_id(domain_link.linked_domain, keyword_action.app_id)
+            except MultipleDownstreamAppsError:
+                raise DomainLinkError(_("Keyword {keyword} references an application that has multiple linked "
+                                        "applications. It cannot be updated.").format(
+                                            keyword=linked_keyword.keyword))
+            if not app_id:
                 raise DomainLinkError(_("Keyword {keyword} references an application "
                                         "that has not been linked to {linked_domain}").format(
                                             keyword=linked_keyword.keyword,
                                             linked_domain=domain_link.linked_domain))
+            keyword_action.app_id = app_id
         keyword_action.save()
 
 
-@quickcache(vary_on=['domain'], skip_arg=lambda _: settings.UNIT_TESTING, timeout=5 * 60)
-def get_master_app_to_linked_app(domain):
-    return {
-        doc["family_id"]: doc["_id"]
-        for doc in get_brief_app_docs_in_domain(domain)
-        if doc.get("family_id", None) is not None
-    }
+def unlink_keywords_in_domain(domain):
+    unlinked_keywords = []
+    keywords = Keyword.objects.filter(domain=domain, upstream_id__isnull=False)
+    for keyword in keywords:
+        unlinked_keyword = unlink_keyword(keyword)
+        unlinked_keywords.append(unlinked_keyword)
+
+    return unlinked_keywords
+
+
+def unlink_keyword(keyword):
+    if not keyword.upstream_id:
+        return None
+
+    keyword.upstream_id = None
+    keyword.save()
+
+    return keyword

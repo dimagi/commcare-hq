@@ -16,8 +16,12 @@ from casexml.apps.case.models import CommCareCase
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
-    CommtrackActionConfig,
+    ActionConfig,
+    AlertConfig,
     CommtrackConfig,
+    ConsumptionConfig,
+    StockLevelsConfig,
+    StockRestoreConfig,
     SupplyPointCase,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -32,7 +36,7 @@ CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
-    actions = {action.keyword: action for action in config.actions}
+    actions = {action.keyword: action for action in config.all_actions}
     products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
 
     ret = {}
@@ -82,37 +86,42 @@ def _create_commtrack_config_if_needed(domain):
     if CommtrackConfig.for_domain(domain):
         return
 
-    CommtrackConfig(
-        domain=domain,
-        actions=[
-            CommtrackActionConfig(
-                action='receipts',
-                keyword='r',
-                caption='Received',
-            ),
-            CommtrackActionConfig(
-                action='consumption',
-                keyword='c',
-                caption='Consumed',
-            ),
-            CommtrackActionConfig(
-                action='consumption',
-                subaction='loss',
-                keyword='l',
-                caption='Losses',
-            ),
-            CommtrackActionConfig(
-                action='stockonhand',
-                keyword='soh',
-                caption='Stock on hand',
-            ),
-            CommtrackActionConfig(
-                action='stockout',
-                keyword='so',
-                caption='Stock-out',
-            ),
-        ],
-    ).save()
+    config = CommtrackConfig(domain=domain)
+    config.save()   # must be saved before submodels can be saved
+
+    AlertConfig(commtrack_config=config).save()
+    ConsumptionConfig(commtrack_config=config).save()
+    StockLevelsConfig(commtrack_config=config).save()
+    StockRestoreConfig(commtrack_config=config).save()
+    config.set_actions([
+        ActionConfig(
+            action='receipts',
+            keyword='r',
+            caption='Received',
+        ),
+        ActionConfig(
+            action='consumption',
+            keyword='c',
+            caption='Consumed',
+        ),
+        ActionConfig(
+            action='consumption',
+            subaction='loss',
+            keyword='l',
+            caption='Losses',
+        ),
+        ActionConfig(
+            action='stockonhand',
+            keyword='soh',
+            caption='Stock on hand',
+        ),
+        ActionConfig(
+            action='stockout',
+            keyword='so',
+            caption='Stock-out',
+        ),
+    ])
+    config.save()   # save actions, and sync couch
 
 
 def _enable_commtrack_previews(domain):
@@ -162,33 +171,6 @@ def due_date_monthly(day, from_end=False, past_period=0):
     y = month_seq // 12
     m = month_seq % 12 + 1
     return date(y, m, min(day, monthrange(y, m)[1]))
-
-
-def submit_mapping_case_block(user, index):
-    mapping = user.get_location_map_case()
-
-    if mapping:
-        caseblock = CaseBlock.deprecated_init(
-            create=False,
-            case_id=mapping.case_id,
-            index=index
-        )
-    else:
-        caseblock = CaseBlock.deprecated_init(
-            create=True,
-            case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(user),
-            owner_id=user._id,
-            index=index,
-            case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
-            user_id=const.COMMTRACK_USERNAME,
-        )
-
-    submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml(), encoding='utf-8'),
-        user.domain,
-        device_id=__name__ + ".submit_mapping_case_block"
-    )
 
 
 def location_map_case_id(user):

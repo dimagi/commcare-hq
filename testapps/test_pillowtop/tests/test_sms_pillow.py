@@ -5,6 +5,7 @@ from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
+from corehq.apps.sms.tests.data_generator import create_fake_sms
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.sms import get_sql_sms_pillow
@@ -33,80 +34,6 @@ class SqlSMSPillowTest(TestCase):
         MessagingEvent.objects.filter(domain=self.domain).delete()
         super(SqlSMSPillowTest, self).tearDown()
 
-    def _create_sms(self):
-        event = MessagingEvent.objects.create(
-            domain=self.domain,
-            date=datetime(2016, 1, 1, 12, 0),
-            source=MessagingEvent.SOURCE_OTHER,
-            source_id=None,
-            content_type=MessagingEvent.CONTENT_SMS,
-            app_id=None,
-            form_unique_id=None,
-            form_name=None,
-            status=MessagingEvent.STATUS_COMPLETED,
-            error_code=None,
-            additional_error_text=None,
-            recipient_type=None,
-            recipient_id=None
-        )
-        subevent = MessagingSubEvent.objects.create(
-            parent=event,
-            date=datetime(2016, 1, 1, 12, 0),
-            recipient_type=MessagingEvent.RECIPIENT_CASE,
-            recipient_id=None,
-            content_type=MessagingEvent.CONTENT_SMS,
-            app_id=None,
-            form_unique_id=None,
-            form_name=None,
-            xforms_session=None,
-            case_id=None,
-            status=MessagingEvent.STATUS_COMPLETED,
-            error_code=None,
-            additional_error_text=None
-        )
-        # Some of the values here don't apply for a simple outgoing SMS,
-        # but the point of this is to just test the serialization and that
-        # everything makes it to elasticsearch
-        self.sms_dict = dict(
-            domain=self.domain,
-            date=datetime(2016, 1, 1, 12, 0),
-            couch_recipient_doc_type='CommCareCase',
-            couch_recipient='fake-case-id',
-            phone_number='99912345678',
-            direction='O',
-            error=False,
-            system_error_message='n/a',
-            system_phone_number='00000',
-            backend_api='TEST',
-            backend_id='fake-backend-id',
-            billed=False,
-            workflow='default',
-            xforms_session_couch_id='fake-session-couch-id',
-            reminder_id='fake-reminder-id',
-            location_id='fake-location-id',
-            messaging_subevent_id=subevent.pk,
-            text='test sms text',
-            raw_text='raw text',
-            datetime_to_process=datetime(2016, 1, 1, 11, 59),
-            processed=True,
-            num_processing_attempts=1,
-            queued_timestamp=datetime(2016, 1, 1, 11, 58),
-            processed_timestamp=datetime(2016, 1, 1, 12, 1),
-            domain_scope=self.domain,
-            ignore_opt_out=False,
-            backend_message_id='fake-backend-message-id',
-            chat_user_id='fake-user-id',
-            invalid_survey_response=False,
-            fri_message_bank_lookup_completed=True,
-            fri_message_bank_message_id='bank-id',
-            fri_id='12345',
-            fri_risk_profile='X',
-            custom_metadata={'a': 'b'},
-        )
-        self.sms = SMS.objects.create(
-            **self.sms_dict
-        )
-
     def _to_json(self, sms_dict, sms):
         result = {'_id': sms.couch_id, 'id': sms.pk}
         for k, v in sms_dict.items():
@@ -123,8 +50,9 @@ class SqlSMSPillowTest(TestCase):
         kafka_seq = get_topic_offset(topics.SMS)
 
         # create an sms
-        self._create_sms()
-        sms_json = self._to_json(self.sms_dict, self.sms)
+        sms_and_dict = create_fake_sms(self.domain)
+        self.sms = sms_and_dict.sms
+        sms_json = self._to_json(sms_and_dict.sms_dict, self.sms)
 
         # test serialization
         self.assertEqual(self.sms.to_json(), sms_json)

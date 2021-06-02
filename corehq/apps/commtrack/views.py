@@ -1,7 +1,10 @@
 import copy
+import decimal
 import json
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db.utils import DataError
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -28,7 +31,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 
 from .forms import CommTrackSettingsForm, ConsumptionForm
-from .models import CommtrackActionConfig, StockRestoreConfig
+from .models import ActionConfig, StockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
 
@@ -82,10 +85,12 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     @memoized
     def commtrack_settings_form(self):
         initial = self.commtrack_settings.to_json()
-        initial.update(dict(('consumption_' + k, v) for k, v in
-            self.commtrack_settings.consumption_config.to_json().items()))
-        initial.update(dict(('stock_' + k, v) for k, v in
-            self.commtrack_settings.stock_levels_config.to_json().items()))
+        if hasattr(self.commtrack_settings, 'consumptionconfig'):
+            initial.update(dict(('consumption_' + k, v) for k, v in
+                self.commtrack_settings.consumptionconfig.to_json().items()))
+        if hasattr(self.commtrack_settings, 'stocklevelsconfig'):
+            initial.update(dict(('stock_' + k, v) for k, v in
+                self.commtrack_settings.stocklevelsconfig.to_json().items()))
 
         if self.request.method == 'POST':
             return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
@@ -102,7 +107,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         """
 
         if self.commtrack_settings.sync_consumption_fixtures:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+            self.domain_object.commtrack_settings.stockrestoreconfig = StockRestoreConfig(
                 section_to_consumption_types={
                     'stock': 'consumption'
                 },
@@ -112,39 +117,54 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 use_dynamic_product_list=True,
             )
         else:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+            self.domain_object.commtrack_settings.stockrestoreconfig = StockRestoreConfig()
 
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
-            previous_config = copy.copy(self.commtrack_settings)
-            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
-            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
+            previous_json = copy.copy(self.commtrack_settings.to_json())
+            for attr in ('use_auto_consumption', 'sync_consumption_fixtures', 'individual_consumption_defaults'):
+                setattr(self.commtrack_settings, attr, bool(data.get(attr)))
 
             self.set_ota_restore_config()
 
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:
                 if data.get('stock_' + field):
-                    setattr(self.commtrack_settings.stock_levels_config, field,
+                    setattr(self.commtrack_settings.stocklevelsconfig, field,
                             data['stock_' + field])
 
             consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
-                    setattr(self.commtrack_settings.consumption_config, field,
+                    setattr(self.commtrack_settings.consumptionconfig, field,
                             data['consumption_' + field])
 
-            self.commtrack_settings.save()
+            try:
+                self.commtrack_settings.save()
+                for attr in ('consumptionconfig', 'stockrestoreconfig', 'stocklevelsconfig'):
+                    submodel = getattr(self.commtrack_settings, attr)
+                    submodel.commtrack_settings = self.commtrack_settings
+                    submodel.save()
+            except (decimal.InvalidOperation, DataError):      # capture only decimal errors and integer overflows
+                try:
+                    # Get human-readable messages
+                    self.commtrack_settings.stocklevelsconfig.full_clean()
+                    self.commtrack_settings.consumptionconfig.full_clean()
+                except ValidationError as e:
+                    for key, msgs in dict(e).items():
+                        for msg in msgs:
+                            messages.error(request, _("Could not save {}: {}").format(key, msg))
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config
                 loc_type.save()
 
-            if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
-                or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
-            ):
+            same_flag = previous_json['use_auto_consumption'] == self.commtrack_settings.use_auto_consumption
+            same_config = (
+                previous_json['consumption_config'] == self.commtrack_settings.consumptionconfig.to_json()
+            )
+            if (not same_flag or not same_config):
                 # kick off delayed consumption rebuild
                 recalculate_domain_consumption_task.delay(self.domain)
                 messages.success(request, _("Settings updated! Your updated consumption settings may take a "
@@ -198,7 +218,7 @@ class SMSSettingsView(BaseCommTrackManageView):
     @property
     def settings_context(self):
         return {
-            'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.actions],
+            'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.all_actions],
         }
 
     # FIXME
@@ -218,17 +238,17 @@ class SMSSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
-        def mk_action(action):
-            return CommtrackActionConfig(**{
-                    'action': action['type'],
-                    'subaction': action['caption'],
-                    'keyword': action['keyword'],
-                    'caption': action['caption'],
-                })
+        def make_action(action):
+            return ActionConfig(**{
+                'action': action['type'],
+                'subaction': action['caption'],
+                'keyword': action['keyword'],
+                'caption': action['caption'],
+            })
 
         # TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
+        self.domain_object.commtrack_settings.set_actions([make_action(a) for a in payload['actions']])
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)

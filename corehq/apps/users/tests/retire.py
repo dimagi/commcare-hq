@@ -17,7 +17,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -190,7 +190,8 @@ class RetireUserTestCase(TestCase):
 
         # check that the index is removed via a new form
         child = CaseAccessors(self.domain).get_case(child_id)
-        self.assertEqual(0, len(child.indices))
+        self.assertEqual(1, len(child.indices))
+        self.assertTrue(child.indices[0].is_deleted)
         self.assertEqual(2, len(child.xform_ids))
 
     @run_with_all_backends
@@ -291,15 +292,15 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):
-        from corehq.apps.callcenter.sync_user_case import sync_usercase
+        from corehq.apps.callcenter.sync_usercase import sync_usercase
         sync_usercase(self.commcare_user)
 
-        user_case_id = self.commcare_user.get_usercase_id()
+        usercase_id = self.commcare_user.get_usercase_id()
 
         # other user submits form against the case (should get deleted)
         caseblock = CaseBlock.deprecated_init(
             create=False,
-            case_id=user_case_id,
+            case_id=usercase_id,
         )
         submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
@@ -309,15 +310,15 @@ class RetireUserTestCase(TestCase):
         form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
         self.assertEqual(0, len(form_ids))
 
-        user_case = self.commcare_user.get_usercase()
-        self.assertEqual(2, len(user_case.xform_ids))
+        usercase = self.commcare_user.get_usercase()
+        self.assertEqual(2, len(usercase.xform_ids))
 
         self.commcare_user.retire(deleted_by=None)
 
-        for form_id in user_case.xform_ids:
+        for form_id in usercase.xform_ids:
             self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
 
-        self.assertTrue(CaseAccessors(self.domain).get_case(user_case_id).is_deleted)
+        self.assertTrue(CaseAccessors(self.domain).get_case(usercase_id).is_deleted)
 
     @run_with_all_backends
     def test_forms_touching_live_case_not_deleted(self):
