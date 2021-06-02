@@ -364,31 +364,6 @@ def get_grouped_datasets_with_template(group_by, template_dataset, data_list):
 
     return datasets
 
-# def get_grouped_datasets_with_template(template={}, group_by='', data_list=[]):
-#     def get_items_from_list_with_key_value(key, value, datalist):
-#         relevant_items = []
-#         for data_item in datalist:
-#             if data_item[key] == value:
-#                 data_item.pop(key)
-#                 relevant_items.append(data_item)
-#                 datalist.remove(data_item)
-#
-#         return relevant_items
-#
-#     data_list_copy = copy.deepcopy(data_list)
-#     elements_to_group_by = set([data_list_item[group_by] for data_list_item in data_list_copy])
-#
-#     grouped_data_list = []
-#     for group_by_element in elements_to_group_by:
-#         grouped_data_template = copy.deepcopy(template)
-#
-#         grouped_data_template[group_by] = group_by_element
-#         grouped_data_template['dataValues'] = get_items_from_list_with_key_value(group_by, group_by_element, data_list_copy)
-#
-#         grouped_data_list.append(grouped_data_template)
-#
-#     return grouped_data_list
-
 
 def get_date_range(frequency: str, send_date: date) -> DateSpan:
     if frequency == SEND_FREQUENCY_WEEKLY:
