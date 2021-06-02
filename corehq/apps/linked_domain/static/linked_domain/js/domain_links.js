@@ -154,7 +154,7 @@ hqDefine("linked_domain/js/domain_links", [
         var self = {};
         self.parent = manageDomainsViewModel;
         self.availableDomains = availableDomains;
-        self.value = ko.observable("");
+        self.value = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
             // TODO: make rmi call to create domain link
@@ -164,7 +164,10 @@ hqDefine("linked_domain/js/domain_links", [
                                             "remote_base_url": "",
                                             "last_update": ""};
             self.parent.newlyAddedDomainLinks.unshift(DomainLink(domainLinkResponse));
-            // TODO: remove element from availableDomains
+            self.availableDomains = _.filter(self.availableDomains, function (item) {
+                return item != viewModel.value();
+            });
+            self.value(null);
             self.parent.goToPage(1);
         };
         return self;
