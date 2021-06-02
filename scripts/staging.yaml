@@ -75,7 +75,6 @@ branches:
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-cleanup-errors  # Biyeun 26 May
     - bmb/sso-fix-iframe-login  # Biyeun 27 May
-    - bmb/sso-next-redirect-test  # Biyeun 27 May
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
@@ -83,4 +82,5 @@ branches:
     - gh/clear-cache-in-set-toggle # Graham June 1
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
+    - bmb/sso-redirect  # Biyeun June 2
 submodules: { }
