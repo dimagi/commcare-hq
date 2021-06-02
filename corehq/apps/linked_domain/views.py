@@ -96,6 +96,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.toggles import ERM_DEVELOPMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -257,6 +258,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'is_linked_domain': bool(master_link),
             'is_master_domain': bool(len(linked_domains)),
+            'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
                 'available_domains': available_domains_to_link,
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
