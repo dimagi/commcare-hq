@@ -99,7 +99,7 @@ hqDefine("linked_domain/js/domain_links", [
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.linked_domain(),
             }).done(function () {
-                self.domain_links = self.domain_links.filter(function(item) {
+                self.domain_links = self.domain_links.filter(function (item) {
                     return item !== link;
                 });
                 self.goToPage(self.currentPage);
