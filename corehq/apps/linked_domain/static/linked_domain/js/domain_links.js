@@ -6,6 +6,7 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/alert_user',
     'hqwebapp/js/multiselect_utils',
     'hqwebapp/js/components.ko', // for pagination
+    'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
     RMI,
     initialPageData,
