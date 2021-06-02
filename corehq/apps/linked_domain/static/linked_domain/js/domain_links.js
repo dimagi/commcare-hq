@@ -159,13 +159,13 @@ hqDefine("linked_domain/js/domain_links", [
         self.addDownstreamDomain = function (viewModel) {
             // TODO: make rmi call to create domain link
             var domainLinkResponse = {"linked_domain": viewModel.value(),
-                                            "is_remote": false,
-                                            "master_domain": self.parent.domain,
-                                            "remote_base_url": "",
-                                            "last_update": ""};
+                "is_remote": false,
+                "master_domain": self.parent.domain,
+                "remote_base_url": "",
+                "last_update": ""};
             self.parent.newlyAddedDomainLinks.unshift(DomainLink(domainLinkResponse));
             self.availableDomains = _.filter(self.availableDomains, function (item) {
-                return item != viewModel.value();
+                return item !== viewModel.value();
             });
             self.value(null);
             self.parent.goToPage(1);
@@ -196,7 +196,7 @@ hqDefine("linked_domain/js/domain_links", [
             $("#ko-tabs-manage-downstream").koApplyBindings(model);
         }
 
-        var addDownstreamDomainModal = AddDownstreamDomainModal(model, view_data.available_domains)
+        var addDownstreamDomainModal = AddDownstreamDomainModal(model, view_data.available_domains);
         if ($("#new-downstream-domain-modal").length) {
             $("#new-downstream-domain-modal").koApplyBindings(addDownstreamDomainModal);
         }
