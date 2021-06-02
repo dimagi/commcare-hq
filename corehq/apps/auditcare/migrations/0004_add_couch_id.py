@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             state_operations=[
                 migrations.AddIndex(
                     model_name='accessaudit',
-                    index=models.Index(fields=['couch_id'], name=ACCESS_INDEX),
+                    index=models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False), name=ACCESS_INDEX),
                 ),
             ]
         ),
