@@ -47,7 +47,7 @@ class DataSetMapForm(forms.ModelForm):
     )
     data_set_id = forms.CharField(
         label=_('DataSetID'),
-        help_text=_('The DHIS2 DataSet ID to which this DataSet adds value.'),
+        help_text=_('The DHIS2 ID of this DataSet'),
         validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
         required=True,
     )
