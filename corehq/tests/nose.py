@@ -28,6 +28,7 @@ from django_nose.plugin import DatabaseContext
 from mock import Mock, patch
 from nose.plugins import Plugin
 from nose.tools import nottest
+from requests.exceptions import HTTPError
 
 from dimagi.utils.parsing import string_to_boolean
 
@@ -338,7 +339,7 @@ def flush_databases():
     for db in get_all_test_dbs():
         try:
             db.flush()
-        except ResourceNotFound:
+        except (ResourceNotFound, HTTPError):
             pass
     call_command('flush', interactive=False)
 
