@@ -120,6 +120,8 @@
             </div>
           </div>
           <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
@@ -135,6 +137,8 @@
             </div>
           </div>
           <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
             <!-- /ko -->
