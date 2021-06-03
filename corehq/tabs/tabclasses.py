@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseInterfaceDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -1566,7 +1567,7 @@ class EnterpriseSettingsTab(UITab):
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
-                           args=[self.domain])
+                        args=[self.domain])
         })
         if IdentityProvider.domain_has_editable_identity_provider(self.domain):
             from corehq.apps.sso.views.enterprise_admin import (
@@ -1584,6 +1585,9 @@ class EnterpriseSettingsTab(UITab):
                 ],
             })
         items.append((_('Manage Enterprise'), enterprise_views))
+
+        items.extend(EnterpriseInterfaceDispatcher.navigation_sections(
+            request=self._request, domain=self.domain))
         return items
 
 
