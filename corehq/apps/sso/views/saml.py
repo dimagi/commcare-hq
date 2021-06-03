@@ -9,7 +9,6 @@ from django.http import (
     Http404,
 )
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
@@ -29,13 +28,11 @@ from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
     get_sso_username_from_session,
-    prepare_session_with_sso_username,
 )
 from corehq.apps.sso.utils.url_helpers import (
     get_documentation_url,
     get_saml_login_url,
 )
-from corehq.apps.users.models import Invitation
 
 
 @identity_provider_required

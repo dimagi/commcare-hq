@@ -55,17 +55,6 @@ def get_sso_user_last_name_from_session(request):
     )
 
 
-def prepare_session_with_sso_username(request, username):
-    """
-    Prepares the request's Session to store username information related to
-    a user that is signing up or a user that is signing in using SSO from
-    a registration, invitation, or sign in form.
-    :param request: HttpRequest
-    :param username: string - username / email
-    """
-    request.session['ssoNewUsername'] = username
-
-
 def get_sso_username_from_session(request):
     """
     If present, this gets the ssoUsername stored in the request's session.
