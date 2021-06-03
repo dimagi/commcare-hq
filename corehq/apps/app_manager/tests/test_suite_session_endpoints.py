@@ -45,6 +45,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -65,6 +66,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="case_id"/>
                     <stack>
                     <push>
+                        <command value="'m0'"/>
                         <command value="'m0-f0'"/>
                         <datum id="case_id" value="$case_id"/>
                     </push>
@@ -91,6 +93,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="case_id"/>
                     <stack>
                     <push>
+                        <command value="'m1'"/>
                         <command value="'m1-f0'"/>
                         <datum id="parent_id" value="$parent_id"/>
                         <datum id="case_id" value="$case_id"/>
@@ -117,6 +120,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -126,6 +130,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="case_id"/>
                     <stack>
                     <push>
+                        <command value="'m1'"/>
                         <command value="'m1-f0'"/>
                         <datum id="parent_id" value="$parent_id"/>
                         <datum id="case_id" value="$case_id"/>
