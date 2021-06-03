@@ -1,11 +1,12 @@
 import json
+import urllib.parse
 from datetime import datetime
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import (
     MessagingEventResource, MessagingEventResourceNew
 )
-from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms, \
     make_email_event
 from corehq.apps.users.models import CommCareUser
@@ -79,6 +80,61 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(0, len(ordered_data))
+
+    def test_date_filter_lt(self):
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.lt": dates[3].isoformat()
+        }, [d.isoformat() for d in dates[:3]])
+
+    def test_date_filter_lte(self):
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.lte": dates[3].isoformat()
+        }, [d.isoformat() for d in dates[:4]])
+
+    def test_date_filter_lte_date(self):
+        """`lte` filter with a date (not datetime) should include data
+        on that day."""
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.lte": str(dates[0].date())
+        }, [d.isoformat() for d in dates])
+
+    def test_date_filter_gt(self):
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.gt": dates[2].isoformat(),
+        }, [d.isoformat() for d in dates[3:]])
+
+    def test_date_filter_gte(self):
+        """`gte` filter with a date (not datetime) should include data
+        on that day."""
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.gte": dates[2].isoformat(),
+        }, [d.isoformat() for d in dates[2:]])
+
+    def test_date_filter_gte_date(self):
+        dates = self._setup_for_date_filter_test()
+        self._check_date_filtering_response({
+            "date.gte": str(dates[0].date())
+        }, [d.isoformat() for d in dates])
+
+    def _setup_for_date_filter_test(self):
+        self._create_sms_messages(5, randomize=True)
+        return list(
+            MessagingSubEvent.objects.filter(parent__domain=self.domain)
+                .order_by('date')
+                .values_list('date', flat=True)
+        )
+
+    def _check_date_filtering_response(self, filters, expected):
+        url = f'{self.list_endpoint}?order_by=date&' + urllib.parse.urlencode(filters)
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200)
+        actual = [event["date"] for event in json.loads(response.content)['objects']]
+        self.assertEqual(actual, expected)
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
@@ -174,7 +230,6 @@ class TestMessagingEventResource(APIResourceTest):
         for result in data:
             del result['id']
             del result['source']['id']
-            print(json.dumps(result, indent=4))
             self.assertEqual(expected, result)
 
     def test_email(self):
@@ -221,5 +276,4 @@ class TestMessagingEventResource(APIResourceTest):
             del result['source']['id']
             del result['date']
             del result['messages'][0]['date']
-            print(json.dumps(result, indent=4))
             self.assertEqual(expected, result)

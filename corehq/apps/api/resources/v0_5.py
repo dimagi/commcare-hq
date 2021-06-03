@@ -1,3 +1,4 @@
+import functools
 from collections import namedtuple
 from itertools import chain
 
@@ -12,7 +13,7 @@ from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
@@ -39,7 +40,7 @@ from corehq.apps.api.resources.auth import (
     RequirePermissionAuthentication,
     LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, make_date_filter, django_date_filter
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -1227,7 +1228,31 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
     def build_filters(self, filters=None, **kwargs):
         # Custom filtering for date etc
         # see corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        filter_consumers = [
+            self._get_date_filter_consumer()
+        ]
+        for key, value in list(filters.items()):
+            for consumer in filter_consumers:
+                result = consumer(key, value)
+                if result:
+                    del filters[key]
+                    filters.update(result)
+                continue
         return super(MessagingEventResourceNew, self).build_filters(filters, **kwargs)
+
+    @staticmethod
+    def _get_date_filter_consumer():
+        date_filter = make_date_filter(functools.partial(django_date_filter, field_name="date"))
+
+        def _date_consumer(key, value):
+            if '.' in key and key.split(".")[0] == "date":
+                prefix, qualifier = key.split(".", maxsplit=1)
+                try:
+                    return date_filter(qualifier, value)
+                except ValueError as e:
+                    raise InvalidFilterError(str(e))
+
+        return _date_consumer
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.all()
@@ -1250,7 +1275,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'), # TODO: convert to date.gt etc
+            "date": ('gt', 'gte', 'lt', 'lte'),
             # "source": ('exact',),  # TODO
             "content_type": ('exact',),  # TODO: convert from slug
             "status": ('exact',),  # TODO: convert from slug
