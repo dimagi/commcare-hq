@@ -181,7 +181,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_search_short']/action"
         )
 
-        # test for localized action node for new versions
+        # test for localized action node for apps with CC version > 2.21
         app.build_spec.version = '2.21.0'
         self.assertXmlPartialEqual(
             self.get_xml('case-search-with-localized-action'),
