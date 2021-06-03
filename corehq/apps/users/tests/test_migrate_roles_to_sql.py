@@ -211,6 +211,7 @@ class UserRoleCouchToSqlTests(TestCase):
 
 class TestPopulateCommand(TestCase):
     domain = 'test-populate-sql-roles'
+
     @classmethod
     def setUpClass(cls):
         role1 = UserRole.create(
