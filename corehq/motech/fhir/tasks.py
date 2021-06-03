@@ -99,7 +99,11 @@ def import_resource(
         try:
             resource = claim_service_request(requests, resource, case_id)
         except ServiceRequestNotActive:
-            return  # Nothing to do
+            # ServiceRequests whose status is "active" are available for
+            # CommCare to claim. If this ServiceRequest is no longer
+            # active, then it is not available any more, and CommCare
+            # should not import it.
+            return
 
     case_block = build_case_block(resource_type, resource, case_id)
     submit_case_blocks(
