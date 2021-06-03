@@ -53,12 +53,3 @@ def get_sso_user_last_name_from_session(request):
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
     )
-
-
-def get_sso_username_from_session(request):
-    """
-    If present, this gets the ssoUsername stored in the request's session.
-    :param request: HttpRequest
-    :return: string or None - username
-    """
-    return request.session.get('ssoNewUsername')
