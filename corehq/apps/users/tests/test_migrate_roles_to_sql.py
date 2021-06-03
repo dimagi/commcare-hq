@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -206,6 +207,52 @@ class UserRoleCouchToSqlTests(TestCase):
         sql_role.set_permissions(permissions.to_list())
         sql_role.set_assignable_by([self.app_editor_sql.id])
         return couch_role, sql_role
+
+
+class TestPopulateCommand(TestCase):
+    domain = 'test-populate-sql-roles'
+    @classmethod
+    def setUpClass(cls):
+        role1 = UserRole.create(
+            cls.domain,
+            UserRolePresets.APP_EDITOR,
+            permissions=UserRolePresets.get_permissions(UserRolePresets.APP_EDITOR),
+        )
+        cls.roles = [
+            role1,
+            UserRole.create(
+                cls.domain,
+                UserRolePresets.FIELD_IMPLEMENTER,
+                permissions=UserRolePresets.get_permissions(UserRolePresets.FIELD_IMPLEMENTER),
+                assignable_by=[role1.get_id]
+            )
+        ]
+        cls.roles_by_id = {role._id: role for role in cls.roles}
+        SQLUserRole.objects.filter(domain=cls.domain).delete()
+
+    @classmethod
+    def tearDownClass(cls):
+        for role in cls.roles:
+            role.delete()
+
+    def test_command(self):
+        call_command("populate_user_role")
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual(len(couch_roles), len(self.roles))
+        for role in couch_roles:
+            pre_migration_role = self.roles_by_id[role._id]
+            self.assertEqual(role.permissions.to_list(), pre_migration_role.permissions.to_list())
+            self.assertEqual(role.assignable_by, pre_migration_role.assignable_by)
+
+        sql_roles = SQLUserRole.objects.filter(domain=self.domain).all()
+        self.assertEqual(len(sql_roles), len(self.roles))
+        for role in sql_roles:
+            pre_migration_role = self.roles_by_id[role.couch_id]
+            self.assertEqual(role.permissions.to_list(), pre_migration_role.permissions.to_list())
+            assignment = [
+                assignment.assignable_by_role.couch_id for assignment in role.get_assignable_by()
+            ]
+            self.assertEqual(assignment, pre_migration_role.assignable_by)
 
 
 def make_couch_role(domain, name, **kwargs):

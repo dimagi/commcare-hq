@@ -9,6 +9,7 @@ from django.db import transaction
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
+from dimagi.utils.couch.migration import disable_sync_to_couch
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +234,7 @@ class PopulateSQLCommand(BaseCommand):
             self.doc_count,
             doc["_id"]
         ))
-        with transaction.atomic():
+        with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
             logger.info("{} model for doc with id {}".format(action, doc["_id"]))
