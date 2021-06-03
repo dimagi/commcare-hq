@@ -108,6 +108,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
         )
 
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
     def test_search_config_model(self, *args):
         config = CaseSearch()
 
@@ -200,6 +203,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         advanced_module_custom.search_config = search_config
         advanced_module_custom.case_details.short.custom_xml = "<detail id='m3_case_short'></detail>"
 
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
@@ -288,6 +294,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 ),
             ],
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
@@ -300,6 +310,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
             blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()

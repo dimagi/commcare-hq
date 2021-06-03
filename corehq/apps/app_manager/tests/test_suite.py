@@ -208,6 +208,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 blanks='first',
             )
         )
+
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
         self.assertXmlPartialEqual(
             self.get_xml('sort-cache-search'),
             app.create_suite(),
