@@ -1555,7 +1555,7 @@ class EnterpriseSettingsTab(UITab):
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
             enterprise_views.extend([
                 {
-                    'title': _('Enterprise Dashboard'),
+                    'title': _('Enterprise Console'),
                     'url': reverse('enterprise_dashboard', args=[self.domain]),
                 },
                 {

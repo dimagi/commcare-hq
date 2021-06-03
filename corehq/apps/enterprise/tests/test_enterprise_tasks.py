@@ -43,7 +43,7 @@ class TestEmailEnterpriseReport(TestCase):
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
             email_enterprise_report(self.domain, EnterpriseReport.DOMAINS, self.couch_user)
 
-        expected_title = "Enterprise Dashboard: Project Spaces"
+        expected_title = "Enterprise Console: Project Spaces"
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
@@ -59,7 +59,7 @@ class TestEmailEnterpriseReport(TestCase):
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
             email_enterprise_report(self.domain, EnterpriseReport.WEB_USERS, self.couch_user)
 
-        expected_title = "Enterprise Dashboard: Web Users"
+        expected_title = "Enterprise Console: Web Users"
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
@@ -75,7 +75,7 @@ class TestEmailEnterpriseReport(TestCase):
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
             email_enterprise_report(self.domain, EnterpriseReport.MOBILE_USERS, self.couch_user)
 
-        expected_title = "Enterprise Dashboard: Mobile Workers"
+        expected_title = "Enterprise Console: Mobile Workers"
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
 
     @patch('corehq.apps.enterprise.tasks.send_html_email_async')
@@ -91,7 +91,7 @@ class TestEmailEnterpriseReport(TestCase):
         with patch('corehq.apps.enterprise.tasks.get_redis_client', return_val=mock_redis_client):
             email_enterprise_report(self.domain, EnterpriseReport.FORM_SUBMISSIONS, self.couch_user)
 
-        expected_title = "Enterprise Dashboard: Mobile Form Submissions"
+        expected_title = "Enterprise Console: Mobile Form Submissions"
         mock_send.assert_called_with(expected_title, self.couch_user.username, mock.ANY)
 
     def test_email_report_unknown_type_fails(self):

@@ -66,8 +66,8 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.FORM_SUBMISSIONS,
         )],
         'current_page': {
-            'page_name': _('Enterprise Dashboard'),
-            'title': _('Enterprise Dashboard'),
+            'page_name': _('Enterprise Console'),
+            'title': _('Enterprise Console'),
         }
     }
     return render(request, "enterprise/enterprise_dashboard.html", context)
@@ -157,7 +157,7 @@ def edit_enterprise_settings(request, domain):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class BaseEnterpriseAdminView(BaseDomainView):
-    section_name = ugettext_lazy("Enterprise Dashboard")
+    section_name = ugettext_lazy("Enterprise Console")
 
     @property
     def section_url(self):
