@@ -1,0 +1,198 @@
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+{% requirejs_main %}
+<!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
+  <head>
+    {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+    {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
+    <title>
+      {% if title_block %}{{ title_block }}{% endif %}
+      {% if title_block %}{% if title_context_block.strip or not title_context_block %}- {{ title_context_block }}{% endif %}{% endif %}
+      {% if not title_context_block %}CommCare HQ{% endif %}
+    </title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+
+    {# link tags #}
+    <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
+    <link type="application/opensearchdescription+xml"
+          rel="search"
+          href="{% url 'osdd' %}"
+          title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
+    {% include 'hqwebapp/includes/less.html' %}
+
+    {% if CUSTOM_LOGO_URL %}
+      <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
+    {% else %}
+      <link rel="apple-touch-icon" sizes="57x57" href="{% static 'hqstyle/images/commcare-icon-57x57.png' %}"/>
+      <link rel="apple-touch-icon" sizes="76x76" href="{% static 'hqstyle/images/commcare-icon-76x76.png' %}"/>
+      <link rel="apple-touch-icon" sizes="120x120" href="{% static 'hqstyle/images/commcare-icon-120x120.png' %}"/>
+      <link rel="apple-touch-icon" sizes="152x152" href="{% static 'hqstyle/images/commcare-icon-152x152.png' %}"/>
+      <link rel="apple-touch-icon" sizes="167x167" href="{% static 'hqstyle/images/commcare-icon-167x167.png' %}"/>
+      <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
+    {% endif %}
+
+    {% block stylesheets %}{% endblock stylesheets %}
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+    {% endcompress %}
+
+    {% if request.use_nvd3 or request.use_nvd3_v3 %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'nvd3/src/nv.d3.css' %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_daterangepicker %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_timepicker %}
+      {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "bootstrap-timepicker/less/timepicker.less" %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_jquery_ui %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_datatables %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_multiselect %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "multiselect/css/multi-select.css" %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_maps %}
+      {% compress css %}
+        <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
+        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% block head %}{% endblock %}
+
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+    <script>
+      // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+      // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+      window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+    </script>
+  </head>
+  <body>
+    {% block background_content %}{% endblock %}
+    <div class="hq-container">
+      {% block content %}{% endblock content %}
+    </div>
+
+    {# modals #}
+    {% block modals %}{% endblock modals %}
+
+    {% block additional_initial_page_data %}
+      {% comment %}
+        fallback place to put initial page data for templates where it's
+        awkward or impossible to include it in another block
+      {% endcomment %}
+    {% endblock %}
+    {% initial_page_data 'toggles_dict' toggles_dict %}
+    {% initial_page_data 'previews_dict' previews_dict %}
+    {% initial_page_data 'secure_cookies' secure_cookies %}
+
+    {% registerurl 'notifications_service' %}
+
+    <div class="initial-page-data hide">
+      {% block initial_page_data %}
+        {# do not override this block, use initial_page_data template tag to populate #}
+      {% endblock %}
+    </div>
+
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {# javascript below this line #}
+
+    {% if requirejs_main %}
+      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+      <script src="{% static 'requirejs/require.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+      {# Do not compress these, which are re-written during depeloy #}
+      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+      <script>
+        requirejs.config({
+          deps: ['knockout', 'ko.mapping'],
+          callback: function (ko, mapping) {
+            ko.mapping = mapping;
+          }
+        });
+        requirejs([
+          'hqwebapp/js/common',
+        ], function() {
+          requirejs([
+            'hqwebapp/js/base_main',
+          ], function () {
+            requirejs(['{{ requirejs_main }}'], function () {
+              console.log("Loaded requirejs main module: {{ requirejs_main }}");
+            });
+          });
+        });
+      </script>
+    {% endif %}
+
+    {% block js %}{% endblock js %}
+
+    {% block js-inline %}{% endblock js-inline %}
+
+  </body>
+</html>
