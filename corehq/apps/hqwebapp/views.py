@@ -467,6 +467,7 @@ def iframe_domain_login(req, domain):
         'current_page': {'page_name': _('Your session has expired')},
         'restrict_domain_creation': True,
         'is_session_expiration': True,
+        'ANALYTICS_IDS': {},
     })
 
 
