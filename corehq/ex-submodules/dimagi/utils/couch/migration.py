@@ -13,6 +13,10 @@ _thread_local = threading.local()
 
 @contextmanager
 def disable_sync_to_couch(sql_class):
+    """Context manager used to disable syncing models from SQL
+    to Couch via `model.save`. This is necessary to prevent
+    syncs from happening when using functions like `Model.objects.create_or_update`
+    """
     if not hasattr(_thread_local, "disabled_models"):
         _thread_local.disabled_models = set()
 
