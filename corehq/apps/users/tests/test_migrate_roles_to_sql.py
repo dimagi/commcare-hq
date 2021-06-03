@@ -8,6 +8,7 @@ from corehq.apps.users.models import (
     SQLUserRole, SQLPermission
 )
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
+from dimagi.utils.couch.migration import sync_to_couch_enabled
 
 
 class UserRoleCouchToSqlTests(TestCase):
@@ -237,7 +238,9 @@ class TestPopulateCommand(TestCase):
             role.delete()
 
     def test_command(self):
+        self.assertTrue(sync_to_couch_enabled(SQLUserRole))
         call_command("populate_user_role")
+        self.assertTrue(sync_to_couch_enabled(SQLUserRole))
         couch_roles = UserRole.by_domain(self.domain)
         self.assertEqual(len(couch_roles), len(self.roles))
         for role in couch_roles:
