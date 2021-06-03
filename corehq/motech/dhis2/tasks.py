@@ -107,18 +107,19 @@ def send_dataset(
         except Exception as err:
             requests.notify_error(message=str(err),
                                   details=traceback.format_exc())
+            text = pformat_json(response.text if response else None)
 
             return {
                 'success': False,
                 'error': str(err),
                 'status_code': response.status_code if response else None,
-                'text': _('Could not send data, DHIS2 reported an issue.'),
+                'text': text,
                 'log_url': response_log_url,
             }
         else:
             return {
                 'success': True,
-                'status_code': response.status_code if response else None,
-                'text': _('Successfully send to DHIS2'),
+                'status_code': response.status_code,
+                'text': pformat_json(response.text),
                 'log_url': response_log_url,
             }
