@@ -62,8 +62,11 @@ class DataSetMapForm(forms.ModelForm):
                     'Week periods use the format yyyyWn (e.g. "2004W10" for '
                     'week 10, 2004). Month periods use the format yyyyMM '
                     '(e.g. "200403" for March 2004). Quarter periods use the '
-                    'format yyyyQn (e.g. "2004Q1" for January-March 2004).'),
-        required=True,
+                    'format yyyyQn (e.g. "2004Q1" for January-March 2004). '
+                    'If the UCR has a date filter then leave the field blank to '
+                    'filter the UCR by the date range of the previous '
+                    'period.'),
+        required=False,
     )
     attribute_option_combo_id = forms.CharField(
         label=_('AttributeOptionComboID'),
