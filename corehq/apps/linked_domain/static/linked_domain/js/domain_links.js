@@ -69,7 +69,6 @@ hqDefine("linked_domain/js/domain_links", [
         }
 
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
-        self.newlyAddedDomainLinks = ko.observableArray([]);
 
         // pull content
         self.model_status = _.map(data.model_status, ModelStatus);
@@ -80,7 +79,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-            return self.domain_links().length + self.newlyAddedDomainLinks().length;
+            return self.domain_links().length;
         });
         self.currentPage = 1;
 
@@ -88,8 +87,7 @@ hqDefine("linked_domain/js/domain_links", [
             self.currentPage = page;
             self.paginatedDomainLinks.removeAll();
             var skip = (self.currentPage - 1) * self.itemsPerPage();
-            var allDomainLinks = self.newlyAddedDomainLinks().concat(self.domain_links());
-            self.paginatedDomainLinks(allDomainLinks.slice(skip, skip + self.itemsPerPage()));
+            self.paginatedDomainLinks(self.domain_links().slice(skip, skip + self.itemsPerPage()));
         };
 
         self.onPaginationLoad = function () {
@@ -163,7 +161,7 @@ hqDefine("linked_domain/js/domain_links", [
                 "master_domain": self.parent.domain,
                 "remote_base_url": "",
                 "last_update": ""};
-            self.parent.newlyAddedDomainLinks.unshift(DomainLink(domainLinkResponse));
+            self.parent.domain_links.unshift(DomainLink(domainLinkResponse));
             self.availableDomains = _.filter(self.availableDomains, function (item) {
                 return item !== viewModel.value();
             });
