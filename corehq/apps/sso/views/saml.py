@@ -177,25 +177,3 @@ def sso_saml_login(request, idp_slug):
             # pre-populate username for Azure AD
             login_url = f'{login_url}&login_hint={username}'
     return HttpResponseRedirect(login_url)
-
-
-@use_saml2_auth
-def sso_test_create_user(request, idp_slug):
-    """
-    A testing view exclusively for staging. This will be removed once the
-    UIs are in place to sign up users or invite new users who must log in with
-    SSO.
-    """
-    if settings.SERVER_ENVIRONMENT not in ['staging']:
-        raise Http404()
-
-    username = request.GET.get('username')
-    if username:
-        prepare_session_with_sso_username(request, username)
-
-    invitation_uuid = request.GET.get('invitation')
-    invitation = Invitation.objects.get(uuid=invitation_uuid) if invitation_uuid else None
-    if invitation:
-        AsyncSignupRequest.create_from_invitation(invitation)
-
-    return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))
