@@ -170,7 +170,7 @@
     {# for banners, maintenance alerts, and any visible UI elements above any page navigation #}
     {% block pre_navigation_content %}{% endblock %}
 
-    <div class="hq-container">
+    <div class="{% block container_class %}hq-container{% endblock %}">
       {# for top-level navigation #}
       {% block navigation %}{% endblock %}
 
