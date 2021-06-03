@@ -9,8 +9,8 @@ from casexml.apps.stock.tests.base import _stock_report
 
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.commtrack.models import (
-    SQLCommtrackConfig,
-    SQLConsumptionConfig,
+    CommtrackConfig,
+    ConsumptionConfig,
     StockState,
 )
 from corehq.apps.commtrack.tests import util
@@ -31,16 +31,16 @@ class StockStateTest(TestCase):
         cls.domain_obj = util.bootstrap_domain(cls.domain)
         util.bootstrap_location_types(cls.domain)
         util.bootstrap_products(cls.domain)
-        cls.ct_settings = SQLCommtrackConfig.for_domain(cls.domain)
+        cls.ct_settings = CommtrackConfig.for_domain(cls.domain)
         cls.ct_settings.use_auto_consumption = True
-        cls.ct_settings.sqlconsumptionconfig = SQLConsumptionConfig(
+        cls.ct_settings.consumptionconfig = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
             optimal_window=60,
         )
         cls.ct_settings.save()
-        cls.ct_settings.sqlconsumptionconfig.commtrack_settings = cls.ct_settings
-        cls.ct_settings.sqlconsumptionconfig.save()
+        cls.ct_settings.consumptionconfig.commtrack_settings = cls.ct_settings
+        cls.ct_settings.consumptionconfig.save()
 
         cls.loc = util.make_loc('loc1', domain=cls.domain)
         cls.sp = cls.loc.linked_supply_point()
@@ -230,13 +230,13 @@ class StockStateConsumptionTest(StockStateTest):
         commtrack_settings = self.domain_obj.commtrack_settings
 
         def _update_consumption_config(min_transactions, min_window, optimal_window):
-            if not hasattr(commtrack_settings, 'sqlconsumptionconfig'):
-                commtrack_settings.sqlconsumptionconfig = SQLConsumptionConfig()
-                commtrack_settings.sqlconsumptionconfig.commtrack_settings = commtrack_settings
-            commtrack_settings.sqlconsumptionconfig.min_transactions = min_transactions
-            commtrack_settings.sqlconsumptionconfig.min_window = min_window
-            commtrack_settings.sqlconsumptionconfig.optimal_window = optimal_window
-            commtrack_settings.sqlconsumptionconfig.save()
+            if not hasattr(commtrack_settings, 'consumptionconfig'):
+                commtrack_settings.consumptionconfig = ConsumptionConfig()
+                commtrack_settings.consumptionconfig.commtrack_settings = commtrack_settings
+            commtrack_settings.consumptionconfig.min_transactions = min_transactions
+            commtrack_settings.consumptionconfig.min_window = min_window
+            commtrack_settings.consumptionconfig.optimal_window = optimal_window
+            commtrack_settings.consumptionconfig.save()
 
         _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
 

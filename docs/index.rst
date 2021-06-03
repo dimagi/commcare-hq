@@ -82,6 +82,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
 
     api
     openmrs
+    motech
 
 .. toctree::
     :caption: UI and Front End

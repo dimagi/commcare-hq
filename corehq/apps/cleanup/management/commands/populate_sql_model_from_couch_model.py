@@ -54,6 +54,18 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
+    def get_filtered_diffs(cls, couch, sql):
+        diffs = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diffs, list):
+            diffs = list(filter(None, diffs))
+        return diffs
+
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diffs = cls.get_filtered_diffs(couch, sql)
+        return "\n".join(diffs) if diffs else None
+
+    @classmethod
     def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None, name_prefix=None):
         """
         Helper for diff_couch_and_sql
@@ -200,14 +212,6 @@ class PopulateSQLCommand(BaseCommand):
         logger.info(f"Processed {self.doc_index} documents")
         if not skip_verify:
             logger.info(f"Found {self.diff_count} differences")
-
-    @classmethod
-    def get_diff_as_string(cls, couch, sql):
-        diff = cls.diff_couch_and_sql(couch, sql)
-        if isinstance(diff, list):
-            diffs = list(filter(None, diff))
-            diff = "\n".join(diffs) if diffs else None
-        return diff
 
     def _verify_doc(self, doc, exit=True):
         try:

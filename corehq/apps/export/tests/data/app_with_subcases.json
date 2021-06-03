@@ -121,7 +121,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -174,7 +173,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -643,7 +641,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -671,7 +668,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -760,7 +756,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": false,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -811,7 +806,6 @@
                     "print_template": {},
                     "pull_down_tile": false,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": false
                 }
@@ -1053,7 +1047,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1081,7 +1074,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -1170,7 +1162,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1223,7 +1214,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }
@@ -1465,7 +1455,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 },
@@ -1493,7 +1482,6 @@
                     "print_template": {},
                     "pull_down_tile": null,
                     "sort_elements": [],
-                    "sort_nodeset_columns": null,
                     "tabs": [],
                     "use_case_tiles": null
                 }

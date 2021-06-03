@@ -9,6 +9,7 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.apps.users.role_utils import init_domain_with_presets
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -145,7 +146,7 @@ def request_new_domain(request, project_name, is_new_user=True):
     if not settings.ENTERPRISE_MODE:
         _setup_subscription(new_domain.name, current_user)
 
-    UserRole.init_domain_with_presets(new_domain.name)
+    init_domain_with_presets(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:

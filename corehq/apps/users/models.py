@@ -2,8 +2,10 @@ import hmac
 import json
 import logging
 import re
+from collections import namedtuple
 from datetime import datetime
 from hashlib import sha1
+from typing import List
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -45,6 +47,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -88,6 +91,11 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
+from .models_sql import (  # noqa
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
+    migrate_role_permissions_to_sql,
+    migrate_role_assignable_by_to_sql,
+)
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -106,6 +114,32 @@ def _add_to_list(list, obj, default):
 
 def _get_default(list):
     return list[0] if list else None
+
+
+class PermissionInfo(namedtuple("Permission", "name, allow")):
+    ALLOW_ALL = "*"
+
+    def __new__(cls, name, allow=ALLOW_ALL):
+        allow = allow if allow == cls.ALLOW_ALL else tuple(allow)
+        if allow != cls.ALLOW_ALL and name not in PARAMETERIZED_PERMISSIONS:
+            raise TypeError(f"Permission '{name}' does not support parameterization")
+        return super(PermissionInfo, cls).__new__(cls, name, allow)
+
+    @property
+    def allow_all(self):
+        return self.allow == self.ALLOW_ALL
+
+    @property
+    def allowed_items(self):
+        if self.allow_all:
+            return []
+        assert isinstance(self.allow, tuple), self.allow
+        return self.allow
+
+
+PARAMETERIZED_PERMISSIONS = {
+    'view_reports': 'view_report_list',
+}
 
 
 class Permissions(DocumentSchema):
@@ -142,14 +176,10 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    view_web_apps = BooleanProperty(default=True)
-    view_web_apps_list = StringListProperty(default=[])
     access_mobile_endpoints = BooleanProperty(default=True)
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
-    manage_releases = BooleanProperty(default=True)
-    manage_releases_list = StringListProperty(default=[])
 
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
@@ -168,8 +198,38 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
-    def view_web_app(self, master_app_id):
-        return self.view_web_apps or master_app_id in self.view_web_apps_list
+    @classmethod
+    def from_permission_list(cls, permission_list):
+        """Converts a list of Permission objects into a Permissions object"""
+        permissions = Permissions.min()
+        for perm in permission_list:
+            setattr(permissions, perm.name, perm.allow_all)
+            if perm.name in PARAMETERIZED_PERMISSIONS:
+                setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
+        return permissions
+
+    @classmethod
+    @memoized
+    def permission_names(cls):
+        """Returns a list of permission names"""
+        return {
+            name for name, value in Permissions.properties().items()
+            if isinstance(value, BooleanProperty)
+        }
+
+    def to_list(self) -> List[PermissionInfo]:
+        """Returns a list of Permission objects for those permissions that are enabled."""
+        return list(self._yield_enabled())
+
+    def _yield_enabled(self):
+        for name in Permissions.permission_names():
+            value = getattr(self, name)
+            list_value = None
+            if name in PARAMETERIZED_PERMISSIONS:
+                list_name = PARAMETERIZED_PERMISSIONS[name]
+                list_value = getattr(self, list_name)
+            if value or list_value:
+                yield PermissionInfo(name, allow=PermissionInfo.ALLOW_ALL if value else list_value)
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
@@ -194,31 +254,18 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions(
-            edit_web_users=True,
-            view_web_users=True,
-            view_roles=True,
-            edit_commcare_users=True,
-            view_commcare_users=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_users_in_groups=True,
-            edit_locations=True,
-            view_locations=True,
-            edit_users_in_locations=True,
-            edit_motech=True,
-            edit_data=True,
-            edit_apps=True,
-            view_apps=True,
-            edit_reports=True,
-            view_reports=True,
-            edit_billing=True,
-            edit_shared_exports=True,
-            view_file_dropzone=True,
-            edit_file_dropzone=True,
-            access_mobile_endpoints=True,
-            access_api=True,
-        )
+        return Permissions._all(True)
+
+    @classmethod
+    def min(cls):
+        return Permissions._all(False)
+
+    @classmethod
+    def _all(cls, value: bool):
+        perms = Permissions()
+        for name in Permissions.permission_names():
+            setattr(perms, name, value)
+        return perms
 
 
 class UserRolePresets(object):
@@ -290,7 +337,7 @@ class UserRolePresets(object):
                 return name
 
 
-class UserRole(QuickCachedDocumentMixin, Document):
+class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     default_landing_page = StringProperty(
@@ -328,82 +375,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return list(all_roles)
 
     @classmethod
-    def get_or_create_with_permissions(cls, domain, permissions, name=None):
-        if isinstance(permissions, dict):
-            permissions = Permissions.wrap(permissions)
-        roles = cls.by_domain(domain)
-        # try to get a matching role from the db
-        for role in roles:
-            if role.permissions == permissions:
-                return role
-        # otherwise create it
-
-        def get_name():
-            if name:
-                return name
-            return UserRolePresets.get_role_name_with_matching_permissions(permissions)
-        role = cls(domain=domain, permissions=permissions, name=get_name())
+    def create(cls, domain, name, **kwargs):
+        role = cls(domain=domain, name=name, **kwargs)
         role.save()
         return role
-
-    @classmethod
-    def get_read_only_role_by_domain(cls, domain):
-        try:
-            return cls.by_domain_and_name(domain, UserRolePresets.READ_ONLY)[0]
-        except (IndexError, TypeError):
-            return cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(
-                    UserRolePresets.READ_ONLY), UserRolePresets.READ_ONLY)
-
-    @classmethod
-    def get_custom_roles_by_domain(cls, domain):
-        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
-
-    @classmethod
-    def reset_initial_roles_for_domain(cls, domain):
-        initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
-        for role in initial_roles:
-            role.permissions = UserRolePresets.get_permissions(role.name)
-            role.save()
-
-    @classmethod
-    def archive_custom_roles_for_domain(cls, domain):
-        custom_roles = cls.get_custom_roles_by_domain(domain)
-        for role in custom_roles:
-            role.is_archived = True
-            role.save()
-
-    @classmethod
-    def unarchive_roles_for_domain(cls, domain):
-        all_roles = cls.by_domain(domain, include_archived=True)
-        for role in all_roles:
-            if role.is_archived:
-                role.is_archived = False
-                role.save()
-
-    @classmethod
-    def init_domain_with_presets(cls, domain):
-        for role_name in UserRolePresets.INITIAL_ROLES:
-            cls.get_or_create_with_permissions(
-                domain, UserRolePresets.get_permissions(role_name), role_name)
-
-    @classmethod
-    def get_default(cls, domain=None):
-        return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return UserRolePresets.get_preset_role_id(name)
-
-    @classmethod
-    def preset_and_domain_role_names(cls, domain_name):
-        presets = set(UserRolePresets.NAME_ID_MAP.keys())
-        custom = set([role.name for role in cls.by_domain(domain_name)])
-        return presets | custom
-
-    @classmethod
-    def admin_role(cls, domain):
-        return AdminUserRole(domain=domain)
 
     @property
     def has_users_assigned(self):
@@ -413,17 +388,33 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
+    @property
+    def cache_version(self):
+        return self._rev
+
     def accessible_by_non_admin_role(self, role_id):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "name",
+            "default_landing_page",
+            "is_non_admin_editable",
+            "is_archived",
+            "upstream_id",
+        ]
 
-class AdminUserRole(UserRole):
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLUserRole
 
-    def __init__(self, domain):
-        super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
-
-    def get_qualified_id(self):
-        return 'admin'
+    def _migration_sync_submodels_to_sql(self, sql_object):
+        if not sql_object._get_pk_val():
+            sql_object.save(sync_to_couch=False)
+        migrate_role_permissions_to_sql(self, sql_object)
+        migrate_role_assignable_by_to_sql(self, sql_object)
 
 
 class DomainMembershipError(Exception):
@@ -490,7 +481,7 @@ class DomainMembership(Membership):
     @memoized
     def role(self):
         if self.is_admin:
-            return UserRole.admin_role(self.domain)
+            return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
                 return UserRole.get(self.role_id)
@@ -684,7 +675,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = None
 
         if checking_global_admin and self.is_global_admin():
-            return UserRole.admin_role(domain)
+            return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_mirroring):
             return self.get_domain_membership(domain, allow_mirroring).role
         else:
@@ -694,6 +685,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         role_qualified_id is either 'admin' 'user-role:[id]'
         """
+        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
+
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
         if role_qualified_id == "admin":
@@ -704,7 +697,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
             role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
             permissions = UserRolePresets.get_permissions(role_name)
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, permissions, role_name).get_id
+            dm.role_id = get_or_create_role_with_permissions(domain, role_name, permissions).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
@@ -1182,7 +1175,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
+                log_model_change(deleted_by, user, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
@@ -2634,8 +2627,8 @@ class Invitation(models.Model):
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
     @classmethod
-    def by_domain(cls, domain):
-        return Invitation.objects.filter(domain=domain, is_accepted=False)
+    def by_domain(cls, domain, is_accepted=False, **filters):
+        return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
 
     @classmethod
     def by_email(cls, email):
@@ -2736,7 +2729,8 @@ class DomainRemovalRecord(DeleteRecord):
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
-        user.add_domain_membership(**self.domain_membership._doc)
+        user.domain_memberships.append(self.domain_membership)
+        user.domains.append(self.domain)
         user.save()
 
 

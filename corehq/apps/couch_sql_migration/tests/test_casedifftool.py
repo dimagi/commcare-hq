@@ -709,8 +709,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         old_locations_enabled = getattr(self.domain, 'locations_enabled', None)
         make_domain_commtrack(self.domain)
         config = self.domain.commtrack_settings
-        config.sqlconsumptionconfig.min_window = 2
-        config.sqlconsumptionconfig.save()
+        config.consumptionconfig.min_window = 2
+        config.consumptionconfig.save()
         try:
             yield
         finally:

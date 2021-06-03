@@ -22,7 +22,7 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -845,6 +845,9 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.domain = domain
         request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
+    if notification.doc_type != 'ReportNotification' or notification.domain != domain:
+        raise Http404
+
     return _render_report_configs(
         request,
         notification.configs,
@@ -883,7 +886,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         return "", []
 
     for config in configs:
-        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
+        content, excel_file = config.get_report_content(lang, attach_excel=attach_excel, couch_user=couch_user)
         if excel_file:
             excel_attachments.append({
                 'title': config.full_name + "." + format.extension,
@@ -1934,20 +1937,27 @@ def archive_form(request, domain, instance_id):
 
 
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
-    def _get_case_link(case_id, name):
-        if case_id == case_id_from_request:
-            return _("%(case_name)s (this case)") % {'case_name': name}
-        else:
-            return '<a href="{}#!history">{}</a>'.format(reverse('case_data', args=[domain, case_id]), name)
+    def _get_all_case_links():
+        all_case_links = []
+        for case_id, case_name in cases_with_other_forms.items():
+            if case_id == case_id_from_request:
+                all_case_links.append(format_html(
+                    _("{} (this case)"),
+                    case_name
+                ))
+            else:
+                all_case_links.append(format_html(
+                    '<a href="{}#!history">{}</a>',
+                    reverse("case_data", args=[domain, case_id]),
+                    case_name
+                ))
+        return all_case_links
 
-    case_links = ', '.join([
-        _get_case_link(case_id, name)
-        for case_id, name in cases_with_other_forms.items()
-    ])
+    case_links = format_html_join(", ", "{}", ((link,) for link in _get_all_case_links()))
+
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
-    notify_msg = """{} {}""".format(msg, case_links)
-    return notify_msg
+    return format_html("{} {}", msg, case_links)
 
 
 def _get_cases_with_other_forms(domain, xform):
