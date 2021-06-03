@@ -52,9 +52,3 @@ def init_domain_with_presets(domain):
         get_or_create_role_with_permissions(
             domain, role_name, UserRolePresets.get_permissions(role_name)
         )
-
-
-def get_all_role_names_for_domain(domain_name):
-    presets = set(UserRolePresets.NAME_ID_MAP.keys())
-    custom = set([role.name for role in UserRole.by_domain(domain_name)])
-    return presets | custom

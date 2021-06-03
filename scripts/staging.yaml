@@ -63,7 +63,6 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - jls/detail-nodeset-rebased # Jenny May 6
     - jls/cross-domain-web-user-download # Jenny April 24
     - smh/embedded-tableau # Steph May 7
     - gh/add-app-id-to-downstream-report # Graham May 18
@@ -75,10 +74,13 @@ branches:
     - bmb/sso-remove-toggle  # Biyeun 25th May
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-cleanup-errors  # Biyeun 26 May
-    - bmb/sso-fix-iframe-login  # Biyeun 27 May
-    - bmb/sso-next-redirect-test  # Biyeun 27 May
+    # - bmb/sso-fix-iframe-login  # Biyeun 27 May
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
     - sk/test_role_create_update  # Simon May 31
+    - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
+    - rp/enterprize-sms-report #Rynhard June 2
+    - bmb/sso-redirect  # Biyeun June 2
+    - cs/SC-1335-dataset-workflow  # Charl June 3
 submodules: { }

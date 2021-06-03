@@ -119,7 +119,7 @@ class WebUserResource(UserResource):
 
     def dehydrate_permissions(self, bundle):
         role = bundle.obj.get_role(bundle.request.domain)
-        return role.permissions._doc if role else {}
+        return role.permissions.to_json() if role else {}
 
     def dehydrate_is_admin(self, bundle):
         return bundle.obj.is_domain_admin(bundle.request.domain)
