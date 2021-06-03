@@ -208,7 +208,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             saveButton.fire('change');
         });
         // checkbox to select media for all languages
-        $(".case-search-multimedia-input input[type='checkbox']").on('click', function () {
+        $(".case-search-multimedia-input input[type='checkbox']").on('change', function () {
             saveButton.fire('change');
         });
 
