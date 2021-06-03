@@ -178,9 +178,9 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 if search_again_label_audio:
                     yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
             else:
-                yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.label.default())
+                yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.default().label)
                 yield (id_strings.case_search_again_locale(module),
-                       trans(CaseSearch.search_again_label.label.default()))
+                       trans(CaseSearch.search_again_label.default().label))
 
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
