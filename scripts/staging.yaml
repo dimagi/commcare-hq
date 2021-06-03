@@ -70,11 +70,10 @@ branches:
     - mk/case_search_labels/multimedia # MK May 21
     - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
     - sr/hide-geo  # Sravan May 25
-    - bmb/sso-new-user-page  # Biyeun 25th May
-    - bmb/sso-remove-toggle  # Biyeun 25th May
+    - bmb/sso-new-user-page  # Biyeun 25th May, pending QA
+    - bmb/sso-remove-toggle  # Biyeun 25th May, pending QA
     - cs/dhis-readable-response  # Charl 26 May
-    - bmb/sso-cleanup-errors  # Biyeun 26 May
-    - bmb/sso-fix-iframe-login  # Biyeun 27 May
+    - bmb/sso-fix-iframe-login  # Biyeun 27 May, pending QA
     - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
@@ -83,6 +82,6 @@ branches:
     - rp/enterprize-sms-report #Rynhard June 2
     # - bmb/sso-redirect  # Biyeun June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
-    - bmb/sso-remove-debug-views  # Biyeun June 3
     - bmb/sso-catch-config-errors  # Biyeun June 3
+    # - bmb/sso-remove-debug-views  # Biyeun June 3
 submodules: { }
