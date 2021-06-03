@@ -22,6 +22,7 @@ from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -409,6 +410,13 @@ def get_ledger_patch_xml(diff):
         and diff.new_value is None
     ):
         element = None
+    elif (
+        path == ["location_id"]
+        and diff.diff_type == "type"
+        and isinstance(diff.old_value, str)
+        and diff.new_value is None
+    ):
+        element = None
     else:
         raise CannotPatch([diff])
     if element is None:
@@ -419,7 +427,7 @@ def get_ledger_patch_xml(diff):
 def ledger_balance_patch(diff):
     assert isinstance(diff.old_value, (Decimal, int, float)), diff
     ref = diff.ref
-    stock = StockState.objects.get(
+    stock = StockState.include_archived.get(
         case_id=ref.case_id,
         section_id=ref.section_id,
         product_id=ref.entry_id,
@@ -452,12 +460,11 @@ def patch_ledgers_directly(diffs):
     """
     for diff in diffs:
         path = list(diff.path)
-        if (
-            path == ["daily_consumption"]
-            and diff.diff_type == "type"
-            and diff.new_value is None
-        ):
-            patch_ledger_daily_consumption(diff)
+        if diff.diff_type == "type" and diff.new_value is None:
+            if path == ["daily_consumption"]:
+                patch_ledger_daily_consumption(diff)
+            if path == ["location_id"]:
+                patch_ledger_location_id(diff)
 
 
 def patch_ledger_daily_consumption(diff):
@@ -477,6 +484,15 @@ def patch_ledger_daily_consumption(diff):
     assert ledger.daily_consumption is None, ref
     ledger.daily_consumption = diff.old_value
     ledger.save()
+
+
+def patch_ledger_location_id(diff):
+    """Patch missing LedgerValue location_id"""
+    location = SQLLocation.objects.select_related("location_type").get(location_id=diff.old_value)
+    if location.location_type.administrative:
+        raise CannotPatch([diff])
+    location.supply_point_id = diff.ref.case_id
+    location.save()
 
 
 def get_couch_transactions(ref):
