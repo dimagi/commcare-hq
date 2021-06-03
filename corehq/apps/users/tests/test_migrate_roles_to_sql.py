@@ -28,9 +28,9 @@ class UserRoleCouchToSqlTests(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        SQLUserRole.objects.all().delete()
-        for role in get_custom_roles_for_domain(self.domain):
-            role.delete()
+        for role in SQLUserRole.objects.get_by_domain(self.domain, include_archived=True):
+            if role.id != self.app_editor_sql.id:
+                role.delete()
         super().tearDown()
 
     def test_sql_role_couch_to_sql(self):
@@ -61,9 +61,7 @@ class UserRoleCouchToSqlTests(TestCase):
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, [
-            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
-        ])
+        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
 
     def test_sync_role_sql_to_couch(self):
         self.maxDiff = None
@@ -96,9 +94,7 @@ class UserRoleCouchToSqlTests(TestCase):
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, [
-            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
-        ])
+        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
 
     def test_diff_identical(self):
         couch, sql = self._create_identical_objects_for_diff()

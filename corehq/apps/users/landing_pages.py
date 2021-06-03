@@ -25,6 +25,11 @@ def get_allowed_landing_pages(domain):
     return [page for page in ALL_LANDING_PAGES if page.id != 'downloads']
 
 
+def validate_landing_page(domain, landing_page_id):
+    allowed_ids = {page.id for page in get_allowed_landing_pages(domain)}
+    if landing_page_id not in allowed_ids:
+        raise ValueError(_("No landing page found with ID '{}'").format(landing_page_id))
+
 def get_landing_page(domain, landing_page_id):
     for landing_page in get_allowed_landing_pages(domain):
         if landing_page.id == landing_page_id:
