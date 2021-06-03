@@ -92,7 +92,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-           return self.query() ? self.filteredDomainLinks().length : self.domain_links().length;
+            return self.query() ? self.filteredDomainLinks().length : self.domain_links().length;
         });
         self.currentPage = 1;
 
