@@ -521,7 +521,16 @@ class CouchSqlDomainMigrator:
             ledger_value = get_sql_ledger_value(case_id, section_id, entry_id)
             if ledger_value.last_modified_form_id != jdiff.new_value:
                 return False
-            couch_form = XFormInstance.get(jdiff.new_value)
+            try:
+                couch_form = XFormInstance.get(jdiff.new_value)
+            except XFormNotFound as err:
+                try:
+                    sql_form = get_sql_form(jdiff.new_value)
+                    if sql_form.xmlns == "http://commcarehq.org/couch-to-sql/patch-case-diff":
+                        return False
+                except XFormNotFound:
+                    pass
+                raise err
             if couch_form.doc_type != "XFormDuplicate":
                 return False
             log.info("dropping duplicate ledgers for form %s case %s",
