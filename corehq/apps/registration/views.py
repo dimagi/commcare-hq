@@ -19,6 +19,7 @@ from django.views.generic.base import TemplateView, View
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -191,6 +192,16 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             'restrictedByDomain': restricted_by_domain,
             'message': message,
         }
+        if settings.ENFORCE_SSO_LOGIN and response['isValid']:
+            idp = IdentityProvider.get_required_identity_provider(email)
+            if idp:
+                response.update({
+                    'isSso': True,
+                    'ssoMessage': _(
+                        "This email is managed by {}. You will be asked to login "
+                        "with Single Sign-On after the next step."
+                    ).format(idp.name),
+                })
         return response
 
 

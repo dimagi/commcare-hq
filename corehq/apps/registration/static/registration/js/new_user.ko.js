@@ -105,6 +105,8 @@ hqDefine('registration/js/new_user.ko', [
                 emailRFC2822: true,
             });
         self.deniedEmail = ko.observable('');
+        self.isSso = ko.observable(false);
+        self.ssoMessage = ko.observable();
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
             .extend({
@@ -121,6 +123,10 @@ hqDefine('registration/js/new_user.ko', [
                                             kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                             self.deniedEmail(val);
                                         }
+
+                                        self.isSso(result.isSso);
+                                        self.ssoMessage(result.ssoMessage);
+
                                         callback({
                                             isValid: result.isValid,
                                             message: result.message,
