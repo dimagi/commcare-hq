@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -1232,6 +1233,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
             self._get_date_filter_consumer(),
             self._get_source_filter_consumer(),
             self._get_content_type_filter_consumer(),
+            self._status_filter_consumer,
         ]
         orm_filters = {}
         for key, value in list(filters.items()):
@@ -1241,8 +1243,18 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
                     del filters[key]
                     orm_filters.update(result)
                     continue
-        orm_filters.update(super(MessagingEventResourceNew, self).build_filters(filters, **kwargs))
+        orm_filters.update(super().build_filters(filters, **kwargs))
         return orm_filters
+
+    def apply_filters(self, request, applicable_filters):
+        native_filters = []
+        for key, value in list(applicable_filters.items()):
+            if isinstance(value, Q):
+                native_filters.append(applicable_filters.pop(key))
+        query = self.get_object_list(request).filter(**applicable_filters)
+        if native_filters:
+            query = query.filter(*native_filters)
+        return query
 
     @staticmethod
     def _get_date_filter_consumer():
@@ -1315,6 +1327,35 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
 
         return _consumer
 
+    def _status_filter_consumer(self, key, value):
+        slug_values = {v: k for k, v in MessagingEvent.STATUS_SLUGS.items()}
+        if key != "status":
+            return
+
+        model_value = slug_values.get(value, value)
+        # match functionality in corehq.pps.reports.standard.sms.MessagingEventsReport.get_filters
+        if model_value == MessagingEvent.STATUS_ERROR:
+            return {"status": (Q(status=model_value) | Q(sms__error=True))}
+        elif model_value == MessagingEvent.STATUS_IN_PROGRESS:
+            # We need to check for id__isnull=False below because the
+            # query we make in this report has to do a left join, and
+            # in this particular filter we can only validly check
+            # session_is_open=True if there actually are
+            # subevent and xforms session records
+            return {"status": (
+                Q(status=model_value) |
+                (Q(xforms_session__id__isnull=False) & Q(xforms_session__session_is_open=True))
+            )}
+        elif model_value == MessagingEvent.STATUS_NOT_COMPLETED:
+            return {"status": (
+                Q(status=model_value) |
+                (Q(xforms_session__session_is_open=False) & Q(xforms_session__submission_id__isnull=True))
+            )}
+        elif model_value == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            return {"status": model_value}
+        else:
+            raise InvalidFilterError(f"'{value}' is an invalid value for the 'status' filter")
+
     class Meta(object):
         queryset = MessagingSubEvent.objects.all()
         include_resource_uri = False
@@ -1336,7 +1377,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "status": ('exact',),  # TODO: convert from slug
             "error_code": ('exact',),  # TODO
             "case_id": ('exact',),
             # "contact": ('exact',),  # TODO
