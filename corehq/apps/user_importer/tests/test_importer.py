@@ -525,13 +525,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             False
         )
         log_entry = HQLogEntry.objects.order_by('created_at').first()
-        self.assertEqual(
-            log_entry.details,
-            {
-                'changes': {},
-                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
-            }
-        )
+        self.assertEqual(log_entry.details['changes']['username'], "hello@mydomain.commcarehq.org")
+        self.assertEqual(log_entry.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         log_entry = HQLogEntry.objects.order_by('created_at').last()
         self.assertEqual(
             log_entry.details,

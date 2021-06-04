@@ -68,13 +68,8 @@ class RetireUserTestCase(TestCase):
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
         log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action=ModelAction.DELETE.value,
                                            object_id=self.commcare_user.get_id)
-        self.assertEqual(
-            log_entry.details,
-            {
-                'changes': {},
-                'changed_via': deleted_via
-            }
-        )
+        self.assertEqual(log_entry.details['changes']['username'], self.username)
+        self.assertEqual(log_entry.details['changed_via'], deleted_via)
 
     @run_with_all_backends
     def test_unretire_user(self):

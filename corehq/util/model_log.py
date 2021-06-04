@@ -2,6 +2,8 @@ from enum import Enum
 
 from corehq.apps.users.models_sql import HQLogEntry, UpdateDetails
 
+MODEL_PROPERTIES_TO_IGNORE = ['_id', '_rev', 'reporting_metadata', 'password']
+
 
 class ModelAction(Enum):
     CREATE = HQLogEntry.CREATE
@@ -45,5 +47,11 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
 
 
 def _get_change_details(couch_user, action, fields_changed):
-    # ToDo: return updates
-    return {}
+    if action in [ModelAction.CREATE, ModelAction.DELETE]:
+        user_json = couch_user.to_json()
+        for prop in MODEL_PROPERTIES_TO_IGNORE:
+            user_json.pop(prop, None)
+        return user_json
+    else:
+        # ToDo: handle for updates
+        return {}
