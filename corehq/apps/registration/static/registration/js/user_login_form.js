@@ -14,15 +14,17 @@ hqDefine('registration/js/user_login_form', [
 ) {
     'use strict';
 
-    let loginController = function (options) {
+    var loginController = function (options) {
         assertProperties.assertRequired(options, [
             'initialUsername',
             'passwordField',
             'passwordFormGroup',
+            'nextUrl',
         ]);
-        let self = {};
+        var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
+        self.nextUrl = options.nextUrl;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
         self.passwordFormGroup.hide();
@@ -118,8 +120,12 @@ hqDefine('registration/js/user_login_form', [
             self.proceedToNextStep();
         };
 
-        self.continueToSsoLogin = function (sso_url) {
-            window.location = sso_url;
+        self.continueToSsoLogin = function (ssoUrl) {
+            if (self.nextUrl) {
+                // note ssoUrl already contains ?username=foo
+                ssoUrl = ssoUrl + "&next=" + self.nextUrl;
+            }
+            window.location = ssoUrl;
         };
 
         self.continueToPasswordLogin = function () {
