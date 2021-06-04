@@ -52,7 +52,6 @@ from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
-from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.const import USER_DATE_FORMAT
 
 

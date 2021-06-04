@@ -4,12 +4,11 @@ from django.test.testcases import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
+from .utils import create_enterprise_permissions
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.users.models import (
-    DomainMembership,
-    DomainPermissionsMirror,
     HQApiKey,
     Permissions,
     SQLUserRole,
@@ -17,17 +16,15 @@ from corehq.apps.users.models import (
 )
 
 
-class DomainPermissionsMirrorTest(TestCase):
+class EnterprisePermissionsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
         # Set up domains
-        cls.domain = 'state'
-        cls.mirror = DomainPermissionsMirror(source='state', mirror='county')
-        cls.mirror.save()
         create_domain('state')
         create_domain('county')
+        create_domain('staging')
 
         # Set up users
         cls.master_role = SQLUserRole.create("state", "role1", permissions=Permissions(
@@ -46,6 +43,8 @@ class DomainPermissionsMirrorTest(TestCase):
         cls.web_user_non_admin.save()
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.web_user_non_admin))
 
+        # Set up permissions
+        create_enterprise_permissions(cls.web_user_admin.username, 'state', ['county'], ignore_domains=['staging'])
 
     def setUp(self):
         patches = [
@@ -66,12 +65,6 @@ class DomainPermissionsMirrorTest(TestCase):
         cls.mirror.delete()
         super().tearDownClass()
 
-    def test_class(self):
-        self.assertEqual('state', DomainPermissionsMirror.source_domain('county'))
-        self.assertIsNone(DomainPermissionsMirror.source_domain('state'))
-        self.assertEqual(['county'], DomainPermissionsMirror.mirror_domains('state'))
-        self.assertEqual([], DomainPermissionsMirror.mirror_domains('county'))
-
     def test_permission_mirroring(self):
         for domain in ('state', 'county'):
             self.assertTrue(self.web_user_admin.is_domain_admin(domain))
@@ -84,6 +77,12 @@ class DomainPermissionsMirrorTest(TestCase):
             # Admin's has no role but `is_admin` gives them access to everything
             self.assertTrue(self.web_user_admin.has_permission(domain, "view_groups"))
             self.assertTrue(self.web_user_admin.has_permission(domain, "edit_groups"))
+
+            # No one gets any permissions in ignored domain
+            self.assertFalse(self.web_user_non_admin.has_permission(domain, "view_groups"))
+            self.assertFalse(self.web_user_non_admin.has_permission(domain, "edit_groups"))
+            self.assertFalse(self.web_user_admin.has_permission(domain, "view_groups"))
+            self.assertFalse(self.web_user_admin.has_permission(domain, "edit_groups"))
 
     def test_api_call(self):
         url = reverse('api_dispatch_list', kwargs={
