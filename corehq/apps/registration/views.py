@@ -186,11 +186,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     subject = _("CommCareHQ account request")
                     message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
-        return {
+        response = {
             'isValid': message is None,
             'restrictedByDomain': restricted_by_domain,
             'message': message,
         }
+        return response
 
 
 class UserRegistrationView(BasePageView):
