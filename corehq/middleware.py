@@ -181,9 +181,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         from corehq.apps.accounting.models import BillingAccount
         subdomains = set()
         for domain in domains:
-            account = BillingAccount.get_account_by_domain(domain)
-            if account:
-                subdomains = subdomains | account.get_enterprise_permissions_domains()
+            subdomains = subdomains | set(BillingAccount.get_enterprise_permissions_domains(domain))
 
         return domains | subdomains
 
