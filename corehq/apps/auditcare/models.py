@@ -126,10 +126,10 @@ class NavigationEventAudit(AuditEvent):
     headers = NullJsonField(default=dict)
     status_code = models.SmallIntegerField(default=0)
 
-    class Meta:
-        indexes = AuditEvent._meta.indexes + [
+    class Meta(AuditEvent.Meta):
+        constraints = [
             models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
-                         name="audit_nav_couch_875bc_idx"),
+                                    name="audit_nav_couch_875bc_idx"),
         ]
 
     @property
@@ -176,8 +176,8 @@ class AccessAudit(AuditEvent):
     http_accept = ForeignValue(http_accept_fk, truncate=True)
     trace_id = models.CharField(max_length=127, null=True, blank=True)
 
-    class Meta:
-        indexes = AuditEvent._meta.indexes + [
+    class Meta(AuditEvent.Meta):
+        constraints = [
             models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
                                     name="audit_access_couch_10d1b_idx"),
         ]
