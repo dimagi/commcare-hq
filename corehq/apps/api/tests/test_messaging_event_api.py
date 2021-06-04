@@ -186,6 +186,17 @@ class TestMessagingEventResource(APIResourceTest):
         actual = {event["id"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {e1.id})
 
+    def test_case_id_filter(self):
+        self._create_sms_messages(2, True)
+        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1.case_id = "123"
+        e1.save()
+        url = f'{self.list_endpoint}?case_id=123'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        actual = {event["case_id"] for event in json.loads(response.content)['objects']}
+        self.assertEqual(actual, {"123"})
+
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
