@@ -71,6 +71,10 @@ ES_INDEX_SETTINGS = {
     },
 }
 
+# Allow removing settings from defaults by setting
+# the value to None in settings.ES_SETTINGS
+REMOVE_SETTING = None
+
 
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
@@ -95,7 +99,10 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         if settings.ES_SETTINGS is not None:
             for hq_index_name in ['default', self.hq_index_name]:
                 for key, value in settings.ES_SETTINGS.get(hq_index_name, {}).items():
-                    meta_settings['settings'][key] = value
+                    if value is REMOVE_SETTING:
+                        del meta_settings['settings'][key]
+                    else:
+                        meta_settings['settings'][key] = value
 
         return meta_settings
 
