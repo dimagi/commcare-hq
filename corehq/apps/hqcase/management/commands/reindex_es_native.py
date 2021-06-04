@@ -81,13 +81,29 @@ def _initialize_target(es, target_index_info):
         return
 
     print("Creating target index")
+
+    print("\tEnabling cluster routing")
+    es.cluster.put_settings({"transient": {"cluster.routing.allocation.enable": "all"}})
+
     initialize_index(es, target_index_info)
     set_index_reindex_settings(es, target_index_info.index)
 
-    print("Setting number of replicas to 0")
+    print("\tSetting number of replicas to 0")
     es.indices.put_settings({
         "index.number_of_replicas": 0
     }, index=target_index_info.index)
+
+    for i in range(6):
+        health = es.cluster.health(index=target_index_info.index)
+        status = health["status"]
+        if status == "green":
+            break
+
+        print(f"\tWaiting for index status to be green. Current status: '{status}'")
+        time.sleep(5)
+
+    print("\tDisabling cluster routing")
+    es.cluster.put_settings({"transient": {"cluster.routing.allocation.enable": "none"}})
 
 
 def start_reindex(es, source_index, target_index):
