@@ -8,6 +8,7 @@ from mock import mock, patch
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -23,7 +24,6 @@ from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
-    DomainPermissionsMirror,
     Invitation,
     SQLUserRole,
     UserHistory,
@@ -912,8 +912,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
     def test_multi_domain(self):
-        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
-        dm.save()
+        create_enterprise_permissions("a@a.com", self.domain_name, [self.other_domain.name])
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],
@@ -1416,8 +1415,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_multi_domain(self):
         self.setup_users()
-        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
-        dm.save()
+        create_enterprise_permissions("a@a.com", self.domain_name, [self.other_domain.name])
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username='123@email.com',
