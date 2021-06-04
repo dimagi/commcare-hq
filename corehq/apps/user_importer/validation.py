@@ -341,6 +341,5 @@ class TargetDomainValidator(ImportValidator):
     def validate_spec(self, spec):
         target_domain = spec.get('domain')
         if target_domain and target_domain != self.domain:
-            account = BillingAccount.get_account_by_domain(self.domain)
-            if target_domain not in account.get_enterprise_permissions_domains():
+            if target_domain not in BillingAccount.get_enterprise_permissions_domains(self.domain):
                 return self.error_message.format(target_domain, self.domain)
