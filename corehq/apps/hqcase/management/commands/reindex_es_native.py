@@ -130,6 +130,7 @@ def check_task_progress(es, task_id):
     node_id = task_id.split(':')[0]
     node_name = es.nodes.info(node_id, metric="name")["nodes"][node_id]["name"]
     print(f"Task with ID '{task_id}' running on '{node_name}'")
+    progress_data = []
     while True:
         result = es.tasks.list(task_id=task_id, detailed=True)
         if not result["nodes"]:
@@ -151,19 +152,40 @@ def check_task_progress(es, task_id):
             running_time_nanos = task_details["running_time_in_nanos"]
             run_time = timedelta(microseconds=running_time_nanos / 1000)
 
-            remaining_time = 'unknown'
+            remaining_time_absolute = 'unknown'
+            remaining_time_relative = ''
             if progress:
+                progress_data.append({
+                    "progress": progress,
+                    "time": time.monotonic() * 1000000000
+                })
+
                 remaining = total - progress
-                remaining_nanos = running_time_nanos / progress * remaining
-                remaining_time = timedelta(microseconds=remaining_nanos / 1000)
+                # estimate based on progress since beginning of task
+                remaining_nanos_absolute = running_time_nanos / progress * remaining
+                remaining_time_absolute = timedelta(microseconds=remaining_nanos_absolute / 1000)
+                if len(progress_data) > 1:
+                    # estimate based on last 12 loops of data
+                    progress_nanos = progress_data[-1]["time"] - progress_data[0]["time"]
+                    progress_diff = progress_data[-1]["progress"] - progress_data[0]["progress"]
+                    progress_data = progress_data[-12:]  # truncate progress data
+                    remaining_nanos = progress_nanos / progress_diff * remaining
+                    remaining_time_relative = timedelta(microseconds=remaining_nanos / 1000)
 
             print(f"Progress {progress_percent:.2f}% ({progress} / {total}). "
-                  f"Elapsed time: {run_time}. "
-                  f"Estimated remaining time: {remaining_time}")
+                  f"Elapsed time: {_format_timedelta(run_time)}. "
+                  f"Estimated remaining time: "
+                  f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
+                  f"(recent average = {_format_timedelta(remaining_time_relative)})")
 
-        time.sleep(5)
+        time.sleep(10)
 
 
 def _get_doc_count(es, index):
     es.indices.refresh(index)
     return es.indices.stats(index=index)['indices'][index]['primaries']['docs']['count']
+
+
+def _format_timedelta(td):
+    out = str(td)
+    return out.split(".")[0]
