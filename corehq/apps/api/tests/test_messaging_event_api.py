@@ -3,9 +3,7 @@ import urllib.parse
 from datetime import datetime
 
 from corehq.apps.api.tests.utils import APIResourceTest
-from corehq.apps.api.resources.v0_5 import (
-    MessagingEventResource, MessagingEventResourceNew
-)
+from corehq.apps.api.resources.v0_5 import MessagingEventResourceNew
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms, \
     make_email_event, make_events_for_test

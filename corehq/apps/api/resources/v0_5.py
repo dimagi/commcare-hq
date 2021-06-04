@@ -1383,8 +1383,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
             "case_id": ('exact',),
-            # "contact": ('exact',),  # TODO
-            # "parent": ('exact',),  # TODO
         }
         ordering = [
             'date',
