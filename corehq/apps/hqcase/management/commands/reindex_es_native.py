@@ -21,7 +21,7 @@ class Command(BaseCommand):
             help="Index to be used as the source",
         )
         parser.add_argument(
-            "target_index", choices=ES_META,
+            "target_index_name", choices=ES_META,
             help="Index to be used as the target"
         )
         parser.add_argument(
@@ -36,12 +36,12 @@ class Command(BaseCommand):
                  "a new reindex."
         )
 
-    def handle(self, source_index, target_index, **options):
+    def handle(self, source_index, target_index_name, **options):
         es = get_es_export()
         if not es.indices.exists(source_index):
             raise CommandError(f"Source index does not exist: '{source_index}'")
 
-        target_index_info = ES_META[target_index]
+        target_index_info = ES_META[target_index_name]
         target_index = target_index_info.index
         _initialize_target(es, target_index_info)
 
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             Perform manual checks to verify the reindex is complete.
             Once you are satisfied that the reindex is complete you should run the following:
 
-            ./manage.py initialize_es_indices --index {target_index} --set-for-usage
+            ./manage.py initialize_es_indices --index {target_index_name} --set-for-usage
         """))
 
 
