@@ -124,14 +124,23 @@ def check_task_progress(es, task_id):
         task_details = result["nodes"][node_id]["tasks"][task_id]
         status = task_details["status"]
         total = status["total"]
-        created, updated, deleted = status["created"], status["updated"], status["deleted"]
-        progress = created + updated + deleted
-        progress_percent = progress / total * 100
+        if total:  # total can be 0 initially
+            created, updated, deleted = status["created"], status["updated"], status["deleted"]
+            progress = created + updated + deleted
+            progress_percent = progress / total * 100
 
-        running_time_nanos = task_details["running_time_in_nanos"]
-        run_time = timedelta(microseconds=running_time_nanos / 1000)
+            running_time_nanos = task_details["running_time_in_nanos"]
+            run_time = timedelta(microseconds=running_time_nanos / 1000)
 
-        print(f"Progress {progress_percent:.2f}% ({progress} / {total}). Duration: {run_time}")
+            remaining_time = 'unknown'
+            if progress:
+                remaining = total - progress
+                remaining_nanos = running_time_nanos / progress * remaining
+                remaining_time = timedelta(microseconds=remaining_nanos / 1000)
+
+            print(f"Progress {progress_percent:.2f}% ({progress} / {total}). "
+                  f"Elapsed time: {run_time}. "
+                  f"Estimated remaining time: {remaining_time}")
 
         time.sleep(5)
 
