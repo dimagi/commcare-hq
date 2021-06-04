@@ -15,6 +15,8 @@ from corehq.motech.dhis2.models import (
     should_send_on_date,
 )
 from corehq.util.view_utils import reverse
+from corehq.privileges import DATA_FORWARDING
+from corehq.apps.domain.models import Domain
 
 
 @periodic_task(
@@ -23,7 +25,7 @@ from corehq.util.view_utils import reverse
 )
 def send_datasets_for_all_domains():
     for domain in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
-        send_datasets.delay(domain)
+        send_datasets.delay(domain) if _data_forwarding_privilege(domain) else None
 
 
 @task(serializer='pickle', queue='background_queue')
@@ -33,6 +35,10 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     for dataset_map in SQLDataSetMap.objects.filter(domain=domain_name).all():
         if send_now or should_send_on_date(dataset_map, send_date):
             send_dataset(dataset_map, send_date)
+
+
+def _data_forwarding_privilege(domain_name):
+    return Domain.get_by_name(domain_name).has_privilege(DATA_FORWARDING)
 
 
 def send_dataset(
