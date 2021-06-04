@@ -1227,13 +1227,12 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         return message_dicts
 
     def build_filters(self, filters=None, **kwargs):
-        # Custom filtering for date etc
-        # see corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
         filter_consumers = [
             self._get_date_filter_consumer(),
             self._get_source_filter_consumer(),
             self._get_content_type_filter_consumer(),
             self._status_filter_consumer,
+            self._error_code_filter_consumer,
         ]
         orm_filters = {}
         for key, value in list(filters.items()):
@@ -1356,6 +1355,12 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         else:
             raise InvalidFilterError(f"'{value}' is an invalid value for the 'status' filter")
 
+    def _error_code_filter_consumer(self, key, value):
+        if key != "error_code":
+            return
+
+        return {"error_code": value}
+
     class Meta(object):
         queryset = MessagingSubEvent.objects.all()
         include_resource_uri = False
@@ -1377,7 +1382,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "error_code": ('exact',),  # TODO
             "case_id": ('exact',),
             # "contact": ('exact',),  # TODO
             # "parent": ('exact',),  # TODO

@@ -124,7 +124,7 @@ class TestMessagingEventResource(APIResourceTest):
     def _setup_for_date_filter_test(self):
         self._create_sms_messages(5, randomize=True)
         return list(
-            MessagingSubEvent.objects.filter(parent__domain=self.domain)
+            MessagingSubEvent.objects.filter(parent__domain=self.domain.name)
                 .order_by('date')
                 .values_list('date', flat=True)
         )
@@ -143,7 +143,7 @@ class TestMessagingEventResource(APIResourceTest):
             MessagingEvent.SOURCE_CASE_RULE
         ]
         for source in sources:
-            make_events_for_test(self.domain, datetime.utcnow(), source=source)
+            make_events_for_test(self.domain.name, datetime.utcnow(), source=source)
 
         url = f'{self.list_endpoint}?order_by=date&source=keyword,reminder'
         response = self._assert_auth_get_resource(url)
@@ -158,7 +158,7 @@ class TestMessagingEventResource(APIResourceTest):
             MessagingEvent.CONTENT_SMS_SURVEY
         ]
         for content_type in content_types:
-            make_events_for_test(self.domain, datetime.utcnow(), content_type=content_type)
+            make_events_for_test(self.domain.name, datetime.utcnow(), content_type=content_type)
 
         url = f'{self.list_endpoint}?order_by=date&content_type=ivr-survey,sms'
         response = self._assert_auth_get_resource(url)
@@ -167,13 +167,24 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(actual, {"sms", "api-sms", "ivr-survey"})
 
     def test_status_filtering_error(self):
-        make_events_for_test(self.domain, datetime.utcnow())
-        make_events_for_test(self.domain, datetime.utcnow(), status=MessagingEvent.STATUS_ERROR)
+        make_events_for_test(self.domain.name, datetime.utcnow())
+        make_events_for_test(self.domain.name, datetime.utcnow(), status=MessagingEvent.STATUS_ERROR)
         url = f'{self.list_endpoint}?status=error'
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         actual = {event["status"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {"error"})
+
+    def test_error_code_filtering(self):
+        self._create_sms_messages(2, True)
+        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1.error_code = MessagingEvent.ERROR_CANNOT_FIND_FORM
+        e1.save()
+        url = f'{self.list_endpoint}?error_code=CANNOT_FIND_FORM'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        actual = {event["id"] for event in json.loads(response.content)['objects']}
+        self.assertEqual(actual, {e1.id})
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
