@@ -13,14 +13,16 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
                      can_skip_domain=False):
     """
     :param domain: domain where the update was initiated
-    :param user: User making the change (couch user)
+    :param user: User making the change (couch user) or SYSTEM_USER_ID
     :param model_object: The user being changed (couch user)
     :param message: Message text
     :param fields_changed: List of model field names that have
     :param action: Action on the model
     :param can_skip_domain: flag to allow domain less entry
     """
-    if not domain and not can_skip_domain:
+    from corehq.apps.users.util import SYSTEM_USER_ID
+
+    if not domain and not can_skip_domain and user != SYSTEM_USER_ID:
         raise ValueError("Please pass domain")
 
     if message is None and fields_changed is None:
@@ -39,7 +41,7 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
         domain=domain,
         object_type=model_object.doc_type,
         object_id=model_object.get_id,
-        by_user_id=user.get_id,
+        by_user_id=SYSTEM_USER_ID if user == SYSTEM_USER_ID else user.get_id,
         details=UpdateDetails.wrap({}),
         message=message,
         action_flag=action.value,
