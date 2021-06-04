@@ -144,13 +144,11 @@
           <tr>
             <td>
               <a data-bind="attr: {href: editUrl}, text: email"></a>
-              {% if request|toggle_enabled:"ENTERPRISE_SSO" %}
                 <span class="label label-warning"
                       data-bind="if: isUntrustedIdentityProvider">
                   <i class="fa fa-warning"></i>
                   {% trans "SSO Identity Provider is not trusted." %}
                 </span>
-              {% endif %}
             </td>
             <td data-bind="text: role"></td>
             <td data-bind="text: name"></td>
