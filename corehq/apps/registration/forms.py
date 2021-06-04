@@ -79,7 +79,11 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.is_sso = kwargs.pop('is_sso', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
+
+        if self.is_sso:
+            self.fields['password'].required = False
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -249,6 +253,10 @@ class RegisterWebUserForm(forms.Form):
         return data
 
     def clean_password(self):
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            # This field is not used with SSO. A randomly generated
+            # password as a fallback is created in SsoBackend.
+            return
         return clean_password(self.cleaned_data.get('password'))
 
     def clean_eula_confirmed(self):
