@@ -174,6 +174,7 @@ def get_tracked_entity_schema() -> dict:
         "orgUnit": id_schema,
         SchemaOptional("programOwners"): [object],
         SchemaOptional("relationships"): [relationship_schema],
+        SchemaOptional("storedBy"): str,
         SchemaOptional("trackedEntityInstance"): id_schema,
         "trackedEntityType": id_schema,
     }
