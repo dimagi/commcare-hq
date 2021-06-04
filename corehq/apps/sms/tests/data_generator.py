@@ -28,6 +28,16 @@ def create_fake_sms(domain, randomize=False):
         content_type = random.choice(MessagingEvent.CONTENT_CHOICES)[0]
         recipient_type = random.choice(MessagingEvent.RECIPIENT_CHOICES)[0]
 
+    make_events_for_test(domain, message_date, source, status, content_type, recipient_type)
+
+
+def make_events_for_test(
+        domain,
+        message_date,
+        source=MessagingEvent.SOURCE_OTHER,
+        status=MessagingEvent.STATUS_COMPLETED,
+        content_type=MessagingEvent.CONTENT_SMS,
+        recipient_type=MessagingEvent.RECIPIENT_CASE):
     event = MessagingEvent.objects.create(
         domain=domain,
         date=message_date,

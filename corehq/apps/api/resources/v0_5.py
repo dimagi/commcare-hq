@@ -1229,16 +1229,20 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         # Custom filtering for date etc
         # see corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
         filter_consumers = [
-            self._get_date_filter_consumer()
+            self._get_date_filter_consumer(),
+            self._source_filter_consumer
         ]
+        orm_filters = {}
         for key, value in list(filters.items()):
             for consumer in filter_consumers:
                 result = consumer(key, value)
                 if result:
                     del filters[key]
-                    filters.update(result)
-                continue
-        return super(MessagingEventResourceNew, self).build_filters(filters, **kwargs)
+                    orm_filters.update(result)
+                    continue
+        orm_filters.update(super(MessagingEventResourceNew, self).build_filters(filters, **kwargs))
+        return orm_filters
+
 
     @staticmethod
     def _get_date_filter_consumer():
@@ -1253,6 +1257,33 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
                     raise InvalidFilterError(str(e))
 
         return _date_consumer
+
+    @staticmethod
+    def _source_filter_consumer(key, value):
+        slug_values = {v: k for k, v in MessagingEvent.SOURCE_SLUGS.items()}
+        if key != "source":
+            return
+
+        if ',' in value:
+            values = value.split(',')
+        else:
+            values = [value]
+
+        sources = [slug_values[val] for val in values if val in slug_values]
+        if sources:
+            # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+            if MessagingEvent.SOURCE_OTHER in sources:
+                sources.append(MessagingEvent.SOURCE_FORWARDED)
+
+            if MessagingEvent.SOURCE_BROADCAST in sources:
+                sources.extend([
+                    MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+                    MessagingEvent.SOURCE_IMMEDIATE_BROADCAST
+                ])
+
+            if MessagingEvent.SOURCE_REMINDER in sources:
+                sources.append(MessagingEvent.SOURCE_CASE_RULE)
+            return {"parent__source__in": sources}
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.all()
@@ -1275,8 +1306,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "date": ('gt', 'gte', 'lt', 'lte'),
-            # "source": ('exact',),  # TODO
             "content_type": ('exact',),  # TODO: convert from slug
             "status": ('exact',),  # TODO: convert from slug
             "error_code": ('exact',),  # TODO

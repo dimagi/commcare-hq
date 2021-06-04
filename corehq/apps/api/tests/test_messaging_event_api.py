@@ -8,7 +8,7 @@ from corehq.apps.api.resources.v0_5 import (
 )
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms, \
-    make_email_event
+    make_email_event, make_events_for_test
 from corehq.apps.users.models import CommCareUser
 
 
@@ -53,7 +53,7 @@ class TestMessagingEventResource(APIResourceTest):
     def test_get_list_simple(self):
         self._create_sms_messages(2, randomize=False)
         response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(2, len(data))
         for result in data:
@@ -63,21 +63,21 @@ class TestMessagingEventResource(APIResourceTest):
     def test_date_ordering(self):
         self._create_sms_messages(5, randomize=True)
         response = self._assert_auth_get_resource(f'{self.list_endpoint}?order_by=date')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(5, len(ordered_data))
         dates = [r['date'] for r in ordered_data]
         self.assertEqual(dates, sorted(dates))
 
         response = self._assert_auth_get_resource(f'{self.list_endpoint}?order_by=-date')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         reverse_ordered_data = json.loads(response.content)['objects']
         self.assertEqual(ordered_data, list(reversed(reverse_ordered_data)))
 
     def test_domain_filter(self):
         self._create_sms_messages(5, randomize=True, domain='different-one')
         response = self._assert_auth_get_resource(f'{self.list_endpoint}?order_by=date')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         ordered_data = json.loads(response.content)['objects']
         self.assertEqual(0, len(ordered_data))
 
@@ -132,9 +132,25 @@ class TestMessagingEventResource(APIResourceTest):
     def _check_date_filtering_response(self, filters, expected):
         url = f'{self.list_endpoint}?order_by=date&' + urllib.parse.urlencode(filters)
         response = self._assert_auth_get_resource(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         actual = [event["date"] for event in json.loads(response.content)['objects']]
         self.assertEqual(actual, expected)
+
+    def test_source_filtering(self):
+        sources = [
+            MessagingEvent.SOURCE_BROADCAST, MessagingEvent.SOURCE_KEYWORD,
+            MessagingEvent.SOURCE_REMINDER, MessagingEvent.SOURCE_UNRECOGNIZED,
+            MessagingEvent.SOURCE_CASE_RULE
+        ]
+        for source in sources:
+            make_events_for_test(self.domain, datetime.utcnow(), source=source)
+
+        url = f'{self.list_endpoint}?order_by=date&source=keyword,reminder'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        actual = {event["source"]["type"] for event in json.loads(response.content)['objects']}
+        self.assertEqual(actual, {"keyword", "reminder", "conditional-alert"})
+
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
@@ -173,7 +189,7 @@ class TestMessagingEventResource(APIResourceTest):
         }
 
         response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(1, len(data))
         for result in data:
@@ -224,7 +240,7 @@ class TestMessagingEventResource(APIResourceTest):
         }
 
         response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(1, len(data))
         for result in data:
@@ -268,7 +284,7 @@ class TestMessagingEventResource(APIResourceTest):
         }
 
         response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(1, len(data))
         for result in data:
