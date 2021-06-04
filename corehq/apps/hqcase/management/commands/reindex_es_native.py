@@ -64,11 +64,15 @@ class Command(BaseCommand):
             task_id = options["monitor_task_id"]
         check_task_progress(es, task_id)
 
-        print(inspect.cleandoc(f"""
-            If you would like to check, you may run this
-            command again with --print_index_size to make sure
-            doc counts match across both indices.
+        print("\nReindex task complete.")
+        source_count = _get_doc_count(es, source_index)
+        target_count = _get_doc_count(es, target_index)
+        print("Number of docs in source index", source_count)
+        print("Number of docs in target index", target_count)
 
+        print("")
+        print(inspect.cleandoc(f"""
+            Perform manual checks to verify the reindex is complete.
             Once you are satisfied that the reindex is complete you should run the following:
 
             ./manage.py initialize_es_indices --index {target_index} --set-for-usage
@@ -132,8 +136,7 @@ def check_task_progress(es, task_id):
             node_failure = result["node_failures"][0]
             error = node_failure["caused_by"]["type"]
             if error == "resource_not_found_exception":
-                print("Reindex task complete or failed. Please check ES logs for final output.")
-                return
+                return  # task completed
             else:
                 raise CommandError(f"Fetching task failed: {node_failure}")
 
