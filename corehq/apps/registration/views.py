@@ -179,7 +179,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test
+                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -209,6 +209,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     subject = _("CommCareHQ account request")
                     message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
+
         response = {
             'isValid': message is None,
             'restrictedByDomain': restricted_by_domain,
