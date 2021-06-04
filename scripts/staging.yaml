@@ -55,7 +55,7 @@ branches:
     # - jls/sync-mixins-hard-fail # Jenny May 24
     - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    - fr/user-data-jit            # Farid September 2
+    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
