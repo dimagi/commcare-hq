@@ -78,7 +78,6 @@ branches:
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
-    - bmb/sso-catch-config-errors  # Biyeun June 3
-    # - bmb/sso-remove-debug-views  # Biyeun June 3
+    - bmb/sso-remove-debug-views  # Biyeun June 3
     - fr/remote-linked-ucr      # Farid June 4
 submodules: { }
