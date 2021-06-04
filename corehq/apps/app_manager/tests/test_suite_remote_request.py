@@ -6,14 +6,20 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
     Itemset,
     Module,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSION
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSION,
+)
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RESULTS_INSTANCE,
+)
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -75,7 +81,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ))
         )
         self.module.search_config = CaseSearch(
-            command_label={'en': 'Search Patients Nationally'},
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search Patients Nationally'
+                }
+            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
@@ -167,8 +177,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
-            command_label={'en': 'Advanced Search'},
-            again_label={'en': 'Search One More Time'},
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Advanced Search'
+                }
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={
+                    'en': 'Search One More Time'
+                }
+            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
@@ -429,6 +447,25 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt key="name" receive="home-street">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_hidden(self, *args):
+        """Setting the appearance to "address"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].hidden = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" hidden="true">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
