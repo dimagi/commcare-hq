@@ -3,10 +3,10 @@ import re
 
 from django.test import SimpleTestCase
 
+import commcare_translations
 import mock
 from lxml.etree import tostring
 
-import commcare_translations
 from corehq.apps.app_manager.exceptions import (
     DuplicateInstanceIdError,
     SuiteValidationError,
@@ -15,6 +15,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     CustomAssertion,
     CustomInstance,
@@ -150,6 +152,48 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
+    def test_case_search_action(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={'en': 'Get them'},
+                media_image={'en': "jr://file/commcare/image/1.png"},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={'en': 'Get them'},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
+        # test for legacy action node for older versions
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
+        # test for localized action node for apps with CC version > 2.21
+        app.build_spec.version = '2.21.0'
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
     def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
@@ -164,6 +208,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 blanks='first',
             )
         )
+
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
         self.assertXmlPartialEqual(
             self.get_xml('sort-cache-search'),
             app.create_suite(),
