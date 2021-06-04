@@ -138,6 +138,9 @@ class RegisterWebUserForm(forms.Form):
                                       "}",
                         ),
                         crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isSso,'
+                                    'text: ssoMessage">&nbsp;</p>'),
+                        crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
                         hqcrispy.ValidationMessage('emailDelayed'),
