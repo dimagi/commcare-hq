@@ -25,11 +25,7 @@ from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseReindexAccessor,
-    FormReindexAccessor,
-)
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
