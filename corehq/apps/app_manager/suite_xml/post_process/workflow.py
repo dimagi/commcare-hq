@@ -282,42 +282,13 @@ class EndOfFormNavigationWorkflow(object):
             return [static_stack_frame] if static_stack_frame else []
 
         stack_frames = []
-        source_form_datums = self.helper.get_form_datums(form)
-
         for link in form.form_links:
-            target_form = self.helper.app.get_form(link.form_id)
-            target_module = target_form.get_module()
-            target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
-                                                                   target_module)
-            if link.datums:
-                frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
-            else:
-                frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
+            stack_frames.append(self._get_link_frame(link, form, module))
 
-            if target_module in module.get_child_modules():
-                parent_frame_children = self.helper.get_frame_children(
-                    self._get_first_command(module), module, module_only=True)
+        fallback_frame = self._get_fallback_frame(form, module)
+        if fallback_frame:
+            stack_frames.append(fallback_frame)
 
-                # exclude frame children from the child module if they are already
-                # supplied by the parent module
-                parent_ids = {parent.id for parent in parent_frame_children}
-                frame_children = parent_frame_children + [
-                    child for child in frame_children
-                    if child.id not in parent_ids
-                ]
-
-            stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
-
-        if form.post_form_workflow_fallback:
-            # If no form link's xpath conditions are met, use the fallback
-            conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
-            if conditions:
-                no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
-                fallback_frame = self._get_static_stack_frame(
-                    form.post_form_workflow_fallback, form, module, xpath=no_conditions_match
-                )
-                if fallback_frame:
-                    stack_frames.append(fallback_frame)
         return stack_frames
 
     def _get_static_stack_frame(self, form_workflow, form, module, xpath=None):
@@ -366,6 +337,41 @@ class EndOfFormNavigationWorkflow(object):
         if module.module_type == "shadow":
             module = module.source_module
         return id_strings.form_command(module.get_form(0))
+
+    def _get_link_frame(self, link, form, module):
+        source_form_datums = self.helper.get_form_datums(form)
+        target_form = self.helper.app.get_form(link.form_id)
+        target_module = target_form.get_module()
+        target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
+                                                               target_module)
+        if link.datums:
+            frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
+        else:
+            frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
+
+        if target_module in module.get_child_modules():
+            parent_frame_children = self.helper.get_frame_children(
+                self._get_first_command(module), module, module_only=True)
+
+            # exclude frame children from the child module if they are already
+            # supplied by the parent module
+            parent_ids = {parent.id for parent in parent_frame_children}
+            frame_children = parent_frame_children + [
+                child for child in frame_children
+                if child.id not in parent_ids
+            ]
+
+        return StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums)
+
+    def _get_fallback_frame(self, form, module):
+        if form.post_form_workflow_fallback:
+            # If no form link's xpath conditions are met, use the fallback
+            conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
+            if conditions:
+                no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
+                return self._get_static_stack_frame(
+                    form.post_form_workflow_fallback, form, module, xpath=no_conditions_match
+                )
 
 
 class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_created case_not_created')):
