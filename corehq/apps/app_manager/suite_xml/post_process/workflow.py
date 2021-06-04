@@ -258,59 +258,57 @@ class EndOfFormNavigationWorkflow(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        stack_frames = []
-
-        if form.post_form_workflow == WORKFLOW_FORM:
-            source_form_datums = self.helper.get_form_datums(form)
-
-            for link in form.form_links:
-                target_form = self.helper.app.get_form(link.form_id)
-                target_module = target_form.get_module()
-
-                target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
-                                                                       target_module)
-                if link.datums:
-                    frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_manual_values(
-                        target_frame_children, link.datums, form
-                    )
-                else:
-                    frame_children = get_datums_matched_to_source(
-                        target_frame_children, source_form_datums
-                    )
-
-                if target_module in module.get_child_modules():
-                    parent_frame_children = self.helper.get_frame_children(
-                        self._get_first_command(module), module, module_only=True)
-
-                    # exclude frame children from the child module if they are already
-                    # supplied by the parent module
-                    parent_ids = {parent.id for parent in parent_frame_children}
-                    frame_children = parent_frame_children + [
-                        child for child in frame_children
-                        if child.id not in parent_ids
-                    ]
-
-                stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
-            if form.post_form_workflow_fallback:
-                # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
-                link_xpaths = [link.xpath for link in form.form_links]
-                # remove any empty string
-                link_xpaths = [x for x in link_xpaths if x.strip()]
-                if link_xpaths:
-                    negate_of_all_link_paths = (
-                        ' and '.join(
-                            ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
-                        )
-                    )
-                    static_stack_frame_for_fallback = self._get_static_stack_frame(
-                        form.post_form_workflow_fallback, form, module, xpath=negate_of_all_link_paths
-                    )
-                    if static_stack_frame_for_fallback:
-                        stack_frames.append(static_stack_frame_for_fallback)
-        else:
+        if form.post_form_workflow != WORKFLOW_FORM:
             static_stack_frame = self._get_static_stack_frame(form.post_form_workflow, form, module)
-            if static_stack_frame:
-                stack_frames.append(static_stack_frame)
+            return [static_stack_frame] if static_stack_frame else []
+
+        stack_frames = []
+        source_form_datums = self.helper.get_form_datums(form)
+
+        for link in form.form_links:
+            target_form = self.helper.app.get_form(link.form_id)
+            target_module = target_form.get_module()
+
+            target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
+                                                                    target_module)
+            if link.datums:
+                frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_manual_values(
+                    target_frame_children, link.datums, form
+                )
+            else:
+                frame_children = get_datums_matched_to_source(
+                    target_frame_children, source_form_datums
+                )
+
+            if target_module in module.get_child_modules():
+                parent_frame_children = self.helper.get_frame_children(
+                    self._get_first_command(module), module, module_only=True)
+
+                # exclude frame children from the child module if they are already
+                # supplied by the parent module
+                parent_ids = {parent.id for parent in parent_frame_children}
+                frame_children = parent_frame_children + [
+                    child for child in frame_children
+                    if child.id not in parent_ids
+                ]
+
+            stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
+        if form.post_form_workflow_fallback:
+            # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
+            link_xpaths = [link.xpath for link in form.form_links]
+            # remove any empty string
+            link_xpaths = [x for x in link_xpaths if x.strip()]
+            if link_xpaths:
+                negate_of_all_link_paths = (
+                    ' and '.join(
+                        ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
+                    )
+                )
+                static_stack_frame_for_fallback = self._get_static_stack_frame(
+                    form.post_form_workflow_fallback, form, module, xpath=negate_of_all_link_paths
+                )
+                if static_stack_frame_for_fallback:
+                    stack_frames.append(static_stack_frame_for_fallback)
         return stack_frames
 
     def _get_static_stack_frame(self, form_workflow, form, module, xpath=None):
