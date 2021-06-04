@@ -42,7 +42,7 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
         object_type=model_object.doc_type,
         object_id=model_object.get_id,
         by_user_id=SYSTEM_USER_ID if user == SYSTEM_USER_ID else user.get_id,
-        details=UpdateDetails.wrap({}),
+        details=UpdateDetails.wrap({}),  # ToDo: Add details
         message=message,
         action_flag=action.value,
     )
