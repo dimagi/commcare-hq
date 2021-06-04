@@ -104,7 +104,7 @@ def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
     domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
     subdomain_objects_by_name = {}
     for domain_name in domain_links_by_name:
-        for subdomain in BillingAccount.get_account_by_domain(domain_name).get_enterprise_permissions_domains():
+        for subdomain in BillingAccount.get_enterprise_permissions_domains(domain_name):
             if subdomain not in domain_links_by_name:
                 subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 
