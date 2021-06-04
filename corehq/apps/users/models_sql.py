@@ -234,7 +234,7 @@ class RoleAssignableBy(models.Model):
 
 
 class UpdateDetails(jsonobject.JsonObject):
-    updated_via = jsonobject.StringProperty()
+    changed_via = jsonobject.StringProperty()
     changes = jsonobject.DictProperty()
 
 
@@ -256,7 +256,7 @@ class HQLogEntry(models.Model):
     object_id = models.CharField(max_length=128)
     by_user_id = models.CharField(max_length=128)
     details = JSONField(default=dict)  # UpdateDetails
-    message = models.TextField(blank=True)
+    message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
 

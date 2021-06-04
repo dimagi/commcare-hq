@@ -35,6 +35,8 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.model_log import log_model_change
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
@@ -107,7 +109,8 @@ class SuperuserManagement(UserAdministration):
                     user.save()
                     couch_user = CouchUser.from_django_user(user)
                     log_message = _("Changed: ") + _(", ").join(changed_field_logs)
-                    log_model_change(None, self.request.couch_user, couch_user, message=log_message)
+                    log_model_change(None, self.request.couch_user, couch_user, message=log_message,
+                                     changed_via=USER_CHANGE_VIA_WEB)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -396,7 +399,8 @@ class DisableUserView(FormView):
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
         couch_user = CouchUser.from_django_user(self.user)
-        log_model_change(None, self.request.couch_user, couch_user, f'User {verb}. Reason: "{reason}"')
+        log_model_change(None, self.request.couch_user, couch_user, f'User {verb}. Reason: "{reason}"',
+                         changed_via=USER_CHANGE_VIA_WEB)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -490,7 +494,8 @@ class DisableTwoFactorView(FormView):
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         log_model_change(
             None, self.request.couch_user, couch_user,
-            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
+            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"',
+            changed_via=USER_CHANGE_VIA_WEB,
         )
         mail_admins(
             "Two-Factor account reset",

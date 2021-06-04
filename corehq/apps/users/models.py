@@ -1178,8 +1178,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             pass
         if deleted_by:
             # ToDo: should this after the couch doc is deleted from where its called
-            log_model_change(domain, deleted_by, self, message=f"deleted_via: {deleted_via}",
-                             action=ModelAction.DELETE)
+            log_model_change(domain, deleted_by, self,
+                             action=ModelAction.DELETE, changed_via=deleted_via)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1613,9 +1613,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             domain,
             created_by,
             self,
-            message=f"created_via: {created_via}",
             action=ModelAction.CREATE,
             can_skip_domain=can_skip_domain,
+            changed_via=created_via,
         )
 
 
@@ -1861,7 +1861,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 domain,
                 unretired_by,
                 self,
-                message=f"unretired_via: {unretired_via}",
+                changed_via=unretired_via,
             )
         return True, None
 
@@ -1900,8 +1900,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
             if deleted_by:
-                log_model_change(domain, deleted_by, self, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
+                log_model_change(domain, deleted_by, self,
+                                 action=ModelAction.DELETE, changed_via=deleted_via)
         self.save()
 
     def confirm_account(self, password):

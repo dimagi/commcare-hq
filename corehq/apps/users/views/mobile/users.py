@@ -841,7 +841,7 @@ def _modify_user_status(request, domain, user_id, is_active):
     user.save(spawn_task=True)
     change_message = "Activated User" if is_active else "Deactivated User"
     log_model_change(domain, request.couch_user, user, message=change_message,
-                     action=ModelAction.UPDATE)
+                     action=ModelAction.UPDATE, changed_via=USER_CHANGE_VIA_WEB)
     return JsonResponse({
         'success': True,
     })

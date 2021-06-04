@@ -526,12 +526,20 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         log_entry = HQLogEntry.objects.order_by('created_at').first()
         self.assertEqual(
-            log_entry.message,
-            f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            log_entry.details,
+            {
+                'changes': {},
+                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
+            }
+        )
         log_entry = HQLogEntry.objects.order_by('created_at').last()
         self.assertEqual(
-            log_entry.message,
-            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            log_entry.details,
+            {
+                'changes': {},
+                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
+            }
+        )
 
     def test_blank_is_active(self):
         import_users_and_groups(

@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('object_id', models.CharField(max_length=128)),
                 ('by_user_id', models.CharField(max_length=128)),
                 ('details', jsonfield.fields.JSONField(default=dict)),
-                ('message', models.TextField(blank=True)),
+                ('message', models.TextField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('action', models.PositiveSmallIntegerField(
                     choices=[(1, 'Create'), (2, 'Update'), (3, 'Delete')])),
