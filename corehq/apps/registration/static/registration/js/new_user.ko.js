@@ -328,6 +328,11 @@ hqDefine('registration/js/new_user.ko', [
         self.isSubmitting = ko.observable(false);
         self.isSubmitSuccess = ko.observable(false);
 
+        // for SSO
+        self.isSsoSuccess = ko.observable(false);
+        self.ssoLoginUrl = ko.observable('');
+        self.ssoIdpName = ko.observable('');
+
         self.hasServerError = ko.observable(false);  // in the case of 500s
 
         // Fake timeouts to give the user some feeling of progress.
@@ -379,12 +384,23 @@ hqDefine('registration/js/new_user.ko', [
                             });
                         } else if (response.success) {
                             self.isSubmitting(false);
-                            self.isSubmitSuccess(true);
+                            if (self.isSso()) {
+                                self.isSsoSuccess(true);
+                                self.ssoLoginUrl(response.ssoLoginUrl);
+                                self.ssoIdpName(response.ssoIdpName);
+                            } else {
+                                self.isSubmitSuccess(true);
+                            }
                             module.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test,
                             }));
+                            if (self.isSso()) {
+                                setTimeout(function () {
+                                    window.location = self.ssoLoginUrl();
+                                }, 3000);
+                            }
                         }
                     },
                     error: function () {
