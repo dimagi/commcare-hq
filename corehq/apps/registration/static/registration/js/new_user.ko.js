@@ -259,15 +259,23 @@ hqDefine('registration/js/new_user.ko', [
         };
 
         self.isStepOneValid = ko.computed(function () {
+            var isPasswordValid = (
+                self.password() !== undefined
+                && self.password.isValid()
+                && self.passwordDelayed.isValid()
+            );
+
+            if (self.isSso()) {
+                isPasswordValid = true;
+            }
+
             return self.fullName() !== undefined
                 && self.email() !== undefined
-                && self.password() !== undefined
                 && self.fullName.isValid()
                 && self.email.isValid()
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating()
-                && self.password.isValid()
-                && self.passwordDelayed.isValid();
+                && isPasswordValid;
         });
 
         self.disableNextStepOne = ko.computed(function () {
