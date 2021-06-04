@@ -16,7 +16,7 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
     :param user: User making the change (couch user) or SYSTEM_USER_ID
     :param model_object: The user being changed (couch user)
     :param message: Optional Message text
-    :param fields_changed: List of model field names that have
+    :param fields_changed: List of model field names that have changed
     :param action: Action on the model
     :param can_skip_domain: flag to allow domain less entry
     :param changed_via: changed via medium i.e API/Web
