@@ -3,10 +3,9 @@ import time
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
-from elasticsearch import NotFoundError
 
 from corehq.elastic import get_es_export, ES_META
-from pillowtop.reindexer.reindexer import prepare_index_for_reindex
+from pillowtop.es_utils import initialize_index, set_index_reindex_settings
 
 USAGE = """Reindex data from one ES index into another ES index using Elasticsearch reindex API
     https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html#reindex-from-remote.
@@ -68,21 +67,18 @@ class Command(BaseCommand):
 
 
 def _initialize_target(es, target_index_info):
-    if not es.indices.exists(target_index_info.index):
-        try:
-            alias = es.indices.get_alias(target_index_info.alias)
-        except NotFoundError:
-            pass
-        else:
-            raise CommandError(f"Target index alias is already assigned to {','.join(list(alias))}")
+    if es.indices.exists(target_index_info.index):
+        print(f"Target index '{target_index_info.index}' already exists. Skipping initialization.")
+        return
 
-        print("Creating target index")
-        prepare_index_for_reindex(es, target_index_info)
+    print("Creating target index")
+    initialize_index(es, target_index_info)
+    set_index_reindex_settings(es, target_index_info.index)
 
-        print("Setting number of replicas to 0")
-        es.indices.put_settings({
-            "number_of_replicas": 0
-        }, index=target_index_info.index)
+    print("Setting number of replicas to 0")
+    es.indices.put_settings({
+        "index.number_of_replicas": 0
+    }, index=target_index_info.index)
 
 
 def reindex_and_poll_progress(es, source_index, target_index):
