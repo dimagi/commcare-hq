@@ -66,7 +66,7 @@ class RetireUserTestCase(TestCase):
     def test_retire(self):
         deleted_via = "Test test"
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
-        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action_flag=ModelAction.DELETE.value,
+        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action=ModelAction.DELETE.value,
                                            object_id=self.commcare_user.get_id)
         self.assertEqual(log_entry.message, f"deleted_via: {deleted_via}")
 
@@ -95,13 +95,13 @@ class RetireUserTestCase(TestCase):
 
         self.assertEqual(
             HQLogEntry.objects.filter(
-                by_user_id=self.other_user.get_id, action_flag=ModelAction.UPDATE.value
+                by_user_id=self.other_user.get_id, action=ModelAction.UPDATE.value
             ).count(),
             0
         )
         self.commcare_user.unretire(self.domain, unretired_by=self.other_user, unretired_via="Test")
 
-        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action_flag=ModelAction.UPDATE.value)
+        log_entry = HQLogEntry.objects.get(by_user_id=self.other_user.get_id, action=ModelAction.UPDATE.value)
         self.assertEqual(log_entry.message, "unretired_via: Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)

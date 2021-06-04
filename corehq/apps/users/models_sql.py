@@ -242,22 +242,26 @@ class HQLogEntry(models.Model):
     UPDATE = 2
     DELETE = 3
 
-    ACTION_FLAG_CHOICES = (
+    ACTION_CHOICES = (
         (CREATE, _('Create')),
         (UPDATE, _('Update')),
         (DELETE, _('Delete')),
     )
-    domain = models.CharField(max_length=255, db_index=True, null=True)
-    object_type = models.CharField(max_length=255, db_index=True, choices=(
-        ('CommCareUser', 'CommCareUser'),
-        ('WebUser', 'WebUser'),
-    ))
-    object_id = models.CharField(max_length=128, db_index=True)
-    by_user_id = models.CharField(max_length=128, db_index=True)
+    domain = models.CharField(max_length=255, null=True)
+    object_type = models.CharField(max_length=255)
+    object_id = models.CharField(max_length=128)
+    by_user_id = models.CharField(max_length=128)
     details = JSONField(default=dict)  # UpdateDetails
-    message = models.TextField(_('change message'), blank=True)
-    action_time = models.DateTimeField(_('action time'), auto_now_add=True, editable=False)
-    action_flag = models.PositiveSmallIntegerField(_('action flag'), choices=ACTION_FLAG_CHOICES)
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['object_id'])
+        ]
+        index_together = ["domain", "by_user_id"]
 
 
 def migrate_role_permissions_to_sql(user_role, sql_role):

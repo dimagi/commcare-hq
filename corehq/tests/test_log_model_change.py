@@ -21,14 +21,14 @@ class TestLogModelChange(TestCase):
         user1 = CommCareUser.create(self.domain, 'user@test-domain.commcarehq.org', 'secret2', web_user,
                                     USER_CHANGE_VIA_WEB)
         log_entry = HQLogEntry.objects.get(domain=self.domain, by_user_id=web_user.get_id,
-                                           action_flag=ModelAction.CREATE.value)
+                                           action=ModelAction.CREATE.value)
         self.assertEqual(log_entry.object_type, "CommCareUser")
         self.assertEqual(log_entry.object_id, user1.get_id)
         self.assertEqual(log_entry.message, f"created_via: {USER_CHANGE_VIA_WEB}")
         user1_id = user1.get_id
         user1.delete(self.domain, web_user, USER_CHANGE_VIA_BULK_IMPORTER)
         log_entry = HQLogEntry.objects.get(domain=self.domain, by_user_id=web_user.get_id,
-                                           action_flag=ModelAction.DELETE.value)
+                                           action=ModelAction.DELETE.value)
         self.assertEqual(log_entry.object_type, "CommCareUser")
         self.assertEqual(log_entry.object_id, user1_id)
         self.assertEqual(log_entry.message, f"deleted_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
@@ -43,7 +43,7 @@ class TestLogModelChange(TestCase):
         web_user = WebUser.create(self.domain, 'admin@test-domain.commcarehq.org', 'secret1',
                                   created_by=SYSTEM_USER_ID, created_via=__name__)
 
-        log_entry = HQLogEntry.objects.get(by_user_id=SYSTEM_USER_ID, action_flag=ModelAction.CREATE.value)
+        log_entry = HQLogEntry.objects.get(by_user_id=SYSTEM_USER_ID, action=ModelAction.CREATE.value)
         self.assertEqual(log_entry.message, f"created_via: {__name__}")
         self.assertEqual(log_entry.object_id, web_user.get_id)
 
@@ -51,7 +51,7 @@ class TestLogModelChange(TestCase):
 
         # domain less delete action
         web_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
-        log_entry = HQLogEntry.objects.get(by_user_id=SYSTEM_USER_ID, action_flag=ModelAction.DELETE.value)
+        log_entry = HQLogEntry.objects.get(by_user_id=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
         self.assertEqual(log_entry.message, f"deleted_via: {__name__}")
         self.assertEqual(log_entry.object_id, web_user_id)
 
