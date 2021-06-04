@@ -531,10 +531,13 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(
             log_entry.details,
             {
-                'changes': {},
+                'changes': {
+                    'role': self.role.get_qualified_id()
+                },
                 'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
             }
         )
+        self.assertEqual(log_entry.message, f"role: {self.role.name}")
 
     def test_blank_is_active(self):
         import_users_and_groups(

@@ -18,7 +18,7 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
     :param user: User making the change (couch user) or SYSTEM_USER_ID
     :param model_object: The user being changed (couch user)
     :param message: Optional Message text
-    :param fields_changed: List of model field names that have changed
+    :param fields_changed: dict of model fields that have changed with current value
     :param action: Action on the model
     :param can_skip_domain: flag to allow domain less entry
     :param changed_via: changed via medium i.e API/Web
@@ -53,5 +53,4 @@ def _get_change_details(couch_user, action, fields_changed):
             user_json.pop(prop, None)
         return user_json
     else:
-        # ToDo: handle for updates
-        return {}
+        return fields_changed

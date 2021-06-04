@@ -319,5 +319,10 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
     :param by_user: couch user that made the update
     :param updated_via: web/bulk_importer
     """
-    # ToDo: pass a dict with new role id instead
-    log_model_change(domain, by_user, user, fields_changed=['role'], changed_via=updated_via)
+    fields_changed = {'role': ''}
+    message = ''
+    if user_role:
+        message = f"role: {user_role.name}"
+        fields_changed['role'] = user_role.get_qualified_id()
+    log_model_change(domain, by_user, user, fields_changed=fields_changed,
+                     message=message, changed_via=updated_via)
