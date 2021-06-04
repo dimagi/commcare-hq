@@ -7,7 +7,14 @@ from xml.sax.saxutils import unescape
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import RETURN_TO
+from corehq.apps.app_manager.const import (
+    RETURN_TO,
+    WORKFLOW_FORM,
+    WORKFLOW_MODULE,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_ROOT,
+)
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import (
@@ -251,52 +258,6 @@ class EndOfFormNavigationWorkflow(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.const import (
-            WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
-        )
-
-        def frame_children_for_module(module_, include_user_selections=True):
-            frame_children = []
-            if module_.root_module:
-                frame_children.extend(frame_children_for_module(module_.root_module))
-
-            if include_user_selections:
-                command = self._get_first_command(module_)
-                this_module_children = self.helper.get_frame_children(command, module_, module_only=True)
-                for child in this_module_children:
-                    if child not in frame_children:
-                        frame_children.append(child)
-            else:
-                module_command = id_strings.menu_id(module_)
-                if module_command != id_strings.ROOT:
-                    frame_children.append(CommandId(module_command))
-
-            return frame_children
-
-        def _get_static_stack_frame(form_workflow, xpath=None):
-            if form_workflow == WORKFLOW_ROOT:
-                return StackFrameMeta(xpath, [], allow_empty_frame=True)
-            elif form_workflow == WORKFLOW_MODULE:
-                frame_children = frame_children_for_module(module, include_user_selections=False)
-                return StackFrameMeta(xpath, frame_children)
-            elif form_workflow == WORKFLOW_PARENT_MODULE:
-                root_module = module.root_module
-                frame_children = frame_children_for_module(root_module)
-                return StackFrameMeta(xpath, frame_children)
-            elif form_workflow == WORKFLOW_PREVIOUS:
-                frame_children = self.helper.get_frame_children(id_strings.form_command(form),
-                                                                module, include_target_root=True)
-
-                # since we want to go the 'previous' screen we need to drop the last
-                # datum
-                last = frame_children.pop()
-                while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
-                    # keep removing last element until we hit a command
-                    # or a non-autoselect datum
-                    last = frame_children.pop()
-
-                return StackFrameMeta(xpath, frame_children)
-
         stack_frames = []
 
         if form.post_form_workflow == WORKFLOW_FORM:
@@ -341,17 +302,58 @@ class EndOfFormNavigationWorkflow(object):
                             ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
                         )
                     )
-                    static_stack_frame_for_fallback = _get_static_stack_frame(
-                        form.post_form_workflow_fallback,
-                        negate_of_all_link_paths
+                    static_stack_frame_for_fallback = self._get_static_stack_frame(
+                        form.post_form_workflow_fallback, form, module, xpath=negate_of_all_link_paths
                     )
                     if static_stack_frame_for_fallback:
                         stack_frames.append(static_stack_frame_for_fallback)
         else:
-            static_stack_frame = _get_static_stack_frame(form.post_form_workflow)
+            static_stack_frame = self._get_static_stack_frame(form.post_form_workflow, form, module)
             if static_stack_frame:
                 stack_frames.append(static_stack_frame)
         return stack_frames
+
+    def _get_static_stack_frame(self, form_workflow, form, module, xpath=None):
+        if form_workflow == WORKFLOW_ROOT:
+            return StackFrameMeta(xpath, [], allow_empty_frame=True)
+        elif form_workflow == WORKFLOW_MODULE:
+            frame_children = self._frame_children_for_module(module, include_user_selections=False)
+            return StackFrameMeta(xpath, frame_children)
+        elif form_workflow == WORKFLOW_PARENT_MODULE:
+            root_module = module.root_module
+            frame_children = self._frame_children_for_module(root_module)
+            return StackFrameMeta(xpath, frame_children)
+        elif form_workflow == WORKFLOW_PREVIOUS:
+            frame_children = self.helper.get_frame_children(id_strings.form_command(form),
+                                                            module, include_target_root=True)
+
+            # since we want to go the 'previous' screen we need to drop the last
+            # datum
+            last = frame_children.pop()
+            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+                # keep removing last element until we hit a command
+                # or a non-autoselect datum
+                last = frame_children.pop()
+
+            return StackFrameMeta(xpath, frame_children)
+
+    def _frame_children_for_module(self, module, include_user_selections=True):
+        frame_children = []
+        if module.root_module:
+            frame_children.extend(self._frame_children_for_module(module.root_module))
+
+        if include_user_selections:
+            command = self._get_first_command(module)
+            this_module_children = self.helper.get_frame_children(command, module, module_only=True)
+            for child in this_module_children:
+                if child not in frame_children:
+                    frame_children.append(child)
+        else:
+            module_command = id_strings.menu_id(module)
+            if module_command != id_strings.ROOT:
+                frame_children.append(CommandId(module_command))
+
+        return frame_children
 
     @staticmethod
     def get_datums_matched_to_manual_values(target_frame_elements, manual_values, form):
