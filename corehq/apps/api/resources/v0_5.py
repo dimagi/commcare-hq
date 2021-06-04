@@ -372,7 +372,7 @@ class WebUserResource(v0_1.WebUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.delete(kwargs['domain'], deleted_by=bundle.request.user,
+                bundle.obj.delete(kwargs['domain'], deleted_by=bundle.request.couch_user,
                                   deleted_via=USER_CHANGE_VIA_API)
             else:
                 try:
