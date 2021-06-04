@@ -200,7 +200,26 @@ class WorkflowHelper(PostProcessor):
                     entry_datum.from_parent_module = form_datum.from_parent
 
 
-def get_datums_matched_to_source(target_frame_elements, source_datums):
+def _get_datums_matched_to_manual_values(target_frame_elements, manual_values, form):
+    """
+    Attempt to match the target session variables with ones that the user
+    has entered manually
+    """
+    manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
+    for child in target_frame_elements:
+        if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
+            yield child
+        else:
+            manual_value = manual_values_by_name.get(child.id)
+            if manual_value:
+                yield StackDatum(id=child.id, value=manual_value)
+            else:
+                raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                    form.default_name(), child.id
+                ))
+
+
+def _get_datums_matched_to_source(target_frame_elements, source_datums):
     """
     Attempt to match the target session variables with ones in the source session.
     Making some large assumptions about how people will actually use this feature
@@ -268,17 +287,12 @@ class EndOfFormNavigationWorkflow(object):
         for link in form.form_links:
             target_form = self.helper.app.get_form(link.form_id)
             target_module = target_form.get_module()
-
             target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
-                                                                    target_module)
+                                                                   target_module)
             if link.datums:
-                frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_manual_values(
-                    target_frame_children, link.datums, form
-                )
+                frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
             else:
-                frame_children = get_datums_matched_to_source(
-                    target_frame_children, source_form_datums
-                )
+                frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
 
             if target_module in module.get_child_modules():
                 parent_frame_children = self.helper.get_frame_children(
@@ -293,22 +307,17 @@ class EndOfFormNavigationWorkflow(object):
                 ]
 
             stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
+
         if form.post_form_workflow_fallback:
-            # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
-            link_xpaths = [link.xpath for link in form.form_links]
-            # remove any empty string
-            link_xpaths = [x for x in link_xpaths if x.strip()]
-            if link_xpaths:
-                negate_of_all_link_paths = (
-                    ' and '.join(
-                        ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
-                    )
+            # If no form link's xpath conditions are met, use the fallback
+            conditions = [link.xpath for link in form.form_links if link.xpath.strip()]
+            if conditions:
+                no_conditions_match = ' and '.join(f'not({condition})' for condition in conditions)
+                fallback_frame = self._get_static_stack_frame(
+                    form.post_form_workflow_fallback, form, module, xpath=no_conditions_match
                 )
-                static_stack_frame_for_fallback = self._get_static_stack_frame(
-                    form.post_form_workflow_fallback, form, module, xpath=negate_of_all_link_paths
-                )
-                if static_stack_frame_for_fallback:
-                    stack_frames.append(static_stack_frame_for_fallback)
+                if fallback_frame:
+                    stack_frames.append(fallback_frame)
         return stack_frames
 
     def _get_static_stack_frame(self, form_workflow, form, module, xpath=None):
@@ -352,25 +361,6 @@ class EndOfFormNavigationWorkflow(object):
                 frame_children.append(CommandId(module_command))
 
         return frame_children
-
-    @staticmethod
-    def get_datums_matched_to_manual_values(target_frame_elements, manual_values, form):
-        """
-        Attempt to match the target session variables with ones that the user
-        has entered manually
-        """
-        manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
-        for child in target_frame_elements:
-            if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
-                yield child
-            else:
-                manual_value = manual_values_by_name.get(child.id)
-                if manual_value:
-                    yield StackDatum(id=child.id, value=manual_value)
-                else:
-                    raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
-                        form.default_name(), child.id
-                    ))
 
     def _get_first_command(self, module):
         if module.module_type == "shadow":
@@ -451,7 +441,7 @@ class CaseListFormWorkflow(object):
         if command:
             target_frame_children = self.helper.get_frame_children(command, target_module, module_only=True)
             remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
-            frame_children = get_datums_matched_to_source(
+            frame_children = _get_datums_matched_to_source(
                 remaining_target_frame_children, source_form_datums
             )
             stack_frames.add_children(frame_children)
