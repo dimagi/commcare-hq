@@ -3,17 +3,25 @@ from collections import OrderedDict
 
 from django.test import TestCase
 
+import commcare_translations
 from lxml import etree
 from testil import eq
 
-import commcare_translations
 from corehq.apps.app_manager import app_strings
-from corehq.apps.app_manager.models import Application, BuildProfile
+from corehq.apps.app_manager.models import (
+    Application,
+    BuildProfile,
+    CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
+    CaseSearchProperty,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.translations.app_translations.upload_form import (
     BulkAppTranslationFormUpdater,
 )
+from corehq.util.test_utils import flag_enabled
 
 
 def get_app():
@@ -144,3 +152,57 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         es_default_strings = self._generate_app_strings(factory.app, 'default', build_profile_id='es')
         self.assertEqual(es_default_strings['modules.m0'], module.name['es'])
         self.assertEqual(es_default_strings['forms.m0f0'], form.name['es'])
+
+    def test_modules_case_search_app_strings(self):
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.langs = ['en', 'es']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'es': BuildProfile(langs=['es'], name='es-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={'en': 'Get them', 'es': 'Conseguirlos'},
+                media_image={
+                    'en': "jr://file/commcare/image/1.png",
+                    'es': "jr://file/commcare/image/1_es.png"
+                },
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={'en': 'Get them all'}
+            ),
+            properties=[
+                CaseSearchProperty(name="name", label={'en': 'Name'})
+            ]
+        )
+        # wrap to have assign_references called
+        app = Application.wrap(factory.app.to_json())
+
+        # default language
+        self.assertEqual(app.default_language, 'en')
+        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+        self.assertEqual(en_app_strings['case_search.m0'], 'Search All Cases')
+        self.assertEqual(en_app_strings['case_search.m0.again'], 'Search Again')
+        self.assertFalse('case_search.m0.icon' in en_app_strings)
+        self.assertFalse('case_search.m0.audio' in en_app_strings)
+
+        # non-default language
+        es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
+        self.assertEqual(es_app_strings['case_search.m0'], 'Search All Cases')
+        self.assertEqual(es_app_strings['case_search.m0.again'], 'Search Again')
+
+        with flag_enabled('USH_CASE_CLAIM_UPDATES'):
+            # default language
+            en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            self.assertEqual(en_app_strings['case_search.m0'], 'Get them')
+            self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
+            self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
+            self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
+
+            # non-default language
+            es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
+            self.assertEqual(es_app_strings['case_search.m0'], 'Conseguirlos')
+            self.assertEqual(es_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1_es.png')
+            self.assertEqual(es_app_strings['case_search.m0.again'], 'Get them all')
