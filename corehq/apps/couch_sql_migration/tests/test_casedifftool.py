@@ -255,6 +255,26 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
+    def test_patch_ledger_with_incorrect_balance_and_missing_stock_state(self):
+        from corehq.apps.commtrack.models import StockState
+        from casexml.apps.stock.models import StockTransaction
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", qty=2)
+        StockTransaction.objects.filter(
+            case_id="test-case", section_id="things", product_id=product._id
+        ).update(quantity=4, stock_on_hand=4)
+        StockState.objects.filter(
+            case_id="test-case", section_id="things", product_id=product._id).delete()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["balance"], kind="stock state"),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
     def test_patch_ledger_with_incorrect_balance_and_location_id(self):
         from corehq.apps.commtrack.models import StockState
         from corehq.apps.locations.models import LocationType, make_location

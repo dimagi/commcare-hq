@@ -39,6 +39,7 @@ class TestDiffCases(SimpleTestCase):
                 "corehq.apps.commtrack.models.StockState.objects.filter",
                 self.get_stock_states,
             ),
+            patch("corehq.apps.commtrack.models.StockState.include_archived.filter"),
             patch(
                 "corehq.form_processor.backends.couch.dbaccessors"
                 ".FormAccessorCouch.form_exists",

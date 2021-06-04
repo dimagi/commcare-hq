@@ -339,10 +339,7 @@ def get_diff_block(case):
     if case.ledger_diffs:
         ledger_diffs = defaultdict(list)
         for diff in sorted(case.ledger_diffs, key=lambda d: d.path):
-            ledger_data = diff_to_json(diff)
-            if ledger_data["path"] == ["balance"]:
-                ledger_data["couch_transactions"] = get_couch_transactions(diff.ref)
-            ledger_diffs[diff.doc_id].append(ledger_data)
+            ledger_diffs[diff.doc_id].append(diff_to_json(diff))
         data["ledgers"] = dict(ledger_diffs)
     return f"<diff>{escape(json.dumps(data))}</diff>"
 
@@ -355,6 +352,8 @@ def diff_to_json(diff, new_value=None):
         obj["old"] = jsonify(diff.old_value)
     if diff.new_value is not MISSING:
         obj["new"] = jsonify(diff.new_value) if new_value is None else new_value
+    if isinstance(diff, LedgerDiff) and obj["path"] == ["balance"]:
+        obj["couch_transactions"] = get_couch_transactions(diff.ref)
     if getattr(diff, "reason", ""):
         obj["reason"] = diff.reason
     return obj
@@ -370,7 +369,15 @@ def is_patchable(diff):
 
 
 def is_ledger_patchable(diff):
-    return tuple(diff.path) not in UNPATCHABLE_LEDGER_PATHS and not (
+    return not (
+        tuple(diff.path) in UNPATCHABLE_LEDGER_PATHS
+        or is_couch_ledger_missing(diff)
+        or is_couch_stock_state_missing(diff)
+    )
+
+
+def is_couch_ledger_missing(diff):
+    return (
         list(diff.path) == ["*"]
         and diff.diff_type == "missing"
         and isinstance(diff.old_value, dict)
@@ -378,6 +385,15 @@ def is_ledger_patchable(diff):
         and diff.old_value.keys() == {"form_state"}
         and diff.new_value.keys() == {"form_state", "ledger"}
     )
+
+
+def is_couch_stock_state_missing(diff):
+    ref = diff.ref
+    return list(diff.path) == ["balance"] and not StockState.include_archived.filter(
+        case_id=ref.case_id,
+        section_id=ref.section_id,
+        product_id=ref.entry_id,
+    ).exists()
 
 
 UNPATCHABLE_LEDGER_PATHS = {
@@ -389,11 +405,7 @@ UNPATCHABLE_LEDGER_PATHS = {
 def get_ledger_patch_xml(diff):
     path = list(diff.path)
     if path == ["balance"]:
-        try:
-            element = ledger_balance_patch(diff)
-        except StockState.DoesNotExist:
-            log.warning("Skipping patch of missing stock state: %s", diff)
-            element = None
+        element = ledger_balance_patch(diff)
     elif (
         path == ["*"]
         and diff.diff_type == "missing"
