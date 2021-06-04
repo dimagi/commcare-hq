@@ -151,6 +151,20 @@ class TestMessagingEventResource(APIResourceTest):
         actual = {event["source"]["type"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {"keyword", "reminder", "conditional-alert"})
 
+    def test_content_type_filtering(self):
+        content_types = [
+            MessagingEvent.CONTENT_SMS, MessagingEvent.CONTENT_EMAIL,
+            MessagingEvent.CONTENT_API_SMS, MessagingEvent.CONTENT_IVR_SURVEY,
+            MessagingEvent.CONTENT_SMS_SURVEY
+        ]
+        for content_type in content_types:
+            make_events_for_test(self.domain, datetime.utcnow(), content_type=content_type)
+
+        url = f'{self.list_endpoint}?order_by=date&content_type=ivr-survey,sms'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        actual = {event["content_type"] for event in json.loads(response.content)['objects']}
+        self.assertEqual(actual, {"sms", "api-sms", "ivr-survey"})
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))

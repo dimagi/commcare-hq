@@ -1230,7 +1230,8 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         # see corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
         filter_consumers = [
             self._get_date_filter_consumer(),
-            self._source_filter_consumer
+            self._get_source_filter_consumer(),
+            self._get_content_type_filter_consumer(),
         ]
         orm_filters = {}
         for key, value in list(filters.items()):
@@ -1242,7 +1243,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
                     continue
         orm_filters.update(super(MessagingEventResourceNew, self).build_filters(filters, **kwargs))
         return orm_filters
-
 
     @staticmethod
     def _get_date_filter_consumer():
@@ -1259,31 +1259,61 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         return _date_consumer
 
     @staticmethod
-    def _source_filter_consumer(key, value):
-        slug_values = {v: k for k, v in MessagingEvent.SOURCE_SLUGS.items()}
-        if key != "source":
-            return
+    def _get_source_filter_consumer():
+        # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        expansions = {
+            MessagingEvent.SOURCE_OTHER: [MessagingEvent.SOURCE_FORWARDED],
+            MessagingEvent.SOURCE_BROADCAST: [
+                MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+                MessagingEvent.SOURCE_IMMEDIATE_BROADCAST
+            ],
+            MessagingEvent.SOURCE_REMINDER: [MessagingEvent.SOURCE_CASE_RULE]
+        }
+        return MessagingEventResourceNew._make_slug_filter_consumer(
+            "source", MessagingEvent.SOURCE_SLUGS, "parent__source__in", expansions
+        )
 
-        if ',' in value:
-            values = value.split(',')
-        else:
-            values = [value]
+    @staticmethod
+    def _get_content_type_filter_consumer():
+        # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        expansions = {
+            MessagingEvent.CONTENT_SMS_SURVEY: [
+                MessagingEvent.CONTENT_SMS_SURVEY,
+                MessagingEvent.CONTENT_IVR_SURVEY,
+            ],
+            MessagingEvent.CONTENT_SMS: [
+                MessagingEvent.CONTENT_SMS,
+                MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                MessagingEvent.CONTENT_ADHOC_SMS,
+                MessagingEvent.CONTENT_API_SMS,
+                MessagingEvent.CONTENT_CHAT_SMS
+            ],
+        }
+        return MessagingEventResourceNew._make_slug_filter_consumer(
+            "content_type", MessagingEvent.CONTENT_TYPE_SLUGS, "content_type__in", expansions
+        )
 
-        sources = [slug_values[val] for val in values if val in slug_values]
-        if sources:
-            # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
-            if MessagingEvent.SOURCE_OTHER in sources:
-                sources.append(MessagingEvent.SOURCE_FORWARDED)
+    @staticmethod
+    def _make_slug_filter_consumer(filter_key, slug_dict, model_filter_arg, expansions=None):
+        slug_values = {v: k for k, v in slug_dict.items()}
 
-            if MessagingEvent.SOURCE_BROADCAST in sources:
-                sources.extend([
-                    MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
-                    MessagingEvent.SOURCE_IMMEDIATE_BROADCAST
-                ])
+        def _consumer(key, value):
+            if key != filter_key:
+                return
 
-            if MessagingEvent.SOURCE_REMINDER in sources:
-                sources.append(MessagingEvent.SOURCE_CASE_RULE)
-            return {"parent__source__in": sources}
+            if ',' in value:
+                values = value.split(',')
+            else:
+                values = [value]
+
+            vals = [slug_values[val] for val in values if val in slug_values]
+            if vals:
+                for key, extras in (expansions or {}).items():
+                    if key in vals:
+                        vals.extend(extras)
+                return {model_filter_arg: vals}
+
+        return _consumer
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.all()
@@ -1306,7 +1336,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "content_type": ('exact',),  # TODO: convert from slug
             "status": ('exact',),  # TODO: convert from slug
             "error_code": ('exact',),  # TODO
             "case_id": ('exact',),
