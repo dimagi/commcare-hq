@@ -100,9 +100,14 @@ def search(request, domain):
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+        Daterange can be specified in the format __range__YYYY-MM-DD__YYYY-MM-DD
+        Multiple values can be specified for a param, which will be searched with OR operator
+
     Returns results as a fixture with the same structure as a casedb instance.
+
+
     """
-    criteria = request.GET.dict()
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
     try:
         case_type = criteria.pop('case_type')
     except KeyError:
