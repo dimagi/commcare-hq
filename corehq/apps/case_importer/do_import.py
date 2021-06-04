@@ -40,7 +40,7 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
     if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        allowed_domains = BillingAccount.get_account_by_domain(domain).get_enterprise_permissions_domains()
+        allowed_domains = BillingAccount.get_enterprise_permissions_domains(domain)
         sub_domains = set()
         import_results = _ImportResults()
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):

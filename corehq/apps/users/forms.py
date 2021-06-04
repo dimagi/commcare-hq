@@ -1225,8 +1225,7 @@ class UserFilterForm(forms.Form):
             (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
-        account = BillingAccount.get_account_by_domain(self.domain)
-        subdomains = account.get_enterprise_permissions_domains()
+        subdomains = BillingAccount.get_enterprise_permissions_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
@@ -1303,7 +1302,6 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            account = BillingAccount.get_account_by_domain(self.domain)
-            domains = account.get_enterprise_permissions_domains()
+            domains = BillingAccount.get_enterprise_permissions_domains(self.domain)
             domains += [self.domain]
-        return domains
+        return sorted(domains)
