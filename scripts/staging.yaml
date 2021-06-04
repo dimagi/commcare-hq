@@ -80,5 +80,5 @@ branches:
     - cs/SC-1335-dataset-workflow  # Charl June 3
     - bmb/sso-remove-debug-views  # Biyeun June 3
     - fr/remote-linked-ucr      # Farid June 4
-    - bmb/sso-sign-up  # Biyeun June 5, PR creation pending
+    - bmb/sso-sign-up  # Biyeun June 5
 submodules: { }
