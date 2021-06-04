@@ -110,6 +110,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # wrap to have assign_references called
         self.app = Application.wrap(self.app.to_json())
+        # reset to newly wrapped module
+        self.module = self.app.modules[0]
 
     def test_search_config_model(self, *args):
         config = CaseSearch()
