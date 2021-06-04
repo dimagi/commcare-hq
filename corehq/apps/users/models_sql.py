@@ -229,12 +229,8 @@ class RoleAssignableBy(models.Model):
     )
 
 
-class UserUpdateMeta(jsonobject.JsonObject):
-    updated_via = jsonobject.StringProperty()
-
-
 class UpdateDetails(jsonobject.JsonObject):
-    meta = jsonobject.ObjectProperty(UserUpdateMeta)
+    updated_via = jsonobject.StringProperty()
     changes = jsonobject.DictProperty()
 
 
