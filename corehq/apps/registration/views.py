@@ -44,7 +44,10 @@ from corehq.apps.registration.forms import (
     DomainRegistrationForm,
     RegisterWebUserForm,
 )
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import (
+    RegistrationRequest,
+    AsyncSignupRequest,
+)
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     request_new_domain,
@@ -132,10 +135,29 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(data['data'])
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(data['data']['email'])
+
+        reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
             ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
             appcues_ab_test = ab_test.context['version']
+
+            if idp:
+                signup_request = AsyncSignupRequest.create_from_registration_form(
+                    reg_form,
+                    additional_hubspot_data={
+                        "appcues_test": appcues_ab_test,
+                    }
+                )
+                return {
+                    'success': True,
+                    'appcues_ab_test': appcues_ab_test,
+                    'ssoLoginUrl': idp.get_login_url(signup_request.username),
+                    'ssoIdpName': idp.name,
+                }
+
             self._create_new_account(reg_form, additional_hubspot_data={
                 "appcues_test": appcues_ab_test,
             })
