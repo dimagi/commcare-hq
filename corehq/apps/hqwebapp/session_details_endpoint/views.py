@@ -66,8 +66,7 @@ class SessionDetailsView(View):
         domains = set()
         for member_domain in couch_user.domains:
             domains.add(member_domain)
-            account = BillingAccount.get_account_by_domain(member_domain)
-            domains.update(account.get_enterprise_permissions_domains())
+            domains.update(BillingAccount.get_enterprise_permissions_domains(member_domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         return JsonResponse({
