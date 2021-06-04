@@ -30,6 +30,11 @@ class Command(BaseCommand):
             default=False,
             help="Print number of docs in source and target index"
         )
+        parser.add_argument(
+            "--monitor-task-id",
+            help="Pass in the task ID of an existing reindex to monitor it's progress. This will not kick off"
+                 "a new reindex."
+        )
 
     def handle(self, source_index, target_index, **options):
         es = get_es_export()
@@ -52,8 +57,12 @@ class Command(BaseCommand):
             print("Doc counts are same, nothing left to reindex. Exiting!")
             return
 
-        print(f"Starting reindex for index from '{source_index}' to '{target_index}'")
-        reindex_and_poll_progress(es, source_index, target_index)
+        if not options["monitor_task_id"]:
+            print(f"Starting reindex for index from '{source_index}' to '{target_index}'")
+            task_id = start_reindex(es, source_index, target_index)
+        else:
+            task_id = options["monitor_task_id"]
+        check_task_progress(es, task_id)
 
         print(inspect.cleandoc(f"""
             If you would like to check, you may run this
@@ -81,7 +90,7 @@ def _initialize_target(es, target_index_info):
     }, index=target_index_info.index)
 
 
-def reindex_and_poll_progress(es, source_index, target_index):
+def start_reindex(es, source_index, target_index):
     reindex_query = {
         "source": {
             "index": source_index,
@@ -94,6 +103,10 @@ def reindex_and_poll_progress(es, source_index, target_index):
 
     result = es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
     task_id = result["task"]
+    return task_id
+
+
+def check_task_progress(es, task_id):
     node_id = task_id.split(':')[0]
     node_name = es.nodes.info(node_id, metric="name")["nodes"][node_id]["name"]
     print(f"Task with ID '{task_id}' running on '{node_name}'")
