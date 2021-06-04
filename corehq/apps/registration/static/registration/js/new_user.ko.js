@@ -107,6 +107,9 @@ hqDefine('registration/js/new_user.ko', [
         self.deniedEmail = ko.observable('');
         self.isSso = ko.observable(false);
         self.ssoMessage = ko.observable();
+        self.showPasswordField = ko.computed(function () {
+            return !self.isSso();
+        });
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
             .extend({

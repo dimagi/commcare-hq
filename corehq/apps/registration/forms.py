@@ -143,18 +143,21 @@ class RegisterWebUserForm(forms.Form):
                         hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    hqcrispy.InlineField(
-                        'password',
-                        css_class="input-lg",
-                        autocomplete="new-password",
-                        data_bind="value: password, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: password, "
-                                  "   delayedValidator: passwordDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'password',
+                            css_class="input-lg",
+                            autocomplete="new-password",
+                            data_bind="value: password, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: password, "
+                                      "   delayedValidator: passwordDelayed "
+                                      "}",
+                        ),
+                        hqcrispy.ValidationMessage('passwordDelayed'),
+                        data_bind="visible: showPasswordField"
                     ),
-                    hqcrispy.ValidationMessage('passwordDelayed'),
                     hqcrispy.InlineField(
                         'phone_number',
                         css_class="input-lg",
