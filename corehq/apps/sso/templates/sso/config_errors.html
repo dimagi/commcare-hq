@@ -15,7 +15,21 @@
               {% endblocktrans %}
             </h2>
 
-            {% if request.idp.is_active %}
+            {% if error.code == error.REDIRECT_INVALID_URL %}
+              <p class="lead">
+                {% blocktrans %}
+                  Your Redirect URL is invalid.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  The redirect URL you have specified is not valid. Please
+                  remove the text after "next=" in the url to temporarily
+                  resolve this issue. If the issue persists, please contact
+                  support so we can find a permanent solution.
+                {% endblocktrans %}
+              </p>
+            {% elif request.idp.is_active %}
               <p class="lead">
                 {% blocktrans with request.idp.is_active as idp_name %}
                   It looks like there is an issue with {{ idp_name }}'s configuration.
@@ -54,20 +68,6 @@
                     SSO setup.  Please review the
                     <a href="{{ docs_link }}">documentation</a>
                     for setting up SSO.
-                  {% endblocktrans %}
-                </p>
-              {% elif error.code == error.REDIRECT_INVALID_URL %}
-                <p class="lead">
-                  {% blocktrans %}
-                    Your Redirect URL is invalid.
-                  {% endblocktrans %}
-                </p>
-                <p>
-                  {% blocktrans %}
-                    The redirect URL you have specified is not valid. Please
-                    remove the text after "next=" in the url to temporarily
-                    resolve this issue. If the issue persists, please contact
-                    support so we can find a permanent solution.
                   {% endblocktrans %}
                 </p>
               {% else %}
