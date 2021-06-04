@@ -11,7 +11,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     kissmetrics
 ) {
     $(function () {
-        kissmetrics.track.event("[Enterprise Console] Visited page");
+        kissmetrics.track.event("[Enterprise Dashboard] Visited page");
         $(".report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
@@ -25,7 +25,7 @@ hqDefine("enterprise/js/enterprise_dashboard", [
             });
 
             $element.find(".btn-primary").click(function () {
-                kissmetrics.track.event("[Enterprise Console] Clicked Email Report for " + slug);
+                kissmetrics.track.event("[Enterprise Dashboard] Clicked Email Report for " + slug);
                 var $button = $(this);
                 $button.disableButton();
                 $.ajax({

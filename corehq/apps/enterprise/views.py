@@ -66,8 +66,8 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.FORM_SUBMISSIONS,
         )],
         'current_page': {
-            'page_name': _('Enterprise Console'),
-            'title': _('Enterprise Console'),
+            'page_name': _('Enterprise Dashboard'),
+            'title': _('Enterprise Dashboard'),
         }
     }
     return render(request, "enterprise/enterprise_dashboard.html", context)
