@@ -524,11 +524,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock(),
             False
         )
-        log_entry = HQLogEntry.objects.order_by('action_time').first()
+        log_entry = HQLogEntry.objects.order_by('created_at').first()
         self.assertEqual(
             log_entry.message,
             f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
-        log_entry = HQLogEntry.objects.order_by('action_time').last()
+        log_entry = HQLogEntry.objects.order_by('created_at').last()
         self.assertEqual(
             log_entry.message,
             f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
