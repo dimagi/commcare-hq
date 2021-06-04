@@ -75,6 +75,7 @@ branches:
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
     - sk/test_role_create_update  # Simon May 31
+    - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
