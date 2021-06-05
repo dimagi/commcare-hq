@@ -40,14 +40,14 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
     if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        subdomains = BillingAccount.get_enterprise_permissions_domains(domain)
+        allowed_domains = BillingAccount.get_enterprise_permissions_domains(domain)
         sub_domains = set()
         import_results = _ImportResults()
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
             if row_num == 1:
                 continue  # skip first row (header row)
             sheet_domain = row.get('domain')
-            if sheet_domain != domain and sheet_domain not in subdomains:
+            if sheet_domain != domain and sheet_domain not in allowed_domains:
                 err = exceptions.CaseRowError(column_name='domain')
                 err.title = _('Invalid domain')
                 err.message = _('Following rows contain invalid value for domain column.')

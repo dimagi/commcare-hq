@@ -55,7 +55,7 @@ branches:
     # - jls/sync-mixins-hard-fail # Jenny May 24
     - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    - fr/user-data-jit            # Farid September 2
+    #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
     # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
@@ -63,10 +63,8 @@ branches:
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - jls/cross-domain-web-user-download # Jenny April 24
     - smh/embedded-tableau # Steph May 7
     - gh/add-app-id-to-downstream-report # Graham May 18
-    - mk/case_search_labels/migrate # MK May 21
     - mk/case_search_labels/multimedia # MK May 21
     - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
     - sr/hide-geo  # Sravan May 25
@@ -74,14 +72,15 @@ branches:
     - bmb/sso-remove-toggle  # Biyeun 25th May, pending QA
     - cs/dhis-readable-response  # Charl 26 May
     - bmb/sso-fix-iframe-login  # Biyeun 27 May, pending QA
-    - cs/annote-route  # Charl 28 May
     - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
     - sk/test_role_create_update  # Simon May 31
+    - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
-    # - bmb/sso-redirect  # Biyeun June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
-    - bmb/sso-catch-config-errors  # Biyeun June 3
-    # - bmb/sso-remove-debug-views  # Biyeun June 3
+    - bmb/sso-remove-debug-views  # Biyeun June 3
+    - fr/remote-linked-ucr      # Farid June 4
+    - bmb/sso-sign-up  # Biyeun June 5
+    - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
 submodules: { }

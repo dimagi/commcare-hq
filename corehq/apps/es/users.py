@@ -67,9 +67,9 @@ def domain(domain, allow_enterprise=False):
     domains = [domain]
     if allow_enterprise:
         from corehq.apps.accounting.models import BillingAccount
-        source_domain = BillingAccount.get_account_by_domain(domain).permissions_source_domain
-        if source_domain:
-            domains.append(source_domain)
+        if domain in BillingAccount.get_enterprise_permissions_domains(domain):
+            account = BillingAccount.get_account_by_domain(domain)
+            domains.append(account.permissions_source_domain)
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)

@@ -513,8 +513,8 @@ class IsMemberOfMixin(DocumentSchema):
 
         if allow_enterprise:
             from corehq.apps.accounting.models import BillingAccount
-            account = BillingAccount.get_account_by_domain(domain)
-            if account.permissions_source_domain:
+            if domain in BillingAccount.get_enterprise_permissions_domains(domain):
+                account = BillingAccount.get_account_by_domain(domain)
                 return self.is_member_of(account.permissions_source_domain, allow_enterprise=False)
 
         return False
@@ -551,8 +551,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if not domain_membership:
                 if domain in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
-                if allow_enterprise:
-                    from corehq.apps.accounting.models import BillingAccount
+                from corehq.apps.accounting.models import BillingAccount
+                if allow_enterprise and domain in BillingAccount.get_enterprise_permissions_domains(domain):
                     account = BillingAccount.get_account_by_domain(domain)
                     return self.get_domain_membership(account.permissions_source_domain, allow_enterprise=False)
         except self.Inconsistent as e:

@@ -355,11 +355,11 @@ def enterprise_permissions(request, domain):
 
 @require_superuser
 @require_POST
-def toggle_enterprise_permission(request, current_domain, target_domain):
-    account = BillingAccount.get_account_by_domain(current_domain)
+def toggle_enterprise_permission(request, domain, target_domain):
+    account = BillingAccount.get_account_by_domain(domain)
     domains = account.get_domains()
 
-    redirect = reverse("enterprise_permissions", args=[current_domain])
+    redirect = reverse("enterprise_permissions", args=[domain])
     if target_domain not in domains:
         messages.error(request, _("Could not update permissions."))
         return HttpResponseRedirect(redirect)
@@ -383,7 +383,11 @@ def update_enterprise_permissions_source_domain(request, domain):
         messages.error(request, _("Please select a valid domain."))
         return HttpResponseRedirect(redirect)
 
-    account.permissions_source_domain = source_domain or None
+    if source_domain:
+        account.permissions_source_domain = source_domain
+    else:
+        account.permissions_source_domain = None
+        account.permissions_ignore_domains = []
     account.save()
     messages.success(request, _('Permissions saved.'))
     return HttpResponseRedirect(redirect)
