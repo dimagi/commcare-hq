@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
-    import_app,
+    import_app, ShadowModule, AdvancedModule,
 )
 from corehq.apps.app_manager.tasks import (
     autogenerate_build,
@@ -382,3 +382,48 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertIn('Build-Number', self.app.jad_settings)
         self.app.build_spec = BuildSpec(version='2.8.0', build_number=1)
         self.assertNotIn('Build-Number', self.app.jad_settings)
+
+    def test_new_module(self):
+        self.app = Application.new_app(self.domain, "Untitled Application")
+
+        module = self.app.add_module(Module.new_module("Untitled Module", None))
+        self.assertIsNone(module.case_details['short'].display)
+        self.assertIsNone(module.case_details['long'].display)
+
+        module = self.app.add_module(ShadowModule.new_module("Report Module", None))
+        self.assertIsNone(module.case_details['short'].display)
+        self.assertIsNone(module.case_details['long'].display)
+
+        module = self.app.add_module(AdvancedModule.new_module("Advanced Module", None))
+        self.assertIsNone(module.case_details['short'].display)
+        self.assertIsNone(module.case_details['long'].display)
+
+        # on wrap
+        app = Application.wrap(self.app.to_json())
+        module = list(app.get_modules())[-1]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
+
+        module = list(app.get_modules())[-2]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
+
+        module = list(app.get_modules())[-3]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
+
+        # on save
+        self.app.save()
+
+        # re-fetch to get updated module object
+        module = list(self.app.get_modules())[-1]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
+
+        module = list(self.app.get_modules())[-2]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
+
+        module = list(self.app.get_modules())[-3]
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
