@@ -1861,6 +1861,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 domain,
                 unretired_by,
                 self,
+                action=ModelAction.CREATE,
                 changed_via=unretired_via,
             )
         return True, None
