@@ -9,6 +9,7 @@ from mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
 from corehq.apps.app_manager.models import (
+    AdvancedModule,
     Application,
     ApplicationBase,
     DetailColumn,
@@ -16,7 +17,8 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
-    import_app, ShadowModule, AdvancedModule,
+    ShadowModule,
+    import_app,
 )
 from corehq.apps.app_manager.tasks import (
     autogenerate_build,
@@ -387,16 +389,16 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.app = Application.new_app(self.domain, "Untitled Application")
 
         module = self.app.add_module(Module.new_module("Untitled Module", None))
-        self.assertIsNone(module.case_details['short'].display)
-        self.assertIsNone(module.case_details['long'].display)
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
 
         module = self.app.add_module(ShadowModule.new_module("Report Module", None))
-        self.assertIsNone(module.case_details['short'].display)
-        self.assertIsNone(module.case_details['long'].display)
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
 
         module = self.app.add_module(AdvancedModule.new_module("Advanced Module", None))
-        self.assertIsNone(module.case_details['short'].display)
-        self.assertIsNone(module.case_details['long'].display)
+        self.assertEqual(module.case_details['short'].display, 'short')
+        self.assertEqual(module.case_details['long'].display, 'long')
 
         # on wrap
         app = Application.wrap(self.app.to_json())
