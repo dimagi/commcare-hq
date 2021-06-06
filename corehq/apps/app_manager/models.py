@@ -2212,6 +2212,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     is_training_module = BooleanProperty(default=False)
     session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
 
+    def has_cowin_appointment_search(self):
+        return self.name.get('en') == 'Cowin Vaccination'
+
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
         self.assign_references()

@@ -168,6 +168,9 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
                 yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
 
+        if module.has_cowin_appointment_search():
+            yield id_strings.cowin_search_appointment_locale(module), 'Search Appointment'
+
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)

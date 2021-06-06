@@ -234,6 +234,11 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
+@pattern('cowin_search_appointment.m%d')
+def cowin_search_appointment_locale(module):
+    return "cowin_search_appointment.m{module.id}".format(module=module)
+
+
 @pattern('case_search.m%d.again')
 def case_search_again_locale(module):
     return "case_search.m{module.id}.again".format(module=module)
@@ -244,9 +249,19 @@ def search_command(module):
     return "search_command.m{module.id}".format(module=module)
 
 
+@pattern('cowin_search_appointment_command.m%d')
+def cowin_search_appointment_command(module):
+    return "cowin_search_appointment_command.m{module.id}".format(module=module)
+
+
 @pattern('search_property.m%d.%s')
 def search_property_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
+
+
+@pattern('cowin_appointment_search_property_locale.m%d.%s')
+def cowin_appointment_search_property_locale(module, search_prop):
+    return "cowin_appointment_search_property_locale.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
 
 
 @pattern('search_property.m%d.%s.hint')

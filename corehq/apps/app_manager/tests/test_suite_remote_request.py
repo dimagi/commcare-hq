@@ -562,3 +562,41 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_cowin_appointment_search(self):
+        self.module = self.app.add_module(Module.new_module("Cowin Vaccination", 'en'))
+        self.app.new_form(0, "Untitled Form", None)
+        self.module.case_type = 'case'
+        suite = self.app.create_suite()
+
+        expected = """
+          <partial>
+            <command id="cowin_search_appointment_command.m1">
+              <display>
+                <text>
+                  <locale id="cowin_search_appointment.m1"/>
+                </text>
+              </display>
+            </command>
+            <session>
+              <query url="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin" storage-instance="cowin_appointments" template="case" default_search="false">
+                <prompt key="pincode">
+                  <display>
+                    <text>
+                      <locale id="cowin_appointment_search_property_locale.m1.pincode"/>
+                    </text>
+                  </display>
+                </prompt>
+                <prompt key="date">
+                  <display>
+                    <text>
+                      <locale id="cowin_appointment_search_property_locale.m1.date"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')" value="./@session_id"/>
+            </session>
+          </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[2]/")

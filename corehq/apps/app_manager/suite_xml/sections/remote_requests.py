@@ -35,6 +35,7 @@ from corehq.util.view_utils import absolute_reverse
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
 SESSION_INSTANCE = 'commcaresession'
+COWIN_APPOINTMENTS = 'cowin_appointments'
 
 
 class QuerySessionXPath(InstanceXpath):
@@ -207,6 +208,84 @@ class RemoteRequestFactory(object):
         return stack
 
 
+class CowinRemoteRequestFactory(object):
+    def __init__(self, domain, app, module, detail_section_elements):
+        self.domain = domain
+        self.app = app
+        self.module = module
+        self.detail_section_elements = detail_section_elements
+
+    def build_remote_request(self):
+        return RemoteRequest(
+            post=self._build_remote_request_post(),
+            command=self._build_command(),
+            instances=self._build_instances(),
+            session=self._build_session(),
+            stack=self._build_stack(),
+        )
+
+    def _build_remote_request_post(self):
+        # should not be needed
+        return None
+
+    def _build_command(self):
+        # should not be needed
+        return Command(
+            id=id_strings.cowin_search_appointment_command(self.module),
+            display=Display(
+                text=Text(locale_id=id_strings.cowin_search_appointment_locale(self.module)),
+            ),
+        )
+
+    def _build_instances(self):
+        return []
+
+    def _build_session(self):
+        return RemoteRequestSession(
+            queries=self._build_remote_request_queries(),
+            data=self._build_remote_request_datums(),
+        )
+
+    def _build_remote_request_queries(self):
+        return [
+            RemoteRequestQuery(
+                url="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin",
+                storage_instance=COWIN_APPOINTMENTS,
+                template='case',
+                data=self._get_remote_request_query_datums(),
+                prompts=self._build_query_prompts(),
+                default_search=False,
+            )
+        ]
+
+    def _get_remote_request_query_datums(self):
+        return []
+
+    def _build_query_prompts(self):
+        prompts = []
+        for prop in ['pincode', 'date']:
+            text = Text(locale_id=id_strings.cowin_appointment_search_property_locale(self.module, prop))
+            display = Display(text=text)
+            kwargs = {
+                'key': prop,
+                'display': display
+            }
+            prompts.append(QueryPrompt(**kwargs))
+        return prompts
+
+    def _build_remote_request_datums(self):
+        return [SessionDatum(
+            id="cowin_search_appointment_id",
+            nodeset=f"instance('{COWIN_APPOINTMENTS}')",
+            value='./@session_id',
+            detail_select=None,
+            detail_confirm=None,
+        )]
+
+    def _build_stack(self):
+        return None
+
+
 class RemoteRequestContributor(SuiteContributorByModule):
     """
     Adds a remote-request node, which sets the URL and query details for
@@ -225,5 +304,31 @@ class RemoteRequestContributor(SuiteContributorByModule):
     def get_module_contributions(self, module, detail_section_elements):
         if module_offers_search(module):
             return [RemoteRequestFactory(
+                self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
+        return []
+
+
+class CowinRemoteRequestContributor(SuiteContributorByModule):
+    """
+    Adds a remote-request node, which sets the URL and query details for
+    synchronous searching and case claiming.
+
+    Search is available from the module's case list.
+
+    See "remote-request" in the `CommCare 2.0 Suite Definition`_ for details.
+
+
+    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
+
+    """
+
+    @time_method()
+    def get_module_contributions(self, module, detail_section_elements):
+        from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
+        if (
+            isinstance(module, (Module, AdvancedModule, ShadowModule)) and
+            module.has_cowin_appointment_search()
+        ):
+            return [CowinRemoteRequestFactory(
                 self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
         return []

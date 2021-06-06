@@ -35,7 +35,7 @@ from corehq.apps.app_manager.suite_xml.sections.fixtures import (
 )
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
-    RemoteRequestContributor,
+    RemoteRequestContributor, CowinRemoteRequestContributor,
 )
 from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
@@ -88,6 +88,9 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
         menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
+
+        cowin_remote_requests = CowinRemoteRequestContributor(self.suite, self.app, self.modules)
+
         session_endpoints = SessionEndpointContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
@@ -106,6 +109,10 @@ class SuiteGenerator(object):
 
             self.suite.remote_requests.extend(
                 remote_requests.get_module_contributions(module, detail_section_elements)
+            )
+
+            self.suite.remote_requests.extend(
+                cowin_remote_requests.get_module_contributions(module, detail_section_elements)
             )
 
             if self.app.supports_session_endpoints:
