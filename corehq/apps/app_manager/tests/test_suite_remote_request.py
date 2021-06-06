@@ -570,7 +570,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
 
         expected = """
-          <partial>
+        <partial>
+          <remote-request>
             <command id="cowin_search_appointment_command.m1">
               <display>
                 <text>
@@ -597,9 +598,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
               </query>
               <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')" value="./@session_id"/>
             </session>
-          </partial>
+          </remote-request>
+        </partial>
         """
-        self.assertXmlPartialEqual(expected, suite, "./remote-request[2]/")
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[2]")
 
         expected = """
         <partial>
