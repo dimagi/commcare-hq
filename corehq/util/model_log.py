@@ -25,7 +25,7 @@ def log_model_change(domain, user, model_object, message=None, fields_changed=No
     """
     from corehq.apps.users.util import SYSTEM_USER_ID
 
-    if not domain and not can_skip_domain and user != SYSTEM_USER_ID:
+    if not domain and user != SYSTEM_USER_ID and not can_skip_domain:
         raise ValueError("Please pass domain")
 
     if action == ModelAction.UPDATE:
