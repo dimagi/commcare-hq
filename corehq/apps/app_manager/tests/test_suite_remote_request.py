@@ -600,3 +600,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[2]/")
+
+        expected = """
+        <partial>
+          <action auto_launch="false()" redo_last="false">
+            <display>
+              <text>
+                <locale id="cowin_search_appointment.m1"/>
+              </text>
+            </display>
+            <stack>
+              <push>
+                <mark />
+                <command value="'cowin_search_appointment_command.m1'"/>
+              </push>
+            </stack>
+          </action>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[@id='m1_case_short']/action")

@@ -196,6 +196,9 @@ class DetailContributor(SectionContributor):
                 if module_offers_search(module):
                     d.actions.append(self._get_case_search_action(module, in_search="search" in id))
 
+                if module.has_cowin_appointment_search():
+                    d.actions.append(self._get_cowin_appointment_search_action(module))
+
             try:
                 if not self.app.enable_multi_sort:
                     d.fields[0].sort = 'default'
@@ -315,6 +318,22 @@ class DetailContributor(SectionContributor):
         frame = PushFrame()
         frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
+        action.stack.add_frame(frame)
+        return action
+
+    @staticmethod
+    def _get_cowin_appointment_search_action(module):
+        action = Action(
+            display=Display(
+                text=Text(locale_id=id_strings.cowin_search_appointment_locale(module))
+            ),
+            stack=Stack(),
+            auto_launch="false()",
+            redo_last=False
+        )
+        frame = PushFrame()
+        frame.add_mark()
+        frame.add_command(XPath.string(id_strings.cowin_search_appointment_command(module)))
         action.stack.add_frame(frame)
         return action
 
