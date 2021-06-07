@@ -104,7 +104,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -1093,6 +1093,7 @@ class BaseUploadUser(BaseUserSettingsView):
         except WorksheetNotFound:
             self.group_specs = []
         try:
+            from corehq.apps.user_importer.importer import check_headers
             check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
