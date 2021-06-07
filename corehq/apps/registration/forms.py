@@ -82,7 +82,7 @@ class RegisterWebUserForm(forms.Form):
         self.is_sso = kwargs.pop('is_sso', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
-        if self.is_sso:
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
         persona_fields = []
