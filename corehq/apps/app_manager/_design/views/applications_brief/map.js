@@ -15,6 +15,7 @@ function(doc){
             mobile_ucr_sync_interval: doc.mobile_ucr_sync_interval,
             created_from_template: doc.created_from_template,
             family_id: doc.family_id,
+            upstream_app_id: doc.doc_type == 'LinkedApplication' ? doc.upstream_app_id : null,
             build_profiles: doc.build_profiles
         });
     }
