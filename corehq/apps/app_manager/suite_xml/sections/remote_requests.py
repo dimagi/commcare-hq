@@ -134,6 +134,9 @@ class RemoteRequestFactory(object):
         if self.module.search_config.search_filter and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
+        if self.module.unique_id == 'ca2cb971916b685380459ba183ac2ce0f8e1b76b' or self.module.unique_id == '722b1db0f3f41f8db3d0ee776e946789ccfac649':
+            nodeset = "instance('results')/results/case[@case_type='song' or @case_type='show' or @case_type='case']"
+
         return [SessionDatum(
             id=self.module.search_config.case_session_var,
             nodeset=nodeset,

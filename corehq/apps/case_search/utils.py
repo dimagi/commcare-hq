@@ -52,7 +52,6 @@ class CaseSearchCriteria(object):
     def _get_initial_search_es(self):
         search_es = (CaseSearchES()
                      .domain(self.domain)
-                     .case_type(self.case_type)
                      .is_closed(False)
                      .size(CASE_SEARCH_MAX_RESULTS)
                      .set_sorting_block(['_score', '_doc']))
