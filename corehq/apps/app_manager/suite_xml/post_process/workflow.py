@@ -67,7 +67,7 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
-    def get_frame_children(self, command, target_module, module_only=False, include_target_root=False):
+    def get_frame_children(self, command, module, module_only=False, include_root_module=False):
         """
         For a form return the list of stack frame children that are required
         to navigate to that form.
@@ -98,24 +98,21 @@ class WorkflowHelper(PostProcessor):
         match = re.search(r'^(m\d+)-(.*)', command)
         if not match:
             raise Exception("Unrecognized command: {}".format(command))
-        target_module_id = match.group(1)
-        target_form_id = match.group(2)
+        module_id = match.group(1)
+        form_id = match.group(2)
+        module_command = id_strings.menu_id(module)
+        module_datums = self.get_module_datums(module_id)
+        form_datums = module_datums[form_id]
 
         frame_children = []
-
-        module_command = id_strings.menu_id(target_module)
-        module_datums = self.get_module_datums(target_module_id)
-        form_datums = module_datums[target_form_id]
-        frame_children = []
-
         if module_command == id_strings.ROOT:
             datums_list = self._root_module_datums
         else:
             datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
-            root_module = target_module.root_module
-            if root_module and include_target_root:
+            root_module = module.root_module
+            if root_module and include_root_module:
                 datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
-                root_module_command = id_strings.menu_id(target_module.root_module)
+                root_module_command = id_strings.menu_id(root_module)
                 if root_module_command != id_strings.ROOT:
                     frame_children.append(CommandId(root_module_command))
             frame_children.append(CommandId(module_command))
@@ -303,7 +300,7 @@ class EndOfFormNavigationWorkflow(object):
             return StackFrameMeta(xpath, frame_children)
         elif form_workflow == WORKFLOW_PREVIOUS:
             frame_children = self.helper.get_frame_children(id_strings.form_command(form),
-                                                            module, include_target_root=True)
+                                                            module, include_root_module=True)
 
             # since we want to go the 'previous' screen we need to drop the last
             # datum
