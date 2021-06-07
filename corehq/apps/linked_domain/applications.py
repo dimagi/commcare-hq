@@ -156,6 +156,8 @@ def unlink_app(linked_app):
         return None
 
     converted_app = linked_app.convert_to_application()
+    # reset family_id since the link is being removed
+    converted_app.family_id = None
     converted_app.save()
 
     return converted_app
