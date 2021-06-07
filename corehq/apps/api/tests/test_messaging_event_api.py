@@ -123,8 +123,8 @@ class TestMessagingEventResource(APIResourceTest):
         self._create_sms_messages(5, randomize=True)
         return list(
             MessagingSubEvent.objects.filter(parent__domain=self.domain.name)
-                .order_by('date')
-                .values_list('date', flat=True)
+            .order_by('date')
+            .values_list('date', flat=True)
         )
 
     def _check_date_filtering_response(self, filters, expected):
@@ -241,7 +241,9 @@ class TestMessagingEventResource(APIResourceTest):
             self.assertEqual(expected, result)
 
     def test_survey_sms(self):
-        rule, xforms_session, event, sms = make_survey_sms(self.domain.name, "test sms survey", datetime(2016, 1, 1, 12, 0))
+        rule, xforms_session, event, sms = make_survey_sms(
+            self.domain.name, "test sms survey", datetime(2016, 1, 1, 12, 0)
+        )
         self.addCleanup(rule.delete)
         self.addCleanup(xforms_session.delete)
         self.addCleanup(event.delete)  # cascades to subevent

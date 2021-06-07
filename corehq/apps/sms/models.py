@@ -954,7 +954,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
 
-    SOURCE_SLUGS= {
+    SOURCE_SLUGS = {
         SOURCE_BROADCAST: 'broadcast',
         SOURCE_SCHEDULED_BROADCAST: 'scheduled-broadcast',
         SOURCE_IMMEDIATE_BROADCAST: 'immediate-broadcast',

@@ -1342,13 +1342,13 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             # session_is_open=True if there actually are
             # subevent and xforms session records
             return {"status": (
-                Q(status=model_value) |
-                (Q(xforms_session__id__isnull=False) & Q(xforms_session__session_is_open=True))
+                Q(status=model_value)
+                | (Q(xforms_session__id__isnull=False) & Q(xforms_session__session_is_open=True))
             )}
         elif model_value == MessagingEvent.STATUS_NOT_COMPLETED:
             return {"status": (
-                Q(status=model_value) |
-                (Q(xforms_session__session_is_open=False) & Q(xforms_session__submission_id__isnull=True))
+                Q(status=model_value)
+                | (Q(xforms_session__session_is_open=False) & Q(xforms_session__submission_id__isnull=True))
             )}
         elif model_value == MessagingEvent.STATUS_EMAIL_DELIVERED:
             return {"status": model_value}

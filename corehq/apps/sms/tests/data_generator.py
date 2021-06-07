@@ -191,7 +191,6 @@ def make_survey_sms(domain, rule_name, utcnow=None):
 
 
 def make_email_event(domain, schedule_name, user_ids, utcnow=None):
-    message_date = utcnow or datetime.utcnow()
     content = EmailContent(
         subject={'*': 'New messaging API goes live!'},
         message={'*': 'Check out the new API.'},
