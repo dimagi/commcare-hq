@@ -17,6 +17,7 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.serializers import Serializer
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
@@ -1370,6 +1371,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         authorization = DomainAuthorization('parent__domain')
         paginator_class = NoCountingPaginator
+        serializer = Serializer(formats=['json'])
         excludes = {
             "error_code",
             "additional_error_text",
