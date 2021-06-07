@@ -410,7 +410,8 @@ class CreatePushBase(IdNode, BaseFrame):
 
     def add_rewind(self, rewind_value):
         node = etree.SubElement(self.node, 'rewind')
-        node.attrib['value'] = rewind_value
+        if rewind_value:
+            node.attrib['value'] = rewind_value
 
 
 class CreateFrame(CreatePushBase):

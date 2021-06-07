@@ -599,6 +599,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
               </query>
               <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')" value="./@session_id"/>
             </session>
+            <stack>
+              <push>
+                <rewind/>
+              </push>
+            </stack>
           </remote-request>
         </partial>
         """

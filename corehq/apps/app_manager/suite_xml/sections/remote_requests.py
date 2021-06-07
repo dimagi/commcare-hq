@@ -288,7 +288,11 @@ class CowinRemoteRequestFactory(object):
         )]
 
     def _build_stack(self):
-        return None
+        stack = Stack()
+        frame = PushFrame()
+        frame.add_rewind(None)
+        stack.add_frame(frame)
+        return stack
 
 
 class RemoteRequestContributor(SuiteContributorByModule):
