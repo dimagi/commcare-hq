@@ -101,7 +101,7 @@ hqDefine("linked_domain/js/domain_links", [
             }).done(function () {
                 self.domain_links.remove(link);
                 var availableDomains = self.addDownstreamDomainModal.availableDomains();
-                availableDomains.push(link.linked_domain())
+                availableDomains.push(link.linked_domain());
                 self.addDownstreamDomainModal.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
