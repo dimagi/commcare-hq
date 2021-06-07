@@ -1093,7 +1093,7 @@ class ODataFormResource(BaseODataResource):
         ]
 
 
-class MessagingEventResourceNew(HqBaseResource, ModelResource):
+class MessagingEventResource(HqBaseResource, ModelResource):
     source = fields.DictField()
     recipient = fields.DictField()
     form = fields.DictField()
@@ -1170,7 +1170,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
 
         if event.content_type in (MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY):
             return self._get_messages_for_survey(event)
-        return []  # see corehq.apps.reports.standard.sms.MessageEventDetailReport.rows
+        return []
 
     def _get_messages_for_email(self, event):
         try:
@@ -1280,7 +1280,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
             ],
             MessagingEvent.SOURCE_REMINDER: [MessagingEvent.SOURCE_CASE_RULE]
         }
-        return MessagingEventResourceNew._make_slug_filter_consumer(
+        return MessagingEventResource._make_slug_filter_consumer(
             "source", MessagingEvent.SOURCE_SLUGS, "parent__source__in", expansions
         )
 
@@ -1300,7 +1300,7 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
                 MessagingEvent.CONTENT_CHAT_SMS
             ],
         }
-        return MessagingEventResourceNew._make_slug_filter_consumer(
+        return MessagingEventResource._make_slug_filter_consumer(
             "content_type", MessagingEvent.CONTENT_TYPE_SLUGS, "content_type__in", expansions
         )
 
@@ -1383,33 +1383,6 @@ class MessagingEventResourceNew(HqBaseResource, ModelResource):
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
             "case_id": ('exact',),
-        }
-        ordering = [
-            'date',
-        ]
-
-
-class MessagingEventResource(HqBaseResource, ModelResource):
-    content_type_display = fields.CharField(attribute='get_content_type_display')
-    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
-    status_display = fields.CharField(attribute='get_status_display')
-    source_display = fields.CharField(attribute='get_source_display')
-
-    class Meta(object):
-        queryset = MessagingEvent.objects.all()
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'messaging-event-old'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        authorization = DomainAuthorization()
-        paginator_class = NoCountingPaginator
-        filtering = {
-            # this is needed for the domain filtering but any values passed in via the URL get overridden
-            "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
-            "source": ('exact',),
-            "content_type": ('exact',),
-            "status": ('exact',),
         }
         ordering = [
             'date',

@@ -2,6 +2,8 @@ import random
 import uuid
 from collections import namedtuple
 
+from nose.tools import nottest
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS, OUTGOING
@@ -31,6 +33,7 @@ def create_fake_sms(domain, randomize=False):
     make_events_for_test(domain, message_date, source, status, content_type, recipient_type)
 
 
+@nottest
 def make_events_for_test(
         domain,
         message_date,
