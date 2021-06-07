@@ -415,6 +415,14 @@ def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
+def cowin_search_appointment_detail(module):
+    return "m{module.id}.cowin_search_appointment_detail".format(module=module)
+
+
+def cowin_search_appointment_detail_header(module, prop):
+    return "m{module.id}.cowin.appointment.{prop}.header".format(module=module, prop=prop)
+
+
 def persistent_case_context_detail(module):
     return detail(module, 'persistent_case_context')
 

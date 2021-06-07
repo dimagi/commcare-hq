@@ -48,6 +48,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import XPath, session_var
+from corehq.apps.cowin import COWIN_APPOINTMENT_DETAIL_XML
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
@@ -61,6 +62,15 @@ class DetailContributor(SectionContributor):
 
         elements = []
         for module in self.modules:
+            if module.has_cowin_appointment_search():
+                elements.append(
+                    load_xmlobject_from_string(
+                        COWIN_APPOINTMENT_DETAIL_XML.format(
+                            detail_id= id_strings.cowin_search_appointment_detail(module),
+                            module_id=module.id),
+                        xmlclass=Detail
+                    )
+                )
             for detail_type, detail, enabled in module.get_details():
                 if not enabled:
                     continue

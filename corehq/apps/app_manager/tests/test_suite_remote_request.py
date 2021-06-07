@@ -598,7 +598,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                   </display>
                 </prompt>
               </query>
-              <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')/results/appointment" value="./@session_id"/>
+              <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')/results/appointment" value="./@session_id" detail-select="m1.cowin_search_appointment_detail" />
             </session>
             <stack>
               <push>
@@ -628,3 +628,96 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./detail[@id='m1_case_short']/action")
+
+        expected = """
+        <partial>
+          <detail id="m1.cowin_search_appointment_detail">
+            <title>
+              <text>
+                <locale id="cchq.cowin.appointment"/>
+              </text>
+            </title>
+            <field>
+              <header>
+                <text>
+                  <locale id="m1.cowin.appointment.name.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="name"/>
+                </text>
+              </template>
+              <sort direction="ascending" order="4" type="string">
+                <text>
+                  <xpath function="name"/>
+                </text>
+              </sort>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="m1.cowin.appointment.available_capacity.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="available_capacity"/>
+                </text>
+              </template>
+              <sort direction="descending" order="1" type="string">
+                <text>
+                  <xpath function="available_capacity"/>
+                </text>
+              </sort>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="m1.cowin.appointment.available_capacity_dose1.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="available_capacity_dose1"/>
+                </text>
+              </template>
+              <sort direction="descending" order="2" type="string">
+                <text>
+                  <xpath function="available_capacity_dose1"/>
+                </text>
+              </sort>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="m1.cowin.appointment.available_capacity_dose2.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="available_capacity_dose2"/>
+                </text>
+              </template>
+              <sort direction="descending" order="3" type="string">
+                <text>
+                  <xpath function="available_capacity_dose2"/>
+                </text>
+              </sort>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="m1.cowin.appointment.vaccine.header"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="vaccine"/>
+                </text>
+              </template>
+            </field>
+          </detail>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./detail[@id='m1.cowin_search_appointment_detail']")

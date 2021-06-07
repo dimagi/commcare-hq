@@ -15,6 +15,7 @@ from corehq.apps.app_manager.util import (
     get_sort_and_sort_only_columns,
     module_offers_search,
 )
+from corehq.apps.cowin.views import AppointmentResultXMLGenerator
 from corehq.util.translation import localize
 from langcodes import langs_by_code
 
@@ -170,6 +171,10 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         if module.has_cowin_appointment_search():
             yield id_strings.cowin_search_appointment_locale(module), 'Search Appointment'
+            for prop in ['pincode', 'date']:
+                yield id_strings.cowin_appointment_search_property_locale(module, prop), prop
+            for prop in AppointmentResultXMLGenerator.appointment_fields:
+                yield id_strings.cowin_search_appointment_detail_header(module, prop), prop
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:

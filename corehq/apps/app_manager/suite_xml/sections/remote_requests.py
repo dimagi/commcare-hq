@@ -284,7 +284,7 @@ class CowinRemoteRequestFactory(object):
             id="cowin_search_appointment_id",
             nodeset=f"instance('{COWIN_APPOINTMENTS}')/results/appointment",
             value='./@session_id',
-            detail_select=None,
+            detail_select=id_strings.cowin_search_appointment_detail(self.module),
             detail_confirm=None,
         )]
 
