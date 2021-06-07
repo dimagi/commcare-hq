@@ -582,7 +582,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
               </display>
             </command>
             <session>
-              <query url="{url}" storage-instance="cowin_appointments" template="case" default_search="false">
+              <query url="{url}" storage-instance="cowin_appointments" default_search="false">
                 <prompt key="pincode">
                   <display>
                     <text>

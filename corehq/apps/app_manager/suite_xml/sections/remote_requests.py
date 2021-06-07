@@ -256,7 +256,6 @@ class CowinRemoteRequestFactory(object):
             RemoteRequestQuery(
                 url=absolute_reverse('find_cowin_appointments'),
                 storage_instance=COWIN_APPOINTMENTS,
-                template='case',
                 data=self._get_remote_request_query_datums(),
                 prompts=self._build_query_prompts(),
                 default_search=False,
