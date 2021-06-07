@@ -598,7 +598,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                   </display>
                 </prompt>
               </query>
-              <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')/results/appointment" value="./@session_id" detail-select="m1.cowin_search_appointment_detail" />
+              <datum id="cowin_search_appointment_id" nodeset="instance('cowin_appointments')/results/appointment" value="./@session_id" detail-select="m1.cowin_search_appointment_detail" detail-confirm="m1.cowin_search_appointment_detail"/>
             </session>
             <stack>
               <push>
