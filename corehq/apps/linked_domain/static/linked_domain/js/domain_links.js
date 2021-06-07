@@ -173,18 +173,18 @@ hqDefine("linked_domain/js/domain_links", [
         self.value = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
-            // TODO: make rmi call to create domain link
-            var domainLinkResponse = {"linked_domain": viewModel.value(),
-                "is_remote": false,
-                "master_domain": self.parent.domain,
-                "remote_base_url": "",
-                "last_update": ""};
-            self.parent.domain_links.unshift(DomainLink(domainLinkResponse));
-            self.availableDomains(_.filter(self.availableDomains(), function (item) {
-                return item !== viewModel.value();
-            }));
-            self.value(null);
-            self.parent.goToPage(1);
+            _private.RMI("create_domain_link", {
+              "downstream_domain": viewModel.value(),
+            }).done(function (data) {
+                self.availableDomains(_.filter(self.availableDomains(), function (item) {
+                    return item !== viewModel.value();
+                }));
+                self.value(null);
+                self.parent.domain_links.unshift(DomainLink(data.response));
+                self.parent.goToPage(1);
+            }).fail(function () {
+                alertUser.alert_user(gettext('Unable to link domains.\nPlease try again, or report an issue if the problem persists.'), 'danger');
+            });
         };
         return self;
     };
