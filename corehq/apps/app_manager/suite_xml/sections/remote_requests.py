@@ -274,6 +274,8 @@ class CowinRemoteRequestFactory(object):
                 'key': prop,
                 'display': display
             }
+            if prop == 'date':
+                kwargs['input_'] = 'date'
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

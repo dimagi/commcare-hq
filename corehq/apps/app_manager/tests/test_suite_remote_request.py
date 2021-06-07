@@ -590,7 +590,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     </text>
                   </display>
                 </prompt>
-                <prompt key="date">
+                <prompt key="date" input="date">
                   <display>
                     <text>
                       <locale id="cowin_appointment_search_property_locale.m1.date"/>
