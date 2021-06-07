@@ -638,7 +638,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
