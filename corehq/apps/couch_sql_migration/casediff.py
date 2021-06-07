@@ -409,8 +409,9 @@ class LedgerPatches:
         """Check if ledger diffs have been patched"""
         from .casepatch import LedgerDiff, is_ledger_patchable
         assert diffs, ref
-        if not any(is_ledger_patchable(d) for d in diffs):
-            unpatched = {tuple(d.path): LedgerDiff(d, ref) for d in diffs}
+        ledger_diffs = [LedgerDiff(d, ref) for d in diffs]
+        if not any(is_ledger_patchable(d) for d in ledger_diffs):
+            unpatched = {tuple(d.path): d for d in ledger_diffs}
             for form in reversed(self.get_patch_forms(ref.case_id)):
                 patch_diffs = self.get_ledger_patch_diffs(form, ref)
                 self.discard_expected_ledger_diffs(form, patch_diffs, unpatched)
