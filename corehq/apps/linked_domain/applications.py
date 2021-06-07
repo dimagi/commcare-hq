@@ -48,7 +48,7 @@ def get_master_app_by_version(domain_link, upstream_app_id, upstream_version):
         return wrap_app(app)
 
 
-def get_downstream_app_id(downstream_domain, upstream_app_id, use_upstream_app_id=False):
+def get_downstream_app_id(downstream_domain, upstream_app_id, use_upstream_app_id=True):
     """
     :param downstream_domain: name of the downstream domain
     :param upstream_app_id: app._id of application in upstream domain

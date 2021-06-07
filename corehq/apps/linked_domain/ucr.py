@@ -29,11 +29,7 @@ def create_linked_ucr(domain_link, report_config_id):
         datasource = DataSourceConfiguration.get(report_config.config_id)
 
     # grab the linked app this linked report references
-    downstream_app_id = get_downstream_app_id(
-        domain_link.linked_domain,
-        report_config.config.meta.build.app_id,
-        use_upstream_app_id=True
-    )
+    downstream_app_id = get_downstream_app_id(domain_link.linked_domain, report_config.config.meta.build.app_id)
     new_datasource = _get_or_create_datasource_link(domain_link, datasource, downstream_app_id)
     new_report = _get_or_create_report_link(domain_link, report_config, new_datasource)
     return LinkedUCRInfo(datasource=new_datasource, report=new_report)
@@ -81,7 +77,11 @@ def _replace_master_app_ids(linked_domain, datasource_json):
 def _replace_upstream_app_id(haystack, upstream_app_id, downstream_domain):
     if upstream_app_id in haystack:
         try:
-            downstream_app_id = get_downstream_app_id(downstream_domain, upstream_app_id)
+            downstream_app_id = get_downstream_app_id(
+                downstream_domain,
+                upstream_app_id,
+                use_upstream_app_id=False
+            )
         except MultipleDownstreamAppsError:
             raise DomainLinkError(_("This report cannot be updated because it references an app "
                                     "that has multiple linked apps."))
