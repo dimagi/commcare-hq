@@ -282,7 +282,7 @@ class CowinRemoteRequestFactory(object):
     def _build_remote_request_datums(self):
         return [SessionDatum(
             id="cowin_search_appointment_id",
-            nodeset=f"instance('{COWIN_APPOINTMENTS}')",
+            nodeset=f"instance('{COWIN_APPOINTMENTS}')/results/appointment",
             value='./@session_id',
             detail_select=None,
             detail_confirm=None,
