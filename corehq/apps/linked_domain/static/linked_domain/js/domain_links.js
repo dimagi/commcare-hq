@@ -58,6 +58,7 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
+        self.addDownstreamDomainModal = AddDownstreamDomainModal(self, data.available_domains);
         self.domain = data.domain;
         self.master_link = data.master_link;
         if (self.master_link) {
@@ -113,6 +114,9 @@ hqDefine("linked_domain/js/domain_links", [
                 "linked_domain": link.linked_domain(),
             }).done(function () {
                 self.domain_links.remove(link);
+                var availableDomains = self.addDownstreamDomainModal.availableDomains();
+                availableDomains.push(link.linked_domain())
+                self.addDownstreamDomainModal.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
@@ -165,7 +169,7 @@ hqDefine("linked_domain/js/domain_links", [
     var AddDownstreamDomainModal = function (manageDomainsViewModel, availableDomains) {
         var self = {};
         self.parent = manageDomainsViewModel;
-        self.availableDomains = availableDomains;
+        self.availableDomains = ko.observableArray(availableDomains.sort());
         self.value = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
@@ -176,9 +180,9 @@ hqDefine("linked_domain/js/domain_links", [
                 "remote_base_url": "",
                 "last_update": ""};
             self.parent.domain_links.unshift(DomainLink(domainLinkResponse));
-            self.availableDomains = _.filter(self.availableDomains, function (item) {
+            self.availableDomains(_.filter(self.availableDomains(), function (item) {
                 return item !== viewModel.value();
-            });
+            }));
             self.value(null);
             self.parent.goToPage(1);
         };
@@ -208,9 +212,8 @@ hqDefine("linked_domain/js/domain_links", [
             $("#ko-tabs-manage-downstream").koApplyBindings(model);
         }
 
-        var addDownstreamDomainModal = AddDownstreamDomainModal(model, view_data.available_domains);
         if ($("#new-downstream-domain-modal").length) {
-            $("#new-downstream-domain-modal").koApplyBindings(addDownstreamDomainModal);
+            $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainModal);
         }
 
     });
