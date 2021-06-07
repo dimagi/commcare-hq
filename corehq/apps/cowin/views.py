@@ -90,5 +90,5 @@ class AppointmentResultXMLGenerator(object):
     def get_element(self):
         root = safe_element("appointment")
         for field in self.appointment_fields:
-            root.append(safe_element(field, self.appointment[field]))
+            root.append(safe_element(field, str(self.appointment[field])))
         return root
