@@ -2,7 +2,10 @@ from enum import Enum
 
 from corehq.apps.users.models_sql import HQLogEntry, UpdateDetails
 
-MODEL_PROPERTIES_TO_IGNORE = ['_id', '_rev', 'reporting_metadata', 'password']
+MODEL_PROPERTIES_TO_IGNORE = [
+    '_id', '_rev', 'reporting_metadata', 'password',
+    'devices', 'last_device', 'device_ids'
+]
 
 
 class ModelAction(Enum):

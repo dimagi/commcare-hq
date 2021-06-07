@@ -104,8 +104,6 @@ def _get_user1_expected_log_entry_changes_json(couch_user):
         'created_on': user_json['created_on'].split('.')[0],
         'date_joined': user_json['date_joined'].split('.')[0],
         'demo_restore_id': None,
-        'device_ids': [''],
-        'devices': [],
         'doc_type': 'CommCareUser',
         'domain': 'test',
         'domain_membership': {
@@ -131,13 +129,6 @@ def _get_user1_expected_log_entry_changes_json(couch_user):
         'is_staff': False,
         'is_superuser': False,
         'language': None,
-        'last_device': {
-            'app_meta': [],
-            'commcare_version': None,
-            'device_id': None,
-            'doc_type': 'DeviceIdLastUsed',
-            'last_used': None
-        },
         'last_login': None,
         'last_modified': user_json['last_modified'].split('.')[0],
         'last_name': '',
@@ -168,8 +159,6 @@ def _get_web_user_expected_log_entry_changes_json(couch_user):
         'base_doc': 'CouchUser',
         'created_on': user_json['created_on'].split('.')[0],
         'date_joined': user_json['date_joined'].split('.')[0],
-        'device_ids': [],
-        'devices': [],
         'doc_type': 'WebUser',
         'domain_memberships': [{
             'assigned_location_ids': [],
@@ -193,13 +182,6 @@ def _get_web_user_expected_log_entry_changes_json(couch_user):
         'is_staff': False,
         'is_superuser': False,
         'language': None,
-        'last_device': {
-            'app_meta': [],
-            'commcare_version': None,
-            'device_id': None,
-            'doc_type': 'DeviceIdLastUsed',
-            'last_used': None
-        },
         'last_login': None,
         'last_modified': user_json['last_modified'].split('.')[0],
         'last_name': '',
