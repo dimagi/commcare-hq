@@ -163,6 +163,15 @@ class SQLXFormsSession(models.Model):
             else:
                 return ugettext_noop('Not Finished')
 
+    @property
+    def status_api(self):
+        if self.submission_id:
+            return "complete"
+        elif self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
+            return "in-progress"
+        else:
+            return "not-finished"
+
     @classmethod
     def get_all_open_sms_sessions(cls, domain, contact_id):
         return cls.objects.filter(
