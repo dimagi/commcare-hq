@@ -1144,7 +1144,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             submission_id = event.xforms_session.submission_id
         return {
             "app_id": bundle.obj.app_id,
-            "form_unique_id": bundle.obj.form_unique_id,
+            "form_definition_id": bundle.obj.form_unique_id,
             "form_name": bundle.obj.form_name,
             "form_submission_id": submission_id,
         }

@@ -257,7 +257,7 @@ class TestMessagingEventResource(APIResourceTest):
                 "app_id": "fake_app_id",
                 "form_name": "fake form name",
                 "form_submission_id": "fake_form_submission_id",
-                "form_unique_id": "fake_form_id"
+                "form_definition_id": "fake_form_id"
             },
             "messages": [
                 {
