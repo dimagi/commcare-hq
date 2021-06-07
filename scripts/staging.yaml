@@ -83,4 +83,5 @@ branches:
     - fr/remote-linked-ucr      # Farid June 4
     - bmb/sso-sign-up  # Biyeun June 5
     - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
+    - sk/messaging-event-api  # Simon June 7
 submodules: { }
