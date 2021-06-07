@@ -1,18 +1,20 @@
 import csv
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import chain
+
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models import ForeignKey
 
 import attr
 from couchdbkit.ext.django.loading import get_db
-from django.contrib.auth.models import User
-from django.db.models import ForeignKey
+
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.domain.utils import get_domain_from_url
 from corehq.apps.users.models import WebUser
 from corehq.util.models import ForeignValue
-
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.parsing import string_to_datetime
 
 from ..models import AccessAudit, NavigationEventAudit
 
