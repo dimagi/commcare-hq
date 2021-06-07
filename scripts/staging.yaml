@@ -64,7 +64,6 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
-    - gh/add-app-id-to-downstream-report # Graham May 18
     - mk/case_search_labels/multimedia # MK May 21
     - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
     - sr/hide-geo  # Sravan May 25
