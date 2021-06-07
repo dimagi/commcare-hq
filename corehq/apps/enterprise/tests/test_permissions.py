@@ -62,7 +62,7 @@ class EnterprisePermissionsTest(TestCase):
         cls.master_role.delete()
         Domain.get_by_name('county').delete()
         Domain.get_by_name('state').delete()
-        cls.mirror.delete()
+        Domain.get_by_name('staging').delete()
         super().tearDownClass()
 
     def test_permission_mirroring(self):
@@ -78,11 +78,12 @@ class EnterprisePermissionsTest(TestCase):
             self.assertTrue(self.web_user_admin.has_permission(domain, "view_groups"))
             self.assertTrue(self.web_user_admin.has_permission(domain, "edit_groups"))
 
-            # No one gets any permissions in ignored domain
-            self.assertFalse(self.web_user_non_admin.has_permission(domain, "view_groups"))
-            self.assertFalse(self.web_user_non_admin.has_permission(domain, "edit_groups"))
-            self.assertFalse(self.web_user_admin.has_permission(domain, "view_groups"))
-            self.assertFalse(self.web_user_admin.has_permission(domain, "edit_groups"))
+        # No one gets any permissions in ignored domain
+        domain = 'staging'
+        self.assertFalse(self.web_user_non_admin.has_permission(domain, "view_groups"))
+        self.assertFalse(self.web_user_non_admin.has_permission(domain, "edit_groups"))
+        self.assertFalse(self.web_user_admin.has_permission(domain, "view_groups"))
+        self.assertFalse(self.web_user_admin.has_permission(domain, "edit_groups"))
 
     def test_api_call(self):
         url = reverse('api_dispatch_list', kwargs={

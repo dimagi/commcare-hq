@@ -20,5 +20,5 @@ def create_enterprise_permissions(email, source_domain, control_domains=None, ig
         subscriptions.append(Subscription.new_domain_subscription(account, domain, plan))
 
     account.permissions_source_domain = source_domain
-    account.permissions_ignore_domains = ignore_domains
+    account.permissions_ignore_domains = ignore_domains or []
     account.save()
