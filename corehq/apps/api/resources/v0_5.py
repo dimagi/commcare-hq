@@ -1362,7 +1362,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return {"error_code": value}
 
     class Meta(object):
-        queryset = MessagingSubEvent.objects.all()
+        queryset = MessagingSubEvent.objects.select_related("parent").all()
         include_resource_uri = False
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
