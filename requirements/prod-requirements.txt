@@ -145,7 +145,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.20
+django==2.2.24
     # via
     #   -r base-requirements.in
     #   django-angular
