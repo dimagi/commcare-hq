@@ -729,7 +729,7 @@ class TestGetDownstreamAppId(TestCase):
         )
         self.assertEqual(linked_app._id, downstream_app_id)
 
-    def test_use_family_id_returns_none_if_using_upstream_app_id(self):
+    def test_use_family_id_returns_none_if_upstream_app_id_is_set(self):
         original_app, _ = self.setup_linked_app(set_upstream_app_id=True)
         downstream_app_id = get_downstream_app_id(
             self.downstream_domain,
@@ -737,7 +737,7 @@ class TestGetDownstreamAppId(TestCase):
         )
         self.assertIsNone(downstream_app_id)
 
-    def test_use_downstream_app_id_returns_none_if_using_family_id(self):
+    def test_use_upstream_app_id_returns_none_if_family_id_is_set(self):
         original_app, _ = self.setup_linked_app(set_family_id=True)
         downstream_app_id = get_downstream_app_id(
             self.downstream_domain,
