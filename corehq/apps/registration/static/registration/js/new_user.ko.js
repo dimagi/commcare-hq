@@ -259,14 +259,15 @@ hqDefine('registration/js/new_user.ko', [
         };
 
         self.isStepOneValid = ko.computed(function () {
-            var isPasswordValid = (
-                self.password() !== undefined
-                && self.password.isValid()
-                && self.passwordDelayed.isValid()
-            );
-
+            var isPasswordValid;
             if (self.isSso()) {
                 isPasswordValid = true;
+            } else {
+                isPasswordValid = (
+                    self.password() !== undefined
+                    && self.password.isValid()
+                    && self.passwordDelayed.isValid()
+                );
             }
 
             return self.fullName() !== undefined
