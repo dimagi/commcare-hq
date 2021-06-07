@@ -225,8 +225,13 @@ class CowinRemoteRequestFactory(object):
         )
 
     def _build_remote_request_post(self):
-        # should not be needed
-        return None
+        # add dummy value with relevant set to false
+        kwargs = {
+            "url": "https://www.google.com",
+            "data": [],
+            "relevant": "false()"
+        }
+        return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
         # should not be needed

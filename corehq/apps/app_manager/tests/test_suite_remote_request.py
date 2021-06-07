@@ -572,6 +572,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <remote-request>
+            <post relevant="false()" url="https://www.google.com"/>
             <command id="cowin_search_appointment_command.m1">
               <display>
                 <text>
