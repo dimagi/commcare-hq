@@ -9,8 +9,8 @@ commcare-cloud](https://dimagi.github.io/commcare-cloud/)
 These instructions are for Mac or Linux computers. For Windows, consider using
 an Ubuntu virtual machine.
 
-Common issues and their solutions can be found at the end
-of this document.
+Once your environment is up and running, bookmark the [dev FAQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md)
+for common issues encountered in day-to-day HQ development.
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -620,7 +620,3 @@ run the Python tests when saving py files as follows:
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
 (recommended to install pywatchman or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
-
-## Other links
-
-+ [Common Issues](https://github.com/dimagi/commcare-hq/blob/master/COMMON_ISSUES.md)

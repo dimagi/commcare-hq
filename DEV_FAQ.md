@@ -1,5 +1,8 @@
-Common issues
+Developer FAQ
 -------------
+
+This is a starting point for troubleshooting issues that frequently occur once your local environment
+is set up and you've started working on a singnificant code change.
 
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
