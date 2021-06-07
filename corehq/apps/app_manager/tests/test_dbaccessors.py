@@ -80,6 +80,10 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         cls = app.__class__
         app_json = app.to_json()
         del app_json['_rev']
+        # brief apps return upstream_app_id which only exists on LinkedApplication
+        if app.doc_type != 'LinkedApplication':
+            app_json['upstream_app_id'] = None
+
         app_json.pop('modules', None)
         # ApplicationBase.wrap does weird things, so I'm calling the __init__ directly
         # It may not matter, but it removes a potential source of error for the test
