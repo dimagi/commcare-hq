@@ -1,6 +1,9 @@
 import json
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
+from urllib.parse import urlencode
+
+from django.http import QueryDict
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import MessagingEventResource
@@ -194,6 +197,79 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 200, response.content)
         actual = {event["case_id"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {"123"})
+
+    def test_cursor(self):
+        utcnow = datetime.utcnow()
+        dates = []
+        for offset in range(5):
+            date = utcnow + timedelta(hours=offset)
+            dates.append(date.isoformat())
+            make_events_for_test(self.domain.name, date)
+
+        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "date"})
+        content = self._test_cursor_response(dates[2:4], previous_content=content)
+        self._test_cursor_response([dates[-1]], previous_content=content)
+
+    def test_cursor_descending_order(self):
+        utcnow = datetime.utcnow()
+        dates = []
+        for offset in range(5):
+            date = utcnow + timedelta(hours=offset)
+            dates.append(date.isoformat())
+            make_events_for_test(self.domain.name, date)
+
+        dates = list(reversed(dates))
+
+        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "-date"})
+        content = self._test_cursor_response(dates[2:4], previous_content=content)
+        self._test_cursor_response([dates[-1]], previous_content=content)
+
+    def test_cursor_stuck_in_loop(self):
+        """This demonstrates the limitation of the current cursor pagination implementation.
+        If there are more objects with the same filter param than the batch size the API
+        will get stuck in a loop."""
+
+        utcnow = datetime.utcnow()
+        dates = []
+        for offset in range(5):
+            dates.append(utcnow.isoformat())
+            make_events_for_test(self.domain.name, utcnow)
+
+        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "-date"})
+        content = self._test_cursor_response(dates[1:3], previous_content=content)
+        self._test_cursor_response(dates[1:3], previous_content=content)
+
+    def test_cursor_change_ordering(self):
+        utcnow = datetime.utcnow()
+        dates = []
+        for offset in range(5):
+            date = utcnow + timedelta(hours=offset)
+            dates.append(date.isoformat())
+            make_events_for_test(self.domain.name, date)
+
+        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "date"})
+        next = content["meta"]["next"][1:]  # strip '?'
+        params = QueryDict(next).dict()
+        params["order_by"] = "-date"  # change sort direction for next request
+        url = f'{self.list_endpoint}?{urlencode(params)}'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def _test_cursor_response(self, expected, previous_content=None, extra_params=None):
+        params = {}
+        if previous_content:
+            params = previous_content["meta"]["next"]
+        if extra_params:
+            params = f'?{urlencode(extra_params)}'
+        url = f'{self.list_endpoint}{params}'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        content = json.loads(response.content)
+        actual = [event["date"] for event in content['objects']]
+        self.assertEqual(actual, expected)
+        if not expected:
+            self.assertIsNone(content["meta"]["next"])
+        return content
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))

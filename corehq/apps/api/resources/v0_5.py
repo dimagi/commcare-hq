@@ -1,4 +1,5 @@
 import functools
+from base64 import b64decode
 from collections import namedtuple
 from itertools import chain
 
@@ -6,7 +7,7 @@ from django.conf.urls import url
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseNotFound, QueryDict
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
@@ -14,7 +15,7 @@ from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError, InvalidSortError
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.serializers import Serializer
@@ -101,7 +102,7 @@ from . import (
     v0_1,
     v0_4,
     CorsResourceMixin)
-from .pagination import DoesNothingPaginator, NoCountingPaginator
+from .pagination import DoesNothingPaginator, NoCountingPaginator, make_cursor_paginator
 
 MOCK_BULK_USER_ES = None
 
@@ -1094,6 +1095,15 @@ class ODataFormResource(BaseODataResource):
         ]
 
 
+def get_messaging_event_cursor_params(event, ascending_order):
+    param = "date.gte" if ascending_order else "date.lte"
+    return {param: event.date.isoformat()}
+
+
+def get_object_id_string(event):
+    return str(event.id)
+
+
 class MessagingEventResource(HqBaseResource, ModelResource):
     source = fields.DictField()
     recipient = fields.DictField()
@@ -1228,6 +1238,10 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return message_dicts
 
     def build_filters(self, filters=None, **kwargs):
+        if 'cursor' in filters:
+            params_string = b64decode(filters['cursor']).decode('utf-8')
+            filters = QueryDict(params_string).dict()
+
         filter_consumers = [
             self._get_date_filter_consumer(),
             self._get_source_filter_consumer(),
@@ -1362,6 +1376,24 @@ class MessagingEventResource(HqBaseResource, ModelResource):
 
         return {"error_code": value}
 
+    def apply_sorting(self, obj_list, options=None):
+        """Custom sort logic to make sure sorting is always applied and object order is consistent
+        between requests. This is required for the cursor pagination."""
+        if options is None:
+            options = {}
+
+        parameter_name = 'order_by'
+        order_by = options.get(parameter_name)
+
+        if not order_by:
+            order_by_args = ["date", "id"]
+        else:
+            if order_by not in ("date", "-date"):
+                raise InvalidSortError(f"No matching '{order_by}' field for ordering on.")
+            order_by_args = [order_by, "id"]
+
+        return obj_list.order_by(*order_by_args)
+
     class Meta(object):
         queryset = MessagingSubEvent.objects.select_related("parent").all()
         include_resource_uri = False
@@ -1370,7 +1402,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         resource_name = 'messaging-event'
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         authorization = DomainAuthorization('parent__domain')
-        paginator_class = NoCountingPaginator
+        paginator_class = make_cursor_paginator(get_messaging_event_cursor_params, get_object_id_string)
         serializer = Serializer(formats=['json'])
         excludes = {
             "error_code",
