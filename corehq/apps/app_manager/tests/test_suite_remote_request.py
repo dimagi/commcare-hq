@@ -22,6 +22,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
+from corehq.util.view_utils import absolute_reverse
 
 DOMAIN = 'test_domain'
 
@@ -581,7 +582,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
               </display>
             </command>
             <session>
-              <query url="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin" storage-instance="cowin_appointments" template="case" default_search="false">
+              <query url="{url}" storage-instance="cowin_appointments" template="case" default_search="false">
                 <prompt key="pincode">
                   <display>
                     <text>
@@ -606,7 +607,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             </stack>
           </remote-request>
         </partial>
-        """
+        """.format(url=absolute_reverse('find_cowin_appointments'))
         self.assertXmlPartialEqual(expected, suite, "./remote-request[2]")
 
         expected = """

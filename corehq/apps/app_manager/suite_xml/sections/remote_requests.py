@@ -254,7 +254,7 @@ class CowinRemoteRequestFactory(object):
     def _build_remote_request_queries(self):
         return [
             RemoteRequestQuery(
-                url="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin",
+                url=absolute_reverse('find_cowin_appointments'),
                 storage_instance=COWIN_APPOINTMENTS,
                 template='case',
                 data=self._get_remote_request_query_datums(),
