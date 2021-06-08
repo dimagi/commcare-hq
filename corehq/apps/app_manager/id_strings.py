@@ -424,6 +424,10 @@ def cowin_search_appointment_detail(module):
     return "m{module.id}.cowin_search_appointment_detail".format(module=module)
 
 
+def cowin_search_appointment_long_detail(module):
+    return "m{module.id}.cowin_search_appointment_long_detail".format(module=module)
+
+
 def cowin_search_appointment_detail_header(module, prop):
     return "m{module.id}.cowin.appointment.{prop}.header".format(module=module, prop=prop)
 

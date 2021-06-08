@@ -285,7 +285,7 @@ class CowinRemoteRequestFactory(object):
             nodeset=f"instance('{COWIN_APPOINTMENTS}')/results/appointment",
             value='./session_id',
             detail_select=id_strings.cowin_search_appointment_detail(self.module),
-            detail_confirm=id_strings.cowin_search_appointment_detail(self.module),
+            detail_confirm=id_strings.cowin_search_appointment_long_detail(self.module),
         )]
 
     def _build_stack(self):
