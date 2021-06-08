@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import RequestFactory
 
+from corehq.apps.sms.tests.data_generator import make_simple_sms, make_case_rule_sms, make_survey_sms
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -79,64 +80,17 @@ class MessageLogReportTest(TestCase):
             yield dict(zip(headers, row))
 
     def make_simple_sms(self, message, error_message=None):
-        sms = SMS.objects.create(
-            domain=self.domain,
-            date=datetime.utcnow(),
-            direction=OUTGOING,
-            text=message,
-            error=bool(error_message),
-            system_error_message=error_message,
-        )
+        sms = make_simple_sms(self.domain, message, error_message)
         self.addCleanup(sms.delete)
 
     def make_case_rule_sms(self, rule_name):
-        rule = AutomaticUpdateRule.objects.create(domain=self.domain, name=rule_name)
-        event = MessagingEvent.objects.create(
-            domain=self.domain,
-            date=datetime.utcnow(),
-            source=MessagingEvent.SOURCE_CASE_RULE,
-            source_id=rule.pk,
-        )
-        subevent = event.create_subevent_for_single_sms()
-        sms = SMS.objects.create(
-            domain=self.domain,
-            date=datetime.utcnow(),
-            direction=OUTGOING,
-            text='this is a message',
-            messaging_subevent=subevent,
-        )
+        rule, event, sms = make_case_rule_sms(self.domain, rule_name)
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)
 
     def make_survey_sms(self, rule_name):
-        # It appears that in production, many SMSs don't have a direct link to the
-        # triggering event - the connection is roundabout via the xforms_session
-        rule = AutomaticUpdateRule.objects.create(domain=self.domain, name=rule_name)
-        xforms_session = SQLXFormsSession.objects.create(
-            domain=self.domain,
-            couch_id=uuid.uuid4().hex,
-            start_time=datetime.utcnow(),
-            modified_time=datetime.utcnow(),
-            current_action_due=datetime.utcnow(),
-            expire_after=3,
-        )
-        event = MessagingEvent.objects.create(
-            domain=self.domain,
-            date=datetime.utcnow(),
-            source=MessagingEvent.SOURCE_CASE_RULE,
-            source_id=rule.pk,
-        )
-        subevent = event.create_subevent_for_single_sms()
-        subevent.xforms_session = xforms_session
-        subevent.save()
-        sms = SMS.objects.create(
-            domain=self.domain,
-            date=datetime.utcnow(),
-            direction=OUTGOING,
-            text='this is a message',
-            xforms_session_couch_id=xforms_session.couch_id,
-        )
+        rule, xforms_session, event, sms = make_survey_sms(self.domain, rule_name)
         self.addCleanup(rule.delete)
         self.addCleanup(xforms_session.delete)
         self.addCleanup(event.delete)  # cascades to subevent
