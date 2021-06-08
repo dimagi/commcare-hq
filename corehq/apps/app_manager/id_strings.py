@@ -239,6 +239,11 @@ def cowin_search_appointment_locale(module):
     return "cowin_search_appointment.m{module.id}".format(module=module)
 
 
+@pattern('cowin_appointment_locale')
+def cowin_appointment_locale():
+    return "cchq.cowin.appointment"
+
+
 @pattern('case_search.m%d.again')
 def case_search_again_locale(module):
     return "case_search.m{module.id}.again".format(module=module)

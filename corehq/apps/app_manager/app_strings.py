@@ -171,6 +171,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         if module.has_cowin_appointment_search():
             yield id_strings.cowin_search_appointment_locale(module), 'Search Appointment'
+            yield id_strings.cowin_appointment_locale(), 'Appointment'
             for prop in ['pincode', 'date']:
                 yield id_strings.cowin_appointment_search_property_locale(module, prop), prop
             for prop_id, prop_display in AppointmentResultXMLGenerator.appointment_fields.items():
