@@ -1315,11 +1315,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             if key != filter_key:
                 return
 
-            if ',' in value:
-                values = value.split(',')
-            else:
-                values = [value]
-
+            values = value.split(',')
             vals = [slug_values[val] for val in values if val in slug_values]
             if vals:
                 for key, extras in (expansions or {}).items():
