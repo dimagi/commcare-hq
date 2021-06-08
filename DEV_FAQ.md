@@ -11,9 +11,9 @@ to mark your local project as a test project and grant access to all features.
 
 ## Common Problems
 + I created local forms and/or cases, but I don't see them in reports.
-   + ElasticSearch data is out of date. See [#ElasticSearch](#ElasticSearch)
+   + ElasticSearch data is out of date. See [ElasticSearch](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md#elasticsearch) below.
 + I created local cases, but some other part of HQ that filters by case type doesn't show my case types.
-   + ElasticSearch data is out of date. See [#ElasticSearch](#ElasticSearch)
+   + ElasticSearch data is out of date. See [ElasticSearch](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md#elasticsearch) below.
 + My local downloads/uploads aren't working
    + Look back over the [celery setup](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#running-commcare-hq).
    + Many background tasks on HQ will run fine locally, if you don't run celery but do have `CELERY_TASK_ALWAYS_EAGER=True` in local settings, but some do require celery (typically those that have a task and also a polling job, which is how most downloads and uploads work).
@@ -21,7 +21,7 @@ to mark your local project as a test project and grant access to all features.
    + Double check that your browser isn't caching. In Chrome, this is Dev Tools > Settings > Preferences > Network and check "Disable cache (while DevTools is open)"
    + Double check that you're editing the source file, under `corehq/apps/<app_name>/static`, not a file in `staticfiles`
 + Web Apps and/or App Preview aren't working at all
-   + Formplayer isn't running properly. See [#Formplayer](#Formplayer)
+   + Formplayer isn't running properly. See [Formplayer](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md#formplayer) below.
 + My web server is throwing a slew of web socket errors
    + It happens, try restarting.
 
