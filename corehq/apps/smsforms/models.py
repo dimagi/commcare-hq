@@ -166,7 +166,11 @@ class SQLXFormsSession(models.Model):
     @property
     def status_api(self):
         if self.submission_id:
-            return "complete"
+            xform_instance = FormAccessors(self.domain).get_form(self.submission_id)
+            if xform_instance.partial_submission:
+                return "partially_completed"
+            else:
+                return "completed"
         elif self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
             return "in-progress"
         else:
