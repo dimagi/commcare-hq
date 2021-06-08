@@ -1422,7 +1422,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         else:
             return {"contact": Q(sms__phone_number__contains=value)}
 
-        raise InvalidFilterError("Contact filter value must be a valid email address of phone number.")
+        raise InvalidFilterError("Contact filter value must be a valid email address or phone number.")
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.select_related("parent").all()
