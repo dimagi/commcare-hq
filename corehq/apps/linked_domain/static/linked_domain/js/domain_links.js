@@ -174,7 +174,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.addDownstreamDomain = function (viewModel) {
             _private.RMI("create_domain_link", {
-              "downstream_domain": viewModel.value(),
+                "downstream_domain": viewModel.value(),
             }).done(function (data) {
                 self.availableDomains(_.filter(self.availableDomains(), function (item) {
                     return item !== viewModel.value();
