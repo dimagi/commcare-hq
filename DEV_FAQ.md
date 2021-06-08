@@ -1,16 +1,15 @@
-Developer FAQ
--------------
+# Developer FAQ
 
 This is a starting point for troubleshooting issues that frequently occur once your local environment
 is set up and you've started working on a singnificant code change.
 
-# General Advice
+## General Advice
 
 - Use the developers section of the [Dimagi Forum](https://forum.dimagi.com/) for help with issues.
 - Some features are limited to specific software plans. Visit Project Settings > Internal Subscription Management
 to mark your local project as a test project and grant access to all features.
 
-# Common Problems
+## Common Problems
 + I created local forms and/or cases, but I don't see them in reports.
    + ElasticSearch data is out of date. See [#ElasticSearch](#ElasticSearch)
 + I created local cases, but some other part of HQ that filters by case type doesn't show my case types.
@@ -26,29 +25,29 @@ to mark your local project as a test project and grant access to all features.
 + My web server is throwing a slew of web socket errors
    + It happens, try restarting.
 
-# Generating Sample Data
+## Generating Sample Data
 
-## SMS
+### SMS
 
 Check out the `generate_fake_sms_data` command.
 
-## Applications
+### Applications
 
 If you have an application on commcarehq.org, follow [these instructions](https://confluence.dimagi.com/display/commcarepublic/Copying+an+Application+between+Projects+or+Servers) to copy it to your local environment.
 
 There are also [three template apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) checked into the codebase.
 You can run [load_app_from_slug](https://github.com/dimagi/commcare-hq/blob/6021df8639dc0053c8dbdbb8690993be708776c5/corehq/apps/app_manager/views/apps.py#L510) in a django shell to import one of these apps. Note that you may wish to only run the first few lins of `load_app_from_slug` if you don't care about your app having multimedia.
 
-## Cases
+### Cases
 
 The easiest way to add cases locally is generally to use your local case importer. [Docs](https://confluence.dimagi.com/display/commcarepublic/Importing+Cases+Using+Excel)
 for this are extensive, but at its most basic, you can just upload a single-column file with a bunch of case names to create cases.
 
-## Cases + App + Data Dictionary
+### Cases + App + Data Dictionary
 
 The `create_case_fixtures` command will add a sample app, a data dictionary, and a set of relevant cases.
 
-# ElasticSearch
+## ElasticSearch
 
 ElasticSearch is the data source for reports, exports, and an assortment of parts of other features.
 Most issues with data not appearing locally, if you've already done something to create that data, are issues with ElasticSearch.
@@ -66,7 +65,7 @@ use the `case_search` index). Depending on what you're working on, you may also 
 `sms` (messaging reports and exports), or `case_search` (Case List Explorer, Explore Case Data). You do not want `case` or `form`, which are
 only used on legacy domains that store forms and cases in CouchDB.
 
-# Formplayer
+## Formplayer
 
 You can run formplayer either in Docker or as a standalone service. It's simpler to run via Docker.
 If you're doing formplayer development, you'll need to run it as a separate service.
