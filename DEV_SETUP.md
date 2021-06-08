@@ -498,9 +498,11 @@ you can follow the instructions in the [pipes repository](https://github.com/dim
 Running Tests
 -------------
 
-To run the standard tests for CommCare HQ, simply run
+To run the standard tests for CommCare HQ, run
 
     $ ./manage.py test
+
+These may not all pass in a local environment. It's often more practical, and faster, to just run tests for the django app where you're working.
 
 To run a particular test or subset of tests
 

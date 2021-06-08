@@ -26,8 +26,6 @@ to mark your local project as a test project and grant access to all features.
 + My web server is throwing a slew of web socket errors
    + It happens, try restarting.
 
-+ Running Tests TODO pull from DEV_SETUP
-
 # Generating Sample Data
 
 ## SMS
