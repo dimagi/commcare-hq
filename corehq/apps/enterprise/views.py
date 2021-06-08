@@ -26,8 +26,16 @@ from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import privileges
-from corehq.apps.accounting.models import CustomerInvoice, CustomerBillingRecord
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    CustomerInvoice,
+    CustomerBillingRecord,
+)
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
@@ -39,13 +47,11 @@ from corehq.apps.enterprise.forms import (
 )
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
-
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.users.decorators import require_can_edit_or_view_web_users
+
 from corehq.const import USER_DATE_FORMAT
 
 
@@ -323,3 +329,65 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@require_can_edit_or_view_web_users
+@require_superuser
+def enterprise_permissions(request, domain):
+    account = BillingAccount.get_account_by_domain(domain)
+    all_domains = set(account.get_domains())
+    ignored_domains = set(account.permissions_ignore_domains)
+    controlled_domains = all_domains - ignored_domains - set([account.permissions_source_domain])
+
+    context = {
+        'domain': domain,
+        'all_domains': sorted(all_domains),
+        'source_domain': account.permissions_source_domain,
+        'ignored_domains': sorted(list(ignored_domains)),
+        'controlled_domains': sorted(list(controlled_domains)),
+        'current_page': {
+            'page_name': _('Enterprise Permissions'),
+            'title': _('Enterprise Permissions'),
+        }
+    }
+    return render(request, "enterprise/enterprise_permissions.html", context)
+
+
+@require_superuser
+@require_POST
+def toggle_enterprise_permission(request, domain, target_domain):
+    account = BillingAccount.get_account_by_domain(domain)
+    domains = account.get_domains()
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    if target_domain not in domains:
+        messages.error(request, _("Could not update permissions."))
+        return HttpResponseRedirect(redirect)
+    if target_domain in account.permissions_ignore_domains:
+        account.permissions_ignore_domains.remove(target_domain)
+    else:
+        account.permissions_ignore_domains.append(target_domain)
+    account.save()
+    messages.success(request, _('Permissions saved.'))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_POST
+def update_enterprise_permissions_source_domain(request, domain):
+    source_domain = request.POST.get('source_domain')
+    redirect = reverse("enterprise_permissions", args=[domain])
+
+    account = BillingAccount.get_account_by_domain(domain)
+    if source_domain and source_domain not in account.get_domains():
+        messages.error(request, _("Please select a valid domain."))
+        return HttpResponseRedirect(redirect)
+
+    if source_domain:
+        account.permissions_source_domain = source_domain
+    else:
+        account.permissions_source_domain = None
+        account.permissions_ignore_domains = []
+    account.save()
+    messages.success(request, _('Permissions saved.'))
+    return HttpResponseRedirect(redirect)
