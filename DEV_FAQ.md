@@ -29,4 +29,17 @@ to mark your local project as a test project and grant access to all features.
 + Running Tests TODO pull from DEV_SETUP
 + Generating Sample Data
 + ElasticSearch TODO pull from document
-+ Formplayer TODO pull from document
+
+# Formplayer
+
+You can run formplayer either in Docker or as a standalone service. It's simpler to run via Docker.
+If you're doing formplayer development, you'll need to run it as a separate service.
+
+When troubleshooting formplayer in docker, use standard docker commands to view logs: `docker logs <formplayer_container_name>`
+
+Formplayer expects HQ to be running on port 8000. If you run HQ on a different port, you'll need to modify settings and run formplayer outside of docker.
+
+If you run formplayer as a separate service, make sure you're not acciddentally also running it in Docker - HQ's Docker script's `up` command will start it.
+
+See the [Formplayer README](https://github.com/dimagi/formplayer/blob/master/README.md)
+and [Formplayer setup for HQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#formplayer).
