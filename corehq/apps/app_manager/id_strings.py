@@ -4,7 +4,7 @@ ROOT = 'root'
 
 
 def _format_to_regex(pattern):
-    """
+    r"""
     convert a format string with %s and %d to a regex
 
     %s => .*
@@ -14,13 +14,13 @@ def _format_to_regex(pattern):
     everything else gets `re.escape`d
 
     >>> import re
-    >>> format = '%shello %%sam %s, you are %d years old.'
-    >>> regex = _format_to_regex(format)
-    >>> print regex
+    >>> format_ = '%shello %%sam %s, you are %d years old.'
+    >>> regex = _format_to_regex(format_)
+    >>> print(regex)
     .*hello\ %sam\ .*\,\ you\ are\ [0-9]+\ years\ old\.
-    >>> bool(re.match(regex, format % ("Oh ", "i am", 6)))
+    >>> bool(re.match(regex, format_ % ("Oh ", "i am", 6)))
     True
-    >>> bool(re.match(regex, format))
+    >>> bool(re.match(regex, format_))
     False
 
     """
