@@ -33,7 +33,7 @@ COWIN_APPOINTMENT_DETAIL_XML = """
           <xpath function="available_capacity"/>
         </text>
       </template>
-      <sort type="string" order="1" direction="descending">
+      <sort type="int" order="1" direction="descending">
         <text>
           <xpath function="available_capacity"/>
         </text>
@@ -50,7 +50,7 @@ COWIN_APPOINTMENT_DETAIL_XML = """
           <xpath function="available_capacity_dose1"/>
         </text>
       </template>
-      <sort type="string" order="2" direction="descending">
+      <sort type="int" order="2" direction="descending">
         <text>
           <xpath function="available_capacity_dose1"/>
         </text>
@@ -67,7 +67,7 @@ COWIN_APPOINTMENT_DETAIL_XML = """
           <xpath function="available_capacity_dose2"/>
         </text>
       </template>
-      <sort type="string" order="3" direction="descending">
+      <sort type="int" order="3" direction="descending">
         <text>
           <xpath function="available_capacity_dose2"/>
         </text>
