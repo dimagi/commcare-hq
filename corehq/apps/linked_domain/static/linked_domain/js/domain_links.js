@@ -5,7 +5,7 @@ hqDefine("linked_domain/js/domain_links", [
     'knockout',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/multiselect_utils',
-    'hqwebapp/js/components.ko', // for pagination
+    'hqwebapp/js/components.ko', // for pagination and search box
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
 ], function (
     RMI,
@@ -69,18 +69,31 @@ hqDefine("linked_domain/js/domain_links", [
             }
         }
 
+        // General data
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
 
-        // pull content
+        // Pull Content Tab
         self.model_status = _.map(data.model_status, ModelStatus);
         self.can_update = data.can_update;
         self.models = data.models;
 
-        // manage downstream domains tab
+        // Manage Downstream Domains Tab
+        // search box
+        self.query = ko.observable();
+        self.filteredDomainLinks = ko.observableArray([]);
+        self.matchesQuery = function (domainLink) {
+            return !self.query() || domainLink.linked_domain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+        };
+        self.filter = function () {
+            self.filteredDomainLinks(_.filter(self.domain_links(), self.matchesQuery));
+            self.goToPage(1);
+        };
+
+        // pagination
         self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-            return self.domain_links().length;
+            return self.query() ? self.filteredDomainLinks().length : self.domain_links().length;
         });
         self.currentPage = 1;
 
@@ -88,7 +101,8 @@ hqDefine("linked_domain/js/domain_links", [
             self.currentPage = page;
             self.paginatedDomainLinks.removeAll();
             var skip = (self.currentPage - 1) * self.itemsPerPage();
-            self.paginatedDomainLinks(self.domain_links().slice(skip, skip + self.itemsPerPage()));
+            var visibleDomains = self.query() ? self.filteredDomainLinks() : self.domain_links();
+            self.paginatedDomainLinks(visibleDomains.slice(skip, skip + self.itemsPerPage()));
         };
 
         self.onPaginationLoad = function () {
@@ -110,7 +124,7 @@ hqDefine("linked_domain/js/domain_links", [
             });
         };
 
-        // push content tab
+        // Push Content Tab
         self.domainsToRelease = ko.observableArray();
         self.modelsToRelease = ko.observableArray();
         self.buildAppsOnRelease = ko.observable(false);
