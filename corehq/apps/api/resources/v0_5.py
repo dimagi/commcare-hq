@@ -1,8 +1,11 @@
+import functools
 from collections import namedtuple
 from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
+from django.db.models import Q
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -12,14 +15,15 @@ from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.serializers import Serializer
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email, SMS
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -39,7 +43,7 @@ from corehq.apps.api.resources.auth import (
     RequirePermissionAuthentication,
     LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, make_date_filter, django_date_filter
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -49,6 +53,7 @@ from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.transforms import case_or_user_id_to_name
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
@@ -58,7 +63,8 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.sms.util import strip_plus
+from corehq.apps.reports.standard.message_event_display import get_event_display_api, get_sms_status_display_raw
+from corehq.apps.sms.util import strip_plus, get_backend_name, validate_phone_number
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -553,6 +559,7 @@ class GroupResource(v0_4.GroupResource):
         group = self.obj_get(bundle, **kwargs)
         group.soft_delete()
         return bundle
+
 
 class DomainAuthorization(ReadOnlyAuthorization):
 
@@ -1089,26 +1096,317 @@ class ODataFormResource(BaseODataResource):
 
 
 class MessagingEventResource(HqBaseResource, ModelResource):
-    content_type_display = fields.CharField(attribute='get_content_type_display')
-    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
-    status_display = fields.CharField(attribute='get_status_display')
-    source_display = fields.CharField(attribute='get_source_display')
+    source = fields.DictField()
+    recipient = fields.DictField()
+    form = fields.DictField()
+    error = fields.DictField()
+    messages = fields.ListField()
+
+    def dehydrate(self, bundle):
+        bundle.data["domain"] = bundle.obj.parent.domain
+        return bundle
+
+    def dehydrate_status(self, bundle):
+        event = bundle.obj
+        if event.status == MessagingEvent.STATUS_COMPLETED and event.xforms_session_id:
+            return event.xforms_session.status_api
+        return MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown')
+
+    def dehydrate_content_type(self, bundle):
+        return MessagingEvent.CONTENT_TYPE_SLUGS.get(bundle.obj.content_type, "unknown")
+
+    def dehydrate_source(self, bundle):
+        parent = bundle.obj.parent
+
+        return {
+            "id": parent.source_id,
+            "type": MessagingEvent.SOURCE_SLUGS.get(parent.source, 'unknown'),
+            "name": get_event_display_api(parent),
+        }
+
+    def dehydrate_recipient(self, bundle):
+        display_value = None
+        if bundle.obj.recipient_id:
+            display_value = case_or_user_id_to_name(bundle.obj.recipient_id, {
+                "couch_recipient_doc_type": bundle.obj.get_recipient_doc_type()
+            })
+        return {
+            "id": bundle.obj.recipient_id,
+            "type": MessagingSubEvent.RECIPIENT_SLUGS.get(bundle.obj.recipient_type, "unknown"),
+            "name": display_value or "unknown",
+        }
+
+    def dehydrate_form(self, bundle):
+        event = bundle.obj
+        if event.content_type not in (MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY):
+            return None
+
+        submission_id = None
+        if event.xforms_session_id:
+            submission_id = event.xforms_session.submission_id
+        return {
+            "app_id": bundle.obj.app_id,
+            "form_definition_id": bundle.obj.form_unique_id,
+            "form_name": bundle.obj.form_name,
+            "form_submission_id": submission_id,
+        }
+
+    def dehydrate_error(self, bundle):
+        event = bundle.obj
+        if not event.error_code:
+            return None
+
+        return {
+            "code": event.error_code,
+            "message": MessagingEvent.ERROR_MESSAGES.get(event.error_code, None),
+            "message_detail": event.additional_error_text
+        }
+
+    def dehydrate_messages(self, bundle):
+        event = bundle.obj
+        if event.content_type == MessagingEvent.CONTENT_EMAIL:
+            return self._get_messages_for_email(event)
+
+        if event.content_type in (MessagingEvent.CONTENT_SMS, MessagingEvent.CONTENT_SMS_CALLBACK):
+            return self._get_messages_for_sms(event)
+
+        if event.content_type in (MessagingEvent.CONTENT_SMS_SURVEY, MessagingEvent.CONTENT_IVR_SURVEY):
+            return self._get_messages_for_survey(event)
+        return []
+
+    def _get_messages_for_email(self, event):
+        try:
+            email = Email.objects.get(messaging_subevent=event.pk)
+            content = email.body
+            recipient_address = email.recipient_address
+        except Email.DoesNotExist:
+            content = '-'
+            recipient_address = '-'
+
+        return [{
+            "date": event.date,
+            "type": "email",
+            "direction": "outgoing",
+            "content": content,
+            "status": MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown'),
+            "backend": "email",
+            "contact": recipient_address
+        }]
+
+    def _get_messages_for_sms(self, event):
+        messages = SMS.objects.filter(messaging_subevent_id=event.pk)
+        return self._get_message_dicts_for_sms(event, messages, "sms")
+
+    def _get_messages_for_survey(self, event):
+        if not event.xforms_session_id:
+            return []
+
+        xforms_session = event.xforms_session
+        if not xforms_session:
+            return []
+
+        messages = SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id)
+        type_ = "ivr" if event.content_type == MessagingEvent.CONTENT_IVR_SURVEY else "sms"
+        return self._get_message_dicts_for_sms(event, messages, type_)
+
+    def _get_message_dicts_for_sms(self, event, messages, type_):
+        message_dicts = []
+        for sms in messages:
+            error_message = None
+            if event.status != MessagingEvent.STATUS_ERROR:
+                status, error_message = get_sms_status_display_raw(sms)
+            else:
+                status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
+
+            message_data = {
+                "date": sms.date,
+                "type": type_,
+                "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
+                "content": sms.text,
+                "status": status,
+                "backend": get_backend_name(sms.backend_id) or sms.backend_id,
+                "contact": sms.phone_number
+            }
+            if error_message:
+                message_data["error_message"] = error_message
+            message_dicts.append(message_data)
+        return message_dicts
+
+    def build_filters(self, filters=None, **kwargs):
+        filter_consumers = [
+            self._get_date_filter_consumer(),
+            self._get_source_filter_consumer(),
+            self._get_content_type_filter_consumer(),
+            self._status_filter_consumer,
+            self._error_code_filter_consumer,
+            self._contact_filter_consumer,
+        ]
+        orm_filters = {}
+        for key, value in list(filters.items()):
+            for consumer in filter_consumers:
+                result = consumer(key, value)
+                if result:
+                    del filters[key]
+                    orm_filters.update(result)
+                    continue
+        orm_filters.update(super().build_filters(filters, **kwargs))
+        return orm_filters
+
+    def apply_filters(self, request, applicable_filters):
+        native_filters = []
+        for key, value in list(applicable_filters.items()):
+            if isinstance(value, Q):
+                native_filters.append(applicable_filters.pop(key))
+        query = self.get_object_list(request).filter(**applicable_filters)
+        if native_filters:
+            query = query.filter(*native_filters)
+        return query
+
+    @staticmethod
+    def _get_date_filter_consumer():
+        date_filter = make_date_filter(functools.partial(django_date_filter, field_name="date"))
+
+        def _date_consumer(key, value):
+            if '.' in key and key.split(".")[0] == "date":
+                prefix, qualifier = key.split(".", maxsplit=1)
+                try:
+                    return date_filter(qualifier, value)
+                except ValueError as e:
+                    raise InvalidFilterError(str(e))
+
+        return _date_consumer
+
+    @staticmethod
+    def _get_source_filter_consumer():
+        # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        expansions = {
+            MessagingEvent.SOURCE_OTHER: [MessagingEvent.SOURCE_FORWARDED],
+            MessagingEvent.SOURCE_BROADCAST: [
+                MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+                MessagingEvent.SOURCE_IMMEDIATE_BROADCAST
+            ],
+            MessagingEvent.SOURCE_REMINDER: [MessagingEvent.SOURCE_CASE_RULE]
+        }
+        return MessagingEventResource._make_slug_filter_consumer(
+            "source", MessagingEvent.SOURCE_SLUGS, "parent__source__in", expansions
+        )
+
+    @staticmethod
+    def _get_content_type_filter_consumer():
+        # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
+        expansions = {
+            MessagingEvent.CONTENT_SMS_SURVEY: [
+                MessagingEvent.CONTENT_SMS_SURVEY,
+                MessagingEvent.CONTENT_IVR_SURVEY,
+            ],
+            MessagingEvent.CONTENT_SMS: [
+                MessagingEvent.CONTENT_SMS,
+                MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                MessagingEvent.CONTENT_ADHOC_SMS,
+                MessagingEvent.CONTENT_API_SMS,
+                MessagingEvent.CONTENT_CHAT_SMS
+            ],
+        }
+        return MessagingEventResource._make_slug_filter_consumer(
+            "content_type", MessagingEvent.CONTENT_TYPE_SLUGS, "content_type__in", expansions
+        )
+
+    @staticmethod
+    def _make_slug_filter_consumer(filter_key, slug_dict, model_filter_arg, expansions=None):
+        slug_values = {v: k for k, v in slug_dict.items()}
+
+        def _consumer(key, value):
+            if key != filter_key:
+                return
+
+            values = value.split(',')
+            vals = [slug_values[val] for val in values if val in slug_values]
+            if vals:
+                for key, extras in (expansions or {}).items():
+                    if key in vals:
+                        vals.extend(extras)
+                return {model_filter_arg: vals}
+
+        return _consumer
+
+    def _status_filter_consumer(self, key, value):
+        slug_values = {v: k for k, v in MessagingEvent.STATUS_SLUGS.items()}
+        if key != "status":
+            return
+
+        model_value = slug_values.get(value, value)
+        # match functionality in corehq.pps.reports.standard.sms.MessagingEventsReport.get_filters
+        if model_value == MessagingEvent.STATUS_ERROR:
+            return {"status": (Q(status=model_value) | Q(sms__error=True))}
+        elif model_value == MessagingEvent.STATUS_IN_PROGRESS:
+            # We need to check for id__isnull=False below because the
+            # query we make in this report has to do a left join, and
+            # in this particular filter we can only validly check
+            # session_is_open=True if there actually are
+            # subevent and xforms session records
+            return {"status": (
+                Q(status=model_value)
+                | (Q(xforms_session__id__isnull=False) & Q(xforms_session__session_is_open=True))
+            )}
+        elif model_value == MessagingEvent.STATUS_NOT_COMPLETED:
+            return {"status": (
+                Q(status=model_value)
+                | (Q(xforms_session__session_is_open=False) & Q(xforms_session__submission_id__isnull=True))
+            )}
+        elif model_value == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            return {"status": model_value}
+        else:
+            raise InvalidFilterError(f"'{value}' is an invalid value for the 'status' filter")
+
+    def _error_code_filter_consumer(self, key, value):
+        if key != "error_code":
+            return
+
+        return {"error_code": value}
+
+    def _contact_filter_consumer(self, key, value):
+        if key != "contact":
+            return
+
+        try:
+            validate_email(value)
+        except ValidationError:
+            pass
+        else:
+            return {"contact": Q(email__recipient_address=value)}
+
+        try:
+            validate_phone_number(value)
+        except ValidationError:
+            pass
+        else:
+            return {"contact": Q(sms__phone_number__contains=value)}
+
+        raise InvalidFilterError("Contact filter value must be a valid email address of phone number.")
 
     class Meta(object):
-        queryset = MessagingEvent.objects.all()
+        queryset = MessagingSubEvent.objects.select_related("parent").all()
+        include_resource_uri = False
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'messaging-event'
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        authorization = DomainAuthorization()
+        authorization = DomainAuthorization('parent__domain')
         paginator_class = NoCountingPaginator
+        serializer = Serializer(formats=['json'])
+        excludes = {
+            "error_code",
+            "additional_error_text",
+            "app_id",
+            "form_name",
+            "form_unique_id",
+            "recipient_id",
+            "recipient_type",
+        }
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
-            "source": ('exact',),
-            "content_type": ('exact',),
-            "status": ('exact',),
+            "case_id": ('exact',),
         }
         ordering = [
             'date',
