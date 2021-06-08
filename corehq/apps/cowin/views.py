@@ -55,34 +55,34 @@ class AppointmentResultsFixture(object):
 
 
 class AppointmentResultXMLGenerator(object):
-    appointment_fields = [
+    appointment_fields = {
         # "center_id",
-        "name",
+        "name": "Name",
         # "name_l",
-        "address",
+        "address": "Address",
         # "address_l",
-        "state_name",
+        "state_name": "State",
         # "state_name_l",
-        "district_name",
+        "district_name": "District",
         # "district_name_l",
-        "block_name",
+        "block_name": "Block",
         # "block_name_l",
-        "pincode",
+        "pincode": "Pincode",
         # "lat",
         # "long",
-        "from",
-        "to",
-        "fee_type",
-        "fee",
-        "session_id",
-        "date",
-        "available_capacity",
-        "available_capacity_dose1",
-        "available_capacity_dose2",
-        "min_age_limit",
-        "vaccine",
-        "slots"
-    ]
+        "from": "From",
+        "to": "To",
+        "fee_type": "Fee Type",
+        "fee": "Fee",
+        "session_id": "Session ID",
+        "date": "Date",
+        "available_capacity": "Capacity",
+        "available_capacity_dose1": "First Dose",
+        "available_capacity_dose2": "Second Dose",
+        "min_age_limit": "Minimum Age",
+        "vaccine": "Vaccine",
+        "slots": "Slots"
+    }
 
     def __init__(self, appointment):
         self.appointment = appointment

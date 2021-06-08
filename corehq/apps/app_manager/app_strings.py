@@ -173,8 +173,8 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             yield id_strings.cowin_search_appointment_locale(module), 'Search Appointment'
             for prop in ['pincode', 'date']:
                 yield id_strings.cowin_appointment_search_property_locale(module, prop), prop
-            for prop in AppointmentResultXMLGenerator.appointment_fields:
-                yield id_strings.cowin_search_appointment_detail_header(module, prop), prop
+            for prop_id, prop_display in AppointmentResultXMLGenerator.appointment_fields.items():
+                yield id_strings.cowin_search_appointment_detail_header(module, prop_id), prop_display
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
