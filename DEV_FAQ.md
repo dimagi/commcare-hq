@@ -27,8 +27,46 @@ to mark your local project as a test project and grant access to all features.
    + It happens, try restarting.
 
 + Running Tests TODO pull from DEV_SETUP
-+ Generating Sample Data
-+ ElasticSearch TODO pull from document
+
+# Generating Sample Data
+
+## SMS
+
+Check out the `generate_fake_sms_data` command.
+
+## Applications
+
+If you have an application on commcarehq.org, follow [these instructions](https://confluence.dimagi.com/display/commcarepublic/Copying+an+Application+between+Projects+or+Servers) to copy it to your local environment.
+
+There are also [three template apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) checked into the codebase.
+You can run [load_app_from_slug](https://github.com/dimagi/commcare-hq/blob/6021df8639dc0053c8dbdbb8690993be708776c5/corehq/apps/app_manager/views/apps.py#L510) in a django shell to import one of these apps. Note that you may wish to only run the first few lins of `load_app_from_slug` if you don't care about your app having multimedia.
+
+## Cases
+
+The easiest way to add cases locally is generally to use your local case importer. [Docs](https://confluence.dimagi.com/display/commcarepublic/Importing+Cases+Using+Excel)
+for this are extensive, but at its most basic, you can just upload a single-column file with a bunch of case names to create cases.
+
+## Cases + App + Data Dictionary
+
+The `create_case_fixtures` command will add a sample app, a data dictionary, and a set of relevant cases.
+
+# ElasticSearch
+
+ElasticSearch is the data source for reports, exports, and an assortment of parts of other features.
+Most issues with data not appearing locally, if you've already done something to create that data, are issues with ElasticSearch.
+
+You can run ElasticSearch continuously, mimicking a production environment, or on an as-needed basis. Either one of these can be simpler,
+depending on how much you're working with ES data.
+
+As described in the [dev setup guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#running-commcare-hq), you can
+use `run_ptop` to keep ES continually up to date.
+
+Alternatively, you can run `ptop_reindexer_v2` as needed to sync individual indexes. `ptop_reindexer_v2` works on one index at a time.
+Running it without any arguments will list the available indexes. The indexes you're most likely to need are `sql-form` and `sql-case`,
+which will populate form-based can case-based reports and exports (excepting the Case List Explorer and Explore Case Data reports, which
+use the `case_search` index). Depending on what you're working on, you may also want `user`, `group`,
+`sms` (messaging reports and exports), or `case_search` (Case List Explorer, Explore Case Data). You do not want `case` or `form`, which are
+only used on legacy domains that store forms and cases in CouchDB.
 
 # Formplayer
 
