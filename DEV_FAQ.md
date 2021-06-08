@@ -59,11 +59,12 @@ As described in the [dev setup guide](https://github.com/dimagi/commcare-hq/blob
 use `run_ptop` to keep ES continually up to date.
 
 Alternatively, you can run `ptop_reindexer_v2` as needed to sync individual indexes. `ptop_reindexer_v2` works on one index at a time.
-Running it without any arguments will list the available indexes. The indexes you're most likely to need are `sql-form` and `sql-case`,
-which will populate form-based can case-based reports and exports (excepting the Case List Explorer and Explore Case Data reports, which
-use the `case_search` index). Depending on what you're working on, you may also want `user`, `group`,
-`sms` (messaging reports and exports), or `case_search` (Case List Explorer, Explore Case Data). You do not want `case` or `form`, which are
-only used on legacy domains that store forms and cases in CouchDB.
+Running it without any arguments will list the available indexes. The indexes you're most likely to use:
++ `sql-form` and `sql-case` populate form-based and case-based reports and exports
++ `user` and `group` may be useful, depending on what you're working on
++ `case_search` populates the Case list Explorer and Explore Case Data reports, as well as the case search/claim feature
++ `sms` populates messaging reports and SMS exports
++ You do **not** care about `case` or `form`, which are only used on legacy domains that store forms and cases in CouchDB.
 
 ## Formplayer
 
