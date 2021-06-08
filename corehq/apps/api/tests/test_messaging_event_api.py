@@ -43,8 +43,8 @@ class TestMessagingEventResource(APIResourceTest):
                 }
             ],
             # "id": 1,  # ids are explicitly removed from comparison
-            "recipient": {'display': 'unknown', 'id': None, 'type': 'case'},
-            "source": {'id': None, 'display': 'sms', 'type': "other"},
+            "recipient": {'name': 'unknown', 'id': None, 'type': 'case'},
+            "source": {'id': None, 'name': 'sms', 'type': "other"},
             "status": "completed",
         }
 
@@ -248,12 +248,12 @@ class TestMessagingEventResource(APIResourceTest):
                 }
             ],
             "recipient": {
-                "display": "unknown",
+                "name": "unknown",
                 "id": "case_id_123",
                 "type": "case"
             },
             "source": {
-                "display": "case rule name",
+                "name": "case rule name",
                 "type": "conditional-alert"
             },
             "status": "in-progress"
@@ -301,12 +301,12 @@ class TestMessagingEventResource(APIResourceTest):
                 }
             ],
             "recipient": {
-                "display": "unknown",
+                "name": "unknown",
                 "id": "user_id_xyz",
                 "type": "mobile-worker"
             },
             "source": {
-                "display": "test sms survey",
+                "name": "test sms survey",
                 "type": "conditional-alert"
             },
             "status": "in-progress"
@@ -345,12 +345,12 @@ class TestMessagingEventResource(APIResourceTest):
                 }
             ],
             "recipient": {
-                "display": "bob",
+                "name": "bob",
                 "id": user.get_id,
                 "type": "mobile-worker"
             },
             "source": {
-                "display": "test broadcast",
+                "name": "test broadcast",
                 "type": "immediate-broadcast"
             },
             "status": "email-delivered"
