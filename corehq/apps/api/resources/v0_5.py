@@ -1096,6 +1096,11 @@ class ODataFormResource(BaseODataResource):
 
 
 class MessagingEventResource(HqBaseResource, ModelResource):
+    """Despite it's name this API is backed by the MessagingSubEvent model
+    which has a more direct relationship with who the messages are being sent to.
+    Each event may have more than one actual message associated with it.
+    """
+
     source = fields.DictField()
     recipient = fields.DictField()
     form = fields.DictField()
@@ -1107,6 +1112,11 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return bundle
 
     def dehydrate_status(self, bundle):
+        """The status of the event is not tied to the status of individual messages. An event
+        may be 'complete' but some or all of the messages may have errored.
+
+        In the case of completed survey events the status is taken from the XFormsSession.
+        """
         event = bundle.obj
         if event.status == MessagingEvent.STATUS_COMPLETED and event.xforms_session_id:
             return event.xforms_session.status_api
@@ -1116,6 +1126,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return MessagingEvent.CONTENT_TYPE_SLUGS.get(bundle.obj.content_type, "unknown")
 
     def dehydrate_source(self, bundle):
+        """This is the 'trigger' for the event e.g. broadcast, conditional-alert etc."""
         parent = bundle.obj.parent
 
         return {
@@ -1152,6 +1163,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         }
 
     def dehydrate_error(self, bundle):
+        """Details about the error at the event level. Not related to errors of individual messages."""
         event = bundle.obj
         if not event.error_code:
             return None
@@ -1163,6 +1175,9 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         }
 
     def dehydrate_messages(self, bundle):
+        """The content_types supported here are the only ones used by the MessagingSubEvent
+        model. Other content types such as CONTENT_CHAT_SMS are used by the MessagingEvent model.
+        """
         event = bundle.obj
         if event.content_type == MessagingEvent.CONTENT_EMAIL:
             return self._get_messages_for_email(event)
@@ -1233,6 +1248,12 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return message_dicts
 
     def build_filters(self, filters=None, **kwargs):
+        """Support custom filtering. Consumers must return None or dictionary with
+        Django filter kwargs or else a Django Q object:
+
+        return {"date__lte": value}
+        return {"date": Q(date__lte=value) | Q(date__gt=value)}
+        """
         filter_consumers = [
             self._get_date_filter_consumer(),
             self._get_source_filter_consumer(),
@@ -1253,6 +1274,8 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return orm_filters
 
     def apply_filters(self, request, applicable_filters):
+        """Separate out Django kwargs filters from Q filters and apply them
+        to the query."""
         native_filters = []
         for key, value in list(applicable_filters.items()):
             if isinstance(value, Q):
@@ -1264,6 +1287,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
 
     @staticmethod
     def _get_date_filter_consumer():
+        """date.{lt, lte, gt, gte}=<ISO DATE>"""
         date_filter = make_date_filter(functools.partial(django_date_filter, field_name="date"))
 
         def _date_consumer(key, value):
@@ -1278,6 +1302,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
 
     @staticmethod
     def _get_source_filter_consumer():
+        """source=<SOURCE SLUG>"""
         # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
         expansions = {
             MessagingEvent.SOURCE_OTHER: [MessagingEvent.SOURCE_FORWARDED],
@@ -1293,6 +1318,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
 
     @staticmethod
     def _get_content_type_filter_consumer():
+        """content_type=<CONTENT TYPE SLUG>"""
         # match functionality in corehq.apps.reports.standard.sms.MessagingEventsReport.get_filters
         expansions = {
             MessagingEvent.CONTENT_SMS_SURVEY: [
@@ -1330,6 +1356,10 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return _consumer
 
     def _status_filter_consumer(self, key, value):
+        """status=<STATUS SLUG>
+
+        Status filtering is applied to the event as well as to the messages / XFormSession.
+        """
         slug_values = {v: k for k, v in MessagingEvent.STATUS_SLUGS.items()}
         if key != "status":
             return
@@ -1359,12 +1389,22 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             raise InvalidFilterError(f"'{value}' is an invalid value for the 'status' filter")
 
     def _error_code_filter_consumer(self, key, value):
+        """error_code=<ERROR CODE>
+
+        This has to be done here since `error_code` is not a field in the API so Tastypie
+        won't allow filtering against it.
+        """
         if key != "error_code":
             return
 
         return {"error_code": value}
 
     def _contact_filter_consumer(self, key, value):
+        """contact=<EMAIL or PHONE NUMBER>
+
+        This only supports filtering on one or the other. Email's are validated prior
+        to being applied.
+        """
         if key != "contact":
             return
 
