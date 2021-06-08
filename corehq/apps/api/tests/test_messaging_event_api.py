@@ -195,6 +195,34 @@ class TestMessagingEventResource(APIResourceTest):
         actual = {event["case_id"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {"123"})
 
+    def test_contact_filter(self):
+        user_ids = []
+        for i in range(2):
+            user = CommCareUser.create(
+                self.domain.name, f"user {i}", "123", None, None, email=f"user{i}@email.com"
+            )
+            user_ids.append(user.get_id)
+            self.addCleanup(user.delete, deleted_by=None)
+        make_email_event(self.domain.name, "test broadcast", user_ids)
+        self._create_sms_messages(1, False)
+
+        self._check_contact_filtering("user0@email.com")
+        self._check_contact_filtering("user1@email.com")
+        self._check_contact_filtering("99912345678")
+
+    def test_contact_filter_validation(self):
+        url = f'{self.list_endpoint}?contact=not-an-email'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def _check_contact_filtering(self, contact):
+        url = f'{self.list_endpoint}?contact={contact}'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        print(json.loads(response.content)['objects'])
+        actual = {event["messages"][0]["contact"] for event in json.loads(response.content)['objects']}
+        self.assertEqual(actual, {contact})
+
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)

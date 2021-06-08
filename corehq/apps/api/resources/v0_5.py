@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
@@ -63,7 +64,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_forms,
 )
 from corehq.apps.reports.standard.message_event_display import get_event_display_api, get_sms_status_display_raw
-from corehq.apps.sms.util import strip_plus, get_backend_name
+from corehq.apps.sms.util import strip_plus, get_backend_name, validate_phone_number
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -1234,6 +1235,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             self._get_content_type_filter_consumer(),
             self._status_filter_consumer,
             self._error_code_filter_consumer,
+            self._contact_filter_consumer,
         ]
         orm_filters = {}
         for key, value in list(filters.items()):
@@ -1361,6 +1363,26 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             return
 
         return {"error_code": value}
+
+    def _contact_filter_consumer(self, key, value):
+        if key != "contact":
+            return
+
+        try:
+            validate_email(value)
+        except ValidationError:
+            pass
+        else:
+            return {"contact": Q(email__recipient_address=value)}
+
+        try:
+            validate_phone_number(value)
+        except ValidationError:
+            pass
+        else:
+            return {"contact": Q(sms__phone_number__contains=value)}
+
+        raise InvalidFilterError("Contact filter value must be a valid email address of phone number.")
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.select_related("parent").all()

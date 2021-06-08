@@ -213,9 +213,9 @@ def make_email_event(domain, schedule_name, user_ids, utcnow=None):
         )
         instance.send_current_event_content_to_recipients()
 
-    event = MessagingEvent.objects.get(source_id=broadcast.id)
-    subevent = MessagingSubEvent.objects.get(parent=event)
-    handle_email_messaging_subevent({
-        "eventType": "Delivery",
-        "delivery": {"timestamp": "2021-05-27T07:09:42.318Z"}
-    }, subevent.id)
+    for event in MessagingEvent.objects.filter(source_id=broadcast.id):
+        for subevent in MessagingSubEvent.objects.filter(parent=event):
+            handle_email_messaging_subevent({
+                "eventType": "Delivery",
+                "delivery": {"timestamp": "2021-05-27T07:09:42.318Z"}
+            }, subevent.id)
