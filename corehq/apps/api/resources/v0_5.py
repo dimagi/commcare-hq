@@ -1121,7 +1121,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return {
             "id": parent.source_id,
             "type": MessagingEvent.SOURCE_SLUGS.get(parent.source, 'unknown'),
-            "display": get_event_display_api(parent),
+            "name": get_event_display_api(parent),
         }
 
     def dehydrate_recipient(self, bundle):
@@ -1133,7 +1133,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         return {
             "id": bundle.obj.recipient_id,
             "type": MessagingSubEvent.RECIPIENT_SLUGS.get(bundle.obj.recipient_type, "unknown"),
-            "display": display_value or "unknown",
+            "name": display_value or "unknown",
         }
 
     def dehydrate_form(self, bundle):
