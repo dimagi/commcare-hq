@@ -66,7 +66,7 @@ class DetailContributor(SectionContributor):
                 elements.append(
                     load_xmlobject_from_string(
                         COWIN_APPOINTMENT_DETAIL_XML.format(
-                            detail_id= id_strings.cowin_search_appointment_detail(module),
+                            detail_id=id_strings.cowin_search_appointment_detail(module),
                             module_id=module.id),
                         xmlclass=Detail
                     )
