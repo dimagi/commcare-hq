@@ -1212,12 +1212,13 @@ class MessagingEventResource(HqBaseResource, ModelResource):
     def _get_message_dicts_for_sms(self, event, messages, type_):
         message_dicts = []
         for sms in messages:
+            error_message = None
             if event.status != MessagingEvent.STATUS_ERROR:
-                status, _ = get_sms_status_display_raw(sms)
+                status, error_message = get_sms_status_display_raw(sms)
             else:
                 status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
 
-            message_dicts.append({
+            message_data = {
                 "date": sms.date,
                 "type": type_,
                 "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
@@ -1225,7 +1226,10 @@ class MessagingEventResource(HqBaseResource, ModelResource):
                 "status": status,
                 "backend": get_backend_name(sms.backend_id) or sms.backend_id,
                 "contact": sms.phone_number
-            })
+            }
+            if error_message:
+                message_data["error_message"] = error_message
+            message_dicts.append(message_data)
         return message_dicts
 
     def build_filters(self, filters=None, **kwargs):
