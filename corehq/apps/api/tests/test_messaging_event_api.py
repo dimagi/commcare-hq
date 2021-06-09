@@ -5,8 +5,13 @@ from datetime import datetime
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import MessagingEventResource
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
-from corehq.apps.sms.tests.data_generator import create_fake_sms, make_case_rule_sms, make_survey_sms, \
-    make_email_event, make_events_for_test
+from corehq.apps.sms.tests.data_generator import (
+    create_fake_sms,
+    make_case_rule_sms_for_test,
+    make_survey_sms_for_test,
+    make_email_event_for_test,
+    make_events_for_test
+)
 from corehq.apps.users.models import CommCareUser
 
 
@@ -203,7 +208,7 @@ class TestMessagingEventResource(APIResourceTest):
             )
             user_ids.append(user.get_id)
             self.addCleanup(user.delete, deleted_by=None)
-        make_email_event(self.domain.name, "test broadcast", user_ids)
+        make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
         self._create_sms_messages(1, False)
 
         self._check_contact_filtering("user0@email.com")
@@ -224,7 +229,7 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(actual, {contact})
 
     def test_case_rule(self):
-        rule, event, sms = make_case_rule_sms(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
+        rule, event, sms = make_case_rule_sms_for_test(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)
@@ -269,7 +274,7 @@ class TestMessagingEventResource(APIResourceTest):
             self.assertEqual(expected, result)
 
     def test_survey_sms(self):
-        rule, xforms_session, event, sms = make_survey_sms(
+        rule, xforms_session, event, sms = make_survey_sms_for_test(
             self.domain.name, "test sms survey", datetime(2016, 1, 1, 12, 0)
         )
         self.addCleanup(rule.delete)
@@ -324,7 +329,7 @@ class TestMessagingEventResource(APIResourceTest):
     def test_email(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
         self.addCleanup(user.delete, deleted_by=None)
-        make_email_event(self.domain.name, "test broadcast", [user.get_id])
+        make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
 
         expected = {
             "case_id": None,

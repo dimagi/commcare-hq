@@ -4,16 +4,17 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from corehq.apps.sms.tests.data_generator import make_simple_sms, make_case_rule_sms, make_survey_sms
-from dimagi.utils.dates import DateSpan
-
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.sms import MessageLogReport
-from corehq.apps.sms.models import OUTGOING, SMS, MessagingEvent
-from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.data_generator import (
+    make_simple_sms_for_test,
+    make_case_rule_sms_for_test,
+    make_survey_sms_for_test
+)
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
+from dimagi.utils.dates import DateSpan
 
 
 @flag_enabled('SMS_LOG_CHANGES')
@@ -80,17 +81,17 @@ class MessageLogReportTest(TestCase):
             yield dict(zip(headers, row))
 
     def make_simple_sms(self, message, error_message=None):
-        sms = make_simple_sms(self.domain, message, error_message)
+        sms = make_simple_sms_for_test(self.domain, message, error_message)
         self.addCleanup(sms.delete)
 
     def make_case_rule_sms(self, rule_name):
-        rule, event, sms = make_case_rule_sms(self.domain, rule_name)
+        rule, event, sms = make_case_rule_sms_for_test(self.domain, rule_name)
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)
 
     def make_survey_sms(self, rule_name):
-        rule, xforms_session, event, sms = make_survey_sms(self.domain, rule_name)
+        rule, xforms_session, event, sms = make_survey_sms_for_test(self.domain, rule_name)
         self.addCleanup(rule.delete)
         self.addCleanup(xforms_session.delete)
         self.addCleanup(event.delete)  # cascades to subevent
