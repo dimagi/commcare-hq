@@ -19,9 +19,9 @@ class CaseSearchCriteria(object):
     """Compiles the case search object for the view
     """
 
-    def __init__(self, domain, case_type, criteria):
+    def __init__(self, domain, case_types, criteria):
         self.domain = domain
-        self.case_type = case_type
+        self.case_types = case_types
         self.criteria = criteria
 
         self.config = self._get_config()
@@ -52,7 +52,7 @@ class CaseSearchCriteria(object):
     def _get_initial_search_es(self):
         search_es = (CaseSearchES()
                      .domain(self.domain)
-                     .case_type(self.case_type)
+                     .case_type(self.case_types)
                      .is_closed(False)
                      .size(CASE_SEARCH_MAX_RESULTS)
                      .set_sorting_block(['_score', '_doc']))
@@ -99,21 +99,25 @@ class CaseSearchCriteria(object):
             self.criteria.pop(key)
 
     def _add_case_property_queries(self):
-        try:
-            fuzzies = self.config.fuzzy_properties.get(
-                domain=self.domain, case_type=self.case_type).properties
-        except FuzzyProperties.DoesNotExist:
-            fuzzies = []
+        fuzzies = []
+        for case_type in self.case_types:
+            try:
+                fuzzies += self.config.fuzzy_properties.get(
+                    domain=self.domain, case_type=case_type).properties
+            except FuzzyProperties.DoesNotExist:
+                fuzzies = []
 
         for key, value in self.criteria.items():
             if (key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE)
                     or key.startswith('__range__')):
                 continue
-            remove_char_regexs = self.config.ignore_patterns.filter(
-                domain=self.domain,
-                case_type=self.case_type,
-                case_property=key,
-            )
+            remove_char_regexs = []
+            for case_type in self.case_types:
+                remove_char_regexs += self.config.ignore_patterns.filter(
+                    domain=self.domain,
+                    case_type=case_type,
+                    case_property=key,
+                )
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)

@@ -107,7 +107,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         }
 
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected
         )
 
@@ -298,7 +298,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected,
             validate_query=False
         )

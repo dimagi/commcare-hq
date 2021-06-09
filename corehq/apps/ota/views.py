@@ -104,6 +104,7 @@ def app_aware_search(request, domain, app_id):
     """
     criteria = request.GET.dict()
     try:
+        # could be a list or a single string
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
