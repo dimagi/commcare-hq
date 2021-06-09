@@ -21,11 +21,17 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, UserRole, WebUser, Invitation
+    CommCareUser,
+    DomainPermissionsMirror,
+    Invitation,
+    UserHistory,
+    UserRole,
+    WebUser,
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.model_log import ModelAction
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -528,10 +534,19 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(
             log_entry.change_message,
             f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
-        log_entry = LogEntry.objects.order_by('action_time').last()
+
+        # update
+        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, by_user_id=self.uploading_user.get_id)
         self.assertEqual(
-            log_entry.change_message,
-            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            log_entry.details,
+            {
+                'changes': {
+                    'role': self.role.get_qualified_id()
+                },
+                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
+            }
+        )
+        self.assertEqual(log_entry.message, f"role: {self.role.name}")
 
     def test_blank_is_active(self):
         import_users_and_groups(
