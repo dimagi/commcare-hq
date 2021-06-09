@@ -98,11 +98,11 @@
                   {% endblocktrans %}
                 </p>
               {% else %}
-              <p class="help-block">
-                {% blocktrans with invite_type|lower as invite_type_lower %}
-                  To accept this {{ invite_type_lower }} invitation, you must create an account.
-                {% endblocktrans %}
-              </p>
+                <p class="help-block">
+                  {% blocktrans with invite_type|lower as invite_type_lower %}
+                    To accept this {{ invite_type_lower }} invitation, you must create an account.
+                  {% endblocktrans %}
+                </p>
               {% endif %}
               <form name="form" method="post" action="">
                 {% if is_sso %}
