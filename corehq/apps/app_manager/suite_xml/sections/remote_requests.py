@@ -131,8 +131,13 @@ class RemoteRequestFactory(object):
             long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
-        if self.module.search_config.search_filter and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
-            nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+        if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
+            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+            if additional_types:
+                nodeset = CaseTypeXpath(self.module.case_type).cases(
+                    additional_types, instance_name=RESULTS_INSTANCE)
+            if self.module.search_config.search_filter:
+                nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
             id=self.module.search_config.case_session_var,

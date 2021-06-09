@@ -2211,6 +2211,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    additional_case_types = ListProperty(str)
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
