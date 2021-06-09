@@ -120,11 +120,11 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_mirror_domain_links_for_dropdown
+    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
-    # Mirrored projects aren't in the dropdown, but show a hint they exist
-    show_all_projects_link = bool(get_mirror_domain_links_for_dropdown(request.couch_user))
+    # Enterprise permissions projects aren't in the dropdown, but show a hint they exist
+    show_all_projects_link = bool(get_enterprise_links_for_dropdown(request.couch_user))
 
     # Too many domains and they won't all fit in the dropdown
     dropdown_limit = 20
