@@ -170,6 +170,14 @@ def get_fixed_start_date_for_sql():
         return None
 
 
+def determine_sql_start_date(start_date):
+    fixed_start_date = get_fixed_start_date_for_sql()
+    if fixed_start_date and start_date < fixed_start_date:
+        return fixed_start_date
+    else:
+        return start_date
+
+
 def get_sql_start_date():
     """Get the date of the first SQL auditcare record
 
