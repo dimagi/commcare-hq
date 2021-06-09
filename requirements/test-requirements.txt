@@ -191,10 +191,6 @@ fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
     # via -r base-requirements.in
-flake8-polyfill==1.0.2
-    # via radon
-flake8==3.9.2
-    # via flake8-polyfill
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
@@ -227,7 +223,6 @@ idna==2.10
     #   requests
 importlib-metadata==3.4.0
     # via
-    #   flake8
     #   jsonschema
     #   pep517
 intervaltree==3.1.0
@@ -287,8 +282,6 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
-mccabe==0.6.1
-    # via flake8
 mock==2.0.0
     # via -r base-requirements.in
 nose-exclude==0.5.0
@@ -339,14 +332,10 @@ py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pycco==0.5.1
     # via -r base-requirements.in
-pycodestyle==2.7.0
-    # via flake8
 pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
     # via -r base-requirements.in
-pyflakes==2.3.1
-    # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.8.1
@@ -404,7 +393,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon[flake8]==4.5.0
+radon==5.0.1
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
