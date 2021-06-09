@@ -1259,8 +1259,9 @@ class MessagingEventResource(HqBaseResource, ModelResource):
             self._get_source_filter_consumer(),
             self._get_content_type_filter_consumer(),
             self._status_filter_consumer,
-            self._error_code_filter_consumer,
-            self._contact_filter_consumer,
+            self._get_error_code_filter_consumer(),
+            self._get_email_filter_consumer(),
+            self._get_phone_number_filter_consumer(),
         ]
         orm_filters = {}
         for key, value in list(filters.items()):
@@ -1388,44 +1389,45 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         else:
             raise InvalidFilterError(f"'{value}' is an invalid value for the 'status' filter")
 
-    def _error_code_filter_consumer(self, key, value):
+    def _get_error_code_filter_consumer(self):
         """error_code=<ERROR CODE>
 
         This has to be done here since `error_code` is not a field in the API so Tastypie
         won't allow filtering against it.
         """
-        if key != "error_code":
-            return
+        return self._make_simple_consumer("error_code", "error_code")
 
-        return {"error_code": value}
+    def _get_email_filter_consumer(self):
+        """email_address=<EMAIL>
 
-    def _contact_filter_consumer(self, key, value):
-        """contact=<EMAIL or PHONE NUMBER>
-
-        This only supports filtering on one or the other. Email's are validated prior
-        to being applied.
+        Values are validated prior to being applied.
         """
-        if key != "contact":
-            return
+        return self._make_simple_consumer(
+            "email_address", "email__recipient_address", validate_email
+        )
 
-        # '+' in URL get's converted to a space unless properly encoded
-        value = value.strip()
+    def _get_phone_number_filter_consumer(self):
+        """phone_number=<PHONE NUMBER>"""
+        return self._make_simple_consumer(
+            "phone_number", "sms__phone_number__contains", validate_phone_number
+        )
 
-        try:
-            validate_email(value)
-        except ValidationError:
-            pass
-        else:
-            return {"contact": Q(email__recipient_address=value)}
+    @staticmethod
+    def _make_simple_consumer(filter_key, model_filter_arg, validator=None):
+        def _consumer(key, value):
+            if key != filter_key:
+                return
 
-        try:
-            validate_phone_number(value)
-        except ValidationError:
-            pass
-        else:
-            return {"contact": Q(sms__phone_number__contains=value)}
+            value = value.strip()
 
-        raise InvalidFilterError("Contact filter value must be a valid email address or phone number.")
+            if validator:
+                try:
+                    validator(value)
+                except ValidationError:
+                    raise InvalidFilterError(f"'{value}' is invalid value for the '{filter_key}' filter")
+
+            return {model_filter_arg: value}
+        return _consumer
 
     class Meta(object):
         queryset = MessagingSubEvent.objects.select_related("parent").all()

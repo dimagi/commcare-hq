@@ -213,22 +213,27 @@ class TestMessagingEventResource(APIResourceTest):
         make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
         self._create_sms_messages(1, False)
 
-        self._check_contact_filtering("user0@email.com")
-        self._check_contact_filtering("user1@email.com")
-        self._check_contact_filtering("+99912345678")
+        self._check_contact_filtering("email_address", "user0@email.com")
+        self._check_contact_filtering("email_address", "user1@email.com")
+        self._check_contact_filtering("phone_number", "+99912345678")
 
-    def test_contact_filter_validation(self):
-        url = f'{self.list_endpoint}?contact=not-an-email'
+    def test_email_filter_validation(self):
+        url = f'{self.list_endpoint}?email_address=not-an-email'
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 400, response.content)
 
-    def _check_contact_filtering(self, contact):
-        query = urlencode({"contact": contact.encode("utf8")})
+    def test_phone_number_filter_validation(self):
+        url = f'{self.list_endpoint}?phone_number=not-an-phone-number'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def _check_contact_filtering(self, key, value):
+        query = urlencode({key: value.encode("utf8")})
         url = f'{self.list_endpoint}?{query}'
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         actual = {event["messages"][0]["contact"] for event in json.loads(response.content)['objects']}
-        self.assertEqual(actual, {contact})
+        self.assertEqual(actual, {value})
 
     def test_case_rule(self):
         rule, event, sms = make_case_rule_sms_for_test(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
