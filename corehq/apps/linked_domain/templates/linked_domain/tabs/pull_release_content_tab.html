@@ -2,7 +2,7 @@
 {% load i18n %}
 
 <div id="ko-tabs-pull-content" class="ko-template">
-  <div data-bind="if: upstreamDomain">
+  <div data-bind="if: upstreamLink">
     <p>
       {% blocktrans %}
         This project is linked to the upstream project <a data-bind="attr: {'href': upstreamURL}, text: upstreamDomain"></a>.<br/>

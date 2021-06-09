@@ -58,15 +58,6 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
-        self.domain = data.domain;
-        self.master_link = data.master_link;
-        if (self.master_link) {
-            if (self.master_link.is_remote) {
-                self.master_href = self.master_link.master_domain;
-            } else {
-                self.master_href = initialPageData.reverse('domain_links', self.master_link.master_domain);
-            }
-        }
 
         // setup add downstream domain modal view model
         var addDownstreamDomainData = {
@@ -80,12 +71,12 @@ hqDefine("linked_domain/js/domain_links", [
             parent: self,
             linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
             canUpdate: data.can_update,
-            upstreamDomain: self.master_link ? self.master_link.master_domain : null,
-            upstreamURL: self.master_link ? self.master_href : null
+            upstreamLink: data.master_link
         };
         self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
 
         // General data
+        self.domain = data.domain;
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
 
         // Manage Downstream Domains Tab
@@ -182,8 +173,15 @@ hqDefine("linked_domain/js/domain_links", [
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;
         self.can_update = data.canUpdate;
-        self.upstreamDomain = data.upstreamDomain;
-        self.upstreamURL = data.upstreamURL;
+        self.upstreamLink = data.upstreamLink;
+        if (self.upstreamLink) {
+            if (self.upstreamLink.is_remote) {
+                self.upstreamURL = self.upstreamLink.master_domain;
+            } else {
+                self.upstreamURL = initialPageData.reverse('domain_links', self.upstreamLink.master_domain);
+            }
+        }
+        self.upstreamDomain = self.upstreamLink ? self.upstreamLink.master_domain : null;
 
         // search box
         self.query = ko.observable();
