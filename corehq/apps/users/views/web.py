@@ -14,6 +14,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 
@@ -132,6 +133,11 @@ class UserInvitationView(object):
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
+
+                    if idp:
+                        signup_request = AsyncSignupRequest.create_from_invitation(invitation)
+                        return HttpResponseRedirect(idp.get_login_url(signup_request.username))
+
                     user = activate_new_user_via_reg_form(
                         form,
                         created_by=invited_by_user,
