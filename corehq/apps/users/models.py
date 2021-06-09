@@ -1604,7 +1604,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, domain, created_by, created_via):
+    def log_user_create(self, domain, created_by, created_via, can_skip_domain=False):
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
@@ -1614,7 +1614,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self,
             created_by,
             changed_via=created_via,
-            action=ModelAction.CREATE
+            action=ModelAction.CREATE,
+            can_skip_domain=can_skip_domain,
         )
 
 
@@ -2372,13 +2373,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, **kwargs):
+               metadata=None, can_skip_domain=False, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(domain, created_by, created_via)
+        web_user.log_user_create(domain, created_by, created_via, can_skip_domain=can_skip_domain)
         return web_user
 
     def is_commcare_user(self):
