@@ -90,8 +90,8 @@
                 {% blocktrans %}Create Account{% endblocktrans %}
               </h2>
               <div class="help-block">
-                {% blocktrans %}
-                  To accept this {{ invite_type|lower }} invitation, you must create an account.
+                {% blocktrans with invite_type|lower as invite_type_lower %}
+                  To accept this {{ invite_type_lower }} invitation, you must create an account.
                 {% endblocktrans %}
               </div>
               <form name="form" method="post" action="">
