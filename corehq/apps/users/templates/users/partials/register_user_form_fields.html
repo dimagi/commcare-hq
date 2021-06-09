@@ -10,14 +10,14 @@
       <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
       <div id="div_id_{{ field.name }}">
         {{ field }}
-        {% for error in field.errors %}
-          <p class="help-block">{{ error }}</p>
-        {% endfor %}
         {% if field.help_text %}
           <p class="help-block">
             {{ field.help_text }}
           </p>
         {% endif %}
+        {% for error in field.errors %}
+          <p class="help-block">{{ error }}</p>
+        {% endfor %}
       </div>
     </div>
   {% endfor %}
