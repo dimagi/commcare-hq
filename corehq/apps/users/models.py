@@ -77,6 +77,7 @@ from corehq.apps.users.tasks import (
 )
 from corehq.apps.users.util import (
     filter_by_app,
+    log_user_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
@@ -1603,18 +1604,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, created_by, created_via):
+    def log_user_create(self, domain, created_by, created_via):
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
-        self_django_user = self.get_django_user(use_primary_db=True)
-        created_by = created_by or self_django_user
-        if isinstance(created_by, CouchUser):
-            created_by = created_by.get_django_user()
-        log_model_change(
+        created_by = created_by or self
+        log_user_change(
+            domain,
+            self,
             created_by,
-            self_django_user,
-            message=f"created_via: {created_via}",
+            changed_via=created_via,
             action=ModelAction.CREATE
         )
 
@@ -1789,7 +1788,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-            commcare_user.log_user_create(created_by, created_via)
+            commcare_user.log_user_create(domain, created_by, created_via)
         return commcare_user
 
     @property
@@ -2379,7 +2378,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(created_by, created_via)
+        web_user.log_user_create(domain, created_by, created_via)
         return web_user
 
     def is_commcare_user(self):
