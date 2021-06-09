@@ -3041,3 +3041,26 @@ class HQApiKey(models.Model):
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None
+
+
+class UserHistory(models.Model):
+    """
+    HQ Adaptation of Django's LogEntry model
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255, null=True)
+    user_type = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=128)
+    by_user_id = models.CharField(max_length=128)
+    details = JSONField(default=dict)
+    message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)

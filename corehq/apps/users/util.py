@@ -18,7 +18,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.util.model_log import log_model_change
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 
@@ -35,6 +35,10 @@ WEIRD_USER_IDS = [
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
     CALLCENTER_USER
+]
+USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
+    '_id', '_rev', 'reporting_metadata', 'password',
+    'devices', 'last_device', 'device_ids'
 ]
 
 
@@ -327,3 +331,51 @@ def log_user_role_update(domain, user, by_user, updated_via):
             message = f"role: {user_role.name}[{user_role.get_id}]"
     message += f", updated_via: {updated_via}"
     log_model_change(by_user, user.get_django_user(), message=message)
+
+
+def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
+                    message=None, fields_changed=None, action=ModelAction.UPDATE):
+    """
+    Log changes done to a user.
+    For a new user or a deleted user, log only specific fields.
+
+    :param domain: domain where the update was initiated
+    :param couch_user: user being changed
+    :param changed_by_user: user making the change
+    :param changed_via: changed via medium i.e API/Web
+    :param message: Optional Message text
+    :param fields_changed: dict of user fields that have changed with their current value
+    :param action: action on the user
+    """
+    from corehq.apps.users.models import UserHistory
+
+    # domain is essential to filter changes done in a domain
+    if not domain:
+        raise ValueError("Please pass domain")
+
+    # for an update, there should always be fields that have changed
+    if action == ModelAction.UPDATE and not fields_changed:
+        raise ValueError("'fields_changed' is required for update.")
+
+    return UserHistory.objects.create(
+        domain=domain,
+        user_type=couch_user.doc_type,
+        user_id=couch_user.get_id,
+        by_user_id=changed_by_user.get_id,
+        details={
+            'changes': _get_changed_details(couch_user, action, fields_changed),
+            'changed_via': changed_via,
+        },
+        message=message,
+        action=action.value,
+    )
+
+
+def _get_changed_details(couch_user, action, fields_changed):
+    if action in [ModelAction.CREATE, ModelAction.DELETE]:
+        user_json = couch_user.to_json()
+        for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
+            user_json.pop(prop, None)
+        return user_json
+    else:
+        return fields_changed
