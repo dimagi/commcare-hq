@@ -78,4 +78,5 @@ branches:
     - sk/messaging-event-api  # Simon June 7
     - smh/multi-domain-user-upload-update  # Steph June 7
     - bmb/sso-invitation-new  # Biyeun June 9
+    - jm/remove-es7  # Joel June 9
 submodules: { }
