@@ -350,7 +350,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
                                                                                 allow_admin_role=True)}
         validators = get_user_import_validators(
-            Domain.get_by_name(domain),
+            domain_obj,
             domain_user_specs,
             True,
             allowed_roles=list(roles_by_name),
