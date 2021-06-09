@@ -6,7 +6,7 @@ is set up and you've started working on a significant code change.
 ## General Advice
 
 - Use the developers section of the [Dimagi Forum](https://forum.dimagi.com/) for help with issues.
-- Some features are limited to specific software plans. Visit Project Settings > Internal Subscription Management
+- Some features are limited to specific software plans. Use the `make_domain_enterprise_level` command
 to mark your local project as a test project and grant access to all features.
 
 ## Common Problems
