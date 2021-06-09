@@ -73,6 +73,31 @@ class TestNavigationEventsQueries(AuditcareTest):
                 session_key='abc123',
                 user_agent='Mozilla/5.0',
             ),
+            save_couch_doc(
+                "NavigationEventAudit",
+                cls.username,
+                event_date=event_date,
+                description='User Name',
+                extra={},
+                headers={
+                    'REQUEST_METHOD': 'GET',
+                    'QUERY_STRING': 'version=2.0&since=...',
+                    'HTTP_CONNECTION': 'close',
+                    'HTTP_COOKIE': 'sessionid=abc123',
+                    'SERVER_NAME': '0.0.0.0',
+                    'SERVER_PORT': '9010',
+                    'HTTP_ACCEPT': 'application/json, application/*+json, */*',
+                    'REMOTE_ADDR': '10.2.10.60',
+                    'HTTP_ACCEPT_ENCODING': 'gzip'
+                },
+                ip_address='10.1.2.3',
+                request_path='/a/delmar/phone/restore/?version=2.0&since=...',
+                session_key='abc123',
+                status_code=200,
+                user_agent='okhttp/4.4.1',
+                view_kwargs={'domain': 'delmar'},
+                view='corehq.apps.ota.views.restore',
+            )
         ]
 
         def iter_events(model, username, **kw):
@@ -108,6 +133,17 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual({e.user for e in events}, {self.username})
         self.assertEqual({e.event_date for e in events}, set(self.event_dates[4:15]))
         self.assertEqual(len(events), 11)
+
+    @patch('corehq.apps.auditcare.utils.export.get_fixed_start_date_for_sql', return_value=datetime(2021, 2, 3))
+    def test_navigation_events_querying_couch_and_sql(self, mock):
+        couch_event_date = datetime(2021, 2, 1, 2)
+        start = datetime(2021, 1, 31)
+        end = datetime(2021, 2, 5)
+        events = list(navigation_events_by_user(self.username, start, end))
+        self.assertEqual({e.user for e in events}, {self.username})
+        expected_event_dates = set(self.event_dates[2:5] + [couch_event_date])
+        self.assertEqual({e.event_date for e in events}, expected_event_dates)
+        self.assertEqual(len(events), 4)
 
     def test_recent_all_log_events_query(self):
         start = datetime(2021, 2, 4)
