@@ -426,7 +426,9 @@ class WebUserInvitationForm(BaseUserInvitationForm):
             # sync django user
             duplicate.save()
         if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
+            raise forms.ValidationError(_(
+                'Username already taken. Please try another or log in.'
+            ))
         return data
 
 
