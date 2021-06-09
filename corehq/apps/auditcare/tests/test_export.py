@@ -123,8 +123,9 @@ class TestNavigationEventsQueries(AuditcareTest):
     def test_navigation_events_query(self):
         events = list(navigation_events_by_user(self.username))
         self.assertEqual({e.user for e in events}, {self.username})
-        self.assertEqual([e.event_date for e in events], self.event_dates)
-        self.assertEqual(len(events), 28)
+        expected_dates = [datetime(2021, 2, 1, 2, 0)] + self.event_dates
+        self.assertEqual([e.event_date for e in events], expected_dates)
+        self.assertEqual(len(events), 29)
 
     def test_navigation_events_date_range_query(self):
         start = datetime(2021, 2, 5)
@@ -169,7 +170,7 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual({e.user for e in events}, {self.username, "other@test.com", "couch@test.com"})
         self.assertEqual({e.doc_type for e in events}, {"AccessAudit", "NavigationEventAudit"})
         self.assertEqual({e.event_date for e in events}, {datetime(2021, 2, 1, 2), datetime(2021, 2, 1, 3)})
-        self.assertEqual(len(events), 6)
+        self.assertEqual(len(events), 7)
 
     def test_write_export_from_all_log_events(self):
         def unpack(row):
@@ -185,7 +186,7 @@ class TestNavigationEventsQueries(AuditcareTest):
                     return row["Date"], row["Type"]
                 rows = DictReader(fh)
                 items = sorted([unpack(r) for r in rows], key=key)
-                self.assertEqual(items, [
+                expected_items = [
                     {
                         'Date': '2021-02-01 02:00:00',
                         'Type': 'AccessAudit',
@@ -197,6 +198,12 @@ class TestNavigationEventsQueries(AuditcareTest):
                         'Type': 'NavigationEventAudit',
                         'User': 'couch@test.com',
                         'Description': 'User Name',
+                    },
+                    {
+                        'Date': '2021-02-01 02:00:00',
+                        'Type': 'NavigationEventAudit',
+                        'User': 'test@test.com',
+                        'Description': 'User Name'
                     },
                     {
                         'Date': '2021-02-01 03:00:00',
@@ -222,7 +229,8 @@ class TestNavigationEventsQueries(AuditcareTest):
                         'User': 'test@test.com',
                         'Description': 'test@test.com',
                     },
-                ])
+                ]
+                self.assertEqual(items, expected_items)
 
     def test_query_window_size(self):
         # NOTE small window size ensures multiple queries per event date
@@ -231,7 +239,7 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual(len(events), 100)
 
     def test_related_query_error(self):
-        event = next(iter(navigation_events_by_user(self.username)))
+        event = next(iter(navigation_events_by_user('other@test.com')))
         keys = get_foreign_names(NavigationEventAudit)
         self.assertIn("user_agent", keys)
         self.assertIn("user_agent_fk", keys)
