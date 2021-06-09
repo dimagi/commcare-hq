@@ -1408,6 +1408,9 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         if key != "contact":
             return
 
+        # '+' in URL get's converted to a space unless properly encoded
+        value = value.strip()
+
         try:
             validate_email(value)
         except ValidationError:

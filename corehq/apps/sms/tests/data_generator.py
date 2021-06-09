@@ -40,7 +40,8 @@ def make_events_for_test(
         source=MessagingEvent.SOURCE_OTHER,
         status=MessagingEvent.STATUS_COMPLETED,
         content_type=MessagingEvent.CONTENT_SMS,
-        recipient_type=MessagingEvent.RECIPIENT_CASE):
+        recipient_type=MessagingEvent.RECIPIENT_CASE,
+        **sms_kwargs):
     event = MessagingEvent.objects.create(
         domain=domain,
         date=message_date,
@@ -71,7 +72,7 @@ def make_events_for_test(
         error_code=None,
         additional_error_text=None
     )
-    sms, sms_dict = _make_sms(domain, message_date, subevent)
+    sms, sms_dict = _make_sms(domain, message_date, subevent, **sms_kwargs)
     return SmsAndDict(sms=sms, sms_dict=sms_dict)
 
 

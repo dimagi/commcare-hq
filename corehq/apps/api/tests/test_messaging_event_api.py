@@ -1,6 +1,7 @@
 import json
 import urllib.parse
 from datetime import datetime
+from urllib.parse import urlencode
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.api.resources.v0_5 import MessagingEventResource
@@ -209,11 +210,12 @@ class TestMessagingEventResource(APIResourceTest):
             user_ids.append(user.get_id)
             self.addCleanup(user.delete, deleted_by=None)
         make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
+        make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
         self._create_sms_messages(1, False)
 
         self._check_contact_filtering("user0@email.com")
         self._check_contact_filtering("user1@email.com")
-        self._check_contact_filtering("99912345678")
+        self._check_contact_filtering("+99912345678")
 
     def test_contact_filter_validation(self):
         url = f'{self.list_endpoint}?contact=not-an-email'
@@ -221,10 +223,10 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(response.status_code, 400, response.content)
 
     def _check_contact_filtering(self, contact):
-        url = f'{self.list_endpoint}?contact={contact}'
+        query = urlencode({"contact": contact.encode("utf8")})
+        url = f'{self.list_endpoint}?{query}'
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
-        print(json.loads(response.content)['objects'])
         actual = {event["messages"][0]["contact"] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {contact})
 
