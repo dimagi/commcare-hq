@@ -77,4 +77,5 @@ branches:
     - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
     - sk/messaging-event-api  # Simon June 7
     - smh/multi-domain-user-upload-update  # Steph June 7
+    - bmb/sso-invitation-new  # Biyeun June 9
 submodules: { }
