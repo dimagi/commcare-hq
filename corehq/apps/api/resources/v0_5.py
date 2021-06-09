@@ -1119,7 +1119,7 @@ class MessagingEventResource(HqBaseResource, ModelResource):
         """
         event = bundle.obj
         if event.status == MessagingEvent.STATUS_COMPLETED and event.xforms_session_id:
-            return event.xforms_session.status_api
+            return event.xforms_session.status_slug
         return MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown')
 
     def dehydrate_content_type(self, bundle):
