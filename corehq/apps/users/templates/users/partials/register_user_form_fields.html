@@ -4,7 +4,7 @@
     {{ global_error }}
   </div>
 {% endfor %}
-<fieldset class="check-password">
+<fieldset {% if not is_sso %}class="check-password"{% endif %}>
   {% for field in form %}
     {% if field.is_hidden %}
       {{ field }}
