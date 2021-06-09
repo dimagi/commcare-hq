@@ -7,7 +7,9 @@
 <fieldset class="check-password">
   {% for field in form %}
     <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
-      <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+      {% if field.label %}
+        <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+      {% endif %}
       <div id="div_id_{{ field.name }}">
         {{ field }}
         {% if field.help_text %}
