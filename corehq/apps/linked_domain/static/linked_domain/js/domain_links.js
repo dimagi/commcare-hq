@@ -62,7 +62,7 @@ hqDefine("linked_domain/js/domain_links", [
         // setup add downstream domain modal view model
         var addDownstreamDomainData = {
             parent: self,
-            availableDomains: data.available_domains
+            availableDomains: data.available_domains,
         };
         self.addDownstreamDomainViewModel = AddDownstreamDomainViewModel(addDownstreamDomainData);
 
@@ -71,7 +71,7 @@ hqDefine("linked_domain/js/domain_links", [
             parent: self,
             linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
             canUpdate: data.can_update,
-            upstreamLink: data.master_link
+            upstreamLink: data.master_link,
         };
         self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
 
