@@ -97,7 +97,7 @@ when no other migration command is currently running on the domain.
   SQL version. Diffs are put in this category if they are a result of a known
   difference between the Couch and SQL form processors.
 
-### Migrating domains
+## Migrating domains
 
 One or more domains can be migrated (serially) with a single command.
 
