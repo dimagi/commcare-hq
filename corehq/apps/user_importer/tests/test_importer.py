@@ -1,17 +1,17 @@
 from copy import deepcopy
-from django.contrib.admin.models import LogEntry
 
+from django.contrib.admin.models import LogEntry
 from django.test import TestCase
 
-from mock import patch, mock
+from mock import mock, patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
@@ -21,7 +21,12 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, UserRole, WebUser, Invitation, UserHistory
+    CommCareUser,
+    DomainPermissionsMirror,
+    Invitation,
+    UserHistory,
+    UserRole,
+    WebUser,
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
