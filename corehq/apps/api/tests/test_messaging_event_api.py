@@ -3,7 +3,6 @@ import urllib.parse
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-from django.http import QueryDict
 from django.urls import reverse
 
 from corehq.apps.api.tests.utils import APIResourceTest

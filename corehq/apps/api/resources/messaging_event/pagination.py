@@ -39,7 +39,7 @@ def _get_objects(query, request_params, limit):
                 logger.debug(f"Skipping first object in API response: {last_id}")
                 return objects[1:]  # remove the first object since it was in the last page
 
-        logger.debug(f"Dropping last object in API response to keep page size consistent")
+        logger.debug("Dropping last object in API response to keep page size consistent")
         return objects[:-1]
 
     logger.debug("no cursor, returning normal page")
