@@ -89,11 +89,11 @@
               <h2>
                 {% blocktrans %}Create Account{% endblocktrans %}
               </h2>
-              <div class="help-block">
+              <p class="help-block">
                 {% blocktrans with invite_type|lower as invite_type_lower %}
                   To accept this {{ invite_type_lower }} invitation, you must create an account.
                 {% endblocktrans %}
-              </div>
+              </p>
               <form name="form" method="post" action="">
                 {% include 'users/partials/register_user_form_fields.html' %}
                 <div class="form-bubble-actions">
