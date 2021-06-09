@@ -115,7 +115,7 @@ def _get_keyword_display_raw(keyword_id):
         EditNormalKeywordView,
     )
     try:
-        keyword = Keyword.objects.filter(couch_id=keyword_id)
+        keyword = Keyword.objects.get(couch_id=keyword_id)
     except Keyword.DoesNotExist:
         return None, None
 
