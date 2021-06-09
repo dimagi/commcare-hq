@@ -22,6 +22,7 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -39,7 +40,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, UserRole
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
@@ -1211,10 +1212,10 @@ class UserFilterForm(forms.Form):
             (role._id, role.name or _('(No Name)')) for role in roles
         ]
 
+        subdomains = BillingAccount.get_enterprise_permissions_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
-                                         [(domain, domain) for domain in
-                                          DomainPermissionsMirror.mirror_domains(self.domain)]
+                                         [(domain, domain) for domain in subdomains]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1227,7 +1228,7 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = []
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+        if subdomains:
             fields += [crispy.Field("domains", data_bind="value: domains")]
         fields += [
             crispy.Div(
@@ -1287,34 +1288,6 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains = BillingAccount.get_enterprise_permissions_domains(self.domain)
             domains += [self.domain]
-        return domains
-
-
-class CreateDomainPermissionsMirrorForm(forms.Form):
-    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        self.mirror_domain = None
-        super().__init__(*args, **kwargs)
-
-    def clean_mirror_domain(self):
-        mirror_domain_name = self.data.get('mirror_domain')
-        if self.domain == mirror_domain_name:
-            raise forms.ValidationError(_("""
-                Enterprise permissions cannot be granted from a project space to itself.
-            """))
-        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if not self.mirror_domain:
-            raise forms.ValidationError(_('Please enter valid project space.'))
-        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
-            message = _('"{mirror_domain_name}" has already been added.')
-            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
-        return mirror_domain_name
-
-    def save_mirror_domain(self):
-        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
-        mirror.save()
+        return sorted(domains)
