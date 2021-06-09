@@ -29,28 +29,27 @@ class SessionEndpointContributor(SuiteContributorByModule):
     def get_module_contributions(self, module) -> List[SessionEndpoint]:
         endpoints = []
         if module.session_endpoint_id:
-            endpoints.append(self._get_module_endpoint(module))
+            endpoints.append(self._make_session_endpoint(module))
         for form in module.get_suite_forms():
             if form.session_endpoint_id:
-                endpoints.append(self._get_form_endpoint(form, module))
+                endpoints.append(self._make_session_endpoint(module, form))
         return endpoints
 
-    def _get_module_endpoint(self, module):
-        id_string = id_strings.case_list_command(module)
-        return self._make_session_endpoint(id_string, module, module.session_endpoint_id)
+    def _make_session_endpoint(self, module, form=None):
+        if form is not None:
+            endpoint_id = form.session_endpoint_id
+            id_string = id_strings.form_command(form)
+        else:
+            endpoint_id = module.session_endpoint_id
+            id_string = id_strings.case_list_command(module)
 
-    def _get_form_endpoint(self, form, module):
-        id_string = id_strings.form_command(form)
-        return self._make_session_endpoint(id_string, module, form.session_endpoint_id)
-
-    def _make_session_endpoint(self, id_string, module, endpoint_id):
         stack = Stack()
         frame = PushFrame()
         stack.add_frame(frame)
         frame.add_command(XPath.string(id_string))
         arguments = []
         helper = WorkflowHelper(self.suite, self.app, self.modules)
-        for child in helper.get_frame_children(id_string, module):
+        for child in helper.get_frame_children(module, form):
             if isinstance(child, WorkflowDatumMeta):
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(

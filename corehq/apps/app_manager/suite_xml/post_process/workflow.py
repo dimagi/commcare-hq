@@ -67,10 +67,10 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
-    def get_frame_children(self, command, module, module_only=False, include_root_module=False):
+    def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form return the list of stack frame children that are required
-        to navigate to that form.
+        to navigate to that form; a mix of commands and datum declarations.
 
         Given command may be a form (mX-fY) or case list menu item (mX-case-list).
 
@@ -95,14 +95,8 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        match = re.search(r'^(m\d+)-(.*)', command)
-        if not match:
-            raise Exception("Unrecognized command: {}".format(command))
-        module_id = match.group(1)
-        form_id = match.group(2)
         module_command = id_strings.menu_id(module)
-        module_datums = self.get_module_datums(module_id)
-        form_datums = module_datums[form_id]
+        module_datums = self.get_module_datums(f'm{module.id}')
 
         frame_children = []
         if module_command == id_strings.ROOT:
@@ -118,12 +112,12 @@ class WorkflowHelper(PostProcessor):
             frame_children.append(CommandId(module_command))
 
         common_datums = commonprefix(datums_list)
-        remaining_datums = form_datums[len(common_datums):]
-
         frame_children.extend(common_datums)
 
-        if not module_only:
-            frame_children.append(CommandId(command))
+        if form:
+            frame_children.append(CommandId(id_strings.form_command(form)))
+            form_datums = module_datums[f'f{form.id}']
+            remaining_datums = form_datums[len(common_datums):]
             frame_children.extend(remaining_datums)
 
         return frame_children
@@ -158,7 +152,7 @@ class WorkflowHelper(PostProcessor):
 
         for e in filter(_include_datums, self.suite.entries):
             command = e.command.id
-            module_id, form_id = command.split('-', 1)
+            module_id, form_id = command.split('-', maxsplit=1)
             entries[command] = e
             if not e.datums:
                 datums[module_id][form_id] = []
@@ -174,7 +168,7 @@ class WorkflowHelper(PostProcessor):
 
     @memoized
     def _form_datums(self, module_id, form_id):
-        module_id = module_id[1:]  # string 'm'
+        module_id = module_id[1:]  # strip 'm'
         form_id = form_id[1:]  # strip 'f'
         module = self.app.get_module(module_id)
         if module.module_type == 'shadow':
@@ -299,8 +293,7 @@ class EndOfFormNavigationWorkflow(object):
             frame_children = self._frame_children_for_module(root_module)
             return StackFrameMeta(xpath, frame_children)
         elif form_workflow == WORKFLOW_PREVIOUS:
-            frame_children = self.helper.get_frame_children(id_strings.form_command(form),
-                                                            module, include_root_module=True)
+            frame_children = self.helper.get_frame_children(module, form, include_root_module=True)
 
             # since we want to go the 'previous' screen we need to drop the last
             # datum
@@ -318,8 +311,7 @@ class EndOfFormNavigationWorkflow(object):
             frame_children.extend(self._frame_children_for_module(module.root_module))
 
         if include_user_selections:
-            command = self._get_first_command(module)
-            this_module_children = self.helper.get_frame_children(command, module, module_only=True)
+            this_module_children = self.helper.get_frame_children(module)
             for child in this_module_children:
                 if child not in frame_children:
                     frame_children.append(child)
@@ -330,25 +322,18 @@ class EndOfFormNavigationWorkflow(object):
 
         return frame_children
 
-    def _get_first_command(self, module):
-        if module.module_type == "shadow":
-            module = module.source_module
-        return id_strings.form_command(module.get_form(0))
-
     def _get_link_frame(self, link, form, module):
         source_form_datums = self.helper.get_form_datums(form)
         target_form = self.helper.app.get_form(link.form_id)
         target_module = target_form.get_module()
-        target_frame_children = self.helper.get_frame_children(id_strings.form_command(target_form),
-                                                               target_module)
+        target_frame_children = self.helper.get_frame_children(target_module, target_form)
         if link.datums:
             frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
         else:
             frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
 
         if target_module in module.get_child_modules():
-            parent_frame_children = self.helper.get_frame_children(
-                self._get_first_command(module), module, module_only=True)
+            parent_frame_children = self.helper.get_frame_children(module)
 
             # exclude frame children from the child module if they are already
             # supplied by the parent module
@@ -435,14 +420,9 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datums from the source form.
         """
         ids_on_stack = stack_frames.ids_on_stack
-        command = None
-        if len(target_module.forms):
-            command = id_strings.form_command(target_module.get_form(0))
-        elif target_module.case_list and target_module.case_list.show:
-            command = id_strings.case_list_command(target_module)
 
-        if command:
-            target_frame_children = self.helper.get_frame_children(command, target_module, module_only=True)
+        if target_module.forms or (target_module.case_list and target_module.case_list.show):
+            target_frame_children = self.helper.get_frame_children(target_module)
             remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
             frame_children = _get_datums_matched_to_source(
                 remaining_target_frame_children, source_form_datums
