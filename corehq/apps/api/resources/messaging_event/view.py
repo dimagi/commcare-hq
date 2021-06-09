@@ -76,5 +76,3 @@ def _get_response_data(query, request_data):
             "next": f"?{meta_next}" if meta_next else None
         }
     }
-
-
