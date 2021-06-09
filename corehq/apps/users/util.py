@@ -4,6 +4,7 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -16,12 +17,10 @@ from casexml.apps.case.const import (
     UNOWNED_EXTENSION_OWNER_ID,
 )
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.quickcache import quickcache
-from django.core.exceptions import ValidationError
-
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
