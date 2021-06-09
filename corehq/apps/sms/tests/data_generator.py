@@ -122,6 +122,7 @@ def _make_sms(domain, message_date, subevent, **kwargs):
     ), sms_dict
 
 
+@nottest
 def make_simple_sms_for_test(domain, message, error_message=None, **kwargs):
     return SMS.objects.create(
         domain=domain,
@@ -134,6 +135,7 @@ def make_simple_sms_for_test(domain, message, error_message=None, **kwargs):
     )
 
 
+@nottest
 def make_case_rule_sms_for_test(domain, rule_name, utcnow=None):
     rule = AutomaticUpdateRule.objects.create(domain=domain, name=rule_name)
     message_date = utcnow or datetime.utcnow()
@@ -155,6 +157,7 @@ def make_case_rule_sms_for_test(domain, rule_name, utcnow=None):
     return rule, subevent, sms
 
 
+@nottest
 def make_survey_sms_for_test(domain, rule_name, utcnow=None):
     # It appears that in production, many SMSs don't have a direct link to the
     # triggering event - the connection is roundabout via the xforms_session
@@ -191,6 +194,7 @@ def make_survey_sms_for_test(domain, rule_name, utcnow=None):
     return rule, xforms_session, event, sms
 
 
+@nottest
 def make_email_event_for_test(domain, schedule_name, user_ids, utcnow=None):
     content = EmailContent(
         subject={'*': 'New messaging API goes live!'},
