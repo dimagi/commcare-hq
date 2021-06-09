@@ -6,6 +6,9 @@
 {% endfor %}
 <fieldset class="check-password">
   {% for field in form %}
+    {% if field.is_hidden %}
+      {{ field }}
+    {% else %}
     <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
       {% if field.label %}
         <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
@@ -22,5 +25,6 @@
         {% endfor %}
       </div>
     </div>
+    {% endif %}
   {% endfor %}
 </fieldset>
