@@ -17,7 +17,7 @@ hqDefine("linked_domain/js/domain_links", [
     var _private = {};
     _private.RMI = function () {};
 
-    var ModelStatus = function (data) {
+    var LinkedDataViewModel = function (data) {
         var self = {};
         self.type = data.type;
         self.name = data.name;
@@ -58,7 +58,6 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
-        self.addDownstreamDomainModal = AddDownstreamDomainModal(self, data.available_domains);
         self.domain = data.domain;
         self.master_link = data.master_link;
         if (self.master_link) {
@@ -69,13 +68,25 @@ hqDefine("linked_domain/js/domain_links", [
             }
         }
 
+        // setup add downstream domain modal view model
+        var addDownstreamDomainData = {
+            parent: self,
+            availableDomains: data.available_domains
+        };
+        self.addDownstreamDomainViewModel = AddDownstreamDomainViewModel(addDownstreamDomainData);
+
+        // setup pull release content view model
+        var pullReleaseContentData = {
+            parent: self,
+            linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
+            canUpdate: data.can_update,
+            upstreamDomain: self.master_link ? self.master_link.master_domain : null,
+            upstreamURL: self.master_link ? self.master_href : null
+        };
+        self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
+
         // General data
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
-
-        // Pull Content Tab
-        self.model_status = _.map(data.model_status, ModelStatus);
-        self.can_update = data.can_update;
-        self.models = data.models;
 
         // Manage Downstream Domains Tab
         // search box
@@ -114,9 +125,9 @@ hqDefine("linked_domain/js/domain_links", [
                 "linked_domain": link.linked_domain(),
             }).done(function () {
                 self.domain_links.remove(link);
-                var availableDomains = self.addDownstreamDomainModal.availableDomains();
+                var availableDomains = self.addDownstreamDomainViewModel.availableDomains();
                 availableDomains.push(link.linked_domain());
-                self.addDownstreamDomainModal.availableDomains(availableDomains.sort());
+                self.addDownstreamDomainViewModel.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
@@ -166,10 +177,52 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
-    var AddDownstreamDomainModal = function (manageDomainsViewModel, availableDomains) {
+    var PullReleaseContentViewModel = function (data) {
+        // Pull Content Tab
+        self.parent = data.parent;
+        self.linkedDataViewModels = data.linkedDataViewModels;
+        self.can_update = data.canUpdate;
+        self.upstreamDomain = data.upstreamDomain;
+        self.upstreamURL = data.upstreamURL;
+
+        // search box
+        self.query = ko.observable();
+        self.filteredLinkedDataViewModels = ko.observableArray([]);
+        self.matchesQuery = function (linkedDataViewModel) {
+            return !self.query() || linkedDataViewModel.name.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+        };
+        self.filter = function () {
+            self.filteredLinkedDataViewModels(_.filter(self.linkedDataViewModels, self.matchesQuery));
+            self.goToPage(1);
+        };
+
+        // pagination
+        self.paginatedLinkedDataViewModels = ko.observableArray([]);
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.computed(function () {
+            return self.query() ? self.filteredLinkedDataViewModels().length : self.linkedDataViewModels.length;
+        });
+        self.currentPage = 1;
+
+        self.goToPage = function (page) {
+            self.currentPage = page;
+            self.paginatedLinkedDataViewModels.removeAll();
+            var skip = (self.currentPage - 1) * self.itemsPerPage();
+            var visibleLinkedDataViewModels = self.query() ? self.filteredLinkedDataViewModels() : self.linkedDataViewModels;
+            self.paginatedLinkedDataViewModels(visibleLinkedDataViewModels.slice(skip, skip + self.itemsPerPage()));
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
+        return self;
+    };
+
+    var AddDownstreamDomainViewModel = function (data) {
         var self = {};
-        self.parent = manageDomainsViewModel;
-        self.availableDomains = ko.observableArray(availableDomains.sort());
+        self.parent = data.parent;
+        self.availableDomains = ko.observableArray(data.availableDomains.sort());
         self.value = ko.observable();
 
         self.addDownstreamDomain = function (viewModel) {
@@ -203,7 +256,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         var model = DomainLinksViewModel(view_data);
         if ($("#ko-tabs-pull-content").length) {
-            $("#ko-tabs-pull-content").koApplyBindings(model);
+            $("#ko-tabs-pull-content").koApplyBindings(model.pullReleaseContentViewModel);
         }
         if ($("#ko-tabs-push-content").length) {
             $("#ko-tabs-push-content").koApplyBindings(model);
@@ -213,7 +266,7 @@ hqDefine("linked_domain/js/domain_links", [
         }
 
         if ($("#new-downstream-domain-modal").length) {
-            $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainModal);
+            $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainViewModel);
         }
 
     });
