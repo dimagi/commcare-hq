@@ -120,7 +120,7 @@ def check_blob(rec, old_db, new_db, migrate=False):
 
     if old_db.exists(key=key):
         if migrate:
-            with old_db.get(key=key) as content:
+            with old_db.get(key=key, type_code=CODES.maybe_compressed) as content:
                 new_db.copy_blob(content, key=key)
             action = "Migrated from"
         else:
