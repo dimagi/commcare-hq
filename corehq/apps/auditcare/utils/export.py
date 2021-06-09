@@ -183,15 +183,9 @@ def get_sql_start_date():
 
     NOTE the output is being hardcoded for the time historical auditcare events are copied to SQL
     """
-    if settings.SERVER_ENVIRONMENT == 'production':
-        return datetime(2021, 3, 24, 6, 17, 21, 988840)
-    elif settings.SERVER_ENVIRONMENT == 'india':
-        return datetime(2021, 3, 23, 21, 52, 25, 476894)
-    elif settings.SERVER_ENVIRONMENT == 'staging':
-        return datetime(2021, 3, 20, 11, 50, 2, 921916)
-    elif settings.SERVER_ENVIRONMENT == 'swiss':
-        return datetime(2021, 3, 25, 8, 22, 53, 179334)
-
+    fixed_sql_start = get_fixed_start_date_for_sql()
+    if fixed_sql_start:
+        return fixed_sql_start
     manager = NavigationEventAudit.objects
     row = manager.order_by("event_date").values("event_date")[:1].first()
     return row["event_date"] if row else None
