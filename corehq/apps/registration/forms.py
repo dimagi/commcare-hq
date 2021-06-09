@@ -375,9 +375,17 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.is_sso = kwargs.pop('is_sso', False)
         super().__init__(*args, **kwargs)
 
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            self.fields['password'].widget = forms.HiddenInput()
+            self.fields['password'].required = False
+
     def clean_full_name(self):
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            # We obtain the full name directly from the identity provider
+            return
         data = self.cleaned_data['full_name'].split()
         return [data.pop(0)] + [' '.join(data)]
 
@@ -387,6 +395,10 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         return data
 
     def clean_password(self):
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            # This field is not used with SSO. A randomly generated
+            # password as a fallback is created in SsoBackend.
+            return
         try:
             return clean_password(self.cleaned_data.get('password'))
         except forms.ValidationError:
@@ -415,8 +427,14 @@ class WebUserInvitationForm(BaseUserInvitationForm):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # web users login with their emails
-        self.fields['email'].help_text = _('You will use this email to log in.')
+
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            self.fields['email'].widget = forms.HiddenInput()
+            self.fields['full_name'].widget = forms.HiddenInput()
+            self.fields['full_name'].required = False
+        else:
+            # web users login with their emails
+            self.fields['email'].help_text = _('You will use this email to log in.')
 
     def clean_email(self):
         data = super().clean_email()
