@@ -41,7 +41,6 @@ from corehq.apps.users.models import (
     UserRole, InvitationStatus, DomainRequest,
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
-from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
@@ -329,6 +328,8 @@ def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
 
 def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+    from corehq.apps.users.views.utils import get_editable_role_choices
+
     domain_info = domain_info_by_domain.get(domain)
     if domain_info:
         return domain_info
