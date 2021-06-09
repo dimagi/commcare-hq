@@ -6,7 +6,7 @@ from corehq.toggles import FORMPLAYER_USE_LIVEQUERY
 
 def sync_db(domain, username, restore_as=None):
     """Call Formplayer API to force a sync for a user."""
-    user = check_user_access(domain, username, allow_mirroring=True)
+    user = check_user_access(domain, username, allow_enterprise=True)
     if restore_as:
         check_user_access(domain, restore_as)
 
