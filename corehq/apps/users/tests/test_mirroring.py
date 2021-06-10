@@ -23,6 +23,7 @@ class DomainPermissionsMirrorTest(TestCase):
         super().setUpClass()
 
         # Set up domains
+        cls.domain = 'state'
         cls.mirror = DomainPermissionsMirror(source='state', mirror='county')
         cls.mirror.save()
         create_domain('state')
@@ -60,8 +61,8 @@ class DomainPermissionsMirrorTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user_admin.delete(deleted_by=None)
-        cls.web_user_non_admin.delete(deleted_by=None)
+        cls.web_user_admin.delete(cls.domain, deleted_by=None)
+        cls.web_user_non_admin.delete(cls.domain, deleted_by=None)
         cls.api_key.delete()
         Domain.get_by_name('county').delete()
         Domain.get_by_name('state').delete()

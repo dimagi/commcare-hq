@@ -33,7 +33,7 @@ class BaseReportTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete(deleted_by=None)
+        cls.couch_user.delete(DOMAIN, deleted_by=None)
         Session.remove()
         super(BaseReportTest, cls).tearDownClass()
 
