@@ -1,21 +1,19 @@
 import csv
 import itertools
 import uuid
-from io import StringIO
 from collections import Counter
 from datetime import datetime, timedelta
+from io import StringIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
-from django.db.models import Q, Case, When, BooleanField
+from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
@@ -35,8 +33,6 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-
-from corehq.const import USER_CHANGE_VIA_WEB
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -59,6 +55,7 @@ from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
 
