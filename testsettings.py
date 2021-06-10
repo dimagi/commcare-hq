@@ -5,10 +5,6 @@ from copy import deepcopy
 import settingshelper as helper
 from settings import *
 
-# to enable v7 ES tests
-if os.environ.get('ELASTICSEARCH_7_PORT'):
-    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
-
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 

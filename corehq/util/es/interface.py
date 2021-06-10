@@ -4,7 +4,6 @@ import traceback
 
 from django.conf import settings
 
-from corehq.pillows.mappings.utils import transform_for_es7
 from corehq.util.es.elasticsearch import bulk, scan
 
 
@@ -140,61 +139,4 @@ class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
     pass
 
 
-class ElasticsearchInterface7(AbstractElasticsearchInterface):
-
-    def get_aliases(self):
-        return self.es.indices.get_alias()
-
-    def search(self, index_alias=None, doc_type=None, body=None, params=None, verify_alias=True, **kwargs):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
-        results = self.es.search(index=index_alias, body=body, params=params or {}, **kwargs)
-        self._fix_hits_in_results(results)
-        return results
-
-    def put_mapping(self, doc_type, mapping, index):
-        mapping = transform_for_es7(mapping)
-        return self.es.indices.put_mapping(mapping, index=index)
-
-    def doc_exists(self, index_alias, doc_id, doc_type):
-        return self.es.exists(index_alias, doc_id)
-
-    def _get_source(self, index_alias, doc_type, doc_id, source_includes=None):
-        kwargs = {"_source_includes": source_includes} if source_includes else {}
-        return self.es.get_source(index_alias, doc_id, **kwargs)
-
-    def _mget(self, index_alias, body, doc_type):
-        return self.es.mget(
-            index=index_alias, body=body, _source=True)
-
-    def index_doc(self, index_alias, doc_type, doc_id, doc, params=None, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
-        params = params or {}
-        # not supported in ES7
-        params.pop('retry_on_conflict', None)
-        self.es.index(index_alias, body=self._without_id_field(doc), id=doc_id,
-                      params=params)
-
-    def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
-        self.es.update(index_alias, doc_id, body={"doc": self._without_id_field(fields)},
-                       params=params or {})
-
-    def delete_doc(self, index_alias, doc_type, doc_id):
-        self.es.delete(index_alias, doc_id)
-
-    def count(self, index_alias, doc_type, query):
-        query = self._prepare_count_query(query)
-        return self.es.count(index=index_alias, body=query).get('count')
-
-    def scan(self, index_alias, query, doc_type):
-        query["sort"] = "_doc"
-        return scan(self.es, query=query, index=index_alias)
-
-
-ElasticsearchInterface = {
-    2: ElasticsearchInterfaceDefault,
-    7: ElasticsearchInterface7,
-}[settings.ELASTICSEARCH_MAJOR_VERSION]
+ElasticsearchInterface = ElasticsearchInterfaceDefault
