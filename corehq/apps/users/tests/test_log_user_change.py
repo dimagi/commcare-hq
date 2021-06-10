@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
-from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, USER_CHANGE_VIA_WEB
 from corehq.util.model_log import ModelAction
 
