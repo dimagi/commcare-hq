@@ -20,6 +20,7 @@ from corehq.apps.api.odata.views import (
     ODataFormServiceView,
 )
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
+from corehq.apps.api.resources.messaging_event.view import messaging_events
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
     DomainForms,
@@ -81,7 +82,6 @@ API_LIST = (
         v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
-        v0_5.MessagingEventResource,
     )),
 )
 
@@ -119,6 +119,7 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
+    yield url(r'v0.5/messaging-event/', messaging_events, name="api_messaging_events")
     yield url(r'v0.6/case/', include(case_api_urlpatterns))
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")

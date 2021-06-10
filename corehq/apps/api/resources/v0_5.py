@@ -1,8 +1,11 @@
+import functools
 from collections import namedtuple
 from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
+from django.db.models import Q
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -12,14 +15,15 @@ from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.serializers import Serializer
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email, SMS
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -39,7 +43,7 @@ from corehq.apps.api.resources.auth import (
     RequirePermissionAuthentication,
     LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, make_date_filter, django_date_filter
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -49,6 +53,7 @@ from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.transforms import case_or_user_id_to_name
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
@@ -58,7 +63,8 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.sms.util import strip_plus
+from corehq.apps.reports.standard.message_event_display import get_event_display_api, get_sms_status_display_raw
+from corehq.apps.sms.util import strip_plus, get_backend_name, validate_phone_number
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -553,6 +559,7 @@ class GroupResource(v0_4.GroupResource):
         group = self.obj_get(bundle, **kwargs)
         group.soft_delete()
         return bundle
+
 
 class DomainAuthorization(ReadOnlyAuthorization):
 
@@ -1085,31 +1092,4 @@ class ODataFormResource(BaseODataResource):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
-        ]
-
-
-class MessagingEventResource(HqBaseResource, ModelResource):
-    content_type_display = fields.CharField(attribute='get_content_type_display')
-    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
-    status_display = fields.CharField(attribute='get_status_display')
-    source_display = fields.CharField(attribute='get_source_display')
-
-    class Meta(object):
-        queryset = MessagingEvent.objects.all()
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'messaging-event'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        authorization = DomainAuthorization()
-        paginator_class = NoCountingPaginator
-        filtering = {
-            # this is needed for the domain filtering but any values passed in via the URL get overridden
-            "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
-            "source": ('exact',),
-            "content_type": ('exact',),
-            "status": ('exact',),
-        }
-        ordering = [
-            'date',
         ]
