@@ -70,7 +70,6 @@ hqDefine("linked_domain/js/domain_links", [
         var pullReleaseContentData = {
             parent: self,
             linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
-            canUpdate: data.can_update,
             upstreamLink: data.master_link,
         };
         self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
@@ -172,7 +171,6 @@ hqDefine("linked_domain/js/domain_links", [
         // Pull Content Tab
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;
-        self.can_update = data.canUpdate;
         self.upstreamLink = data.upstreamLink;
         if (self.upstreamLink) {
             if (self.upstreamLink.is_remote) {
