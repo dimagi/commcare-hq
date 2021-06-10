@@ -133,6 +133,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_single_worksheet
+from corehq.toggles import TURN_IO_BACKEND
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -742,6 +743,7 @@ def chat(request, domain, contact_id, vn_id=None):
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
+
     history_choices = [(_(x), _fmt(y)) for (x, y) in SMS_CHAT_HISTORY_CHOICES]
     history_choices.append(
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
@@ -977,7 +979,10 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user,
+                domain=self.request.domain
+            ),
             'extra_backend_mappings': extra_backend_mappings,
             'is_system_admin': self.is_system_admin,
         })
@@ -1348,7 +1353,10 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user,
+                domain=self.request.domain
+            ),
         })
         return context
 
@@ -1945,10 +1953,14 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 
-        turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
-            domain=self.domain,
-            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
-        )
+        if TURN_IO_BACKEND.enabled(self.domain):
+            turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
+                domain=self.domain,
+                hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+            )
+        else:
+            turn_backend = SQLTurnWhatsAppBackend.objects.none()
+
         infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
             hq_api_id=InfobipBackend.get_api_id()
@@ -1969,6 +1981,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
             templates = wa_active_backend.get_all_templates()
+
             if templates is not None:
                 for template in templates:
                     template['template_string'] = wa_active_backend.generate_template_string(template)
