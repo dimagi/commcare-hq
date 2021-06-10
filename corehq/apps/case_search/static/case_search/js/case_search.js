@@ -1,10 +1,12 @@
 hqDefine('case_search/js/case_search', [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
+    _,
     ko,
     alertUser,
     initialPageData

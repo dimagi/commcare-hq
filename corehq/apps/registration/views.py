@@ -19,6 +19,7 @@ from django.views.generic.base import TemplateView, View
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -43,7 +44,10 @@ from corehq.apps.registration.forms import (
     DomainRegistrationForm,
     RegisterWebUserForm,
 )
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import (
+    RegistrationRequest,
+    AsyncSignupRequest,
+)
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     request_new_domain,
@@ -131,10 +135,29 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(data['data'])
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(data['data']['email'])
+
+        reg_form = RegisterWebUserForm(data['data'], is_sso=idp is not None)
         if reg_form.is_valid():
             ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
             appcues_ab_test = ab_test.context['version']
+
+            if idp:
+                signup_request = AsyncSignupRequest.create_from_registration_form(
+                    reg_form,
+                    additional_hubspot_data={
+                        "appcues_test": appcues_ab_test,
+                    }
+                )
+                return {
+                    'success': True,
+                    'appcues_ab_test': appcues_ab_test,
+                    'ssoLoginUrl': idp.get_login_url(signup_request.username),
+                    'ssoIdpName': idp.name,
+                }
+
             self._create_new_account(reg_form, additional_hubspot_data={
                 "appcues_test": appcues_ab_test,
             })
@@ -156,7 +179,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test
+                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -186,11 +209,23 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     subject = _("CommCareHQ account request")
                     message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
-        return {
+
+        response = {
             'isValid': message is None,
             'restrictedByDomain': restricted_by_domain,
             'message': message,
         }
+        if settings.ENFORCE_SSO_LOGIN and response['isValid']:
+            idp = IdentityProvider.get_required_identity_provider(email)
+            if idp:
+                response.update({
+                    'isSso': True,
+                    'ssoMessage': _(
+                        "This email is managed by {}. You will be asked to login "
+                        "with Single Sign-On after the next step."
+                    ).format(idp.name),
+                })
+        return response
 
 
 class UserRegistrationView(BasePageView):

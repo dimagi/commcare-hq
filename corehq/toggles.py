@@ -759,7 +759,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 
 USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     'ush_dont_close_patient_extensions',
-    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -781,7 +781,7 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -793,12 +793,13 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
+    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     'webapps_sticky_search',
-    'COVID: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    'USH: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/COVID%3A+Web+Apps+Sticky+Search',
@@ -913,7 +914,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
-    "COVID: Allow domain to override default length of inactivity timeout",
+    "USH: Allow domain to override default length of inactivity timeout",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/Allow+domain+to+override+default+length+of+inactivity+timeout",
@@ -1297,7 +1298,7 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
 
 OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
     'override_expanded_column_limit_in_report_builder',
-    'COVID: Override the limit for expanded columns in report builder from 10 to 50',
+    'USH: Override the limit for expanded columns in report builder from 10 to 50',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
@@ -1475,10 +1476,14 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
+    """
+        Bulk user management features:
+        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+User+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1820,7 +1825,7 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'COVID: Require explicit permissions to access mobile app endpoints',
+    'USH: Require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
@@ -1828,7 +1833,7 @@ RESTRICT_MOBILE_ACCESS = StaticToggle(
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
-    "COVID: Enterprise Permissions: mirror a project space's permissions in other project spaces",
+    "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Enterprise+Permissions',
@@ -1884,7 +1889,7 @@ DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
 
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
-    'COVID: Allow refer case repeaters to be setup',
+    'USH: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
@@ -1892,7 +1897,7 @@ REFER_CASE_REPEATER = StaticToggle(
 
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
-    'COVID: Enable usage of AWS Connect Dialer',
+    'USH: Enable usage of AWS Connect Dialer',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
@@ -1900,7 +1905,7 @@ WIDGET_DIALER = StaticToggle(
 
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
-    'COVID: Enable signed messaging url callouts in cloudcare',
+    'USH: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
@@ -1908,7 +1913,7 @@ HMAC_CALLOUT = StaticToggle(
 
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
-    'COVID: Enable retrieving OTPs from a GAEN Server',
+    'USH: Enable retrieving OTPs from a GAEN Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
@@ -1916,14 +1921,14 @@ GAEN_OTP_SERVER = StaticToggle(
 
 PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
-    'COVID: Process user imports in parallel on a dedicated queue',
+    'USH: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
-    'COVID: Limit allowed users for login as',
+    'USH: Limit allowed users for login as',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -1960,7 +1965,7 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
     'change_form_language',
-    'Allow user to change form language in web apps',
+    'USH: Allow user to change form language in web apps',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -2010,7 +2015,7 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
 
 PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
-    'COVID: Control which domains will be included in the prime formplayer task runs',
+    'USH: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
@@ -2038,4 +2043,11 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

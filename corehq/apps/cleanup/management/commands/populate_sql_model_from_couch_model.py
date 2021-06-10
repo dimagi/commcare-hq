@@ -9,6 +9,7 @@ from django.db import transaction
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
+from dimagi.utils.couch.migration import disable_sync_to_couch
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,18 @@ class PopulateSQLCommand(BaseCommand):
         out before display.
         """
         raise NotImplementedError()
+
+    @classmethod
+    def get_filtered_diffs(cls, couch, sql):
+        diffs = cls.diff_couch_and_sql(couch, sql)
+        if isinstance(diffs, list):
+            diffs = list(filter(None, diffs))
+        return diffs
+
+    @classmethod
+    def get_diff_as_string(cls, couch, sql):
+        diffs = cls.get_filtered_diffs(couch, sql)
+        return "\n".join(diffs) if diffs else None
 
     @classmethod
     def diff_attr(cls, name, doc, obj, wrap_couch=None, wrap_sql=None, name_prefix=None):
@@ -201,14 +214,6 @@ class PopulateSQLCommand(BaseCommand):
         if not skip_verify:
             logger.info(f"Found {self.diff_count} differences")
 
-    @classmethod
-    def get_diff_as_string(cls, couch, sql):
-        diff = cls.diff_couch_and_sql(couch, sql)
-        if isinstance(diff, list):
-            diffs = list(filter(None, diff))
-            diff = "\n".join(diffs) if diffs else None
-        return diff
-
     def _verify_doc(self, doc, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
@@ -229,7 +234,7 @@ class PopulateSQLCommand(BaseCommand):
             self.doc_count,
             doc["_id"]
         ))
-        with transaction.atomic():
+        with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
             logger.info("{} model for doc with id {}".format(action, doc["_id"]))

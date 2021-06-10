@@ -147,7 +147,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                     name: menuResponse.title,
                 };
                 var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
-                if (_.isEmpty(fields)) {
+                if (!_.isEmpty(fields)) {
                     eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, eventData);

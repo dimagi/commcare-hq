@@ -120,7 +120,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -148,7 +147,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -445,7 +443,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -499,7 +496,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": null,
           "display": "long"
         }
       },
@@ -570,7 +566,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -598,7 +593,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1080,8 +1074,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -1202,7 +1198,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1323,7 +1318,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -1394,7 +1388,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1422,7 +1415,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -1677,8 +1669,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -1799,7 +1793,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -1943,7 +1936,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -2016,7 +2008,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -2044,7 +2035,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -2370,8 +2360,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -2515,7 +2507,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -2613,7 +2604,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },
@@ -2684,7 +2674,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -2712,7 +2701,6 @@
           "lookup_image": null,
           "lookup_display_results": false,
           "columns": [],
-          "sort_nodeset_columns": null,
           "persist_tile_on_forms": null,
           "persistent_case_tile_from_module": null,
           "lookup_enabled": false,
@@ -2926,8 +2914,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -3048,7 +3038,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": false,
-          "sort_nodeset_columns": null,
           "display": "short"
         },
         "long": {
@@ -3146,7 +3135,6 @@
           "lookup_name": null,
           "lookup_autolaunch": false,
           "use_case_tiles": null,
-          "sort_nodeset_columns": false,
           "display": "long"
         }
       },

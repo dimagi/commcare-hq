@@ -10,7 +10,6 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from dimagi.utils.web import json_response
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -26,6 +25,7 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -77,6 +77,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
@@ -85,7 +86,6 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    DomainRequestForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
@@ -100,6 +100,7 @@ from corehq.apps.users.models import (
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
+    StaticRole,
     UserRole,
     WebUser,
 )
@@ -110,6 +111,7 @@ from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadR
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -499,7 +501,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @property
     @memoized
     def user_roles(self):
-        user_roles = [UserRole.admin_role(self.domain)]
+        user_roles = [StaticRole.domain_admin(self.domain)]
         user_roles.extend(sorted(
             UserRole.by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
@@ -564,7 +566,11 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
-        bulk_download_url = reverse("download_web_users", args=[self.domain])
+        from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+        if can_use_filtered_user_download(self.domain):
+            bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
@@ -577,13 +583,8 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
-    user_filters = {}
-    download = DownloadBase()
-    is_web_download = True
-    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                          is_web_download, owner_id=request.couch_user.get_id)
-    download.set_task(res)
-    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+    from corehq.apps.users.views.mobile.users import download_users
+    return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):
@@ -657,7 +658,7 @@ class ListRolesView(BaseRoleAccessView):
             'user_roles': self.user_roles,
             'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
-            'default_role': UserRole.get_default(),
+            'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
@@ -708,20 +709,14 @@ def delete_domain_permission_mirror(request, domain, mirror):
 @require_POST
 def create_domain_permission_mirror(request, domain):
     form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if form.is_valid():
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if mirror_domain is not None:
-            mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
-            mirror.save()
-            message = _('You have successfully added the project space "{mirror_domain_name}".')
-            messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-        else:
-            message = _('Please enter a valid project space.')
-            messages.error(request, message.format())
-    else:
+    if not form.is_valid():
         for field, message in form.errors.items():
             messages.error(request, message)
+    else:
+        form.save_mirror_domain()
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        message = _('You have successfully added the project space "{mirror_domain_name}".')
+        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
@@ -816,7 +811,7 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     role_data = dict(
         (p, role_data[p])
@@ -870,24 +865,25 @@ def post_user_role(request, domain):
         role.permissions.edit_users_in_locations = False
 
     role.save()
-    role.__setattr__('hasUsersAssigned', role.has_users_assigned)
-    return json_response(role)
+    response_data = role.to_json()
+    response_data['hasUsersAssigned'] = role.has_users_assigned
+    return JsonResponse(response_data)
 
 
 @domain_admin_required
 @require_POST
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
         role = UserRole.get(role_data["_id"])
     except ResourceNotFound:
-        return json_response({})
+        return JsonResponse({})
     copy_id = role._id
     role.delete()
     # return removed id in order to remove it from UI
-    return json_response({"_id": copy_id})
+    return JsonResponse({"_id": copy_id})
 
 
 @always_allow_project_access
@@ -895,7 +891,7 @@ def delete_user_role(request, domain):
 @require_can_edit_web_users
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({'status': 'ok'})
 
 
 @always_allow_project_access
@@ -1145,7 +1141,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-class UserUploadJobPollView(BaseManageWebUserView):
+class UserUploadJobPollView(BaseUserSettingsView):
 
     def get(self, request, domain, download_id):
         try:
@@ -1163,7 +1159,7 @@ class UserUploadJobPollView(BaseManageWebUserView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
-class WebUserUploadJobPollView(UserUploadJobPollView):
+class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
     user_type = 'web users'
