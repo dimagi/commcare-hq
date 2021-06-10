@@ -5,6 +5,11 @@ from corehq.apps.accounting.models import BillingAccount
 
 
 class EnterprisePermissions(models.Model):
+    """
+    Configuration for enterprise permissions, which causes users with accounts in the config's
+    "source" domain to be automatically granted their same set of permissions in all domains
+    controlled by the config.
+    """
     account = models.ForeignKey('accounting.BillingAccount', null=False, on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)
     source_domain = models.CharField(max_length=128, null=True, blank=True)
