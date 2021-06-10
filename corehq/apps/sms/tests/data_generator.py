@@ -30,7 +30,7 @@ def create_fake_sms(domain, randomize=False):
         content_type = random.choice(MessagingEvent.CONTENT_CHOICES)[0]
         recipient_type = random.choice(MessagingEvent.RECIPIENT_CHOICES)[0]
 
-    make_events_for_test(domain, message_date, source, status, content_type, recipient_type)
+    return make_events_for_test(domain, message_date, source, status, content_type, recipient_type)
 
 
 @nottest
