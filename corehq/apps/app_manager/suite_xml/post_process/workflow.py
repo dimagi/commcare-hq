@@ -69,14 +69,12 @@ class WorkflowHelper(PostProcessor):
 
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
-        For a form return the list of stack frame children that are required
-        to navigate to that form; a mix of commands and datum declarations.
-
-        Given command may be a form (mX-fY) or case list menu item (mX-case-list).
+        For a form or module return the list of stack frame children that are required
+        to navigate there; a mix of commands and datum declarations.
 
         This is based on the following algorithm:
 
-        * Add the module the form is in to the stack (we'll call this `m`)
+        * Add the module (or form's module) to the stack (we'll call this `m`)
         * Walk through all forms in the module, determine what datum selections
           are present in all of the forms (this may be an empty set)
           * Basically if there are three forms that respectively load
@@ -85,6 +83,8 @@ class WorkflowHelper(PostProcessor):
             * f3: v1, v2
           * The longest common chain is v1, v2
         * Add a datum for each of those values to the stack
+
+        For forms:
         * Add the form "command id" for the <entry> to the stack
         * Add the remainder of the datums for the current form to the stack
         * For the three forms above, the stack entries for "last element" would be
