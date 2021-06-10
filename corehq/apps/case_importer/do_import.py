@@ -13,8 +13,8 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.case_importer.exceptions import CaseRowError
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
@@ -40,7 +40,7 @@ ALL_LOCATIONS = 'ALL_LOCATIONS'
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     has_domain_column = 'domain' in [c.lower() for c in spreadsheet.get_header_columns()]
     if has_domain_column and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
-        allowed_domains = BillingAccount.get_enterprise_permissions_domains(domain)
+        allowed_domains = EnterprisePermissions.get_domains(domain)
         sub_domains = set()
         import_results = _ImportResults()
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):

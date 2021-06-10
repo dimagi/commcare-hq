@@ -10,8 +10,8 @@ from corehq.apps.users.dbaccessors import get_existing_usernames
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.forms import clean_password
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
@@ -341,5 +341,5 @@ class TargetDomainValidator(ImportValidator):
     def validate_spec(self, spec):
         target_domain = spec.get('domain')
         if target_domain and target_domain != self.domain:
-            if target_domain not in BillingAccount.get_enterprise_permissions_domains(self.domain):
+            if target_domain not in EnterprisePermissions.get_domains(self.domain):
                 return self.error_message.format(target_domain, self.domain)

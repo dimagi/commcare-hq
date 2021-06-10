@@ -500,13 +500,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     def get_enterprise_restricted_signup_accounts(cls):
         return BillingAccount.objects.filter(is_customer_billing_account=True, restrict_signup=True)
 
-    @classmethod
-    def get_enterprise_permissions_domains(cls, domain):
-        account = cls.get_account_by_domain(domain)
-        if account and account.permissions_source_domain:
-            return list(set(account.get_domains()) - set(account.permissions_ignore_domains))
-        return []
-
     @property
     def autopay_card(self):
         if not self.auto_pay_enabled:
