@@ -11,6 +11,7 @@ from corehq.messaging.whatsapputil import (
     extract_error_message_from_template_string
 )
 
+
 class SQLTurnWhatsAppBackend(SQLSMSBackend):
     class Meta(object):
         proxy = True
@@ -100,7 +101,11 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
     def get_all_templates(self):
         config = self.config
         client = TurnBusinessManagementClient(config.business_id, config.business_auth_token)
-        return client.message_templates.get_message_templates()
+        try:
+            # For bad config values, this can throw an exception
+            return client.message_templates.get_message_templates()
+        except Exception:
+            return None
 
     @classmethod
     def generate_template_string(cls, template):

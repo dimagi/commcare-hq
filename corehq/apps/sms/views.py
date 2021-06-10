@@ -1959,7 +1959,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
                 hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
             )
         else:
-            turn_backend = []
+            turn_backend = SQLTurnWhatsAppBackend.objects.none()
 
         infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
