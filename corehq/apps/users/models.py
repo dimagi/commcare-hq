@@ -514,7 +514,7 @@ class IsMemberOfMixin(DocumentSchema):
         if allow_enterprise:
             from corehq.apps.enterprise.models import EnterprisePermissions
             config = EnterprisePermissions.get_by_domain(domain)
-            if config and config.is_enabled and domain in config.domains:
+            if config.is_enabled and domain in config.domains:
                 return self.is_member_of(config.source_domain, allow_enterprise=False)
 
         return False

@@ -21,7 +21,7 @@ class EnterprisePermissions(models.Model):
         try:
             return cls.objects.get(account=account)
         except cls.DoesNotExist:
-            return None
+            return cls()
 
     @classmethod
     def get_domains(cls, source_domain):
