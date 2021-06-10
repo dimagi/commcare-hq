@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ";
         dateFormat = "YYYY-MM-DD";
+    var selectDelimiter = "#,#"; // Formplayer also uses this
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -24,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return true;
             }
             if (model.get('input') === 'select') {
-                return value.join(" ");
+                return value.join(selectDelimiter);
             }
             return value;
         },
@@ -36,7 +37,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return value.replace("__range__", "").replace("__", separator);
             }
             if (model.get('input') === 'select') {
-                return value.split(" ");
+                return value.split(selectDelimiter);
             }
             return value;
         };
@@ -283,7 +284,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value = response.models[i].get('value');
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         if ($field.attr('multiple')) {
-                            value = value.split(" ");
+                            value = value.split(selectDelimiter);
                         }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
