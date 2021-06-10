@@ -136,7 +136,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.20
+django==2.2.24
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -317,6 +317,8 @@ pyjwt==1.7.1
     #   twilio
 pyopenssl==20.0.1
     # via -r sso-requirements.in
+pyphonetics==0.5.3
+    # via -r base-requirements.in
 pyrsistent==0.17.3
     # via jsonschema
 pysocks==1.7.1
@@ -333,8 +335,6 @@ python-dateutil==2.8.1
 python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
-    # via -r base-requirements.in
-python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -465,6 +465,8 @@ typing-extensions==3.7.4.3
     # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
+unidecode==1.2.0
+    # via pyphonetics
 urllib3==1.26.5
     # via
     #   botocore
@@ -498,4 +500,3 @@ setuptools==50.3.0
     #   gunicorn
     #   jsonschema
     #   protobuf
-    #   python-levenshtein

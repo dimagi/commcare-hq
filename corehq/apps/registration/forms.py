@@ -79,7 +79,11 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.is_sso = kwargs.pop('is_sso', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
+
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            self.fields['password'].required = False
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -138,23 +142,29 @@ class RegisterWebUserForm(forms.Form):
                                       "}",
                         ),
                         crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isSso,'
+                                    'text: ssoMessage">&nbsp;</p>'),
+                        crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
                         hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    hqcrispy.InlineField(
-                        'password',
-                        css_class="input-lg",
-                        autocomplete="new-password",
-                        data_bind="value: password, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: password, "
-                                  "   delayedValidator: passwordDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'password',
+                            css_class="input-lg",
+                            autocomplete="new-password",
+                            data_bind="value: password, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: password, "
+                                      "   delayedValidator: passwordDelayed "
+                                      "}",
+                        ),
+                        hqcrispy.ValidationMessage('passwordDelayed'),
+                        data_bind="visible: showPasswordField"
                     ),
-                    hqcrispy.ValidationMessage('passwordDelayed'),
                     hqcrispy.InlineField(
                         'phone_number',
                         css_class="input-lg",
@@ -243,6 +253,10 @@ class RegisterWebUserForm(forms.Form):
         return data
 
     def clean_password(self):
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            # This field is not used with SSO. A randomly generated
+            # password as a fallback is created in SsoBackend.
+            return
         return clean_password(self.cleaned_data.get('password'))
 
     def clean_eula_confirmed(self):
