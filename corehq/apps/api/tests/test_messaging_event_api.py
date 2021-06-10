@@ -382,29 +382,29 @@ class TestMessagingEventResource(APIResourceTest):
 
     def test_cursor(self):
         utcnow = datetime.utcnow()
-        dates = []
+        ids_and_dates = []
         for offset in range(5):
             date = utcnow + timedelta(hours=offset)
-            dates.append(date.isoformat())
-            make_events_for_test(self.domain.name, date)
+            _, subevent, _ = make_events_for_test(self.domain.name, date)
+            ids_and_dates.append((subevent.id, date.isoformat()))
 
-        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "date"})
-        content = self._test_cursor_response(dates[2:4], previous_content=content)
-        self._test_cursor_response([dates[-1]], previous_content=content)
+        content = self._test_cursor_response(ids_and_dates[:2], extra_params={"limit": 2, "order_by": "date"})
+        content = self._test_cursor_response(ids_and_dates[2:4], previous_content=content)
+        self._test_cursor_response([ids_and_dates[-1]], previous_content=content)
 
     def test_cursor_descending_order(self):
         utcnow = datetime.utcnow()
-        dates = []
+        ids_and_dates = []
         for offset in range(5):
             date = utcnow + timedelta(hours=offset)
-            dates.append(date.isoformat())
-            make_events_for_test(self.domain.name, date)
+            _, subevent, _ = make_events_for_test(self.domain.name, date)
+            ids_and_dates.append((subevent.id, date.isoformat()))
 
-        dates = list(reversed(dates))
+        ids_and_dates = list(reversed(ids_and_dates))
 
-        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "-date"})
-        content = self._test_cursor_response(dates[2:4], previous_content=content)
-        self._test_cursor_response([dates[-1]], previous_content=content)
+        content = self._test_cursor_response(ids_and_dates[:2], extra_params={"limit": 2, "order_by": "-date"})
+        content = self._test_cursor_response(ids_and_dates[2:4], previous_content=content)
+        self._test_cursor_response([ids_and_dates[-1]], previous_content=content)
 
     def test_cursor_stuck_in_loop(self):
         """This demonstrates the limitation of the current cursor pagination implementation.
@@ -415,14 +415,34 @@ class TestMessagingEventResource(APIResourceTest):
         """
 
         utcnow = datetime.utcnow()
-        dates = []
-        for offset in range(5):
-            dates.append(utcnow.isoformat())
-            make_events_for_test(self.domain.name, utcnow)
+        ids_and_dates = []
+        for i in range(5):
+            _, subevent, _ = make_events_for_test(self.domain.name, utcnow)
+            ids_and_dates.append((subevent.id, utcnow.isoformat()))
 
-        content = self._test_cursor_response(dates[:2], extra_params={"limit": 2, "order_by": "-date"})
-        content = self._test_cursor_response(dates[1:3], previous_content=content)
-        self._test_cursor_response(dates[1:3], previous_content=content)
+        content = self._test_cursor_response(ids_and_dates[:2], extra_params={"limit": 2})
+        content = self._test_cursor_response(ids_and_dates[:2], previous_content=content)
+        self._test_cursor_response(ids_and_dates[:2], previous_content=content)
+
+    def test_cursor_multiple_matching_dates(self):
+        """Make sure that where we have multiple objects with matching dates at the intersection of pages
+        we return the correct result set.
+
+        This works because we are sorting the results by 'event.date' AND 'event.id'
+        """
+        # events at 2, 3, 4 have the same dates ('[]' mark expected pages with limit=3)
+        # [d1, d2, d3], [d3, d3, d4], [d5, d6]
+        ids_and_dates = []
+        previous_date = None
+        for i in range(8):
+            event_date = previous_date if i in (3, 4) else datetime.utcnow()
+            previous_date = event_date
+            _, subevent, _ = make_events_for_test(self.domain.name, event_date)
+            ids_and_dates.append((subevent.id, event_date.isoformat()))
+
+        content = self._test_cursor_response(ids_and_dates[:3], extra_params={"limit": 3})
+        content = self._test_cursor_response(ids_and_dates[3:6], previous_content=content)
+        self._test_cursor_response(ids_and_dates[6:], previous_content=content)
 
     def _test_cursor_response(self, expected, previous_content=None, extra_params=None):
         params = {}
@@ -434,7 +454,7 @@ class TestMessagingEventResource(APIResourceTest):
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         content = json.loads(response.content)
-        actual = [event["date"] for event in content['objects']]
+        actual = [(event["id"], event["date"]) for event in content['objects']]
         self.assertEqual(actual, expected)
         if not expected:
             self.assertIsNone(content["meta"]["next"])

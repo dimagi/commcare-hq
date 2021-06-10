@@ -30,7 +30,10 @@ def create_fake_sms(domain, randomize=False):
         content_type = random.choice(MessagingEvent.CONTENT_CHOICES)[0]
         recipient_type = random.choice(MessagingEvent.RECIPIENT_CHOICES)[0]
 
-    return make_events_for_test(domain, message_date, source, status, content_type, recipient_type)
+    _, _, sms_and_dict = make_events_for_test(
+        domain, message_date, source, status, content_type, recipient_type
+    )
+    return sms_and_dict
 
 
 @nottest
@@ -73,7 +76,7 @@ def make_events_for_test(
         additional_error_text=None
     )
     sms, sms_dict = _make_sms(domain, message_date, subevent, **sms_kwargs)
-    return SmsAndDict(sms=sms, sms_dict=sms_dict)
+    return event, subevent, SmsAndDict(sms=sms, sms_dict=sms_dict)
 
 
 def _make_sms(domain, message_date, subevent, **kwargs):
