@@ -24,10 +24,10 @@ non-zero, proceed to setup and run migrations.
 
 The migration commands outlined in this document are typically run on a "limited
 release" on a machine in your CommCareHQ cluster, usually the `django_manage`
-machine. 8GB of RAM is recommended, although less may be necessary for small
-domains. It is also recommended to use a screen session so that network
+machine. 8GB of RAM is recommended, although small domains may require less.
+It is also recommended to use a tmux or screen session so that network
 disruptions between your workstation and the `django_manage` machine do not
-interrupt migration processes. Proceed to setup a limited release and screen
+interrupt migration processes. Proceed to setup a limited release and tmux or screen
 session:
 
 ```sh
