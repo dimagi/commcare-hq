@@ -1,5 +1,3 @@
-from urllib.parse import urlencode
-
 from django.http import JsonResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from tastypie.exceptions import BadRequest
@@ -8,8 +6,9 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors
 from corehq.apps.api.resources.messaging_event.filters import filter_query
+from corehq.apps.api.resources.messaging_event.pagination import get_paged_data
 from corehq.apps.api.resources.messaging_event.serializers import serialize_event
-from corehq.apps.api.resources.messaging_event.utils import sort_query, get_limit_offset
+from corehq.apps.api.resources.messaging_event.utils import sort_query, get_request_params
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.sms.models import MessagingSubEvent
@@ -47,32 +46,9 @@ def _get_individual(request, event_id):
 
 
 def _get_list(request):
-    request_data = request.GET.dict()
+    request_params = get_request_params(request)
     query = MessagingSubEvent.objects.select_related("parent").filter(parent__domain=request.domain)
-    filtered_query = filter_query(query, request_data)
-    sorted_query = sort_query(filtered_query, request_data)
-    data = _get_response_data(sorted_query, request_data)
+    filtered_query = filter_query(query, request_params)
+    sorted_query = sort_query(filtered_query, request_params)
+    data = get_paged_data(sorted_query, request_params)
     return JsonResponse(data)
-
-
-def _get_response_data(query, request_data):
-    limit = get_limit_offset("limit", request_data, 20, max_value=1000)
-    offset = get_limit_offset("offset", request_data, 0)
-    if limit == 0:
-        objects = list(query[offset:])
-    else:
-        objects = list(query[offset:offset + limit])
-    if objects:
-        next_vals = {"offset": str(offset + limit), "limit": str(limit)}
-        request_data.update(next_vals)
-        meta_next = urlencode(request_data)
-    else:
-        meta_next = None
-    return {
-        "objects": [serialize_event(event) for event in objects],
-        "meta": {
-            "limit": limit,
-            "offset": offset,
-            "next": f"?{meta_next}" if meta_next else None
-        }
-    }
