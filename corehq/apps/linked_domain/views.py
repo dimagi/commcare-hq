@@ -347,7 +347,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         timezone = get_timezone_for_request()
         return {
             'success': True,
-            'domain_link': build_domain_link_view_model(domain_link, timezone.localize(datetime.utcnow()).tzname())
+            'domain_link': build_domain_link_view_model(domain_link, timezone)
         }
 
 
