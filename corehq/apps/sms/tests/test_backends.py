@@ -66,6 +66,7 @@ from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from corehq.util.test_utils import create_test_case
+from corehq.util.test_utils import flag_enabled
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
@@ -329,6 +330,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self.assertEqual(response.status_code, expected_response_code)
 
+    @flag_enabled('TURN_IO_BACKEND')
     @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
     @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
     @patch('corehq.messaging.smsbackends.http.models.SQLHttpBackend.send')
@@ -436,6 +438,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
+    @flag_enabled('TURN_IO_BACKEND')
     @run_with_all_backends
     def test_turn_inbound_sms(self):
         url = '/turn/sms/%s' % self.turn_backend.inbound_api_key
