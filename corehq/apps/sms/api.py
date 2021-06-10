@@ -54,6 +54,7 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
+from corehq.toggles import TURN_IO_BACKEND
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -153,9 +154,14 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
         backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
+
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
+
+                if not _backend_enabled_for_domain(backend, domain):
+                    return False
+
             except BadSMSConfigException as e:
                 if logged_subevent:
                     logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
@@ -167,6 +173,10 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)
+
+
+def _backend_enabled_for_domain(backend, domain):
+    return backend.get_api_id() != 'TURN' or TURN_IO_BACKEND.enabled(domain)
 
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
