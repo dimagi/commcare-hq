@@ -435,7 +435,7 @@ class ImporterTest(TestCase):
         subdomain2 = create_domain('subdomain2')
         ignored_domain = create_domain('ignored-domain')
         create_enterprise_permissions(self.couch_user.username, self.domain, [subdomain1.name, subdomain2.name],
-                                      ignore_domains=[ignored_domain.name])
+                                      [ignored_domain.name])
         headers_with_domain = ['case_id', 'name', 'artist', 'domain']
         config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
         case_with_domain_file = make_worksheet_wrapper(
