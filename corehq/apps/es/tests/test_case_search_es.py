@@ -507,7 +507,7 @@ class TestCaseSearchLookups(TestCase):
 
     def test_multiple_case_types(self):
         cases = [
-            {'_id': 'c1', 'case_type': 'song', 'description': 'New York New York'},
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
             {'_id': 'c2', 'case_type': 'song', 'description': 'Another Song'},
             {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
             {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
