@@ -1177,12 +1177,18 @@ class MessagingTab(UITab):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+        from corehq.toggles import TURN_IO_BACKEND
+
         whatsapp_urls = []
 
-        domain_has_turn_integration = (
-            SQLTurnWhatsAppBackend.get_api_id() in
-            (b.get_api_id() for b in
-             SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        if TURN_IO_BACKEND.enabled(self.domain):
+            domain_has_turn_integration = (
+                SQLTurnWhatsAppBackend.get_api_id() in
+                (b.get_api_id() for b in
+                 SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        else:
+            domain_has_turn_integration = None
+
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
