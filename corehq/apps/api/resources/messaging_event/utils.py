@@ -1,6 +1,7 @@
 from base64 import b64decode
 from collections import namedtuple
 
+from attr import attrib, attrs
 from django.http import QueryDict
 from django.utils.translation import gettext_lazy as _
 from tastypie.exceptions import BadRequest
@@ -43,7 +44,12 @@ def sort_query(query, request_params):
     return query.order_by(*order_by_args)
 
 
-class CursorParams(namedtuple("CursorParams", "params, domain, is_cursor")):
+@attrs
+class CursorParams():
+    params = attrib()
+    domain = attrib()
+    is_cursor = attrib()
+
     def __getitem__(self, key):
         return self.params[key]
 
