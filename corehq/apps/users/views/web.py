@@ -162,8 +162,16 @@ class UserInvitationView(object):
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if CouchUser.get_by_username(invitation.email):
-                    return HttpResponseRedirect(reverse("login") + '?next='
-                        + reverse('domain_accept_invitation', args=[invitation.domain, invitation.uuid]))
+                    login_url = reverse("login")
+                    accept_invitation_url = reverse(
+                        'domain_accept_invitation',
+                        args=[invitation.domain, invitation.uuid]
+                    )
+                    return HttpResponseRedirect(
+                        f"{login_url}"
+                        f"?next={accept_invitation_url}"
+                        f"&username={invitation.email}"
+                    )
                 form = WebUserInvitationForm(
                     initial={
                         'email': invitation.email,
