@@ -44,7 +44,7 @@ class EnterprisePermissionsTest(TestCase):
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.web_user_non_admin))
 
         # Set up permissions
-        create_enterprise_permissions(cls.web_user_admin.username, 'state', ['county'], ignore_domains=['staging'])
+        create_enterprise_permissions(cls.web_user_admin.username, 'state', ['county'], ['staging'])
 
     def setUp(self):
         patches = [
