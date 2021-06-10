@@ -334,7 +334,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 @require_can_edit_or_view_web_users
 @require_superuser
 def enterprise_permissions(request, domain):
-    config = EnterprisePermissions.get_by_domain()
+    config = EnterprisePermissions.get_by_domain(domain)
     all_domains = set(config.account.get_domains())
     ignored_domains = all_domains - set(config.domains) - {config.source_domain}
 
