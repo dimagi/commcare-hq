@@ -333,8 +333,8 @@ class DomainRegistrationForm(forms.Form):
 class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     full_name = forms.CharField(
         label=_('Full Name'),
-        max_length=(User._meta.get_field('first_name').max_length +
-                    User._meta.get_field('last_name').max_length + 1),
+        max_length=(User._meta.get_field('first_name').max_length
+                    + User._meta.get_field('last_name').max_length + 1),
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     email = forms.EmailField(
@@ -347,8 +347,8 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         widget=forms.PasswordInput(
             render_value=False,
             attrs={
-               'data-bind': "value: password, valueUpdate: 'input'",
-               'class': 'form-control',
+                'data-bind': "value: password, valueUpdate: 'input'",
+                'class': 'form-control',
             }
         ),
         help_text=mark_safe(  # nosec - no user input
