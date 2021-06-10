@@ -24,12 +24,12 @@ class EnterprisePermissions(models.Model):
             return None
 
     @classmethod
-    def get_domains(cls, domain):
-        account = BillingAccount.get_account_by_domain(domain)
+    def get_domains(cls, source_domain):
+        account = BillingAccount.get_account_by_domain(source_domain)
         try:
             config = cls.objects.get(account=account)
         except cls.DoesNotExist:
             return []
-        if config.is_enabled and config.source_domain:
-            return config.domains
+        if config.is_enabled and config.source_domain == source_domain:
+            return list(set(config.domains) - {config.source_domain})
         return []
