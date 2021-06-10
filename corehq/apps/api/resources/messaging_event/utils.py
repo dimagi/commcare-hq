@@ -1,5 +1,4 @@
 from base64 import b64decode
-from collections import namedtuple
 
 from attr import attrib, attrs
 from django.http import QueryDict

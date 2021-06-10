@@ -1,31 +1,22 @@
-import functools
 from collections import namedtuple
 from itertools import chain
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
-from django.core.validators import validate_email
-from django.db.models import Q
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
-
 from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound, InvalidFilterError
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
-from tastypie.serializers import Serializer
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email, SMS
-from phonelog.models import DeviceReportEntry
-
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
@@ -43,7 +34,8 @@ from corehq.apps.api.resources.auth import (
     RequirePermissionAuthentication,
     LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj, make_date_filter, django_date_filter
+from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
+from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -53,7 +45,6 @@ from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
-from corehq.apps.export.transforms import case_or_user_id_to_name
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
@@ -63,8 +54,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.reports.standard.message_event_display import get_event_display_api, get_sms_status_display_raw
-from corehq.apps.sms.util import strip_plus, get_backend_name, validate_phone_number
+from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -94,7 +84,7 @@ from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
-
+from phonelog.models import DeviceReportEntry
 from . import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
