@@ -1187,7 +1187,7 @@ class InitiateAddSMSBackendForm(Form):
 
     def backend_classes_for_domain(self, domain):
         backends = copy.deepcopy(get_sms_backend_classes())
-        if domain not in TURN_IO_BACKEND.get_enabled_domains():
+        if not TURN_IO_BACKEND.enabled(domain):
             backends.pop('TURN')
 
         return backends

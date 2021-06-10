@@ -177,7 +177,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
 def _backend_enabled_for_domain(backend, domain):
     if backend.get_api_id() == 'TURN':
-        return domain in TURN_IO_BACKEND.get_enabled_domains()
+        return TURN_IO_BACKEND.enabled(domain)
     return True
 
 

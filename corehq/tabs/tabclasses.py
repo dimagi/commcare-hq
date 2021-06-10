@@ -1180,7 +1180,7 @@ class MessagingTab(UITab):
 
         whatsapp_urls = []
 
-        if self.domain in TURN_IO_BACKEND.get_enabled_domains():
+        if TURN_IO_BACKEND.enabled(self.domain):
             domain_has_turn_integration = (
                 SQLTurnWhatsAppBackend.get_api_id() in
                 (b.get_api_id() for b in

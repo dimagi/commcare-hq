@@ -1953,7 +1953,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 
-        if self.domain in TURN_IO_BACKEND.get_enabled_domains():
+        if TURN_IO_BACKEND.enabled(self.domain):
             turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
                 domain=self.domain,
                 hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
