@@ -1,3 +1,5 @@
+from simplejson.errors import JSONDecodeError
+
 from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
 from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
@@ -104,7 +106,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         try:
             # For bad config values, this can throw an exception
             return client.message_templates.get_message_templates()
-        except Exception:
+        except JSONDecodeError:
             return None
 
     @classmethod
