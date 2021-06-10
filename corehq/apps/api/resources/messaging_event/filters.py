@@ -116,7 +116,11 @@ def _status_filter_consumer(key, value):
     if key != "status":
         return {}
 
-    model_value = slug_values.get(value, value)
+    try:
+        model_value = slug_values[value]
+    except KeyError:
+        raise BadRequest(SLUG_FILTER_ERROR_MESSAGE.format(value=value, filter_name='status'))
+
     # match functionality in corehq.pps.reports.standard.sms.MessagingEventsReport.get_filters
     if model_value == MessagingEvent.STATUS_ERROR:
         return {"status": (Q(status=model_value) | Q(sms__error=True))}
@@ -135,10 +139,8 @@ def _status_filter_consumer(key, value):
             Q(status=model_value)
             | (Q(xforms_session__session_is_open=False) & Q(xforms_session__submission_id__isnull=True))
         )}
-    elif model_value == MessagingEvent.STATUS_EMAIL_DELIVERED:
-        return {"status": model_value}
     else:
-        raise BadRequest(SLUG_FILTER_ERROR_MESSAGE.format(value=value, filter_name='status'))
+        return {"status": model_value}
 
 
 def _make_simple_consumer(filter_name, model_filter_arg, validator=None):
