@@ -2,12 +2,16 @@ import functools
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from tastypie.exceptions import BadRequest, InvalidFilterError
 
 from corehq.apps.api.util import make_date_filter, django_date_filter
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.util import validate_phone_number
+
+
+SLUG_FILTER_ERROR_MESSAGE = _("'{value}' is an invalid value for the '{filter_name}' filter")
 
 
 def filter_query(query, request_data):
@@ -134,12 +138,12 @@ def _status_filter_consumer(key, value):
     elif model_value == MessagingEvent.STATUS_EMAIL_DELIVERED:
         return {"status": model_value}
     else:
-        raise BadRequest(f"'{value}' is an invalid value for the 'status' filter")
+        raise BadRequest(SLUG_FILTER_ERROR_MESSAGE.format(value=value, filter_name='status'))
 
 
-def _make_simple_consumer(filter_key, model_filter_arg, validator=None):
+def _make_simple_consumer(filter_name, model_filter_arg, validator=None):
     def _consumer(key, value):
-        if key != filter_key:
+        if key != filter_name:
             return {}
 
         value = value.strip()
@@ -148,7 +152,7 @@ def _make_simple_consumer(filter_key, model_filter_arg, validator=None):
             try:
                 validator(value)
             except ValidationError:
-                raise BadRequest(f"'{value}' is invalid value for the '{filter_key}' filter")
+                raise BadRequest(SLUG_FILTER_ERROR_MESSAGE.format(value=value, filter_name=filter_name))
 
         return {model_filter_arg: value}
 

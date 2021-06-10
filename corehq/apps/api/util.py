@@ -82,7 +82,7 @@ def make_date_filter(date_filter):
 
     def filter_fn(param, val):
         if param not in ['gt', 'gte', 'lt', 'lte']:
-            raise ValueError(f"'{param}' is not a valid type of date range.")
+            raise ValueError(_("'{param}' is not a valid type of date range.").format(param=param))
         try:
             # If it's only a date, don't turn it into a datetime
             val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
@@ -90,7 +90,7 @@ def make_date_filter(date_filter):
             try:
                 val = parse(val)
             except ValueError:
-                raise ValueError(f"Cannot parse datetime '{val}'")
+                raise ValueError(_("Cannot parse datetime '{val}'").format(val=val))
         return date_filter(**{param: val})
 
     return filter_fn
