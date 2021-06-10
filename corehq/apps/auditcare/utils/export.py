@@ -160,16 +160,15 @@ def iter_couch_audit_events(params, chunksize=10000):
 
 def get_fixed_start_date_for_sql():
     # reemove after auditcare migration is done
-    if settings.SERVER_ENVIRONMENT == 'production':
-        return datetime(2021, 3, 24, 6, 17, 21, 988840)
-    elif settings.SERVER_ENVIRONMENT == 'india':
-        return datetime(2021, 3, 23, 21, 52, 25, 476894)
-    elif settings.SERVER_ENVIRONMENT == 'staging':
-        return datetime(2021, 3, 20, 11, 50, 2, 921916)
-    elif settings.SERVER_ENVIRONMENT == 'swiss':
-        return datetime(2021, 3, 25, 8, 22, 53, 179334)
-    else:
-        return None
+    return FIXED_START_DATES.get(settings.SERVER_ENVIRONMENT)
+
+
+FIXED_START_DATES = {
+    'production': datetime(2021, 3, 24, 6, 17, 21, 988840),
+    'india': datetime(2021, 3, 23, 21, 52, 25, 476894),
+    'staging': datetime(2021, 3, 20, 11, 50, 2, 921916),
+    'swiss': datetime(2021, 3, 25, 8, 22, 53, 179334),
+}
 
 
 def determine_sql_start_date(start_date):
