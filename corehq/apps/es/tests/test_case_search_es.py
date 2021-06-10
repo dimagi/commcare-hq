@@ -505,6 +505,23 @@ class TestCaseSearchLookups(TestCase):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
+    def test_multiple_case_types(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Another Song'},
+            {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
+            {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
+        ]
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['show', 'song'], {'description': 'New York'}).search_es,
+            None,
+            ['c1', 'c3']
+        )
+        config.delete()
+
     def _assert_related_case_ids(self, cases, paths, ids):
         results = get_related_case_results(self.domain, cases, paths)
         self.assertEqual(ids, {result['_id'] for result in results})
