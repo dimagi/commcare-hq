@@ -392,7 +392,7 @@
 </script>
 <script type="text/html" id="select-entry-ko-template">
   <div class="sel clear">
-    <div data-bind="foreach: choices, as: 'choice'">
+    <div data-bind="foreach: { data: choices_v2, as: 'choice' }">
       <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
         <label>
           <input data-bind="
@@ -405,8 +405,11 @@
                           class: 'group-' + $parent.entryId,
                       },
                   "/>
-          <span data-bind="renderMarkdown: $data"></span>
+          <span data-bind="renderMarkdown: choice.value()"></span>
         </label>
+        <div class="widget-multimedia" data-bind="
+                template: { name: 'widget-multimedia-ko-template', data: choice }">
+        </div>
       </div>
     </div>
     <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">

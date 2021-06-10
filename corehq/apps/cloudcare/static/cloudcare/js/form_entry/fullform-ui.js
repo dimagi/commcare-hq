@@ -575,6 +575,12 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
+        self.mediaSrc = function (resourceType) {
+            // needs to be defined before calling getEntry()
+            if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
+            return Utils.resourceMap(resourceType);
+        };
+
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
         self.entry = hqImport("cloudcare/js/form_entry/entrycontrols_full").getEntry(self);
         self.entryTemplate = function () {
@@ -596,11 +602,6 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             $.publish('formplayer.' + Const.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
-
-        self.mediaSrc = function (resourceType) {
-            if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
-            return Utils.resourceMap(resourceType);
-        };
 
         self.requiredNotAnswered = ko.computed(function () {
             return self.required() && self.answer() === Const.NO_ANSWER;
