@@ -254,7 +254,7 @@ def delete_web_user():
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
-                web_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
+                web_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__ + '.delete_web_user')
 
 
 def _get_missing_domains():
