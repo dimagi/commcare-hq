@@ -80,4 +80,5 @@ branches:
     - bmb/sso-invitation-new  # Biyeun June 9
     - jm/remove-es7  # Joel June 9
     - cs/SC-1390-put_turn_behind_ff  # Charl June 10
+    - ap/remove-angular # Amit June 10
 submodules: { }
