@@ -81,12 +81,13 @@ from corehq.apps.linked_domain.util import (
     server_to_user_time,
 )
 from corehq.apps.linked_domain.view_helpers import (
+    build_domain_link_view_model,
     build_pullable_view_models_from_data_models,
     build_view_models_from_data_models,
     get_apps,
     get_fixtures,
     get_keywords,
-    get_reports, build_domain_link_view_model,
+    get_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
