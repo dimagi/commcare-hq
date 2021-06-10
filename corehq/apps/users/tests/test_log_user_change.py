@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
-from corehq.apps.users.util import log_user_change
+from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, USER_CHANGE_VIA_WEB
 from corehq.util.model_log import ModelAction
 
@@ -21,8 +21,8 @@ class TestLogUserChange(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete(deleted_by=None, deleted_via=None)
-        cls.web_user.delete(deleted_by=None, deleted_via=None)
+        cls.commcare_user.delete(cls.domain, deleted_by=None, deleted_via=None)
+        cls.web_user.delete(cls.domain, deleted_by=None, deleted_via=None)
         cls.project.delete()
 
     def test_create(self):
@@ -108,6 +108,26 @@ class TestLogUserChange(TestCase):
         )
         self.assertEqual(user_history.message, "Deleted User")
         self.assertEqual(user_history.action, ModelAction.DELETE.value)
+
+    def test_domain_less_actions(self):
+        new_user = CommCareUser.create(self.domain, f'test-new@{self.domain}.commcarehq.org', '******',
+                                       created_by=self.web_user, created_via=USER_CHANGE_VIA_WEB)
+        new_user_id = new_user.get_id
+
+        # domain less delete action by non-system user
+        with self.assertRaisesMessage(ValueError, "Please pass domain"):
+            new_user.delete(None, deleted_by=self.web_user, deleted_via=__name__)
+
+        # domain less delete action by SYSTEM_USER_ID
+        self.assertEqual(
+            UserHistory.objects.filter(by_user_id=SYSTEM_USER_ID).count(),
+            0
+        )
+
+        new_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
+
+        log_entry = UserHistory.objects.get(by_user_id=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
+        self.assertEqual(log_entry.user_id, new_user_id)
 
 
 def _get_expected_changes_json(user):
