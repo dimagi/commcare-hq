@@ -184,7 +184,10 @@ hqDefine("linked_domain/js/domain_links", [
                     self.parent.domain_links.unshift(DomainLink(response.domain_link));
                     self.parent.goToPage(1);
                 } else {
-                    alertUser.alert_user(gettext('Unable to link project spaces. ' + response.message + '\nYou must remove the existing link before creating this new link.'), 'danger');
+                    var errorMessage = _.template(
+                        gettext('Unable to link project spaces. <%- error %>\nYou must remove the existing link before creating this new link.')
+                    )({error: response.message});
+                    alertUser.alert_user(errorMessage, 'danger');
                 }
             }).fail(function () {
                 alertUser.alert_user(gettext('Unable to link project spaces.\nPlease try again, or report an issue if the problem persists.'), 'danger');
