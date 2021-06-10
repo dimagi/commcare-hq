@@ -553,7 +553,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                     raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
                 from corehq.apps.enterprise.models import EnterprisePermissions
                 config = EnterprisePermissions.get_by_domain(domain)
-                if allow_enterprise and config and config.is_enabled and domain in config.domains:
+                if allow_enterprise and config.is_enabled and domain in config.domains:
                     return self.get_domain_membership(config.source_domain, allow_enterprise=False)
         except self.Inconsistent as e:
             logging.warning(e)
