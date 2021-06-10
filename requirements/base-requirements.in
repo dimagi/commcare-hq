@@ -89,7 +89,7 @@ Pygments==2.8.1
 pygooglechart==0.4.0
 python-dateutil~=2.6
 python-imap==1.0.0
-python-levenshtein>=0.12.1
+pyphonetics==0.5.3
 python-magic~=0.4.22
 pytz>=2017.2
 PyYAML~=5.4.1
