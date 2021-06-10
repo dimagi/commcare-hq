@@ -552,7 +552,7 @@ class StackFrameMeta(object):
 
         for child in children:
             if isinstance(child, CommandId):
-                frame.add_command(XPath.string(child.id))
+                frame.add_command(child.to_command())
             elif isinstance(child, StackDatum):
                 frame.add_datum(child)
             else:
@@ -577,6 +577,9 @@ class CommandId(object):
 
     def __repr__(self):
         return 'ModuleCommand(id={})'.format(self.id)
+
+    def to_command(self):
+        return XPath.string(self.id)
 
 
 @total_ordering

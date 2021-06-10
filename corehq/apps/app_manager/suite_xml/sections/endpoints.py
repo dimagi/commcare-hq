@@ -5,6 +5,7 @@ from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    CommandId,
     WorkflowDatumMeta,
     WorkflowHelper,
 )
@@ -38,23 +39,22 @@ class SessionEndpointContributor(SuiteContributorByModule):
     def _make_session_endpoint(self, module, form=None):
         if form is not None:
             endpoint_id = form.session_endpoint_id
-            id_string = id_strings.form_command(form)
         else:
             endpoint_id = module.session_endpoint_id
-            id_string = id_strings.case_list_command(module)
 
         stack = Stack()
         frame = PushFrame()
         stack.add_frame(frame)
-        frame.add_command(XPath.string(id_string))
         arguments = []
         helper = WorkflowHelper(self.suite, self.app, self.modules)
-        for child in helper.get_frame_children(module, form):
+        for child in helper.get_frame_children(module, form, include_root_module=True):
             if isinstance(child, WorkflowDatumMeta):
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
                     StackDatum(id=child.id, value=f"${child.id}")
                 )
+            elif isinstance(child, CommandId):
+                frame.add_command(child.to_command())
 
         return SessionEndpoint(
             id=endpoint_id,
