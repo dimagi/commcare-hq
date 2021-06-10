@@ -22,6 +22,11 @@ class EnterprisePermissions(models.Model):
 
     @classmethod
     def get_by_domain(cls, domain):
+        """
+        Get or create the configuration associated with the given domain's account.
+        Note that the domain may be the source domain, one of the controlled domains,
+        or another domain in the account that does not use enterprise permissions.
+        """
         account = BillingAccount.get_account_by_domain(domain)
         try:
             return cls.objects.get(account=account)
@@ -30,6 +35,9 @@ class EnterprisePermissions(models.Model):
 
     @classmethod
     def get_domains(cls, source_domain):
+        """
+        Get a list of domains, if any, controlled by the given source domain.
+        """
         account = BillingAccount.get_account_by_domain(source_domain)
         try:
             config = cls.objects.get(account=account)
