@@ -1,21 +1,16 @@
-import datetime
 from base64 import b64decode, b64encode
-from itertools import chain
-from django.utils.http import urlencode
 
 from django.http import QueryDict
+from django.utils.http import urlencode
 
-from dateutil.parser import parse
-
-from dimagi.utils.parsing import FALSE_STRINGS
-
+from corehq.apps.api.util import make_date_filter
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
     build_filter_from_xpath,
 )
 from corehq.apps.es import case_search
 from corehq.apps.es import cases as case_es
-
+from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
 DEFAULT_PAGE_SIZE = 20
@@ -40,21 +35,16 @@ def _get_custom_property_filter(case_property, val):
 
 
 def _make_date_filter(date_filter):
+    filter_fn = make_date_filter(date_filter)
 
-    def filter_fn(param, val):
-        if param not in ['gt', 'gte', 'lt', 'lte']:
-            raise UserError(f"'{param}' is not a valid type of date range.")
+    def _exception_converter(param, value):
+        """Wrapper to convert ValueError to UserError"""
         try:
-            # If it's only a date, don't turn it into a datetime
-            val = datetime.datetime.strptime(val, '%Y-%m-%d').date()
-        except ValueError:
-            try:
-                val = parse(val)
-            except ValueError:
-                raise UserError(f"Cannot parse datetime '{val}'")
-        return date_filter(**{param: val})
+            return filter_fn(param, value)
+        except ValueError as e:
+            raise UserError(str(e))
 
-    return filter_fn
+    return _exception_converter
 
 
 def _index_filter(identifier, case_id):
