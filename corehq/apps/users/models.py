@@ -77,6 +77,7 @@ from corehq.apps.users.tasks import (
 )
 from corehq.apps.users.util import (
     filter_by_app,
+    log_user_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
@@ -1863,7 +1864,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
         return True, None
 
-    def retire(self, deleted_by, deleted_via=None):
+    def retire(self, retired_by_domain, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
@@ -1897,9 +1898,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
-            if deleted_by:
-                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
+        if deleted_by:
+            log_user_change(retired_by_domain, self, deleted_by,
+                            changed_via=deleted_via, action=ModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):

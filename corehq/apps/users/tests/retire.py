@@ -18,7 +18,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -66,13 +66,14 @@ class RetireUserTestCase(TestCase):
 
     def test_retire(self):
         deleted_via = "Test test"
-        django_user = self.commcare_user.get_django_user()
-        other_django_user = self.other_user.get_django_user()
 
-        self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.DELETE.value)
-        self.assertEqual(log_entry.object_repr, force_text(django_user))
-        self.assertEqual(log_entry.change_message, f"deleted_via: {deleted_via}")
+        self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
+        log_entry = UserHistory.objects.get(user_id=self.commcare_user.get_id,
+                                            action=ModelAction.DELETE.value)
+        self.assertEqual(log_entry.domain, self.domain)
+        self.assertEqual(log_entry.user_type, "CommCareUser")
+        self.assertEqual(log_entry.by_user_id, self.other_user.get_id)
+        self.assertEqual(log_entry.details['changed_via'], deleted_via)
 
     @run_with_all_backends
     def test_unretire_user(self):
