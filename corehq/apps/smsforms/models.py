@@ -35,6 +35,18 @@ class SQLXFormsSession(models.Model):
     # Maximum session length of 7 days
     MAX_SESSION_LENGTH = 7 * 24 * 60
 
+    STATUS_PARTIALLY_COMPLETE = "partially_completed"
+    STATUS_COMPLETE = "completed"
+    STATUS_IN_PROGRESS = "in-progress"
+    STATUS_NOT_FINISHED = "not-finished"
+
+    STATUS_DISPLAY = {
+        STATUS_PARTIALLY_COMPLETE: ugettext_noop('Completed (Partially Completed Submission)'),
+        STATUS_COMPLETE: ugettext_noop('Completed'),
+        STATUS_IN_PROGRESS: ugettext_noop('In Progress'),
+        STATUS_NOT_FINISHED: ugettext_noop('Not Finished'),
+    }
+
     # generic properties
     couch_id = models.CharField(db_index=True, max_length=50)
     connection_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
@@ -148,20 +160,23 @@ class SQLXFormsSession(models.Model):
 
     @property
     def status(self):
+        return self.STATUS_DISPLAY[self.status_slug]
+
+    @property
+    def status_slug(self):
         xform_instance = None
         if self.submission_id:
             xform_instance = FormAccessors(self.domain).get_form(self.submission_id)
 
         if xform_instance:
             if xform_instance.partial_submission:
-                return ugettext_noop('Completed (Partially Completed Submission)')
+                return self.STATUS_PARTIALLY_COMPLETE
             else:
-                return ugettext_noop('Completed')
+                return self.STATUS_COMPLETE
+        elif self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
+            return self.STATUS_IN_PROGRESS
         else:
-            if self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
-                return ugettext_noop('In Progress')
-            else:
-                return ugettext_noop('Not Finished')
+            return self.STATUS_NOT_FINISHED
 
     @classmethod
     def get_all_open_sms_sessions(cls, domain, contact_id):
