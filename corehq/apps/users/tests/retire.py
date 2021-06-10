@@ -77,7 +77,6 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_unretire_user(self):
-        other_django_user = self.other_user.get_django_user()
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
         caseblocks = []
@@ -100,14 +99,22 @@ class RetireUserTestCase(TestCase):
         self.assertTrue(form.is_deleted)
 
         self.assertEqual(
-            list(LogEntry.objects.filter(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)),
-            []
+            UserHistory.objects.filter(
+                user_id=self.commcare_user.get_id,
+                action=ModelAction.CREATE.value
+            ).count(),
+            0
         )
-        self.commcare_user.unretire(unretired_by=other_django_user, unretired_via="Test")
+        self.commcare_user.unretire(self.domain, unretired_by=self.other_user, unretired_via="Test")
 
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)
-        self.assertEqual(log_entry.object_repr, force_text(self.commcare_user.get_django_user()))
-        self.assertEqual(log_entry.change_message, f"unretired_via: Test")
+        log_entry = UserHistory.objects.get(
+            user_id=self.commcare_user.get_id,
+            action=ModelAction.CREATE.value
+        )
+        self.assertEqual(log_entry.domain, self.domain)
+        self.assertEqual(log_entry.user_type, "CommCareUser")
+        self.assertEqual(log_entry.by_user_id, self.other_user.get_id)
+        self.assertEqual(log_entry.details['changed_via'], "Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))

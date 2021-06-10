@@ -1833,7 +1833,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self, unretired_by, unretired_via=None):
+    def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1857,10 +1857,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
         if unretired_by:
-            log_model_change(
+            log_user_change(
+                unretired_by_domain,
+                self,
                 unretired_by,
-                self.get_django_user(use_primary_db=True),
-                message=f"unretired_via: {unretired_via}",
+                changed_via=unretired_via,
+                action=ModelAction.CREATE,
             )
         return True, None
 
