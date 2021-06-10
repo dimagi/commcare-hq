@@ -99,6 +99,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    log_user_change,
     raw_username,
 )
 from corehq.apps.users.views import (
@@ -119,7 +120,6 @@ from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
-from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -839,9 +839,8 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    change_message = "Activated User" if is_active else "Deactivated User"
-    log_model_change(request.user, user.get_django_user(), message=change_message,
-                     action=ModelAction.UPDATE)
+    log_user_change(request.domain, user, request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
     return JsonResponse({
         'success': True,
     })
