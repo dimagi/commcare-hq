@@ -6,6 +6,7 @@ import logging
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -530,6 +531,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return False
         except AttributeError:
             return True
+
+    @classmethod
+    def get_report(cls, report_id):
+        try:
+            notification = ReportNotification.get(report_id)
+        except ResourceNotFound:
+            notification = None
+        else:
+            if notification.doc_type != 'ReportNotification':
+                notification = None
+
+        return notification
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
