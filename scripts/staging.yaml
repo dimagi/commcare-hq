@@ -74,7 +74,7 @@ branches:
     - rp/enterprize-sms-report #Rynhard June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
     - fr/remote-linked-ucr      # Farid June 4
-    #- jls/move-enterprise-permissions-2-of-3  # Jenny June 4
+    - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
     - sk/messaging-event-api  # Simon June 7
     - smh/multi-domain-user-upload-update  # Steph June 7
     - bmb/sso-invitation-new  # Biyeun June 9
