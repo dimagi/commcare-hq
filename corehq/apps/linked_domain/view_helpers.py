@@ -35,8 +35,9 @@ from corehq.util.timezones.utils import get_timezone_for_request
 def build_domain_link_view_model(link, timezone):
     return {
         'linked_domain': link.linked_domain,
-        'master_domain': link.qualified_master,
-        'remote_base_url': link.remote_base_url,
+        'master_domain': link.master_domain,
+        'upstream_url': link.upstream_url,
+        'downstream_url': link.downstream_url,
         'is_remote': link.is_remote,
         'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else _('Never'),
     }

@@ -33,8 +33,8 @@ class DomainLink(models.Model):
 
     # used for linking across remote instances of HQ
     remote_base_url = models.CharField(max_length=255, null=True, blank=True,
-                                       help_text=_("should be the full link with the trailing /. "
-                                                   "Example: https://www.commcarehq.org/"))
+                                       help_text=_("should be the full link without the trailing /. "
+                                                   "Example: https://www.commcarehq.org"))
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
 
@@ -42,14 +42,24 @@ class DomainLink(models.Model):
     all_objects = models.Manager()
 
     @property
-    def qualified_master(self):
+    def upstream_url(self):
         if self.is_remote:
             return '{}{}'.format(
                 self.remote_base_url,
                 reverse('domain_homepage', args=[self.master_domain])
             )
         else:
-            return self.master_domain
+            return reverse('domain_links', args=[self.master_domain])
+
+    @property
+    def downstream_url(self):
+        if self.is_remote:
+            return '{}{}'.format(
+                self.remote_base_url,
+                reverse('domain_homepage', args=[self.linked_domain])
+            )
+        else:
+            return reverse('domain_links', args=[self.linked_domain])
 
     @property
     def remote_details(self):

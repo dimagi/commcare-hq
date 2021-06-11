@@ -66,13 +66,17 @@ hqDefine("linked_domain/js/domain_links", [
         };
         self.addDownstreamDomainViewModel = AddDownstreamDomainViewModel(addDownstreamDomainData);
 
-        // setup pull release content view model
-        var pullReleaseContentData = {
-            parent: self,
-            linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
-            upstreamLink: data.master_link,
-        };
-        self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
+        // can only pull content if a link with an upstream domain exists
+        var pullReleaseContentData = null;
+        if (data.master_link) {
+            pullReleaseContentData = {
+                parent: self,
+                linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
+                domainLink: DomainLink(data.master_link),
+            };
+            self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
+        }
+
 
         // General data
         self.domain = data.domain;
@@ -157,13 +161,9 @@ hqDefine("linked_domain/js/domain_links", [
         self.linked_domain = ko.observable(link.linked_domain);
         self.is_remote = link.is_remote;
         self.master_domain = link.master_domain;
-        self.remote_base_url = ko.observable(link.remote_base_url);
         self.lastUpdate = link.last_update;
-        if (self.is_remote) {
-            self.domain_link = self.linked_domain;
-        } else {
-            self.domain_link = initialPageData.reverse('domain_links', self.linked_domain());
-        }
+        self.upstreamURL = link.upstream_url;
+        self.downstreamURL = link.downstream_url;
         return self;
     };
 
@@ -171,15 +171,7 @@ hqDefine("linked_domain/js/domain_links", [
         // Pull Content Tab
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;
-        self.upstreamLink = data.upstreamLink;
-        if (self.upstreamLink) {
-            if (self.upstreamLink.is_remote) {
-                self.upstreamURL = self.upstreamLink.master_domain;
-            } else {
-                self.upstreamURL = initialPageData.reverse('domain_links', self.upstreamLink.master_domain);
-            }
-        }
-        self.upstreamDomain = self.upstreamLink ? self.upstreamLink.master_domain : null;
+        self.domainLink = data.domainLink;
 
         // search box
         self.query = ko.observable();

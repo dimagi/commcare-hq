@@ -40,7 +40,7 @@
           </thead>
           <tbody data-bind="foreach: paginatedDomainLinks">
           <tr>
-            <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
+            <td><a data-bind="attr: {'href': downstreamURL}, text: linked_domain"></a></td>
             <td data-bind="text: lastUpdate"></td>
             <td>
               <button type="button" class="btn btn-danger" data-toggle="modal" data-bind="attr: {'data-target': '#remove-link-modal-' + $index()}">

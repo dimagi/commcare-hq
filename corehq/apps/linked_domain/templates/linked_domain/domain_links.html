@@ -7,7 +7,6 @@
 {% block page_content %}
   {% initial_page_data 'view_data' view_data %}
   {% registerurl 'linked_domain:domain_link_rmi' domain %}
-  {% registerurl 'domain_links' '---' %}
   {% registerurl 'app_settings' domain '---' %}
 
   {% if not is_master_domain and not is_linked_domain %}
