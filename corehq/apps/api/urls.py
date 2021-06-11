@@ -119,7 +119,8 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
-    yield url(r'v0.5/messaging-event/', messaging_events, name="api_messaging_events")
+    yield url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_events")
+    yield url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event")
     yield url(r'v0.6/case/', include(case_api_urlpatterns))
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
