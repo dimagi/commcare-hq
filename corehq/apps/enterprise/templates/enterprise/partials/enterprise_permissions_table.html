@@ -10,7 +10,11 @@
           </td>
           <td class="col-sm-2">
             <form class="form form-horizontal disable-on-submit"
-                  action="{% url 'toggle_enterprise_permission' domain domain_name %}"
+                  {% if ACTION_ENABLE %}
+                    action="{% url 'add_enterprise_permissions_domain' domain domain_name %}"
+                  {% else %}
+                    action="{% url 'remove_enterprise_permissions_domain' domain domain_name %}"
+                  {% endif %}
                   method="POST">
               {% csrf_token %}
               <input type="hidden" name="target_domain" value="{{ domain_name }}"/>
