@@ -81,12 +81,13 @@ from corehq.apps.linked_domain.util import (
     server_to_user_time,
 )
 from corehq.apps.linked_domain.view_helpers import (
+    build_domain_link_view_model,
     build_pullable_view_models_from_data_models,
     build_view_models_from_data_models,
     get_apps,
     get_fixtures,
     get_keywords,
-    get_reports, link_context,
+    get_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -237,7 +238,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         """
         timezone = get_timezone_for_request()
         master_link = get_domain_master_link(self.domain)
-        linked_domains = [link_context(link, timezone) for link in get_linked_domains(self.domain)]
+        linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
         master_apps, linked_apps = get_apps(self.domain)
         master_fixtures, linked_fixtures = get_fixtures(self.domain, master_link)
         master_reports, linked_reports = get_reports(self.domain)
@@ -261,7 +262,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
                 'available_domains': available_domains_to_link,
-                'master_link': link_context(master_link, timezone) if master_link else None,
+                'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
@@ -341,13 +342,13 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         except DomainLinkError as e:
             return {
                 'success': False,
-                'message': str(e),
+                'message': str(e)
             }
 
         timezone = get_timezone_for_request()
         return {
             'success': True,
-            'response': link_context(domain_link, timezone.localize(datetime.utcnow()).tzname())
+            'domain_link': build_domain_link_view_model(domain_link, timezone)
         }
 
 
