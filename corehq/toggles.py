@@ -2051,3 +2051,11 @@ DETAILED_TAGGING = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)

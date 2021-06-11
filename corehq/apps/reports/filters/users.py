@@ -14,7 +14,7 @@ from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserHistory
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.apps.reports.extension_points import customize_user_query
 

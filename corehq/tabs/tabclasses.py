@@ -63,6 +63,7 @@ from corehq.apps.reminders.views import (
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
+    UserManagementReportDispatcher,
 )
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.saved_reports.models import ReportConfig
@@ -129,11 +130,14 @@ class ProjectReportsTab(UITab):
     def sidebar_items(self):
         tools = self._get_tools_items()
         report_builder_nav = self._get_report_builder_items()
+        user_management_reports = UserManagementReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
+        sidebar_items = (tools + report_builder_nav + user_management_reports
+                         + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
     def _regroup_sidebar_items(self, sidebar_items):
