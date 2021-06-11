@@ -11,10 +11,7 @@ hqDefine("hqwebapp/js/widgets",[
             );
             // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
             _.each($(".hqwebapp-select2"), function (element) {
-                var $element = $(element);
-                $element.select2({
-                    allowClear: $element.data("allowClear"),
-                    placeholder: $element.data("placeholder"),
+                $(element).select2({
                     width: '100%',
                 });
             });

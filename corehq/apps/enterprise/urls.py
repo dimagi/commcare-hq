@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from corehq.apps.enterprise.views import (
+    disable_enterprise_permissions,
     edit_enterprise_settings,
     enterprise_dashboard,
     enterprise_dashboard_download,
@@ -26,6 +27,7 @@ domain_specific = [
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
     url(r'^permissions/$', enterprise_permissions, name="enterprise_permissions"),
+    url(r'^permissions/disable/$', disable_enterprise_permissions, name="disable_enterprise_permissions"),
     url(r'^permissions/toggle/(?P<target_domain>[ \w-]+)/$', toggle_enterprise_permission,
         name='toggle_enterprise_permission'),
     url(r'^permissions/source/$', update_enterprise_permissions_source_domain,
