@@ -26,6 +26,7 @@ def create_enterprise_permissions(email, source_domain, domains=None, other_doma
         subscriptions.append(Subscription.new_domain_subscription(account, domain, plan))
 
     EnterprisePermissions(
+        account=account,
         is_enabled=True,
         source_domain=source_domain,
         domains=domains,
