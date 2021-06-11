@@ -38,11 +38,8 @@ class EnterprisePermissions(models.Model):
         """
         Get a list of domains, if any, controlled by the given source domain.
         """
-        account = BillingAccount.get_account_by_domain(source_domain)
         try:
-            config = cls.objects.get(account=account)
+            config = cls.objects.get(is_enabled=True, source_domain=source_domain)
         except cls.DoesNotExist:
             return []
-        if config.is_enabled and config.source_domain == source_domain:
-            return list(set(config.domains) - {config.source_domain})
-        return []
+        return list(set(config.domains) - {config.source_domain})
