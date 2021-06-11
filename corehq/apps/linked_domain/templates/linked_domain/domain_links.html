@@ -132,7 +132,17 @@
                               <h4 class="modal-title">{% trans 'Remove Project Link' %}</h4>
                             </div>
                             <div class="modal-body">
-                              <p>{% trans 'Are you sure you want to remove the link between projects?' %}</p>
+                              <h4>
+                                {% blocktrans %}
+                                  Are you sure you want to remove the downstream link to <b data-bind="text: linked_domain"></b>?
+                                {% endblocktrans %}
+                              </h4>
+                              <p>
+                                {% blocktrans %}
+                                  Removing the link will also remove links between upstream and downstream data models.<br/>
+                                  <a href="#" target="_blank">Learn more</a> about what happens when downstream project links are removed.
+                                {% endblocktrans %}
+                              </p>
                             </div>
                             <div class="modal-footer">
                               <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
