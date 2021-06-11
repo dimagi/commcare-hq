@@ -41,7 +41,7 @@ class TestMessagingEventResource(APIResourceTest):
             'messages': [
                 {
                     'backend': 'fake-backend-id',
-                    'contact': '99912345678',
+                    'phone_number': '99912345678',
                     'content': 'test sms text',
                     'date': '2016-01-01T12:00:00',
                     'direction': 'outgoing',
@@ -214,9 +214,9 @@ class TestMessagingEventResource(APIResourceTest):
         make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
         self._create_sms_messages(1, False)
 
-        self._check_contact_filtering("email_address", "user0@email.com")
-        self._check_contact_filtering("email_address", "user1@email.com")
-        self._check_contact_filtering("phone_number", "+99912345678")
+        self._check_contact_filtering("email_address", "user0@email.com", "email_address")
+        self._check_contact_filtering("email_address", "user1@email.com", "email_address")
+        self._check_contact_filtering("phone_number", "+99912345678", "phone_number")
 
     def test_email_filter_validation(self):
         url = f'{self.list_endpoint}?email_address=not-an-email'
@@ -228,12 +228,12 @@ class TestMessagingEventResource(APIResourceTest):
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 400, response.content)
 
-    def _check_contact_filtering(self, key, value):
+    def _check_contact_filtering(self, key, value, field):
         query = urlencode({key: value.encode("utf8")})
         url = f'{self.list_endpoint}?{query}'
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
-        actual = {event["messages"][0]["contact"] for event in json.loads(response.content)['objects']}
+        actual = {event["messages"][0][field] for event in json.loads(response.content)['objects']}
         self.assertEqual(actual, {value})
 
     def test_case_rule(self):
@@ -252,7 +252,7 @@ class TestMessagingEventResource(APIResourceTest):
             "messages": [
                 {
                     "backend": 'fake-backend-id',
-                    "contact": "99912345678",
+                    "phone_number": "99912345678",
                     "content": "test sms text",
                     "date": "2016-01-01T12:00:00",
                     "direction": "outgoing",
@@ -305,7 +305,7 @@ class TestMessagingEventResource(APIResourceTest):
             "messages": [
                 {
                     "backend": "fake-backend-id",
-                    "contact": "99912345678",
+                    "phone_number": "99912345678",
                     "content": "test sms text",
                     "date": "2016-01-01T12:00:00",
                     "direction": "outgoing",
@@ -349,7 +349,7 @@ class TestMessagingEventResource(APIResourceTest):
             "messages": [
                 {
                     "backend": "email",
-                    "contact": "bob@email.com",
+                    "email_address": "bob@email.com",
                     "content": "Check out the new API.",
                     # "date": "2021-06-02T15:08:20.546006",
                     "direction": "outgoing",

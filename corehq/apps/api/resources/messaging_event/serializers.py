@@ -113,7 +113,7 @@ def _get_messages_for_email(event):
         "content": content,
         "status": MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown'),
         "backend": "email",
-        "contact": recipient_address
+        "email_address": recipient_address
     }]
 
 
@@ -151,7 +151,7 @@ def _get_message_dicts_for_sms(event, messages, type_):
             "content": sms.text,
             "status": status,
             "backend": get_backend_name(sms.backend_id) or sms.backend_id,
-            "contact": sms.phone_number
+            "phone_number": sms.phone_number
         }
         if error_message:
             message_data["error_message"] = error_message
