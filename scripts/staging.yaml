@@ -68,13 +68,13 @@ branches:
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
     - sk/test_role_create_update  # Simon May 31
-    #- bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
+    - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
     - cs/SC-1335-dataset-workflow  # Charl June 3
     - fr/remote-linked-ucr      # Farid June 4
     - jls/move-enterprise-permissions-1-of-3  # Jenny June 4
-    #- jls/move-enterprise-permissions-2-of-3  # Jenny June 4
+    - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
     - jls/users-merge-migration # Jenny June 11
     - sk/messaging-event-api  # Simon June 7
     - smh/multi-domain-user-upload-update  # Steph June 7
