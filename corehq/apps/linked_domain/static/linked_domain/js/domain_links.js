@@ -162,8 +162,8 @@ hqDefine("linked_domain/js/domain_links", [
         self.is_remote = link.is_remote;
         self.master_domain = link.master_domain;
         self.lastUpdate = link.last_update;
-        self.upstreamURL = link.upstream_url;
-        self.downstreamURL = link.downstream_url;
+        self.upstreamUrl = link.upstream_url;
+        self.downstreamUrl = link.downstream_url;
         return self;
     };
 

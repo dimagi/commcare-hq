@@ -4,19 +4,19 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink
 
 
-class DomainLinkURLsTest(TestCase):
+class DomainLinkUrlsTest(TestCase):
 
     domain = 'domain-link-tests'
 
     @classmethod
     def setUpClass(cls):
-        super(DomainLinkURLsTest, cls).setUpClass()
+        super(DomainLinkUrlsTest, cls).setUpClass()
         cls.downstream = create_domain('downstream-domain')
         cls.upstream = create_domain('upstream-domain')
 
     @classmethod
     def tearDownClass(cls):
-        super(DomainLinkURLsTest, cls).tearDownClass()
+        super(DomainLinkUrlsTest, cls).tearDownClass()
         cls.downstream.delete()
         cls.upstream.delete()
 
