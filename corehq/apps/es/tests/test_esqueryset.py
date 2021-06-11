@@ -71,7 +71,7 @@ class TestESQuerySet(TestCase):
         with self.assertRaises(ESError):
             ESQuerySet(self.example_error, HQESQuery('forms'))
 
-    @skipIf(settings.ELASTICSEARCH_MAJOR_VERSION == 7, 'Only applicable for older versions')
+    @skipIf(settings.ELASTICSEARCH_MAJOR_VERSION > 2, 'Only applicable for older versions')
     def test_flatten_field_dicts(self):
         example_response = {
             'hits': {'hits': [{
