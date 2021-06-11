@@ -34,6 +34,9 @@ class ReportLookup:
 
         return corehq_reports + custom_reports
 
+    # NOTE: This is largely duplicated in ReportDispatcher.get_report
+    # This should be the primary way that we resolve slugs into report objects,
+    # and we should look into removing the logic from report dispatcher when possible
     def get_report(self, domain, slug):
         for name, group in self.get_reports(domain):
             for report in group:

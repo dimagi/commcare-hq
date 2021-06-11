@@ -86,8 +86,22 @@ class ReportDispatcher(View):
         Returns the report class for `report_slug`, or None if no report is
         found.
         """
-        lookup = ReportLookup(cls.map_name)
-        return lookup.get_report(domain, report_slug)
+        # NOTE: This is duplicated logic also contained within ReportLookup. While
+        # replacing this code with the lookup code does not cause issues for production,
+        # it breaks the way some tests try to create mock versions of a dispatcher --
+        # they override `get_reports` with a custom mapping, and then rely on this method
+        # using the override. I think a deeper refactor will need to be done to handle this.
+
+        # The reason this *should* be separated out into its own module is because
+        # report name resolution is independent from handling dispatch logic;
+        # code which doesn't care about dispatching urls or handling views should still be able
+        # to resolve a slug to a report object
+        for name, group in cls.get_reports(domain):
+            for report in group:
+                if report.slug == report_slug:
+                    return report
+
+        return None
 
     @classmethod
     @quickcache(['domain', 'report_slug'], timeout=300)
