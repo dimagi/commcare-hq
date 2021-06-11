@@ -453,6 +453,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class ChangedByUserFilter(ExpandedMobileWorkerFilter):
+    slug = "changed_by_user"
+    label = ugettext_lazy("By User(s)")
+
+    def get_default_selections(self):
+        return [('t__6', _("[Web Users]"))]
+
+
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:
