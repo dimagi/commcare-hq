@@ -17,7 +17,7 @@ def migrate_mirrors(apps, schema_editor):
             account=account,
             is_enabled=True,
             source_domain=source,
-            domains=list(account_domains - mirror_domains - {source}),
+            domains=list(account_domains & mirror_domains - {source}),
         ).save()
 
 
