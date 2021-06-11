@@ -19,17 +19,30 @@
     {% endblocktrans %}
   </p>
 
-  <p class="help-block">
-    {% blocktrans %}
-      To turn on enterprise permissions, select the controlling project space.
-    {% endblocktrans %}
-  </p>
+  {% if is_enabled %}
+    <form class="pull-right" method="POST" action="{% url "disable_enterprise_permissions" domain %}">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">
+        <i class="fa fa-ban"></i>
+        {% trans "Disable Enterprise Permissions" %}
+      </button>
+    </form>
+  {% else %}
+    <p class="help-block">
+      {% blocktrans %}
+        To turn on enterprise permissions, select the controlling project space.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
 
   <form method="POST" action="{% url "update_enterprise_permissions_source_domain" domain %}">
     {% csrf_token %}
     <div class="row">
       <div class="col-sm-3">
-        <select name="source_domain" class="hqwebapp-select2" data-allow-clear="true" data-placeholder="{% trans_html_attr "Select a Project Space" %}">
+        <select name="source_domain" class="hqwebapp-select2">
+          {% if not source_domain %}
+            <option value="">{% trans "Select the controlling project space" %}</option>
+          {% endif %}
           {% for domain in all_domains %}
             <option{% if domain == source_domain %} selected{% endif %}>{{ domain }}</option>
           {% endfor %}
@@ -43,26 +56,36 @@
     </div>
   </form>
 
-  {% if source_domain %}
-    <br>
-    <div class="row">
-      <div class="col-sm-6">
-        <p class="help-block">
+  <br>
+  <div class="row">
+    <div class="col-sm-6">
+      <p class="help-block">
+        {% if source_domain %}
           {% blocktrans %}
             Web users in <strong>{{ source_domain }}</strong> will also have permissions in the following project spaces.
           {% endblocktrans %}
-        </p>
-        {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=controlled_domains ACTION_ENABLE=False %}
-      </div>
-      <div class="col-sm-6">
-        <p class="help-block">
+        {% else %}
+          {% blocktrans %}
+            Web users in the controlling project space will also have permissions in the following project spaces.
+          {% endblocktrans %}
+        {% endif %}
+      </p>
+      {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=controlled_domains ACTION_ENABLE=False %}
+    </div>
+    <div class="col-sm-6">
+      <p class="help-block">
+        {% if source_domain %}
           {% blocktrans %}
             Web users in <strong>{{ source_domain }}</strong> will <strong>not</strong> have permissions in the following project spaces.
           {% endblocktrans %}
-        </p>
-        {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=ignored_domains ACTION_ENABLE=True %}
-      </div>
+        {% else %}
+          {% blocktrans %}
+            Web users in the controlling project space will <strong>not</strong> have permissions in the following project spaces.
+          {% endblocktrans %}
+        {% endif %}
+      </p>
+      {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=ignored_domains ACTION_ENABLE=True %}
     </div>
-  {% endif %}
+  </div>
 
 {% endblock %}
