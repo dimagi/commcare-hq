@@ -183,7 +183,7 @@ class TestNavigationEventsQueries(AuditcareTest):
                 write_export_from_all_log_events(csvfile, start=start, end=end)
             with open(filename, encoding="utf-8") as fh:
                 def key(row):
-                    return row["Date"], row["Type"]
+                    return row["Date"], row["Type"], row["User"]
                 rows = DictReader(fh)
                 items = sorted([unpack(r) for r in rows], key=key)
                 expected_items = [
