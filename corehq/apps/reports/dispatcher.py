@@ -26,6 +26,8 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
+from .lookup import ReportLookup
+
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
@@ -75,43 +77,17 @@ class ReportDispatcher(View):
 
     @classmethod
     def get_reports(cls, domain):
-        attr_name = cls.map_name
-        from corehq import reports
-        if domain:
-            domain_obj = Domain.get_by_name(domain)
-        else:
-            domain_obj = None
-
-        def process(reports):
-            if callable(reports):
-                reports = reports(domain_obj) if domain_obj else tuple()
-            return tuple(reports)
-
-        corehq_reports = process(getattr(reports, attr_name, ()))
-
-        module_name = get_custom_domain_module(domain)
-        if module_name is None:
-            custom_reports = ()
-        else:
-            module = __import__(module_name, fromlist=['reports'])
-            if hasattr(module, 'reports'):
-                reports = getattr(module, 'reports')
-                custom_reports = process(getattr(reports, attr_name, ()))
-            else:
-                custom_reports = ()
-
-        return corehq_reports + custom_reports
+        lookup = ReportLookup(cls.map_name)
+        return lookup.get_reports(domain)
 
     @classmethod
-    def get_report(cls, domain, report_slug, *args):
+    def get_report(cls, domain, report_slug, config_id=None):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
         """
-        for name, group in cls.get_reports(domain):
-            for report in group:
-                if report.slug == report_slug:
-                    return report
+        lookup = ReportLookup(cls.map_name)
+        return lookup.get_report(domain, report_slug)
 
     @classmethod
     @quickcache(['domain', 'report_slug'], timeout=300)
