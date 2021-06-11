@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.util.quickcache import quickcache
 
 
 class EnterprisePermissions(models.Model):
@@ -21,6 +22,7 @@ class EnterprisePermissions(models.Model):
     )
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'], timeout=7 * 24 * 60 * 60)
     def get_by_domain(cls, domain):
         """
         Get or create the configuration associated with the given domain's account.
@@ -34,6 +36,7 @@ class EnterprisePermissions(models.Model):
             return cls()
 
     @classmethod
+    @quickcache(['cls.__name__', 'source_domain'], timeout=7 * 24 * 60 * 60)
     def get_domains(cls, source_domain):
         """
         Get a list of domains, if any, controlled by the given source domain.
@@ -43,3 +46,9 @@ class EnterprisePermissions(models.Model):
         except cls.DoesNotExist:
             return []
         return list(set(config.domains) - {config.source_domain})
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.get_domains.clear(self.__class__, self.source_domain)
+        for domain in self.account.get_domains():
+            self.get_by_domain.clear(self.__class__, domain)
