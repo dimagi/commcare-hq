@@ -174,19 +174,20 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
             selected_billables = selected_billables.filter(
                 is_valid=(show_billables == ShowBillablesFilter.VALID),
             )
-        domain = EnterpriseDomainFilter.get_value(self.request, self.domain)
-        if domain:
-            selected_billables = selected_billables.filter(
-                domain=domain,
-            )
-        else:
-            account = BillingAccount.objects.filter(name=self.request.account).first()
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name:
+            account = BillingAccount.objects.filter(name=account_name).first()
             domains = Subscription.visible_objects.filter(
                 account=account
             ).values_list('subscriber__domain', flat=True).distinct()
             domains = set(domains).union([account.created_by_domain])
             selected_billables = selected_billables.filter(
                 domain__in=domains
+            )
+        domain = EnterpriseDomainFilter.get_value(self.request, self.domain)
+        if domain:
+            selected_billables = selected_billables.filter(
+                domain=domain,
             )
         has_gateway_fee = HasGatewayFeeFilter.get_value(
             self.request, self.domain
