@@ -81,6 +81,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         if user_ids:
             filters = filters & Q(user_id__in=user_ids)
 
+        if self.datespan:
+            filters = filters & Q(changed_at__lt=self.datespan.enddate_adjusted,
+                                  changed_at__gte=self.datespan.startdate)
         return UserHistory.objects.filter(filters)
 
     @property
