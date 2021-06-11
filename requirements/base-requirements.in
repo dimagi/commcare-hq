@@ -99,6 +99,7 @@ quickcache~=0.5
 redis==3.5.3
 reportlab==3.5.53
 requests_oauthlib
+requests_toolbelt==0.9.1
 requests~=2.20
 schema
 sentry-sdk==0.19.5
