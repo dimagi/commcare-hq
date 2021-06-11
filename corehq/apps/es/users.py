@@ -66,10 +66,10 @@ class UserES(HQESQuery):
 def domain(domain, allow_enterprise=False):
     domains = [domain]
     if allow_enterprise:
-        from corehq.apps.accounting.models import BillingAccount
-        if domain in BillingAccount.get_enterprise_permissions_domains(domain):
-            account = BillingAccount.get_account_by_domain(domain)
-            domains.append(account.permissions_source_domain)
+        from corehq.apps.enterprise.models import EnterprisePermissions
+        config = EnterprisePermissions.get_by_domain(domain)
+        if config.is_enabled and domain in config.domains:
+            domains.append(config.source_domain)
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
