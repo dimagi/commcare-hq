@@ -5,13 +5,13 @@ from memoized import memoized
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import UserHistory
 
 
-class UserHistoryReport(DatespanMixin, GenericTabularReport, ProjectReport):
+class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'user_history'
     name = ugettext_lazy("User History")
     section_name = ugettext_lazy("User Management")
