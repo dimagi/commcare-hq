@@ -8,6 +8,7 @@ from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
     WorkflowDatumMeta,
     WorkflowHelper,
+    prepend_parent_frame_children,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Argument,
@@ -46,8 +47,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
         frame = PushFrame()
         stack.add_frame(frame)
         arguments = []
-        helper = WorkflowHelper(self.suite, self.app, self.modules)
-        for child in helper.get_frame_children(module, form, include_root_module=True):
+        for child in self._get_frame_children(module, form):
             if isinstance(child, WorkflowDatumMeta):
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
@@ -61,3 +61,10 @@ class SessionEndpointContributor(SuiteContributorByModule):
             arguments=arguments,
             stack=stack,
         )
+
+    def _get_frame_children(self, module, form):
+        helper = WorkflowHelper(self.suite, self.app, self.modules)
+        frame_children = helper.get_frame_children(module, form)
+        if module.root_module_id:
+            frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
+        return frame_children

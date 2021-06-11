@@ -95,9 +95,9 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
-                            <command value="'m1-f0'"/>
                             <datum id="parent_id" value="$parent_id"/>
                             <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
                         </push>
                     </stack>
                 </endpoint>
@@ -133,9 +133,9 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
-                            <command value="'m1-f0'"/>
                             <datum id="parent_id" value="$parent_id"/>
                             <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
                         </push>
                     </stack>
                 </endpoint>

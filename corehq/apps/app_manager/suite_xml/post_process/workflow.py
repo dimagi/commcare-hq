@@ -105,7 +105,7 @@ class WorkflowHelper(PostProcessor):
             datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = module.root_module
             if root_module and include_root_module:
-                datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                datums_list.extend(self.get_module_datums(id_strings.menu_id(root_module)).values())
                 root_module_command = id_strings.menu_id(root_module)
                 if root_module_command != id_strings.ROOT:
                     frame_children.append(CommandId(root_module_command))
@@ -332,16 +332,9 @@ class EndOfFormNavigationWorkflow(object):
         else:
             frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
 
+        # I think this is a bug - it only executes when linking to a child of the current module
         if target_module in module.get_child_modules():
-            parent_frame_children = self.helper.get_frame_children(module)
-
-            # exclude frame children from the child module if they are already
-            # supplied by the parent module
-            parent_ids = {parent.id for parent in parent_frame_children}
-            frame_children = parent_frame_children + [
-                child for child in frame_children
-                if child.id not in parent_ids
-            ]
+            frame_children = prepend_parent_frame_children(self.helper, frame_children, module)
 
         return StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums)
 
@@ -354,6 +347,17 @@ class EndOfFormNavigationWorkflow(object):
                 return self._get_static_stack_frame(
                     form.post_form_workflow_fallback, form, module, xpath=no_conditions_match
                 )
+
+
+def prepend_parent_frame_children(helper, frame_children, parent_module):
+    # Note: this fn is roughly equivalent to just passing include_root_module
+    # to get_frame_children in the first place, but that gives the wrong order
+    parent_frame_children = helper.get_frame_children(parent_module)
+    parent_ids = {parent.id for parent in parent_frame_children}
+    return parent_frame_children + [
+        child for child in frame_children
+        if child.id not in parent_ids
+    ]
 
 
 class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_created case_not_created')):
