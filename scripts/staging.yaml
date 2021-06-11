@@ -64,7 +64,6 @@ branches:
     - smh/embedded-tableau # Steph May 7
     - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
     - sr/hide-geo  # Sravan May 25
-    - bmb/sso-new-user-page  # Biyeun 25th May, pending QA
     - bmb/sso-remove-toggle  # Biyeun 25th May, pending QA
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
