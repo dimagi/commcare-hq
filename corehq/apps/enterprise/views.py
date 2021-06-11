@@ -368,19 +368,33 @@ def disable_enterprise_permissions(request, domain):
 
 @require_superuser
 @require_POST
-def toggle_enterprise_permission(request, domain, target_domain):
+def add_enterprise_permissions_domain(request, domain, target_domain):
     config = EnterprisePermissions.get_by_domain(domain)
 
     redirect = reverse("enterprise_permissions", args=[domain])
     if target_domain not in config.account.get_domains():
-        messages.error(request, _("Could not update permissions."))
+        messages.error(request, _("Could not add {}}.").format(target_domain))
         return HttpResponseRedirect(redirect)
-    if target_domain in config.domains:
-        config.domains.remove(target_domain)
-    else:
-        config.domains.append(target_domain)
+
+    config.domains.append(target_domain)
     config.save()
-    messages.success(request, _('Permissions saved.'))
+    messages.success(request, _('Users in {} now have access to {}.').format(target_domain, config.source_domain))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_POST
+def remove_enterprise_permissions_domain(request, domain, target_domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    if target_domain not in config.account.get_domains() or target_domain not in config.domains:
+        messages.error(request, _("Could not remove {}.").format(target_domain))
+        return HttpResponseRedirect(redirect)
+
+    config.domains.remove(target_domain)
+    config.save()
+    messages.success(request, _('Users in {} now have access to {}.').format(target_domain, config.source_domain))
     return HttpResponseRedirect(redirect)
 
 
