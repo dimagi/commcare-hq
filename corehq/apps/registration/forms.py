@@ -79,7 +79,11 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.is_sso = kwargs.pop('is_sso', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
+
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            self.fields['password'].required = False
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -138,23 +142,29 @@ class RegisterWebUserForm(forms.Form):
                                       "}",
                         ),
                         crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isSso,'
+                                    'text: ssoMessage">&nbsp;</p>'),
+                        crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
                         hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    hqcrispy.InlineField(
-                        'password',
-                        css_class="input-lg",
-                        autocomplete="new-password",
-                        data_bind="value: password, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: password, "
-                                  "   delayedValidator: passwordDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'password',
+                            css_class="input-lg",
+                            autocomplete="new-password",
+                            data_bind="value: password, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: password, "
+                                      "   delayedValidator: passwordDelayed "
+                                      "}",
+                        ),
+                        hqcrispy.ValidationMessage('passwordDelayed'),
+                        data_bind="visible: showPasswordField"
                     ),
-                    hqcrispy.ValidationMessage('passwordDelayed'),
                     hqcrispy.InlineField(
                         'phone_number',
                         css_class="input-lg",
@@ -243,6 +253,10 @@ class RegisterWebUserForm(forms.Form):
         return data
 
     def clean_password(self):
+        if settings.ENFORCE_SSO_LOGIN and self.is_sso:
+            # This field is not used with SSO. A randomly generated
+            # password as a fallback is created in SsoBackend.
+            return
         return clean_password(self.cleaned_data.get('password'))
 
     def clean_eula_confirmed(self):
@@ -287,16 +301,27 @@ class DomainRegistrationForm(forms.Form):
     max_name_length = 25
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
-                                      widget=forms.TextInput(attrs={'class': 'form-control',
-                                        'placeholder': _('My CommCare Project')}))
+    hr_name = forms.CharField(
+        label=_('Project Name'),
+        max_length=max_name_length,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': _('My CommCare Project'),
+            }
+        ),
+        help_text=_(
+            "Important: This will be used to create a project URL, and you "
+            "will not be able to change it in the future."
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
+        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
+        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-4'
         self.helper.layout = crispy.Layout(
             'hr_name',
             'org',
@@ -304,7 +329,7 @@ class DomainRegistrationForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Create Project"),
                     type="submit",
-                    css_class="btn btn-primary btn-lg disable-on-submit",
+                    css_class="btn btn-primary disable-on-submit",
                 )
             )
         )
