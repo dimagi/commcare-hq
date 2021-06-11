@@ -1,5 +1,6 @@
 import json
 
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -7,6 +8,8 @@ from memoized import memoized
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.reports.util import datespan_from_beginning
@@ -57,8 +60,28 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @memoized
     def _get_queryset(self):
-        # ToDo: add query based on params
-        return UserHistory.objects.filter(domain=self.domain)
+        user_ids = self._get_user_ids()
+        query = self._build_query(user_ids)
+        return query
+
+    def _get_user_ids(self):
+        es_query = self._get_users_es_query(self.request.GET.getlist(EMWF.slug))
+        return es_query.values_list('_id', flat=True)
+
+    def _get_users_es_query(self, slugs):
+        return EMWF.user_es_query(
+            self.domain,
+            slugs,
+            self.request.couch_user,
+        )
+
+    def _build_query(self, user_ids):
+        filters = Q(domain=self.domain)
+
+        if user_ids:
+            filters = filters & Q(user_id__in=user_ids)
+
+        return UserHistory.objects.filter(filters)
 
     @property
     def rows(self):
