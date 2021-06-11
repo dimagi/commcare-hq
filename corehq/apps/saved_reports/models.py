@@ -777,6 +777,12 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         if start_date != self.start_date and start_date < datetime.today().date():
             raise ValidationError("You can not specify a start date in the past.")
 
+    def can_be_viewed_by(self, user):
+        if ((user._id == self.owner_id)
+                or (user.is_domain_admin(self.domain)
+                or (user.get_email() in self.all_recipient_emails))):
+            return True
+
 
 class ScheduledReportsCheckpoint(models.Model):
     """
