@@ -314,47 +314,42 @@ def group_dataset_datavalues(
         group_by_items = ['orgUnit', 'period']
 
     return get_grouped_datavalues_sets(
+        data_list=datavalues_list,
         group_by=group_by_items,
-        template_dataset=dataset,
-        data_list=datavalues_list
+        template_dataset=dataset
     )
 
 
-def get_grouped_datavalues_sets(group_by, template_dataset, data_list):
-    """
-        'group_by' will mostly be a list containing just 1 item, but in one instance it contains 2 items, thus
-        all list operations concerning the 'group_by' argument would take a very short time to execute.
-    """
-    def get_grouped_data(data, group_by_keys):
-        data_list_temp = copy.deepcopy(data)
+def group_data_by_keys(data: List[dict], keys: list):
+    from collections import defaultdict
+    datasets_dict = defaultdict(lambda: [])
+    for row in data:
+        dict_key = []
+        for k in keys:
+            dict_key.append(row[k])
+            row.pop(k)
 
-        while len(data_list_temp) > 0:
-            group_by_values_ = [data_list_temp[0][group_by_key] for group_by_key in group_by_keys]
+        dict_key = tuple(dict_key)
+        datasets_dict[dict_key].append(row)
 
-            grouped_data = []
-            iterable_data_list = copy.deepcopy(data_list_temp)
+    return dict(datasets_dict)
 
-            for data_item in data_list_temp:
-                data_item_key_values = [data_item[group_by_key] for group_by_key in group_by_keys]
 
-                if sorted(data_item_key_values) == sorted(group_by_values_):
-                    iterable_data_list.remove(data_item)
-                    [data_item.pop(group_by_key) for group_by_key in group_by_keys]
-                    grouped_data.append(data_item)
-
-            data_list_temp = copy.deepcopy(iterable_data_list)
-            yield [{'group_by_values': group_by_values_, 'grouped_datavalues': grouped_data}]
+def get_grouped_datavalues_sets(
+    data_list: List[dict],
+    group_by_keys: list,
+    template_dataset: dict,
+) -> List[dict]:
 
     datasets = []
-    for grouped_result in chain.from_iterable(get_grouped_data(data_list, group_by)):
-        grouped_data_set = copy.deepcopy(template_dataset)
+    for grouped_key, grouped_value in group_data_by_keys(data_list, group_by_keys).items():
+        dataset = copy.deepcopy(template_dataset)
 
-        group_by_values = grouped_result['group_by_values']
-        for key, value in zip(group_by, group_by_values):
-            grouped_data_set[key] = value
+        for key, key_value in zip(group_by_keys, grouped_key):
+            dataset[key] = key_value
 
-        grouped_data_set['dataValues'] = grouped_result['grouped_datavalues']
-        datasets.append(grouped_data_set)
+        dataset['dataValues'] = grouped_value
+        datasets.append(dataset)
 
     return datasets
 

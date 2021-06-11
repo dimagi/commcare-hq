@@ -240,10 +240,7 @@ def add_initial_properties(instance, kwargs_initial):
 
 
 def ucr_has_field(ucr: ReportConfiguration, field):
-    for column in ucr.report_columns:
-        if column.column_id == field:
-            return True
-    return False
+    return any(c.column_id == field for c in ucr.report_columns)
 
 
 def get_connection_settings_field(domain):
