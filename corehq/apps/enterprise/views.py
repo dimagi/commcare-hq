@@ -341,6 +341,7 @@ def enterprise_permissions(request, domain):
     context = {
         'domain': domain,
         'all_domains': sorted(all_domains),
+        'is_enabled': config.is_enabled,
         'source_domain': config.source_domain,
         'ignored_domains': sorted(list(ignored_domains)),
         'controlled_domains': sorted(config.domains),
@@ -354,8 +355,21 @@ def enterprise_permissions(request, domain):
 
 @require_superuser
 @require_POST
+def disable_enterprise_permissions(request, domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+    config.is_enabled = False
+    config.source_domain = None
+    config.save()
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    messages.success(request, _('Enterprise permissions have been disabled.'))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_POST
 def toggle_enterprise_permission(request, domain, target_domain):
-    config = EnterprisePermissions.get_dy_domain(domain)
+    config = EnterprisePermissions.get_by_domain(domain)
 
     redirect = reverse("enterprise_permissions", args=[domain])
     if target_domain not in config.account.get_domains():
@@ -377,14 +391,14 @@ def update_enterprise_permissions_source_domain(request, domain):
     redirect = reverse("enterprise_permissions", args=[domain])
 
     config = EnterprisePermissions.get_by_domain(domain)
-    if source_domain and source_domain not in config.account.get_domains():
-        messages.error(request, _("Please select a valid domain."))
+    if source_domain not in config.account.get_domains():
+        messages.error(request, _("Please select a project."))
         return HttpResponseRedirect(redirect)
 
-    if source_domain:
-        config.source_domain = source_domain
-    else:
-        config.is_enabled = False
+    config.is_enabled = True
+    config.source_domain = source_domain
+    if source_domain in config.domains:
+        config.domains.remove(source_domain)
     config.save()
-    messages.success(request, _('Permissions saved.'))
+    messages.success(request, _('Controlling domain set to {}.').format(source_domain))
     return HttpResponseRedirect(redirect)
