@@ -29,7 +29,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     section_name = "Enterprise"
     dispatcher = EnterpriseReportDispatcher
     name = "SMS Detailed Report"
-    description = """This is a report of SMS details that can be altered by using the filter options 
+    description = """This is a report of SMS details that can be altered by using the filter options
     above. Once you are happy with your filters, simply click Apply."""
     slug = "Enterprise"
     ajax_pagination = True
