@@ -6,8 +6,8 @@
     <p>
       {% blocktrans %}
         This project is linked to the upstream project <a data-bind="attr: {'href': upstreamURL}, text: upstreamDomain"></a>.<br/>
-        The following items below are synced from the upstream project.<br/>
-        <a href="#" target="_blank">Learn more</a> about Linked Projects.
+        The data models below can be synced with the existing data models in the upstream project.<br/>
+        <a href="#" target="_blank">Learn more</a> about syncing data between linked projects.
       {% endblocktrans %}
     </p>
 
@@ -35,14 +35,14 @@
             <td data-bind="text: lastUpdate"></td>
             <td data-bind="css: {'has-error': error}">
               <button class="btn btn-danger" data-toggle="modal" data-bind="visible: showUpdate() && !update_url, attr: {'data-target': '#overwrite-content-modal-' + $index()}">
-                <i class="fa fa-refresh"></i> {% trans "Overwrite" %}
+                <i class="fa fa-refresh"></i> {% trans "Sync & Overwrite" %}
               </button>
               <div class="modal fade" tabindex="-1" role="dialog" data-bind="attr: {'id': 'overwrite-content-modal-' + $index()}">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
                       <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
-                      <h4 class="modal-title">{% trans 'Overwrite' %}</h4>
+                      <h4 class="modal-title">{% trans 'Sync & Overwrite' %}</h4>
                     </div>
                     <div class="modal-body">
                       <h4>
@@ -52,14 +52,14 @@
                       </h4>
                       <p>
                         {% blocktrans %}
-                          This will pull <b data-bind="text: name"></b> from the upstream project <b data-bind="text: $root.upstreamDomain"></b>, overwriting the existing <b data-bind="text: name"></b>.<br/>
+                          This will pull <!-- ko text: name --><!-- /ko --> from the upstream project <b data-bind="text: $root.upstreamDomain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko --> data model.<br/>
                           <a href="#" target="_blank">Learn more</a> about pulling content from an upstream project into a downstream project.
                         {% endblocktrans %}
                       </p>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                      <button type="button" class="btn btn-primary" data-bind="click: update" data-dismiss="modal">{% trans 'Overwrite' %}</button>
+                      <button type="button" class="btn btn-primary" data-bind="click: update" data-dismiss="modal">{% trans 'Sync & Overwrite' %}</button>
                     </div>
                   </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->

@@ -224,15 +224,22 @@ hqDefine("linked_domain/js/domain_links", [
         self.addDownstreamDomain = function (viewModel) {
             _private.RMI("create_domain_link", {
                 "downstream_domain": viewModel.value(),
-            }).done(function (data) {
-                self.availableDomains(_.filter(self.availableDomains(), function (item) {
-                    return item !== viewModel.value();
-                }));
-                self.value(null);
-                self.parent.domain_links.unshift(DomainLink(data.response));
-                self.parent.goToPage(1);
+            }).done(function (response) {
+                if (response.success) {
+                    self.availableDomains(_.filter(self.availableDomains(), function (item) {
+                        return item !== viewModel.value();
+                    }));
+                    self.value(null);
+                    self.parent.domain_links.unshift(DomainLink(response.domain_link));
+                    self.parent.goToPage(1);
+                } else {
+                    var errorMessage = _.template(
+                        gettext('Unable to link project spaces. <%- error %>\nYou must remove the existing link before creating this new link.')
+                    )({error: response.message});
+                    alertUser.alert_user(errorMessage, 'danger');
+                }
             }).fail(function () {
-                alertUser.alert_user(gettext('Unable to link domains.\nPlease try again, or report an issue if the problem persists.'), 'danger');
+                alertUser.alert_user(gettext('Unable to link project spaces.\nPlease try again, or report an issue if the problem persists.'), 'danger');
             });
         };
         return self;

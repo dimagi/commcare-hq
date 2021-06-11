@@ -82,17 +82,24 @@ class DomainLink(models.Model):
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
         existing_links = cls.all_objects.filter(linked_domain=linked_domain)
-        active_links_with_other_domains = [l for l in existing_links
-                                           if not l.deleted and l.master_domain != master_domain]
+        active_links_with_other_domains = [
+            domain_link for domain_link in existing_links
+            if not domain_link.deleted and domain_link.master_domain != master_domain
+        ]
         if active_links_with_other_domains:
-            raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
-                linked_domain, active_links_with_other_domains[0].master_domain
-            ))
+            already_linked_domain = active_links_with_other_domains[0].master_domain
+            raise DomainLinkError(
+                _(f'{linked_domain} is already a downstream project space of {already_linked_domain}.')
+            )
 
-        deleted_existing_links = [l for l in existing_links
-                                  if l.deleted and l.master_domain == master_domain]
-        active_links_with_this_domain = [l for l in existing_links
-                                         if not l.deleted and l.master_domain == master_domain]
+        deleted_existing_links = [
+            domain_link for domain_link in existing_links
+            if domain_link.deleted and domain_link.master_domain == master_domain
+        ]
+        active_links_with_this_domain = [
+            domain_link for domain_link in existing_links
+            if not domain_link.deleted and domain_link.master_domain == master_domain
+        ]
 
         if deleted_existing_links:
             # if there was a deleted link, just undelete it
