@@ -6,24 +6,32 @@ from memoized import memoized
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.reports.standard import DatespanMixin, ProjectReport
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import UserHistory
 
 
-class UserHistoryReport(GenericTabularReport, ProjectReport):
+class UserHistoryReport(DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'user_history'
     name = ugettext_lazy("User History")
     section_name = ugettext_lazy("User Management")
 
     dispatcher = UserManagementReportDispatcher
 
-    # ToDo: Add filters
-    fields = []
+    # ToDo: Add pending filters
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     description = ugettext_lazy("History of user updates")
     ajax_pagination = True
 
     sortable = False
+
+    @property
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     @property
     def headers(self):
