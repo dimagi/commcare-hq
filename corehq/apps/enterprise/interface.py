@@ -1,6 +1,6 @@
 from django.db.models.aggregates import Count
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.enterprise.dispatcher import EnterpriseInterfaceDispatcher
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.accounting.filters import DateCreatedFilter, NameFilter
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -27,7 +27,7 @@ from dimagi.utils.dates import DateSpan
 class EnterpriseSMSBillablesInterface(GenericTabularReport):
     base_template = "accounting/report_filter_actions.html"
     section_name = "Enterprise"
-    dispatcher = EnterpriseInterfaceDispatcher
+    dispatcher = EnterpriseReportDispatcher
     name = "SMS Detailed Report"
     description = """This is a report of SMS details that can be altered by using the filter options 
     above. Once you are happy with your filters, simply click Apply."""
