@@ -100,7 +100,7 @@ class TableauReport(ProjectReport):
 def get_reports(domain):
     vis_num = 1
     result = []
-    for v in TableauVisualization.objects.all().filter(project=domain):
+    for v in TableauVisualization.objects.all().filter(domain=domain):
         visualization_class = _make_visualization_class(vis_num, v)
         if visualization_class is not None:
             result.append(visualization_class)

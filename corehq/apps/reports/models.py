@@ -226,11 +226,11 @@ class TableauServer(models.Model):
 
 
 class TableauVisualization(models.Model):
-    project = models.CharField(max_length=64)
+    domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
 
     def __str__(self):
-        return '{project} {server} {view}'.format(project=self.project,
-                                                  server=self.server,
-                                                  view=self.view_url[0:64])
+        return '{domain} {server} {view}'.format(domain=self.domain,
+                                                 server=self.server,
+                                                 view=self.view_url[0:64])
