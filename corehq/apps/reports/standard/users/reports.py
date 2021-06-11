@@ -1,3 +1,5 @@
+import json
+
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -8,7 +10,9 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.users.models import UserHistory
+from corehq.apps.users.models import CouchUser, UserHistory
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.util.timezones.conversions import ServerTime
 
 
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -35,9 +39,14 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @property
     def headers(self):
-        # ToDo: Add headers
         h = [
             DataTablesColumn(_("User")),
+            DataTablesColumn(_("By User")),
+            DataTablesColumn(_("Action")),
+            DataTablesColumn(_("Via")),
+            DataTablesColumn(_("Change Message")),
+            DataTablesColumn(_("Changes")),
+            DataTablesColumn(_("Timestamp")),
         ]
 
         return DataTablesHeader(*h)
@@ -49,7 +58,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     @memoized
     def _get_queryset(self):
         # ToDo: add query based on params
-        return UserHistory.objects.none()
+        return UserHistory.objects.filter(domain=self.domain)
 
     @property
     def rows(self):
@@ -61,5 +70,21 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
 
 def _user_history_row(record):
-    # ToDo: add render for each row
-    return []
+    return [
+        CouchUser.get_by_user_id(record.user_id).username,  # ToDo: re-think this fetch
+        CouchUser.get_by_user_id(record.changed_by).username,
+        _get_action_display(record.action),
+        record.details['changed_via'],
+        record.message,
+        json.dumps(record.details['changes']),
+        ServerTime(record.changed_at).ui_string(USER_DATETIME_FORMAT),
+    ]
+
+
+def _get_action_display(logged_action):
+    action = ugettext_lazy("Updated")
+    if logged_action == UserHistory.CREATE:
+        action = ugettext_lazy("Added")
+    elif logged_action == UserHistory.DELETE:
+        action = ugettext_lazy("Deleted")
+    return action
