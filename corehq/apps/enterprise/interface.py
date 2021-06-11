@@ -1,9 +1,12 @@
+
+from django.utils.translation import ugettext_noop as _
 from django.db.models.aggregates import Count
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.accounting.filters import DateCreatedFilter, NameFilter
 from corehq.apps.sms.models import INCOMING, OUTGOING
+
 
 from corehq.apps.smsbillables.filters import (
     DateSentFilter,
@@ -48,17 +51,17 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date of Message"),
-            DataTablesColumn("Project Space"),
-            DataTablesColumn("Direction"),
-            DataTablesColumn("SMS parts"),
-            DataTablesColumn("Gateway", sortable=False),
-            DataTablesColumn("Gateway Charge", sortable=False),
-            DataTablesColumn("Usage Charge", sortable=False),
-            DataTablesColumn("Total Charge", sortable=False),
-            DataTablesColumn("Message Log ID", sortable=False),
-            DataTablesColumn("Is Valid?", sortable=False),
-            DataTablesColumn("Date Created"),
+            DataTablesColumn(_("Date of Message")),
+            DataTablesColumn(_("Project Space")),
+            DataTablesColumn(_("Direction")),
+            DataTablesColumn(_("SMS parts")),
+            DataTablesColumn(_("Gateway"), sortable=False),
+            DataTablesColumn(_("Gateway Charge"), sortable=False),
+            DataTablesColumn(_("Usage Charge"), sortable=False),
+            DataTablesColumn(_("Total Charge"), sortable=False),
+            DataTablesColumn(_("Message Log ID"), sortable=False),
+            DataTablesColumn(_("Is Valid?"), sortable=False),
+            DataTablesColumn(_("Date Created")),
         )
 
     @property
@@ -135,8 +138,8 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
                 sms_billable.date_sent,
                 sms_billable.domain,
                 {
-                    INCOMING: "Incoming",
-                    OUTGOING: "Outgoing",
+                    INCOMING: _("Incoming"),
+                    OUTGOING: _("Outgoing"),
                 }.get(sms_billable.direction, ""),
                 sms_billable.multipart_count,
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
