@@ -2,13 +2,19 @@ import logging
 import sys
 import traceback
 
-from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
+from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
+from corehq.dbaccessors.couchapps.all_docs import (
+    get_all_docs_with_doc_types,
+    get_doc_count_by_type,
+    get_doc_count_by_domain_type
+)
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.migration import disable_sync_to_couch
 
 logger = logging.getLogger(__name__)
@@ -185,6 +191,11 @@ class PopulateSQLCommand(BaseCommand):
                 models that don't support verification.
             """,
         )
+        parser.add_argument(
+            '--domains',
+            nargs='+',
+            help="""Only migrate documents in the specified domains""",
+        )
 
     def handle(self, **options):
         verify_only = options.get("verify_only", False)
@@ -193,17 +204,27 @@ class PopulateSQLCommand(BaseCommand):
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
-        self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         self.diff_count = 0
         self.doc_index = 0
+
+        domains = options["domains"]
+        if domains:
+            self.doc_count = sum(self._get_couch_doc_count_for_domain(domain) for domain in domains)
+            sql_doc_count = self._get_sql_doc_count_for_domains(domains)
+            docs = self._iter_couch_docs_for_domains(domains)
+        else:
+            self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+            sql_doc_count = self.sql_class().objects.count()
+            docs = get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
 
         logger.info("Found {} {} docs and {} {} models".format(
             self.doc_count,
             self.couch_doc_type(),
-            self.sql_class().objects.count(),
+            sql_doc_count,
             self.sql_class().__name__,
         ))
-        for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
+
+        for doc in docs:
             self.doc_index += 1
             if not verify_only:
                 self._migrate_doc(doc)
@@ -238,3 +259,18 @@ class PopulateSQLCommand(BaseCommand):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
             logger.info("{} model for doc with id {}".format(action, doc["_id"]))
+
+    def _get_couch_doc_count_for_domain(self, domain):
+        return get_doc_count_by_domain_type(self.couch_db(), domain, self.couch_doc_type())
+
+    def _get_sql_doc_count_for_domains(self, domains):
+        return self.sql_class().objects.filter(domain__in=domains).count()
+
+    def _iter_couch_docs_for_domains(self, domains):
+        for domain in domains:
+            logger.info(f"Processing data for domain: {domain}")
+            doc_id_iter = iterate_doc_ids_in_domain_by_type(
+                domain, self.couch_doc_type(), database=self.couch_db()
+            )
+            for doc in iter_docs(self.couch_db(), doc_id_iter):
+                yield doc
