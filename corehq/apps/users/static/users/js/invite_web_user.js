@@ -41,12 +41,6 @@ hqDefine('users/js/invite_web_user',[
                         if (self.email.isValid()) {
                             self.showIdentityProviderMessage(false);
 
-                            // ignore sso email domain check in production for now
-                            if (!toggles.toggleEnabled('ENTERPRISE_SSO')) {
-                                callback({ isValid: true });
-                                return;
-                            }
-
                             $.post(initialPageData.reverse('check_sso_trust'), {
                                 username: self.email(),
                             }, function (result) {
