@@ -198,7 +198,7 @@ class TestDeleteConfig(TestCase):
 
 
 class TestDeleteScheduledReport(TestCase):
-    def test_invalid_report_redirects_to_home(self):
+    def test_invalid_report_redirects(self):
         response = self.delete_scheduled_report(report_id='invalid_report_id')
         self.assertEqual(response.status_code, 302)
 

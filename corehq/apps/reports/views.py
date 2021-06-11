@@ -466,14 +466,14 @@ class AddSavedReportConfigView(View):
 
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug, dispatcher_klass=ProjectReportDispatcher, once=False):
+def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
     form = EmailReportForm(request.GET)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
-    if not _can_email_report(report_slug, request, dispatcher_klass, domain):
+    if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
     recipient_emails = set(form.cleaned_data['recipient_emails'])
@@ -482,24 +482,21 @@ def email_report(request, domain, report_slug, dispatcher_klass=ProjectReportDis
 
     request_data = request_as_dict(request)
 
-    report_type = dispatcher_klass.prefix
+    report_type = dispatcher_class.prefix
     send_email_report.delay(recipient_emails, domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
 
 
-def _can_email_report(report_slug, request, dispatcher_klass, domain):
-    dispatcher = dispatcher_klass()
+def _can_email_report(report_slug, request, dispatcher_class, domain):
+    dispatcher = dispatcher_class()
     lookup = ReportLookup(dispatcher.map_name)
     report = lookup.get_report(domain, report_slug)
     if not report:
         return False
 
     report_name = get_full_report_name(report)
-    if not dispatcher.permissions_check(report_name, request, domain):
-        return False
-
-    return True
+    return dispatcher.permissions_check(report_name, request, domain)
 
 
 @login_and_domain_required
@@ -521,10 +518,7 @@ def delete_config(request, domain, config_id):
 
 
 def _can_delete_saved_report(report, user, domain):
-    if domain != report.domain:
-        return False
-
-    return user._id == report.owner_id
+    return domain == report.domain and user._id == report.owner_id
 
 
 def normalize_hour(hour):
@@ -841,10 +835,7 @@ def _can_delete_scheduled_report(report, user, domain):
     if report.domain != domain:
         return False
 
-    if user._id != report.owner_id and not user.is_domain_admin(domain):
-        return False
-
-    return True
+    return user._id == report.owner_id or user.is_domain_admin(domain)
 
 
 @login_and_domain_required
@@ -873,10 +864,7 @@ def _can_send_test_report(report_id, user, domain):
     if report.domain != domain:
         return False
 
-    if user._id != report.owner._id and not user.is_domain_admin(domain):
-        return False
-
-    return True
+    return user._id == report.owner._id or user.is_domain_admin(domain)
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
@@ -2166,7 +2154,7 @@ def export_report(request, domain, export_hash, format):
     except NotFound:
         return report_not_found
     with report_file:
-        if not request.couch_user.has_permission(meta.domain, 'view_report', data=report_class):
+        if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
             file = ContentFile(report_file.read())
