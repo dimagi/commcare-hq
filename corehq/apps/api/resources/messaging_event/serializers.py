@@ -5,6 +5,7 @@ from corehq.apps.sms.util import get_backend_name
 
 
 def serialize_event(event):
+    messages = _serialize_event_messages(event)
     return {
         "id": event.id,
         "content_type": MessagingEvent.CONTENT_TYPE_SLUGS.get(event.content_type, "unknown"),
@@ -13,21 +14,24 @@ def serialize_event(event):
         "domain": event.parent.domain,
         "error": _serialize_event_error(event),
         "form": _serialize_event_form(event),
-        'messages': _serialize_event_messages(event),
+        'messages': messages,
         "recipient": _serialize_event_recipient(event),
         "source": _serialize_event_source(event),
-        "status": _serialize_event_status(event),
+        "status": _serialize_event_status(event, messages),
     }
 
 
-def _serialize_event_status(event):
+def _serialize_event_status(event, messages):
     """The status of the event is not tied to the status of individual messages. An event
     may be 'complete' but some or all of the messages may have errored.
 
     In the case of completed survey events the status is taken from the XFormsSession.
     """
-    if event.status == MessagingEvent.STATUS_COMPLETED and event.xforms_session_id:
-        return event.xforms_session.status_slug
+    if event.status == MessagingEvent.STATUS_COMPLETED:
+        if event.xforms_session_id:
+            return event.xforms_session.status_slug
+        if any(message["status"] == SMS.STATUS_ERROR for message in messages):
+            return SMS.STATUS_ERROR  # mark event status as 'error' if any messages errored
     return MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown')
 
 

@@ -174,10 +174,13 @@ class TestMessagingEventResource(APIResourceTest):
     def test_status_filtering_error(self):
         make_events_for_test(self.domain.name, datetime.utcnow())
         make_events_for_test(self.domain.name, datetime.utcnow(), status=MessagingEvent.STATUS_ERROR)
+        make_events_for_test(self.domain.name, datetime.utcnow(), error=True)  # sms with error
         url = f'{self.list_endpoint}?status=error'
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
-        actual = {event["status"] for event in json.loads(response.content)['objects']}
+        events = json.loads(response.content)['objects']
+        self.assertEqual(len(events), 2)
+        actual = {event["status"] for event in events}
         self.assertEqual(actual, {"error"})
 
     def test_error_code_filtering(self):
