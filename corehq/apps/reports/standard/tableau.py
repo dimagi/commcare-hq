@@ -1,6 +1,7 @@
 import sys
 
 import requests
+from requests_toolbelt.adapters import host_header_ssl
 
 from django.shortcuts import render
 
@@ -33,8 +34,14 @@ class TableauReport(ProjectReport):
     @property
     def template_context(self):
         context = super().template_context
-        context.update({"server_type": self.visualization.server.server_type,
+        if self.visualization.server.validate_hostname == '':
+            hostname = self.visualization.server.server_name
+        else:
+            hostname = "https://" + self.visualization.server.validate_hostname
+        context.update({"domain": self.visualization.server.domain,
+                        "server_type": self.visualization.server.server_type,
                         "server_address": self.visualization.server.server_name,
+                        "validate_hostname": hostname,
                         "target_site": self.visualization.server.target_site,
                         "allow_domain_username_override": self.visualization.server.allow_domain_username_override,
                         "domain_username": self.visualization.server.domain_username,
@@ -60,8 +67,16 @@ class TableauReport(ProjectReport):
         post_arguments = {'username': self.get_post_username()}
         if self.visualization.server.target_site != 'Default':
             post_arguments.update({'target_site': self.visualization.server.target_site})
-        tabserver_response = requests.post(tabserver_url,
-                                           post_arguments)
+
+        if self.visualization.server.validate_hostname != '':
+            request = requests.Session()
+            request.mount('https://', host_header_ssl.HostHeaderSSLAdapter())
+            tabserver_response = request.post(tabserver_url,
+                                              post_arguments,
+                                              headers={'Host': self.visualization.server.validate_hostname})
+        else:
+            tabserver_response = requests.post(tabserver_url, post_arguments)
+
         if tabserver_response.status_code == 200:
             if tabserver_response.content != b'-1':
                 self.context.update({'ticket': tabserver_response.content.decode('utf-8')})

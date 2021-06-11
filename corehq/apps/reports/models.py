@@ -211,8 +211,10 @@ class TableauServer(models.Model):
         ('server', 'Tableau Server'),
         ('online', 'Tableau Online'),
     )
+    domain = models.CharField(max_length=64, default='')
     server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
     server_name = models.CharField(max_length=128)
+    validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
     domain_username = models.CharField(max_length=64)
     allow_domain_username_override = models.BooleanField(default=False)
