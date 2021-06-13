@@ -19,9 +19,9 @@ def create_enterprise_permissions(email, source_domain, domains=None, other_doma
 
     all_domains = [source_domain]
     if domains:
-        domains.extend(domains)
+        all_domains.extend(domains)
     if other_domains:
-        domains.extend(other_domains)
+        all_domains.extend(other_domains)
     for domain in all_domains:
         subscriptions.append(Subscription.new_domain_subscription(account, domain, plan))
 
