@@ -1483,7 +1483,7 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+User+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
