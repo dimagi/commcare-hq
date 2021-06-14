@@ -86,27 +86,24 @@ class TestLogUserChange(TestCase):
         self.commcare_user.phone_numbers = restore_phone_numbers_to
 
     def test_delete(self):
-        self.assertEqual(UserHistory.objects.count(), 0)
-        user_history = log_user_change(
-            self.domain,
-            self.commcare_user,
-            self.web_user,
-            changed_via=USER_CHANGE_VIA_WEB,
-            message="Deleted User",
-            action=ModelAction.DELETE
-        )
+        user_to_delete = CommCareUser.create(self.domain, f'delete@{self.domain}.commcarehq.org', '******',
+                                             created_by=None, created_via=None)
+        user_to_delete_id = user_to_delete.get_id
+
+        user_to_delete.delete(self.domain, deleted_by=self.web_user, deleted_via=USER_CHANGE_VIA_WEB)
+
+        user_history = UserHistory.objects.get(domain=self.domain, user_id=user_to_delete_id)
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
-        self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertEqual(user_history.by_user_id, self.web_user.get_id)
         self.assertEqual(
             user_history.details,
             {
-                'changes': _get_expected_changes_json(self.commcare_user),
+                'changes': _get_expected_changes_json(user_to_delete),
                 'changed_via': USER_CHANGE_VIA_WEB,
             }
         )
-        self.assertEqual(user_history.message, "Deleted User")
+        self.assertIsNone(user_history.message)
         self.assertEqual(user_history.action, ModelAction.DELETE.value)
 
     def test_domain_less_actions(self):
