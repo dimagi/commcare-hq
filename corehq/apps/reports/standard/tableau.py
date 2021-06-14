@@ -82,11 +82,13 @@ class TableauReport(ProjectReport):
                 self.context.update({'ticket': tabserver_response.content.decode('utf-8')})
                 return super().view_response
             else:
-                return render(self.request, 'reports/tableau_auth_failed.html',
+                self.context.update({"failure_message": "Tableau trusted authentication failed"})
+                return render(self.request, 'reports/tableau_server_request_failed.html',
                               self.context)
         else:
-            self.context.update({"status_code": tabserver_response.status_code})
-            return render(self.request, 'reports/tableau_request_failed.html',
+            message = "Request to Tableau failed with status code {}".format(tabserver_response.status_code)
+            self.context.update({"failure_message": message})
+            return render(self.request, 'reports/tableau_server_request_failed.html',
                           self.context)
 
     def tableau_online_response(self):
