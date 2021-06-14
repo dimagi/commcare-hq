@@ -81,6 +81,5 @@ branches:
     - jm/remove-es7  # Joel June 9
     - cs/SC-1390-put_turn_behind_ff  # Charl June 10
     - ap/remove-angular # Amit June 10
-    - gh/add-upstream-app-id-to-brief-view # Graham June 10
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
 submodules: { }
