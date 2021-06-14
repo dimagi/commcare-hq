@@ -75,7 +75,6 @@ branches:
     - fr/remote-linked-ucr      # Farid June 4
     - jls/move-enterprise-permissions-1-of-3  # Jenny June 4
     - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
-    - jls/users-merge-migration # Jenny June 11
     - sk/messaging-event-api  # Simon June 7
     - smh/multi-domain-user-upload-update  # Steph June 7
     - bmb/sso-invitation-new  # Biyeun June 9, in pilot & QA please do not remove!
