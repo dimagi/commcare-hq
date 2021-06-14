@@ -559,10 +559,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def all_recipient_emails(self):
-        # handle old documents
-        if not self.owner_id:
-            return frozenset([self.owner.get_email()])
-
         emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
             emails |= {self.owner_email}
