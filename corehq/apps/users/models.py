@@ -1171,6 +1171,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return session_data
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()

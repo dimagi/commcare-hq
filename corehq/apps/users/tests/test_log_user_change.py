@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
@@ -89,6 +89,10 @@ class TestLogUserChange(TestCase):
         user_to_delete = CommCareUser.create(self.domain, f'delete@{self.domain}.commcarehq.org', '******',
                                              created_by=None, created_via=None)
         user_to_delete_id = user_to_delete.get_id
+
+        with override_settings(UNIT_TESTING=False):
+            with self.assertRaisesMessage(ValueError, "Missing deleted_by"):
+                user_to_delete.delete(self.domain, deleted_by=None)
 
         user_to_delete.delete(self.domain, deleted_by=self.web_user, deleted_via=USER_CHANGE_VIA_WEB)
 
