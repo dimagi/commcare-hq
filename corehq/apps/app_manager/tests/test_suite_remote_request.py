@@ -206,8 +206,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.additional_case_types = [another_case_type]
-        suite = self.app.create_suite()
-        suite = parse_normalize(suite, to_string=False)
+        suite_xml = self.app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
             "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]".format(
@@ -218,6 +218,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 self.module.search_config.search_filter
             ),
             suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
     def test_case_search_action_relevant_condition(self, *args):

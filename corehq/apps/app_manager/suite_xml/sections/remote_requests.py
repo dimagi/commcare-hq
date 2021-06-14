@@ -154,6 +154,14 @@ class RemoteRequestFactory(object):
                 ref="'{}'".format(self.module.case_type)
             ),
         ]
+        additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+        for type in additional_types:
+            default_query_datums.append(
+                QueryData(
+                    key='case_type',
+                    ref="'{}'".format(type)
+                )
+            )
         extra_query_datums = [
             QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
             for c in self.module.search_config.default_properties
