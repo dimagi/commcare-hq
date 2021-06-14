@@ -392,7 +392,8 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
         messages.error(request, _("Could not remove {}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
-    config.domains.remove(target_domain)
+    if target_domain in config.domains:
+        config.domains.remove(target_domain)
     config.save()
     messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
                                                                                    target_domain))
