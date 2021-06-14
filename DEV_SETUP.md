@@ -9,8 +9,8 @@ commcare-cloud](https://dimagi.github.io/commcare-cloud/)
 These instructions are for Mac or Linux computers. For Windows, consider using
 an Ubuntu virtual machine.
 
-Common issues and their solutions can be found at the end
-of this document.
+Once your environment is up and running, bookmark the [dev FAQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md)
+for common issues encountered in day-to-day HQ development.
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -277,7 +277,7 @@ If you previously created backups of another HQ install's data, you can now copy
 
 
 
-### Set up your Django environment
+### Initial Database Population
 
 Before running any of the commands below, you should have all of the following
 running: CouchDB, Redis, and Elasticsearch.
@@ -288,11 +288,37 @@ Populate your database:
     $ ./manage.py sync_couch_views
     $ ./manage.py create_kafka_topics
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
-    $ ./manage.py compilejsi18n
 
 You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting
+
+If you have an authentication error running `./manage.py migrate` the first
+time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+and change the line "local all all peer" to "local all all md5".
+
+If you have trouble with your first run of `./manage.py sync_couch_views`:
++ 401 error related to nonexistent database:
+```
+$ curl -X PUT http://localhost:5984/commcarehq  # create the database
+$ curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"' . # add admin user
+```
+
++ Error stemming from any Python modules: the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
+
++ If you encounter an error stemming from an Incompatible Library Version of libxml2.2.dylib on Mac OS X, try running the following commands:
+```
+$ brew install libxml2
+$ brew install libxslt
+$ brew link libxml2 --force
+$ brew link libxslt --force
+```
+
++ If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
+
+### ElasticSearch Setup
 
 To set up elasticsearch indexes run the following:
 
@@ -477,9 +503,11 @@ you can follow the instructions in the [pipes repository](https://github.com/dim
 Running Tests
 -------------
 
-To run the standard tests for CommCare HQ, simply run
+To run the standard tests for CommCare HQ, run
 
     $ ./manage.py test
+
+These may not all pass in a local environment. It's often more practical, and faster, to just run tests for the django app where you're working.
 
 To run a particular test or subset of tests
 
@@ -620,7 +648,3 @@ run the Python tests when saving py files as follows:
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
 (recommended to install pywatchman or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
-
-## Other links
-
-+ [Common Issues](https://github.com/dimagi/commcare-hq/blob/master/COMMON_ISSUES.md)

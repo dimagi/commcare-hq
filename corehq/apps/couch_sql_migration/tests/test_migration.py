@@ -176,6 +176,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
+        ), mock.patch(
+            "couchforms.analytics.get_last_form_submission_received"
         ), patch_chunk_size, patch_find_missing_docs:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)

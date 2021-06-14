@@ -465,6 +465,9 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 def iframe_domain_login(req, domain):
     return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
+        'restrict_domain_creation': True,
+        'is_session_expiration': True,
+        'ANALYTICS_IDS': {},
     })
 
 

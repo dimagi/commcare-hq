@@ -21,6 +21,7 @@ class TestValidateSupportedFHIRTypes(SimpleTestCase):
         except ValidationError as e:
             self.assertEqual(
                 e.message_dict['name'],
-                ['Unsupported FHIR Resource type Random. '
-                 'Please choose from Patient, DiagnosticReport, Observation']
+                ['Unsupported FHIR Resource type Random. Please choose from '
+                 'DiagnosticReport, Encounter, Immunization, Observation, '
+                 'Patient']
             )

@@ -208,6 +208,38 @@ class Permissions(DocumentSchema):
                 setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
         return permissions
 
+    def normalize(self):
+        if not self.access_all_locations:
+            # The following permissions cannot be granted to location-restricted
+            # roles.
+            self.edit_web_users = False
+            self.view_web_users = False
+            self.edit_groups = False
+            self.view_groups = False
+            self.edit_apps = False
+            self.view_roles = False
+            self.edit_reports = False
+            self.edit_billing = False
+
+        if self.edit_web_users:
+            self.view_web_users = True
+
+        if self.edit_commcare_users:
+            self.view_commcare_users = True
+
+        if self.edit_groups:
+            self.view_groups = True
+        else:
+            self.edit_users_in_groups = False
+
+        if self.edit_locations:
+            self.view_locations = True
+        else:
+            self.edit_users_in_locations = False
+
+        if self.edit_apps:
+            self.view_apps = True
+
     @classmethod
     @memoized
     def permission_names(cls):
@@ -379,11 +411,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         role = cls(domain=domain, name=name, **kwargs)
         role.save()
         return role
-
-    @property
-    def has_users_assigned(self):
-        from corehq.apps.es.users import UserES
-        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id

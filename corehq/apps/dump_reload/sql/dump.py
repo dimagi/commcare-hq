@@ -103,7 +103,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
-    FilteredModelIteratorBuilder('mobile_auth.SQLMobileAuthKeyRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
