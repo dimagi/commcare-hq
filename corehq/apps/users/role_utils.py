@@ -18,8 +18,8 @@ def archive_custom_roles_for_domain(domain):
 
 
 def unarchive_roles_for_domain(domain):
-    all_roles = SQLUserRole.objects.filter(domain=domain, is_archived=True)
-    for role in all_roles:
+    archived_roles = SQLUserRole.objects.filter(domain=domain, is_archived=True)
+    for role in archived_roles:
         role.is_archived = False
         role.save()
 
