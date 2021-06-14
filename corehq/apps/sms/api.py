@@ -54,7 +54,6 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
-from corehq.toggles import TURN_IO_BACKEND
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
