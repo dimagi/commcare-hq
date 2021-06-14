@@ -1,5 +1,6 @@
 import attr
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -137,8 +138,15 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @transaction.atomic
     def set_permissions(self, permission_infos):
+        def _clear_prefetch_cache():
+            try:
+                self.refresh_from_db(fields=["rolepermission_set"])
+            except FieldDoesNotExist:
+                pass
+
         if not permission_infos:
             RolePermission.objects.filter(role=self).delete()
+            _clear_prefetch_cache()
             return
 
         permissions_by_name = {
@@ -159,6 +167,8 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             old_ids = [old.id for old in permissions_by_name.values()]
             RolePermission.objects.filter(id__in=old_ids).delete()
 
+        _clear_prefetch_cache()
+
     def get_permission_infos(self):
         return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
 
@@ -175,8 +185,15 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
     @transaction.atomic
     def set_assignable_by(self, role_ids):
+        def _clear_prefetch_cache():
+            try:
+                self.refresh_from_db(fields=["roleassignableby_set"])
+            except FieldDoesNotExist:
+                pass
+
         if not role_ids:
             self.roleassignableby_set.all().delete()
+            _clear_prefetch_cache()
             return
 
         assignments_by_role_id = {
@@ -193,6 +210,8 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         if assignments_by_role_id:
             old_ids = list(assignments_by_role_id.values())
             RoleAssignableBy.objects.filter(id__in=old_ids).delete()
+
+        _clear_prefetch_cache()
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())

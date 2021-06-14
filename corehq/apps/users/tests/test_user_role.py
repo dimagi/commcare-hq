@@ -74,6 +74,31 @@ class RolesTests(TestCase):
             {r.name for r in new_assignments}
         )
 
+    def test_set_assignable_by_clear_prefetched_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            assignable_by=[self.roles[0].id]
+        )
+        self.assertEqual({a.assignable_by_role.name for a in role.get_assignable_by()}, {
+            self.roles[0].name
+        })
+
+        new_assignments = {
+            self.roles[2]
+        }
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([r.id for r in new_assignments])
+
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role_with_prefetch.roleassignableby_set.all()},
+            {r.name for r in new_assignments}
+        )
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([])
+        self.assertEqual(list(role_with_prefetch.roleassignableby_set.all()), [])
+
     def test_set_assignable_by_couch(self):
         role = SQLUserRole(
             domain=self.domain,
@@ -128,6 +153,26 @@ class RolesTests(TestCase):
 
         role2 = SQLUserRole.objects.get(id=role.id)
         self.assertEqual(set(role2.get_permission_infos()), new_permissions)
+
+    def test_set_permissions_clear_prefetch_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            permissions=Permissions()
+        )
+
+        self.assertEqual(set(role.get_permission_infos()), set(Permissions().to_list()))
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        new_permissions = {PermissionInfo(Permissions.access_api.name)}
+        role_with_prefetch.set_permissions(new_permissions)
+
+        self.assertEqual(set(role_with_prefetch.get_permission_infos()), new_permissions)
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        role_with_prefetch.set_permissions([])
+        self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
+
 
 
 class TestRolePermissionsModel(TestCase):
