@@ -175,12 +175,13 @@ function _run_tests {
         python-sharded-and-javascript)
             _test_python
             _test_javascript
+            echo "----------> Begin Static Analysis <----------"
+            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis
             if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-                echo "----------> Begin Static Analysis <----------"
-                COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+                # I'm gonna migrate this to python shortly
                 ./scripts/static-analysis.sh datadog
-                echo "----------> End Static Analysis <----------"
             fi
+            echo "----------> End Static Analysis <----------"
             ;;
         python|python-sharded)
             _test_python

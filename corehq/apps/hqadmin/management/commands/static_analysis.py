@@ -6,23 +6,41 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from datadog import api, initialize
+from github import Github
 
 from dimagi.ext.couchdbkit import Document
 
-from corehq.toggles import all_toggles
 from corehq.feature_previews import all_previews
+from corehq.toggles import all_toggles
 
 
-class DatadogLogger:
-    def __init__(self, stdout, datadog):
+GITHUB_COMMENT = """
+# Code Analysis Results
+
+Ur code is bad
+"""
+
+
+class AnalysisLogger:
+    def __init__(self, stdout):
         self.stdout = stdout
-        self.datadog = datadog
+
+        self.datadog = os.environ.get('TRAVIS_EVENT_TYPE') == 'cron'
         if self.datadog:
             api_key = os.environ.get("DATADOG_API_KEY")
             app_key = os.environ.get("DATADOG_APP_KEY")
             assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
             initialize(api_key=api_key, app_key=app_key)
             self.metrics = []
+
+        self.pull_request = None
+        if os.environ.get('TRAVIS_PULL_REQUEST', 'false') != 'false':
+            pr_number = int(os.environ['TRAVIS_PULL_REQUEST'])
+            assert os.environ.get('DIMAGIMON_GITHUB_TOKEN') is not None, \
+                "DIMAGIMON_GITHUB_TOKEN must be set"
+            gh = Github(os.environ['DIMAGIMON_GITHUB_TOKEN'])
+            repo = gh.get_repo('dimagi/commcare-hq')
+            self.pull_request = repo.get_pull(pr_number)
 
     def log(self, metric, value, tags=None):
         self.stdout.write(f"{metric}: {value} {tags or ''}")
@@ -41,27 +59,35 @@ class DatadogLogger:
             })
 
     def send_all(self):
-        if self.datadog:
-            api.Metric.send(self.metrics)
-            self.metrics = []
+        self._send_to_datadog()
+        self._send_to_github()
+
+    def _send_to_datadog(self):
+        if not self.datadog:
+            self.stdout.write("This isn't the daily travis build, not submitting to datadog")
+            return
+
+        api.Metric.send(self.metrics)
+        self.metrics = []
+        self.stdout.write("Analysis sent to datadog")
+
+    def _send_to_github(self):
+        if not self.pull_request:
+            self.stdout.write("No PR detected, not submitting info to github")
+            return
+
+        self.pull_request.create_issue_comment(GITHUB_COMMENT)
+        self.stdout.write(f"Analysis submitted to github PR {pr_number}")
 
 
 class Command(BaseCommand):
     help = (
-        "Display a variety of code-quality metrics, optionally sending them to datadog. "
+        "Display a variety of code-quality metrics. "
         "Other metrics are computed in scripts/static-analysis.sh"
     )
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--datadog',
-            action='store_true',
-            default=False,
-            help='Record these metrics in datadog',
-        )
-
     def handle(self, **options):
-        self.logger = DatadogLogger(self.stdout, options['datadog'])
+        self.logger = AnalysisLogger(self.stdout)
         self.show_couch_model_count()
         self.show_custom_modules()
         self.show_js_dependencies()

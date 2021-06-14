@@ -20,8 +20,10 @@ services:
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
       TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
+      DIMAGIMON_GITHUB_TOKEN: "${DIMAGIMON_GITHUB_TOKEN}"
     privileged: true  # allows mount inside container
     links:
       - postgres
