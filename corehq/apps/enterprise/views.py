@@ -378,7 +378,7 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
 
     if target_domain not in config.domains:
         config.domains.append(target_domain)
-    config.save()
+        config.save()
     messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
     return HttpResponseRedirect(redirect)
 
@@ -395,7 +395,7 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
 
     if target_domain in config.domains:
         config.domains.remove(target_domain)
-    config.save()
+        config.save()
     messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
                                                                                    target_domain))
     return HttpResponseRedirect(redirect)
