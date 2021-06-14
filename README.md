@@ -1,5 +1,5 @@
 CommCare HQ
-===========
+============
 
 CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare J2ME, Android, and Web Apps as well as
