@@ -4,21 +4,27 @@
     {{ global_error }}
   </div>
 {% endfor %}
-<fieldset class="check-password">
+<fieldset {% if not is_sso %}class="check-password"{% endif %}>
   {% for field in form %}
-    <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
-      <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-      <div id="div_id_{{ field.name }}">
-        {{ field }}
-        {% for error in field.errors %}
-          <p class="help-block">{{ error }}</p>
-        {% endfor %}
-        {% if field.help_text %}
-          <p class="help-block">
-            {{ field.help_text }}
-          </p>
+    {% if field.is_hidden %}
+      {{ field }}
+    {% else %}
+      <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+        {% if field.label %}
+          <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
         {% endif %}
+        <div id="div_id_{{ field.name }}">
+          {{ field }}
+          {% if field.help_text %}
+            <p class="help-block">
+              {{ field.help_text }}
+            </p>
+          {% endif %}
+          {% for error in field.errors %}
+            <p class="help-block">{{ error }}</p>
+          {% endfor %}
+        </div>
       </div>
-    </div>
+    {% endif %}
   {% endfor %}
 </fieldset>
