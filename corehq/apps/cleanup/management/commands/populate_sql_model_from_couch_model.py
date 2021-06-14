@@ -223,7 +223,7 @@ class PopulateSQLCommand(BaseCommand):
 
         domains = options["domains"]
         if domains:
-            doc_count = sum(self._get_couch_doc_count_for_domain(domain) for domain in domains)
+            doc_count = self._get_couch_doc_count_for_domains(domains)
             sql_doc_count = self._get_sql_doc_count_for_domains(domains)
             docs = self._iter_couch_docs_for_domains(domains)
         else:
@@ -272,8 +272,11 @@ class PopulateSQLCommand(BaseCommand):
             action = "Creating" if created else "Updated"
             logfile.write(f"{action} model for {self.couch_doc_type()} with id {doc['_id']}\n")
 
-    def _get_couch_doc_count_for_domain(self, domain):
-        return get_doc_count_by_domain_type(self.couch_db(), domain, self.couch_doc_type())
+    def _get_couch_doc_count_for_domains(self, domains):
+        return sum(
+            get_doc_count_by_domain_type(self.couch_db(), domain, self.couch_doc_type())
+            for domain in domains
+        )
 
     def _get_sql_doc_count_for_domains(self, domains):
         return self.sql_class().objects.filter(domain__in=domains).count()
