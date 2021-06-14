@@ -381,12 +381,14 @@ class DisableUserView(FormView):
         return redirect(self.redirect_url)
 
     def form_valid(self, form):
+        log_messages = []
         if not self.user:
             return self.redirect_response(self.request)
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
+            log_messages.append("Password reset")
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -394,9 +396,10 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
+        log_messages.append(f'User {verb}. Reason: "{reason}"')
         couch_user = CouchUser.from_django_user(self.user)
         log_user_change(None, couch_user, self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=f'User {verb}. Reason: "{reason}"',
+                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
                         fields_changed={'is_active': self.user.is_active},
                         can_skip_domain=True)
         mail_admins(
