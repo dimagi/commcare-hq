@@ -32,6 +32,7 @@ def create_enterprise_permissions(email, source_domain, domains=None, other_doma
             date_start=start_date,
             date_end=end_date,
             plan_version=plan_version,
+            is_active=True,
         ))
 
     EnterprisePermissions(
