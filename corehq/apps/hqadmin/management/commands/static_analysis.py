@@ -1,9 +1,10 @@
 import os
 import subprocess
-from collections import Counter
+from collections import Counter, namedtuple
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.template import Context, Template
 
 from datadog import api, initialize
 from github import Github
@@ -13,17 +14,22 @@ from dimagi.ext.couchdbkit import Document
 from corehq.feature_previews import all_previews
 from corehq.toggles import all_toggles
 
-
 GITHUB_COMMENT = """
-# Code Analysis Results
+### Code Analysis
 
-Ur code is bad
+Metric name | value
+------------|-------
+{% for metric in metrics %}**{{ metric.name }}** - {{ metric.tags|join:", " }} | {{ metric.value }}
+{% endfor %}
 """
+
+Metric = namedtuple('Metric', "name value tags")
 
 
 class AnalysisLogger:
     def __init__(self, stdout):
         self.stdout = stdout
+        self.metrics = []
 
         self.datadog = os.environ.get('TRAVIS_EVENT_TYPE') == 'cron'
         if self.datadog:
@@ -31,32 +37,19 @@ class AnalysisLogger:
             app_key = os.environ.get("DATADOG_APP_KEY")
             assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
             initialize(api_key=api_key, app_key=app_key)
-            self.metrics = []
 
         self.pull_request = None
         if os.environ.get('TRAVIS_PULL_REQUEST', 'false') != 'false':
-            pr_number = int(os.environ['TRAVIS_PULL_REQUEST'])
+            self.pr_number = int(os.environ['TRAVIS_PULL_REQUEST'])
             assert os.environ.get('DIMAGIMON_GITHUB_TOKEN') is not None, \
                 "DIMAGIMON_GITHUB_TOKEN must be set"
             gh = Github(os.environ['DIMAGIMON_GITHUB_TOKEN'])
             repo = gh.get_repo('dimagi/commcare-hq')
-            self.pull_request = repo.get_pull(pr_number)
+            self.pull_request = repo.get_pull(self.pr_number)
 
-    def log(self, metric, value, tags=None):
-        self.stdout.write(f"{metric}: {value} {tags or ''}")
-        if self.datadog:
-            self.metrics.append({
-                'metric': metric,
-                'points': value,
-                'type': "gauge",
-                'host': "travis-ci.org",
-                'tags': [
-                    "environment:travis",
-                    f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
-                    f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
-                    f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
-                ] + (tags or []),
-            })
+    def log(self, name, value, tags=None):
+        self.stdout.write(f"{name}: {value} {tags or ''}")
+        self.metrics.append(Metric(name, value, tags or []))
 
     def send_all(self):
         self._send_to_datadog()
@@ -67,8 +60,20 @@ class AnalysisLogger:
             self.stdout.write("This isn't the daily travis build, not submitting to datadog")
             return
 
-        api.Metric.send(self.metrics)
-        self.metrics = []
+        api.Metric.send([
+            {
+                'metric': metric.name,
+                'points': metric.value,
+                'type': "gauge",
+                'host': "travis-ci.org",
+                'tags': [
+                    "environment:travis",
+                    f"travis_build:{os.environ.get('TRAVIS_BUILD_ID')}",
+                    f"travis_number:{os.environ.get('TRAVIS_BUILD_NUMBER')}",
+                    f"travis_job_number:{os.environ.get('TRAVIS_JOB_NUMBER')}",
+                ] + metric.tags,
+            } for metric in self.metrics
+        ])
         self.stdout.write("Analysis sent to datadog")
 
     def _send_to_github(self):
@@ -76,8 +81,9 @@ class AnalysisLogger:
             self.stdout.write("No PR detected, not submitting info to github")
             return
 
-        self.pull_request.create_issue_comment(GITHUB_COMMENT)
-        self.stdout.write(f"Analysis submitted to github PR {pr_number}")
+        comment = Template(GITHUB_COMMENT).render(Context({"metrics": self.metrics}))
+        self.pull_request.create_issue_comment(comment)
+        self.stdout.write(f"Analysis submitted to github PR {self.pr_number}")
 
 
 class Command(BaseCommand):
