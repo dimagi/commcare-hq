@@ -208,8 +208,8 @@ class ReportsSidebarOrdering(models.Model):
 
 class TableauServer(models.Model):
     SERVER_TYPES = (
-        ('server', 'Tableau Server'),
-        ('online', 'Tableau Online'),
+        ('server', _('Tableau Server')),
+        ('online', _('Tableau Online')),
     )
     domain = models.CharField(max_length=64, default='')
     server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
