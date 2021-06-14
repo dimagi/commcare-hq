@@ -22,7 +22,7 @@ class EnterprisePermissions(models.Model):
     )
 
     @classmethod
-    @quickcache(['cls.__name__', 'domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def get_by_domain(cls, domain):
         """
         Get or create the configuration associated with the given domain's account.
@@ -36,7 +36,7 @@ class EnterprisePermissions(models.Model):
             return cls()
 
     @classmethod
-    @quickcache(['cls.__name__', 'source_domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
     def get_domains(cls, source_domain):
         """
         Get a list of domains, if any, controlled by the given source domain.
