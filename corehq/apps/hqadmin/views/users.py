@@ -99,7 +99,7 @@ class SuperuserManagement(UserAdministration):
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    field_changed['is_superuser'] = is_staff
+                    field_changed['is_staff'] = is_staff
 
                 if field_changed:
                     user.save()
