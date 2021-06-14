@@ -25,6 +25,7 @@ from corehq.apps.app_manager.models import (
     FormAction,
     FormActionCondition,
     Module,
+    ShadowModule
 )
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
@@ -52,7 +53,7 @@ class AppCaseMetadataBuilder(object):
 
     def _add_module_contributions(self):
         for module in self.app.get_modules():
-            if isinstance(module, (Module, AdvancedModule)):
+            if isinstance(module, (Module, AdvancedModule, ShadowModule)):
                 self._add_module_contribution(module)
 
     def _add_module_contribution(self, module):
