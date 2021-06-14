@@ -320,7 +320,7 @@ def group_dataset_datavalues(
     )
 
 
-def group_data_by_keys(data: List[dict], keys: list):
+def _group_data_by_keys(data: List[dict], keys: list):
     from collections import defaultdict
     datasets_dict = defaultdict(lambda: [])
     for row in data:
@@ -342,7 +342,7 @@ def get_grouped_datavalues_sets(
 ) -> List[dict]:
 
     datasets = []
-    for grouped_key, grouped_value in group_data_by_keys(data_list, group_by_keys).items():
+    for grouped_key, grouped_value in _group_data_by_keys(data_list, group_by_keys).items():
         dataset = copy.deepcopy(template_dataset)
 
         for key, key_value in zip(group_by_keys, grouped_key):
