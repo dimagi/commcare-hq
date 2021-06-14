@@ -16,8 +16,6 @@ from corehq.apps.reports.standard import (
 
 from corehq.apps.reports.models import TableauVisualization
 
-cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
-
 
 class TableauReport(ProjectReport):
     """
@@ -102,7 +100,7 @@ class TableauReport(ProjectReport):
 def get_reports(domain):
     vis_num = 1
     result = []
-    for v in TableauVisualization.objects.all().filter(domain=domain):
+    for v in TableauVisualization.objects.filter(domain=domain):
         visualization_class = _make_visualization_class(vis_num, v)
         if visualization_class is not None:
             result.append(visualization_class)
