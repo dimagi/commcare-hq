@@ -158,10 +158,6 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
-
-                if not _backend_enabled_for_domain(backend, domain):
-                    return False
-
             except BadSMSConfigException as e:
                 if logged_subevent:
                     logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
@@ -173,11 +169,6 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)
-
-
-def _backend_enabled_for_domain(backend, domain):
-    return backend.get_api_id() != 'TURN' or TURN_IO_BACKEND.enabled(domain)
-
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
         logged_subevent=None, events=[]):

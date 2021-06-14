@@ -133,7 +133,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_single_worksheet
-from corehq.toggles import TURN_IO_BACKEND
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -1953,13 +1952,10 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 
-        if TURN_IO_BACKEND.enabled(self.domain):
-            turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
-                domain=self.domain,
-                hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
-            )
-        else:
-            turn_backend = SQLTurnWhatsAppBackend.objects.none()
+        turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
+            domain=self.domain,
+            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+        )
 
         infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
