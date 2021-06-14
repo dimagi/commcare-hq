@@ -82,7 +82,7 @@ def activate_new_user(
         created_by,
         created_via,
         is_admin=is_domain_admin,
-        can_skip_domain=(not domain),
+        can_skip_domain=(domain is None),
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
