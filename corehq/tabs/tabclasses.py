@@ -1186,7 +1186,7 @@ class MessagingTab(UITab):
                 (b.get_api_id() for b in
                  SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
         else:
-            domain_has_turn_integration = None
+            domain_has_turn_integration = False
 
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in

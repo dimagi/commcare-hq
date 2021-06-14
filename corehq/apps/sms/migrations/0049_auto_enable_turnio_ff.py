@@ -2,13 +2,13 @@
 
 from django.db import migrations
 from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
-from corehq.toggles import TURN_IO_BACKEND
+from corehq.toggles import TURN_IO_BACKEND, NAMESPACE_DOMAIN
 
 
 def auto_enable_turnio_ff_for_certain_domains(apps, schema_editor):
     for backend in SQLTurnWhatsAppBackend.active_objects.all():
         domain = backend.domain
-        TURN_IO_BACKEND.set(item=domain, enabled=True, namespace='domain')
+        TURN_IO_BACKEND.set(item=domain, enabled=True, namespace=NAMESPACE_DOMAIN)
 
 
 def noop(apps, schema_editor):
