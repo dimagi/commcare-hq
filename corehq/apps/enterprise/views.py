@@ -376,7 +376,8 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
         messages.error(request, _("Could not add {}}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
-    config.domains.append(target_domain)
+    if target_domain not in config.domains:
+        config.domains.append(target_domain)
     config.save()
     messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
     return HttpResponseRedirect(redirect)
