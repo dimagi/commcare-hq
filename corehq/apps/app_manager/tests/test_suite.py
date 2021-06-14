@@ -3,10 +3,10 @@ import re
 
 from django.test import SimpleTestCase
 
+import commcare_translations
 import mock
 from lxml.etree import tostring
 
-import commcare_translations
 from corehq.apps.app_manager.exceptions import (
     DuplicateInstanceIdError,
     SuiteValidationError,
@@ -15,6 +15,8 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     CustomAssertion,
     CustomInstance,
@@ -150,6 +152,48 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
+    def test_case_search_action(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={'en': 'Get them'},
+                media_image={'en': "jr://file/commcare/image/1.png"},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={'en': 'Get them'},
+                media_audio={'en': "jr://file/commcare/image/2.mp3"}
+            ),
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
+        # test for legacy action node for older versions
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
+        # test for localized action node for apps with CC version > 2.21
+        app.build_spec.version = '2.21.0'
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/action"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('case-search-again-with-localized-action'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']/action"
+        )
+
     def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
@@ -164,6 +208,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 blanks='first',
             )
         )
+
+        # wrap to have assign_references called
+        app = Application.wrap(app.to_json())
+
         self.assertXmlPartialEqual(
             self.get_xml('sort-cache-search'),
             app.create_suite(),
@@ -522,153 +570,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         plain_gender_col.format = "plain"
         index = len(app.modules[0].case_details.long.columns) - 1
         app.modules[0].case_details.long.columns.insert(index, plain_gender_col)
-        xml_partial = """
-            <partial>
-                <detail id="m0_case_long">
-                    <title>
-                      <text>
-                        <locale id="cchq.case"/>
-                      </text>
-                    </title>
-                    <detail>
-                      <title>
-                        <text>
-                          <locale id="m0.case_long.tab.1.title"/>
-                        </text>
-                      </title>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_name_1.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="case_name"/>
-                          </text>
-                        </template>
-                      </field>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_artist_2.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="artist"/>
-                          </text>
-                        </template>
-                      </field>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_plays_3.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="plays"/>
-                          </text>
-                        </template>
-                      </field>
-                    </detail>
-                    <detail nodeset="some/data">
-                      <title>
-                        <text>
-                          <locale id="m0.case_long.tab.2.title"/>
-                        </text>
-                      </title>
-                      <field>
-                        <header width="0">
-                          <text/>
-                        </header>
-                        <template width="0">
-                          <text>
-                            <xpath function="gender"/>
-                          </text>
-                        </template>
-                        <sort type="string" order="1" direction="ascending">
-                          <text>
-                            <xpath function="gender"/>
-                          </text>
-                        </sort>
-                      </field>
-                    </detail>
-                    <detail nodeset="instance('commtrack:products')/some/data">
-                      <title>
-                        <text>
-                          <locale id="m0.case_long.tab.3.title"/>
-                        </text>
-                      </title>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_calculated_property_5.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="$calculated_property">
-                              <variable name="calculated_property">
-                                <xpath function="column"/>
-                              </variable>
-                            </xpath>
-                          </text>
-                        </template>
-                      </field>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_calculated_property_6.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="$calculated_property">
-                              <variable name="calculated_property">
-                                <xpath function="column"/>
-                              </variable>
-                            </xpath>
-                          </text>
-                        </template>
-                      </field>
-                      <field>
-                        <header>
-                          <text>
-                            <locale id="m0.case_long.case_gender_7.header"/>
-                          </text>
-                        </header>
-                        <template>
-                          <text>
-                            <xpath function="gender"/>
-                          </text>
-                        </template>
-                      </field>
-                      <field>
-                        <header width="0">
-                          <text/>
-                        </header>
-                        <template width="0">
-                          <text>
-                            <xpath function="gender"/>
-                          </text>
-                        </template>
-                        <sort type="string" order="1" direction="ascending">
-                          <text>
-                            <xpath function="gender"/>
-                          </text>
-                        </sort>
-                      </field>
-                    </detail>
-                    <variables>
-                      <case_id function="./@case_id"/>
-                    </variables>
-                  </detail>
-
-            </partial>"""
         self.assertXmlPartialEqual(
-            xml_partial, app.create_suite(),
+            self.get_xml("suite-case-detail-tabs-with-nodesets-for-sorting-search-only"),
+            app.create_suite(),
             './detail[@id="m0_case_long"]')
 
     def test_case_detail_instance_adding(self, *args):

@@ -258,7 +258,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
     )
     is_editable = forms.BooleanField(
-        label=ugettext_lazy("Enterprise Dashboard"),
+        label=ugettext_lazy("Enterprise Console"),
         required=False,
         widget=BootstrapCheckboxInput(
             inline_label=ugettext_lazy(

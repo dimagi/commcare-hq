@@ -1,11 +1,12 @@
+from django.conf import settings
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.utils import mapping_from_json
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_SEARCH_HQ_INDEX_NAME
 
 
-CASE_SEARCH_INDEX = prefix_for_tests("case_search_2018-05-29")
-CASE_SEARCH_ALIAS = prefix_for_tests("case_search")
+CASE_SEARCH_INDEX = prefix_for_tests(settings.ES_CASE_SEARCH_INDEX_NAME)
+CASE_SEARCH_ALIAS = prefix_for_tests('case_search')
 CASE_SEARCH_MAPPING = mapping_from_json('case_search_mapping.json')
 
 

@@ -440,7 +440,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "hqwebapp/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -571,7 +571,8 @@ CELERY_TASK_ANNOTATIONS = {
 CELERY_MAIN_QUEUE = 'celery'
 CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
-CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_rule_queue'  # override in localsettings
+CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_case_update_bulk_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
@@ -1029,6 +1030,7 @@ CUSTOM_LANDING_TEMPLATE = {
 
 ES_SETTINGS = None
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
+ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
 ES_XFORM_DISABLE_ALL = False
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1156,6 +1158,8 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+
+IS_INDIA_ENVIRONMENT = SERVER_ENVIRONMENT == 'india'
 
 if 'KAFKA_URL' in globals():
     import warnings

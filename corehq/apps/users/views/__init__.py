@@ -78,6 +78,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
@@ -86,7 +87,6 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    DomainRequestForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
@@ -113,6 +113,7 @@ from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadR
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -572,7 +573,11 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
-        bulk_download_url = reverse("download_web_users", args=[self.domain])
+        from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+        if can_use_filtered_user_download(self.domain):
+            bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
@@ -585,13 +590,8 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
-    user_filters = {}
-    download = DownloadBase()
-    is_web_download = True
-    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                          is_web_download, owner_id=request.couch_user.get_id)
-    download.set_task(res)
-    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+    from corehq.apps.users.views.mobile.users import download_users
+    return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):

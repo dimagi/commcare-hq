@@ -110,14 +110,21 @@
           </div>
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group">
-            <label for="search_command_label" class="{% css_label_class %} control-label">
+            <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching" %}"
                     data-content="{% trans_html_attr "This text is for the button to enter case search. It is also the header on the search results screen." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.command_label langs input_name='search_command_label' input_id='search_command_label' data_bind="value: searchCommandLabel" %}
+              {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
             </div>
+          </div>
+          <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
+            <!-- /ko -->
           </div>
           <div class="form-group">
             <label for="search_again_label" class="{% css_label_class %} control-label">
@@ -126,8 +133,15 @@
                     data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.again_label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
+              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
+          </div>
+          <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+            <!-- /ko -->
           </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
