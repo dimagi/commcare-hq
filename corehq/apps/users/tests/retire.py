@@ -1,9 +1,7 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
-from django.contrib.admin.models import LogEntry
-from django.test import TestCase
-from django.utils.encoding import force_text
+from django.test import TestCase, override_settings
 
 import mock
 
@@ -65,6 +63,9 @@ class RetireUserTestCase(TestCase):
         super(RetireUserTestCase, self).tearDown()
 
     def test_retire(self):
+        with override_settings(UNIT_TESTING=False):
+            with self.assertRaisesMessage(ValueError, "Missing deleted_by"):
+                self.commcare_user.retire(self.domain, deleted_by=None)
         deleted_via = "Test test"
 
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
@@ -97,6 +98,10 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
+
+        with override_settings(UNIT_TESTING=False):
+            with self.assertRaisesMessage(ValueError, "Missing unretired_by"):
+                self.commcare_user.unretire(self.domain, unretired_by=None)
 
         self.assertEqual(
             UserHistory.objects.filter(

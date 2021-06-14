@@ -1842,6 +1842,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore reminders for cases
         """
         NotAllowed.check(self.domain)
+        if not unretired_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing unretired_by")
+
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             return False, "A user with the same username already exists in the system"
@@ -1868,6 +1871,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def retire(self, retired_by_domain, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
+
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
