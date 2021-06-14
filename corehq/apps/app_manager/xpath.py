@@ -218,9 +218,9 @@ class CaseTypeXpath(CaseSelectionXPath):
         quoted = CaseTypeXpath("'{}'".format(self))
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
-    def cases(self, additional_types=[], instance_name='casedb', case_name='case'):
+    def cases(self, additional_types, instance_name='casedb', case_name='case'):
         quoted = CaseTypeXpath("'{}'".format(self))
-        selector = "{sel}={self}".format(sel=self.selector, self=quoted)
+        selector = "{sel}={quoted}".format(sel=self.selector, quoted=quoted)
         for type in additional_types:
             quoted = CaseTypeXpath("'{}'".format(type))
             selector = "{selector} or {sel}={quoted}".format(selector=selector, sel=self.selector, quoted=quoted)
