@@ -481,7 +481,7 @@ class DisableTwoFactorView(FormView):
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        fields_changed['devices'] = []
+        fields_changed['two_factor_devices'] = []
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
