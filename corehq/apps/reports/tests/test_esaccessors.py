@@ -894,6 +894,11 @@ class TestUserESAccessors(TestCase):
         super().setUpClass()
         cls.domain = 'user-esaccessors-test'
         cls.domain_obj = create_domain(cls.domain)
+
+        cls.source_domain = cls.domain + "-source"
+        cls.source_domain_obj = create_domain(cls.source_domain)
+        create_enterprise_permissions("a@a.com", cls.source_domain, [cls.domain])
+
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
@@ -930,6 +935,7 @@ class TestUserESAccessors(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        cls.source_domain_obj.delete()
         cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
@@ -980,14 +986,9 @@ class TestUserESAccessors(TestCase):
         })
 
     def test_domain_allow_enterprise(self):
-        source_domain = self.domain + "-source"
-        domain = create_domain(source_domain)
-        self.addCleanup(domain.delete)
-        create_enterprise_permissions(self.user.username, source_domain, [self.domain])
         self._send_user_to_es()
-
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
         self.assertEqual(
             ['superman'],
             UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
