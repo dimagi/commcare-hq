@@ -1,6 +1,6 @@
 <script type="text/html" id="ko-select-toggle">
   <div class="ko-select-toggle">
-    <select class="hide" data-bind="foreach: options, attr: {name: name, id: id}, value: value">
+    <select class="hide" data-bind="foreach: options, attr: htmlAttrs, value: value">
       <option data-bind="value: $data.id,
                                text: $data.text,
                                attr: {selected: $data.selected}"></option>

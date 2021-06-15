@@ -213,6 +213,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     $input.val(newValue).trigger('change');
                 }
             });
+            if (this.options.model.get('hidden') === 'true') {
+                this.$el.hide();
+            }
         },
     });
 

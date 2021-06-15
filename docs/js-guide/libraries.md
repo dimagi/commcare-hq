@@ -40,8 +40,5 @@ Current total: <span data-bind="text: oTotal"></div>
 [Backbone](http://backbonejs.org/) is used in Web Apps. It **should not** be used outside of Web Apps. Within Web
 Apps, we use [Marionette](http://marionettejs.com/) for most UI management.
 
-## Angular
-[Angular](https://angularjs.org/) is used only in custom reports for ICDS. It **should not** be used for new code. The angular we do have is Angular 1, which is outdated but is effectively a different framework than later versions of angular, making upgrading non-trivial. It's [unclear](https://toddmotto.com/future-of-angular-1-x#whats-next-for-angular-1x) how long Angular 1 will be supported by its creators.
-
 ## Yarn
 We use [yarn](https://classic.yarnpkg.com/en/) for package management, so new libraries should be added to [package.json](https://github.com/dimagi/commcare-hq/blob/master/package.json).

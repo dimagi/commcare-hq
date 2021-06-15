@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 
 from .progress import ProgressManager, ProcessorProgressLogger
-from ..pagination import PaginationEventHandler, TooManyRetries
+from ..pagination import PaginationEventHandler
 
 
 class BulkProcessingFailed(Exception):
@@ -83,7 +83,7 @@ class DocumentProcessorController(object):
     :param doc_processor: A ``BaseDocProcessor`` object used to process documents.
     :param reset: Reset existing processor state (if any), causing all
     documents to be reconsidered for processing, if this is true.
-    :param max_retry: Number of times to retry processing a document before giving up.
+    :param max_retry: Obsolete, not used.
     :param chunk_size: Maximum number of records to read from couch at
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
@@ -91,11 +91,10 @@ class DocumentProcessorController(object):
     :param event_handler: A ``PaginateViewLogHandler`` object to be notified of pagination events.
     :param progress_logger: A ``ProcessorProgressLogger`` object to notify of progress events.
     """
-    def __init__(self, document_provider, doc_processor, reset=False, max_retry=2,
+    def __init__(self, document_provider, doc_processor, reset=False, max_retry=None,
                  chunk_size=100, event_handler=None, progress_logger=None):
         self.doc_processor = doc_processor
         self.reset = reset
-        self.max_retry = max_retry
         self.chunk_size = chunk_size
         self.document_provider = document_provider
 
@@ -131,14 +130,14 @@ class DocumentProcessorController(object):
         ok = self.doc_processor.process_doc(doc)
         if ok:
             self.progress.add()
+        elif self.doc_processor.handle_skip(doc):
+            self.progress.skip(doc)
         else:
-            try:
-                self.document_iterator.retry(doc['_id'], self.max_retry)
-            except TooManyRetries:
-                if not self.doc_processor.handle_skip(doc):
-                    raise
-                else:
-                    self.progress.skip(doc)
+            raise UnhandledDocumentError(doc)
+
+
+class UnhandledDocumentError(Exception):
+    pass
 
 
 class BulkDocProcessorEventHandler(PaginationEventHandler):

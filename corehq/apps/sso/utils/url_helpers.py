@@ -15,8 +15,9 @@ def get_saml_login_url(identity_provider):
     return _get_full_sso_url("sso_saml_login", identity_provider)
 
 
-def get_saml_sls_url(identity_provider):
-    return _get_full_sso_url("sso_saml_sls", identity_provider)
+def get_documentation_url(identity_provider):
+    # todo update documentation URL (will change depending on IdP)
+    return '#'
 
 
 def get_dashboard_link(identity_provider):

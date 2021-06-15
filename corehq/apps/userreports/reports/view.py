@@ -42,7 +42,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.reports_core.filters import Choice
+from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -114,7 +114,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     :param query_dict: a QueryDict
     :param domain:
-    :param string_type_params: list of params that should not be autocasted to boolean/numbers
+    :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
     request_dict = json_request(query_dict)
@@ -255,12 +255,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_context(self):
-        params = self.request_dict
-        if self.saved_report_config:
-            params.update(self.saved_report_config.serialized_filters)
         return {
-            report_filter.css_id: report_filter.context(params, self.request_user, self.lang)
-            for report_filter in self.filters
+            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
+            for filter in self.filters
         }
 
     @property
@@ -283,12 +280,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self._lang is not None:
             return self._lang
         return self.request.couch_user.language or default_language()
-
-    @property
-    @memoized
-    def saved_report_config(self):
-        config_id = self.request.GET.get('config_id')
-        return get_document_or_404(ReportConfig, self.domain, config_id) if config_id else None
 
     def get(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
@@ -379,9 +370,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def saved_report_context_data(self):
-        """
-        Returns a dictionary with every saved report config associated with the report
-        """
         def _get_context_for_saved_report(report_config):
             if report_config:
                 report_config_data = report_config.to_json()
@@ -390,18 +378,20 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             else:
                 return ReportConfig.default()
 
-        context = {
+        saved_report_config_id = self.request.GET.get('config_id')
+        saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
+            if saved_report_config_id else None
+
+        return {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
                 for saved_report in ReportConfig.by_domain_and_owner(
                     self.domain, self.request.couch_user._id, report_slug=self.slug
                 )
             ],
-            'default_config': _get_context_for_saved_report(self.saved_report_config),
+            'default_config': _get_context_for_saved_report(saved_report_config),
             'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
         }
-
-        return context
 
     @property
     def has_datespan(self):

@@ -26,7 +26,10 @@ from ...progress import (
     set_couch_sql_migration_started,
 )
 from ...statedb import open_state_db
-from .migrate_domain_from_couch_to_sql import blow_away_migration
+from .migrate_domain_from_couch_to_sql import (
+    blow_away_migration,
+    unfinish_couch_sql_migration,
+)
 
 log = logging.getLogger(__name__)
 
@@ -66,13 +69,19 @@ class Command(BaseCommand):
                 failed.append((domain, "stopped by operator"))
                 break
             except Incomplete as err:
-                log.info("Incomplete migration: %s %s", domain, err)
+                log.error("Incomplete migration of %s: %s\n", domain, err)
                 failed.append((domain, str(err)))
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
                 if not self.live_migrate:
                     self.abort(domain, state_dir)
-                failed.append((domain, err))
+                failed.append((domain, str(err)))
+            except BaseException as err:
+                log.exception("Fatal error migrating domain %s", domain)
+                failed.append((domain, str(err) or type(err).__name__))
+                break
+            finally:
+                print("")
 
         if failed:
             log.error("Errors:\n" + "\n".join(
@@ -86,8 +95,7 @@ class Command(BaseCommand):
             return
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is in progress\n".format(domain))
-            raise Incomplete("in progress")
+            raise Incomplete("migration is in progress")
 
         set_couch_sql_migration_started(domain, self.live_migrate)
         try:
@@ -98,12 +106,15 @@ class Command(BaseCommand):
                 live_migrate=self.live_migrate,
             )
         except MigrationRestricted as err:
-            log.error("migration restricted: %s", err)
             set_couch_sql_migration_not_started(domain)
-            raise Incomplete(str(err))
+            raise Incomplete(f"migration restricted: {err}")
 
         if self.live_migrate:
-            self.finish_live_migration_if_possible(domain, state_dir)
+            try:
+                self.finish_live_migration_if_possible(domain, state_dir)
+            except Incomplete as err:
+                unfinish_couch_sql_migration(domain, state_dir)
+                raise err
         elif self.has_diffs(domain, state_dir):
             self.abort(domain, state_dir)
             raise Incomplete("has diffs")
@@ -113,6 +124,9 @@ class Command(BaseCommand):
         log.info(f"Domain migrated: {domain}\n")
 
     def finish_live_migration_if_possible(self, domain, state_dir):
+        log.info(f"Finishing {domain} migration")
+        set_couch_sql_migration_started(domain)
+        do_couch_to_sql_migration(domain, state_dir)  # --finish
         stats = get_diff_stats(domain, state_dir, self.strict)
         if stats:
             if any(s.pending for s in stats.values()):
@@ -123,19 +137,9 @@ class Command(BaseCommand):
                 raise Incomplete("has unpatchable diffs")
             assert stats["CommCareCase"].patchable, stats
             log.info(f"Patching {domain} migration")
-            do_couch_to_sql_migration(
-                domain,
-                state_dir,
-                live_migrate=True,
-                case_diff="patch",
-            )
+            do_couch_to_sql_migration(domain, state_dir, case_diff="patch")
             if self.has_diffs(domain, state_dir, resume=True):
                 raise Incomplete("has unpatchable or pending diffs")
-        log.info(f"Finishing {domain} migration")
-        set_couch_sql_migration_started(domain)
-        do_couch_to_sql_migration(domain, state_dir)
-        if self.has_diffs(domain, state_dir, resume=True):
-            raise Incomplete("has diffs (WARNING: NOT LIVE!)")
         log_stats(domain, get_diff_stats(
             domain, state_dir, self.strict, resume=True, verbose=True))
 

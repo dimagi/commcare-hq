@@ -12,14 +12,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
-            var state = hqImport('app_manager/js/details/screen_config').state;
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
-            state.requires_case_details(moduleBrief.requires_case_details);
-
             var details = initial_page_data('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var detailScreenConfig = DetailScreenConfig.init({
+                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")({
                     module_id: moduleBrief.id,
                     moduleUniqueId: moduleBrief.unique_id,
                     state: {
@@ -39,7 +35,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: state,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
                     searchDefaultRelevant: options.search_default_relevant,
@@ -48,7 +43,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     defaultSearch: options.default_search,
                     defaultProperties: options.default_properties || [],
                     searchButtonDisplayCondition: options.search_button_display_condition,
-                    searchCommandLabel: options.search_command_label,
+                    searchLabel: options.search_label,
                     searchAgainLabel: options.search_again_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,

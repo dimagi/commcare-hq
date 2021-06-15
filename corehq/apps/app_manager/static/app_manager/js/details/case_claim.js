@@ -86,6 +86,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             appearance: '',
             isMultiselect: false,
             defaultValue: '',
+            hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
         });
@@ -97,6 +98,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.appearance = ko.observable(options.appearance);
         self.isMultiselect = ko.observable(options.isMultiselect);
         self.defaultValue = ko.observable(options.defaultValue);
+        self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -147,8 +149,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
         subscribeToSave(self,
-            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'receiverExpression', 'isMultiselect'], saveButton);
-
+            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression', 'isMultiselect'], saveButton);
         return self;
     };
 
@@ -166,13 +167,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchCommandLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
         'searchAdditionalRelevant',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
-        options.searchCommandLabel = options.searchCommandLabel[lang] || "";
+        options.searchLabel = options.searchLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
         var self = ko.mapping.fromJS(options);
 
@@ -206,6 +207,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
+        // media image/audio buttons
+        $(".case-search-multimedia-input button").on("click", function () {
+            saveButton.fire('change');
+        });
+        // checkbox to select media for all languages
+        $(".case-search-multimedia-input input[type='checkbox']").on('change', function () {
+            saveButton.fire('change');
+        });
 
         self.serialize = function () {
             return {
@@ -214,8 +223,24 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
-                search_command_label: self.searchCommandLabel(),
+                search_label: self.searchLabel(),
+                search_label_image:
+                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
+                search_label_image_for_all:
+                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_use_default_image_for_all']").val() || null,
+                search_label_audio:
+                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_media_audio']").val() || null,
+                search_label_audio_for_all:
+                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_use_default_audio_for_all']").val() || null,
                 search_again_label: self.searchAgainLabel(),
+                search_again_label_image:
+                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_media_image']").val() || null,
+                search_again_label_image_for_all:
+                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_use_default_image_for_all']").val() || null,
+                search_again_label_audio:
+                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_media_audio']").val() || null,
+                search_again_label_audio_for_all:
+                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
@@ -260,6 +285,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     defaultValue: searchProperties[i].default_value,
+                    hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
                         instance_id: searchProperties[i].itemset.instance_id,
@@ -296,6 +322,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         default_value: p.defaultValue(),
+                        hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
                     };

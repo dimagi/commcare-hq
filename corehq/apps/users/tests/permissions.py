@@ -1,7 +1,9 @@
+from couchdbkit.ext.django.schema import ListProperty
 from django.test import SimpleTestCase, TestCase
 
 import mock
 from memoized import Memoized
+from testil import eq, assert_raises
 
 from corehq.apps.export.views.utils import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
@@ -9,11 +11,10 @@ from corehq.apps.users.models import (
     DomainMembership,
     Permissions,
     UserRole,
-    WebUser,
+    WebUser, PARAMETERIZED_PERMISSIONS, PermissionInfo,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
-    ODATA_FEED_PERMISSION, can_manage_releases
-from corehq.util.test_utils import flag_enabled
+    ODATA_FEED_PERMISSION
 
 
 @mock.patch('corehq.apps.export.views.utils.domain_has_privilege',
@@ -85,22 +86,21 @@ class PermissionsHelpersTest(SimpleTestCase):
         self.permissions = Permissions(view_report_list=[ODATA_FEED_PERMISSION])
         self.assertTrue(has_permission_to_view_report(self.web_user, self.domain, ODATA_FEED_PERMISSION))
 
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases_all(self):
-        self.permissions = Permissions(manage_releases=False)    # manage_releases is True by default
-        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.permissions = Permissions()
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
 
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases(self):
-        self.permissions = Permissions(manage_releases=False)  # manage_releases is True by default
-        self.assertFalse(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.permissions = Permissions(manage_releases=False, manage_releases_list=["app_id"])
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
+def test_parameterized_permission_covers_all():
+    list_names = set(PARAMETERIZED_PERMISSIONS.values())
+    list_properties = {
+        name for name, type_ in Permissions.properties().items()
+        if isinstance(type_, ListProperty)
+    }
+    eq(list_names, list_properties)
 
-    @flag_enabled('RESTRICT_APP_RELEASE')
-    def test_can_manage_releases_domain_admin(self):
-        self.permissions = Permissions()
-        self.assertTrue(can_manage_releases(self.web_user, self.domain, "app_id"))
-        self.assertFalse(can_manage_releases(self.web_user, self.admin_domain, "app_id"))
+    parameterized_perms = set(PARAMETERIZED_PERMISSIONS.keys())
+    eq(set(), parameterized_perms - set(Permissions.properties()))
+
+
+def test_parameterized_permission_validation():
+    # no exception raised
+    PermissionInfo(Permissions.view_apps.name, allow=PermissionInfo.ALLOW_ALL)
+    with assert_raises(TypeError):
+        PermissionInfo(Permissions.view_apps.name, allow=["app1"])

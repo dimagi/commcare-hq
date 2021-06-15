@@ -44,7 +44,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progre
     if live_migrate:
         log.info(f"stopping at {get_main_forms_iteration_stop_date(statedb)}")
     with statedb, stopper, ExitStack() as stop_it:
-        for entity in ["form", "case"]:
+        for entity in MissingIds.DOC_TYPES:
             missing_ids = MissingIds(
                 entity, statedb, stopper, resume=resume, progress=progress)
             stop_it.enter_context(missing_ids)
@@ -62,19 +62,31 @@ def recheck_missing_docs(domain, state_dir):
     statedb = open_state_db(domain, state_dir, readonly=False)
     counts = statedb.get_doc_counts()
     with statedb:
-        for entity in ["form", "case"]:
-            missing_ids = MissingIds(entity, statedb, None)
-            for doc_type in missing_ids.doc_types:
-                if doc_type not in counts or not counts[doc_type].missing:
-                    continue
-                log.info("Re-checking %s (%s)", doc_type, counts[doc_type].missing)
-                were_missing_ids = statedb.iter_missing_doc_ids(doc_type)
-                for doc_ids in chunked(were_missing_ids, 1000, set):
-                    missed = set(missing_ids.drop_sql_ids(doc_ids))
-                    dd_count(f"commcare.couchsqlmigration.{entity}.has_diff",
-                             value=len(missed))
-                    for doc_id in doc_ids - missed:
-                        statedb.doc_not_missing(doc_type, doc_id)
+        for missing_ids, doc_type in iter_missing_scanners(statedb):
+            if doc_type not in counts or not counts[doc_type].missing:
+                continue
+            log.info("Re-checking %s (%s)", doc_type, counts[doc_type].missing)
+            were_missing_ids = statedb.iter_missing_doc_ids(doc_type)
+            for doc_ids in chunked(were_missing_ids, 1000, set):
+                missed = set(missing_ids.drop_sql_ids(doc_ids))
+                dd_count(f"commcare.couchsqlmigration.{missing_ids.entity}.has_diff",
+                         value=len(missed))
+                for doc_id in doc_ids - missed:
+                    statedb.doc_not_missing(doc_type, doc_id)
+
+
+def discard_missing_docs_state(domain, state_dir):
+    statedb = open_state_db(domain, state_dir)
+    for missing_ids, doc_type in iter_missing_scanners(statedb):
+        resume_key, x = missing_ids.keys(doc_type)
+        missing_ids.discard_iteration_state(resume_key)
+
+
+def iter_missing_scanners(statedb):
+    for entity in MissingIds.DOC_TYPES:
+        missing_ids = MissingIds(entity, statedb, None)
+        for doc_type in missing_ids.doc_types:
+            yield missing_ids, doc_type
 
 
 @attr.s
@@ -136,11 +148,8 @@ class MissingIds:
         """
         if self.stopper.clean_break:
             return
-        assert doc_type in self.doc_types, \
-            f"'{doc_type}' is not a {self.entity} doc type"
+        resume_key, count_key = self.keys(doc_type)
         dd_type = f"find_{self.tag}_{self.entity}s"
-        count_key = f"{doc_type}.id.{self.tag}"
-        resume_key = f"{self.domain}.{count_key}.{self.statedb.unique_id}"
         if not self.resume:
             self.discard_iteration_state(resume_key)
             self.counter.pop(count_key)
@@ -155,6 +164,13 @@ class MissingIds:
                 yield from drop_if_not_missing(batch)
                 add_docs(len(batch))
         self._count_keys.add((doc_type, count_key))
+
+    def keys(self, doc_type):
+        assert doc_type in self.doc_types, \
+            f"'{doc_type}' is not a {self.entity} doc type"
+        count_key = f"{doc_type}.id.{self.tag}"
+        resume_key = f"{self.domain}.{count_key}.{self.statedb.unique_id}"
+        return resume_key, count_key
 
     def drop_sql_ids(self, couch_ids):
         """Filter the given couch ids, removing ids that are in SQL"""
@@ -207,7 +223,7 @@ class MissingIds:
 
     @staticmethod
     def discard_iteration_state(resume_key):
-        ResumableFunctionIterator(resume_key, None, None, None).discard_state()
+        ResumableFunctionIterator(resume_key, None, None).discard_state()
 
     def reset_doc_count(self, doc_type, count_key):
         count = self.counter.pop(count_key)
