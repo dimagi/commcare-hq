@@ -90,7 +90,7 @@
         "grunt-mocha": "1.2.0",
         "jasmine-fixture": "2.0.0",
         "lodash": "4.17.21",
-        "mocha": "2.5.3",
+        "mocha": "8.4.0",
         "mocha-headless-chrome": "3.0.0",
         "sinon": "2.3.2"
     },
