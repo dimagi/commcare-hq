@@ -7,11 +7,9 @@ from corehq.toggles import TURN_IO_BACKEND, NAMESPACE_DOMAIN
 def auto_enable_turnio_ff_for_certain_domains(apps, schema_editor):
     SQLTurnWhatsAppBackend = apps.get_model('sms', 'SQLTurnWhatsAppBackend')
 
-    for backend in SQLTurnWhatsAppBackend.objects.all():
-        # Check for backend.deleted to account for active_objects
-        if not backend.deleted:
-            domain = backend.domain
-            TURN_IO_BACKEND.set(item=domain, enabled=True, namespace=NAMESPACE_DOMAIN)
+    for backend in SQLTurnWhatsAppBackend.objects.filter(deleted=False):
+        domain = backend.domain
+        TURN_IO_BACKEND.set(item=domain, enabled=True, namespace=NAMESPACE_DOMAIN)
 
 
 def noop(apps, schema_editor):
