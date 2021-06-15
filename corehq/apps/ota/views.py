@@ -102,7 +102,7 @@ def app_aware_search(request, domain, app_id):
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = request.GET.dict()
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
     try:
         # could be a list or a single string
         case_type = criteria.pop('case_type')

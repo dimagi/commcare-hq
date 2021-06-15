@@ -2125,6 +2125,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+    additional_case_types = ListProperty(str)
 
     @property
     def case_session_var(self):
@@ -2211,7 +2212,6 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
-    additional_case_types = ListProperty(str)
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)

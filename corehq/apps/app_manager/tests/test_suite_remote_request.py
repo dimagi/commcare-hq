@@ -205,7 +205,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
-        self.module.additional_case_types = [another_case_type]
+        self.module.search_config.additional_case_types = [another_case_type]
         suite_xml = self.app.create_suite()
         suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'

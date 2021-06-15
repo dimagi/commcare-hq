@@ -687,7 +687,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             track_workflow(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('additional_case_types'):
-        module.additional_case_types = list(set(request.POST.getlist('additional_case_types')))
+        module.search_config.additional_case_types = list(set(request.POST.getlist('additional_case_types')))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')

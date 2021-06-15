@@ -66,7 +66,7 @@
               <div class="{% css_field_class %}">
                 <select name='additional_case_types' class='form-control multiselect-caselist' multiple="multiple" >
                   {% for case_type in case_types %}
-                    <option value="{{ case_type }}" {% if case_type in  module.additional_case_types %}selected{% endif %}>{{ case_type }}</option>
+                    <option value="{{ case_type }}" {% if case_type in  module.search_config.additional_case_types %}selected{% endif %}>{{ case_type }}</option>
                   {% endfor %}
                 </select>
               </div>

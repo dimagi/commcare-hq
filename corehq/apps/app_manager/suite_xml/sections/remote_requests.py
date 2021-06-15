@@ -132,7 +132,7 @@ class RemoteRequestFactory(object):
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
-            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+            additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=RESULTS_INSTANCE)
@@ -154,7 +154,7 @@ class RemoteRequestFactory(object):
                 ref="'{}'".format(self.module.case_type)
             ),
         ]
-        additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+        additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
         for type in additional_types:
             default_query_datums.append(
                 QueryData(
