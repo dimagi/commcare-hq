@@ -2051,3 +2051,10 @@ DETAILED_TAGGING = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+TURN_IO_BACKEND = StaticToggle(
+    'turn_io_backend',
+    'Enable Turn.io SMS backend',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
