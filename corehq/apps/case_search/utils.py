@@ -129,7 +129,7 @@ class CaseSearchCriteria(object):
                 self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
 
-def get_related_cases(domain, app_id, case_type, cases):
+def get_related_cases(domain, app_id, case_types, cases):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -140,8 +140,14 @@ def get_related_cases(domain, app_id, case_type, cases):
         return []
 
     app = get_app_cached(domain, app_id)
-    paths = get_related_case_relationships(app, case_type)
-    child_case_types = get_child_case_types(app, case_type)
+    paths = [
+        rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
+        for rel in rels
+    ]
+    child_case_types = [
+        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
+        for _type in types
+    ]
 
     results = []
     if paths:
