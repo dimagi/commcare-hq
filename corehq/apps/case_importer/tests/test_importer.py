@@ -40,16 +40,17 @@ class ImporterTest(TestCase):
         self.domain_obj = create_domain("importer-test")
         self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
+
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        self.couch_user.add_domain_membership(self.domain, is_admin=True)
+        self.couch_user.save()
+
         self.subdomain1 = create_domain('subdomain1')
         self.subdomain2 = create_domain('subdomain2')
         self.ignored_domain = create_domain('ignored-domain')
         create_enterprise_permissions(self.couch_user.username, self.domain,
                                       [self.subdomain1.name, self.subdomain2.name],
                                       [self.ignored_domain.name])
-
-        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
-        self.couch_user.add_domain_membership(self.domain, is_admin=True)
-        self.couch_user.save()
 
         self.accessor = CaseAccessors(self.domain)
 
