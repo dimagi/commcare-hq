@@ -37,7 +37,11 @@ class SQLXFormsSession(models.Model):
 
     STATUS_PARTIALLY_COMPLETE = "partially_completed"
     STATUS_COMPLETE = "completed"
+    # "In Progress" means the survey session is open and the survey can still
+    # be completed by the user
     STATUS_IN_PROGRESS = "in-progress"
+    # "Not Finished" means the survey session closed without generating a form submission
+    # and the survey can no longer be completed
     STATUS_NOT_FINISHED = "not-finished"
 
     STATUS_DISPLAY = {
