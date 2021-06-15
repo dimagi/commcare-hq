@@ -12,7 +12,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import Instance
 
 
 class EntryInstances(PostProcessor):
-    """Adds instance declarations to the suite file"""
 
     def update_suite(self):
         for entry in self.suite.entries:
