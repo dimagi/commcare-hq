@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from itertools import chain
 
 from django.conf import settings
@@ -173,6 +173,8 @@ FIXED_START_DATES = {
 
 def determine_sql_start_date(start_date):
     fixed_start_date = get_fixed_start_date_for_sql()
+    if not isinstance(start_date, datetime) and isinstance(start_date, date):
+        fixed_start_date = fixed_start_date.date()
     if fixed_start_date and start_date < fixed_start_date:
         return fixed_start_date
     else:
