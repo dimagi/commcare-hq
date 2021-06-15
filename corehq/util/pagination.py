@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
-from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
+from jsonobject.properties import ListProperty, JsonArray, JsonSet, JsonDict
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db, retry_on_couch_error
@@ -173,7 +173,6 @@ class ResumableIteratorState(JsonObject):
     args = ListProperty()
     kwargs = DictProperty()
     progress = DictProperty()
-    complete = BooleanProperty(default=False)
 
     def is_resume(self):
         return bool(getattr(self, '_rev', None))
@@ -253,7 +252,8 @@ class ResumableFunctionIterator(object):
         return self._state
 
     def __iter__(self):
-        if self.state.complete:
+        if getattr(self.state, "complete", False):
+            # Legacy: do not try to resume completed iteration
             return
 
         resumable_args = ResumableArgsProvider(self.state, self.args_provider)
@@ -265,9 +265,6 @@ class ResumableFunctionIterator(object):
         except StopToResume:
             return
 
-        self.state.args = None
-        self.state.kwargs = None
-        self.state.complete = True
         self._save_state()
 
     def _get_event_handler(self):

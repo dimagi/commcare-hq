@@ -3,12 +3,11 @@ from django.test import RequestFactory, TestCase, override_settings
 import mock
 
 from corehq.apps.accounting.models import (
-    BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
-    SubscriptionAdjustment,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.analytics.utils import (
     get_blocked_hubspot_domains,
     get_blocked_hubspot_email_domains,
@@ -19,7 +18,7 @@ from corehq.apps.analytics.utils import (
     hubspot_enabled_for_email,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CouchUser, CommCareUser
 
 from ..tasks import (
     HUBSPOT_COOKIE,
@@ -67,23 +66,98 @@ class TestSendToHubspot(TestCase):
 
 
 class TestBlockedHubspotData(TestCase):
-    blocked_domain = 'block-domain-hubspot'
-    allowed_domain = 'allow-domain-hubspot'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+
+        cls.blocked_account = generator.billing_account('test@diamgi.com', 'test@test.com')
+        cls.blocked_account.block_hubspot_data_for_all_users = True
+        cls.blocked_account.block_email_domains_from_hubspot = [
+            'blocked.com',
+            'foo.org',
+            'gmail.com',
+        ]
+        cls.blocked_account.save()
+
+        # this is one domain linked to the billing account that blocks hubspot
+        cls.blocked_domain = create_domain('block-domain-hubspot')
+        first_blocked_sub = Subscription.new_domain_subscription(
+            cls.blocked_account, cls.blocked_domain.name, plan
+        )
+        first_blocked_sub.is_active = True
+        first_blocked_sub.save()
+
+        # this is another domain linked to the billing account that blocks hubspot
+        cls.second_blocked_domain = create_domain('block-domain-hubspot-002')
+        second_blocked_sub = Subscription.new_domain_subscription(
+            cls.blocked_account, cls.second_blocked_domain.name, plan
+        )
+        second_blocked_sub.is_active = True
+        second_blocked_sub.save()
+
+        # this domain is not linked to an account that is blocking hubspot
+        cls.allowed_domain = create_domain('allow-domain-hubspot')
+        allowed_account = generator.billing_account('test@diamgi.com', 'test@test.com')
+        allowed_sub = Subscription.new_domain_subscription(
+            allowed_account, cls.allowed_domain.name, plan
+        )
+        allowed_sub.is_active = True
+        allowed_sub.save()
+
+        cls.allowed_user = WebUser.create(
+            cls.allowed_domain.name, 'bob@allowed.com', '*****', None, None
+        )
+        cls.allowed_user.save()
+
+        cls.blocked_by_email_user = WebUser.create(
+            cls.allowed_domain.name, 'jjj@blocked.com', '*****', None, None
+        )
+        cls.blocked_by_email_user.save()
+
+        cls.blocked_user = WebUser.create(
+            cls.blocked_domain.name, 'fff@example.com', '*****', None, None
+        )
+        cls.blocked_user.save()
+
+        cls.blocked_couch_user = CouchUser.get_by_username(cls.blocked_user.username)
+
+        cls.blocked_commcare_user = CommCareUser.create(
+            cls.blocked_domain.name, 'testuser', '****', None, None
+        )
+        cls.blocked_commcare_user.save()
 
     def test_get_blocked_domains(self):
-        self.assertEqual(get_blocked_hubspot_domains(), [self.blocked_domain])
+        self.assertListEqual(
+            get_blocked_hubspot_domains(),
+            [self.blocked_domain.name, self.second_blocked_domain.name]
+        )
 
     def test_get_blocked_email_domains(self):
-        self.assertEqual(get_blocked_hubspot_email_domains(), ['blocked.com'])
+        """
+        Ensure that gmail.com is never included in the list of blocked hubspot
+        email domains, and that if multiple values were specified, that they
+        are included.
+        """
+        self.assertListEqual(
+            sorted(get_blocked_hubspot_email_domains()),
+            sorted([
+                'blocked.com',
+                'foo.org',
+            ])
+        )
 
     def test_get_blocked_hubspot_accounts(self):
-        self.assertEqual(get_blocked_hubspot_accounts(), [
+        self.assertListEqual(get_blocked_hubspot_accounts(), [
             f'{self.blocked_account.name} - ID # {self.blocked_account.id}',
         ])
 
     def test_is_domain_blocked_from_hubspot(self):
-        self.assertTrue(is_domain_blocked_from_hubspot(self.blocked_domain))
-        self.assertFalse(is_domain_blocked_from_hubspot(self.allowed_domain))
+        self.assertTrue(is_domain_blocked_from_hubspot(self.blocked_domain.name))
+        self.assertTrue(is_domain_blocked_from_hubspot(self.second_blocked_domain.name))
+        self.assertFalse(is_domain_blocked_from_hubspot(self.allowed_domain.name))
 
     def test_is_email_blocked_from_hubspot(self):
         self.assertTrue(is_email_blocked_from_hubspot(self.blocked_by_email_user.username))
@@ -99,54 +173,19 @@ class TestBlockedHubspotData(TestCase):
         self.assertFalse(hubspot_enabled_for_email(self.blocked_user.username))
         self.assertTrue(hubspot_enabled_for_email(self.allowed_user.username))
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
-
-        cls.blocked_domain_obj = create_domain(cls.blocked_domain)
-        cls.blocked_account = BillingAccount.get_or_create_account_by_domain(
-            cls.blocked_domain, created_by='test'
-        )[0]
-        cls.blocked_account.block_hubspot_data_for_all_users = True
-        cls.blocked_account.block_email_domains_from_hubspot = ['blocked.com']
-        cls.blocked_account.save()
-        blocked_sub = Subscription.new_domain_subscription(
-            cls.blocked_account, cls.blocked_domain, plan
-        )
-        blocked_sub.is_active = True
-        blocked_sub.save()
-
-        cls.allowed_domain_obj = create_domain(cls.allowed_domain)
-        allowed_account = BillingAccount.get_or_create_account_by_domain(
-            cls.allowed_domain, created_by='test'
-        )[0]
-        allowed_sub = Subscription.new_domain_subscription(
-            allowed_account, cls.allowed_domain, plan
-        )
-        allowed_sub.is_active = True
-        allowed_sub.save()
-
-        cls.allowed_user = WebUser.create(
-            cls.allowed_domain, 'bob@allowed.com', '*****', None, None
-        )
-        cls.allowed_user.save()
-
-        cls.blocked_by_email_user = WebUser.create(
-            cls.allowed_domain, 'jjj@blocked.com', '*****', None, None
-        )
-        cls.blocked_by_email_user.save()
-
-        cls.blocked_user = WebUser.create(
-            cls.blocked_domain, 'fff@example.com', '*****', None, None
-        )
-        cls.blocked_user.save()
+    def test_couch_user_is_blocked(self):
+        """
+        Make sure that hubspot_enabled_for_user does not throw an error if a
+        CouchUser is passed to it (rather than a WebUser).
+        """
+        self.assertFalse(hubspot_enabled_for_user(self.blocked_couch_user))
 
     @classmethod
     def tearDownClass(cls):
-        cls.blocked_domain_obj.delete()
-        cls.allowed_domain_obj.delete()
-        SubscriptionAdjustment.objects.all().delete()
-        Subscription.visible_and_suppressed_objects.all().delete()
-        BillingAccount.objects.all().delete()
+        cls.blocked_user.delete(None)
+        cls.blocked_by_email_user.delete(None)
+        cls.allowed_user.delete(None)
+        cls.blocked_domain.delete()
+        cls.second_blocked_domain.delete()
+        cls.allowed_domain.delete()
         super().tearDownClass()

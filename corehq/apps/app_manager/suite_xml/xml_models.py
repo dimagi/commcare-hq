@@ -524,6 +524,7 @@ class QueryPrompt(DisplayNode):
     key = StringField('@key')
     appearance = StringField('@appearance', required=False)
     receive = StringField('@receive', required=False)
+    hidden = SimpleBooleanField('@hidden', 'true', 'false', required=False)
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
 
@@ -743,14 +744,14 @@ class ActionMixin(OrderedXmlObject):
 
     stack = NodeField('stack', Stack)
     relevant = XPathField('@relevant')
+    auto_launch = StringField("@auto_launch")
+    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class Action(ActionMixin):
     """ For CC < 2.21 """
 
     display = NodeField('display', Display)
-    auto_launch = StringField("@auto_launch")
-    redo_last = SimpleBooleanField("@redo_last", "true", "false")
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):

@@ -21,6 +21,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.role_utils import init_domain_with_presets
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
@@ -274,6 +275,11 @@ class TestWebUserResource(APIResourceTest):
         "role": "Admin"
     }
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        init_domain_with_presets(cls.domain.name)
+
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
         role = user.get_role(self.domain.name)
@@ -340,6 +346,7 @@ class TestWebUserResource(APIResourceTest):
 
     def test_create(self):
         user_json = deepcopy(self.default_user_json)
+        self.addCleanup(self._delete_user, user_json["username"])
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
@@ -350,11 +357,11 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
 
     def test_create_admin_without_role(self):
         user_json = deepcopy(self.default_user_json)
         user_json.pop('role')
+        self.addCleanup(self._delete_user, user_json["username"])
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
@@ -365,40 +372,36 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete(deleted_by=None)
 
     def test_create_with_preset_role(self):
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = "Field Implementer"
         user_json["is_admin"] = False
+        self.addCleanup(self._delete_user, user_json["username"])
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, 'Field Implementer')
-        user_back.delete(deleted_by=None)
+        self.assertEqual(user_back.get_role(self.domain.name).name, 'Field Implementer')
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.create(self.domain.name, 'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False
+        self.addCleanup(self._delete_user, user_json["username"])
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, new_user_role.name)
-        user_back.delete(deleted_by=None)
+        self.assertEqual(user_back.get_role(self.domain.name).name, new_user_role.name)
 
     def test_create_with_invalid_admin_role(self):
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = 'Jack of all trades'
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
+        response = self._assert_auth_post_resource(self.list_endpoint, json.dumps(user_json))
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode('utf-8'), '{"error": "An admin can have only one role : Admin"}')
 
@@ -406,21 +409,15 @@ class TestWebUserResource(APIResourceTest):
         user_json = deepcopy(self.default_user_json)
         user_json['is_admin'] = False
         user_json["role"] = 'Jack of all trades'
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
+        response = self._assert_auth_post_resource(self.list_endpoint, json.dumps(user_json))
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role Jack of all trades"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'Jack of all trades\'"}')
 
     def test_create_with_missing_non_admin_role(self):
         user_json = deepcopy(self.default_user_json)
         user_json['is_admin'] = False
         user_json.pop("role")
-        response = self._assert_auth_post_resource(self.list_endpoint,
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   failure_code=400)
+        response = self._assert_auth_post_resource(self.list_endpoint, json.dumps(user_json))
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
 
@@ -441,6 +438,11 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.first_name, "Joe")
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
+
+    def _delete_user(self, username):
+        user = WebUser.get_by_username(username)
+        if user:
+            user.delete(deleted_by=None)
 
 
 class FakeUserES(object):
