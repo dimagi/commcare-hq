@@ -1551,7 +1551,6 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
-    notification_emails=['aking'],
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
