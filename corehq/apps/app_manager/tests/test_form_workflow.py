@@ -283,6 +283,26 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
+    def test_return_to_shadow_module(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('enroll child', 'child')
+        factory.form_requires_case(m0f0)
+        m0f0.post_form_workflow = WORKFLOW_MODULE
+
+        m1 = factory.new_shadow_module('shadow_module', m0, with_form=False)
+
+        expected = """
+        <partial>
+            <stack>
+              <create>
+                <command value="'m1'"/>
+              </create>
+            </stack>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[2]/stack")
+
     def test_link_to_form_in_parent_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')

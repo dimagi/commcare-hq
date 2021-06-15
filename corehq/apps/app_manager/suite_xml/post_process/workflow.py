@@ -96,7 +96,10 @@ class WorkflowHelper(PostProcessor):
                     and DatumMeta's represent stack datums.
         """
         module_command = id_strings.menu_id(module)
-        module_datums = self.get_module_datums(f'm{module.id}')
+        if form is None and module.module_type == "shadow":
+            module_datums = self.get_module_datums(f'm{module.source_module.id}')
+        else:
+            module_datums = self.get_module_datums(f'm{module.id}')
 
         frame_children = []
         if module_command == id_strings.ROOT:
