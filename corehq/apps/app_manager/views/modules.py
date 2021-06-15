@@ -958,7 +958,12 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
         if prop.get('appearance', '') == 'fixture':
-            ret['input_'] = 'select1'
+            if prop.get('is_multiselect', False):
+                ret['input_'] = 'select'
+                # formplayer needs "#,#" as tokenizer for multiselects
+                ret['default_value'] = prop['default_value'].replace(" ", "").replace(",", "#,#")
+            else:
+                ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
             keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
             missing = [key for key in keys if not fixture_props.get(key)]
