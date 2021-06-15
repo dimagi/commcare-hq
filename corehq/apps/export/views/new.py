@@ -52,7 +52,7 @@ from corehq.apps.export.views.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 
 
 class BaseExportView(BaseProjectDataView):
@@ -126,6 +126,7 @@ class BaseExportView(BaseProjectDataView):
             'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+            'has_api_access': domain_has_privilege(self.domain, API_ACCESS),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,

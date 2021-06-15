@@ -22,18 +22,12 @@ billiard==3.5.0.4
     # via
     #   -r base-requirements.in
     #   celery
-boto3==1.15.12
+boto3==1.17.85
     # via -r base-requirements.in
-botocore==1.18.12
+botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
-cairocffi==1.1.0
-    # via
-    #   cairosvg
-    #   weasyprint
-cairosvg==2.5.1
-    # via weasyprint
 https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/releases/celery-4.1.1.1-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
@@ -45,10 +39,8 @@ certifi==2020.6.20
     #   sentry-sdk
 cffi==1.14.3
     # via
-    #   cairocffi
     #   cryptography
     #   csiphash
-    #   weasyprint
 chardet==3.0.4
     # via
     #   ghdiff
@@ -71,10 +63,6 @@ cryptography==3.4.7
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
-cssselect2==0.3.0
-    # via
-    #   cairosvg
-    #   weasyprint
 datadog==0.39.0
     # via -r base-requirements.in
 ddtrace==0.44.0
@@ -87,7 +75,6 @@ decorator==4.0.11
 defusedxml==0.5.0
     # via
     #   -r base-requirements.in
-    #   cairosvg
     #   python3-saml
 deprecated==1.2.10
     # via pygithub
@@ -157,7 +144,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis==0.6.0
     # via -r base-requirements.in
-django==2.2.20
+django==2.2.24
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -204,10 +191,6 @@ fakecouch==0.0.15
     # via -r test-requirements.in
 faker==5.0.2
     # via -r base-requirements.in
-flake8-polyfill==1.0.2
-    # via radon
-flake8==3.9.2
-    # via flake8-polyfill
 flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
@@ -232,8 +215,6 @@ gunicorn==20.0.4
     # via -r base-requirements.in
 hiredis==1.1.0
     # via -r base-requirements.in
-html5lib==1.1
-    # via weasyprint
 httpagentparser==1.9.0
     # via -r base-requirements.in
 idna==2.10
@@ -242,7 +223,6 @@ idna==2.10
     #   requests
 importlib-metadata==3.4.0
     # via
-    #   flake8
     #   jsonschema
     #   pep517
 intervaltree==3.1.0
@@ -302,8 +282,6 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
-mccabe==0.6.1
-    # via flake8
 mock==2.0.0
     # via -r base-requirements.in
 nose-exclude==0.5.0
@@ -330,7 +308,6 @@ phonenumberslite==8.12.10
 pillow==8.1.2
     # via
     #   -r base-requirements.in
-    #   cairosvg
     #   django-simple-captcha
     #   reportlab
 pip-tools==6.1.0
@@ -355,14 +332,10 @@ py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pycco==0.5.1
     # via -r base-requirements.in
-pycodestyle==2.7.0
-    # via flake8
 pycparser==2.20
     # via cffi
 pycryptodome==3.9.9
     # via -r base-requirements.in
-pyflakes==2.3.1
-    # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.8.1
@@ -377,8 +350,8 @@ pyjwt==1.7.1
     #   twilio
 pyopenssl==20.0.1
     # via -r sso-requirements.in
-pyphen==0.9.5
-    # via weasyprint
+pyphonetics==0.5.3
+    # via -r base-requirements.in
 pyrsistent==0.17.3
     # via jsonschema
 pysocks==1.7.1
@@ -396,8 +369,6 @@ python-dateutil==2.8.1
 python-editor==1.0.4
     # via alembic
 python-imap==1.0.0
-    # via -r base-requirements.in
-python-levenshtein==0.12.2
     # via -r base-requirements.in
 python-magic==0.4.22
     # via -r base-requirements.in
@@ -422,7 +393,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon[flake8]==4.5.0
+radon==5.0.1
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
@@ -434,11 +405,11 @@ redis==3.5.3
     #   django-websocket-redis
 reportlab==3.5.53
     # via -r base-requirements.in
-requests-mock==1.8.0
+requests-mock==1.9.3
     # via -r test-requirements.in
 requests-oauthlib==1.3.0
     # via -r base-requirements.in
-requests==2.24.0
+requests==2.25.1
     # via
     #   -r base-requirements.in
     #   cloudant
@@ -453,7 +424,7 @@ requests==2.24.0
     #   twilio
 rjsmin==1.1.0
     # via django-compressor
-s3transfer==0.3.3
+s3transfer==0.4.2
     # via boto3
 schema==0.7.2
     # via -r base-requirements.in
@@ -481,7 +452,6 @@ six==1.15.0
     #   ethiopian-date-converter
     #   eulxml
     #   ghdiff
-    #   html5lib
     #   isodate
     #   jsonfield
     #   jsonobject
@@ -532,11 +502,6 @@ text-unidecode==1.3
     # via
     #   -r base-requirements.in
     #   faker
-tinycss2==1.0.2
-    # via
-    #   cairosvg
-    #   cssselect2
-    #   weasyprint
 tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
@@ -551,7 +516,9 @@ typing-extensions==3.7.4.3
     # via importlib-metadata
 ua-parser==0.10.0
     # via user-agents
-urllib3==1.25.10
+unidecode==1.2.0
+    # via pyphonetics
+urllib3==1.26.5
     # via
     #   botocore
     #   elasticsearch
@@ -564,13 +531,6 @@ user-agents==2.2.0
     # via django-user-agents
 vine==1.3.0
     # via amqp
-weasyprint==51
-    # via -r base-requirements.in
-webencodings==0.5.1
-    # via
-    #   cssselect2
-    #   html5lib
-    #   tinycss2
 werkzeug==1.0.1
     # via -r base-requirements.in
 wrapt==1.12.1
@@ -587,16 +547,11 @@ zipp==3.4.0
     #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==21.0.1
+pip==21.1.2
     # via pip-tools
 setuptools==50.3.0
     # via
-    #   cairocffi
-    #   cssselect2
     #   django-websocket-redis
     #   gunicorn
     #   jsonschema
     #   protobuf
-    #   python-levenshtein
-    #   tinycss2
-    #   weasyprint

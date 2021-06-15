@@ -184,10 +184,11 @@ class CouchSqlDomainMigrator:
         self.case_diff_queue = diff_queue(self.statedb)
 
     def migrate(self):
-        log.info('{live}migrating domain {domain} ({state})'.format(
+        log.info('{live}migrating domain {domain} ({state})\n{stats}'.format(
             live=("live " if self.live_migrate else ""),
             domain=self.domain,
             state=self.statedb.unique_id,
+            stats="\n".join(iter_couch_stats(self.domain)),
         ))
         patch = migration_patches()
         with self.counter, patch, self.case_diff_queue, self.stopper:
@@ -380,9 +381,14 @@ class CouchSqlDomainMigrator:
             external_id=couch_case.external_id,
             case_json=couch_case.dynamic_case_properties()
         )
-        _migrate_case_actions(couch_case, sql_case)
-        _migrate_case_indices(couch_case, sql_case)
-        _migrate_case_attachments(couch_case, sql_case)
+        try:
+            _migrate_case_actions(couch_case, sql_case)
+            _migrate_case_indices(couch_case, sql_case)
+            _migrate_case_attachments(couch_case, sql_case)
+        except Exception:
+            log.exception("unprocessed case error: %s", couch_case.case_id)
+            self.case_diff_queue.enqueue(couch_case.case_id)
+            return
         try:
             CaseAccessorSQL.save_case(sql_case)
         except CaseSaveError:
@@ -515,7 +521,16 @@ class CouchSqlDomainMigrator:
             ledger_value = get_sql_ledger_value(case_id, section_id, entry_id)
             if ledger_value.last_modified_form_id != jdiff.new_value:
                 return False
-            couch_form = XFormInstance.get(jdiff.new_value)
+            try:
+                couch_form = XFormInstance.get(jdiff.new_value)
+            except XFormNotFound as err:
+                try:
+                    sql_form = get_sql_form(jdiff.new_value)
+                    if sql_form.xmlns == "http://commcarehq.org/couch-to-sql/patch-case-diff":
+                        return False
+                except XFormNotFound:
+                    pass
+                raise err
             if couch_form.doc_type != "XFormDuplicate":
                 return False
             log.info("dropping duplicate ledgers for form %s case %s",
@@ -1076,9 +1091,8 @@ def _migrate_case_attachments(couch_case, sql_case):
             name=name or attachment.identifier,
             case=sql_case,
             content_type=attachment.server_mime,
-            content_length=attachment.content_length,
-            blob_id=blob.id,
-            blob_bucket=couch_case._blobdb_bucket(),
+            content_length=blob.content_length,
+            blob_id=blob.key,
             properties=attachment.attachment_properties,
             md5=attachment.server_md5
         ))
@@ -1276,7 +1290,6 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         resume_key,
         data_function,
         args_provider,
-        item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
     if rows.state.is_resume() and rows.state.to_json().get("kwargs"):
@@ -1466,8 +1479,8 @@ class MissingFormLoader:
 
 def get_main_forms_iteration_stop_date(statedb):
     resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
-    itr = ResumableFunctionIterator(resume_key, None, None, None)
-    if itr.state.complete:
+    itr = ResumableFunctionIterator(resume_key, None, None)
+    if getattr(itr.state, "complete", False):
         return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
@@ -1560,6 +1573,25 @@ class DocCounter:
                     metric_name_template_normalized % timing.full_name, normalized_value,
                     buckets=NORMALIZED_TIMING_BUCKETS, bucket_tag='duration'
                 )
+
+
+def iter_couch_stats(domain_name):
+    from .missingdocs import MissingIds
+    from couchforms.analytics import get_last_form_submission_received
+    couchdb = XFormInstance.get_db()
+    for entity in MissingIds.DOC_TYPES:
+        count = get_couch_doc_count(domain_name, entity, couchdb)
+        yield f"Total {entity}s: {count}"
+    received_on = get_last_form_submission_received(domain_name)
+    yield f"Last form submission: {received_on}"
+
+
+def get_couch_doc_count(domain_name, entity, couchdb):
+    from .missingdocs import MissingIds
+    return sum(
+        get_doc_count_in_domain_by_type(domain_name, doc_type, couchdb)
+        for doc_type in MissingIds.DOC_TYPES[entity]
+    )
 
 
 def commit_migration(domain_name):

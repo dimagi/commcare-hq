@@ -176,6 +176,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
+        ), mock.patch(
+            "couchforms.analytics.get_last_form_submission_received"
         ), patch_chunk_size, patch_find_missing_docs:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
@@ -202,6 +204,22 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             if not self.migration_success:
                 self.fail("migration failed")
             assert not self.is_live_migration(), "live migration not finished"
+
+    def do_unfinish_migration(self):
+        if should_use_sql_backend(self.domain_name):
+            clear_local_domain_sql_backend_override(self.domain_name)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, "unfinish")
+
+    def has_missing_docs_state(self):
+        from ..missingdocs import iter_missing_scanners
+        from corehq.util.pagination import ResumableFunctionIterator
+        statedb = open_state_db(self.domain_name, self.state_dir)
+        for missing_ids, doc_type in iter_missing_scanners(statedb):
+            resume_key, x = missing_ids.keys(doc_type)
+            itr = ResumableFunctionIterator(resume_key, None, None)
+            if itr.couch_db.doc_exist(itr.iteration_id):
+                return True
+        return False
 
     def is_live_migration(self):
         from corehq.apps.couch_sql_migration.progress import (
@@ -1314,6 +1332,24 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration(finish=True)
         self.assertEqual(self._get_form_ids(), {"one", "two"})
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
+
+    def test_unfinish_migration(self):
+        self.submit_form(make_test_form("one"), timedelta(minutes=-97))
+        self.submit_form(make_test_form("two"))
+        with self.patch_migration_chunk_size(1):
+            self.do_migration(live=True, diffs=IGNORE)
+        self.assertEqual(self._get_form_ids(), {"one"})
+        msg = "cannot unfinish migration in dry_run state"
+        with self.assertRaises(CommandError, msg=msg):
+            self.do_unfinish_migration()
+        self.do_migration(finish=True, missing_docs="rebuild")
+        self.assertEqual(self._get_form_ids(), {"one", "two"})
+        self.assertTrue(self.has_missing_docs_state())
+        self.do_unfinish_migration()
+        self.assertFalse(self.has_missing_docs_state())
+        self.submit_form(make_test_form("three"))
+        self.do_migration(finish=True)
+        self.assertEqual(self._get_form_ids(), {"one", "two", "three"})
 
     def test_rebuild_state(self):
         def interrupt():

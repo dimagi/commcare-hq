@@ -42,7 +42,7 @@ from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping, ElasticsearchIndexInfo
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -193,12 +193,20 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         Processors:
           - :py:class:`corehq.pillows.case_search.CaseSearchPillowProcessor`
     """
-    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
+    index_info = CASE_SEARCH_INDEX_INFO
+    if 'index_name' in kwargs and 'index_alias' in kwargs:
+        # Allow overriding index name and alias for the purposes of reindexing.
+        # These can be set in localsettings.LOCAL_PILLOWTOPS
+        raw_info = CASE_SEARCH_INDEX_INFO.to_json()
+        raw_info.pop("meta")
+        index_info = ElasticsearchIndexInfo.wrap(raw_info)
+        index_info.index = kwargs['index_name']
+        index_info.alias = kwargs['index_alias']
+
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
-        index_info=CASE_SEARCH_INDEX_INFO,
+        index_info=index_info,
         doc_prep_fn=transform_case_for_elasticsearch
     )
     change_feed = KafkaChangeFeed(

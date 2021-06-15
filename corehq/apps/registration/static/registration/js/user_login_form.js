@@ -1,5 +1,6 @@
 hqDefine('registration/js/user_login_form', [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
@@ -7,6 +8,7 @@ hqDefine('registration/js/user_login_form', [
     'hqwebapp/js/knockout_bindings.ko',
 ], function (
     $,
+    _,
     ko,
     initialPageData,
     assertProperties,
@@ -14,15 +16,17 @@ hqDefine('registration/js/user_login_form', [
 ) {
     'use strict';
 
-    let loginController = function (options) {
+    var loginController = function (options) {
         assertProperties.assertRequired(options, [
             'initialUsername',
             'passwordField',
             'passwordFormGroup',
+            'nextUrl',
         ]);
-        let self = {};
+        var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
+        self.nextUrl = options.nextUrl;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
         self.passwordFormGroup.hide();
@@ -54,7 +58,10 @@ hqDefine('registration/js/user_login_form', [
          * or "Continue to <IdentityProvider>".
          * @param {boolean} expandPasswordField - (optional) if this is true, auto expand password field
          */
-        self.updateContinueText = function (expandPasswordField = false) {
+        self.updateContinueText = function (expandPasswordField) {
+            if (_.isUndefined(expandPasswordField)) {
+                expandPasswordField = false;
+            }
             self.continueTextPromise = $.post(self.checkSsoLoginStatusUrl, {
                 username: self.authUsername(),
             }, function (data) {
@@ -118,8 +125,12 @@ hqDefine('registration/js/user_login_form', [
             self.proceedToNextStep();
         };
 
-        self.continueToSsoLogin = function (sso_url) {
-            window.location = sso_url;
+        self.continueToSsoLogin = function (ssoUrl) {
+            if (self.nextUrl) {
+                // note ssoUrl already contains ?username=foo
+                ssoUrl = ssoUrl + "&next=" + self.nextUrl;
+            }
+            window.location = ssoUrl;
         };
 
         self.continueToPasswordLogin = function () {

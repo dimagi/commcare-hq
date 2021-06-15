@@ -332,8 +332,12 @@ def clear_caches_when_subscription_status_changes(sender, instance, **kwargs):
     :param instance: Subscription - the instance being saved/deleted
     :param kwargs:
     """
-    for identity_provider in IdentityProvider.objects.filter(owner=instance.account):
-        identity_provider.clear_domain_caches(instance.subscriber.domain)
+    try:
+        for identity_provider in IdentityProvider.objects.filter(owner=instance.account):
+            identity_provider.clear_domain_caches(instance.subscriber.domain)
+    except BillingAccount.DoesNotExist:
+        # for community subscriptions that might not have a BillingAccount set up
+        pass
 
 
 class AuthenticatedEmailDomain(models.Model):

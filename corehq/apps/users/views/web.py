@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -14,7 +14,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.analytics.tasks import (
@@ -193,12 +192,12 @@ def reinvite_web_user(request, domain):
     try:
         invitation = Invitation.objects.get(uuid=uuid)
     except Invitation.DoesNotExist:
-        return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
+        return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
 
     invitation.invited_on = datetime.utcnow()
     invitation.save()
     invitation.send_activation_email()
-    return json_response({'response': _("Invitation resent"), 'status': 'ok'})
+    return JsonResponse({'response': _("Invitation resent"), 'status': 'ok'})
 
 
 @always_allow_project_access
@@ -208,7 +207,7 @@ def delete_invitation(request, domain):
     uuid = request.POST['uuid']
     invitation = Invitation.objects.get(uuid=uuid)
     invitation.delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({'status': 'ok'})
 
 
 @method_decorator(always_allow_project_access, name='dispatch')

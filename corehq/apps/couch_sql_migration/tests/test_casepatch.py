@@ -88,11 +88,12 @@ def assert_patched(form, diffs, expect_patched=True):
 
 
 def check_ledger_diffs(case, diffs, patched_diffs=None):
-    with patch.object(mod, "get_couch_transactions", lambda ref: [ref]):
+    with patch.object(mod, "get_couch_transactions", lambda ref: [ref]), \
+            patch("corehq.apps.commtrack.models.StockState.include_archived.filter"):
         form = FakeForm(mod.get_diff_block(case))
         data = json.loads(unescape(form.form_data["diff"]))
-    eq(data["case_id"], case.case_id)
-    eq(data["ledgers"], {"led/ger/ref": [ledger_json(y) for y in diffs]})
+        eq(data["case_id"], case.case_id)
+        eq(data["ledgers"], {"led/ger/ref": [ledger_json(y) for y in diffs]})
     assert "diffs" not in data, data
 
 

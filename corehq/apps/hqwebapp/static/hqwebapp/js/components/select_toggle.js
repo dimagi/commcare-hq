@@ -34,6 +34,13 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             self.name = params.name || '';
             self.id = params.id || '';
             self.disabled = params.disabled || false;
+            self.htmlAttrs = {};
+            if (self.name) {
+                self.htmlAttrs.name = self.name;
+            }
+            if (self.id) {
+                self.htmlAttrs.id = self.id;
+            }
 
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
