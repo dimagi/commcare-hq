@@ -6,10 +6,6 @@ from requests_toolbelt.adapters import host_header_ssl
 from django.shortcuts import render
 
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.domain.decorators import (
-    cls_to_view,
-    login_and_domain_required,
-)
 from corehq.apps.reports.standard import (
     ProjectReport,
 )
