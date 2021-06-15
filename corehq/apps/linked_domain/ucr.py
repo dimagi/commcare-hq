@@ -27,12 +27,15 @@ def create_linked_ucr(domain_link, report_config_id):
     else:
         report_config = ReportConfiguration.get(report_config_id)
         datasource = DataSourceConfiguration.get(report_config.config_id)
-    new_datasource = _get_or_create_datasource_link(domain_link, datasource)
+
+    # grab the linked app this linked report references
+    downstream_app_id = get_downstream_app_id(domain_link.linked_domain, report_config.config.meta.build.app_id)
+    new_datasource = _get_or_create_datasource_link(domain_link, datasource, downstream_app_id)
     new_report = _get_or_create_report_link(domain_link, report_config, new_datasource)
     return LinkedUCRInfo(datasource=new_datasource, report=new_report)
 
 
-def _get_or_create_datasource_link(domain_link, datasource):
+def _get_or_create_datasource_link(domain_link, datasource, app_id):
     domain_datsources = get_datasources_for_domain(domain_link.linked_domain)
     existing_linked_datasources = [d for d in domain_datsources if d.meta.master_id == datasource.get_id]
     if existing_linked_datasources:
@@ -43,9 +46,9 @@ def _get_or_create_datasource_link(domain_link, datasource):
     datasource_json["_id"] = None
     datasource_json["_rev"] = None
 
-    # app_id is needed to edit a report in report builder, but linked
-    # reports can't be edited, so we can ignore this
-    datasource_json["meta"]["build"]["app_id"] = None
+    # app_id is needed to edit reports which is not possible with a linked project due to master_id
+    # this is to ensure if the link is removed, the downstream report will be editable
+    datasource_json["meta"]["build"]["app_id"] = app_id
 
     datasource_json["meta"]["master_id"] = datasource.get_id
 
@@ -74,7 +77,11 @@ def _replace_master_app_ids(linked_domain, datasource_json):
 def _replace_upstream_app_id(haystack, upstream_app_id, downstream_domain):
     if upstream_app_id in haystack:
         try:
-            downstream_app_id = get_downstream_app_id(downstream_domain, upstream_app_id)
+            downstream_app_id = get_downstream_app_id(
+                downstream_domain,
+                upstream_app_id,
+                use_upstream_app_id=False
+            )
         except MultipleDownstreamAppsError:
             raise DomainLinkError(_("This report cannot be updated because it references an app "
                                     "that has multiple linked apps."))
