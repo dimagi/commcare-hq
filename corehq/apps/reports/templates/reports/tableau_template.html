@@ -25,9 +25,8 @@
 
         var options = {
             hideTabs: true,
-            onFirstInteractive: function () {
-                console.log("Run this code when the viz has finished loading.");
-            }
+            width: "800px",
+            height: "700px",
         };
 
         var viz = new tableau.Viz(containerDiv, url, options);
@@ -35,7 +34,7 @@
 </script>
 
 <body onload="initViz();">
-    <div id="vizContainer" style="width:800px; height:700px;"></div>
+    <div id="vizContainer"></div>
 </body>
 
 {% endblock %}
