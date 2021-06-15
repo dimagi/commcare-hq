@@ -78,10 +78,10 @@ class CaseSearchCriteria(object):
         for key, val in self.criteria.items():
             if not isinstance(val, list):
                 continue
-            daterange_invalid = any([v.startswith('__range__') for v in val])
-            if key in disallowed_multiple_value_parameters or '/' in key or daterange_invalid:
+            is_daterange = any([v.startswith('__range__') for v in val])
+            if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
                 raise CaseFilterError(
-                    _("Multiple values are only supported for simple text lookups"),
+                    _("Multiple values are only supported for simple text and range searches"),
                     key
                 )
 
@@ -137,9 +137,7 @@ class CaseSearchCriteria(object):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 if isinstance(value, list):
-                    new_value = []
-                    for val in value:
-                        new_value.append(re.sub(to_remove, '', value))
+                    value = [re.sub(to_remove, '', val) for val in value]
                 else:
                     value = re.sub(to_remove, '', value)
 
