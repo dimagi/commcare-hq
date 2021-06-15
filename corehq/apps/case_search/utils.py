@@ -1,4 +1,5 @@
 import re
+from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -13,6 +14,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 
 
 class CaseSearchCriteria(object):
@@ -59,11 +61,29 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
+        self._validate_multiple_parameter_values()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_daterange_queries()
         self._add_case_property_queries()
+
+    def _validate_multiple_parameter_values(self):
+        disallowed_multiple_value_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+            CASE_SEARCH_XPATH_QUERY_KEY,
+        ]
+
+        for key, val in self.criteria.items():
+            if not isinstance(val, list):
+                continue
+            is_daterange = any([v.startswith('__range__') for v in val])
+            if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text and range searches"),
+                    key
+                )
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
@@ -88,7 +108,7 @@ class CaseSearchCriteria(object):
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         drop_keys = []
         for key, val in self.criteria.items():
-            if val.startswith('__range__'):
+            if not isinstance(val, list) and val.startswith('__range__'):
                 match = pattern.match(val)
                 if match:
                     [_, _, startdate, enddate] = val.split('__')
@@ -116,7 +136,10 @@ class CaseSearchCriteria(object):
             )
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
-                value = re.sub(to_remove, '', value)
+                if isinstance(value, list):
+                    value = [re.sub(to_remove, '', val) for val in value]
+                else:
+                    value = re.sub(to_remove, '', value)
 
             if '/' in key:
                 query = '{} = "{}"'.format(key, value)
