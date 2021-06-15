@@ -873,6 +873,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.role = UserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = UserRole.create(cls.domain.name, 'admin')
         cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -1107,7 +1108,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_multi_domain(self):
         self.setup_users()
-        create_enterprise_permissions("a@a.com", self.domain_name, [self.other_domain.name])
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username='123@email.com',
