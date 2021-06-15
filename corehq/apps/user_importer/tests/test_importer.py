@@ -44,6 +44,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.STANDARD)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
@@ -912,7 +913,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
     def test_multi_domain(self):
-        create_enterprise_permissions("a@a.com", self.domain_name, [self.other_domain.name])
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],

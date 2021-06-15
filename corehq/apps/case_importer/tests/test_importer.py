@@ -40,6 +40,12 @@ class ImporterTest(TestCase):
         self.domain_obj = create_domain("importer-test")
         self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
+        self.subdomain1 = create_domain('subdomain1')
+        self.subdomain2 = create_domain('subdomain2')
+        self.ignored_domain = create_domain('ignored-domain')
+        create_enterprise_permissions(self.couch_user.username, self.domain,
+                                      [self.subdomain1.name, self.subdomain2.name],
+                                      [self.ignored_domain.name])
 
         self.couch_user = WebUser.create(None, "test", "foobar", None, None)
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
@@ -55,6 +61,9 @@ class ImporterTest(TestCase):
     def tearDown(self):
         self.couch_user.delete(self.domain, deleted_by=None)
         self.domain_obj.delete()
+        self.subdomain1.delete()
+        self.subdomain2.delete()
+        self.ignored_domain.delete()
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
@@ -431,22 +440,17 @@ class ImporterTest(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import(self):
-        subdomain1 = create_domain('subdomain1')
-        subdomain2 = create_domain('subdomain2')
-        ignored_domain = create_domain('ignored-domain')
-        create_enterprise_permissions(self.couch_user.username, self.domain, [subdomain1.name, subdomain2.name],
-                                      [ignored_domain.name])
         headers_with_domain = ['case_id', 'name', 'artist', 'domain']
         config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
         case_with_domain_file = make_worksheet_wrapper(
             ['case_id', 'name', 'artist', 'domain'],
             ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', subdomain1.name],
-            ['', 'name-2', 'artist-2', subdomain2.name],
+            ['', 'name-1', 'artist-1', self.subdomain1.name],
+            ['', 'name-2', 'artist-2', self.subdomain2.name],
             ['', 'name-3', 'artist-3', self.domain],
             ['', 'name-4', 'artist-4', self.domain],
             ['', 'name-5', 'artist-5', 'not-existing-domain'],
-            ['', 'name-6', 'artist-6', ignored_domain.name],
+            ['', 'name-6', 'artist-6', self.ignored_domain.name],
         )
         res = do_import(case_with_domain_file, config_1, self.domain)
         self.assertEqual(5, res['created_count'])
@@ -462,7 +466,7 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
 
         # Asserting subdomain 1
-        s1_case_ids = CaseAccessors(subdomain1.name).get_case_ids_in_domain()
+        s1_case_ids = CaseAccessors(self.subdomain1.name).get_case_ids_in_domain()
         s1_cases = list(self.accessor.get_cases(s1_case_ids))
         self.assertEqual(1, len(s1_cases))
         # Asserting subdomain 1 case property
@@ -470,17 +474,12 @@ class ImporterTest(TestCase):
         self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
 
         # Asserting subdomain 2
-        s2_case_ids = CaseAccessors(subdomain2.name).get_case_ids_in_domain()
+        s2_case_ids = CaseAccessors(self.subdomain2.name).get_case_ids_in_domain()
         s2_cases = list(self.accessor.get_cases(s2_case_ids))
         self.assertEqual(1, len(s2_cases))
         # Asserting subdomain 2 case property
         s2_cases_pro = {c.name: c for c in s2_cases}
         self.assertEqual(s2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
-
-        # Clean up
-        subdomain1.delete()
-        subdomain2.delete()
-        ignored_domain.delete()
 
     # This test will only run on SQL backend because of a bug in couch backend
     # that overrides current domain with the 'domain' column value from excel
