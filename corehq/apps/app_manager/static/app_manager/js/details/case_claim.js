@@ -277,7 +277,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
-                var isMultiselect = searchProperties[i].input_ === "select" ? true : false;
+                var isMultiselect = searchProperties[i].input_ === "select";
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
