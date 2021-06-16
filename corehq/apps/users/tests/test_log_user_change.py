@@ -54,7 +54,10 @@ class TestLogUserChange(TestCase):
             self.web_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
             message="Phone Number Updated",
-            fields_changed={'phone_numbers': self.commcare_user.phone_numbers},
+            fields_changed={
+                'phone_numbers': self.commcare_user.phone_numbers,
+                'password': '******'
+            },
             action=ModelAction.UPDATE
         )
 

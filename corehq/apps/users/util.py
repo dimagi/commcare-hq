@@ -372,9 +372,10 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
 
 def _get_changed_details(couch_user, action, fields_changed):
     if action in [ModelAction.CREATE, ModelAction.DELETE]:
-        user_json = couch_user.to_json()
-        for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
-            user_json.pop(prop, None)
-        return user_json
+        changed_details = couch_user.to_json()
     else:
-        return fields_changed
+        changed_details = fields_changed.copy()
+
+    for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
+        changed_details.pop(prop, None)
+    return changed_details
