@@ -333,7 +333,8 @@ def log_user_role_update(domain, user, by_user, updated_via):
 
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
-                    message=None, fields_changed=None, action=ModelAction.UPDATE):
+                    message=None, fields_changed=None, action=ModelAction.UPDATE,
+                    domain_required_for_log=True):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
@@ -345,11 +346,12 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param message: Optional Message text
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
+    :param domain_required_for_log: set to False to allow domain less log for specific changes
     """
     from corehq.apps.users.models import UserHistory
 
     # domain is essential to filter changes done in a domain
-    if not domain:
+    if not domain and domain_required_for_log:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
