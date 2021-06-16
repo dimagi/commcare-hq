@@ -126,6 +126,12 @@ hqDefine("linked_domain/js/domain_links", [
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\n' +
                     'Please try again, or report an issue if the problem persists.'), 'danger');
+            }).always(function () {
+                $('body').removeClass('modal-open');
+                var $modalBackdrop = $('.modal-backdrop');
+                if ($modalBackdrop) {
+                    $modalBackdrop.remove();
+                }
             });
         };
 
