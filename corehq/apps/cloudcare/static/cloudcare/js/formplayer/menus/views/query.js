@@ -126,21 +126,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             return $(this).text().trim() === value;
                         });
                     }
-                    domElement.each(function () {
-                        var option = matchingOption($(this));
-                        if (this.multiple === true) {
-                            if (option.length === 1 && $(this).val().indexOf(option.val()) === -1) {
-                                $(this).val($(this).val().concat(option.val())).trigger("change");
-                            }
+                    var option = matchingOption(domElement);
+                    if (domElement[0].multiple === true) {
+                        if (option.length === 1 && domElement.val().indexOf(option.val()) === -1) {
+                            domElement.val(domElement.val().concat(option.val())).trigger("change");
                         }
-                        else {
-                            if (option.length === 1) {
-                                $(this).val(String(option.index() - 1)).trigger("change");
-                            } else {
-                                $(this).val("-1").trigger('change');
-                            }
+                    }
+                    else {
+                        if (option.length === 1) {
+                            domElement.val(String(option.index() - 1)).trigger("change");
+                        } else {
+                            domElement.val("-1").trigger('change');
                         }
-                    });
+                    }
                 }
             };
         },
