@@ -1476,10 +1476,14 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
+    """
+        Bulk user management features:
+        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+User+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1547,7 +1551,6 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
-    notification_emails=['aking'],
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -1919,7 +1922,8 @@ PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
     'USH: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Parallel+User+Imports"
 )
 
 RESTRICT_LOGIN_AS = StaticToggle(
@@ -2039,4 +2043,11 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

@@ -255,6 +255,70 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
+    def test_patch_ledger_with_incorrect_balance_and_missing_stock_state(self):
+        from corehq.apps.commtrack.models import StockState
+        from casexml.apps.stock.models import StockTransaction
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, "2020-09-28", "2020-09-24T00:00:00.000Z", qty=2)
+        StockTransaction.objects.filter(
+            case_id="test-case", section_id="things", product_id=product._id
+        ).update(quantity=4, stock_on_hand=4)
+        StockState.objects.filter(
+            case_id="test-case", section_id="things", product_id=product._id).delete()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/things/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs([
+            Diff(ref_id, type="diff", path=["balance"], kind="stock state"),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_with_incorrect_balance_and_location_id(self):
+        from corehq.apps.commtrack.models import StockState
+        from corehq.apps.locations.models import LocationType, make_location
+        from .ledgers import print_ledger_history
+        with self.enable_commtrack():
+            town = LocationType.objects.create(domain=self.domain_name, name='Town')
+            town.save()
+            with patch("corehq.apps.commtrack.models.sync_supply_point"):
+                mtjoy = make_location(domain=self.domain_name, name="Mount Joy", location_type=town)
+                mtjoy.save()
+            assert mtjoy.supply_point_id is None, mtjoy.supply_point_id
+            product = self.make_product()
+            self.update_stock(
+                product,
+                "2020-09-28",
+                "2020-09-24T00:00:00.000Z",
+                location=mtjoy,
+                qty=0,
+            )
+            stock = StockState.objects.get(
+                case_id='test-case',
+                section_id="things",
+                product_id=product._id,
+            )
+            stock.stock_on_hand = 2
+            stock.sql_location = mtjoy
+            stock.save()
+            self.do_migration(case_diff='none')
+            self.do_case_diffs()
+            ref_id = f"test-case/things/{product._id}"
+            print_ledger_history(ref_id)
+            self.compare_diffs([
+                Diff(ref_id, type="diff", path=["balance"], kind="stock state"),
+                Diff(
+                    ref_id,
+                    type="type",
+                    path=["location_id"],
+                    old=mtjoy.location_id,
+                    new=None,
+                    kind="stock state",
+                ),
+            ])
+            self.do_migration(forms="missing", case_diff="patch")
+
     def test_patch_ledger_missing_in_sql(self):
         from .ledgers import print_ledger_history
         product = self.make_product()
@@ -268,6 +332,23 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             Diff(ref_id, type="missing", new={"form_state": "present"}),
         ], changes=[
             Diff("test-case", type="missing", path=["*"], old="*", new=MISSING),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+
+    def test_patch_ledger_missing_in_couch(self):
+        from corehq.apps.commtrack.models import StockState
+        from casexml.apps.stock.models import StockTransaction
+        from .ledgers import print_ledger_history
+        product = self.make_product()
+        self.update_stock(product, qty=1, section="stock")
+        StockState.objects.filter(product_id=product._id).delete()
+        StockTransaction.objects.filter(product_id=product._id).delete()
+        self.do_migration(case_diff='none')
+        self.do_case_diffs()
+        ref_id = f"test-case/stock/{product._id}"
+        print_ledger_history(ref_id)
+        self.compare_diffs(changes=[
+            Diff(ref_id, type="missing", old={"form_state": "present"}),
         ])
         self.do_migration(forms="missing", case_diff="patch")
 
@@ -667,7 +748,9 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         return make_product(self.domain_name, name, name)
 
     def update_stock(self, product, reported="2014-08-04", submitted=None,
-            qty=1, balance=False, section="things", tx_type="write_things_to_ledger"):
+            qty=1, balance=False, location=None, section="things",
+            tx_type="write_things_to_ledger"):
+        from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
         submission_date = "2014-08-04T18:25:56.656Z"
         if balance:
             tx_type = "stock_balance"
@@ -681,6 +764,13 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             .replace(submission_date, submitted or submission_date)
             .replace('quantity="1"', f'quantity="{qty if balance else abs(qty)}"')
         )
+        if location:
+            xml = (
+                xml
+                .replace("case_name>Ledger", f"case_name>{location.name}")
+                .replace("testing</n0:case_type>", f"{SUPPLY_POINT_CASE_TYPE}</n0:case_type>")
+                .replace("<n0:update>", f"<n0:update><n0:location_id>{location.location_id}</n0:location_id>")
+            )
         if balance:
             xml = xml.replace("n2:transfer", "n2:balance").replace('dest=', 'entity-id=')
         elif qty < 0:
@@ -704,17 +794,24 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     @contextmanager
     def enable_commtrack_daily_consumption(self):
+        with self.enable_commtrack():
+            config = self.domain.commtrack_settings
+            config.consumptionconfig.min_window = 2
+            config.consumptionconfig.save()
+            try:
+                yield
+            finally:
+                self.domain.commtrack_settings.delete()
+
+    @contextmanager
+    def enable_commtrack(self):
         from corehq.apps.commtrack.util import make_domain_commtrack
         old_commtrack_enabled = self.domain.commtrack_enabled
         old_locations_enabled = getattr(self.domain, 'locations_enabled', None)
         make_domain_commtrack(self.domain)
-        config = self.domain.commtrack_settings
-        config.consumptionconfig.min_window = 2
-        config.consumptionconfig.save()
         try:
             yield
         finally:
-            self.domain.commtrack_settings.delete()
             self.domain.commtrack_enabled = old_commtrack_enabled
             if old_locations_enabled is not None:
                 self.domain.locations_enabled = old_locations_enabled

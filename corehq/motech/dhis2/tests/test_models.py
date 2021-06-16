@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -217,7 +217,7 @@ class GetInfoForColumnsTests(TestCase):
             }]
         })
         self.dataset_map.save()
-        call_command('populate_sqldatasetmap')
+        call_command('populate_sqldatasetmap', log_path=f"sqldatasetmap_{datetime.utcnow().isoformat()}.log")
         self.sqldataset_map = SQLDataSetMap.objects.get(
             domain=self.domain,
             couch_id=self.dataset_map._id,

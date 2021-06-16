@@ -105,6 +105,11 @@ hqDefine('registration/js/new_user.ko', [
                 emailRFC2822: true,
             });
         self.deniedEmail = ko.observable('');
+        self.isSso = ko.observable(false);
+        self.ssoMessage = ko.observable();
+        self.showPasswordField = ko.computed(function () {
+            return !self.isSso();
+        });
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
             .extend({
@@ -121,6 +126,10 @@ hqDefine('registration/js/new_user.ko', [
                                             kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                             self.deniedEmail(val);
                                         }
+
+                                        self.isSso(result.isSso);
+                                        self.ssoMessage(result.ssoMessage);
+
                                         callback({
                                             isValid: result.isValid,
                                             message: result.message,
@@ -250,15 +259,24 @@ hqDefine('registration/js/new_user.ko', [
         };
 
         self.isStepOneValid = ko.computed(function () {
+            var isPasswordValid;
+            if (self.isSso()) {
+                isPasswordValid = true;
+            } else {
+                isPasswordValid = (
+                    self.password() !== undefined
+                    && self.password.isValid()
+                    && self.passwordDelayed.isValid()
+                );
+            }
+
             return self.fullName() !== undefined
                 && self.email() !== undefined
-                && self.password() !== undefined
                 && self.fullName.isValid()
                 && self.email.isValid()
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating()
-                && self.password.isValid()
-                && self.passwordDelayed.isValid();
+                && isPasswordValid;
         });
 
         self.disableNextStepOne = ko.computed(function () {
@@ -311,6 +329,11 @@ hqDefine('registration/js/new_user.ko', [
         self.isSubmitting = ko.observable(false);
         self.isSubmitSuccess = ko.observable(false);
 
+        // for SSO
+        self.isSsoSuccess = ko.observable(false);
+        self.ssoLoginUrl = ko.observable('');
+        self.ssoIdpName = ko.observable('');
+
         self.hasServerError = ko.observable(false);  // in the case of 500s
 
         // Fake timeouts to give the user some feeling of progress.
@@ -362,12 +385,23 @@ hqDefine('registration/js/new_user.ko', [
                             });
                         } else if (response.success) {
                             self.isSubmitting(false);
-                            self.isSubmitSuccess(true);
+                            if (self.isSso()) {
+                                self.isSsoSuccess(true);
+                                self.ssoLoginUrl(response.ssoLoginUrl);
+                                self.ssoIdpName(response.ssoIdpName);
+                            } else {
+                                self.isSubmitSuccess(true);
+                            }
                             module.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test,
                             }));
+                            if (self.isSso()) {
+                                setTimeout(function () {
+                                    window.location = self.ssoLoginUrl();
+                                }, 3000);
+                            }
                         }
                     },
                     error: function () {

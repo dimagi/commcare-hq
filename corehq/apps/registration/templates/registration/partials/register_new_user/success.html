@@ -30,3 +30,19 @@
     {% endblocktrans %}
   </p>
 </div>
+<div class="submit-success" data-bind="visible: isSsoSuccess">
+  <h2>
+    <i class="fa fa-spinner fa-spin"></i>
+    {% trans "Single Sign-On" %}
+  </h2>
+  <p class="lead">
+    {% blocktrans %}
+      We are now redirecting you to sign in with <span data-bind="text: ssoIdpName"></span>.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Your account will be created after the next step.
+    {% endblocktrans %}
+  </p>
+</div>
