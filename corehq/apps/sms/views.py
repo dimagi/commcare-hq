@@ -742,6 +742,7 @@ def chat(request, domain, contact_id, vn_id=None):
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
+
     history_choices = [(_(x), _fmt(y)) for (x, y) in SMS_CHAT_HISTORY_CHOICES]
     history_choices.append(
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
@@ -976,8 +977,12 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         }
 
         context = self.pagination_context
+
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user,
+                domain=self.domain
+            ),
             'extra_backend_mappings': extra_backend_mappings,
             'is_system_admin': self.is_system_admin,
         })
@@ -1348,7 +1353,9 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user
+            ),
         })
         return context
 
@@ -1949,6 +1956,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             domain=self.domain,
             hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
         )
+
         infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
             hq_api_id=InfobipBackend.get_api_id()
@@ -1969,6 +1977,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
             templates = wa_active_backend.get_all_templates()
+
             if templates is not None:
                 for template in templates:
                     template['template_string'] = wa_active_backend.generate_template_string(template)
