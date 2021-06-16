@@ -84,6 +84,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             label: '',
             hint: '',
             appearance: '',
+            isMultiselect: false,
             defaultValue: '',
             hidden: false,
             receiverExpression: '',
@@ -95,6 +96,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.label = ko.observable(options.label);
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
+        self.isMultiselect = ko.observable(options.isMultiselect);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
@@ -147,8 +149,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
         subscribeToSave(self,
-            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression'], saveButton);
-
+            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression', 'isMultiselect'], saveButton);
         return self;
     };
 
@@ -255,13 +256,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
 
+        var multiSelectToken = "#,#";
+
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
                 var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1") {
+                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
                     var uri = searchProperties[i].itemset.instance_uri;
                     if (uri !== null && uri.includes("commcare-reports")) {
                         appearance = "report_fixture";
@@ -276,12 +279,20 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].input_ === "daterange") {
                     appearance = "daterange";
                 }
+                var isMultiselect = searchProperties[i].input_ === "select";
+                if (searchProperties[i].default_value) {
+                    var defaultValue = searchProperties[i].default_value.replaceAll(multiSelectToken, ",");
+                }
+                else {
+                    var defaultValue = searchProperties[i].default_value;
+                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
-                    defaultValue: searchProperties[i].default_value,
+                    isMultiselect: isMultiselect,
+                    defaultValue: defaultValue,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
@@ -312,12 +323,19 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     function (p) { return p.name().length > 0; }  // Skip properties where name is blank
                 ),
                 function (p) {
+                    if (p.isMultiselect() && p.defaultValue()) {
+                        var defaultValue = p.defaultValue().replaceAll(" ", "").replaceAll(",", multiSelectToken);
+                    }
+                    else {
+                        var defaultValue = p.defaultValue();
+                    }
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
-                        default_value: p.defaultValue(),
+                        is_multiselect: p.isMultiselect(),
+                        default_value: defaultValue,
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
