@@ -960,8 +960,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
-                # formplayer needs "#,#" as tokenizer for multiselects
-                ret['default_value'] = prop['default_value'].replace(" ", "").replace(",", "#,#")
+                ret['default_value'] = prop['default_value']
             else:
                 ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
