@@ -8,6 +8,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from corehq.apps.linked_domain.const import (
     MODEL_FLAGS,
     MODEL_LOCATION_DATA,
+    MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
     MODEL_ROLES,
     MODEL_USER_DATA,
@@ -526,7 +527,14 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
             },
             {
                 'type': 'toggles',
-                'name': 'Feature Flags and Previews',
+                'name': 'Feature Flags',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            },
+            {
+                'type': 'previews',
+                'name': 'Feature Previews',
                 'detail': None,
                 'last_update': 'Never',
                 'can_update': True
@@ -538,7 +546,8 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
 
     def test_build_domain_level_view_models_ignores_models(self):
         expected_view_models = []
-        ignore_models = [MODEL_USER_DATA, MODEL_PRODUCT_DATA, MODEL_LOCATION_DATA, MODEL_ROLES, MODEL_FLAGS]
+        ignore_models = [MODEL_USER_DATA, MODEL_PRODUCT_DATA, MODEL_LOCATION_DATA, MODEL_ROLES, MODEL_FLAGS,
+                         MODEL_PREVIEWS]
 
         view_models = build_domain_level_view_models(ignore_models=ignore_models)
 

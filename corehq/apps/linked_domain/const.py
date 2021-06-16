@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy
 from corehq import toggles
 
 MODEL_FLAGS = 'toggles'
+MODEL_PREVIEWS = 'previews'
 MODEL_FIXTURE = 'fixture'
 MODEL_ROLES = 'roles'
 MODEL_LOCATION_DATA = 'custom_location_data'
@@ -29,7 +30,8 @@ DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
-    (MODEL_FLAGS, ugettext_lazy('Feature Flags and Previews')),
+    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
+    (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
 ]
 
 FEATURE_FLAG_DATA_MODELS = [

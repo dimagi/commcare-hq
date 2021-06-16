@@ -60,7 +60,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
-    get_toggles_previews,
+    get_enabled_toggles_and_previews,
     get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
@@ -108,7 +108,7 @@ from corehq.util.timezones.utils import get_timezone_for_request
 @login_or_api_key
 @require_linked_domain
 def toggles_and_previews(request, domain):
-    return JsonResponse(get_toggles_previews(domain))
+    return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
