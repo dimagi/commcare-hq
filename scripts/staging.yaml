@@ -82,4 +82,5 @@ branches:
     - es/reminders  # Ethan June 15
     - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16
+    - jls/copy-app-to-remote-linked-domain # Jenny June 16
 submodules: { }
