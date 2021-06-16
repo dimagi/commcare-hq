@@ -35,41 +35,37 @@ from corehq.util.workbook_reading import make_worksheet
 
 class ImporterTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain("importer-test")
-        cls.domain = cls.domain_obj.name
-        cls.default_case_type = 'importer-test-casetype'
-
-        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
-        cls.couch_user.add_domain_membership(cls.domain, is_admin=True)
-        cls.couch_user.save()
-
-        cls.subdomain1 = create_domain('subdomain1')
-        cls.subdomain2 = create_domain('subdomain2')
-        cls.ignored_domain = create_domain('ignored-domain')
-        create_enterprise_permissions(cls.couch_user.username, cls.domain,
-                                      [cls.subdomain1.name, cls.subdomain2.name],
-                                      [cls.ignored_domain.name])
-
-        cls.accessor = CaseAccessors(cls.domain)
-
-        cls.factory = CaseFactory(domain=cls.domain, case_defaults={
-            'case_type': cls.default_case_type,
-        })
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.couch_user.delete(deleted_by=None)
-        cls.domain_obj.delete()
-        cls.subdomain1.delete()
-        cls.subdomain2.delete()
-        cls.ignored_domain.delete()
-        super().tearDownClass()
-
     def setUp(self):
+        super(ImporterTest, self).setUp()
+        self.domain_obj = create_domain("importer-test")
+        self.domain = self.domain_obj.name
+        self.default_case_type = 'importer-test-casetype'
+
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        self.couch_user.add_domain_membership(self.domain, is_admin=True)
+        self.couch_user.save()
+
+        self.subdomain1 = create_domain('subdomain1')
+        self.subdomain2 = create_domain('subdomain2')
+        self.ignored_domain = create_domain('ignored-domain')
+        create_enterprise_permissions(self.couch_user.username, self.domain,
+                                      [self.subdomain1.name, self.subdomain2.name],
+                                      [self.ignored_domain.name])
+
+        self.accessor = CaseAccessors(self.domain)
+
+        self.factory = CaseFactory(domain=self.domain, case_defaults={
+            'case_type': self.default_case_type,
+        })
         delete_all_cases()
+
+    def tearDown(self):
+        self.couch_user.delete(deleted_by=None)
+        self.domain_obj.delete()
+        self.subdomain1.delete()
+        self.subdomain2.delete()
+        self.ignored_domain.delete()
+        super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
                 search_field='case_id', create_new_cases=True):
