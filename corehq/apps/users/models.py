@@ -1832,7 +1832,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self, unretired_by, unretired_via=None):
+    def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1841,6 +1841,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore reminders for cases
         """
         NotAllowed.check(self.domain)
+        if not unretired_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing unretired_by")
+
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             return False, "A user with the same username already exists in the system"
@@ -1856,15 +1859,20 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
         if unretired_by:
-            log_model_change(
+            log_user_change(
+                unretired_by_domain,
+                self,
                 unretired_by,
-                self.get_django_user(use_primary_db=True),
-                message=f"unretired_via: {unretired_via}",
+                changed_via=unretired_via,
+                action=ModelAction.CREATE,
             )
         return True, None
 
-    def retire(self, deleted_by, deleted_via=None):
+    def retire(self, retired_by_domain, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
+
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
@@ -1897,9 +1905,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
-            if deleted_by:
-                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
+        if deleted_by:
+            log_user_change(retired_by_domain, self, deleted_by,
+                            changed_via=deleted_via, action=ModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):
