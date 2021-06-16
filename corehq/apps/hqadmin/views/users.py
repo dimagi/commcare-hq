@@ -106,7 +106,7 @@ class SuperuserManagement(UserAdministration):
                     couch_user = CouchUser.from_django_user(user)
                     log_user_change(None, couch_user, self.request.couch_user,
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    can_skip_domain=True)
+                                    domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -401,7 +401,7 @@ class DisableUserView(FormView):
         log_user_change(None, couch_user, self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
                         fields_changed={'is_active': self.user.is_active},
-                        can_skip_domain=True)
+                        domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -500,7 +500,7 @@ class DisableTwoFactorView(FormView):
             f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"')
         log_user_change(None, couch_user, self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
-                        can_skip_domain=True)
+                        domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
