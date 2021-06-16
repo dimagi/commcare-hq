@@ -108,7 +108,7 @@ class TestLogUserChange(TestCase):
         new_user_id = new_user.get_id
 
         # domain less delete action by non-system user
-        with self.assertRaisesMessage(ValueError, "Please pass domain"):
+        with self.assertRaisesMessage(ValueError, "missing 'domain' argument'"):
             new_user.delete(None, deleted_by=self.web_user, deleted_via=__name__)
 
         # domain less delete action by SYSTEM_USER_ID
