@@ -339,7 +339,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
 
     :param domain: domain where the update was initiated
     :param couch_user: user being changed
-    :param changed_by_user: user making the change
+    :param changed_by_user: user making the change or SYSTEM_USER_ID
     :param changed_via: changed via medium i.e API/Web
     :param message: Optional Message text
     :param fields_changed: dict of user fields that have changed with their current value
@@ -349,7 +349,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     from corehq.apps.users.models import UserHistory
 
     # domain is essential to filter changes done in a domain
-    if not domain and domain_required_for_log:
+    if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
@@ -360,7 +360,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
         domain=domain,
         user_type=couch_user.doc_type,
         user_id=couch_user.get_id,
-        by_user_id=changed_by_user.get_id,
+        by_user_id=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
         details={
             'changes': _get_changed_details(couch_user, action, fields_changed),
             'changed_via': changed_via,

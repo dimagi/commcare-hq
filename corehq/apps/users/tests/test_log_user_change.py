@@ -1,8 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
-from corehq.apps.users.util import log_user_change
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, USER_CHANGE_VIA_WEB
 from corehq.util.model_log import ModelAction
 
@@ -22,8 +22,8 @@ class TestLogUserChange(TestCase):
     @classmethod
     def tearDownClass(cls):
         UserHistory.objects.all().delete()
-        cls.commcare_user.delete(deleted_by=None, deleted_via=None)
-        cls.web_user.delete(deleted_by=None, deleted_via=None)
+        cls.commcare_user.delete(cls.domain, deleted_by=None, deleted_via=None)
+        cls.web_user.delete(cls.domain, deleted_by=None, deleted_via=None)
         cls.project.delete()
 
     def test_create(self):
@@ -76,28 +76,51 @@ class TestLogUserChange(TestCase):
 
         self.commcare_user.phone_numbers = restore_phone_numbers_to
 
+    @override_settings(UNIT_TESTING=False)
+    def test_delete_missing_deleted_by(self):
+        with self.assertRaisesMessage(ValueError, "Missing deleted_by"):
+            self.commcare_user.delete(self.domain, deleted_by=None)
+
     def test_delete(self):
-        user_history = log_user_change(
-            self.domain,
-            self.commcare_user,
-            self.web_user,
-            changed_via=USER_CHANGE_VIA_WEB,
-            message="Deleted User",
-            action=ModelAction.DELETE
-        )
+        user_to_delete = CommCareUser.create(self.domain, f'delete@{self.domain}.commcarehq.org', '******',
+                                             created_by=None, created_via=None)
+        user_to_delete_id = user_to_delete.get_id
+
+        user_to_delete.delete(self.domain, deleted_by=self.web_user, deleted_via=USER_CHANGE_VIA_WEB)
+
+        user_history = UserHistory.objects.get(domain=self.domain, user_id=user_to_delete_id)
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
-        self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertEqual(user_history.by_user_id, self.web_user.get_id)
         self.assertEqual(
             user_history.details,
             {
-                'changes': _get_expected_changes_json(self.commcare_user),
+                'changes': _get_expected_changes_json(user_to_delete),
                 'changed_via': USER_CHANGE_VIA_WEB,
             }
         )
-        self.assertEqual(user_history.message, "Deleted User")
+        self.assertIsNone(user_history.message)
         self.assertEqual(user_history.action, ModelAction.DELETE.value)
+
+    def test_domain_less_actions(self):
+        new_user = CommCareUser.create(self.domain, f'test-new@{self.domain}.commcarehq.org', '******',
+                                       created_by=self.web_user, created_via=USER_CHANGE_VIA_WEB)
+        new_user_id = new_user.get_id
+
+        # domain less delete action by non-system user
+        with self.assertRaisesMessage(ValueError, "missing 'domain' argument'"):
+            new_user.delete(None, deleted_by=self.web_user, deleted_via=__name__)
+
+        # domain less delete action by SYSTEM_USER_ID
+        self.assertEqual(
+            UserHistory.objects.filter(by_user_id=SYSTEM_USER_ID).count(),
+            0
+        )
+
+        new_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
+
+        log_entry = UserHistory.objects.get(by_user_id=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
+        self.assertEqual(log_entry.user_id, new_user_id)
 
 
 def _get_expected_changes_json(user):

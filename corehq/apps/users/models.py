@@ -1170,16 +1170,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
-            if deleted_by:
-                log_model_change(deleted_by, user, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
+        if deleted_by:
+            log_user_change(deleted_by_domain, self, deleted_by,
+                            changed_via=deleted_via, action=ModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1725,12 +1727,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
             sync_usercases_if_applicable(self, spawn_task)
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
-        super(CommCareUser, self).delete(deleted_by=deleted_by, deleted_via=deleted_via)
+        super(CommCareUser, self).delete(deleted_by_domain, deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
     @memoized

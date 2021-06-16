@@ -1264,7 +1264,8 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
+                CommCareUser.wrap(doc).delete(request.domain, deleted_by=request.couch_user,
+                                              deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")

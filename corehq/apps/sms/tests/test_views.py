@@ -113,7 +113,7 @@ def normal_user():
     try:
         yield
     finally:
-        user.delete(deleted_by=None)
+        user.delete(DOMAIN_NAME, deleted_by=None)
 
 
 @contextmanager
@@ -125,7 +125,7 @@ def domain_admin():
     try:
         yield
     finally:
-        user.delete(deleted_by=None)
+        user.delete(DOMAIN_NAME, deleted_by=None)
 
 
 @contextmanager
@@ -140,4 +140,4 @@ def superuser():
     try:
         yield
     finally:
-        user.delete(deleted_by=None)
+        user.delete(DOMAIN_NAME, deleted_by=None)

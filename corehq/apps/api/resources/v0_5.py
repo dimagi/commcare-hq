@@ -373,7 +373,8 @@ class WebUserResource(v0_1.WebUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.delete(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+                bundle.obj.delete(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
             else:
                 try:
                     django_user = bundle.obj.get_django_user()
@@ -381,8 +382,6 @@ class WebUserResource(v0_1.WebUserResource):
                     pass
                 else:
                     django_user.delete()
-                    log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
-                                     action=ModelAction.DELETE)
             raise
         return bundle
 
