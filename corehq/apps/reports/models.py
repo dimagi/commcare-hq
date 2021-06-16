@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from jsonfield import JSONField
 
@@ -208,8 +208,8 @@ class ReportsSidebarOrdering(models.Model):
 
 class TableauServer(models.Model):
     SERVER_TYPES = (
-        ('server', _('Tableau Server')),
-        ('online', _('Tableau Online')),
+        ('server', ugettext_lazy('Tableau Server')),
+        ('online', ugettext_lazy('Tableau Online')),
     )
     domain = models.CharField(max_length=64, default='')
     server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')

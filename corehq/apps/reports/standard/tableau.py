@@ -4,6 +4,7 @@ import requests
 from requests_toolbelt.adapters import host_header_ssl
 
 from django.shortcuts import render
+from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard import (
@@ -76,12 +77,12 @@ class TableauReport(ProjectReport):
                 self.context.update({'ticket': tabserver_response.content.decode('utf-8')})
                 return super().view_response
             else:
-                self.context.update({"failure_message": "Tableau trusted authentication failed"})
+                self.context.update({"failure_message": _("Tableau trusted authentication failed")})
                 return render(self.request, 'reports/tableau_server_request_failed.html',
                               self.context)
         else:
             message = "Request to Tableau failed with status code {}".format(tabserver_response.status_code)
-            self.context.update({"failure_message": message})
+            self.context.update({"failure_message": _(message)})
             return render(self.request, 'reports/tableau_server_request_failed.html',
                           self.context)
 
