@@ -3067,7 +3067,7 @@ class UserHistory(models.Model):
         (DELETE, _('Delete')),
     )
     domain = models.CharField(max_length=255, null=True)
-    user_type = models.CharField(max_length=255)
+    user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     by_user_id = models.CharField(max_length=128)
     details = JSONField(default=dict)
