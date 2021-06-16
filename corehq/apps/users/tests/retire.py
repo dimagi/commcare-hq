@@ -75,7 +75,7 @@ class RetireUserTestCase(TestCase):
                                             action=ModelAction.DELETE.value)
         self.assertEqual(log_entry.domain, self.domain)
         self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.by_user_id, self.other_user.get_id)
+        self.assertEqual(log_entry.changed_by, self.other_user.get_id)
         self.assertEqual(log_entry.details['changed_via'], deleted_via)
 
     @override_settings(UNIT_TESTING=False)
@@ -121,7 +121,7 @@ class RetireUserTestCase(TestCase):
         )
         self.assertEqual(log_entry.domain, self.domain)
         self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.by_user_id, self.other_user.get_id)
+        self.assertEqual(log_entry.changed_by, self.other_user.get_id)
         self.assertEqual(log_entry.details['changed_via'], "Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)

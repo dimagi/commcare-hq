@@ -523,7 +523,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def test_tracking_updates(self):
         self.assertEqual(
             UserHistory.objects.filter(
-                action=ModelAction.CREATE.value, by_user_id=self.uploading_user.get_id).count(),
+                action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
             0
         )
         import_users_and_groups(
@@ -538,7 +538,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # create
         created_user = CommCareUser.get_by_username("hello@mydomain.commcarehq.org")
         self.assertEqual(LogEntry.objects.filter(action_flag=ModelAction.CREATE.value).count(), 0)  # deprecated
-        log_entry = UserHistory.objects.get(action=ModelAction.CREATE.value, by_user_id=self.uploading_user.get_id)
+        log_entry = UserHistory.objects.get(action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id)
         self.assertEqual(log_entry.domain, self.domain.name)
         self.assertEqual(log_entry.user_type, "CommCareUser")
         self.assertEqual(log_entry.user_id, created_user.get_id)
@@ -546,7 +546,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(log_entry.details['changes']['username'], created_user.username)
 
         # update
-        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, by_user_id=self.uploading_user.get_id)
+        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, changed_by=self.uploading_user.get_id)
         self.assertEqual(
             log_entry.details,
             {

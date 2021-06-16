@@ -360,7 +360,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
         domain=domain,
         user_type=couch_user.doc_type,
         user_id=couch_user.get_id,
-        by_user_id=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
+        changed_by=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
         details={
             'changes': _get_changed_details(couch_user, action, fields_changed),
             'changed_via': changed_via,

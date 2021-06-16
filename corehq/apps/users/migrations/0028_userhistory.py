@@ -18,10 +18,10 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(max_length=255, null=True)),
                 ('user_type', models.CharField(max_length=255)),
                 ('user_id', models.CharField(max_length=128)),
-                ('by_user_id', models.CharField(max_length=128)),
+                ('changed_by', models.CharField(max_length=128)),
                 ('details', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
                 ('message', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('changed_at', models.DateTimeField(auto_now_add=True)),
                 ('action', models.PositiveSmallIntegerField(
                     choices=[(1, 'Create'), (2, 'Update'), (3, 'Delete')])),
             ],

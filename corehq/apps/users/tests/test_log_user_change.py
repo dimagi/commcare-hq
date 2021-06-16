@@ -31,8 +31,8 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
-        self.assertIsNotNone(user_history.by_user_id)
-        self.assertEqual(user_history.by_user_id, self.web_user.get_id)
+        self.assertIsNotNone(user_history.changed_by)
+        self.assertEqual(user_history.changed_by, self.web_user.get_id)
         self.assertEqual(
             user_history.details,
             {
@@ -65,8 +65,8 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertIsNotNone(user_history.user_id)
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
-        self.assertIsNotNone(user_history.by_user_id)
-        self.assertEqual(user_history.by_user_id, self.web_user.get_id)
+        self.assertIsNotNone(user_history.changed_by)
+        self.assertEqual(user_history.changed_by, self.web_user.get_id)
         self.assertEqual(
             user_history.details,
             {
@@ -94,7 +94,7 @@ class TestLogUserChange(TestCase):
         user_history = UserHistory.objects.get(domain=self.domain, user_id=user_to_delete_id)
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
-        self.assertEqual(user_history.by_user_id, self.web_user.get_id)
+        self.assertEqual(user_history.changed_by, self.web_user.get_id)
         self.assertEqual(
             user_history.details,
             {
@@ -116,13 +116,13 @@ class TestLogUserChange(TestCase):
 
         # domain less delete action by SYSTEM_USER_ID
         self.assertEqual(
-            UserHistory.objects.filter(by_user_id=SYSTEM_USER_ID).count(),
+            UserHistory.objects.filter(changed_by=SYSTEM_USER_ID).count(),
             0
         )
 
         new_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
 
-        log_entry = UserHistory.objects.get(by_user_id=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
+        log_entry = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
         self.assertEqual(log_entry.user_id, new_user_id)
 
 
