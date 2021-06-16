@@ -62,8 +62,6 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
-    - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
-    - sr/hide-geo  # Sravan May 25
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
@@ -83,4 +81,7 @@ branches:
     - ap/remove-angular # Amit June 10
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - mjr/report-access  # Matt June 14
+    - sr/mixed-case-types  # Sravan June 15
+    - es/reminders  # Ethan June 15
+    - mjr/hidden-report-columns  # Matt June 15
 submodules: { }
