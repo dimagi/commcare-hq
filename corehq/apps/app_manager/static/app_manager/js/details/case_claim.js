@@ -256,8 +256,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
 
-        var multiSelectToken = "#,#";
-
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels/hints come in keyed by lang.
