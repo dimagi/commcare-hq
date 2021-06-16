@@ -2,42 +2,38 @@ import os
 import re
 import subprocess
 from collections import Counter, namedtuple
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.template import Context, Template
 
-from datadog import api, initialize
+import datadog
 from github import Github
 
 from dimagi.ext.couchdbkit import Document
+from dimagi.utils.chunked import chunked
 
 from corehq.feature_previews import all_previews
 from corehq.toggles import all_toggles
 
-GITHUB_COMMENT = """
-### Code Analysis
-
-Metric name | value
-------------|-------
-{% for metric in metrics %}**{{ metric.name }}** - {{ metric.tags|join:", " }} | {{ metric.value }}
-{% endfor %}
-"""
-
 Metric = namedtuple('Metric', "name value tags")
+
+
+def to_querystring(metric):
+    tag = ",".join(metric.tags).replace(" ", "_").lower() or "*"
+    return f"avg:{metric.name}{{{tag}}}"
+
+
+def _normalize_number(value):
+    if value == int(value):
+        return int(value)
+    return round(value, 3)
 
 
 class AnalysisLogger:
     def __init__(self, stdout):
         self.stdout = stdout
         self.metrics = []
-
-        self.datadog = os.environ.get('TRAVIS_EVENT_TYPE') == 'cron'
-        if self.datadog:
-            api_key = os.environ.get("DATADOG_API_KEY")
-            app_key = os.environ.get("DATADOG_APP_KEY")
-            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
-            initialize(api_key=api_key, app_key=app_key)
 
         self.pull_request = None
         if os.environ.get('TRAVIS_PULL_REQUEST', 'false') != 'false':
@@ -48,6 +44,13 @@ class AnalysisLogger:
             repo = gh.get_repo('dimagi/commcare-hq')
             self.pull_request = repo.get_pull(self.pr_number)
 
+        self.submit_to_datadog = os.environ.get('TRAVIS_EVENT_TYPE') == 'cron'
+        if self.submit_to_datadog or self.pull_request:
+            api_key = os.environ.get("DATADOG_API_KEY")
+            app_key = os.environ.get("DATADOG_APP_KEY")
+            assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
+            datadog.initialize(api_key=api_key, app_key=app_key)
+
     def log(self, name, value, tags=None):
         self.stdout.write(f"{name}: {value} {tags or ''}")
         self.metrics.append(Metric(name, value, tags or []))
@@ -57,11 +60,11 @@ class AnalysisLogger:
         self._send_to_github()
 
     def _send_to_datadog(self):
-        if not self.datadog:
+        if not self.submit_to_datadog:
             self.stdout.write("This isn't the daily travis build, not submitting to datadog")
             return
 
-        api.Metric.send([
+        datadog.api.Metric.send([
             {
                 'metric': metric.name,
                 'points': metric.value,
@@ -82,9 +85,41 @@ class AnalysisLogger:
             self.stdout.write("No PR detected, not submitting info to github")
             return
 
-        comment = Template(GITHUB_COMMENT).render(Context({"metrics": self.metrics}))
-        self.pull_request.create_issue_comment(comment)
+        previous_values = self._fetch_previous_values()
+
+        comment_lines = [
+            "### Code Analysis\n",
+            "Metric name | tags | old value | new value",
+            "------------|------|-----------|----------",
+        ]
+        for metric in self.metrics:
+            comment_lines.append(" | ".join([
+                metric.name,
+                ", ".join(metric.tags),
+                str(previous_values.get(to_querystring(metric), "")),
+                str(metric.value),
+            ]))
+
+        self.pull_request.create_issue_comment("\n".join(comment_lines))
         self.stdout.write(f"Analysis submitted to github PR {self.pr_number}")
+
+    def _fetch_previous_values(self):
+        """Lookup latest values that have been saved to datadog"""
+        previous_values = {}
+        for metrics in chunked(self.metrics, 10):
+            query = ",".join(to_querystring(metric) for metric in metrics)
+            res = datadog.api.Metric.query(
+                start=(datetime.now() - timedelta(days=2)).timestamp(),
+                end=datetime.now().timestamp(),
+                query=query,
+            )
+            if 'error' in res:
+                raise Exception(res['error'])
+            previous_values.update(
+                (d['expression'], _normalize_number(d['pointlist'][-1][-1]))
+                for d in res['series']
+            )
+        return previous_values
 
 
 class Command(BaseCommand):
@@ -140,7 +175,7 @@ class Command(BaseCommand):
             "--min=C",
             "--total-average",
             "--exclude=node_modules/*,staticfiles/*",
-        ], capture_output=True).stdout.decode('utf-8').strip()
+        ], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
         raw_blocks, raw_complexity = output.split('\n')[-2:]
 
         blocks_pattern = r'^(\d+) blocks \(classes, functions, methods\) analyzed.$'
