@@ -90,22 +90,22 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['users']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-            field_changed = {}
+            fields_changed = {}
             for user in users:
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    field_changed['is_superuser'] = is_superuser
+                    fields_changed['is_superuser'] = is_superuser
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    field_changed['is_staff'] = is_staff
+                    fields_changed['is_staff'] = is_staff
 
-                if field_changed:
+                if fields_changed:
                     user.save()
                     couch_user = CouchUser.from_django_user(user)
                     log_user_change(None, couch_user, self.request.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=field_changed,
+                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
                                     can_skip_domain=True)
             messages.success(request, _("Successfully updated superuser permissions"))
 
