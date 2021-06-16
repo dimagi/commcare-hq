@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_lazy
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.accounting.models import Subscription
@@ -6,7 +6,7 @@ from corehq.apps.accounting.models import Subscription
 
 class EnterpriseDomainFilter(BaseSingleOptionFilter):
     slug = "account"
-    label = _("Project Space")
+    label = ugettext_lazy("Project Space")
 
     @property
     def options(self):
