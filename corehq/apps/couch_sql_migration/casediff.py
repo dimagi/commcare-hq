@@ -35,6 +35,7 @@ from .retrydb import (
     get_sql_cases,
     get_sql_forms,
     get_sql_ledger_values,
+    retry_on_sql_error,
     sql_form_exists,
 )
 from .statedb import Change
@@ -166,6 +167,7 @@ def check_domains(case_id, couch_json, sql_json):
     return diffs
 
 
+@retry_on_sql_error
 @retry_on_couch_error
 def hard_rebuild(couch_case):
     return FormProcessorCouch.hard_rebuild_case(
@@ -179,10 +181,7 @@ def diff_ledgers(case_ids, sql_cases, dd_count):
         diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
         return filter_ledger_diffs(diffs)
     stock_tx = StockTransactionLoader()
-    couch_state_map = {
-        state.ledger_reference: state
-        for state in StockState.objects.filter(case_id__in=case_ids)
-    }
+    couch_state_map = get_couch_ledger_map(case_ids)
     patches = LedgerPatches(sql_cases)
     sql_refs = set()
     all_diffs = []
@@ -223,6 +222,14 @@ def diff_ledgers(case_ids, sql_cases, dd_count):
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
             all_diffs.append(("stock state", ref.as_id(), diffs))
     return all_diffs, all_changes
+
+
+@retry_on_sql_error
+def get_couch_ledger_map(case_ids):
+    return {
+        state.ledger_reference: state
+        for state in StockState.objects.filter(case_id__in=case_ids)
+    }
 
 
 class StockTransactionLoader:
@@ -273,6 +280,7 @@ class StockTransactionLoader:
             new["ledger"] = ledger.to_json()
         return Diff("missing", path=["*"], old_value=old, new_value=new)
 
+    @retry_on_sql_error
     def get_transactions(self, ref):
         cache = self.stock_transactions
         if ref.case_id not in cache:
@@ -296,6 +304,7 @@ class StockTransactionLoader:
             stock_on_hand=transaction.stock_on_hand,
         )
 
+    @retry_on_sql_error
     def get_location(self, case_id):
         try:
             loc = self.case_locations[case_id]

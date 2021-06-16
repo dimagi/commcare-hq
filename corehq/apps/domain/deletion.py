@@ -354,7 +354,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'IncrementalExport', 'domain', ['IncrementalExportCheckpoint']),
     CustomDeletion('export', _delete_data_files, []),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),

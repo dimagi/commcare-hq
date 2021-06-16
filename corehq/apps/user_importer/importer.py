@@ -344,6 +344,9 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         location_cache = SiteCodeToLocationCache(domain)
 
     domain_obj = Domain.get_by_name(domain)
+    if domain_obj is None:
+        raise UserUploadError(_("Domain cannot be set to '{domain}'".format(domain=domain)))
+
     allowed_group_names = [group.name for group in domain_group_memoizer.groups]
     profiles_by_name = {}
     domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
@@ -351,7 +354,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
                                                                                 allow_admin_role=True)}
         validators = get_user_import_validators(
-            Domain.get_by_name(domain),
+            domain_obj,
             domain_user_specs,
             True,
             allowed_roles=list(roles_by_name),
@@ -419,9 +422,10 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 'row': row,
             }
 
-            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, group_memoizer)
-
             try:
+                domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+                                              group_memoizer)
+
                 for validator in domain_info.validators:
                     validator(row)
             except UserUploadError as e:
@@ -634,9 +638,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             'username': username,
             'row': row,
         }
-        domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-                                      upload_user=upload_user, is_web_upload=True)
         try:
+            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+                                          upload_user=upload_user, is_web_upload=True)
             for validator in domain_info.validators:
                 validator(row)
         except UserUploadError as e:
