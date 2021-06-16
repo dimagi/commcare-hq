@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.urls.base import reverse
 
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 
@@ -14,10 +15,18 @@ def require_linked_domain(fn):
         if not requester:
             return HttpResponseBadRequest()
 
+        # Check if this is a linked domain "pulling" content from a master domain
         link = get_domain_master_link(requester)
-        if not link or link.master_domain != domain:
-            return HttpResponseForbidden()
+        if link and link.master_domain == domain:
+            return fn(request, domain, *args, **kwargs)
 
-        return fn(request, domain, *args, **kwargs)
+        # Check if this is a master domain "pushing" content to a linked domain
+        link = get_domain_master_link(domain)
+        if link:
+            expected_requester = link.remote_base_url + reverse("domain_homepage", args=[link.master_domain])
+            if requester == expected_requester:
+                return fn(request, domain, *args, **kwargs)
+
+        return HttpResponseForbidden()
 
     return _inner
