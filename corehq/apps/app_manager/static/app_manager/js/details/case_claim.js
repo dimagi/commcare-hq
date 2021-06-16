@@ -280,19 +280,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance = "daterange";
                 }
                 var isMultiselect = searchProperties[i].input_ === "select";
-                if (searchProperties[i].default_value) {
-                    var defaultValue = searchProperties[i].default_value.replaceAll(multiSelectToken, ",");
-                }
-                else {
-                    var defaultValue = searchProperties[i].default_value;
-                }
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
                     hint: hint,
                     appearance: appearance,
                     isMultiselect: isMultiselect,
-                    defaultValue: defaultValue,
+                    defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
                     itemsetOptions: {
@@ -323,19 +317,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     function (p) { return p.name().length > 0; }  // Skip properties where name is blank
                 ),
                 function (p) {
-                    if (p.isMultiselect() && p.defaultValue()) {
-                        var defaultValue = p.defaultValue().replaceAll(" ", "").replaceAll(",", multiSelectToken);
-                    }
-                    else {
-                        var defaultValue = p.defaultValue();
-                    }
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
-                        default_value: defaultValue,
+                        default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
                         fixture: ko.toJSON(p.itemset),
