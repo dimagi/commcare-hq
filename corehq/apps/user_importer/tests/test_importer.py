@@ -546,10 +546,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(log_entry.details['changes']['username'], created_user.username)
 
         # update
-        log_entry = LogEntry.objects.filter(action_flag=ModelAction.UPDATE.value).order_by('action_time').last()
+        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, by_user_id=self.uploading_user.get_id)
         self.assertEqual(
-            log_entry.change_message,
-            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            log_entry.details,
+            {
+                'changes': {
+                    'role': self.role.get_qualified_id()
+                },
+                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
+            }
+        )
+        self.assertEqual(log_entry.message, f"role: {self.role.name}")
 
     def test_blank_is_active(self):
         import_users_and_groups(

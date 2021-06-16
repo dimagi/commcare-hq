@@ -545,7 +545,9 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 if log_user_create:
                     user.log_user_create(upload_domain, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
                 if log_role_update:
-                    log_user_role_update(domain, user, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
+                    new_user_role_in_domain = user.get_role(domain)
+                    log_user_role_update(upload_domain, new_user_role_in_domain, user=user, by_user=upload_user,
+                                         updated_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 if web_user:
                     check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)
@@ -662,8 +664,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 else:
                     membership = user.get_domain_membership(domain)
                     if membership:
-                        modify_existing_user_in_domain(domain, domain_info, location_codes, membership,
-                                                       role_qualified_id, upload_user, user)
+                        modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes,
+                                                       membership, role_qualified_id, upload_user, user)
                     else:
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                          user.location_id)
@@ -701,8 +703,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
     return ret
 
 
-def modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
-                                   upload_user, current_user, max_tries=3):
+def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
+                                   role_qualified_id, upload_user, current_user, max_tries=3):
     if domain_info.can_assign_locations and location_codes is not None:
         location_ids = find_location_id(location_codes, domain_info.location_cache)
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
@@ -717,8 +719,9 @@ def modify_existing_user_in_domain(domain, domain_info, location_codes, membersh
                         and user_current_role.get_qualified_id() == role_qualified_id)
     if role_updated:
         current_user.set_role(domain, role_qualified_id)
-        log_user_role_update(domain, current_user, upload_user,
-                             USER_CHANGE_VIA_BULK_IMPORTER)
+        new_user_role = current_user.get_role(domain)
+        log_user_role_update(upload_domain, new_user_role, user=current_user, by_user=upload_user,
+                             updated_via=USER_CHANGE_VIA_BULK_IMPORTER)
     try:
         current_user.save()
     except ResourceConflict:
