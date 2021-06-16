@@ -62,10 +62,12 @@ class RetireUserTestCase(TestCase):
         delete_all_xforms()
         super(RetireUserTestCase, self).tearDown()
 
+    @override_settings(UNIT_TESTING=False)
+    def test_retire_missing_deleted_by(self):
+        with self.assertRaisesMessage(ValueError, "Missing deleted_by"):
+            self.commcare_user.retire(self.domain, deleted_by=None)
+
     def test_retire(self):
-        with override_settings(UNIT_TESTING=False):
-            with self.assertRaisesMessage(ValueError, "Missing deleted_by"):
-                self.commcare_user.retire(self.domain, deleted_by=None)
         deleted_via = "Test test"
 
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
@@ -75,6 +77,11 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(log_entry.user_type, "CommCareUser")
         self.assertEqual(log_entry.by_user_id, self.other_user.get_id)
         self.assertEqual(log_entry.details['changed_via'], deleted_via)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_unretire_missing_unretired_by(self):
+        with self.assertRaisesMessage(ValueError, "Missing unretired_by"):
+            self.commcare_user.unretire(self.domain, unretired_by=None)
 
     @run_with_all_backends
     def test_unretire_user(self):
@@ -98,10 +105,6 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
-
-        with override_settings(UNIT_TESTING=False):
-            with self.assertRaisesMessage(ValueError, "Missing unretired_by"):
-                self.commcare_user.unretire(self.domain, unretired_by=None)
 
         self.assertEqual(
             UserHistory.objects.filter(
