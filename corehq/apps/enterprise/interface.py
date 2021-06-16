@@ -16,7 +16,6 @@ from corehq.apps.smsbillables.filters import (
 )
 from corehq.apps.enterprise.filters import EnterpriseDomainFilter
 from corehq.apps.accounting.models import (
-    BillingAccount,
     Subscription
 )
 from corehq.apps.smsbillables.models import (
@@ -28,6 +27,7 @@ from dimagi.utils.dates import DateSpan
 
 
 class EnterpriseSMSBillablesInterface(GenericTabularReport):
+    emailable = True
     base_template = "accounting/report_filter_actions.html"
     section_name = "Enterprise"
     dispatcher = EnterpriseReportDispatcher
