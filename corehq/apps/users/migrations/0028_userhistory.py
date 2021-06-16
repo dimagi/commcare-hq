@@ -26,4 +26,8 @@ class Migration(migrations.Migration):
                     choices=[(1, 'Create'), (2, 'Update'), (3, 'Delete')])),
             ],
         ),
+        migrations.AddIndex(
+            model_name='userhistory',
+            index=models.Index(fields=['domain'], name='users_userh_domain_4e500e_idx'),
+        ),
     ]

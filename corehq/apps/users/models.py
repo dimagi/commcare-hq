@@ -3074,3 +3074,8 @@ class UserHistory(models.Model):
     message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain'])
+        ]
