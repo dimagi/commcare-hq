@@ -65,7 +65,6 @@ branches:
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
-    - sk/test_role_create_update  # Simon May 31
     - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
