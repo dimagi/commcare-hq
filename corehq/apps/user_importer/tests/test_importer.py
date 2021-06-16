@@ -1,17 +1,17 @@
 from copy import deepcopy
-from django.contrib.admin.models import LogEntry
 
+from django.contrib.admin.models import LogEntry
 from django.test import TestCase
 
-from mock import patch, mock
+from mock import mock, patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
@@ -21,11 +21,17 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, UserRole, WebUser, Invitation
+    CommCareUser,
+    DomainPermissionsMirror,
+    Invitation,
+    UserHistory,
+    UserRole,
+    WebUser,
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
+from corehq.util.model_log import ModelAction
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -515,7 +521,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
     def test_tracking_updates(self):
-        self.assertEqual(LogEntry.objects.count(), 0)
+        self.assertEqual(
+            UserHistory.objects.filter(
+                action=ModelAction.CREATE.value, by_user_id=self.uploading_user.get_id).count(),
+            0
+        )
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(role=self.role.name)],
@@ -524,14 +534,29 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock(),
             False
         )
-        log_entry = LogEntry.objects.order_by('action_time').first()
+
+        # create
+        created_user = CommCareUser.get_by_username("hello@mydomain.commcarehq.org")
+        self.assertEqual(LogEntry.objects.filter(action_flag=ModelAction.CREATE.value).count(), 0)  # deprecated
+        log_entry = UserHistory.objects.get(action=ModelAction.CREATE.value, by_user_id=self.uploading_user.get_id)
+        self.assertEqual(log_entry.domain, self.domain.name)
+        self.assertEqual(log_entry.user_type, "CommCareUser")
+        self.assertEqual(log_entry.user_id, created_user.get_id)
+        self.assertEqual(log_entry.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(log_entry.details['changes']['username'], created_user.username)
+
+        # update
+        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, by_user_id=self.uploading_user.get_id)
         self.assertEqual(
-            log_entry.change_message,
-            f"created_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
-        log_entry = LogEntry.objects.order_by('action_time').last()
-        self.assertEqual(
-            log_entry.change_message,
-            f"role: {self.role.name}[{self.role.get_id}], updated_via: {USER_CHANGE_VIA_BULK_IMPORTER}")
+            log_entry.details,
+            {
+                'changes': {
+                    'role': self.role.get_qualified_id()
+                },
+                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
+            }
+        )
+        self.assertEqual(log_entry.message, f"role: {self.role.name}")
 
     def test_blank_is_active(self):
         import_users_and_groups(

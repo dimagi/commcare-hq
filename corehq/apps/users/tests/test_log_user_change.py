@@ -21,23 +21,15 @@ class TestLogUserChange(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        UserHistory.objects.all().delete()
         cls.commcare_user.delete(cls.domain, deleted_by=None, deleted_via=None)
         cls.web_user.delete(cls.domain, deleted_by=None, deleted_via=None)
         cls.project.delete()
 
     def test_create(self):
-        self.assertEqual(UserHistory.objects.count(), 0)
-        user_history = log_user_change(
-            self.domain,
-            self.commcare_user,
-            self.web_user,
-            changed_via=USER_CHANGE_VIA_WEB,
-            message="Test Message",
-            action=ModelAction.CREATE
-        )
+        user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id, action=ModelAction.CREATE.value)
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
-        self.assertIsNotNone(user_history.user_id)
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertIsNotNone(user_history.by_user_id)
         self.assertEqual(user_history.by_user_id, self.web_user.get_id)
@@ -48,7 +40,7 @@ class TestLogUserChange(TestCase):
                 'changed_via': USER_CHANGE_VIA_WEB,
             }
         )
-        self.assertEqual(user_history.message, "Test Message")
+        self.assertIsNone(user_history.message)
         self.assertEqual(user_history.action, ModelAction.CREATE.value)
 
     def test_update(self):
@@ -56,7 +48,6 @@ class TestLogUserChange(TestCase):
 
         self.commcare_user.add_phone_number("9999999999")
 
-        self.assertEqual(UserHistory.objects.count(), 0)
         user_history = log_user_change(
             self.domain,
             self.commcare_user,

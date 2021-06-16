@@ -19,7 +19,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.util.model_log import ModelAction, log_model_change
+from corehq.util.model_log import ModelAction
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
@@ -314,26 +314,25 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-def log_user_role_update(domain, user, by_user, updated_via):
+def log_user_role_update(domain, user_role, user, by_user, updated_via):
     """
-    :param domain: domain name
+    :param domain: domain that initiated the change
+    :param user_role: user's new role
     :param user: couch user that got updated
-    :param by_user: django/couch user that made the update
+    :param by_user: couch user that made the update
     :param updated_via: web/bulk_importer
     """
-    user_role = user.get_role(domain)
-    message = "role: None"
+    changes = {'role': None}
+    message = ''
     if user_role:
-        if user_role.get_qualified_id() == 'admin':
-            message = f"role: {user_role.name}"
-        else:
-            message = f"role: {user_role.name}[{user_role.get_id}]"
-    message += f", updated_via: {updated_via}"
-    log_model_change(by_user, user.get_django_user(), message=message)
+        changes['role'] = user_role.get_qualified_id()
+        message = f"role: {user_role.name}"
+    log_user_change(domain, user, by_user, changed_via=updated_via, message=message, fields_changed=changes)
 
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
-                    message=None, fields_changed=None, action=ModelAction.UPDATE):
+                    message=None, fields_changed=None, action=ModelAction.UPDATE,
+                    domain_required_for_log=True):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
@@ -345,11 +344,12 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param message: Optional Message text
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
+    :param domain_required_for_log: set to False to allow domain less log for specific changes
     """
     from corehq.apps.users.models import UserHistory
 
     # domain is essential to filter changes done in a domain
-    if not domain and changed_by_user != SYSTEM_USER_ID:
+    if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
