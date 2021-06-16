@@ -128,8 +128,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                     var option = matchingOption(domElement);
                     if (domElement[0].multiple === true) {
-                        if (option.length === 1 && domElement.val().indexOf(option.val()) === -1) {
-                            domElement.val(domElement.val().concat(option.val())).trigger("change");
+                        var val = option.val();
+                        if (option.length === 1 && domElement.val().indexOf(val) === -1) {
+                            domElement.val(
+                                domElement.val().concat(val)
+                            ).trigger("change");
                         }
                     }
                     else {

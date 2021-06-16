@@ -44,7 +44,7 @@
         <% } %>
       <select>
     <% } else if (input == "select") { %>
-      <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>" style="width:100%">
+      <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
         <% for (var i = 0; i < itemsetChoices.length; i++) { %>
           <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
             <%- itemsetChoices[i] %>
