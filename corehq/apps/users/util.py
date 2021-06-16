@@ -352,11 +352,11 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
 
     # domain is essential to filter changes done in a domain
     if not domain and domain_required_for_log:
-        raise ValueError("Please pass domain")
+        raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
     if action == ModelAction.UPDATE and not fields_changed:
-        raise ValueError("'fields_changed' is required for update.")
+        raise ValueError("missing 'fields_changed' argument for update.")
 
     return UserHistory.objects.create(
         domain=domain,
