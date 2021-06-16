@@ -9,11 +9,6 @@ disallowed_settings_by_es_version = {
         'store.throttle.max_bytes_per_sec',
         'store.throttle.type'
     ],
-    7: [
-        'merge.policy.merge_factor',
-        'store.throttle.max_bytes_per_sec',
-        'store.throttle.type'
-    ]
 }
 
 
