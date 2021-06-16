@@ -30,4 +30,5 @@ class TurnIncomingSMSView(IncomingBackendView):
                 domain_scope=self.domain,
                 backend_id=self.backend_couch_id
             )
+
         return HttpResponse("")
