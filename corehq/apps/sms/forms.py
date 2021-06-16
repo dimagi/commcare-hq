@@ -1156,7 +1156,7 @@ class InitiateAddSMSBackendForm(Form):
     )
 
     def __init__(self, user: CouchUser, *args, **kwargs):
-        domain = kwargs.pop('domain')
+        domain = kwargs.pop('domain', None)
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -1187,7 +1187,7 @@ class InitiateAddSMSBackendForm(Form):
 
     def backend_classes_for_domain(self, domain):
         backends = copy.deepcopy(get_sms_backend_classes())
-        if not TURN_IO_BACKEND.enabled(domain):
+        if (domain is not None) and (not TURN_IO_BACKEND.enabled(domain)):
             backends.pop('TURN')
 
         return backends

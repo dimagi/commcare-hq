@@ -977,10 +977,11 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         }
 
         context = self.pagination_context
+
         context.update({
             'initiate_new_form': InitiateAddSMSBackendForm(
                 user=self.request.couch_user,
-                domain=self.request.domain
+                domain=self.domain
             ),
             'extra_backend_mappings': extra_backend_mappings,
             'is_system_admin': self.is_system_admin,
@@ -1353,8 +1354,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         context = self.pagination_context
         context.update({
             'initiate_new_form': InitiateAddSMSBackendForm(
-                user=self.request.couch_user,
-                domain=self.request.domain
+                user=self.request.couch_user
             ),
         })
         return context
