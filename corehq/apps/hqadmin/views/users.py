@@ -478,13 +478,13 @@ class DisableTwoFactorView(FormView):
 
     def form_valid(self, form):
         from django_otp import devices_for_user
-        fields_changed = {}
+        log_messages = []
 
         username = form.cleaned_data['username']
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        fields_changed['two_factor_devices'] = []
+        log_messages.append("Registered devices reset")
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -492,14 +492,14 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
-            fields_changed['two_factor_auth_disabled_until'] = disable_until
+            log_messages.append(f"Disabled for {disable_for_days} days")
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
-        log_message = f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
+        log_messages.append(
+            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"')
         log_user_change(None, couch_user, self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=log_message,
-                        fields_changed=fields_changed,
+                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
                         can_skip_domain=True)
         mail_admins(
             "Two-Factor account reset",
