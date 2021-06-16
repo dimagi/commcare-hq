@@ -45,6 +45,7 @@ from corehq.apps.hqmedia.views import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
+    get_linked_domains,
     is_linked_domain,
 )
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -269,8 +270,9 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 and get_domain_master_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
+    remote_linked_domains = [link for link in get_linked_domains(request.domain) if link.remote_username]
     context.update({
-        'domain_names': sorted(domain_names),
+        'domain_names': sorted(domain_names) + sorted(remote_linked_domains),
     })
     context.update({
         'copy_app_form': copy_app_form,

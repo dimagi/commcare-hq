@@ -67,6 +67,8 @@ class CopyApplicationForm(forms.Form):
 
     def clean_domain(self):
         domain = self.cleaned_data['domain']
+        if self.is_remote_linked_domain(domain):
+            return domain
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
@@ -75,6 +77,8 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
+            if self.is_remote_linked_domain(domain):
+                return self.cleaned_data
             if not toggles.LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
@@ -82,6 +86,9 @@ class CopyApplicationForm(forms.Form):
                 raise forms.ValidationError(
                     "The target project space is already linked to a different domain")
         return self.cleaned_data
+
+    def _is_remote_linked_domain(self, domain):
+        return domain.startswith("http") and "://" in domain
 
 
 class PromptUpdateSettingsForm(forms.Form):

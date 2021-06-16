@@ -57,7 +57,7 @@ class DomainLink(models.Model):
 
     @property
     def is_remote(self):
-        return bool(self.remote_base_url) or 'http' in self.linked_domain
+        return bool(self.remote_base_url) or self.linked_domain.startswith('http') and '://' in self.linked_domain
 
     @atomic
     def update_last_pull(self, model, user_id, date=None, model_detail=None):
