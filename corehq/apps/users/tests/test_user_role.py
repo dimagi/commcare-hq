@@ -172,6 +172,15 @@ class RolesTests(TestCase):
         role_with_prefetch.set_permissions([])
         self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
 
+    def test_by_couch_id(self):
+        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id)
+        self.assertEqual(role.id, self.roles[0].id)
+
+        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain=self.roles[0].domain)
+        self.assertEqual(role.id, self.roles[0].id)
+
+        with self.assertRaises(SQLUserRole.DoesNotExist):
+            SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain="other-domain")
 
 
 class TestRolePermissionsModel(TestCase):
