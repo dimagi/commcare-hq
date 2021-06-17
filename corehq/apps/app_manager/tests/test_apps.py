@@ -84,10 +84,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
             )
         self.app.save()
 
-    def tearDown(self):
-        DomainLink.all_objects.all().delete()
-        super().tearDown()
-
     def test_last_modified(self):
         lm = self.app.last_modified
         self.app.save()
