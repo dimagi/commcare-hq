@@ -11,6 +11,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.signals import create_repeat_records
 
+from casexml.apps.case.signals import case_post_save
 
 
 class BaseCOWINRepeater(CaseRepeater):
@@ -62,7 +63,10 @@ class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
             return bool(case.get_case_property('cowin_id'))
         return allowed
 
-@receiver([sql_case_post_save])
+
 def create_cowin_repeat_records(sender, case, **kwargs):
     create_repeat_records(BeneficiaryRegistrationRepeater, case)
     create_repeat_records(BeneficiaryVaccinationRepeater, case)
+
+
+case_post_save.connect(create_cowin_repeat_records, CommCareCaseSQL)
