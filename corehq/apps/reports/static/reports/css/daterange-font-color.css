@@ -1,4 +1,4 @@
-select.ui-datepicker-month,
-select.ui-datepicker-year {
+.ui-datepicker-month,
+.ui-datepicker-year {
     color: black;
 }
