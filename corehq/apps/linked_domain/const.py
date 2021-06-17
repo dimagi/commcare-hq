@@ -30,8 +30,11 @@ DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
-    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
     (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
+]
+
+SUPERUSER_DATA_MODELS = [
+    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
 ]
 
 FEATURE_FLAG_DATA_MODELS = [
@@ -42,7 +45,8 @@ FEATURE_FLAG_DATA_MODELS = [
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
 ]
 
-LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS
+LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \
+    SUPERUSER_DATA_MODELS
 
 LINKED_MODELS_MAP = dict(LINKED_MODELS)
 

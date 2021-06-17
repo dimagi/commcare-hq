@@ -57,10 +57,10 @@ from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_data_dictionary,
     get_dialer_settings,
+    get_enabled_toggles_and_previews,
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
-    get_enabled_toggles_and_previews,
     get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
@@ -266,12 +266,15 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_reports, linked_reports = get_reports(self.domain)
         master_keywords, linked_keywords = get_keywords(self.domain)
 
+        is_superuser = self.request.couch_user.is_superuser
+        timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords
+            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords, timezone,
+            is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, master_apps, master_fixtures, master_reports, master_keywords
+            self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
         if master_link and master_link.is_remote:
