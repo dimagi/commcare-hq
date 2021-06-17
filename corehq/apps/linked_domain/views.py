@@ -11,6 +11,8 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from toggle.shortcuts import namespaced_item
+
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -48,7 +50,10 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    UnsupportedActionError,
+)
 from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
@@ -88,10 +93,17 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import Keyword
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.views import (  # TODO
+    _clear_cache_for_toggle,
+    _notify_on_change,
+)
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -99,6 +111,27 @@ from corehq.util.timezones.utils import get_timezone_for_request
 @require_linked_domain
 def toggles_and_previews(request, domain):
     return JsonResponse(get_toggles_previews(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def update_toggles_and_previews(request, domain):
+    for slug, enabled in request.GET.items():   # TODO: this should be a post request, why does that 403?
+        # TODO: disabling doesn't work because `enabled` is a string. Update _do_request_to_remote_hq to send json.
+        # TODO: DRY up with set_toggle view
+        static_toggle = find_static_toggle(slug)
+        if not static_toggle:
+            continue
+        if static_toggle.set(item=domain, enabled=enabled, namespace=NAMESPACE_DOMAIN):
+            action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
+            ToggleAudit.objects.log_toggle_action(
+                slug, request.user.username, [namespaced_item(domain, NAMESPACE_DOMAIN)], action
+            )
+        if enabled:
+            _notify_on_change(static_toggle, [domain], request.user.username)
+        _clear_cache_for_toggle(NAMESPACE_DOMAIN, domain)
+
+    return JsonResponse({"success": 1})
 
 
 @login_or_api_key
