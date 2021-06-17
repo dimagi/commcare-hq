@@ -4,10 +4,9 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
     Permissions,
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo, UserRole,
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
     StaticRole
 )
-from corehq.apps.users.tests.test_migrate_roles_to_sql import _drop_couch_only_fields
 
 
 class RolesTests(TestCase):
@@ -237,15 +236,27 @@ class TestRolePermissionsModel(TestCase):
 class TestStaticRoles(SimpleTestCase):
     domain = "static-role-test"
 
+    expected_role_dict = {
+        "domain": "static-role-test",
+        "name": None,
+        "permissions": None,
+        "default_landing_page": None,
+        "is_non_admin_editable": False,
+        "assignable_by": [],
+        "is_archived": False,
+        "upstream_id": None
+    }
+
     def test_static_role_default(self):
         static_dict = StaticRole.domain_default(self.domain).to_json()
-        couch_dict = UserRole(domain=self.domain, name=None, permissions=Permissions()).to_json()
-        _drop_couch_only_fields(couch_dict)
-        self.assertDictEqual(couch_dict, static_dict)
+        expected = self.expected_role_dict.copy()
+        expected["permissions"] = Permissions().to_json()
+        self.assertDictEqual(expected, static_dict)
 
     def test_static_role_admin(self):
         static_admin_role = StaticRole.domain_admin(self.domain)
-        couch_dict = UserRole(domain=self.domain, name="Admin", permissions=Permissions.max()).to_json()
-        _drop_couch_only_fields(couch_dict)
-        self.assertDictEqual(couch_dict, static_admin_role.to_json())
+        expected = self.expected_role_dict.copy()
+        expected["name"] = "Admin"
+        expected["permissions"] = Permissions.max().to_json()
+        self.assertDictEqual(expected, static_admin_role.to_json())
         self.assertEqual(static_admin_role.get_qualified_id(), "admin")
