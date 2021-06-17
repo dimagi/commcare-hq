@@ -1,3 +1,4 @@
+from corehq.apps.accounting.filters import clean_options
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
@@ -10,8 +11,8 @@ class EnterpriseDomainFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [(domain, domain) for domain in Subscription.visible_objects.filter(
+        return clean_options([(domain, domain) for domain in Subscription.visible_objects.filter(
             account=self.request.account,
             is_active=True,
             account__is_active=True,
-        ).values_list('subscriber__domain', flat=True).distinct()]
+        ).values_list('subscriber__domain', flat=True).distinct()])
