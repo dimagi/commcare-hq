@@ -41,7 +41,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
-    MODEL_REPORT,
+    MODEL_REPORT, SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
@@ -440,6 +440,11 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _base_query(self):
         query = DomainLinkHistory.objects.filter(link=self.selected_link)
+
+        # filter out superuser data models
+        if not self.request.couch_user.is_superuser:
+            query = query.exclude(model__in=dict(SUPERUSER_DATA_MODELS).keys())
+
         if self.link_model:
             query = query.filter(model=self.link_model)
 
