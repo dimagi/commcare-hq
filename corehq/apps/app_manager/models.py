@@ -2213,7 +2213,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
 
     def has_cowin_appointment_search(self):
-        return self.name.get('en') == 'Cowin Vaccination'
+        return 'Registration' in self.name.get('en')
 
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
