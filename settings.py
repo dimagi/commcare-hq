@@ -807,6 +807,8 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryRegistrationRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryVaccinationRepeater',
 ]
 
 # Override this in localsettings to add new repeater types

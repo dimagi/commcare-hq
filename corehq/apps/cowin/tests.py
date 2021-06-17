@@ -1,7 +1,19 @@
+import json
+import uuid
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.cowin.repeater_generators import (
+    BeneficiaryRegistrationPayloadGenerator,
+    BeneficiaryVaccinationPayloadGenerator,
+)
+from corehq.apps.cowin.repeaters import (
+    BeneficiaryRegistrationRepeater,
+    BeneficiaryVaccinationRepeater,
+)
 from corehq.apps.cowin.views import AppointmentResultsFixture
+from corehq.form_processor.models import CommCareCaseSQL
 
 DUMMY_RESPONSE = {
     "sessions": [{
@@ -70,4 +82,87 @@ class TestAppointmentResultsFixture(SimpleTestCase, TestXmlMixin):
             """,
             fixture,
             "."
+        )
+
+
+class TestRepeaters(SimpleTestCase):
+    domain = 'test-cowin'
+
+    def test_registration_payload(self):
+        case_id = uuid.uuid4().hex
+        case_json = {
+            'name': 'Nitish Dube',
+            'birth_year': '2000',
+            'gender_id': 1,
+            'mobile_number': '9999999999',
+            'aadhaar_number': 'XXXXXXXX1234',
+        }
+        case = CommCareCaseSQL(domain=self.domain, type='beneficiary', case_id=case_id, case_json=case_json)
+        repeater = BeneficiaryRegistrationRepeater()
+        generator = BeneficiaryRegistrationPayloadGenerator(repeater)
+        payload = generator.get_payload(repeat_record=None, beneficiary_case=case)
+        self.assertDictEqual(
+            json.loads(payload),
+            {
+                'name': 'Nitish Dube',
+                'birth_year': '2000',
+                'gender_id': 1,
+                'mobile_number': '9999999999',
+                "photo_id_type": 1,
+                'photo_id_number': 'XXXXXXXX1234',
+                "consent_version": "1"
+            }
+        )
+
+    def test_vaccination_payload(self):
+        case_id = uuid.uuid4().hex
+        case = CommCareCaseSQL(domain=self.domain, type='vaccination', case_id=case_id)
+        repeater = BeneficiaryVaccinationRepeater()
+        generator = BeneficiaryVaccinationPayloadGenerator(repeater)
+
+        # 1st dose
+        case.case_json = {
+            'cowin_id': '1234567890123',
+            'center_id': 1234,
+            'vaccine': "COVISHIELD",
+            'vaccine_batch': '123456',
+            'dose': 1,
+            'dose1_date': "01-01-2020",
+            'vaccinator_name': 'Neelima',
+        }
+
+        payload = generator.get_payload(repeat_record=None, vaccination_case=case)
+        self.assertDictEqual(
+            json.loads(payload),
+            {
+                "beneficiary_reference_id": "1234567890123",
+                "center_id": 1234,
+                "vaccine": "COVISHIELD",
+                "vaccine_batch": "123456",
+                "dose": 1,
+                "dose1_date": "01-01-2020",
+                "vaccinator_name": "Neelima"
+            }
+        )
+
+        # 2nd dose
+        case.case_json.update({
+            'dose': 2,
+            'dose2_date': "01-02-2020",
+            'vaccinator_name': 'Sumanthra',
+        })
+
+        payload = generator.get_payload(repeat_record=None, vaccination_case=case)
+        self.assertDictEqual(
+            json.loads(payload),
+            {
+                "beneficiary_reference_id": "1234567890123",
+                "center_id": 1234,
+                "vaccine": "COVISHIELD",
+                "vaccine_batch": "123456",
+                "dose": 2,
+                "dose1_date": "01-01-2020",
+                "dose2_date": "01-02-2020",
+                "vaccinator_name": "Sumanthra"
+            }
         )
