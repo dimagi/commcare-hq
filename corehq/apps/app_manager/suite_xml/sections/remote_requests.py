@@ -321,9 +321,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
 class CowinRemoteRequestContributor(SuiteContributorByModule):
     """
     Adds a remote-request node, which sets the URL and query details for
-    synchronous searching and case claiming.
-
-    Search is available from the module's case list.
+    cowin appointments search
 
     See "remote-request" in the `CommCare 2.0 Suite Definition`_ for details.
 
@@ -335,10 +333,7 @@ class CowinRemoteRequestContributor(SuiteContributorByModule):
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
         from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
-        if (
-            isinstance(module, (Module, AdvancedModule, ShadowModule)) and
-            module.has_cowin_appointment_search()
-        ):
+        if isinstance(module, (Module, AdvancedModule, ShadowModule)):
             return [CowinRemoteRequestFactory(
                 self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
         return []
