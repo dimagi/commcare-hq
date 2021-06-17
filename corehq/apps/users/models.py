@@ -3056,8 +3056,8 @@ class HQApiKey(models.Model):
     def role(self):
         if self.role_id:
             try:
-                return UserRole.get(self.role_id)
-            except ResourceNotFound:
+                return SQLUserRole.objects.by_couch_id(self.role_id)
+            except SQLUserRole.DoesNotExist:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
