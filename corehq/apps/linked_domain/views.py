@@ -36,7 +36,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
-    LINKED_MODELS,
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_FIXTURE,

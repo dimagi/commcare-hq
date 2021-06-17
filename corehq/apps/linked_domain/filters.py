@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.linked_domain.const import LINKED_MODELS, NON_SUPERUSER_DATA_MODELS
+from corehq.apps.linked_domain.const import ALL_LINKED_MODELS, NON_SUPERUSER_DATA_MODELS
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
@@ -27,5 +27,5 @@ class DomainLinkModelFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         if self.request.couch_user.is_superuser:
-            return list(LINKED_MODELS)
+            return list(ALL_LINKED_MODELS)
         return list(NON_SUPERUSER_DATA_MODELS)

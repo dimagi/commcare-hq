@@ -13,7 +13,6 @@ from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_FIXTURE,
-    MODEL_FLAGS,
     MODEL_KEYWORD,
     MODEL_REPORT,
     SUPERUSER_DATA_MODELS,
