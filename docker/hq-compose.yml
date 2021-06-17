@@ -28,6 +28,7 @@ services:
       - couch
       - redis
       - elasticsearch2
+      - elasticsearch5
       - kafka
       - zookeeper
       - minio
@@ -85,10 +86,20 @@ services:
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
-      - "9200"  # is used in python-elasticsearch-v7 build matrix
+      - "9200"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
       - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+
+  elasticsearch5:
+    image: elasticsearch:5.6.16
+    environment:
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch5:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper

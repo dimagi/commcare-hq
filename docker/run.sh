@@ -21,6 +21,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
+    python-elasticsearch-v5
 )
 
 
@@ -151,11 +152,18 @@ function _run_tests {
     shift
     py_test_args=("$@")
     js_test_args=("$@")
-    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
-        export USE_PARTITIONED_DATABASE=yes
-        # TODO make it possible to run a subset of python-sharded tests
-        py_test_args+=("--attr=sql_backend")
-    fi
+    case "$TEST" in
+        python-sharded*)
+            export USE_PARTITIONED_DATABASE=yes
+            # TODO make it possible to run a subset of python-sharded tests
+            py_test_args+=("--attr=sql_backend")
+            ;;
+        python-elasticsearch-v5)
+            #export ELASTICSEARCH_5_PORT=5200
+            #export ELASTICSEARCH_MAJOR_VERSION=5
+            py_test_args+=("--attr=es_test")
+            ;;
+    esac
 
     function _test_python {
         ./manage.py create_kafka_topics
@@ -177,7 +185,7 @@ function _run_tests {
             _test_javascript
             ./manage.py static_analysis
             ;;
-        python|python-sharded)
+        python|python-sharded|python-elasticsearch-v5)
             _test_python
             ;;
         javascript)

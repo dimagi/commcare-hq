@@ -136,6 +136,7 @@ ENV Vars
 * TEST=[javascript|**python**|python-sharded|python-sharded-and-javascript]
   * `javascript`: extra setup and config for JS tests. Also only run JS tests
   * `python`: default tests
+  * `python-elasticsearch-v5`: configure django for ES tests
   * `python-sharded`: configure django for sharded setup and only run subset of
     tests
   * `python-sharded-and-javascript`: combines `python-sharded` and `javascript`.
