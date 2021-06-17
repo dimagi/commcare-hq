@@ -41,7 +41,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
-    MODEL_REPORT,
+    MODEL_REPORT, SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
@@ -259,10 +259,6 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
-                'models': [
-                    {'slug': model[0], 'name': model[1]}
-                    for model in LINKED_MODELS
-                ]
             },
         }
 
@@ -390,6 +386,11 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _base_query(self):
         query = DomainLinkHistory.objects.filter(link=self.selected_link)
+
+        # filter out superuser data models
+        if not self.request.couch_user.is_superuser:
+            query = query.exclude(model__in=dict(SUPERUSER_DATA_MODELS).keys())
+
         if self.link_model:
             query = query.filter(model=self.link_model)
 
