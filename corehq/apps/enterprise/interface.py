@@ -27,7 +27,6 @@ from dimagi.utils.dates import DateSpan
 
 
 class EnterpriseSMSBillablesInterface(GenericTabularReport):
-    emailable = True
     base_template = "accounting/report_filter_actions.html"
     section_name = "Enterprise"
     dispatcher = EnterpriseReportDispatcher
