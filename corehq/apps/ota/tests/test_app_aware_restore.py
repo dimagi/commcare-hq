@@ -25,8 +25,6 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import Permissions, UserRole
-from corehq.util.test_utils import flag_enabled
 
 
 class AppAwareSyncTests(TestCase):
