@@ -1,5 +1,4 @@
 import datetime
-import json
 
 import requests
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -94,71 +93,3 @@ class AppointmentResultXMLGenerator(object):
         for field in self.appointment_fields:
             root.append(safe_element(field, self.appointment[field]))
         return root
-
-
-def send_request_for_meta_beneficiary_type_protected_api():
-    headers = {
-        'Accept-Language': 'en_US',
-        'User-Agent': '',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Api-Key': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi'
-    }
-
-    url = "https://cdndemo-api.co-vin.in/api/v2/registration/beneficiary/idTypes"
-    return requests.get(url, headers=headers)
-
-
-def send_request_for_otp_protected_api(mobile_number=None):
-    headers = {
-        'Accept-Language': 'en_US',
-        'User-Agent': '',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Api-Key': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi'
-    }
-
-    mobile_number = mobile_number or "8383909618"
-    url = "https://cdndemo-api.co-vin.in/api/v2/auth/generateOTP"
-    data = {
-        'mobile': mobile_number
-    }
-    return requests.post(url, headers=headers, data=json.dumps(data))
-
-
-def send_request_confirm_otp_protected_api(otp, txn_id):
-    headers = {
-        'Accept-Language': 'en_US',
-        'User-Agent': '',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Api-Key': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi'
-    }
-
-    url = "https://cdndemo-api.co-vin.in/api/v2/auth/confirmOTP"
-    data = {
-        'otp': otp,
-        'txnId': txn_id
-    }
-    return requests.post(url, headers=headers, data=json.dumps(data))
-
-
-def sent_request_to_register_beneficiary_protected_api():
-    headers = {
-        'Accept-Language': 'en_US',
-        'User-Agent': '',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Api-Key': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi'
-    }
-    url = "https://cdndemo-api.co-vin.in/api/v2/registration/beneficiary/new"
-    data = {
-        "name": "Apparao",
-        "birth_year": "1980",
-        "gender_id": 1,
-        "photo_id_type": 1,
-        "photo_id_number": "9999",
-        "comorbidity_ind": "Y",
-        "consent_version": "1"
-    }
-    return requests.post(url, headers=headers, data=json.dumps(data))
