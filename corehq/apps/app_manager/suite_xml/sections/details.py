@@ -62,7 +62,7 @@ class DetailContributor(SectionContributor):
 
         elements = []
         for module in self.modules:
-            if module.has_cowin_appointment_search():
+            if toggles.COWIN_INTEGRATION.enabled(self.app.domain) and module.has_cowin_appointment_search():
                 elements.append(
                     load_xmlobject_from_string(
                         COWIN_APPOINTMENT_DETAIL_XML.format(
@@ -215,7 +215,7 @@ class DetailContributor(SectionContributor):
                 if module_offers_search(module):
                     d.actions.append(self._get_case_search_action(module, in_search="search" in id))
 
-                if module.has_cowin_appointment_search():
+                if toggles.COWIN_INTEGRATION.enabled(self.app.domain) and module.has_cowin_appointment_search():
                     d.actions.append(self._get_cowin_appointment_search_action(module))
 
             try:

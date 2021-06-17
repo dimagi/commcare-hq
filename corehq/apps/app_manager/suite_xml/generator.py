@@ -6,6 +6,7 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
@@ -89,7 +90,9 @@ class SuiteGenerator(object):
         menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
 
-        cowin_remote_requests = CowinRemoteRequestContributor(self.suite, self.app, self.modules)
+        cowin_remote_requests = None
+        if toggles.COWIN_INTEGRATION.enabled(self.app.domain):
+            cowin_remote_requests = CowinRemoteRequestContributor(self.suite, self.app, self.modules)
 
         session_endpoints = SessionEndpointContributor(self.suite, self.app, self.modules)
 
@@ -111,9 +114,10 @@ class SuiteGenerator(object):
                 remote_requests.get_module_contributions(module, detail_section_elements)
             )
 
-            self.suite.remote_requests.extend(
-                cowin_remote_requests.get_module_contributions(module, detail_section_elements)
-            )
+            if cowin_remote_requests and module.has_cowin_appointment_search():
+                self.suite.remote_requests.extend(
+                    cowin_remote_requests.get_module_contributions(module, detail_section_elements)
+                )
 
             if self.app.supports_session_endpoints:
                 self.suite.endpoints.extend(
