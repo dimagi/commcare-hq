@@ -319,7 +319,7 @@ class StockTransactionLoader:
             # the result of this call is cached, so a second call
             # with the same arguments will be fast
             return self.count_ledger_refs(form_id, report_type, ref) > 0
-        except XFormNotFound:
+        except (XFormNotFound, DomainMismatch):
             return False
 
     def count_ledger_refs(self, form_id, report_type, ref):
@@ -332,12 +332,17 @@ class StockTransactionLoader:
 
     def iter_stock_transactions(self, form_id):
         xform = get_couch_form(form_id)
-        assert xform.domain == get_domain(), xform
+        if xform.domain != get_domain():
+            raise DomainMismatch(f"{form_id}: {xform.domain} != {get_domain()}")
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
                 if tx.action == TRANSACTION_TYPE_STOCKONHAND:
                     yield report.report_type, tx
+
+
+class DomainMismatch(Exception):
+    pass
 
 
 def is_case_patched(case_id, diffs):
