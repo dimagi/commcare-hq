@@ -1,10 +1,13 @@
 import datetime
+from xml.etree import cElementTree as ElementTree
 
-import requests
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from casexml.apps.case.xml.generator import safe_element
-from xml.etree import cElementTree as ElementTree
+
+from corehq.apps.cowin.api import (
+    send_request_to_get_available_appointments_via_public_api,
+)
 
 
 def find_cowin_appointments(request):
@@ -15,7 +18,7 @@ def find_cowin_appointments(request):
     if error_response:
         return error_response
 
-    response = _get_response(pincode, on_date)
+    response = send_request_to_get_available_appointments_via_public_api(pincode, on_date)
     appointments = response.json()['sessions']
     fixtures = AppointmentResultsFixture(appointments).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
@@ -29,13 +32,6 @@ def _validate_request(pincode, on_date):
         datetime.datetime.strptime(on_date, '%d-%m-%Y')
     except ValueError:
         return HttpResponseBadRequest("Invalid date, format should be DD-MM-YYYY")
-
-
-def _get_response(pincode, on_date):
-    headers = {'Accept-Language': 'en_US'}
-    url = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?" \
-          f"pincode={pincode}&date={on_date}"
-    return requests.get(url, headers=headers)
 
 
 class AppointmentResultsFixture(object):

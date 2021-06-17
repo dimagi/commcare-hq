@@ -1,7 +1,7 @@
 import datetime
 import json
-import requests
 
+import requests
 
 API = {
     'public': 'https://cdn-api.co-vin.in/api/v2/',
@@ -25,6 +25,18 @@ def send_request_for_meta_beneficiary_via_public_api():
     }
 
     url = API['public'] + "registration/beneficiary/idTypes"
+    return requests.get(url, headers=headers)
+
+
+def send_request_to_get_available_appointments_via_public_api(pincode, on_date):
+    headers = {
+        'Accept-Language': 'en_US',
+        'User-Agent': '',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+
+    url = API['public'] + f"appointment/sessions/public/findByPin?pincode={pincode}&date={on_date}"
     return requests.get(url, headers=headers)
 
 
