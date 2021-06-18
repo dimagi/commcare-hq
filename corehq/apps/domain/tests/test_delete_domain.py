@@ -720,7 +720,7 @@ class TestDeleteDomain(TestCase):
             server = TableauServer.objects.create(
                 domain=domain_name,
                 server_type='server',
-                server_name='my_server,',
+                server_name='my_server',
                 target_site='my_site',
                 domain_username='my_username',
                 allow_domain_username_override=False,
