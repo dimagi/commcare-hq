@@ -17,7 +17,8 @@ from corehq.apps.reports.filters.users import \
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.users.models import CouchUser, UserHistory
+from corehq.apps.users.models import UserHistory
+from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -114,8 +115,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
 def _user_history_row(record):
     return [
-        CouchUser.get_by_user_id(record.user_id).username,  # ToDo: re-think this fetch
-        CouchUser.get_by_user_id(record.changed_by).username,
+        cached_user_id_to_username(record.user_id),
+        cached_user_id_to_username(record.changed_by),
         _get_action_display(record.action),
         record.details['changed_via'],
         record.message,
