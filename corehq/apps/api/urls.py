@@ -34,6 +34,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
     LookupTableResource,
 )
 from corehq.apps.hqcase.urls import case_api_urlpatterns
+from corehq.apps.hqcase.views import case_api
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 
@@ -119,7 +120,8 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
-    yield url(r'v0.6/case/', include(case_api_urlpatterns))
+    yield url(r'v0.6/case$', case_api)  # We don't want Django to redirect to add a trailing slash
+    yield url(r'v0.6/case/?', include(case_api_urlpatterns))
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")

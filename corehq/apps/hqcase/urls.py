@@ -12,5 +12,5 @@ urlpatterns = [
 
 case_api_urlpatterns = [
     url(r'^$', case_api, name='case_api'),
-    url(r'^(?P<case_id>[\w-]+)/$', case_api, name='case_api'),
+    url(r'^(?P<case_id>[\w-]+)/?$', case_api, name='case_api'),
 ]
