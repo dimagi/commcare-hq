@@ -1,18 +1,13 @@
-from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
+from corehq.apps.cowin.api import API_KEYS
 from corehq.apps.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
     BeneficiaryVaccinationPayloadGenerator,
 )
 from corehq.apps.hqcase.utils import update_case
-from corehq.form_processor.models import CommCareCaseSQL
-from corehq.apps.cowin.api import API_KEYS
 from corehq.motech.repeaters.models import CaseRepeater
-from corehq.motech.repeaters.signals import create_repeat_records
-
-from casexml.apps.case.signals import case_post_save
 
 
 class BaseCOWINRepeater(CaseRepeater):
@@ -77,11 +72,3 @@ class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
         if allowed:
             return bool(case.get_case_property('cowin_id'))
         return allowed
-
-
-def create_cowin_repeat_records(sender, case, **kwargs):
-    create_repeat_records(BeneficiaryRegistrationRepeater, case)
-    create_repeat_records(BeneficiaryVaccinationRepeater, case)
-
-
-case_post_save.connect(create_cowin_repeat_records, CommCareCaseSQL)
