@@ -24,8 +24,8 @@
       {% if is_linked_domain %}
         <li class="active"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project" %}</a></li>
       {% endif %}
-      <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Projects linked to this one" %}</a></li>
-      <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Release Content" %}</a></li>
+      <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
     </ul>
     <div class="spacer"></div>
   {% elif is_linked_domain %}
