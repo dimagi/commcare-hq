@@ -5,7 +5,7 @@
   <div data-bind="if: domainLink">
     <p>
       {% blocktrans %}
-        This project is linked to the upstream project <a data-bind="attr: {'href': domainLink.upstreamUrl}, text: domainLink.upstreamDomain"></a>.<br/>
+        This project is linked to the upstream project <a data-bind="attr: {'href': domainLink.upstreamUrl}, text: domainLink.master_domain"></a>.<br/>
         The data models below can be synced with the existing data models in the upstream project.<br/>
         <a href="#" target="_blank">Learn more</a> about syncing data between linked projects.
       {% endblocktrans %}
