@@ -13,13 +13,13 @@
 
 {% block filter_panel %}
 
-<script src="{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
+<script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
 
 <script type="text/javascript">
     function initViz() {
         var containerDiv = document.getElementById("vizContainer");
 
-        var url = "{{ validate_hostname }}/".concat(
+        var url = "https://{{ validate_hostname }}/".concat(
                   "{{ server_type }}" == "server" ? "trusted/{{ ticket }}/" : "",
                   "{{ view_url }}");
 

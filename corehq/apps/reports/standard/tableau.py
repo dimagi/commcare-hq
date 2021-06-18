@@ -32,7 +32,7 @@ class TableauReport(ProjectReport):
         if self.visualization.server.validate_hostname == '':
             hostname = self.visualization.server.server_name
         else:
-            hostname = "https://" + self.visualization.server.validate_hostname
+            hostname = self.visualization.server.validate_hostname
         context.update({"domain": self.visualization.server.domain,
                         "server_type": self.visualization.server.server_type,
                         "server_address": self.visualization.server.server_name,
@@ -58,7 +58,7 @@ class TableauReport(ProjectReport):
         return self.visualization.server.domain_username
 
     def tableau_server_response(self):
-        tabserver_url = '{}/trusted/'.format(self.visualization.server.server_name)
+        tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
         post_arguments = {'username': self.get_post_username()}
         if self.visualization.server.target_site != 'Default':
             post_arguments.update({'target_site': self.visualization.server.target_site})
