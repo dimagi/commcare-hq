@@ -2,6 +2,7 @@ MOTECH on FHIR
 ==============
 
 CommCare HQ offers two ways of sharing data over FHIR:
+
 #. The FHIR API exposes CommCare cases as FHIR resources.
 #. Data forwarding allows CommCare cases to be sent to remote FHIR
    services.
