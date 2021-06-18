@@ -5,8 +5,8 @@
   <h3>{% trans "Push Content" %}</h3>
   <p>
     {% blocktrans %}
-      Prepare a new release by selecting which data models you would like to push to the selected downstream project spaces.<br/>
-      <a href="#" target="_blank">Learn more</a> about pushing release content with linked projects.
+      Select which data models you would like to push to the specified downstream project spaces.<br/>
+      <a href="#" target="_blank">Learn more</a> about pushing content with linked projects.
     {% endblocktrans %}
   </p>
   <div class="spacer"></div>
@@ -20,7 +20,7 @@
                 data-bind="selectedOptions: modelsToRelease,
                            multiselect: {
                                selectableHeaderTitle: '{% trans_html_attr "All content" %}',
-                               selectedHeaderTitle: '{% trans_html_attr "Content to release" %}',
+                               selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
                                searchItemTitle: '{% trans_html_attr "Search content" %}',
                           }">
           {% for model in view_data.master_model_status %}
@@ -38,7 +38,7 @@
                 data-bind="selectedOptions: domainsToRelease,
                            multiselect: {
                                selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
-                               selectedHeaderTitle: '{% trans_html_attr "Projects to release to" %}',
+                               selectedHeaderTitle: '{% trans_html_attr "Projects to push to" %}',
                                searchItemTitle: '{% trans_html_attr "Search projects" %}',
                           }">
           {% for link in view_data.linked_domains %}
@@ -64,7 +64,7 @@
       <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
         <button type="button" class="btn btn-primary" data-bind="click: createRelease, enable: enableReleaseButton">
           <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: releaseInProgress"></i>
-          {% trans "Create Release" %}
+          {% trans "Push Content" %}
         </button>
       </div>
     </div>
