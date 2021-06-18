@@ -40,14 +40,18 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
-    MODEL_REPORT, SUPERUSER_DATA_MODELS,
+    MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
     get_linked_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    UnsupportedActionError,
+)
 from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
