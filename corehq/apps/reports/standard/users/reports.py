@@ -8,7 +8,10 @@ from memoized import memoized
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
-from corehq.apps.reports.filters.users import ChangedByUserFilter
+from corehq.apps.reports.filters.users import (
+    ChangeActionFilter,
+    ChangedByUserFilter,
+)
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -26,10 +29,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     dispatcher = UserManagementReportDispatcher
 
-    # ToDo: Add pending filters
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.users.ChangedByUserFilter',
+        'corehq.apps.reports.filters.users.ChangeActionFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
@@ -64,7 +67,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     def _get_queryset(self):
         user_ids = self._get_user_ids()
         changed_by_user_ids = self._get_changed_by_user_ids()
-        query = self._build_query(user_ids, changed_by_user_ids)
+        actions = self.request.GET.getlist('action')
+        query = self._build_query(user_ids, changed_by_user_ids, actions)
         return query
 
     def _get_user_ids(self):
@@ -82,7 +86,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.request.couch_user,
         )
 
-    def _build_query(self, user_ids, changed_by_user_ids):
+    def _build_query(self, user_ids, changed_by_user_ids, actions):
         filters = Q(domain=self.domain)
 
         if user_ids:
@@ -90,6 +94,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
         if changed_by_user_ids:
             filters = filters & Q(changed_by__in=changed_by_user_ids)
+
+        if actions and ChangeActionFilter.ALL not in actions:
+            filters = filters & Q(action__in=actions)
 
         if self.datespan:
             filters = filters & Q(changed_at__lt=self.datespan.enddate_adjusted,

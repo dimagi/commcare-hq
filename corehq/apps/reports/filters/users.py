@@ -461,6 +461,22 @@ class ChangedByUserFilter(ExpandedMobileWorkerFilter):
         return [('t__6', _("[Web Users]"))]
 
 
+class ChangeActionFilter(BaseMultipleOptionFilter):
+    ALL = '0'
+
+    label = ugettext_noop('Action')
+    default_text = ugettext_noop('Select Action')
+    slug = 'action'
+
+    options = [
+        (ALL, ugettext_noop('All')),
+        (str(UserHistory.CREATE), ugettext_noop('Create')),
+        (str(UserHistory.UPDATE), ugettext_noop('Update')),
+        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+    ]
+    default_options = ['0']
+
+
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:
