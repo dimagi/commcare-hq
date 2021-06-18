@@ -1,4 +1,3 @@
-from django.core.management import CommandError
 from django.test.testcases import TestCase
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
