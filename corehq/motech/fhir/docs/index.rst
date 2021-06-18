@@ -15,6 +15,9 @@ The FHIR API
 
 MOTECH offers a FHIR R4 API. It returns responses in JSON.
 
+The FHIR API is not yet targeted at external users. API users must be
+superusers.
+
 The API focuses on the Patient resource. The endpoint for a Patient with
 case ID 11111111 would be
 https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/Patient/11111111
@@ -25,14 +28,6 @@ placeholder value for the name of a project space on CommCare HQ.)
 To search for the patient's Observations, the API accepts the
 "patient_id" search filter. For example,
 https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/Observation/?patient_id=11111111
-
-The FHIR API CapabilityStatement can be found at
-https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/metadata
-
-The FHIR API uses API key authentication. Users will also need a user
-role with the "Edit Data" privilege. (Admin users automatically have
-this privilege.) The project space will need a subscription that offers
-API access.
 
 
 Mapping Case Properties
@@ -170,6 +165,8 @@ CommCare HQ instance and the services it needs:
 
        $ scripts/docker runserver
 
+CommCare HQ is now accessible at http://localhost:8000/
+
 
 A Reference API Client
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -181,5 +178,5 @@ You can find it implemented using the `Flask`_ Python web framework, or
 `FastAPI`_ for async Python.
 
 
-.. _Flask: https://github.com/dimagi/commcare-fhir-web-app/tree/flask
+.. _Flask: https://github.com/dimagi/commcare-fhir-web-app/
 .. _FastAPI: https://github.com/dimagi/commcare-fhir-web-app/tree/fast_api
