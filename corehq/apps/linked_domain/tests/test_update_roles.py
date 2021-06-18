@@ -74,7 +74,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
 
         # create role in linked domain with upstream_id and name not matching upstream name
         SQLUserRole.create(
-            self.linked_domain, 'id_test', Permissions(edit_web_users=True, view_locations=True),
+            self.linked_domain, 'id_test', Permissions(edit_web_users=False, view_locations=True),
             upstream_id=self.other_role.get_id
         )
 
