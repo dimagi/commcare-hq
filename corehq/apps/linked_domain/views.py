@@ -40,7 +40,8 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
-    MODEL_REPORT, SUPERUSER_DATA_MODELS,
+    MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
