@@ -161,7 +161,7 @@ def get_couch_domains():
     )
 
 
-DOMAIN_COUNT_UPPER_BOUND = 1000
+DOMAIN_COUNT_UPPER_BOUND = 20000
 
 
 def write_domain_csv(output_dir, domain_sets):
