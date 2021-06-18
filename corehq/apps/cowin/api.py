@@ -12,6 +12,7 @@ API = {
 
 API_KEYS = {
     'protected': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi',
+    'vaccinator': '3sjOr2rmM52GzhpMHjDEE1kpQeRxwFDr4YcBEimi',
 }
 
 
@@ -57,6 +58,7 @@ def send_request_to_register_beneficiary_via_vaccinator_api(beneficiary_data):
         'User-Agent': '',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'X-Api-Key': API_KEYS['vaccinator'],
     }
 
     url = API['vaccinator'] + "vaccinator/beneficiaries/new"

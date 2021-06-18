@@ -8,6 +8,7 @@ from corehq.apps.cowin.repeater_generators import (
 )
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.apps.cowin.api import API_KEYS
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.signals import create_repeat_records
 
@@ -37,6 +38,13 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryRegistrationPayloadGenerator,)
     friendly_name = _("Register beneficiaries on COWIN")
 
+    def get_headers(self, repeat_record):
+        headers = super(BeneficiaryRegistrationRepeater, self).get_headers(repeat_record)
+        headers.update({
+            'X-Api-Key': API_KEYS['vaccinator'],
+        })
+        return headers
+
     def handle_response(self, response, repeat_record):
         attempt = super().handle_response(response, repeat_record)
         if response.status_code == 200:
@@ -56,6 +64,13 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryVaccinationPayloadGenerator,)
     friendly_name = _("Update vaccination for beneficiaries on COWIN")
+
+    def get_headers(self, repeat_record):
+        headers = super(BeneficiaryVaccinationRepeater, self).get_headers(repeat_record)
+        headers.update({
+            'X-Api-Key': API_KEYS['vaccinator'],
+        })
+        return headers
 
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
