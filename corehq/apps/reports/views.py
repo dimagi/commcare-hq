@@ -164,7 +164,8 @@ from corehq.util.view_utils import (
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
-from .forms import SavedReportConfigForm
+from .forms import SavedReportConfigForm, TableauServerForm
+from .models import TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
@@ -2120,3 +2121,41 @@ def project_health_user_details(request, domain, user_id):
         'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })
+
+
+class TableauServerView(BaseProjectReportSectionView):
+    urlname = 'tableau_server_view'
+    page_title = ugettext_lazy('Tableau Server Config')
+    template_name = 'reports/tableau_server.html'
+
+    @property
+    @memoized
+    def tableau_server_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return TableauServerForm(
+            data, domain=self.domain
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['initial'] = TableauServer.objects.get_or_create(domain=self.domain)
+        return kwargs
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.tableau_server_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.tableau_server_form.is_valid():
+            self.tableau_server_form.save()
+            messages.success(
+                request, ugettext_lazy("Tableau Server Settings Updated")
+            )
+        else:
+            messages.error(
+                request, ugettext_lazy("Could not update Tableau Server Settings")
+            )
+        return self.get(request, *args, **kwargs)
