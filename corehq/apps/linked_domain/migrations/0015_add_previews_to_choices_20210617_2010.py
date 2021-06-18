@@ -2,6 +2,18 @@
 
 from django.db import migrations, models
 
+from corehq.apps.linked_domain.const import MODEL_PREVIEWS, MODEL_FLAGS
+from corehq.apps.linked_domain.models import DomainLinkHistory
+
+
+def _duplicate_toggle_events_into_preview_events(apps, schema_editor):
+    all_toggle_events = DomainLinkHistory.objects.filter(model=MODEL_FLAGS)
+    # iterate through events, copy into a new entry with model='previews'
+    for toggle_event in all_toggle_events:
+        toggle_event.pk = None
+        toggle_event.model = MODEL_PREVIEWS
+        toggle_event.save()
+
 
 class Migration(migrations.Migration):
 
@@ -31,4 +43,5 @@ class Migration(migrations.Migration):
                 ('toggles', 'Feature Flags')
             ], max_length=128),
         ),
+        migrations.RunPython(_duplicate_toggle_events_into_preview_events),
     ]
