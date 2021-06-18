@@ -5,7 +5,7 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from dimagi.utils.couch.migration import SyncSQLToCouchMixin, disable_sync_to_couch
 
 
 @attr.s(frozen=True)
@@ -86,18 +86,21 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         )
 
     @classmethod
-    @transaction.atomic
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import Permissions
-        role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
-        if permissions is None:
-            # match couch functionality and set default permissions
-            permissions = Permissions()
-        role.set_permissions(permissions.to_list())
-        if assignable_by:
-            if not isinstance(assignable_by, list):
-                assignable_by = [assignable_by]
-            role.set_assignable_by(assignable_by)
+        with transaction.atomic(), disable_sync_to_couch(cls):
+            # disable sync to couch to avoid partially syncing the role. Sync happens
+            # after the transaction succeeds
+            role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
+            if permissions is None:
+                # match couch functionality and set default permissions
+                permissions = Permissions()
+            role.set_permissions(permissions.to_list())
+            if assignable_by:
+                if not isinstance(assignable_by, list):
+                    assignable_by = [assignable_by]
+                role.set_assignable_by(assignable_by)
+
         role._migration_do_sync()  # sync role to couch
         return role
 

@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from django.db import IntegrityError
 from django.db.transaction import atomic
 from django.test import TestCase, SimpleTestCase
@@ -41,7 +43,8 @@ class RolesTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for role in SQLUserRole.objects.get_by_domain(cls.domain, include_archived=True):
+        # user couch role since SQL roles get rolled back with the transaction
+        for role in UserRole.by_domain(cls.domain, include_archived=True):
             role.delete()
         super().tearDownClass()
 
@@ -173,6 +176,22 @@ class RolesTests(TestCase):
         role_with_prefetch.set_permissions([])
         self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
 
+    def test_create_atomic(self):
+        sql_roles_in_domain = {role.get_id for role in self.roles[0:2]}
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
+
+        permissions_raises_exception = Mock(side_effect=Exception)
+        with self.assertRaises(Exception):
+            SQLUserRole.create(self.domain, 'test_atomic', permissions=permissions_raises_exception)
+
+        # check sql role not created
+        sql_roles = SQLUserRole.objects.get_by_domain(self.domain)
+        self.assertEqual({role.get_id for role in sql_roles}, sql_roles_in_domain)
+
+        # check couch role not created
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
 
 class TestRolePermissionsModel(TestCase):
