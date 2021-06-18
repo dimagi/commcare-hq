@@ -52,7 +52,8 @@ class TestAddAppIdToLinkedReports(TestCase):
         self.linked_app.upstream_app_id = self.original_app._id
         self.linked_app.save()
 
-        migrate_linked_reports()
+        num_of_failed_attempts = migrate_linked_reports()
+        self.assertEqual(0, num_of_failed_attempts)
         # refetch
         actual_report = ReportConfiguration.get(self.linked_report._id)
         self.assertEqual(self.linked_app._id, actual_report.config.meta.build.app_id)
@@ -65,12 +66,13 @@ class TestAddAppIdToLinkedReports(TestCase):
         self.linked_app.upstream_app_id = None
         self.linked_app.save()
 
-        migrate_linked_reports()
+        num_of_failed_attempts = migrate_linked_reports()
+        self.assertEqual(0, num_of_failed_attempts)
         # refetch
         actual_report = ReportConfiguration.get(self.linked_report._id)
         self.assertEqual(self.linked_app._id, actual_report.config.meta.build.app_id)
 
-    def test_app_id_for_linked_reports_raises_error(self):
+    def test_app_id_for_linked_reports_increments_failed_attempts(self):
         self.linked_report.config.meta.build.app_id = None
         self.linked_report.save()
         self.assertIsNone(self.linked_report.config.meta.build.app_id)
@@ -78,14 +80,15 @@ class TestAddAppIdToLinkedReports(TestCase):
         self.linked_app.upstream_app_id = None
         self.linked_app.save()
 
-        with self.assertRaises(CommandError):
-            migrate_linked_reports()
+        num_of_failed_attempts = migrate_linked_reports()
+        self.assertEqual(1, num_of_failed_attempts)
 
     def test_linked_report_with_app_id_is_not_updated(self):
         self.linked_report.config.meta.build.app_id = self.linked_app._id
         self.linked_report.save()
         self.assertEqual(self.linked_app._id, self.linked_report.config.meta.build.app_id)
-        migrate_linked_reports()
+        num_of_failed_attempts = migrate_linked_reports()
+        self.assertEqual(0, num_of_failed_attempts)
         # refetch
         actual_report = ReportConfiguration.get(self.linked_report._id)
         self.assertEqual(self.linked_app._id, actual_report.config.meta.build.app_id)
