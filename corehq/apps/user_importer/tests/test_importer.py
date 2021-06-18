@@ -15,7 +15,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
-    create_or_update_users_and_groups,
+    create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
@@ -146,7 +146,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # location_code should be an array of multiple excel columns
         # with self.assertRaises(UserUploadError):
-        result = create_or_update_users_and_groups(
+        result = create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code='unknownsite')],
             self.uploading_user
@@ -204,7 +204,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def test_primary_location_replace(self):
         self.setup_locations()
         # first assign to loc1
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             self.uploading_user
@@ -217,7 +217,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         # reassign to loc2
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
             self.uploading_user
@@ -234,14 +234,14 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.setup_locations()
 
         # first assign to loc1
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc1.site_code])],
             self.uploading_user
         )
 
         # reassign to loc2
-        create_or_update_users_and_groups(
+        create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
             self.uploading_user

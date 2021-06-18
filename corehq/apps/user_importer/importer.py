@@ -400,7 +400,8 @@ def format_location_codes(location_codes):
     return location_codes
 
 
-def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None,
+                                               update_progress=None):
     domain_info_by_domain = {}
 
     ret = {"errors": [], "rows": []}
