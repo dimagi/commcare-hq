@@ -119,15 +119,15 @@ def _do_simple_request(url_name, domain_link):
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
 
 
-def _do_request_to_remote_hq_json(relative_url, remote_details, linked_domain, params=None, method='get'):
-    return _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params, method).json()
+def _do_request_to_remote_hq_json(relative_url, remote_details, requester_domain, params=None, method='get'):
+    return _do_request_to_remote_hq(relative_url, remote_details, requester_domain, params, method).json()
 
 
-def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params=None, method='get'):
+def _do_request_to_remote_hq(relative_url, remote_details, requester_domain, params=None, method='get'):
     """
     :param relative_url: Relative URL on remote HQ
     :param remote_details: RemoteDetails object containing remote URL base and auth details
-    :param linked_domain: Used for permission check on remote system
+    :param requester_domain: Used for permission check on remote system
     :param params: GET/POST params to include
     :param method:
     :return:
@@ -137,7 +137,7 @@ def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params
     api_key = remote_details.api_key
     full_url = '%s%s' % (url_base, relative_url)
     headers = {
-        'HQ-REMOTE-REQUESTER': absolute_reverse('domain_homepage', args=[linked_domain])
+        'HQ-REMOTE-REQUESTER': absolute_reverse('domain_homepage', args=[requester_domain])
     }
     try:
         response = requests.request(
