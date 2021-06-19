@@ -5,6 +5,7 @@ from corehq.apps.linked_domain.views import (
     app_by_version,
     brief_apps,
     case_search_config,
+    create_app,
     custom_data_models,
     data_dictionary,
     fixture,
@@ -25,6 +26,7 @@ app_name = 'linked_domain'
 urlpatterns = [
     url(r'^brief_apps/$', brief_apps, name='brief_apps'),
     url(r'^app_by_version/(?P<app_id>[\w-]+)/(?P<version>\d+)/$', app_by_version, name='app_by_version'),
+    url(r'^app/create/$', create_app, name='create_app'),
     url(r'^case_search_config/$', case_search_config, name='case_search_config'),
     url(r'^custom_data_models/$', custom_data_models, name='custom_data_models'),
     url(r'^data_dictionary/$', data_dictionary, name='data_dictionary'),

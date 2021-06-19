@@ -24,6 +24,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import (
@@ -36,7 +37,7 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.applications import unlink_apps_in_domain
+from corehq.apps.linked_domain.applications import link_app, unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS,
     LINKED_MODELS_MAP,
@@ -131,6 +132,28 @@ def update_toggles_and_previews(request, domain):
             _notify_on_change(static_toggle, [domain], request.user.username)
         _clear_cache_for_toggle(NAMESPACE_DOMAIN, domain)
 
+    return JsonResponse({"success": 1})
+
+
+# TODO: move to linked_domain.applications?
+@login_or_api_key
+@require_linked_domain
+def create_app(request, domain):
+    source = request.GET.get('doc')     # TODO: make this a POST
+    is_linked = request.GET.get('is_linked')
+    remote_details = request.GET.get('remote_details')
+
+    # TODO: DRY up with _copy_app_helper?
+    extra_properties = {'name': request.GET.get('name')}
+    app_copy = import_app_util(source, domain, extra_properties, request)
+    if is_linked_app(app_copy):
+        app_copy = app_copy.convert_to_application()
+        app_copy.save()
+
+    if is_linked:
+        link_app(app_copy, domain, source['_id'], remote_details)
+
+    # TODO: redirect to new app
     return JsonResponse({"success": 1})
 
 
