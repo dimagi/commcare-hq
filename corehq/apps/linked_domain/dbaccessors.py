@@ -18,6 +18,14 @@ def is_linked_domain(domain):
     return DomainLink.objects.filter(linked_domain=domain).exists()
 
 
+@quickcache(['master_domain', 'linked_domain'], timeout=60 * 60)
+def get_domain_link(master_domain, linked_domain):
+    try:
+        return DomainLink.objects.get(master_domain=master_domain, linked_domain=linked_domain)
+    except DomainLink.DoesNotExist:
+        return None
+
+
 @quickcache(['domain'], timeout=60 * 60)
 def get_linked_domains(domain, include_deleted=False):
     """

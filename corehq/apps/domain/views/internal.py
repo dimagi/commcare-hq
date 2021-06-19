@@ -42,6 +42,9 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.linked_domain.dbaccessors import get_domain_link
+from corehq.apps.linked_domain.local_accessors import get_toggles_previews
+from corehq.apps.linked_domain.remote_accessors import get_downstream_toggles_previews
 from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
@@ -444,35 +447,43 @@ class DeactivateTransferDomainView(View):
 @require_superuser
 @require_GET
 def toggle_diff(request, domain):
-    params = json_request(request.GET)
-    other_domain = params.get('domain')
-    diff = []
-    if Domain.get_by_name(other_domain):
-        diff = [{
-            'slug': t.slug,
-            'label': t.label,
-            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
-            'tag_name': _('Preview'),
-            'tag_css_class': 'default',
-            'tag_index': -1,
-        } for t in feature_previews.all_previews() if _can_copy_toggle(t, request.domain, other_domain)]
-        diff.extend([{
-            'slug': t.slug,
-            'label': t.label,
-            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
-            'tag_name': t.tag.name,
-            'tag_css_class': t.tag.css_class,
-            'tag_index': t.tag.index,
-        } for t in toggles.all_toggles() if _can_copy_toggle(t, request.domain, other_domain)])
-        diff.sort(key=lambda x: (x['tag_index'], x['label']))
+    data = get_toggles_previews(domain)
+
+    other_domain = request.GET.get('domain')
+    other_data = None
+    if other_domain.startswith('http') and '://' in other_domain:
+        domain_link = get_domain_link(domain, other_domain)
+        if domain_link:
+            other_data = get_downstream_toggles_previews(domain_link)
+    if not other_data and Domain.get_by_name(other_domain):
+        other_data = get_toggles_previews(other_domain)
+
+    if not other_data:
+        return []
+
+    diff = [{
+        'slug': t.slug,
+        'label': t.label,
+        'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+        'tag_name': _('Preview'),
+        'tag_css_class': 'default',
+        'tag_index': -1,
+    } for t in feature_previews.all_previews() if _can_copy_toggle(t, data['previews'], other_data['previews'])]
+    diff.extend([{
+        'slug': t.slug,
+        'label': t.label,
+        'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+        'tag_name': t.tag.name,
+        'tag_css_class': t.tag.css_class,
+        'tag_index': t.tag.index,
+    } for t in toggles.all_toggles() if _can_copy_toggle(t, data['toggles'], other_data['toggles'])])
+    diff.sort(key=lambda x: (x['tag_index'], x['label']))
+
     return json_response(diff)
 
 
-def _can_copy_toggle(toggle, domain, other_domain):
-    return (
-        toggle.enabled(domain, toggles.NAMESPACE_DOMAIN)
-        and not toggle.enabled(other_domain, toggles.NAMESPACE_DOMAIN)
-    )
+def _can_copy_toggle(toggle, data, other_data):
+    return toggle.slug in data and toggle.slug not in other_data
 
 
 @login_and_domain_required

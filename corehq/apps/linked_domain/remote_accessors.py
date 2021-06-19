@@ -20,6 +20,11 @@ def get_toggles_previews(domain_link):
     return _do_simple_request('linked_domain:toggles', domain_link)
 
 
+# TODO: rename, move, probably rename this file
+def get_downstream_toggles_previews(domain_link):
+    return _do_push_request('linked_domain:toggles', domain_link)
+
+
 def get_custom_data_models(domain_link, limit_types=None):
     url = reverse('linked_domain:custom_data_models', args=[domain_link.master_domain])
     params = None
@@ -117,6 +122,16 @@ def _fetch_remote_media_content(media_item, remote_app_details):
 def _do_simple_request(url_name, domain_link):
     url = reverse(url_name, args=[domain_link.master_domain])
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
+
+
+# TODO: rename: _do_downstream_request?
+def _do_push_request(url_name, domain_link, params=None):
+    import re
+    linked_domain = re.sub(r'.*/a/', '', domain_link.linked_domain)[:-1]    # TODO: nope...absolute version of get_domain_from_url?
+    url = reverse(url_name, args=[linked_domain])
+    return _do_request_to_remote_hq_json(
+        url, domain_link.remote_details, domain_link.master_domain, params=params, method='get'  # TODO: post
+    )
 
 
 def _do_request_to_remote_hq_json(relative_url, remote_details, requester_domain, params=None, method='get'):
