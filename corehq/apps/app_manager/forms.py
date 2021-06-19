@@ -67,7 +67,7 @@ class CopyApplicationForm(forms.Form):
 
     def clean_domain(self):
         domain = self.cleaned_data['domain']
-        if self.is_remote_linked_domain(domain):
+        if self._is_remote_linked_domain(domain):
             return domain
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
@@ -77,7 +77,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if self.is_remote_linked_domain(domain):
+            if self._is_remote_linked_domain(domain):
                 return self.cleaned_data
             if not toggles.LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
