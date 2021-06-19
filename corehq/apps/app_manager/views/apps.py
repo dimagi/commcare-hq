@@ -455,14 +455,27 @@ def copy_app(request, domain):
                     set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
 
         linked = data.get('linked')
-        if linked:
-            return _create_linked_app(request, app_id, data['build_id'], from_domain, to_domain, data['name'])
+        if domain_link:
+            if linked:
+                # TODO: get correct doc, create it, and pull
+                app_id = None
+            else:
+                # TODO: get the doc that's either data['build_id'] or app_id
+                app_id = None
+            relative_url = reverse('view_app', args=[to_domain, app_id])
+            return HttpResponseRedirect(domain_link.remote_base_url + relative_url)
         else:
-            return _copy_app_helper(request, data['build_id'] or app_id, to_domain, data['name'])
+            if linked:
+                return _create_linked_app(request, app_id, data['build_id'], from_domain, to_domain, data['name'])
+            else:
+                return _copy_app_helper(request, data['build_id'] or app_id, to_domain, data['name'])
 
-    # having login_and_domain_required validates that the user
-    # has access to the domain we're copying the app to
-    return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
+    if domain_link:
+        return _inner(request, to_domain, form.cleaned_data)
+    else:
+        # having login_and_domain_required validates that the user
+        # has access to the domain we're copying the app to
+        return login_and_domain_required(_inner)(request, to_domain, form.cleaned_data)
 
 
 def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_app_name):
