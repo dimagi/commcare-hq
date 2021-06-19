@@ -25,6 +25,11 @@ def get_downstream_toggles_previews(domain_link):
     return _do_push_request('linked_domain:toggles', domain_link)
 
 
+def enable_toggles(domain_link, slugs):
+    params = {slug: True for slug in slugs}
+    return _do_push_request("linked_domain:update_toggles", domain_link, params=params)['success']
+
+
 def get_custom_data_models(domain_link, limit_types=None):
     url = reverse('linked_domain:custom_data_models', args=[domain_link.master_domain])
     params = None

@@ -98,8 +98,9 @@ from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
+from corehq.apps.linked_domain.dbaccessors import get_domain_link, is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
+from corehq.apps.linked_domain.remote_accessors import enable_toggles
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
@@ -437,12 +438,21 @@ def copy_app(request, domain):
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id, copy_app_form=form)
 
+    to_domain = form.cleaned_data['domain']
+    domain_link = None
+    if to_domain.startswith('http'):
+        domain_link = get_domain_link(domain, to_domain)
+
     def _inner(request, to_domain, data, from_domain=domain):
         clear_app_cache(request, to_domain)
 
         if data['toggles']:
-            for slug in data['toggles'].split(","):
-                set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            slugs = data['toggles'].split(",")
+            if domain_link:
+                enable_toggles(domain_link, slugs)
+            else:
+                for slug in slugs:
+                    set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
 
         linked = data.get('linked')
         if linked:
