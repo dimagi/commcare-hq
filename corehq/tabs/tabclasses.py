@@ -1625,9 +1625,9 @@ class EnterpriseSettingsTab(UITab):
                 ],
             })
         if self.couch_user.is_superuser:
-            from corehq.apps.accounting.models import BillingAccount
+            from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or BillingAccount.get_enterprise_permissions_domains(self.domain):
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
                 enterprise_views.append({
                     'title': _("Enterprise Permissions"),
                     'url': reverse("enterprise_permissions", args=[self.domain]),
