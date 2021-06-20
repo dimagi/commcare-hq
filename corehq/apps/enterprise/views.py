@@ -360,6 +360,7 @@ def disable_enterprise_permissions(request, domain):
     config.is_enabled = False
     config.source_domain = None
     config.save()
+    config.clear_cache_for_all_users()
 
     redirect = reverse("enterprise_permissions", args=[domain])
     messages.success(request, _('Enterprise permissions have been disabled.'))
@@ -376,8 +377,10 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
         messages.error(request, _("Could not add {}}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
-    config.domains.append(target_domain)
-    config.save()
+    if target_domain not in config.domains:
+        config.domains.append(target_domain)
+        config.save()
+        config.clear_cache_for_all_users(target_domain)
     messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
     return HttpResponseRedirect(redirect)
 
@@ -392,8 +395,10 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
         messages.error(request, _("Could not remove {}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
-    config.domains.remove(target_domain)
-    config.save()
+    if target_domain in config.domains:
+        config.domains.remove(target_domain)
+        config.save()
+        config.clear_cache_for_all_users(target_domain)
     messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
                                                                                    target_domain))
     return HttpResponseRedirect(redirect)
@@ -415,5 +420,6 @@ def update_enterprise_permissions_source_domain(request, domain):
     if source_domain in config.domains:
         config.domains.remove(source_domain)
     config.save()
+    config.clear_cache_for_all_users()
     messages.success(request, _('Controlling domain set to {}.').format(source_domain))
     return HttpResponseRedirect(redirect)
