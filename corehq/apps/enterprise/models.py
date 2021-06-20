@@ -49,8 +49,8 @@ class EnterprisePermissions(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.get_domains.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
+            self.get_domains.clear(self.__class__, domain)
             self.get_by_domain.clear(self.__class__, domain)
 
     def clear_cache_for_all_users(self, domain=None):
