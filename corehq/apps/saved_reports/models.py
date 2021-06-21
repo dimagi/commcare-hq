@@ -1,4 +1,6 @@
 import calendar
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 import functools
 import hashlib
 import json
@@ -171,6 +173,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
+            SMSAdminInterfaceDispatcher,
+            EnterpriseReportDispatcher
         ]
 
         for dispatcher in dispatchers:
