@@ -603,21 +603,20 @@ def import_app(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
-        compressed = request.POST.get('compressed')
+        file = request.FILES.get('source_file')
 
         valid_request = True
         if not name:
             messages.error(request, _("You must submit a name for the application you are importing."))
             valid_request = False
-        if not compressed:
-            messages.error(request, _("You must submit the source data."))
+        if not file:
+            messages.error(request, _("You must upload the app source file."))
             valid_request = False
 
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
-        source = json.loads(source)
+        source = json.loads(file.read())
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})
 
