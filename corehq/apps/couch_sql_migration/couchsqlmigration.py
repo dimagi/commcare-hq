@@ -14,6 +14,7 @@ from django.db.utils import IntegrityError
 import attr
 from memoized import memoized
 
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import CaseProcessingResult, get_case_updates
 from casexml.apps.case.xml.parser import CaseNoopAction
@@ -674,7 +675,10 @@ class CouchSqlDomainMigrator:
             # 'initial_processing_complete' state in Couch is wrong.
             sql_form.initial_processing_complete = True
             sql_form.save()
-        result = self._get_case_stock_result(sql_form, couch_form)
+        try:
+            result = self._get_case_stock_result(sql_form, couch_form)
+        except IllegalCaseId:
+            return None
         if sql_form.is_normal and sql_form.initial_processing_complete:
             for case in result.case_models:
                 for tx in case.get_live_tracked_models(CaseTransaction):
