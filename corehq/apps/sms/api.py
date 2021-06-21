@@ -153,6 +153,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
         backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
+
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
@@ -167,7 +168,6 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)
-
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
         logged_subevent=None, events=[]):
