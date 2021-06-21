@@ -26,6 +26,8 @@ class UserChangeLogger(object):
         self.fields_changed = {}
         self.messages = []
 
+        self._save = False  # flag to check if log needs to be saved for updates
+
     def add_changes(self, changes):
         # ignore for new user since the whole user doc is logged for a new user
         if self.is_new_user:
@@ -33,16 +35,19 @@ class UserChangeLogger(object):
         for name, new_value in changes.items():
             if self.original_user_doc[name] != new_value:
                 self.fields_changed[name] = new_value
+                self._save = True
 
     def add_change_message(self, message):
         # ignore for new user since the whole user doc is logged for a new user
         if self.is_new_user:
             return
         self.messages.append(message)
+        self._save = True
 
     def add_info(self, info):
         # useful info for display like names
         self.messages.append(info)
+        self._save = True
 
     def save(self):
         self._include_user_data_changes()
@@ -56,6 +61,8 @@ class UserChangeLogger(object):
                 action=UserModelAction.CREATE,
             )
         else:
+            if not self._save:
+                return
             log_user_change(
                 self.domain,
                 self.user,
@@ -69,3 +76,4 @@ class UserChangeLogger(object):
         # ToDo: consider putting just the diff
         if self.original_user_doc['user_data'] != self.user.user_data:
             self.fields_changed['user_data'] = self.user.user_data
+            self._save = True
