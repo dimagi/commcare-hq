@@ -442,8 +442,7 @@ def use_domain_security_settings(domain_obj):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r for r in get_custom_roles_for_domain(domain) if not r.is_archived]
-    return len(custom_roles)
+    return len(get_custom_roles_for_domain(domain))
 
 
 def num_location_restricted_roles(domain):
