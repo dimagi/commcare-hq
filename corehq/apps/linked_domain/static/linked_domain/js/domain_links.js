@@ -83,14 +83,10 @@ hqDefine("linked_domain/js/domain_links", [
 
 
         // can only push content if a link with a downstream domain exists
-        var pushContentData = null;
-        if (data.linked_domains.length > 0) {
-            pushContentData = {
-                parent: self,
-            };
-            self.pushContentViewModel = PushContentViewModel(pushContentData);
-        }
-
+        var pushContentData = {
+            parent: self,
+        };
+        self.pushContentViewModel = PushContentViewModel(pushContentData);
         // Manage Downstream Domains Tab
         // search box
         self.query = ko.observable();
@@ -173,6 +169,10 @@ hqDefine("linked_domain/js/domain_links", [
             return _.filter(self.parent.domain_links(), function (link) {
                 return !link.is_remote;
             });
+        });
+
+        self.canPush = ko.computed(function () {
+            return self.localDomainLinks().length > 0;
         });
 
         self.pushContent = function () {
