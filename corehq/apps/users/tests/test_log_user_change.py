@@ -1,10 +1,10 @@
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, USER_CHANGE_VIA_WEB
-from corehq.util.model_log import ModelAction
 
 
 class TestLogUserChange(TestCase):
@@ -27,7 +27,8 @@ class TestLogUserChange(TestCase):
         cls.project.delete()
 
     def test_create(self):
-        user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id, action=ModelAction.CREATE.value)
+        user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id,
+                                               action=UserModelAction.CREATE.value)
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
@@ -41,7 +42,7 @@ class TestLogUserChange(TestCase):
             }
         )
         self.assertIsNone(user_history.message)
-        self.assertEqual(user_history.action, ModelAction.CREATE.value)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
     def test_update(self):
         restore_phone_numbers_to = self.commcare_user.to_json()['phone_numbers']
@@ -58,7 +59,7 @@ class TestLogUserChange(TestCase):
                 'phone_numbers': self.commcare_user.phone_numbers,
                 'password': '******'
             },
-            action=ModelAction.UPDATE
+            action=UserModelAction.UPDATE
         )
 
         self.assertEqual(user_history.domain, self.domain)
@@ -75,7 +76,7 @@ class TestLogUserChange(TestCase):
             }
         )
         self.assertEqual(user_history.message, "Phone Number Updated")
-        self.assertEqual(user_history.action, ModelAction.UPDATE.value)
+        self.assertEqual(user_history.action, UserModelAction.UPDATE.value)
 
         self.commcare_user.phone_numbers = restore_phone_numbers_to
 
@@ -103,7 +104,7 @@ class TestLogUserChange(TestCase):
             }
         )
         self.assertIsNone(user_history.message)
-        self.assertEqual(user_history.action, ModelAction.DELETE.value)
+        self.assertEqual(user_history.action, UserModelAction.DELETE.value)
 
     def test_domain_less_actions(self):
         new_user = CommCareUser.create(self.domain, f'test-new@{self.domain}.commcarehq.org', '******',
@@ -122,7 +123,7 @@ class TestLogUserChange(TestCase):
 
         new_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
 
-        log_entry = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=ModelAction.DELETE.value)
+        log_entry = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=UserModelAction.DELETE.value)
         self.assertEqual(log_entry.user_id, new_user_id)
 
 

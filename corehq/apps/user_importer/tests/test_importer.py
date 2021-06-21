@@ -24,14 +24,14 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    UserHistory,
     SQLUserRole,
+    UserHistory,
     WebUser,
 )
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
-from corehq.util.model_log import ModelAction
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -524,7 +524,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def test_tracking_updates(self):
         self.assertEqual(
             UserHistory.objects.filter(
-                action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
+                action=UserModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
             0
         )
         import_users_and_groups(
@@ -538,8 +538,12 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # create
         created_user = CommCareUser.get_by_username("hello@mydomain.commcarehq.org")
-        self.assertEqual(LogEntry.objects.filter(action_flag=ModelAction.CREATE.value).count(), 0)  # deprecated
-        log_entry = UserHistory.objects.get(action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id)
+        self.assertEqual(
+            LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
+            0
+        )  # deprecated
+        log_entry = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                            changed_by=self.uploading_user.get_id)
         self.assertEqual(log_entry.domain, self.domain.name)
         self.assertEqual(log_entry.user_type, "CommCareUser")
         self.assertEqual(log_entry.user_id, created_user.get_id)
@@ -547,7 +551,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(log_entry.details['changes']['username'], created_user.username)
 
         # update
-        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, changed_by=self.uploading_user.get_id)
+        log_entry = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                            changed_by=self.uploading_user.get_id)
         self.assertEqual(
             log_entry.details,
             {

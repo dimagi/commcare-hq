@@ -28,7 +28,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 
-from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1194,6 +1193,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return session_data
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
         self.clear_quickcache_for_user()
@@ -1204,7 +1205,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             pass
         if deleted_by:
             log_user_change(deleted_by_domain, self, deleted_by,
-                            changed_via=deleted_via, action=ModelAction.DELETE)
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1630,6 +1631,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.save()
 
     def log_user_create(self, domain, created_by, created_via, domain_required_for_log=True):
+        from corehq.apps.users.model_log import UserModelAction
+
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
@@ -1639,7 +1642,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self,
             created_by,
             changed_via=created_via,
-            action=ModelAction.CREATE,
+            action=UserModelAction.CREATE,
             domain_required_for_log=domain_required_for_log,
         )
 
@@ -1865,6 +1868,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
         if not unretired_by and not settings.UNIT_TESTING:
             raise ValueError("Missing unretired_by")
@@ -1889,11 +1894,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self,
                 unretired_by,
                 changed_via=unretired_via,
-                action=ModelAction.CREATE,
+                action=UserModelAction.CREATE,
             )
         return True, None
 
     def retire(self, retired_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
@@ -1932,7 +1939,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         if deleted_by:
             log_user_change(retired_by_domain, self, deleted_by,
-                            changed_via=deleted_via, action=ModelAction.DELETE)
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):
