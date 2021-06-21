@@ -28,7 +28,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 
-from corehq.util.model_log import ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -68,6 +67,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
     tag_cases_as_deleted_and_remove_indices,
@@ -1208,7 +1208,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             pass
         if deleted_by:
             log_user_change(deleted_by_domain, self, deleted_by,
-                            changed_via=deleted_via, action=ModelAction.DELETE)
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1643,7 +1643,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self,
             created_by,
             changed_via=created_via,
-            action=ModelAction.CREATE,
+            action=UserModelAction.CREATE,
             domain_required_for_log=domain_required_for_log,
         )
 
@@ -1893,7 +1893,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self,
                 unretired_by,
                 changed_via=unretired_via,
-                action=ModelAction.CREATE,
+                action=UserModelAction.CREATE,
             )
         return True, None
 
@@ -1936,7 +1936,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         if deleted_by:
             log_user_change(retired_by_domain, self, deleted_by,
-                            changed_via=deleted_via, action=ModelAction.DELETE)
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):

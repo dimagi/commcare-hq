@@ -16,6 +16,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -25,7 +26,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.util.model_log import ModelAction
 
 
 class RetireUserTestCase(TestCase):
@@ -72,7 +72,7 @@ class RetireUserTestCase(TestCase):
 
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
         log_entry = UserHistory.objects.get(user_id=self.commcare_user.get_id,
-                                            action=ModelAction.DELETE.value)
+                                            action=UserModelAction.DELETE.value)
         self.assertEqual(log_entry.domain, self.domain)
         self.assertEqual(log_entry.user_type, "CommCareUser")
         self.assertEqual(log_entry.changed_by, self.other_user.get_id)
@@ -109,7 +109,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(
             UserHistory.objects.filter(
                 user_id=self.commcare_user.get_id,
-                action=ModelAction.CREATE.value
+                action=UserModelAction.CREATE.value
             ).count(),
             0
         )
@@ -117,7 +117,7 @@ class RetireUserTestCase(TestCase):
 
         log_entry = UserHistory.objects.get(
             user_id=self.commcare_user.get_id,
-            action=ModelAction.CREATE.value
+            action=UserModelAction.CREATE.value
         )
         self.assertEqual(log_entry.domain, self.domain)
         self.assertEqual(log_entry.user_type, "CommCareUser")
