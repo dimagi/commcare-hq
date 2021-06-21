@@ -98,7 +98,7 @@ def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
 
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
-                                 plan_version=None, service_type=SubscriptionType.NOT_SET):
+                                 plan_version=None, service_type=SubscriptionType.NOT_SET, is_active=False):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -107,6 +107,7 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_start=date_start,
         date_end=date_end,
         service_type=service_type,
+        is_active=is_active,
     )
     subscription.save()
     return subscription
