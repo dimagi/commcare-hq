@@ -170,9 +170,9 @@ hqDefine("linked_domain/js/domain_links", [
         });
 
         self.localDomainLinks = ko.computed(function () {
-           return _.filter(self.parent.domain_links(), function (link) {
+            return _.filter(self.parent.domain_links(), function (link) {
                 return !link.is_remote;
-           });
+            });
         });
 
         self.pushContent = function () {
@@ -190,7 +190,8 @@ hqDefine("linked_domain/js/domain_links", [
             });
         };
 
-    }
+        return self;
+    };
 
     var PullReleaseContentViewModel = function (data) {
         // Pull Content Tab
