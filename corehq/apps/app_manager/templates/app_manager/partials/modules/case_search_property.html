@@ -53,6 +53,9 @@
                     <p class="help-block" data-bind="visible: appearance() == 'daterange'">
                       {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
                     </p>
+                    <p class="help-block" data-bind="visible: isMultiselect">
+                      {% trans 'e.g. Use #,# as seperator to select multiple values' %}
+                    </p>
                   </div>
                 </div>
                 {% endif %}
@@ -76,6 +79,14 @@
                           <option value="address">{% trans "Geocoder Broadcast" %}</option>
                         {% endif %}
                       </select>
+                    </div>
+                  </div>
+                  <div class="form-group" data-bind="visible: appearanceFinal() == 'fixture'">
+                    <label class="control-label col-xs-12 col-sm-3">
+                      {% trans "Allow multiple selections" %}
+                    </label>
+                    <div class="col-xs-12 col-sm-9">
+                      <input type="checkbox" data-bind="checked: isMultiselect"/>
                     </div>
                   </div>
                 {% endif %}
