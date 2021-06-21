@@ -82,7 +82,6 @@ branches:
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16
-    - gh/update-release-content-page # Graham June 18
     - rn_disallow_yui_cors # Rohit Negi
     - jls/move-enterprise-permissions-2-of-3+mk/user-history/base
     - mk/user-history/base # MK June 21 [QA]
