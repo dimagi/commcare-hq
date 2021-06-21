@@ -3,17 +3,18 @@ from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
 from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField
+from crispy_forms.bootstrap import InlineField, StrictButton
 
 import langcodes
-from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions, HQFormHelper
+from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
-from corehq.apps.reports.models import TableauServer
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.saved_reports.models import (
     DEFAULT_REPORT_NOTIF_SUBJECT,
     ReportConfig,
@@ -329,3 +330,50 @@ class TableauServerForm(forms.Form):
         self._existing_config.domain_username = self.cleaned_data['domain_username']
         self._existing_config.allow_domain_username_override = self.cleaned_data['allow_domain_username_override']
         self._existing_config.save()
+
+
+class TableauVisualizationForm(forms.ModelForm):
+    view_url = forms.CharField(
+        label=_('View URL'),
+    )
+
+    class Meta:
+        model = TableauVisualization
+        fields = [
+            'server',
+            'view_url',
+        ]
+
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+
+    @property
+    def helper(self):
+        helper = HQFormHelper()
+        from corehq.apps.reports.views import TableauVisualizationListView
+        helper.layout = crispy.Layout(
+            crispy.Field('server'),
+            crispy.Field('view_url'),
+
+            FormActions(
+                StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                LinkButton(
+                    _("Cancel"),
+                    reverse(
+                        TableauVisualizationListView.urlname,
+                        kwargs={'domain': self.domain},
+                    ),
+                    css_class="btn btn-default",
+                ),
+            ),
+        )
+        return helper
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)

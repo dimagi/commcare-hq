@@ -8,7 +8,11 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.reports.views import TableauServerView
+from corehq.apps.reports.views import (
+    TableauServerView,
+    TableauVisualizationListView,
+    TableauVisualizationDetailView,
+)
 
 settings_patterns = [
     url(r'^biometric/$', BiometricIntegrationView.as_view(),
@@ -17,6 +21,12 @@ settings_patterns = [
     url(r'^signed_callout/$', HmacCalloutSettingsView.as_view(), name=HmacCalloutSettingsView.urlname),
     url(r'^gaen_otp_server/$', GaenOtpServerSettingsView.as_view(), name=GaenOtpServerSettingsView.urlname),
     url(r'^tableau_server/$', TableauServerView.as_view(), name=TableauServerView.urlname),
+    url(r'^tableau_visualization/$', TableauVisualizationListView.as_view(),
+        name=TableauVisualizationListView.urlname),
+    url(r'^tableau_visualization/(?P<pk>\d+)/$', TableauVisualizationDetailView.as_view(),
+        name=TableauVisualizationDetailView.urlname),
+    url(r'^tableau_visualization/add/$', TableauVisualizationDetailView.as_view(),
+        name=TableauVisualizationDetailView.urlname),
 ]
 
 urlpatterns = [

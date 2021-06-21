@@ -1909,6 +1909,12 @@ def _get_integration_section(domain):
         'url': reverse(TableauServerView.urlname, args=[domain])
     })
 
+    from corehq.apps.reports.views import TableauVisualizationListView
+    integration.append({
+        'title': _(TableauVisualizationListView.page_title),
+        'url': reverse(TableauVisualizationListView.urlname, args=[domain])
+    })
+
     return integration
 
 
