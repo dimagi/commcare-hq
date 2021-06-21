@@ -85,4 +85,5 @@ branches:
     - rn_disallow_yui_cors # Rohit Negi
     - jls/move-enterprise-permissions-2-of-3+mk/user-history/base
     - mk/user-history/base # MK June 21 [QA]
+    - cs/SC-1517-openmrs_cancelled_payloads_not_logged # Charl June 21
 submodules: { }
