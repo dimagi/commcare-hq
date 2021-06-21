@@ -43,10 +43,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     sortable = False
 
     @property
-    def default_datespan(self):
-        return datespan_from_beginning(self.domain_object, self.timezone)
-
-    @property
     def headers(self):
         h = [
             DataTablesColumn(_("User")),
