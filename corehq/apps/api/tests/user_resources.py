@@ -18,7 +18,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
-    UserRole,
     WebUser,
     UserRolePresets,
     SQLUserRole
@@ -401,7 +400,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'App Editor\'"}')
 
     def test_create_with_custom_role(self):
-        new_user_role = UserRole.create(self.domain.name, 'awesomeness')
+        new_user_role = SQLUserRole.create(self.domain.name, 'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False

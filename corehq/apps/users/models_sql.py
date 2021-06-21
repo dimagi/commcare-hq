@@ -57,8 +57,12 @@ class UserRoleManager(models.Manager):
         # name is not unique so return all results
         return list(self.filter(domain=domain, name=name))
 
-    def by_couch_id(self, couch_id):
-        return SQLUserRole.objects.get(couch_id=couch_id)
+    def by_couch_id(self, couch_id, domain=None):
+        if domain:
+            query = SQLUserRole.objects.filter(domain=domain)
+        else:
+            query = SQLUserRole.objects
+        return query.get(couch_id=couch_id)
 
 
 class SQLUserRole(SyncSQLToCouchMixin, models.Model):

@@ -2643,7 +2643,7 @@ class Invitation(models.Model):
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
     domain = models.CharField(max_length=255)
-    role = models.CharField(max_length=100, null=True)
+    role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
@@ -2698,8 +2698,8 @@ class Invitation(models.Model):
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
-                    return UserRole.get(role_id).name
-                except ResourceNotFound:
+                    return SQLUserRole.objects.by_couch_id(role_id).name
+                except SQLUserRole.DoesNotExist:
                     return _('Unknown Role')
         else:
             return None
@@ -3056,8 +3056,8 @@ class HQApiKey(models.Model):
     def role(self):
         if self.role_id:
             try:
-                return UserRole.get(self.role_id)
-            except ResourceNotFound:
+                return SQLUserRole.objects.by_couch_id(self.role_id)
+            except SQLUserRole.DoesNotExist:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role

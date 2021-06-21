@@ -27,7 +27,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_usernames_by_filters,
     get_web_users_by_filters,
 )
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -125,8 +125,8 @@ def get_user_role_name(domain_membership):
         role_name = ''
         if domain_membership.role_id:
             try:
-                role_name = UserRole.get(domain_membership.role_id).name
-            except ResourceNotFound:
+                role_name = SQLUserRole.objects.by_couch_id(domain_membership.role_id).name
+            except SQLUserRole.DoesNotExist:
                 role_name = ugettext('Unknown Role')
     return role_name
 
