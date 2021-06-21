@@ -17,7 +17,7 @@
       </label>
       <div class="col-sm-9 col-md-10 controls">
         <select multiple class="form-control"
-                data-bind="selectedOptions: modelsToRelease,
+                data-bind="selectedOptions: modelsToPush,
                            multiselect: {
                                selectableHeaderTitle: '{% trans_html_attr "All content" %}',
                                selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
@@ -35,17 +35,15 @@
       </label>
       <div class="col-sm-9 col-md-10 controls">
         <select multiple class="form-control"
-                data-bind="selectedOptions: domainsToRelease,
+                data-bind="selectedOptions: domainsToPush,
+                           options: localDomainLinks,
+                           optionsText: 'linked_domain',
+                           optionsValue: 'linked_domain',
                            multiselect: {
                                selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
                                selectedHeaderTitle: '{% trans_html_attr "Projects to push to" %}',
                                searchItemTitle: '{% trans_html_attr "Search projects" %}',
                           }">
-          {% for link in view_data.linked_domains %}
-            {% if not linked_domain.is_remote %}
-              <option value="{{ link.linked_domain }}">{{ link.linked_domain }}</option>
-            {% endif %}
-          {% endfor %}
         </select>
       </div>
     </div>
@@ -55,15 +53,15 @@
       </label>
       <div class="col-sm-9 col-md-10 controls">
         <label class="checkbox">
-          <input type="checkbox" data-bind="checked: buildAppsOnRelease" />
+          <input type="checkbox" data-bind="checked: buildAppsOnPush" />
           {% trans "Create and release new build for apps" %}
         </label>
       </div>
     </div>
     <div class="form-actions">
       <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
-        <button type="button" class="btn btn-primary" data-bind="click: createRelease, enable: enableReleaseButton">
-          <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: releaseInProgress"></i>
+        <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
+          <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushInProgress"></i>
           {% trans "Push Content" %}
         </button>
       </div>
