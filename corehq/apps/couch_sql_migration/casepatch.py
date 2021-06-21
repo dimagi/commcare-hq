@@ -22,6 +22,7 @@ from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -338,10 +339,7 @@ def get_diff_block(case):
     if case.ledger_diffs:
         ledger_diffs = defaultdict(list)
         for diff in sorted(case.ledger_diffs, key=lambda d: d.path):
-            ledger_data = diff_to_json(diff)
-            if ledger_data["path"] == ["balance"]:
-                ledger_data["couch_transactions"] = get_couch_transactions(diff.ref)
-            ledger_diffs[diff.doc_id].append(ledger_data)
+            ledger_diffs[diff.doc_id].append(diff_to_json(diff))
         data["ledgers"] = dict(ledger_diffs)
     return f"<diff>{escape(json.dumps(data))}</diff>"
 
@@ -354,6 +352,8 @@ def diff_to_json(diff, new_value=None):
         obj["old"] = jsonify(diff.old_value)
     if diff.new_value is not MISSING:
         obj["new"] = jsonify(diff.new_value) if new_value is None else new_value
+    if isinstance(diff, LedgerDiff) and obj["path"] == ["balance"]:
+        obj["couch_transactions"] = get_couch_transactions(diff.ref)
     if getattr(diff, "reason", ""):
         obj["reason"] = diff.reason
     return obj
@@ -369,7 +369,31 @@ def is_patchable(diff):
 
 
 def is_ledger_patchable(diff):
-    return tuple(diff.path) not in UNPATCHABLE_LEDGER_PATHS
+    return not (
+        tuple(diff.path) in UNPATCHABLE_LEDGER_PATHS
+        or is_couch_ledger_missing(diff)
+        or is_couch_stock_state_missing(diff)
+    )
+
+
+def is_couch_ledger_missing(diff):
+    return (
+        list(diff.path) == ["*"]
+        and diff.diff_type == "missing"
+        and isinstance(diff.old_value, dict)
+        and isinstance(diff.new_value, dict)
+        and diff.old_value.keys() == {"form_state"}
+        and diff.new_value.keys() == {"form_state", "ledger"}
+    )
+
+
+def is_couch_stock_state_missing(diff):
+    ref = diff.ref
+    return list(diff.path) == ["balance"] and not StockState.include_archived.filter(
+        case_id=ref.case_id,
+        section_id=ref.section_id,
+        product_id=ref.entry_id,
+    ).exists()
 
 
 UNPATCHABLE_LEDGER_PATHS = {
@@ -381,11 +405,7 @@ UNPATCHABLE_LEDGER_PATHS = {
 def get_ledger_patch_xml(diff):
     path = list(diff.path)
     if path == ["balance"]:
-        try:
-            element = ledger_balance_patch(diff)
-        except StockState.DoesNotExist:
-            log.warning("Skipping patch of missing stock state: %s", diff)
-            element = None
+        element = ledger_balance_patch(diff)
     elif (
         path == ["*"]
         and diff.diff_type == "missing"
@@ -402,6 +422,13 @@ def get_ledger_patch_xml(diff):
         and diff.new_value is None
     ):
         element = None
+    elif (
+        path == ["location_id"]
+        and diff.diff_type == "type"
+        and isinstance(diff.old_value, str)
+        and diff.new_value is None
+    ):
+        element = None
     else:
         raise CannotPatch([diff])
     if element is None:
@@ -412,7 +439,7 @@ def get_ledger_patch_xml(diff):
 def ledger_balance_patch(diff):
     assert isinstance(diff.old_value, (Decimal, int, float)), diff
     ref = diff.ref
-    stock = StockState.objects.get(
+    stock = StockState.include_archived.get(
         case_id=ref.case_id,
         section_id=ref.section_id,
         product_id=ref.entry_id,
@@ -445,12 +472,11 @@ def patch_ledgers_directly(diffs):
     """
     for diff in diffs:
         path = list(diff.path)
-        if (
-            path == ["daily_consumption"]
-            and diff.diff_type == "type"
-            and diff.new_value is None
-        ):
-            patch_ledger_daily_consumption(diff)
+        if diff.diff_type == "type" and diff.new_value is None:
+            if path == ["daily_consumption"]:
+                patch_ledger_daily_consumption(diff)
+            if path == ["location_id"]:
+                patch_ledger_location_id(diff)
 
 
 def patch_ledger_daily_consumption(diff):
@@ -470,6 +496,15 @@ def patch_ledger_daily_consumption(diff):
     assert ledger.daily_consumption is None, ref
     ledger.daily_consumption = diff.old_value
     ledger.save()
+
+
+def patch_ledger_location_id(diff):
+    """Patch missing LedgerValue location_id"""
+    location = SQLLocation.objects.select_related("location_type").get(location_id=diff.old_value)
+    if location.location_type.administrative:
+        raise CannotPatch([diff])
+    location.supply_point_id = diff.ref.case_id
+    location.save()
 
 
 def get_couch_transactions(ref):

@@ -1,10 +1,35 @@
+import threading
 from collections import namedtuple
+from contextlib import contextmanager
 
 from django.conf import settings
 
 from couchdbkit import ResourceNotFound
 
 from dimagi.utils.logging import notify_exception
+
+_thread_local = threading.local()
+
+
+@contextmanager
+def disable_sync_to_couch(sql_class):
+    """Context manager used to disable syncing models from SQL
+    to Couch via `model.save`. This is necessary to prevent
+    syncs from happening when using functions like `Model.objects.create_or_update`
+    """
+    if not hasattr(_thread_local, "disabled_models"):
+        _thread_local.disabled_models = set()
+
+    _thread_local.disabled_models.add(sql_class)
+    try:
+        yield
+    finally:
+        _thread_local.disabled_models.remove(sql_class)
+
+
+def sync_to_couch_enabled(sql_class):
+    return sql_class not in getattr(_thread_local, "disabled_models", set())
+
 
 SubModelSpec = namedtuple('SubModelSpec', [
     'sql_attr',
@@ -29,6 +54,7 @@ class SyncCouchToSQLMixin(object):
     and allow it to be null since it can be initially null. Do not include
     this field in _migration_get_fields().
     You can override '_migration_couch_id_name' if `couch_id` won't work.
+    Note that you cannot set '_migration_couch_id' to the SQL 'id' field.
 
     2. Make the Couch model inherit from SyncCouchToSQLMixin.
 
@@ -263,7 +289,7 @@ class SyncSQLToCouchMixin(object):
     def save(self, *args, **kwargs):
         sync_to_couch = kwargs.pop('sync_to_couch', True)
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
-        if sync_to_couch:
+        if sync_to_couch and sync_to_couch_enabled(self.__class__):
             try:
                 self._migration_do_sync()
             except Exception as e:
@@ -277,7 +303,7 @@ class SyncSQLToCouchMixin(object):
 
     def delete(self, *args, **kwargs):
         sync_to_couch = kwargs.pop('sync_to_couch', True)
-        if sync_to_couch:
+        if sync_to_couch and sync_to_couch_enabled(self.__class__):
             couch_object = self._migration_get_couch_object()
             if couch_object is not None:
                 couch_object.delete(sync_to_sql=False)

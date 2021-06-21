@@ -69,13 +69,19 @@ class Command(BaseCommand):
                 failed.append((domain, "stopped by operator"))
                 break
             except Incomplete as err:
-                log.info("Incomplete migration: %s %s", domain, err)
+                log.error("Incomplete migration of %s: %s\n", domain, err)
                 failed.append((domain, str(err)))
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
                 if not self.live_migrate:
                     self.abort(domain, state_dir)
-                failed.append((domain, err))
+                failed.append((domain, str(err)))
+            except BaseException as err:
+                log.exception("Fatal error migrating domain %s", domain)
+                failed.append((domain, str(err) or type(err).__name__))
+                break
+            finally:
+                print("")
 
         if failed:
             log.error("Errors:\n" + "\n".join(
@@ -89,8 +95,7 @@ class Command(BaseCommand):
             return
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is in progress\n".format(domain))
-            raise Incomplete("in progress")
+            raise Incomplete("migration is in progress")
 
         set_couch_sql_migration_started(domain, self.live_migrate)
         try:
@@ -101,9 +106,8 @@ class Command(BaseCommand):
                 live_migrate=self.live_migrate,
             )
         except MigrationRestricted as err:
-            log.error("migration restricted: %s", err)
             set_couch_sql_migration_not_started(domain)
-            raise Incomplete(str(err))
+            raise Incomplete(f"migration restricted: {err}")
 
         if self.live_migrate:
             try:

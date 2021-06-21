@@ -1,21 +1,16 @@
-import json
-
-from django.conf import settings
 from django.contrib import auth, messages
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
     HttpResponseRedirect,
-    Http404,
 )
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
+from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
-from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.registration.utils import request_new_domain
@@ -27,10 +22,11 @@ from corehq.apps.sso.configuration import get_saml2_config
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
-    get_sso_username_from_session,
-    prepare_session_with_sso_username,
 )
-from corehq.apps.users.models import Invitation
+from corehq.apps.sso.utils.url_helpers import (
+    get_documentation_url,
+    get_saml_login_url,
+)
 
 
 @identity_provider_required
@@ -77,7 +73,7 @@ def sso_saml_acs(request, idp_slug):
         return render(request, error_template, {
             'saml_error_reason': request.saml2_auth.get_last_error_reason() or errors[0],
             'idp_type': "Azure AD",  # we will update this later,
-            'docs_link': '#tbd',  # we will update this later,
+            'docs_link': get_documentation_url(request.idp),
         })
 
     if not request.saml2_auth.is_authenticated():
@@ -122,6 +118,17 @@ def sso_saml_acs(request, idp_slug):
                 )
 
         AsyncSignupRequest.clear_data_for_username(user.username)
+
+        relay_state = request.saml2_request_data['post_data'].get('RelayState')
+        if relay_state not in [
+            OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
+            get_saml_login_url(request.idp),
+        ]:
+            # redirect to next=<relay_state>
+            return HttpResponseRedirect(
+                request.saml2_auth.redirect_to(relay_state)
+            )
+
         return redirect("homepage")
 
     return render(request, error_template, {
@@ -130,30 +137,12 @@ def sso_saml_acs(request, idp_slug):
 
 
 @use_saml2_auth
-@login_required
-def sso_debug_user_data(request, idp_slug):
-    """
-    Test utility for showing SAML data on the staging environment.
-    """
-    if settings.SERVER_ENVIRONMENT not in ['staging']:
-        raise Http404()
-    return HttpResponse(json.dumps({
-        "samlUserdata": request.session.get('samlUserdata'),
-        "samlNameId": request.session.get('samlNameId'),
-        "samlNameIdFormat": request.session.get('samlNameIdFormat'),
-        "samlNameIdNameQualifier": request.session.get('samlNameIdNameQualifier'),
-        "samlNameIdSPNameQualifier": request.session.get('samlNameIdSPNameQualifier'),
-        "samlSessionIndex": request.session.get('samlSessionIndex'),
-    }), 'text/json')
-
-
-@use_saml2_auth
 def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    login_url = request.saml2_auth.login()
-    username = get_sso_username_from_session(request) or request.GET.get('username')
+    login_url = request.saml2_auth.login(return_to=request.GET.get('next'))
+    username = request.GET.get('username')
     if username:
         # verify that the stored user data actually the current IdP
         idp = IdentityProvider.get_active_identity_provider_by_username(username)
@@ -161,25 +150,3 @@ def sso_saml_login(request, idp_slug):
             # pre-populate username for Azure AD
             login_url = f'{login_url}&login_hint={username}'
     return HttpResponseRedirect(login_url)
-
-
-@use_saml2_auth
-def sso_test_create_user(request, idp_slug):
-    """
-    A testing view exclusively for staging. This will be removed once the
-    UIs are in place to sign up users or invite new users who must log in with
-    SSO.
-    """
-    if settings.SERVER_ENVIRONMENT not in ['staging']:
-        raise Http404()
-
-    username = request.GET.get('username')
-    if username:
-        prepare_session_with_sso_username(request, username)
-
-    invitation_uuid = request.GET.get('invitation')
-    invitation = Invitation.objects.get(uuid=invitation_uuid) if invitation_uuid else None
-    if invitation:
-        AsyncSignupRequest.create_from_invitation(invitation)
-
-    return HttpResponseRedirect(reverse("sso_saml_login", args=(idp_slug,)))

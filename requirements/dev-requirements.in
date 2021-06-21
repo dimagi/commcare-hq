@@ -7,7 +7,6 @@ django-extensions
 ipython==7.16.1
 wheel==0.36.2
 transifex-client==0.14.2
-modernize
 gnureadline==8.0.0
 git-build-branch
 

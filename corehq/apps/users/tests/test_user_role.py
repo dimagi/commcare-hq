@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from django.db import IntegrityError
 from django.db.transaction import atomic
 from django.test import TestCase, SimpleTestCase
@@ -41,7 +43,9 @@ class RolesTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        SQLUserRole.objects.all().delete()
+        # user couch role since SQL roles get rolled back with the transaction
+        for role in UserRole.by_domain(cls.domain, include_archived=True):
+            role.delete()
         super().tearDownClass()
 
     def test_set_assignable_by(self):
@@ -66,6 +70,50 @@ class RolesTests(TestCase):
             self.roles[2]
         }
         role.set_assignable_by([r.id for r in new_assignments])
+
+        role2 = SQLUserRole.objects.get(id=role.id)
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role2.get_assignable_by()},
+            {r.name for r in new_assignments}
+        )
+
+    def test_set_assignable_by_clear_prefetched_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            assignable_by=[self.roles[0].id]
+        )
+        self.assertEqual({a.assignable_by_role.name for a in role.get_assignable_by()}, {
+            self.roles[0].name
+        })
+
+        new_assignments = {
+            self.roles[2]
+        }
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([r.id for r in new_assignments])
+
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role_with_prefetch.roleassignableby_set.all()},
+            {r.name for r in new_assignments}
+        )
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([])
+        self.assertEqual(list(role_with_prefetch.roleassignableby_set.all()), [])
+
+    def test_set_assignable_by_couch(self):
+        role = SQLUserRole(
+            domain=self.domain,
+            name="test-role",
+        )
+        role.save()
+
+        new_assignments = {
+            self.roles[1],
+            self.roles[2]
+        }
+        role.set_assignable_by_couch([r.couch_id for r in new_assignments])
 
         role2 = SQLUserRole.objects.get(id=role.id)
         self.assertEqual(
@@ -108,6 +156,42 @@ class RolesTests(TestCase):
 
         role2 = SQLUserRole.objects.get(id=role.id)
         self.assertEqual(set(role2.get_permission_infos()), new_permissions)
+
+    def test_set_permissions_clear_prefetch_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            permissions=Permissions()
+        )
+
+        self.assertEqual(set(role.get_permission_infos()), set(Permissions().to_list()))
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        new_permissions = {PermissionInfo(Permissions.access_api.name)}
+        role_with_prefetch.set_permissions(new_permissions)
+
+        self.assertEqual(set(role_with_prefetch.get_permission_infos()), new_permissions)
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        role_with_prefetch.set_permissions([])
+        self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
+
+    def test_create_atomic(self):
+        sql_roles_in_domain = {role.get_id for role in self.roles[0:2]}
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
+
+        permissions_raises_exception = Mock(side_effect=Exception)
+        with self.assertRaises(Exception):
+            SQLUserRole.create(self.domain, 'test_atomic', permissions=permissions_raises_exception)
+
+        # check sql role not created
+        sql_roles = SQLUserRole.objects.get_by_domain(self.domain)
+        self.assertEqual({role.get_id for role in sql_roles}, sql_roles_in_domain)
+
+        # check couch role not created
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
 
 class TestRolePermissionsModel(TestCase):
