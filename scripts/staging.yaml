@@ -83,4 +83,5 @@ branches:
     - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16
     - gh/update-release-content-page # Graham June 18
+    - rn_disallow_yui_cors # Rohit Negi
 submodules: { }
