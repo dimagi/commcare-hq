@@ -67,7 +67,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
     tag_cases_as_deleted_and_remove_indices,
@@ -1198,6 +1197,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return session_data
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
         self.clear_quickcache_for_user()
@@ -1634,6 +1635,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.save()
 
     def log_user_create(self, domain, created_by, created_via, domain_required_for_log=True):
+        from corehq.apps.users.model_log import UserModelAction
+
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
@@ -1869,6 +1872,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
         if not unretired_by and not settings.UNIT_TESTING:
             raise ValueError("Missing unretired_by")
@@ -1898,6 +1903,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return True, None
 
     def retire(self, retired_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
