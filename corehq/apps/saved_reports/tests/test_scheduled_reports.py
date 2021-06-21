@@ -12,10 +12,8 @@ from corehq.apps.saved_reports.scheduled import (
     guess_reporting_minute,
 )
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -182,7 +180,9 @@ class ScheduledReportSendingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        es = ensure_active_es()
         super(ScheduledReportSendingTest, cls).setUpClass()
+
         cls.domain_obj = create_domain(cls.domain)
         cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
             view_report_list=[cls.REPORT_NAME_LOOKUP['worker_activity']]
@@ -196,9 +196,7 @@ class ScheduledReportSendingTest(TestCase):
             role_id=cls.reports_role._id
         )
 
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            es = get_es_new()
-            initialize_index_and_mapping(es, CASE_INDEX_INFO)
+        initialize_index_and_mapping(es, CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
