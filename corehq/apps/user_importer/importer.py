@@ -26,7 +26,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
+from corehq.apps.user_importer.helpers import (
+    UserChangeLogger,
+    spec_value_to_boolean_or_none,
+)
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
@@ -413,8 +416,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if update_progress:
                 update_progress(current)
                 current += 1
-            log_user_create = False
-            log_role_update = False
 
             username = row.get('username')
             domain = row.get('domain') or upload_domain
@@ -484,13 +485,23 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, created_by=upload_user,
                                                created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
-                    log_user_create = True
                     status_row['flag'] = 'created'
 
+                user_change_logger = UserChangeLogger(upload_domain, user=user, is_new_user=not bool(user_id),
+                                                      changed_by_user=upload_user,
+                                                      changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
+                if status_row['row'].get('password') == 'REDACTED':
+                    user_change_logger.add_change_message(_("Password Reset"))
+
                 if phone_number:
-                    user.add_phone_number(_fmt_phone(phone_number), default=True)
+                    fmt_phone_number = _fmt_phone(phone_number)
+                    # always call this to set phone number as default if needed
+                    user.add_phone_number(fmt_phone_number, default=True)
+                    if fmt_phone_number not in user.phone_numbers:
+                        user_change_logger.add_change_message(_(f"Added phone number {fmt_phone_number}"))
                 if name:
                     user.set_full_name(str(name))
+                    user_change_logger.add_changes({'first_name': user.first_name, 'last_name': user.last_name})
 
                 # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
                 for key, value in user.user_data.items():
@@ -516,10 +527,13 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
                 if language:
                     user.language = language
+                    user_change_logger.add_changes({'language': language})
                 if email:
                     user.email = email.lower()
+                    user_change_logger.add_changes({'email': user.email})
                 if is_active is not None:
                     user.is_active = is_active
+                    user_change_logger.add_changes({'is_active': is_active})
 
                 if domain_info.can_assign_locations and location_codes is not None:
                     # Do this here so that we validate the location code before we
@@ -528,6 +542,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
                     # Do not update location info if the column is not included at all
                     location_ids = find_location_id(location_codes, domain_info.location_cache)
+                    users_current_primary_location_id = user.location_id
                     locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
                                                                                      user.location_id,
                                                                                      user.assigned_location_ids)
@@ -535,7 +550,19 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         user.unset_location(commit=False)
                     if locations_updated:
                         user.reset_locations(location_ids, commit=False)
-
+                        user_change_logger.add_changes({'assigned_location_ids': location_ids})
+                        if location_ids:
+                            location_names = list(SQLLocation.active_objects.filter(
+                                location_id__in=location_ids
+                            ).values_list('name', flat=True))
+                            user_change_logger.add_info(_(f"Assigned locations: {location_names}"))
+                    # log this after assigned locations are updated, which can re-set primary location
+                    if user.location_id != users_current_primary_location_id:
+                        user_change_logger.add_changes({'location_id': user.location_id})
+                        if user.location_id:
+                            user_change_logger.add_info(
+                                _(f"Primary location: {user.get_sql_location(domain).name}"))
+                role_updated = False
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role]
                     user_current_role = user.get_role(domain=domain)
@@ -548,12 +575,17 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     user.update_metadata({'login_as_user': web_user})
 
                 user.save()
-                if log_user_create:
-                    user.log_user_create(upload_domain, upload_user, USER_CHANGE_VIA_BULK_IMPORTER)
-                if log_role_update:
-                    new_user_role_in_domain = user.get_role(domain)
-                    log_user_role_update(upload_domain, new_user_role_in_domain, user=user, by_user=upload_user,
-                                         updated_via=USER_CHANGE_VIA_BULK_IMPORTER)
+
+                if role_updated:
+                    # Tracking for role is done post save to have role setup correctly on save
+                    new_role = user.get_role(domain=domain)
+                    if new_role:
+                        user_change_logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+                    else:
+                        user_change_logger.add_change_message("Role: None")
+
+                user_change_logger.save()
+
                 if web_user:
                     check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)
