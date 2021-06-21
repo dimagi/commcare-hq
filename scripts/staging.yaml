@@ -79,7 +79,10 @@ branches:
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - mjr/report-access  # Matt June 14
     - sr/mixed-case-types  # Sravan June 15
-    - es/reminders  # Ethan June 15
     - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16
+    - rn_disallow_yui_cors # Rohit Negi
+    - jls/move-enterprise-permissions-2-of-3+mk/user-history/base
+    - mk/user-history/base # MK June 21 [QA]
+    - cs/SC-1517-openmrs_cancelled_payloads_not_logged # Charl June 21
 submodules: { }
