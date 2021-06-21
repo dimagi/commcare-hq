@@ -77,7 +77,6 @@ hqDefine("linked_domain/js/domain_links", [
             self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
         }
 
-
         // General data
         self.domain = data.domain;
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
