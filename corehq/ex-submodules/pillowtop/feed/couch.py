@@ -1,4 +1,6 @@
 from couchdbkit import ChangesStream
+from jsonobject.exceptions import BadValueError
+
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 from pillowtop.utils import force_seq_int
@@ -87,6 +89,8 @@ def populate_change_metadata(change, data_source_type, data_source_name):
             doc_id=change.id,
         )
     except MissingMetaInformationError:
+        pass
+    except BadValueError:
         pass
     else:
         change.metadata = change_meta
