@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
@@ -30,8 +31,7 @@ def add_group(request, domain):
             "please give it a name first"
         ))
         redirection_url = request.META['HTTP_REFERER']
-
-        if not is_url_or_host_banned(redirection_url):
+        if not redirection_url.startswith(get_url_base()):
             messages.warning(request, _(
                 "We sensed a fishy redirection URL in your Request. "
                 "Therefore, redirected you here as we care about your security."
