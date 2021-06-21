@@ -22,7 +22,7 @@ class EnterprisePermissions(models.Model):
     )
 
     @classmethod
-    @quickcache(['cls.__name__', 'domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def get_by_domain(cls, domain):
         """
         Get or create the configuration associated with the given domain's account.
@@ -36,7 +36,7 @@ class EnterprisePermissions(models.Model):
             return cls()
 
     @classmethod
-    @quickcache(['cls.__name__', 'source_domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(['source_domain'], timeout=7 * 24 * 60 * 60)
     def get_domains(cls, source_domain):
         """
         Get a list of domains, if any, controlled by the given source domain.
@@ -49,6 +49,15 @@ class EnterprisePermissions(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.get_domains.clear(self.__class__, self.source_domain)
         for domain in self.account.get_domains():
+            self.get_domains.clear(self.__class__, domain)
             self.get_by_domain.clear(self.__class__, domain)
+
+    def clear_cache_for_all_users(self, domain=None):
+        from corehq.apps.domain.views.base import get_enterprise_links_for_dropdown
+        from corehq.apps.users.models import CouchUser
+        domains = [domain] if domain else self.account.get_domains()
+        for domain in domains:
+            for user_id in CouchUser.ids_by_domain(domain):
+                user = CouchUser.get_by_user_id(user_id)
+                get_enterprise_links_for_dropdown.clear(user)
