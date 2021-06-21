@@ -106,10 +106,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield _user_history_row(record)
+            yield _user_history_row(record, self.timezone)
 
 
-def _user_history_row(record):
+def _user_history_row(record, timezone):
     return [
         cached_user_id_to_username(record.user_id),
         cached_user_id_to_username(record.changed_by),
@@ -117,7 +117,7 @@ def _user_history_row(record):
         record.details['changed_via'],
         record.message,
         json.dumps(record.details['changes']),
-        ServerTime(record.changed_at).ui_string(USER_DATETIME_FORMAT),
+        ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
 
 
