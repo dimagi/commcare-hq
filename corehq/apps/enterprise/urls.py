@@ -1,4 +1,4 @@
-from corehq.apps.enterprise.dispatcher import EnterpriseInterfaceDispatcher
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf.urls import include, url
 
 from corehq.apps.enterprise.views import (
@@ -20,8 +20,8 @@ from corehq.apps.sso.views.enterprise_admin import (
     EditIdentityProviderEnterpriseView,
 )
 
-interface_urls = [
-    EnterpriseInterfaceDispatcher.url_pattern(),
+report_urls = [
+    EnterpriseReportDispatcher.url_pattern(),
 ]
 
 domain_specific = [
@@ -49,5 +49,5 @@ domain_specific = [
     url(r'^sso/(?P<idp_slug>[^/]*)/$', EditIdentityProviderEnterpriseView.as_view(),
         name=EditIdentityProviderEnterpriseView.urlname),
 
-    url(r'^interfaces/', include(interface_urls)),
+    url(r'^reports/', include(report_urls)),
 ]
