@@ -106,7 +106,6 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.util.compression import decompress
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -616,7 +615,10 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = json.loads(file.read())
+        try:
+            source = json.loads(file.read())
+        except json.decoder.JSONDecodeError:
+            messages.error(request, _("The file uploaded is an invalid JSON file"))
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})
 
