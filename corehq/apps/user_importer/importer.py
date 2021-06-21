@@ -566,9 +566,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role]
                     user_current_role = user.get_role(domain=domain)
-                    log_role_update = not (user_current_role
+                    role_updated = not (user_current_role
                                         and user_current_role.get_qualified_id() == role_qualified_id)
-                    if log_role_update:
+                    if role_updated:
                         user.set_role(domain, role_qualified_id)
 
                 if web_user:
