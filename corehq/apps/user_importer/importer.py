@@ -664,7 +664,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
         if update_progress:
             update_progress(current)
             current += 1
-        role_updated = False
 
         username = row.get('username')
         domain = row.get('domain') or upload_domain
