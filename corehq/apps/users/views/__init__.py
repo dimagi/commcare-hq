@@ -879,7 +879,7 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except SQLUserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id

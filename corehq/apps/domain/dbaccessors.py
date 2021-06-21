@@ -78,7 +78,6 @@ def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
         'CommCareCaseGroup',
         'HQGroupExportConfiguration',
         'Group',
-        'UserRole',
         'ReportConfiguration',
         'LinkedApplication',
     ]
