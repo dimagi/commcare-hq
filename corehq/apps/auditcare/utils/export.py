@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.domain.utils import get_domain_from_url
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, Invitation
 from corehq.util.models import ForeignValue
 
 from ..models import AccessAudit, NavigationEventAudit
@@ -45,12 +45,15 @@ def write_log_event(writer, event, override_user=None):
 def get_users_to_export(username, domain):
     if username:
         users = [username]
+        removed_users = []
         super_users = []
     else:
         users = {u.username for u in WebUser.by_domain(domain)}
         super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
+        users_who_accepted_invitations = set(Invitation.objects.filter(is_accepted=True, domain=domain).values_list('email', flat=True))
+        removed_users = users_who_accepted_invitations - users
         super_users = super_users - users
-    return users, super_users
+    return users, removed_users, super_users
 
 
 def get_all_log_events(start_date=None, end_date=None):
