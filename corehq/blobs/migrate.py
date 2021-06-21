@@ -76,6 +76,7 @@ from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
 from tempfile import mkdtemp, NamedTemporaryFile
+from botocore.exceptions import ClientError
 
 import gevent
 from django.conf import settings
@@ -300,7 +301,11 @@ class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
     def migrate(self, doc):
         meta = doc["_obj_not_json"]
         self.total_blobs += 1
-        if not self.db.new_db.exists(key=meta.key):
+        try:
+            exists = self.db.new_db.exists(key=meta.key)
+        except ClientError:
+            exists = False
+        if not exists:
             try:
                 content = self.db.old_db.get(key=meta.key, type_code=CODES.maybe_compressed)
             except NotFound:
