@@ -208,6 +208,38 @@ class Permissions(DocumentSchema):
                 setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
         return permissions
 
+    def normalize(self):
+        if not self.access_all_locations:
+            # The following permissions cannot be granted to location-restricted
+            # roles.
+            self.edit_web_users = False
+            self.view_web_users = False
+            self.edit_groups = False
+            self.view_groups = False
+            self.edit_apps = False
+            self.view_roles = False
+            self.edit_reports = False
+            self.edit_billing = False
+
+        if self.edit_web_users:
+            self.view_web_users = True
+
+        if self.edit_commcare_users:
+            self.view_commcare_users = True
+
+        if self.edit_groups:
+            self.view_groups = True
+        else:
+            self.edit_users_in_groups = False
+
+        if self.edit_locations:
+            self.view_locations = True
+        else:
+            self.edit_users_in_locations = False
+
+        if self.edit_apps:
+            self.view_apps = True
+
     @classmethod
     @memoized
     def permission_names(cls):
@@ -379,11 +411,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         role = cls(domain=domain, name=name, **kwargs)
         role.save()
         return role
-
-    @property
-    def has_users_assigned(self):
-        from corehq.apps.es.users import UserES
-        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
@@ -687,8 +714,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         role_qualified_id is either 'admin' 'user-role:[id]'
         """
-        from corehq.apps.users.role_utils import get_or_create_role_with_permissions
-
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
         if role_qualified_id == "admin":
@@ -696,10 +721,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
             dm.role_id = None
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
-        elif role_qualified_id in UserRolePresets.ID_NAME_MAP:
-            role_name = UserRolePresets.get_preset_role_name(role_qualified_id)
-            permissions = UserRolePresets.get_permissions(role_name)
-            dm.role_id = get_or_create_role_with_permissions(domain, role_name, permissions).get_id
         elif role_qualified_id == 'none':
             dm.role_id = None
         else:
@@ -2624,7 +2645,7 @@ class Invitation(models.Model):
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
     domain = models.CharField(max_length=255)
-    role = models.CharField(max_length=100, null=True)
+    role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
@@ -2679,8 +2700,8 @@ class Invitation(models.Model):
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
-                    return UserRole.get(role_id).name
-                except ResourceNotFound:
+                    return SQLUserRole.objects.by_couch_id(role_id).name
+                except SQLUserRole.DoesNotExist:
                     return _('Unknown Role')
         else:
             return None
@@ -3037,8 +3058,8 @@ class HQApiKey(models.Model):
     def role(self):
         if self.role_id:
             try:
-                return UserRole.get(self.role_id)
-            except ResourceNotFound:
+                return SQLUserRole.objects.by_couch_id(self.role_id)
+            except SQLUserRole.DoesNotExist:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
