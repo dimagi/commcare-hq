@@ -132,6 +132,11 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        if self.change_filter_fn:
+            changes_chunk = [
+                change for change in changes_chunk
+                if not self.change_filter_fn(change)
+            ]
         with self._datadog_timing('bulk_extract'):
             bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
 
