@@ -62,12 +62,9 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
-    - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
-    - sr/hide-geo  # Sravan May 25
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
-    - sk/test_role_create_update  # Simon May 31
     - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
     - rp/enterprize-sms-report #Rynhard June 2
@@ -76,10 +73,16 @@ branches:
     - jls/move-enterprise-permissions-1-of-3  # Jenny June 4
     - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
     - sk/messaging-event-api  # Simon June 7
-    - smh/multi-domain-user-upload-update  # Steph June 7
     - bmb/sso-invitation-new  # Biyeun June 9, in pilot & QA please do not remove!
     - jm/remove-es7  # Joel June 9
     - cs/SC-1390-put_turn_behind_ff  # Charl June 10
-    - ap/remove-angular # Amit June 10
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
+    - mjr/report-access  # Matt June 14
+    - sr/mixed-case-types  # Sravan June 15
+    - mjr/hidden-report-columns  # Matt June 15
+    - gh/improve-erm-ui # Graham June 16
+    - rn_disallow_yui_cors # Rohit Negi
+    - jls/move-enterprise-permissions-2-of-3+mk/user-history/base
+    - mk/user-history/base # MK June 21 [QA]
+    - cs/SC-1517-openmrs_cancelled_payloads_not_logged # Charl June 21
 submodules: { }

@@ -38,10 +38,10 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    UserRole, InvitationStatus, DomainRequest,
+    SQLUserRole,
+    InvitationStatus
 )
 from corehq.apps.users.util import normalize_username, log_user_role_update
-from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
@@ -329,6 +329,8 @@ def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
 
 def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+    from corehq.apps.users.views.utils import get_editable_role_choices
+
     domain_info = domain_info_by_domain.get(domain)
     if domain_info:
         return domain_info
@@ -343,6 +345,9 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         location_cache = SiteCodeToLocationCache(domain)
 
     domain_obj = Domain.get_by_name(domain)
+    if domain_obj is None:
+        raise UserUploadError(_("Domain cannot be set to '{domain}'".format(domain=domain)))
+
     allowed_group_names = [group.name for group in domain_group_memoizer.groups]
     profiles_by_name = {}
     domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
@@ -350,14 +355,14 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
                                                                                 allow_admin_role=True)}
         validators = get_user_import_validators(
-            Domain.get_by_name(domain),
+            domain_obj,
             domain_user_specs,
             True,
             allowed_roles=list(roles_by_name),
             upload_domain=upload_domain,
         )
     else:
-        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+        roles_by_name = {role.name: role.get_qualified_id() for role in SQLUserRole.objects.get_by_domain(domain)}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
             profiles_by_name = {
@@ -418,9 +423,10 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 'row': row,
             }
 
-            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, group_memoizer)
-
             try:
+                domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+                                              group_memoizer)
+
                 for validator in domain_info.validators:
                     validator(row)
             except UserUploadError as e:
@@ -530,7 +536,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
+                    role_qualified_id = domain_info.roles_by_name[role]
                     user_current_role = user.get_role(domain=domain)
                     log_role_update = not (user_current_role
                                         and user_current_role.get_qualified_id() == role_qualified_id)
@@ -631,9 +637,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             'username': username,
             'row': row,
         }
-        domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-                                      upload_user=upload_user, is_web_upload=True)
         try:
+            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+                                          upload_user=upload_user, is_web_upload=True)
             for validator in domain_info.validators:
                 validator(row)
         except UserUploadError as e:

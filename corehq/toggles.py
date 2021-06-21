@@ -1551,7 +1551,6 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
-    notification_emails=['aking'],
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -1923,7 +1922,8 @@ PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
     'USH: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Parallel+User+Imports"
 )
 
 RESTRICT_LOGIN_AS = StaticToggle(
