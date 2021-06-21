@@ -779,6 +779,13 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertFalse(mock_invite.send_activation_email.called)
         self.assertTrue(web_user.is_member_of(self.domain.name))
 
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.message, "Added as web user")
+        self.assertEqual(user_history.details['changes'], {})
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+
     def test_upload_edit_web_user(self):
         username = 'a@a.com'
         web_user = WebUser.create(self.domain.name, username, 'password', None, None)
@@ -793,6 +800,13 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         web_user = WebUser.get_by_username(username)
         self.assertEqual(web_user.get_role(self.domain.name).name, self.role.name)
 
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        self.assertEqual(user_history.details['changes'], {})
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+
     def test_remove_web_user(self):
         username = 'a@a.com'
         web_user = WebUser.create(self.domain.name, username, 'password', None, None)
@@ -806,6 +820,13 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
+
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=web_user.get_id,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.message, "Removed from domain")
+        self.assertEqual(user_history.details['changes'], {})
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
     def test_multi_domain(self):
         dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
@@ -843,6 +864,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
         self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role.get_id)
 
+        # only one entry for mobile user create, none for corresponding web user
+        self.assertEqual(UserHistory.objects.filter(
+            changed_by=self.uploading_user.get_id
+        ).count(), 1)
+
         added_user_id = self.user._id
         import_users_and_groups(
             self.domain.name,
@@ -864,6 +890,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(len(Invitation.by_email('a@a.com')), 1)  # only one invite associated with user
         self.assertEqual(self.user.get_role(self.domain.name).name, self.other_role.name)
         self.assertEqual(Invitation.by_email('a@a.com')[0].role, self.other_role.get_qualified_id())
+
+        # one more added just for commcare user update, none for corresponding web user
+        self.assertEqual(UserHistory.objects.filter(
+            changed_by=self.uploading_user.get_id
+        ).count(), 2)
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):

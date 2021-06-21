@@ -300,7 +300,8 @@ DomainInfo = namedtuple('DomainInfo', [
 ])
 
 
-def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id, send_email=True):
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id,
+                                     user_change_logger=None, send_email=True):
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
@@ -314,6 +315,8 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     )
     if invite_created and send_email:
         invite.send_activation_email()
+    if invite_created and user_change_logger:
+        user_change_logger.add_change_message(_("Invited to domain"))
 
 
 def find_location_id(location_codes, location_cache):
@@ -587,10 +590,17 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 user_change_logger.save()
 
                 if web_user:
+                    # reset for web_user logging
+                    user_change_logger = None
                     check_can_upload_web_users(upload_user)
                     current_user = CouchUser.get_by_username(web_user)
+                    if current_user:
+                        user_change_logger = UserChangeLogger(upload_domain, user=current_user, is_new_user=False,
+                                                              changed_by_user=upload_user,
+                                                              changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
                     if remove_web_user:
-                        remove_web_user_from_domain(domain, current_user, username, upload_user)
+                        remove_web_user_from_domain(domain, current_user, username, upload_user,
+                                                    user_change_logger)
                     else:
                         check_user_role(username, role)
                         if not current_user and is_account_confirmed:
@@ -598,22 +608,45 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                                 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.").format(web_user=web_user)
                             )
                         if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
-                            current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
+                            current_user.add_as_web_user(domain, role=role_qualified_id,
+                                                         location_id=user.location_id)
+                            user_change_logger.add_change_message(_("Added as web user"))
 
                         elif not current_user or not current_user.is_member_of(domain):
-                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user, user.location_id,
+                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user,
+                                                             user.location_id, user_change_logger,
                                                              send_email=send_account_confirmation_email)
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
-                            current_user.set_role(domain, role_qualified_id)
+                            user_current_role = current_user.get_role(domain=domain)
+                            role_updated = not (user_current_role
+                                                and user_current_role.get_qualified_id() == role_qualified_id)
+                            if role_updated:
+                                current_user.set_role(domain, role_qualified_id)
                             if location_codes is not None:
+                                current_user_current_primary_location_id = current_user.location_id
                                 if user.location_id:
                                     current_user.set_location(domain, user.location_id)
+                                    user_change_logger.add_changes({'location_id': current_user.location_id})
+                                    if current_user.location_id != current_user_current_primary_location_id:
+                                        user_change_logger.add_info(
+                                            _(f"Primary location: {current_user.get_sql_location(domain).name}"))
                                 else:
                                     current_user.unset_location(domain)
-                            current_user.save()
+                                    if current_user.location_id != current_user_current_primary_location_id:
+                                        user_change_logger.add_changes({'location_id': ''})
 
+                            current_user.save()
+                            # Tracking for role is done post save to have role setup correctly on save
+                            if role_updated:
+                                new_role = current_user.get_role(domain=domain)
+                                if new_role:
+                                    user_change_logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+                                else:
+                                    user_change_logger.add_change_message("Role: None")
+                    if user_change_logger:
+                        user_change_logger.save()
                 if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
 
@@ -803,10 +836,13 @@ def remove_invited_web_user(domain, username):
     invitation.delete()
 
 
-def remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=False):
+def remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger=None,
+                                is_web_upload=False):
     if not user or not user.is_member_of(domain):
         if is_web_upload:
             remove_invited_web_user(domain, username)
+            if user_change_logger:
+                user_change_logger.add_change_message(_("Invitation revoked"))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -815,3 +851,5 @@ def remove_web_user_from_domain(domain, user, username, upload_user, is_web_uplo
     else:
         user.delete_domain_membership(domain)
         user.save()
+        if user_change_logger:
+            user_change_logger.add_change_message(_("Removed from domain"))
