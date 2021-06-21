@@ -86,7 +86,6 @@ from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
 
 from . import (
