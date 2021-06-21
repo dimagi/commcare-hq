@@ -729,16 +729,22 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
             user = CouchUser.get_by_username(username, strict=True)
             if user:
                 check_changing_username(user, username)
+                user_change_logger = UserChangeLogger(upload_domain, user=user, is_new_user=False,
+                                                      changed_by_user=upload_user,
+                                                      changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 if remove:
-                    remove_web_user_from_domain(domain, user, username, upload_user, is_web_upload=True)
+                    remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger,
+                                                is_web_upload=True)
                 else:
                     membership = user.get_domain_membership(domain)
                     if membership:
                         modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes,
-                                                       membership, role_qualified_id, upload_user, user)
+                                                       membership, role_qualified_id, upload_user, user,
+                                                       user_change_logger)
                     else:
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
-                                                         user.location_id)
+                                                         user.location_id, user_change_logger)
+                user_change_logger.save()
                 status_row['flag'] = 'updated'
 
             else:
@@ -774,7 +780,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
 
 
 def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
-                                   role_qualified_id, upload_user, current_user, max_tries=3):
+                                   role_qualified_id, upload_user, current_user, user_change_logger,
+                                   max_tries=3):
+
     if domain_info.can_assign_locations and location_codes is not None:
         location_ids = find_location_id(location_codes, domain_info.location_cache)
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
@@ -782,16 +790,22 @@ def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_
                                                                          membership.assigned_location_ids)
         if primary_loc_removed:
             current_user.unset_location(domain, commit=False)
+            user_change_logger.add_changes({'location_id': current_user.location_id})
+            if current_user.location_id:
+                user_change_logger.add_info(_(f"Primary location: {current_user.get_sql_location(domain).name}"))
         if locations_updated:
             current_user.reset_locations(domain, location_ids, commit=False)
+            user_change_logger.add_changes({'assigned_location_ids': location_ids})
+            if location_ids:
+                location_names = list(SQLLocation.active_objects.filter(
+                    location_id__in=location_ids
+                ).values_list('name', flat=True))
+                user_change_logger.add_info(_(f"Assigned locations: {location_names}"))
     user_current_role = current_user.get_role(domain=domain)
     role_updated = not (user_current_role
                         and user_current_role.get_qualified_id() == role_qualified_id)
     if role_updated:
         current_user.set_role(domain, role_qualified_id)
-        new_user_role = current_user.get_role(domain)
-        log_user_role_update(upload_domain, new_user_role, user=current_user, by_user=upload_user,
-                             updated_via=USER_CHANGE_VIA_BULK_IMPORTER)
     try:
         current_user.save()
     except ResourceConflict:
@@ -801,9 +815,17 @@ def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_
             current_user.clear_quickcache_for_user()
             updated_user = CouchUser.get_by_username(current_user.username, strict=True)
             modify_existing_user_in_domain(domain, domain_info, location_codes, membership, role_qualified_id,
-                                           upload_user, updated_user, max_tries=max_tries - 1)
+                                           upload_user, updated_user, user_change_logger, max_tries=max_tries - 1)
         else:
             raise
+
+    # Tracking for role is done post save to have role setup correctly on save
+    if role_updated:
+        new_role = current_user.get_role(domain=domain)
+        if new_role:
+            user_change_logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+        else:
+            user_change_logger.add_change_message("Role: None")
 
 
 def check_user_role(username, role):

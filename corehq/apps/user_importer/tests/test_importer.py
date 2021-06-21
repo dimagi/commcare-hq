@@ -1096,7 +1096,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_upload_existing_web_user(self):
         self.setup_users()
-        WebUser.create(self.other_domain.name, 'existing@user.com', 'abc', None, None, email='existing@user.com')
+        web_user = WebUser.create(self.other_domain.name, 'existing@user.com', 'abc', None, None,
+                                  email='existing@user.com')
         self.assertIsNone(Invitation.objects.filter(email='existing@user.com').first())
         import_users_and_groups(
             self.domain.name,
@@ -1110,6 +1111,14 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             True
         )
         self.assertIsNotNone(Invitation.objects.filter(email='existing@user.com').first())
+        user_history = UserHistory.objects.filter(
+            user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        self.assertEqual(user_history.message, 'Invited to domain')
+        self.assertDictEqual(
+            user_history.details,
+            {'changed_via': 'bulk_importer', 'changes': {}}
+        )
 
     def test_web_user_user_name_change(self):
         self.setup_users()
@@ -1149,6 +1158,14 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             True
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+        user_history = UserHistory.objects.filter(
+            changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        self.assertDictEqual(
+            user_history.details,
+            {'changed_via': 'bulk_importer', 'changes': {}}
+        )
 
     def test_update_role_current_user(self):
         self.setup_users()
@@ -1208,6 +1225,11 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
         self.assertIsNone(Invitation.objects.filter(domain=self.domain_name, email=username).first())
+
+        user_history = UserHistory.objects.filter(
+            user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
+        ).last()
+        self.assertEqual(user_history.message, 'Removed from domain')
 
     def test_remove_invited_user(self):
         Invitation.objects.all().delete()
