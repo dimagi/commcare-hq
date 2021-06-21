@@ -27,13 +27,12 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    Permissions,
     UserRole,
     WebUser,
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
-from corehq.apps.users.role_utils import init_domain_with_presets
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
 @es_test
@@ -50,7 +49,7 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.save()
         bootstrap_location_types(cls.ccdomain.name)
 
-        init_domain_with_presets(cls.ccdomain.name)
+        initialize_domain_with_default_roles(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
         cls.custom_role = UserRole.create(cls.ccdomain.name, "Custom Role")
 
