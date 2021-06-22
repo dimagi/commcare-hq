@@ -2130,6 +2130,10 @@ class TableauServerView(BaseProjectReportSectionView):
     page_title = ugettext_lazy('Tableau Server Config')
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauServerView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def tableau_server_form(self):
@@ -2167,6 +2171,10 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     urlname = 'tableau_visualization_list_view'
     page_title = _('Tableau Visualizations')
     template_name = 'reports/tableau_visualization.html'
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def total(self):
@@ -2225,6 +2233,10 @@ class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixi
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
     model = TableauVisualization
     form_class = TableauVisualizationForm
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationDetailView, self).dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
