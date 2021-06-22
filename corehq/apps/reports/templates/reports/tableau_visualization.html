@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "reports/js/tableau_visualization" %}
+{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
 
 {% block pagination_header %}
   <h2>{% trans "Tableau Visualizations" %}</h2>
@@ -12,6 +12,7 @@
   <script type="text/html" id="tableau-visualization-template">
     <td data-bind="text: server"></td>
     <td data-bind="text: view_url"></td>
+    <td>
       <button type="button"
               class="btn btn-danger"
               data-bind="attr: {'data-target': '#delete-tableau-visualization-' + id}"
