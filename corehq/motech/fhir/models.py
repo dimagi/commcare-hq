@@ -437,6 +437,9 @@ class JSONPathToResourceType(models.Model):
         on_delete=models.CASCADE,
     )
 
+    # Create index on child case to imported parent case?
+    related_resource_is_parent = models.BooleanField(default=False)
+
     def __str__(self):
         jsonpath = self.jsonpath
         if jsonpath.startswith('$.'):
