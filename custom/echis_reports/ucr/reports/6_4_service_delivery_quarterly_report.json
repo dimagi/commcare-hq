@@ -12,13 +12,8 @@
     "data_source_table": "static_quarterly_service_delivery_dS_v1",
     "config": {
       "title": "6.4 Service Delivery Quarterly Report",
-      "aggregation_columns": [
-        "region",
-        "zone",
-        "woreda",
-        "health_center",
-        "health_post",
-        "quarterly_report_date"
+      "aggregation_columns": [ 
+        "health_post" 
       ] ,
       "filters": [
         {
@@ -119,69 +114,19 @@
           "datatype": "string",
           "pre_value": "False",
           "display": null
+        },
+        {
+          "type": "pre",
+          "field": "health_post",
+          "slug": "health_post_pre",
+          "datatype": "string",
+          "pre_value": "",
+          "pre_operator": "!=",
+          "display": null
         }
       ] ,
       "columns":[
-        {
-          "comment": null,
-          "field": "region",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "region",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Region"
-        },
-        {
-          "comment": null,
-          "field": "zone",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "zone",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Zone"
-        },
-        {
-          "comment": null,
-          "field": "woreda",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "woreda",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Woreda"
-        },
-        {
-          "comment": null,
-          "field": "health_center",
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_center",
-          "visible": true,
-          "transform": {},
-          "calculate_total": false,
-          "type": "field",
-          "display": "Health Center"
-        },
+         
         {
           "comment": null,
           "field": "health_post",
@@ -196,22 +141,7 @@
           "calculate_total": false,
           "type": "field",
           "display": "Health Post"
-        },
-        {
-          "field": "quarterly_report_date",
-          "sortable": false,
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "transform": {},
-          "column_id": "quarterly_report_date",
-          "visible": true,
-          "display": "Quarterly Report Date",
-          "calculate_total": false,
-          "type": "field",
-          "width": null,
-          "aggregation": "simple"
-        },
+        } ,
         {
           "comment": "HSEH_ES_ALTR:Proportion of households with access to any type of latrine facilities",
           "field": "HSEH_ES_ALTR",
