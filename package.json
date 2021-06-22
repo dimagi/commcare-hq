@@ -5,7 +5,7 @@
     "description": "CommCare HQ Javascript Libraries",
     "private": true,
     "dependencies": {
-        "@mapbox/mapbox-gl-geocoder": "4.5.1",
+        "@mapbox/mapbox-gl-geocoder": "4.7.1",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
         "DOMPurify": "cure53/DOMPurify#2.2.2",
