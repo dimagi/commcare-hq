@@ -16,11 +16,20 @@ from corehq.apps.linked_domain.const import (
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_OTP_SETTINGS,
+    MODEL_REPORT,
     MODEL_USER_DATA,
 )
-from corehq.apps.linked_domain.models import AppLinkDetail
+from corehq.apps.linked_domain.models import AppLinkDetail, ReportLinkDetail
 from corehq.apps.linked_domain.tasks import ReleaseManager, release_domain
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.ucr import (
+    create_linked_ucr,
+    get_downstream_report,
+)
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_report_config,
+)
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -210,3 +219,66 @@ class TestReleaseApp(BaseReleaseManagerTest):
         self.addCleanup(downstream_app.delete)
         self.assertEqual(unpushed_app.name, downstream_app.name)
         self.assertTrue(downstream_app.is_released)
+
+
+class TestReleaseReport(BaseReleaseManagerTest):
+
+    def _create_new_report(self):
+        self.data_source = get_sample_data_source()
+        self.data_source.domain = self.domain
+        self.data_source.save()
+
+        self.report = get_sample_report_config()
+        self.report.config_id = self.data_source.get_id
+        self.report.domain = self.domain
+        self.report.save()
+        return self.report
+
+    def test_already_linked_report_is_pushed(self):
+        new_report = self._create_new_report()
+        new_report.title = "Title"
+        new_report.save()
+        self.addCleanup(new_report.delete)
+        linked_report_info = create_linked_ucr(self.domain_link, new_report.get_id)
+        self.addCleanup(linked_report_info.report.delete)
+        # after creating the link, update the upstream report
+        new_report.title = "Updated Title"
+        new_report.save()
+        model = self._model_status(MODEL_REPORT, detail=ReportLinkDetail(report_id=new_report.get_id).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_report(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
+        self.assertIsNotNone(downstream_report)
+        self.assertEqual("Updated Title", downstream_report.title)
+
+    def test_report_not_pushed_if_not_found_with_toggle_disabled(self):
+        unpushed_report = self._create_new_report()
+        self.addCleanup(unpushed_report.delete)
+        model = self._model_status(
+            MODEL_REPORT,
+            detail=ReportLinkDetail(report_id=unpushed_report.get_id).to_json()
+        )
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_report(self.domain_link, model)
+        self.assertTrue('Could not find report. Please check that the report has been linked.' in errors)
+
+    @flag_enabled('ERM_DEVELOPMENT')
+    def test_report_pushed_if_not_found_with_toggle_enabled(self):
+        unpushed_report = self._create_new_report()
+        self.addCleanup(unpushed_report.delete)
+        model = self._model_status(
+            MODEL_REPORT,
+            detail=ReportLinkDetail(report_id=unpushed_report.get_id).to_json()
+        )
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_report(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
+        self.addCleanup(downstream_report.delete)
+        self.assertIsNotNone(downstream_report)
