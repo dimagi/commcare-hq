@@ -73,7 +73,8 @@ Project data like forms and cases would not be shared.
 
 ### On 'master domain':
 
-```
+```python
+from corehq.apps.linked_domain.models import DomainLink
 DomainLink.link_domains('https://url.of.linked.hq/a/linked_domain_name/', 'master_domain_name')
 ```
 
@@ -82,7 +83,8 @@ that the remote domain is allowed to sync from this domain.
 
 ### On 'linked domain'
 
-```
+```python
+from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 remote_details = RemoteLinkDetails(
     url_base='https://url.of.master.hq',
     username='username@email.com',
@@ -90,6 +92,33 @@ remote_details = RemoteLinkDetails(
 )
 DomainLink.link_domains('linked_domain_name', 'master_domain_name', remote_details)
 ```
+
+### Manually Testing Remote Links
+
+Testing new code with remote links is hard, because it requires two different servers to have the new code that you are testing. With some networking trickery, you can set up a remote link with your own development server which will allow you to test both ends of a remote link.
+
+1. Add an alias to localhost in your `/etc/hosts` file:
+```
+127.0.0.1 remote-hq.local
+```
+2. Forward port 80 to port 8000 (or whatever port your django server is running on) through ssh. This has to be run as root since it is forwarding protected port 80.
+```sh
+$ sudo ssh user@localhost -L80:localhost:8000
+```
+
+3. You can now create a new remote link where the "remote" url will use `remote-hq.local`.
+
+    ```python
+    from corehq.apps.linked_domain.models import DomainLink
+    DomainLink.link_domains('http://localhost:8000/a/linked_domain_name/', 'master_domain_name') # this still uses localhost since this is where the request comes from.
+
+    remote_details = RemoteLinkDetails(
+        url_base='http://remote-hq.local',
+        username='username@email.com',
+        api_key='api key for username'
+    )
+    DomainLink.link_domains('linked_domain_name', 'master_domain_name', remote_details)
+    ```
 
 ### Pulling changes from master
 
@@ -99,7 +128,7 @@ Linked apps can be setup between linked domains by running `link_app_to_remote` 
 
 # Linked Applications
 
-Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A linked/downstream app is tied to one or more master/upstream apps via the `upstream_app_id` and `upstream_version` attributes. 
+Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A linked/downstream app is tied to one or more master/upstream apps via the `upstream_app_id` and `upstream_version` attributes.
 
 ## Pulling changes from master
 A linked app can be pulled if its master/upstream app has a higher released version than the `upstream_version` of the linked app. Pulling a linked app is similar but not identical to copying an app.
