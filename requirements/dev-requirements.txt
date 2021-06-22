@@ -504,11 +504,14 @@ requests==2.25.1
     #   pygithub
     #   requests-mock
     #   requests-oauthlib
+    #   requests-toolbelt
     #   sphinx
     #   stripe
     #   tinys3
     #   transifex-client
     #   twilio
+requests_toolbelt==0.9.1
+    # via -r base-requirements.in
 rjsmin==1.1.0
     # via django-compressor
 s3transfer==0.4.2
