@@ -16,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.const import (
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
     MODEL_APP,
@@ -140,7 +141,11 @@ The following linked project spaces received content:
                     app = update_linked_app(linked_app, app_id, user.user_id)
 
             if not found:
-                return self._error_tuple(_("Could not find app"))
+                if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
+                    app = create_linked_app(domain_link.master_domain, app_id, domain_link.linked_domain)
+                    app = update_linked_app(app, app_id, user.user_id)
+                else:
+                    return self._error_tuple(_("Could not find app"))
 
             if build_and_release:
                 error_prefix = _("Updated app but did not build or release: ")

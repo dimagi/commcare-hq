@@ -1,26 +1,32 @@
 from mock import patch
 
-from corehq.apps.app_manager.models import LinkedApplication, Module
+from corehq.apps.app_manager.models import (
+    Application,
+    LinkedApplication,
+    Module,
+)
 from corehq.apps.app_manager.views.utils import get_blank_form_xml
+from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
-    MODEL_FLAGS,
-    MODEL_USER_DATA,
     MODEL_DATA_DICTIONARY,
     MODEL_DIALER_SETTINGS,
-    MODEL_OTP_SETTINGS,
+    MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_OTP_SETTINGS,
+    MODEL_USER_DATA,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
-from corehq.apps.linked_domain.tasks import release_domain
+from corehq.apps.linked_domain.tasks import ReleaseManager, release_domain
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-class TestReleaseManager(BaseLinkedAppsTest):
+class BaseReleaseManagerTest(BaseLinkedAppsTest):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -28,12 +34,19 @@ class TestReleaseManager(BaseLinkedAppsTest):
         master1_module = cls.master1.add_module(Module.new_module('Module for master1', None))
         master1_module.new_form('Form for master1', 'en', get_blank_form_xml('Form for master1'))
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by=None)
+
     def _model_status(self, _type, detail=None):
         return {
             'type': _type,
             'name': LINKED_MODELS_MAP[_type],
             'detail': detail,
         }
+
+
+class TestReleaseManager(BaseReleaseManagerTest):
 
     def _assert_release(self, models, domain=None, has_success=None, error=None, build_apps=False):
         domain = domain or self.linked_domain
@@ -148,3 +161,52 @@ class TestReleaseManager(BaseLinkedAppsTest):
             self._assert_release([
                 self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=self.master1._id).to_json()),
             ], error="Updated app but did not build or release: Boom!", build_apps=True)
+
+
+class TestReleaseApp(BaseReleaseManagerTest):
+
+    def test_app_not_pushed_if_not_found_with_toggle_disabled(self):
+        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
+        unpushed_app.save()
+        self.addCleanup(unpushed_app.delete)
+        model = self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_app(self.domain_link, model, manager.user)
+
+        self.assertTrue("Could not find app" in errors)
+
+    @flag_enabled('ERM_DEVELOPMENT')
+    def test_app_pushed_if_not_found_with_toggle_enabled(self):
+        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
+        unpushed_app.save()
+        self.addCleanup(unpushed_app.delete)
+        model = self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_app(self.domain_link, model, manager.user)
+        self.assertIsNone(errors)
+
+        downstream_app_id = get_downstream_app_id(self.linked_domain, unpushed_app._id, use_upstream_app_id=False)
+        downstream_app = Application.get(downstream_app_id)
+        self.addCleanup(downstream_app.delete)
+        self.assertEqual(unpushed_app.name, downstream_app.name)
+        self.assertFalse(downstream_app.is_released)
+
+    @flag_enabled('ERM_DEVELOPMENT')
+    def test_app_pushed_and_released_if_not_found_with_toggle_enabled(self):
+        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
+        unpushed_app.save()
+        self.addCleanup(unpushed_app.delete)
+        self._make_build(unpushed_app, True)
+        model = self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_app(self.domain_link, model, manager.user, build_and_release=True)
+        self.assertIsNone(errors)
+
+        downstream_app_id = get_downstream_app_id(self.linked_domain, unpushed_app._id, use_upstream_app_id=False)
+        downstream_app = Application.get(downstream_app_id)
+        self.addCleanup(downstream_app.delete)
+        self.assertEqual(unpushed_app.name, downstream_app.name)
+        self.assertTrue(downstream_app.is_released)

@@ -4,6 +4,7 @@ from django.conf import settings
 
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,
+    get_brief_app,
     get_brief_app_docs_in_domain,
     get_brief_apps_in_domain,
     get_build_doc_by_version,
@@ -105,10 +106,16 @@ def get_latest_master_releases_versions(domain_link):
         return get_latest_released_app_versions_by_app_id(domain_link.master_domain)
 
 
-def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):
+def create_linked_app(master_domain, master_id, target_domain, target_name=None, remote_details=None):
     from corehq.apps.app_manager.models import LinkedApplication
+
+    # use name of upstream app if no name is provided
+    linked_app_name = target_name
+    if not linked_app_name:
+        linked_app_name = get_brief_app(master_domain, master_id).name
+
     linked_app = LinkedApplication(
-        name=target_name,
+        name=linked_app_name,
         domain=target_domain,
     )
     return link_app(linked_app, master_domain, master_id, remote_details)
