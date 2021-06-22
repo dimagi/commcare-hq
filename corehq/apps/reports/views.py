@@ -2128,7 +2128,7 @@ def project_health_user_details(request, domain, user_id):
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
     page_title = ugettext_lazy('Tableau Server Config')
-    template_name = 'reports/tableau_server.html'
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
     @property
     @memoized
@@ -2222,7 +2222,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
 class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixin, ProcessFormView):
     urlname = 'tableau_visualization_detail_view'
     page_title = _('Tableau Visualization')
-    template_name = 'reports/tableau_visualization_detail.html'
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
     model = TableauVisualization
     form_class = TableauVisualizationForm
 
