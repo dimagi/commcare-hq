@@ -223,8 +223,6 @@ class Command(BaseCommand):
         ]:
             setattr(self, opt, options[opt])
 
-        if self.no_input and not settings.UNIT_TESTING:
-            raise CommandError('--no-input only allowed for unit testing')
         if action != MIGRATE and self.live_migrate:
             raise CommandError(f"{action} --live not allowed")
         if action != MIGRATE and self.finish:
