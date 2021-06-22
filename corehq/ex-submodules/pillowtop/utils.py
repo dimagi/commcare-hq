@@ -240,7 +240,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
             "_index": index_info.alias,
             "_id": change.id
         }
-        if settings.ELASTICSEARCH_MAJOR_VERSION != 7:
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
             action.update({"_type": index_info.type})
 
         if _is_deleted(change):
