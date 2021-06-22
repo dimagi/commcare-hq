@@ -4,6 +4,7 @@ import string
 
 import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -45,6 +46,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app_doc,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -107,12 +109,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        username = self.request.couch_user.username
-        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
-        else:
-            return get_latest_released_app_doc(domain, app_id)
+        return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = get_application_access_for_domain(domain)
@@ -218,6 +215,13 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
+
+
+def _fetch_build(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
 
 
 class FormplayerMainPreview(FormplayerMain):
@@ -569,3 +573,37 @@ def _message_to_sentry_thread_topic(message):
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
     """
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+def session_endpoint(request, domain, app_id, endpoint_id):
+    def _fail(error):
+        messages.error(request, error)
+        return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
+
+    if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
+        _fail(_("Linking directly into Web Apps has been disabled."))
+
+    # TODO: fail if you aren't logged in as a mobile worker(?)
+
+    # TODO: claim case if it isn't in your casedb(?)
+    # arguments = request.GET
+
+    build = _fetch_build(domain, request.couch_user.username, app_id)
+    if not build:
+        _fail(_("Could not find application."))
+    build = wrap_app(build)
+
+    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
+    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
+    if endpoint_id not in valid_endpoint_ids:
+        _fail(_("Could not find endpoint."))
+
+    cloudcare_state = json.dumps({
+        "appId": build._id,
+        "endpointId": endpoint_id,
+        "endpointArgs": request.GET,
+    })
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
