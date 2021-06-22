@@ -7,6 +7,7 @@ from mock import patch, mock
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
@@ -21,7 +22,7 @@ from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
-    CommCareUser, DomainPermissionsMirror, SQLUserRole, WebUser, Invitation
+    CommCareUser, SQLUserRole, WebUser, Invitation
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
@@ -36,6 +37,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
@@ -687,8 +689,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertFalse(web_user.is_member_of(self.domain.name))
 
     def test_multi_domain(self):
-        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
-        dm.save()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],
@@ -873,6 +873,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
         cls.other_domain_role = SQLUserRole.create(cls.other_domain.name, 'view-apps')
+        create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -1107,8 +1108,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_multi_domain(self):
         self.setup_users()
-        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
-        dm.save()
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(username='123@email.com',
