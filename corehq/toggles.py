@@ -2051,3 +2051,11 @@ DETAILED_TAGGING = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+COWIN_INTEGRATION = StaticToggle(
+    'cowin_integration',
+    'Integrate with COWIN APIs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
