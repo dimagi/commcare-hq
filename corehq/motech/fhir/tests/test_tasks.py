@@ -30,6 +30,7 @@ from ..models import (
     JSONPathToResourceType,
 )
 from ..tasks import (
+    ParentInfo,
     ServiceRequestNotActive,
     build_case_block,
     claim_service_request,
@@ -257,6 +258,7 @@ class TestImportResource(SimpleTestCase):
                 requests=None,
                 resource_type=FooResourceType(),
                 resource={},
+                child_cases=[],
             )
 
     def test_bad_resource_type(self):
@@ -265,6 +267,7 @@ class TestImportResource(SimpleTestCase):
                 requests=None,
                 resource_type=FooResourceType(),
                 resource={'resourceType': 'Bar'},
+                child_cases=[],
             )
 
 
@@ -296,37 +299,22 @@ class TestImportRelated(TestCase):
             name='mother',
         )
 
-        cls.service_request = FHIRImporterResourceType.objects.create(
+        cls.service_request_type = FHIRImporterResourceType.objects.create(
             fhir_importer=cls.fhir_importer,
             name='ServiceRequest',
             case_type=cls.referral,
         )
-        patient = FHIRImporterResourceType.objects.create(
+        cls.patient_type = FHIRImporterResourceType.objects.create(
             fhir_importer=cls.fhir_importer,
             name='Patient',
             case_type=cls.mother,
         )
-        JSONPathToResourceType.objects.create(
-            resource_type=cls.service_request,
-            jsonpath='$.subject.reference',
-            related_resource_type=patient,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.mother.delete()
-        cls.referral.delete()
-        cls.fhir_importer.delete()
-        cls.conn.delete()
-        super().tearDownClass()
-
-    def test_import_related_calls_get_resource_with_reference(self):
-        patient = {
+        cls.patient = {
             'id': '12345',
             'resourceType': 'Patient',
             'name': [{'text': 'Alice Apple'}]
         }
-        service_request = {
+        cls.service_request = {
             'id': '67890',
             'resourceType': 'ServiceRequest',
             'subject': {
@@ -338,17 +326,78 @@ class TestImportRelated(TestCase):
             'priority': 'routine',
         }
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.mother.delete()
+        cls.referral.delete()
+        cls.fhir_importer.delete()
+        cls.conn.delete()
+        super().tearDownClass()
+
+    def test_import_related_calls_get_resource_with_reference(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+        )
         with patch('corehq.motech.fhir.tasks.get_resource') as get_resource, \
                 patch('corehq.motech.fhir.tasks.import_resource'):
-            get_resource.return_value = patient
+            get_resource.return_value = self.patient
 
             import_related(
                 requests=None,
-                resource_type=self.service_request,
-                resource=service_request,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=[],
             )
             call_arg_2 = get_resource.call_args[0][1]
             self.assertEqual(call_arg_2, 'Patient/12345')
+
+    def test_import_related_is_parent(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+            related_resource_is_parent=True,
+        )
+        with patch('corehq.motech.fhir.tasks.get_resource'), \
+                patch('corehq.motech.fhir.tasks.import_resource'):
+            child_cases = []
+
+            import_related(
+                requests=None,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=child_cases,
+            )
+
+            self.assertEqual(child_cases, [ParentInfo(
+                child_case_id='1',
+                parent_ref='Patient/12345',
+                parent_resource_type=self.patient_type,
+            )])
+
+    def test_import_related_is_not_parent(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+        )
+        with patch('corehq.motech.fhir.tasks.get_resource'), \
+                patch('corehq.motech.fhir.tasks.import_resource'):
+            child_cases = []
+
+            import_related(
+                requests=None,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=child_cases,
+            )
+
+            self.assertEqual(child_cases, [])
 
 
 class TestGetCaseIDOrNone(SimpleTestCase):
