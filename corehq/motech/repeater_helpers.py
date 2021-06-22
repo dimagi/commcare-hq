@@ -34,18 +34,18 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
             case_create = case_block.get('create') or {}
             case_update = case_block.get('update') or {}
 
-            if case_create or case_update:
-                result.append(CaseTriggerInfo(
-                    domain=domain,
-                    case_id=case_block['@case_id'],
-                    type=case.type,
-                    name=case.name,
-                    owner_id=case.owner_id,
-                    modified_by=case.modified_by,
-                    updates={**case_create, **case_update},
-                    created='create' in case_block,
-                    closed='close' in case_block,
-                    extra_fields={field: case.get_case_property(field) for field in extra_fields},
-                    form_question_values=form_question_values or {},
-                ))
+            result.append(CaseTriggerInfo(
+                domain=domain,
+                case_id=case_block['@case_id'],
+                type=case.type,
+                name=case.name,
+                owner_id=case.owner_id,
+                modified_by=case.modified_by,
+                updates={**case_create, **case_update},
+                created='create' in case_block,
+                closed='close' in case_block,
+                extra_fields={field: case.get_case_property(field) for field in extra_fields},
+                form_question_values=form_question_values or {},
+            ))
+
     return result

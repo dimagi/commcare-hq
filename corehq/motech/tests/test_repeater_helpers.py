@@ -47,9 +47,7 @@ class TestRepeaterHelpers(TestCase):
             ['paciente'],
             self.extra_fields
         )
-
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].updates, {'name': 'John Lennon'})
+        self.assertEqual(len(result), 2)
 
     @patch.object(CaseAccessors, 'get_cases')
     def test__get_relevant_case_updates_from_form_json_without_case_types(self, get_cases):
@@ -61,7 +59,7 @@ class TestRepeaterHelpers(TestCase):
             [],
             self.extra_fields
         )
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 3)
 
 
 def create_commcare_case(data):
@@ -86,7 +84,8 @@ def _get_form_json():
                 'form.xml': {
                     'content_type': 'text/xml',
                     'length': 10975,
-                    'url': 'https://www.commcarehq.org/a/infomovel-pepfar/api/form/attachment/CONFIDENTIAL/form.xml'
+                    'url': 'https://www.commcarehq.org/a/infomovel-pepfar'
+                           '/api/form/attachment/CONFIDENTIAL/form.xml'
                 }
             },
             'build_id': 'BUILD_ID',
@@ -106,9 +105,13 @@ def _get_form_json():
                                                 '@date_modified': '2021-06-24T08:43:06.746000Z',
                                                 '@user_id': 'USER ID',
                                                 '@xmlns': 'http://commcarehq.org/case/transaction/v2',
-                                                'index': {'parent': {'#text': '6ca13e74-8ba3-4d0d-l09j-66371e8895dc',
-                                                                     '@case_type': '',
-                                                                     '@relationship': 'child'}}}},
+                                                'index': {
+                                                    'parent': {
+                                                        '#text': '6ca13e74-8ba3-4d0d-l09j-66371e8895dc',
+                                                        '@case_type': '',
+                                                        '@relationship': 'child'
+                                                    }
+                                                }}},
                                        'criar_actualizar_casa': {
                                            'case': {'@case_id': '6ca13e74-8ba3-4d0d-l09j-66371e8895dc',
                                                     '@date_modified': '2021-05-24T08:43:06.746000Z',
