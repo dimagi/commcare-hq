@@ -50,7 +50,7 @@ class BaseFHIRViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain_obj.name, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
