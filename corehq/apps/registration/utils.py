@@ -81,7 +81,8 @@ def activate_new_user(
         password,
         created_by,
         created_via,
-        is_admin=is_domain_admin
+        is_admin=is_domain_admin,
+        domain_required_for_log=bool(domain),
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
