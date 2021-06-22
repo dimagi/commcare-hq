@@ -16,6 +16,7 @@ from corehq.apps.smsbillables.filters import (
 )
 from corehq.apps.enterprise.filters import EnterpriseDomainFilter
 from corehq.apps.accounting.models import (
+    BillingAccount,
     Subscription
 )
 from corehq.apps.smsbillables.models import (
@@ -179,11 +180,8 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
                 domain=domain,
             )
         else:
-            domains = Subscription.visible_objects.filter(
-                account=self.request.account,
-                is_active=True,
-                account__is_active=True,
-            ).values_list('subscriber__domain', flat=True).distinct()
+            account = BillingAccount.get_account_by_domain(self.request.domain)
+            domains = Subscription.get_active_subscription_by_account(account)
             selected_billables = selected_billables.filter(
                 domain__in=domains
             )
