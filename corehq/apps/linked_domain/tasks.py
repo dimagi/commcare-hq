@@ -23,8 +23,12 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
 )
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-from corehq.apps.linked_domain.keywords import update_keyword
-from corehq.apps.linked_domain.ucr import update_linked_ucr
+from corehq.apps.linked_domain.keywords import update_keyword, create_linked_keyword
+from corehq.apps.linked_domain.ucr import (
+    create_linked_ucr,
+    get_downstream_report,
+    update_linked_ucr,
+)
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app_and_notify,
@@ -153,23 +157,27 @@ The following linked project spaces received content:
     def _release_report(self, domain_link, model):
         report_id = model['detail']['report_id']
         found = False
-        for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
-            if linked_report.report_meta.master_id == report_id:
-                found = True
-                update_linked_ucr(domain_link, linked_report.get_id)
+        linked_report = get_downstream_report(domain_link.linked_domain, report_id)
+        if linked_report:
+            found = True
+            update_linked_ucr(domain_link, linked_report.get_id)
 
         if not found:
-            report = ReportConfiguration.get(report_id)
-            if report.report_meta.created_by_builder:
-                view = 'edit_report_in_builder'
+            if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
+                linked_report_info = create_linked_ucr(domain_link, report_id)
+                update_linked_ucr(domain_link, linked_report_info.report.get_id)
             else:
-                view = 'edit_configurable_report'
-            url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
-            return self._error_tuple(
-                _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
-                  + 'report.').format(url),
-                text=_('Could not find report. Please check that the report has been linked.'),
-            )
+                report = ReportConfiguration.get(report_id)
+                if report.report_meta.created_by_builder:
+                    view = 'edit_report_in_builder'
+                else:
+                    view = 'edit_configurable_report'
+                url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
+                return self._error_tuple(
+                    _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
+                      + 'report.').format(url),
+                    text=_('Could not find report. Please check that the report has been linked.'),
+                )
 
     def _release_flag_dependent_model(self, domain_link, model, user, feature_flag):
         if not feature_flag.enabled(domain_link.linked_domain):
@@ -183,18 +191,21 @@ The following linked project spaces received content:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
                                  .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
-            return self._error_tuple(
-                _('Could not find linked keyword in {domain}. '
-                  'Please check that the keyword has been linked from the '
-                  '<a href="{keyword_url}">Keyword Page</a>.').format(
-                    domain=domain_link.linked_domain,
-                    keyword_url=(
-                        get_url_base() + reverse(
-                            KeywordsListView.urlname, args=[domain_link.master_domain]
-                        ))
-                ),
-                _('Could not find linked keyword. Please check the keyword has been linked.'),
-            )
+            if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
+                linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
+            else:
+                return self._error_tuple(
+                    _('Could not find linked keyword in {domain}. '
+                      'Please check that the keyword has been linked from the '
+                      '<a href="{keyword_url}">Keyword Page</a>.').format(
+                        domain=domain_link.linked_domain,
+                        keyword_url=(
+                            get_url_base() + reverse(
+                                KeywordsListView.urlname, args=[domain_link.master_domain]
+                            ))
+                    ),
+                    _('Could not find linked keyword. Please check the keyword has been linked.'),
+                )
 
         update_keyword(domain_link, linked_keyword_id)
 
