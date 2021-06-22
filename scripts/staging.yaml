@@ -85,5 +85,4 @@ branches:
     - mk/user-history/base # MK June 21 [QA]
     - cs/SC-1517-openmrs_cancelled_payloads_not_logged # Charl June 21
     - jm/repeater-domain-admins  # Joel June 21
-    - smh/et-ui  # Steph Jun 22
 submodules: { }
