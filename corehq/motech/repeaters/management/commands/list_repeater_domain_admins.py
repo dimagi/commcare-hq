@@ -60,10 +60,10 @@ class Table:
         self.rows.append(row)
 
     def sort(self, *sorta, **sortkw):
-        if self.header is not None:
-            header = self.rows.pop(0)
+        header = None if self.header is None else self.rows.pop(0)
         self.rows.sort(*sorta, **sortkw)
-        self.rows.insert(0, header)
+        if header is not None:
+            self.rows.insert(0, header)
 
     def write_csv(self, file):
         writer = csv.writer(file)
