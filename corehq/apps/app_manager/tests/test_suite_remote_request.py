@@ -228,6 +228,34 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types(self, *args):
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        suite_xml = self.app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                self.module.search_config.search_filter
+            ),
+            suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[1]/session/query/data[@key='case_type']"
+        )
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
