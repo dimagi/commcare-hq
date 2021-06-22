@@ -35,6 +35,9 @@ def migrate_linked_reports(upstream_domain=None):
                         upstream_datasource.meta.build.app_id,
                         use_upstream_app_id=False
                     )
+                    if downstream_app_id:
+                        logger.info(f"Needed to use family_id to find downstream app {downstream_app_id}")
+
                 if not downstream_app_id:
                     logger.warning(f"Could not find downstream_app_id for upstream app"
                                    f" {upstream_datasource.meta.build.app_id} "
