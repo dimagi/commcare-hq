@@ -1137,7 +1137,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_label=CaseSearchLabel(label=command_label),
                 search_again_label=CaseSearchAgainLabel(label=again_label),
                 properties=properties,
-                additional_case_types=module.additional_case_types,
+                additional_case_types=module.search_config.additional_case_types,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),
