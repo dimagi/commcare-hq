@@ -387,7 +387,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         EntryArrayAnswer.call(this, question, options);
         self.templateType = 'select';
         self.choices = question.choices;
-        self.choices_v2 = _.map(question.choices_v2(), function(choice) {
+        self.choices_v2 = _.map(question.choices_v2(), function (choice) {
             // add mediaSrc definition to question context, otherwise will not be defined
             choice["mediaSrc"] = question.mediaSrc;
             return choice;
@@ -442,7 +442,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var self = this;
         EntrySingleAnswer.call(this, question, options);
         self.choices = question.choices;
-        self.choices_v2 = _.map(question.choices_v2(), function(choice) {
+        self.choices_v2 = _.map(question.choices_v2(), function (choice) {
             // add mediaSrc definition to question context, otherwise will not be defined
             choice["mediaSrc"] = question.mediaSrc;
             return choice;
