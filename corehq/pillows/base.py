@@ -61,5 +61,4 @@ def restore_property_dict(report_dict_item):
 def is_couch_change_for_sql_domain(change):
     if not change.metadata or not change.metadata.domain:
         return False
-    if change.metadata.data_source_type == SOURCE_COUCH and should_use_sql_backend(change.metadata.domain):
-        return True
+    return change.metadata.data_source_type == SOURCE_COUCH and should_use_sql_backend(change.metadata.domain)
