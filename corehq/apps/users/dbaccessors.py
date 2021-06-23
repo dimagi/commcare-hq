@@ -361,12 +361,3 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
-
-
-def get_all_role_ids():
-    roles = UserRole.view(
-        'users/roles_by_domain',
-        include_docs=False,
-        reduce=False
-    ).all()
-    return [r['id'] for r in roles]
