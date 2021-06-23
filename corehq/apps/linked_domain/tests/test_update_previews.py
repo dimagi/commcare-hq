@@ -34,10 +34,7 @@ class TestUpdatePreviews(BaseLinkedAppsTest):
         self.assertTrue(TEST_PREVIEW.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))
 
     def test_downstream_preview_disabled_in_local_link(self):
-        set_toggle('test_preview', self.domain_link.master_domain, True, NAMESPACE_DOMAIN)
-        update_previews(self.domain_link)
-        self.assertTrue(TEST_PREVIEW.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))
-
+        set_toggle('test_preview', self.domain_link.linked_domain, True, NAMESPACE_DOMAIN)
         set_toggle('test_preview', self.domain_link.master_domain, False, NAMESPACE_DOMAIN)
         update_previews(self.domain_link)
         self.assertFalse(TEST_PREVIEW.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))

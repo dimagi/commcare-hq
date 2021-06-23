@@ -24,7 +24,6 @@ class TestUpdateToggles(BaseLinkedAppsTest):
 
     def test_get_enabled_toggles(self):
         set_toggle('test_toggle', self.domain_link.master_domain, True, NAMESPACE_DOMAIN)
-        set_toggle('report_builder', self.domain_link.master_domain, True, NAMESPACE_DOMAIN)
         enabled_toggles = get_enabled_toggles(self.domain_link.master_domain)
         self.assertEqual(['test_toggle'], enabled_toggles)
 
@@ -34,10 +33,7 @@ class TestUpdateToggles(BaseLinkedAppsTest):
         self.assertTrue(TEST_TOGGLE.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))
 
     def test_downstream_toggle_disabled_in_local_link(self):
-        set_toggle('test_toggle', self.domain_link.master_domain, True, NAMESPACE_DOMAIN)
-        update_toggles(self.domain_link)
-        self.assertTrue(TEST_TOGGLE.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))
-
+        set_toggle('test_toggle', self.domain_link.linked_domain, True, NAMESPACE_DOMAIN)
         set_toggle('test_toggle', self.domain_link.master_domain, False, NAMESPACE_DOMAIN)
         update_toggles(self.domain_link)
         self.assertFalse(TEST_TOGGLE.enabled(self.domain_link.linked_domain, NAMESPACE_DOMAIN))
