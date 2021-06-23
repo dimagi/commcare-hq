@@ -51,12 +51,13 @@
         }
         return "";
       }
-      var token = getCookie('XSRF-TOKEN')
       $.ajaxSetup({
         beforeSend: function(xhr, settings) {
+          var token = getCookie('XSRF-TOKEN')
           if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
             xhr.setRequestHeader('X-XSRF-TOKEN', token);
           }
+          xhr.withCredentials = true;
         }
       });
   </script>
