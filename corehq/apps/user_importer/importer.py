@@ -462,39 +462,20 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
                 remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
+                user = _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user,
+                                                       password, upload_user)
+                user_change_logger = UserChangeLogger(upload_domain, user=user, is_new_user=not bool(user_id),
+                                                      changed_by_user=upload_user,
+                                                      changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 if user_id:
-                    user = CommCareUser.get_by_user_id(user_id, domain)
-                    if not user:
-                        raise UserUploadError(_(
-                            "User with ID '{user_id}' not found"
-                        ).format(user_id=user_id, domain=domain))
-                    check_changing_username(user, username)
-
-                    # note: explicitly not including "None" here because that's the default value if not set.
-                    # False means it was set explicitly to that value
-                    if is_account_confirmed is False and not web_user:
-                        raise UserUploadError(_(
-                            "You can only set 'Is Account Confirmed' to 'False' on a new User."
-                        ))
-
                     if is_password(password):
                         user.set_password(password)
                         # overwrite password in results so we do not save it to the db
                         status_row['row']['password'] = 'REDACTED'
+                        user_change_logger.add_change_message(_("Password Reset"))
                     status_row['flag'] = 'updated'
                 else:
-                    kwargs = {}
-                    if is_account_confirmed is not None and not web_user:
-                        kwargs['is_account_confirmed'] = is_account_confirmed
-                    user = CommCareUser.create(domain, username, password, created_by=upload_user,
-                                               created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
                     status_row['flag'] = 'created'
-
-                user_change_logger = UserChangeLogger(upload_domain, user=user, is_new_user=not bool(user_id),
-                                                      changed_by_user=upload_user,
-                                                      changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
-                if status_row['row'].get('password') == 'REDACTED':
-                    user_change_logger.add_change_message(_("Password Reset"))
 
                 if phone_number:
                     fmt_phone_number = _fmt_phone(phone_number)
@@ -685,6 +666,31 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             ret['errors'].append(_error_message)
 
     return ret
+
+
+def _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user, password,
+                                    upload_user):
+    if user_id:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if not user:
+            raise UserUploadError(_(
+                "User with ID '{user_id}' not found"
+            ).format(user_id=user_id, domain=domain))
+        check_changing_username(user, username)
+
+        # note: explicitly not including "None" here because that's the default value if not set.
+        # False means it was set explicitly to that value
+        if is_account_confirmed is False and not web_user:
+            raise UserUploadError(_(
+                "You can only set 'Is Account Confirmed' to 'False' on a new User."
+            ))
+    else:
+        kwargs = {}
+        if is_account_confirmed is not None and not web_user:
+            kwargs['is_account_confirmed'] = is_account_confirmed
+        user = CommCareUser.create(domain, username, password, created_by=upload_user,
+                                   created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
+    return user
 
 
 def create_or_update_web_users(upload_domain, user_specs, upload_user, update_progress=None):
