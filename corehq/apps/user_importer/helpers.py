@@ -19,6 +19,12 @@ def spec_value_to_boolean_or_none(user_spec_dict, key):
 
 
 class UserChangeLogger(object):
+    """
+    User change logger to record
+        changes in user fields
+        messages for changes or
+        useful info text for user display like names
+    """
     def __init__(self, domain, user, is_new_user, changed_by_user, changed_via):
         self.domain = domain
         self.user = user
@@ -76,6 +82,10 @@ class UserChangeLogger(object):
 
 
 class CommCareUserImporter(object):
+    """
+    Imports a CommCareUser added via bulk importer
+    Also handles the logging, eventually saved by calling save
+    """
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via):
         self.user_domain = user_domain
         self.user = user
@@ -189,6 +199,10 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(object):
+    """
+    Imports a WebUser added via bulk importer
+    Also handles the logging, if the web user is present, eventually saved by calling save
+    """
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, is_web_users_upload):
         self.user_domain = user_domain
         self.user = user

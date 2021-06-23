@@ -398,6 +398,15 @@ def format_location_codes(location_codes):
 
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None,
                                                update_progress=None):
+    """"
+    Creates and Updates CommCare Users
+    For the associated web user username passed, for each CommCareUser
+        if corresponding web user is present
+            assigns the same role and primary location, as the CommCareUser
+        else creates or updates user invitation
+           sets Invitation with the CommCare user's role and primary location
+    All changes to users only, are tracked using UserChangeLogger, as an audit trail.
+    """
     from corehq.apps.user_importer.helpers import CommCareUserImporter, WebUserImporter
 
     domain_info_by_domain = {}
@@ -522,6 +531,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                             ).format(web_user_username=web_user_username))
                         if web_user and not web_user.is_member_of(domain) and is_account_confirmed:
                             # add confirmed account to domain
+                            # role_qualified_id would be be present here as confirmed in check_user_role
                             web_user_importer.add_to_domain(role_qualified_id, user.location_id)
                         elif not web_user or not web_user.is_member_of(domain):
                             create_or_update_web_user_invite(web_user_username, domain, role_qualified_id,
