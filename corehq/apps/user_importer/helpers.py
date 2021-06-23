@@ -2,7 +2,6 @@ from dimagi.utils.parsing import string_to_boolean
 from django.utils.translation import ugettext as _
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
 
 from corehq.apps.users.model_log import UserModelAction
@@ -143,7 +142,11 @@ class CommCareUserImporter(object):
         self.logger.add_changes({'is_active': is_active})
 
     def update_locations(self, location_codes, domain_info):
-        from corehq.apps.user_importer.importer import find_location_id, check_modified_user_loc
+        from corehq.apps.user_importer.importer import (
+            check_modified_user_loc,
+            find_location_id,
+            get_location_from_site_code
+        )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
         users_current_primary_location_id = self.user.location_id
@@ -156,9 +159,8 @@ class CommCareUserImporter(object):
             self.user.reset_locations(location_ids, commit=False)
             self.logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = list(SQLLocation.active_objects.filter(
-                    location_id__in=location_ids
-                ).values_list('name', flat=True))
+                location_names = [get_location_from_site_code(code, domain_info.location_cache).name
+                                  for code in location_codes]
                 self.logger.add_info(_(f"Assigned locations: {location_names}"))
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != users_current_primary_location_id:
@@ -236,7 +238,11 @@ class WebUserImporter(object):
                 self.logger.add_changes({'location_id': ''})
 
     def update_locations(self, location_codes, membership, domain_info):
-        from corehq.apps.user_importer.importer import find_location_id, check_modified_user_loc
+        from corehq.apps.user_importer.importer import (
+            check_modified_user_loc,
+            find_location_id,
+            get_location_from_site_code
+        )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
@@ -251,9 +257,8 @@ class WebUserImporter(object):
             self.user.reset_locations(self.user_domain, location_ids, commit=False)
             self.logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = list(SQLLocation.active_objects.filter(
-                    location_id__in=location_ids
-                ).values_list('name', flat=True))
+                location_names = [get_location_from_site_code(code, domain_info.location_cache).name
+                                  for code in location_codes]
                 self.logger.add_info(_(f"Assigned locations: {location_names}"))
 
     def save(self):
