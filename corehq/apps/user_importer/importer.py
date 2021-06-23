@@ -172,12 +172,6 @@ class GroupMemoizer(object):
         Group.bulk_save(self.groups)
 
 
-def _fmt_phone(phone_number):
-    if phone_number and not isinstance(phone_number, str):
-        phone_number = str(int(phone_number))
-    return phone_number.lstrip("+")
-
-
 class BulkCacheBase(object):
 
     def __init__(self, domain):
@@ -408,6 +402,8 @@ def format_location_codes(location_codes):
 
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None,
                                                update_progress=None):
+    from corehq.apps.user_importer.helpers import CommCareUserImporter
+
     domain_info_by_domain = {}
 
     ret = {"errors": [], "rows": []}
@@ -464,111 +460,46 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
                 user = _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user,
                                                        password, upload_user)
-                user_change_logger = UserChangeLogger(upload_domain, user=user, is_new_user=not bool(user_id),
-                                                      changed_by_user=upload_user,
-                                                      changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
+                commcare_user_importer = CommCareUserImporter(upload_domain, domain, user, upload_user,
+                                                              is_new_user=not bool(user_id),
+                                                              via=USER_CHANGE_VIA_BULK_IMPORTER)
                 if user_id:
                     if is_password(password):
-                        user.set_password(password)
+                        commcare_user_importer.update_password(password)
                         # overwrite password in results so we do not save it to the db
                         status_row['row']['password'] = 'REDACTED'
-                        user_change_logger.add_change_message(_("Password Reset"))
                     status_row['flag'] = 'updated'
                 else:
                     status_row['flag'] = 'created'
 
                 if phone_number:
-                    fmt_phone_number = _fmt_phone(phone_number)
-                    # always call this to set phone number as default if needed
-                    user.add_phone_number(fmt_phone_number, default=True)
-                    if fmt_phone_number not in user.phone_numbers:
-                        user_change_logger.add_change_message(_(f"Added phone number {fmt_phone_number}"))
+                    commcare_user_importer.update_phone_number(phone_number)
                 if name:
-                    user.set_full_name(str(name))
-                    user_change_logger.add_changes({'first_name': user.first_name, 'last_name': user.last_name})
+                    commcare_user_importer.update_name(name)
 
-                # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
-                for key, value in user.user_data.items():
-                    if key not in data:
-                        data[key] = value
-                if profile:
-                    profile_obj = domain_info.profiles_by_name[profile]
-                    data[PROFILE_SLUG] = profile_obj.id
-                    for key in profile_obj.fields.keys():
-                        user.pop_metadata(key)
-                try:
-                    user.update_metadata(data)
-                except ValueError as e:
-                    raise UserUploadError(str(e))
-                if uncategorized_data:
-                    user.update_metadata(uncategorized_data)
-
-                # Clear blank user data so that it can be purged by remove_unused_custom_fields_from_users_task
-                for key in dict(data, **uncategorized_data):
-                    value = user.metadata[key]
-                    if value is None or value == '':
-                        user.pop_metadata(key)
+                commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
 
                 if language:
-                    user.language = language
-                    user_change_logger.add_changes({'language': language})
+                    commcare_user_importer.update_language(language)
                 if email:
-                    user.email = email.lower()
-                    user_change_logger.add_changes({'email': user.email})
+                    commcare_user_importer.update_email(email)
                 if is_active is not None:
-                    user.is_active = is_active
-                    user_change_logger.add_changes({'is_active': is_active})
+                    commcare_user_importer.update_status(is_active)
 
+                # Do this here so that we validate the location code before we
+                # save any other information to the user, this way either all of
+                # the user's information is updated, or none of it
+                # Do not update location info if the column is not included at all
                 if domain_info.can_assign_locations and location_codes is not None:
-                    # Do this here so that we validate the location code before we
-                    # save any other information to the user, this way either all of
-                    # the user's information is updated, or none of it
+                    commcare_user_importer.update_locations(location_codes, domain_info)
 
-                    # Do not update location info if the column is not included at all
-                    location_ids = find_location_id(location_codes, domain_info.location_cache)
-                    users_current_primary_location_id = user.location_id
-                    locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
-                                                                                     user.location_id,
-                                                                                     user.assigned_location_ids)
-                    if primary_loc_removed:
-                        user.unset_location(commit=False)
-                    if locations_updated:
-                        user.reset_locations(location_ids, commit=False)
-                        user_change_logger.add_changes({'assigned_location_ids': location_ids})
-                        if location_ids:
-                            location_names = list(SQLLocation.active_objects.filter(
-                                location_id__in=location_ids
-                            ).values_list('name', flat=True))
-                            user_change_logger.add_info(_(f"Assigned locations: {location_names}"))
-                    # log this after assigned locations are updated, which can re-set primary location
-                    if user.location_id != users_current_primary_location_id:
-                        user_change_logger.add_changes({'location_id': user.location_id})
-                        if user.location_id:
-                            user_change_logger.add_info(
-                                _(f"Primary location: {user.get_sql_location(domain).name}"))
-                role_updated = False
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role]
-                    user_current_role = user.get_role(domain=domain)
-                    role_updated = not (user_current_role
-                                        and user_current_role.get_qualified_id() == role_qualified_id)
-                    if role_updated:
-                        user.set_role(domain, role_qualified_id)
-
+                    commcare_user_importer.update_role(role, domain_info)
                 if web_user:
                     user.update_metadata({'login_as_user': web_user})
 
-                user.save()
-
-                if role_updated:
-                    # Tracking for role is done post save to have role setup correctly on save
-                    new_role = user.get_role(domain=domain)
-                    if new_role:
-                        user_change_logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
-                    else:
-                        user_change_logger.add_change_message("Role: None")
-
-                user_change_logger.save()
+                commcare_user_importer.save()
 
                 if web_user:
                     # reset for web_user logging
