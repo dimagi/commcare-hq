@@ -81,6 +81,12 @@ hqDefine("linked_domain/js/domain_links", [
         self.domain = data.domain;
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
 
+
+        // can only push content if a link with a downstream domain exists
+        var pushContentData = {
+            parent: self,
+        };
+        self.pushContentViewModel = PushContentViewModel(pushContentData);
         // Manage Downstream Domains Tab
         // search box
         self.query = ko.observable();
@@ -135,30 +141,6 @@ hqDefine("linked_domain/js/domain_links", [
             });
         };
 
-        // Push Content Tab
-        self.domainsToRelease = ko.observableArray();
-        self.modelsToRelease = ko.observableArray();
-        self.buildAppsOnRelease = ko.observable(false);
-        self.releaseInProgress = ko.observable(false);
-        self.enableReleaseButton = ko.computed(function () {
-            return self.domainsToRelease().length && self.modelsToRelease().length && !self.releaseInProgress();
-        });
-
-        self.createRelease = function () {
-            self.releaseInProgress(true);
-            _private.RMI("create_release", {
-                models: _.map(self.modelsToRelease(), JSON.parse),
-                linked_domains: self.domainsToRelease(),
-                build_apps: self.buildAppsOnRelease(),
-            }).done(function (data) {
-                alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
-                self.releaseInProgress(false);
-            }).fail(function () {
-                alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
-                self.releaseInProgress(false);
-            });
-        };
-
         return self;
     };
 
@@ -170,6 +152,44 @@ hqDefine("linked_domain/js/domain_links", [
         self.lastUpdate = link.last_update;
         self.upstreamUrl = link.upstream_url;
         self.downstreamUrl = link.downstream_url;
+        return self;
+    };
+
+    var PushContentViewModel = function (data) {
+        self.parent = data.parent;
+        self.domainsToPush = ko.observableArray();
+        self.modelsToPush = ko.observableArray();
+        self.buildAppsOnPush = ko.observable(false);
+        self.pushInProgress = ko.observable(false);
+        self.enablePushButton = ko.computed(function () {
+            return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
+        });
+
+        self.localDomainLinks = ko.computed(function () {
+            return _.filter(self.parent.domain_links(), function (link) {
+                return !link.is_remote;
+            });
+        });
+
+        self.canPush = ko.computed(function () {
+            return self.localDomainLinks().length > 0;
+        });
+
+        self.pushContent = function () {
+            self.pushInProgress(true);
+            _private.RMI("create_release", {
+                models: _.map(self.modelsToPush(), JSON.parse),
+                linked_domains: self.domainsToPush(),
+                build_apps: self.buildAppsOnPush(),
+            }).done(function (data) {
+                alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
+                self.pushInProgress(false);
+            }).fail(function () {
+                alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
+                self.pushInProgress(false);
+            });
+        };
+
         return self;
     };
 
@@ -260,7 +280,7 @@ hqDefine("linked_domain/js/domain_links", [
             $("#ko-tabs-pull-content").koApplyBindings(model.pullReleaseContentViewModel);
         }
         if ($("#ko-tabs-push-content").length) {
-            $("#ko-tabs-push-content").koApplyBindings(model);
+            $("#ko-tabs-push-content").koApplyBindings(model.pushContentViewModel);
         }
         if ($("#ko-tabs-manage-downstream").length) {
             $("#ko-tabs-manage-downstream").koApplyBindings(model);
