@@ -170,8 +170,6 @@ class CommCareUserImporter(object):
             self.user.set_role(self.user_domain, role_qualified_id)
 
     def save(self):
-        self.user.save()
-
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
