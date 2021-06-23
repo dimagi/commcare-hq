@@ -24,6 +24,8 @@ from ..models import (
     get_previous_week,
     get_quarter_start_month,
     should_send_on_date,
+    get_grouped_datavalues_sets,
+    _group_data_by_keys,
 )
 
 
@@ -288,3 +290,167 @@ class TestDifferentDataSetMaps(TestCase):
             'is_org_unit': False,
             'is_period': False,
         }})
+
+
+class TestGetGroupedDatasets(TestCase):
+
+    def test_group_data_by_keys(self):
+        data_list = [
+            {'dataElement': 'dataElementID1', 'period': '202102', 'value': 90456},
+            {'dataElement': 'dataElementID2', 'period': '202103', 'value': 90456},
+            {'dataElement': 'dataElementID3', 'period': '202104', 'value': 135},
+            {'dataElement': 'dataElementID4', 'period': '202105', 'value': 90333},
+            {'dataElement': 'dataElementID5', 'period': '202106', 'value': 90333},
+            {'dataElement': 'dataElementID6', 'period': '202103', 'value': 90456},
+            {'dataElement': 'dataElementID7', 'period': '202102', 'value': 90210}
+        ]
+        num_unique_periods = 5
+        result = _group_data_by_keys(data_list, ['period'])
+
+        self.assertEqual(len(result), num_unique_periods)
+        for key_value, key_grouped in result.items():
+            if key_value == ('202102',):
+                self.assertEqual(
+                    key_grouped,
+                    [
+                        {'dataElement': 'dataElementID1', 'value': 90456},
+                        {'dataElement': 'dataElementID7', 'value': 90210}
+                    ]
+                )
+            elif key_value == ('202103',):
+                self.assertEqual(
+                    key_grouped,
+                    [
+                        {'dataElement': 'dataElementID2', 'value': 90456},
+                        {'dataElement': 'dataElementID6', 'value': 90456}
+                    ]
+                )
+            elif key_value == ('202104',):
+                self.assertEqual(
+                    key_grouped,
+                    [{'dataElement': 'dataElementID3', 'value': 135}]
+                )
+            elif key_value == ('202105',):
+                self.assertEqual(
+                    key_grouped,
+                    [{'dataElement': 'dataElementID4', 'value': 90333}]
+                )
+            else:
+                self.assertEqual(
+                    key_grouped,
+                    [{'dataElement': 'dataElementID5', 'value': 90333}]
+                )
+
+    def test_group_by_period(self):
+        template_dataset = {'dataSet': 'p1UpPrpg1QX', 'orgUnit': 'g8dWMTyEZGZ'}
+
+        data_list = [
+            {'dataElement': 'dataElementID1', 'period': '202102', 'value': 90456},
+            {'dataElement': 'dataElementID2', 'period': '202103', 'value': 90456},
+            {'dataElement': 'dataElementID3', 'period': '202104', 'value': 135},
+            {'dataElement': 'dataElementID4', 'period': '202105', 'value': 90333},
+            {'dataElement': 'dataElementID5', 'period': '202106', 'value': 90333},
+            {'dataElement': 'dataElementID6', 'period': '202103', 'value': 90456},
+            {'dataElement': 'dataElementID7', 'period': '202102', 'value': 90210}
+        ]
+
+        grouped_result = get_grouped_datavalues_sets(
+            group_by_keys=['period'],
+            template_dataset=template_dataset,
+            data_list=data_list
+        )
+
+        expected_results = {
+            '202102': [
+                {'dataElement': 'dataElementID1', 'value': 90456},
+                {'dataElement': 'dataElementID7', 'value': 90210}
+            ],
+            '202103': [
+                {'dataElement': 'dataElementID2', 'value': 90456},
+                {'dataElement': 'dataElementID6', 'value': 90456}
+            ],
+            '202104': [
+                {'dataElement': 'dataElementID3', 'value': 135}
+            ],
+            '202105': [
+                {'dataElement': 'dataElementID4', 'value': 90333}
+            ],
+            '202106': [
+                {'dataElement': 'dataElementID5', 'value': 90333}
+            ]
+        }
+
+        self.assertEqual(len(grouped_result), 5)
+
+        for res in grouped_result:
+            self.assertIn('period', res)
+            self.assertIn('dataValues', res)
+            self.assertEqual(expected_results[res['period']], res['dataValues'])
+
+    def test_group_by_orgUnit(self):
+        template_dataset = {'dataSet': 'p1UpPrpg1QX', 'period': '202104'}
+
+        data_list = [
+            {'dataElement': 'dataElementID1', 'orgUnit': 'orgUnit1', 'value': 90456},
+            {'dataElement': 'dataElementID2', 'orgUnit': 'orgUnit1', 'value': 90456},
+            {'dataElement': 'dataElementID3', 'orgUnit': 'orgUnit2', 'value': 135},
+            {'dataElement': 'dataElementID4', 'orgUnit': 'orgUnit3', 'value': 135}
+        ]
+
+        grouped_result = get_grouped_datavalues_sets(
+            group_by_keys=['orgUnit'],
+            template_dataset=template_dataset,
+            data_list=data_list
+        )
+
+        expected_results = {
+            'orgUnit1': [
+                {'dataElement': 'dataElementID1', 'value': 90456},
+                {'dataElement': 'dataElementID2', 'value': 90456}
+            ],
+            'orgUnit2': [
+                {'dataElement': 'dataElementID3', 'value': 135}
+            ],
+            'orgUnit3': [
+                {'dataElement': 'dataElementID4', 'value': 135}
+            ]
+        }
+
+        self.assertEqual(len(grouped_result), 3)
+
+        for res in grouped_result:
+            self.assertIn('orgUnit', res)
+            self.assertIn('dataValues', res)
+            self.assertEqual(expected_results[res['orgUnit']], res['dataValues'])
+
+    def test_group_by_orgUnit_and_period(self):
+        template_dataset = {'dataSet': 'p1UpPrpg1QX'}
+
+        data_list = [
+            {'dataElement': 'dataElementID1', 'orgUnit': 'orgUnit1', 'period': '202101', 'value': 90456},
+            {'dataElement': 'dataElementID2', 'orgUnit': 'orgUnit1', 'period': '202101', 'value': 90456},
+            {'dataElement': 'dataElementID3', 'orgUnit': 'orgUnit1', 'period': '202102', 'value': 90456},
+            {'dataElement': 'dataElementID4', 'orgUnit': 'orgUnit2', 'period': '202102', 'value': 135},
+            {'dataElement': 'dataElementID5', 'orgUnit': 'orgUnit3', 'period': '202103', 'value': 135}
+        ]
+
+        grouped_result = get_grouped_datavalues_sets(
+            group_by_keys=['orgUnit', 'period'],
+            template_dataset=template_dataset,
+            data_list=data_list
+        )
+
+        expected_results = [
+            {'dataElement': 'dataElementID1', 'value': 90456},
+            {'dataElement': 'dataElementID2', 'value': 90456}
+        ]
+
+        self.assertEqual(len(grouped_result), 4)
+
+        result_of_interest = None
+        for result in grouped_result:
+            if result.get('orgUnit') == 'orgUnit1' and result.get('period') == '202101':
+                result_of_interest = result
+                break
+
+        self.assertEqual(result_of_interest.get('dataValues'), expected_results)
