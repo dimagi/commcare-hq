@@ -58,6 +58,7 @@ IGNORE_MODELS = {
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
     'registration.AsyncSignupRequest',
+    'users.UserHistory',
 }
 
 

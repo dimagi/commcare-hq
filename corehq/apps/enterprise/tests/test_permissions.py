@@ -23,6 +23,7 @@ class EnterprisePermissionsTest(TestCase):
         super().setUpClass()
 
         # Set up domains
+        cls.domain = 'state'
         create_domain('state')
         create_domain('county')
         create_domain('staging')
@@ -57,8 +58,8 @@ class EnterprisePermissionsTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user_admin.delete(deleted_by=None)
-        cls.web_user_non_admin.delete(deleted_by=None)
+        cls.web_user_admin.delete(cls.domain, deleted_by=None)
+        cls.web_user_non_admin.delete(cls.domain, deleted_by=None)
         cls.api_key.delete()
         cls.master_role.delete()
         Domain.get_by_name('county').delete()
