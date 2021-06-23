@@ -16,7 +16,6 @@ from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
-from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
