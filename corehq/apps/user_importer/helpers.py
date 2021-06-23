@@ -99,10 +99,10 @@ class CommCareUserImporter(object):
 
     def update_phone_number(self, phone_number):
         fmt_phone_number = _fmt_phone(phone_number)
-        # always call this to set phone number as default if needed
-        self.user.add_phone_number(fmt_phone_number, default=True)
         if fmt_phone_number not in self.user.phone_numbers:
             self.logger.add_change_message(_(f"Added phone number {fmt_phone_number}"))
+        # always call this to set phone number as default if needed
+        self.user.add_phone_number(fmt_phone_number, default=True)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))

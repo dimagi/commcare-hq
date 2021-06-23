@@ -651,7 +651,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(
             user_history.message,
-            f"Password Reset. Role: {self.role.name}[{self.role.get_id}]"
+            f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_id}]"
         )
 
     def test_blank_is_active(self):
