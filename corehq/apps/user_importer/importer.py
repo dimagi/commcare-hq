@@ -448,7 +448,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             location_codes = format_location_codes(location_codes)
             role = row.get('role', None)
             profile = row.get('user_profile', None)
-            web_user = row.get('web_user')
+            web_user_username = row.get('web_user')
 
             try:
                 password = str(password) if password else None
@@ -458,8 +458,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
                 remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
-                user = _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user,
-                                                       password, upload_user)
+                user = _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed,
+                                                       web_user_username, password, upload_user)
                 commcare_user_importer = CommCareUserImporter(upload_domain, domain, user, upload_user,
                                                               is_new_user=not bool(user_id),
                                                               via=USER_CHANGE_VIA_BULK_IMPORTER)
@@ -496,70 +496,71 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 if role:
                     role_qualified_id = domain_info.roles_by_name[role]
                     commcare_user_importer.update_role(role, domain_info)
-                if web_user:
-                    user.update_metadata({'login_as_user': web_user})
+                if web_user_username:
+                    user.update_metadata({'login_as_user': web_user_username})
 
                 commcare_user_importer.save()
 
-                if web_user:
+                if web_user_username:
                     # reset for web_user logging
                     user_change_logger = None
                     check_can_upload_web_users(upload_user)
-                    current_user = CouchUser.get_by_username(web_user)
-                    if current_user:
-                        user_change_logger = UserChangeLogger(upload_domain, user=current_user, is_new_user=False,
+                    web_user = CouchUser.get_by_username(web_user_username)
+                    if web_user:
+                        user_change_logger = UserChangeLogger(upload_domain, user=web_user, is_new_user=False,
                                                               changed_by_user=upload_user,
                                                               changed_via=USER_CHANGE_VIA_BULK_IMPORTER)
                     if remove_web_user:
-                        remove_web_user_from_domain(domain, current_user, username, upload_user,
+                        remove_web_user_from_domain(domain, web_user, username, upload_user,
                                                     user_change_logger)
                     else:
                         check_user_role(username, role)
-                        if not current_user and is_account_confirmed:
+                        if not web_user and is_account_confirmed:
                             raise UserUploadError(_(
-                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.").format(web_user=web_user)
-                            )
-                        if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
-                            current_user.add_as_web_user(domain, role=role_qualified_id,
-                                                         location_id=user.location_id)
+                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
+                                f"{web_user_username} is a new username."
+                            ).format(web_user_username=web_user_username))
+                        if web_user and not web_user.is_member_of(domain) and is_account_confirmed:
+                            web_user.add_as_web_user(domain, role=role_qualified_id,
+                                                     location_id=user.location_id)
                             user_change_logger.add_change_message(_("Added as web user"))
 
-                        elif not current_user or not current_user.is_member_of(domain):
-                            create_or_update_web_user_invite(web_user, domain, role_qualified_id, upload_user,
-                                                             user.location_id, user_change_logger,
+                        elif not web_user or not web_user.is_member_of(domain):
+                            create_or_update_web_user_invite(web_user_username, domain, role_qualified_id,
+                                                             upload_user, user.location_id, user_change_logger,
                                                              send_email=send_account_confirmation_email)
 
-                        elif current_user.is_member_of(domain):
+                        elif web_user.is_member_of(domain):
                             # edit existing user in the domain
-                            user_current_role = current_user.get_role(domain=domain)
+                            user_current_role = web_user.get_role(domain=domain)
                             role_updated = not (user_current_role
                                                 and user_current_role.get_qualified_id() == role_qualified_id)
                             if role_updated:
-                                current_user.set_role(domain, role_qualified_id)
+                                web_user.set_role(domain, role_qualified_id)
                             if location_codes is not None:
-                                current_user_current_primary_location_id = current_user.location_id
+                                current_user_current_primary_location_id = web_user.location_id
                                 if user.location_id:
-                                    current_user.set_location(domain, user.location_id)
-                                    user_change_logger.add_changes({'location_id': current_user.location_id})
-                                    if current_user.location_id != current_user_current_primary_location_id:
+                                    web_user.set_location(domain, user.location_id)
+                                    user_change_logger.add_changes({'location_id': web_user.location_id})
+                                    if web_user.location_id != current_user_current_primary_location_id:
                                         user_change_logger.add_info(
-                                            _(f"Primary location: {current_user.get_sql_location(domain).name}"))
+                                            _(f"Primary location: {web_user.get_sql_location(domain).name}"))
                                 else:
-                                    current_user.unset_location(domain)
-                                    if current_user.location_id != current_user_current_primary_location_id:
+                                    web_user.unset_location(domain)
+                                    if web_user.location_id != current_user_current_primary_location_id:
                                         user_change_logger.add_changes({'location_id': ''})
 
-                            current_user.save()
+                            web_user.save()
                             # Tracking for role is done post save to have role setup correctly on save
                             if role_updated:
-                                new_role = current_user.get_role(domain=domain)
+                                new_role = web_user.get_role(domain=domain)
                                 if new_role:
                                     user_change_logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
                                 else:
                                     user_change_logger.add_change_message("Role: None")
                     if user_change_logger:
                         user_change_logger.save()
-                if send_account_confirmation_email and not web_user:
+                if send_account_confirmation_email and not web_user_username:
                     send_account_confirmation_if_necessary(user)
 
                 if is_password(password):
@@ -599,7 +600,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     return ret
 
 
-def _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user, password,
+def _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user_username, password,
                                     upload_user):
     if user_id:
         user = CommCareUser.get_by_user_id(user_id, domain)
@@ -611,13 +612,13 @@ def _setup_commcare_user_for_import(domain, user_id, username, is_account_confir
 
         # note: explicitly not including "None" here because that's the default value if not set.
         # False means it was set explicitly to that value
-        if is_account_confirmed is False and not web_user:
+        if is_account_confirmed is False and not web_user_username:
             raise UserUploadError(_(
                 "You can only set 'Is Account Confirmed' to 'False' on a new User."
             ))
     else:
         kwargs = {}
-        if is_account_confirmed is not None and not web_user:
+        if is_account_confirmed is not None and not web_user_username:
             kwargs['is_account_confirmed'] = is_account_confirmed
         user = CommCareUser.create(domain, username, password, created_by=upload_user,
                                    created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
