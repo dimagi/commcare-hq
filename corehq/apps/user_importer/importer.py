@@ -13,14 +13,11 @@ from couchdbkit.exceptions import (
     ResourceConflict
 )
 
-from dimagi.utils.parsing import string_to_boolean
-
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -43,7 +40,7 @@ from corehq.apps.users.models import (
     SQLUserRole,
     InvitationStatus
 )
-from corehq.apps.users.util import normalize_username, log_user_role_update
+from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 
