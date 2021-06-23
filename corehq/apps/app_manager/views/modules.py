@@ -114,7 +114,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es, get_case_types_for_domain
+    get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.models import (
@@ -198,7 +198,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'case_list_form_options': _case_list_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
-        'case_types': get_case_types_for_domain(app.domain),
+        'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
