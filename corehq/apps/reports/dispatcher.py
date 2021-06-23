@@ -26,6 +26,8 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
+from .lookup import ReportLookup
+
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
@@ -75,43 +77,31 @@ class ReportDispatcher(View):
 
     @classmethod
     def get_reports(cls, domain):
-        attr_name = cls.map_name
-        from corehq import reports
-        if domain:
-            domain_obj = Domain.get_by_name(domain)
-        else:
-            domain_obj = None
-
-        def process(reports):
-            if callable(reports):
-                reports = reports(domain_obj) if domain_obj else tuple()
-            return tuple(reports)
-
-        corehq_reports = process(getattr(reports, attr_name, ()))
-
-        module_name = get_custom_domain_module(domain)
-        if module_name is None:
-            custom_reports = ()
-        else:
-            module = __import__(module_name, fromlist=['reports'])
-            if hasattr(module, 'reports'):
-                reports = getattr(module, 'reports')
-                custom_reports = process(getattr(reports, attr_name, ()))
-            else:
-                custom_reports = ()
-
-        return corehq_reports + custom_reports
+        lookup = ReportLookup(cls.map_name)
+        return lookup.get_reports(domain)
 
     @classmethod
-    def get_report(cls, domain, report_slug, *args):
+    def get_report(cls, domain, report_slug, config_id=None):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
         """
+        # NOTE: This is duplicated logic also contained within ReportLookup. While
+        # replacing this code with the lookup code does not cause issues for production,
+        # it breaks the way some tests try to create mock versions of a dispatcher --
+        # they override `get_reports` with a custom mapping, and then rely on this method
+        # using the override. I think a deeper refactor will need to be done to handle this.
+
+        # The reason this *should* be separated out into its own module is because
+        # report name resolution is independent from handling dispatch logic;
+        # code which doesn't care about dispatching urls or handling views should still be able
+        # to resolve a slug to a report object
         for name, group in cls.get_reports(domain):
             for report in group:
                 if report.slug == report_slug:
                     return report
+
+        return None
 
     @classmethod
     @quickcache(['domain', 'report_slug'], timeout=300)

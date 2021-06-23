@@ -19,7 +19,6 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.util.model_log import ModelAction
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
@@ -331,7 +330,7 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
 
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
-                    message=None, fields_changed=None, action=ModelAction.UPDATE,
+                    message=None, fields_changed=None, action=None,
                     domain_required_for_log=True):
     """
     Log changes done to a user.
@@ -347,13 +346,16 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param domain_required_for_log: set to False to allow domain less log for specific changes
     """
     from corehq.apps.users.models import UserHistory
+    from corehq.apps.users.model_log import UserModelAction
+
+    action = action or UserModelAction.UPDATE
 
     # domain is essential to filter changes done in a domain
     if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
-    if action == ModelAction.UPDATE and not fields_changed:
+    if action == UserModelAction.UPDATE and not fields_changed:
         raise ValueError("missing 'fields_changed' argument for update.")
 
     return UserHistory.objects.create(
@@ -371,7 +373,9 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
 
 
 def _get_changed_details(couch_user, action, fields_changed):
-    if action in [ModelAction.CREATE, ModelAction.DELETE]:
+    from corehq.apps.users.model_log import UserModelAction
+
+    if action in [UserModelAction.CREATE, UserModelAction.DELETE]:
         changed_details = couch_user.to_json()
     else:
         changed_details = fields_changed.copy()

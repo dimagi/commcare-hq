@@ -24,14 +24,14 @@ from corehq.apps.users.models import (
     CommCareUser,
     DomainPermissionsMirror,
     Invitation,
+    SQLUserRole,
     UserHistory,
-    UserRole,
     WebUser,
 )
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
-from corehq.util.model_log import ModelAction
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -45,8 +45,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
-        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
-        cls.other_role = UserRole.create(cls.domain.name, 'admin')
+        cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -523,7 +523,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def test_tracking_updates(self):
         self.assertEqual(
             UserHistory.objects.filter(
-                action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
+                action=UserModelAction.CREATE.value, changed_by=self.uploading_user.get_id).count(),
             0
         )
         import_users_and_groups(
@@ -537,8 +537,12 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # create
         created_user = CommCareUser.get_by_username("hello@mydomain.commcarehq.org")
-        self.assertEqual(LogEntry.objects.filter(action_flag=ModelAction.CREATE.value).count(), 0)  # deprecated
-        log_entry = UserHistory.objects.get(action=ModelAction.CREATE.value, changed_by=self.uploading_user.get_id)
+        self.assertEqual(
+            LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
+            0
+        )  # deprecated
+        log_entry = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                            changed_by=self.uploading_user.get_id)
         self.assertEqual(log_entry.domain, self.domain.name)
         self.assertEqual(log_entry.user_type, "CommCareUser")
         self.assertEqual(log_entry.user_id, created_user.get_id)
@@ -546,7 +550,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(log_entry.details['changes']['username'], created_user.username)
 
         # update
-        log_entry = UserHistory.objects.get(action=ModelAction.UPDATE.value, changed_by=self.uploading_user.get_id)
+        log_entry = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                            changed_by=self.uploading_user.get_id)
         self.assertEqual(
             log_entry.details,
             {
@@ -745,7 +750,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
-        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role._id)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role.get_id)
 
         added_user_id = self.user._id
         import_users_and_groups(
@@ -895,9 +900,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
-        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
-        cls.other_role = UserRole.create(cls.domain.name, 'admin')
-        cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
+        cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
+        cls.other_domain_role = SQLUserRole.create(cls.other_domain.name, 'view-apps')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
