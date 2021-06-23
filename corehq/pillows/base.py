@@ -58,7 +58,7 @@ def restore_property_dict(report_dict_item):
     return restored
 
 
-def ignore_couch_changes_for_sql_domains(change):
+def is_couch_change_for_sql_domain(change):
     if not change.metadata or not change.metadata.domain:
         return False
     if change.metadata.data_source_type == SOURCE_COUCH and should_use_sql_backend(change.metadata.domain):

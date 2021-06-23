@@ -17,7 +17,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
-from corehq.pillows.base import ignore_couch_changes_for_sql_domains
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.interface import ElasticsearchInterface
@@ -188,7 +188,7 @@ class TestBulkOperationsCaseToSQL(TestCase):
 
     def test_process_changes_chunk_ignore_couch(self):
         processor = BulkElasticProcessor(
-            self.es, TEST_INDEX_INFO, change_filter_fn=ignore_couch_changes_for_sql_domains)
+            self.es, TEST_INDEX_INFO, change_filter_fn=is_couch_change_for_sql_domain)
 
         changes = self._changes_from_ids(self.case_ids)
 
