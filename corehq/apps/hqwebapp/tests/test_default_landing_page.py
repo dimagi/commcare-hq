@@ -11,7 +11,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
-    UserRole,
+    SQLUserRole,
     WebUser,
 )
 from corehq.util.test_utils import flag_enabled, generate_cases
@@ -30,21 +30,18 @@ class TestDefaultLandingPages(TestCase):
         cls.domain_object = Domain(name=cls.domain, is_active=True)
         cls.domain_object.save()
 
-        cls.reports_role = UserRole(
+        cls.reports_role = SQLUserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
             permissions=Permissions(view_reports=True),
         )
-        cls.reports_role.save()
-        cls.webapps_role = UserRole(
+        cls.webapps_role = SQLUserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
             permissions=Permissions(access_web_apps=True),
         )
-        cls.webapps_role.save()
-        cls.downloads_role = UserRole(
+        cls.downloads_role = SQLUserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='downloads',
             permissions=Permissions.max(),
         )
-        cls.downloads_role.save()
         cls.global_password = 'secret'
 
         # make an app because not having one changes the default dashboard redirect to the apps page
