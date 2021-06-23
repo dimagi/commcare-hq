@@ -1176,12 +1176,14 @@ class MessagingTab(UITab):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+
         whatsapp_urls = []
 
         domain_has_turn_integration = (
             SQLTurnWhatsAppBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
@@ -1387,6 +1389,7 @@ class ProjectUsersTab(UITab):
                 EditWebUserView,
                 ListWebUsersView,
             )
+            from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
             menu.append({
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
@@ -1403,9 +1406,13 @@ class ProjectUsersTab(UITab):
                         'urlname': EditWebUserView.urlname
                     },
                     {
+                        'title': FilteredWebUserDownload.page_title,
+                        'urlname': FilteredWebUserDownload.urlname,
+                    },
+                    {
                         'title': _("Bulk Upload"),
-                        'urlname': 'upload_web_users'
-                    }
+                        'urlname': 'upload_web_users',
+                    },
                 ],
                 'show_in_dropdown': True,
             })

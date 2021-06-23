@@ -1,4 +1,5 @@
 import re
+from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -13,6 +14,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 
 
 class CaseSearchCriteria(object):
@@ -59,11 +61,29 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
+        self._validate_multiple_parameter_values()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_daterange_queries()
         self._add_case_property_queries()
+
+    def _validate_multiple_parameter_values(self):
+        disallowed_multiple_value_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+            CASE_SEARCH_XPATH_QUERY_KEY,
+        ]
+
+        for key, val in self.criteria.items():
+            if not isinstance(val, list):
+                continue
+            is_daterange = any([v.startswith('__range__') for v in val])
+            if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text and range searches"),
+                    key
+                )
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
@@ -88,7 +108,7 @@ class CaseSearchCriteria(object):
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         drop_keys = []
         for key, val in self.criteria.items():
-            if val.startswith('__range__'):
+            if not isinstance(val, list) and val.startswith('__range__'):
                 match = pattern.match(val)
                 if match:
                     [_, _, startdate, enddate] = val.split('__')
@@ -116,7 +136,10 @@ class CaseSearchCriteria(object):
             )
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
-                value = re.sub(to_remove, '', value)
+                if isinstance(value, list):
+                    value = [re.sub(to_remove, '', val) for val in value]
+                else:
+                    value = re.sub(to_remove, '', value)
 
             if '/' in key:
                 query = '{} = "{}"'.format(key, value)
@@ -137,9 +160,16 @@ def get_related_cases(domain, app_id, case_type, cases):
 
     app = get_app_cached(domain, app_id)
     paths = get_related_case_relationships(app, case_type)
-    if not paths:
-        return []
-    return get_related_case_results(domain, cases, paths)
+    child_case_types = get_child_case_types(app, case_type)
+
+    results = []
+    if paths:
+        results.extend(get_related_case_results(domain, cases, paths))
+
+    if child_case_types:
+        results.extend(get_child_case_results(domain, cases, child_case_types))
+
+    return results
 
 
 def get_related_case_relationships(app, case_type):
@@ -147,7 +177,7 @@ def get_related_case_relationships(app, case_type):
     Get unique case relationships used by search details in any modules that
     match the given case type and are configured for case search.
 
-    Returns a set of paths, e.g. {"parent", "host", "parent/parent"}
+    Returns a set of relationships, e.g. {"parent", "host", "parent/parent"}
     """
     paths = set()
     for module in app.get_modules():
@@ -189,3 +219,27 @@ def get_related_case_results(domain, cases, paths):
         results.extend(results_cache[path])
 
     return results
+
+
+def get_child_case_types(app, case_type):
+    """
+    Get child case types used by search detail tab nodesets in any modules
+    that match the given case type and are configured for case search.
+
+    Returns a set of case types
+    """
+    case_types = set()
+    for module in app.get_modules():
+        if module.case_type == case_type and module_offers_search(module):
+            for tab in module.search_detail("long").tabs:
+                if tab.has_nodeset and tab.nodeset_case_type:
+                    case_types.add(tab.nodeset_case_type)
+
+    return case_types
+
+
+def get_child_case_results(domain, parent_cases, case_types):
+    parent_case_ids = {c.case_id for c in parent_cases}
+    query = CaseSearchES().domain(domain).case_type(case_types).get_child_cases(parent_case_ids, "parent")
+    results = query.run().hits
+    return [CommCareCase.wrap(flatten_result(result)) for result in results]

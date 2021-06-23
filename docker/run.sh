@@ -16,6 +16,13 @@ fi
 # owners and file modes.
 DOCKER_OVERLAY_TEST_DEBUG='no'
 
+VALID_TEST_SUITES=(
+    javascript
+    python
+    python-sharded
+    python-sharded-and-javascript
+)
+
 
 function setup {
     [ -n "$1" ] && TEST="$1"
@@ -25,6 +32,7 @@ function setup {
 
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
+    python_preheat  # preheat the python libs
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
@@ -48,13 +56,33 @@ function setup {
     /mnt/wait.sh
 }
 
+function python_preheat {
+    # Perform preflight operations as the container's root user to "preheat"
+    # libraries used by Django.
+    #
+    # Import the `eulxml.xmlmap` module which checks if its lextab module
+    # (.../eulxml/xpath/lextab.py) is up-to-date and writes a new lextab.py file
+    # if not. This write fails if performed by the container's cchq user due to
+    # insufficient filesystem permissions at that path. E.g.
+    #   WARNING: Couldn't write lextab module 'eulxml.xpath.lextab'. [Errno 13] Permission denied: '/vendor/lib/python3.6/site-packages/eulxml/xpath/lextab.py'
+    #
+    # NOTE: This "preheat" can also be performed by executing a no-op manage
+    # action (e.g. `manage.py test -h`), but this operation is heavy-handed and
+    # importing the python module directly is done instead to improve
+    # performance.
+    logmsg INFO "preheating python libraries"
+    # send to /dev/null and allow to fail
+    python -c 'import eulxml.xmlmap' >/dev/null 2>&1 || true
+}
+
 function run_tests {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
-        logmsg ERROR "Unknown test suite: $TEST"
+    shift
+    suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
+    if ! echo "$TEST" | grep -E "^(${suite_pat})$" >/dev/null; then
+        logmsg ERROR "invalid test suite: $TEST (choices=${suite_pat})"
         exit 1
     fi
-    shift
     if truthy "$DOCKER_OVERLAY_TEST_DEBUG"; then
         # skip setup and tests and run debugging commands instead
         function overlay_debug {
@@ -121,43 +149,51 @@ function _run_tests {
     set -e
     TEST="$1"
     shift
+    py_test_args=("$@")
+    js_test_args=("$@")
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
-        TESTS="--attr=sql_backend"
-    else
-        TESTS=""
+        py_test_args+=("--attr=sql_backend")
     fi
 
-    if [ "$TEST" == "python-sharded-and-javascript" ]; then
+    function _test_python {
         ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test $* $TESTS"
-        ./manage.py test "$@" $TESTS
+        logmsg INFO "./manage.py test ${py_test_args[*]}"
+        ./manage.py test "${py_test_args[@]}"
+    }
 
+    function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         /mnt/wait.sh 127.0.0.1:8000
-        logmsg INFO "grunt test $*"
-        grunt test "$@"
+        logmsg INFO "grunt test ${js_test_args[*]}"
+        grunt test "${js_test_args[@]}"
+    }
 
-        if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
-            echo "----------> Begin Static Analysis <----------"
-            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
-            ./scripts/static-analysis.sh datadog
-            echo "----------> End Static Analysis <----------"
-        fi
-
-    elif [ "$TEST" != "javascript" ]; then
-        ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test $* $TESTS"
-        ./manage.py test "$@" $TESTS
-    else
-        ./manage.py migrate --noinput
-        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        host=127.0.0.1 /mnt/wait.sh hq:8000
-        logmsg INFO "grunt test $*"
-        grunt test "$@"
-    fi
+    case "$TEST" in
+        python-sharded-and-javascript)
+            _test_python
+            _test_javascript
+            if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+                echo "----------> Begin Static Analysis <----------"
+                COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
+                ./scripts/static-analysis.sh datadog
+                echo "----------> End Static Analysis <----------"
+            fi
+            ;;
+        python|python-sharded)
+            _test_python
+            ;;
+        javascript)
+            _test_javascript
+            ;;
+        *)
+            # this should never happen (would mean there is a bug in this script)
+            logmsg ERROR "invalid TEST value: '${TEST}'"
+            exit 1
+            ;;
+    esac
 }
 
 function bootstrap {
@@ -220,7 +256,7 @@ else
             # is an expensive operation and some container ecosystems (travis
             # perhaps?) may not require it. I suspect this is the reason local
             # testing was not working for many people in the past.
-            logmsg INFO -n "chmod'ing commcare-hq overlay... "
+            logmsg -n INFO "chmod'ing commcare-hq overlay... "
             now=$(date +%s)
             # add world-read (and world-x for dirs and existing-x files)
             chmod -R o+rX commcare-hq
