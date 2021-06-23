@@ -55,25 +55,17 @@ class UserChangeLogger(object):
 
     def save(self):
         self._include_user_data_changes()
-        if self.is_new_user:
+        if self.is_new_user or self._save:
+            action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
+            fields_changed = None if self.is_new_user else self.fields_changed
             log_user_change(
                 self.domain,
                 self.user,
                 changed_by_user=self.changed_by_user,
                 changed_via=self.changed_via,
                 message=". ".join(self.messages),
-                action=UserModelAction.CREATE,
-            )
-        else:
-            if not self._save:
-                return
-            log_user_change(
-                self.domain,
-                self.user,
-                changed_by_user=self.changed_by_user,
-                changed_via=self.changed_via,
-                message=". ".join(self.messages),
-                fields_changed=self.fields_changed
+                action=action,
+                fields_changed=fields_changed
             )
 
     def _include_user_data_changes(self):
