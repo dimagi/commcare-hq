@@ -1,17 +1,18 @@
-from django.utils.translation import ugettext_noop as _
+from corehq.apps.accounting.filters import clean_options
+from django.utils.translation import ugettext_lazy
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription
 
 
 class EnterpriseDomainFilter(BaseSingleOptionFilter):
     slug = "account"
-    label = _("Project Space")
+    label = ugettext_lazy("Project Space")
 
     @property
     def options(self):
-        return [(domain, domain) for domain in Subscription.visible_objects.filter(
-            account=self.request.account,
+        account = BillingAccount.get_account_by_domain(self.request.domain)
+        return clean_options([(domain, domain) for domain in Subscription.visible_objects.filter(
             is_active=True,
-            account__is_active=True,
-        ).values_list('subscriber__domain', flat=True).distinct()]
+            account=account,
+        ).values_list('subscriber__domain', flat=True).distinct()])
