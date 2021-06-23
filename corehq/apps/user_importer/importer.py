@@ -501,11 +501,15 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 if web_user_username:
                     check_can_upload_web_users(upload_user)
                     web_user = CouchUser.get_by_username(web_user_username)
-                    web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
-                                                        is_new_user=False,
-                                                        via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                        is_web_users_upload=False)
-                    user_change_logger = web_user_importer.logger
+                    if web_user:
+                        web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
+                                                            is_new_user=False,
+                                                            via=USER_CHANGE_VIA_BULK_IMPORTER,
+                                                            is_web_users_upload=False)
+                        user_change_logger = web_user_importer.logger
+                    else:
+                        web_user_importer = None
+                        user_change_logger = None
                     if remove_web_user:
                         remove_web_user_from_domain(domain, web_user, username, upload_user,
                                                     user_change_logger)
@@ -529,7 +533,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                             if location_codes is not None:
                                 web_user_importer.update_primary_location(user.location_id)
                             web_user.save()
-                    web_user_importer.save()
+                    if web_user_importer:
+                        web_user_importer.save()
                 if send_account_confirmation_email and not web_user_username:
                     send_account_confirmation_if_necessary(user)
 

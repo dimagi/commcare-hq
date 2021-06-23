@@ -196,12 +196,9 @@ class WebUserImporter(object):
         self.role_updated = False
 
         self.is_web_users_upload = is_web_users_upload
-        if self.user:
-            self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
-                                           changed_by_user=upload_user,
-                                           changed_via=via)
-        else:
-            self.logger = None
+        self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
+                                       changed_by_user=upload_user,
+                                       changed_via=via)
 
     def add_to_domain(self, role_qualified_id, location_id):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
@@ -252,12 +249,11 @@ class WebUserImporter(object):
                 self.logger.add_info(_(f"Assigned locations: {location_names}"))
 
     def save(self):
-        if self.logger:
-            # Tracking for role is done post user save to have role setup correctly on save
-            if self.role_updated:
-                new_role = self.user.get_role(domain=self.user_domain)
-                if new_role:
-                    self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
-                else:
-                    self.logger.add_change_message("Role: None")
-            self.logger.save()
+        # Tracking for role is done post user save to have role setup correctly on save
+        if self.role_updated:
+            new_role = self.user.get_role(domain=self.user_domain)
+            if new_role:
+                self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+            else:
+                self.logger.add_change_message("Role: None")
+        self.logger.save()
