@@ -28,6 +28,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
+from corehq.util.view_utils import get_case_or_404
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
 
@@ -81,7 +82,7 @@ from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -586,10 +587,11 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         _fail(_("Linking directly into Web Apps has been disabled."))
 
-    # TODO: fail if you aren't logged in as a mobile worker(?)
-
-    # TODO: claim case if it isn't in your casedb(?)
-    # arguments = request.GET
+    for case_id in request.GET.values():
+        try:
+            get_case_or_404(domain, case_id)
+        except Http404:
+            _fail(_("Case not found."))
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
