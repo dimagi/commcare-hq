@@ -35,6 +35,31 @@
   <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
   <script src="{% static 'reports/js/readable_form.js' %}"></script>
   <script src="{% static 'url-polyfill/url-polyfill.js' %}"></script>
+  <script>
+      function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+      var token = getCookie('XSRF-TOKEN')
+      $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+          if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+            xhr.setRequestHeader('X-XSRF-TOKEN', token);
+          }
+        }
+      });
+  </script>
 {% endcompress %}
 
 {% include 'hqwebapp/includes/ui_element_js.html' %}
