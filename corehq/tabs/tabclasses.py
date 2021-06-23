@@ -63,9 +63,9 @@ from corehq.apps.reminders.views import (
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
-    UserManagementReportDispatcher,
 )
 from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
@@ -130,13 +130,11 @@ class ProjectReportsTab(UITab):
     def sidebar_items(self):
         tools = self._get_tools_items()
         report_builder_nav = self._get_report_builder_items()
-        user_management_reports = UserManagementReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + report_builder_nav + user_management_reports
+        sidebar_items = (tools + report_builder_nav
                          + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
@@ -1539,6 +1537,17 @@ class ProjectUsersTab(UITab):
         if locations_menu:
             items.append((_('Organization'), locations_menu))
 
+        if (
+                user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS)
+                and toggles.USER_HISTORY_REPORT.enabled(self.couch_user.username)
+        ):
+            user_management_menu = [{
+                'title': UserHistoryReport.name,
+                'url': reverse('user_management_report_dispatcher',
+                               args=[self.domain, UserHistoryReport.slug])
+            }]
+            items.append((_('User Management'), user_management_menu))
         return items
 
 
