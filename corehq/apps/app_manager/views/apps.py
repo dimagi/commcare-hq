@@ -612,15 +612,17 @@ def import_app(request, domain):
             messages.error(request, _("You must upload the app source file."))
             valid_request = False
 
+        try:
+            source = json.load(file)
+        except json.decoder.JSONDecodeError:
+            messages.error(request, _("The file uploaded is an invalid JSON file"))
+            valid_request = False
+
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        try:
-            source = json.loads(file.read())
-        except json.decoder.JSONDecodeError:
-            messages.error(request, _("The file uploaded is an invalid JSON file"))
         assert(source is not None)
-        app = import_app_util(source, domain, {'name': name})
+        app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
     else:
