@@ -373,7 +373,7 @@ pillow==8.1.2
     #   -r base-requirements.in
     #   django-simple-captcha
     #   reportlab
-pip-tools==6.1.0
+pip-tools==6.2.0
     # via -r test-requirements.in
 ply==3.11
     # via
@@ -660,7 +660,9 @@ wcwidth==0.2.5
 werkzeug==1.0.1
     # via -r base-requirements.in
 wheel==0.36.2
-    # via -r dev-requirements.in
+    # via
+    #   -r dev-requirements.in
+    #   pip-tools
 wrapt==1.12.1
     # via deprecated
 xlrd==1.0.0
@@ -685,6 +687,7 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
+    #   pip-tools
     #   protobuf
     #   python-termstyle
     #   sphinx
