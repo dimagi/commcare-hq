@@ -37,7 +37,7 @@ class TestCaseListReport(TestCase):
         for user in dummy_user_list:
             user_obj = CouchUser.get_by_username(user['username'])
             if user_obj:
-                user_obj.delete('')
+                user_obj.delete(cls.domain, deleted_by=None)
         cls.user_list = []
         for user in dummy_user_list:
             user_obj = CommCareUser.create(**user) if user['doc_type'] == 'CommcareUser'\
@@ -69,7 +69,7 @@ class TestCaseListReport(TestCase):
         ensure_index_deleted(USER_INDEX)
         ensure_index_deleted(CASE_INDEX)
         for user in cls.user_list:
-            user.delete(deleted_by='')
+            user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     @classmethod
