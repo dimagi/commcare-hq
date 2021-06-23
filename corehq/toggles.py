@@ -1551,7 +1551,6 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
-    notification_emails=['aking'],
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -1923,7 +1922,8 @@ PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
     'USH: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Parallel+User+Imports"
 )
 
 RESTRICT_LOGIN_AS = StaticToggle(
@@ -2052,9 +2052,18 @@ DETAILED_TAGGING = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )

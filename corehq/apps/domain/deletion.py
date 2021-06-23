@@ -137,7 +137,7 @@ def _delete_web_user_membership(domain_name):
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
         if settings.UNIT_TESTING and not web_user.domain_memberships:
-            web_user.delete(deleted_by=None)
+            web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
 
@@ -354,7 +354,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'IncrementalExport', 'domain', ['IncrementalExportCheckpoint']),
     CustomDeletion('export', _delete_data_files, []),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),

@@ -283,6 +283,26 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
+    def test_return_to_shadow_module(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('enroll child', 'child')
+        factory.form_requires_case(m0f0)
+        m0f0.post_form_workflow = WORKFLOW_MODULE
+
+        m1 = factory.new_shadow_module('shadow_module', m0, with_form=False)
+
+        expected = """
+        <partial>
+            <stack>
+              <create>
+                <command value="'m1'"/>
+              </create>
+            </stack>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[2]/stack")
+
     def test_link_to_form_in_parent_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
@@ -324,6 +344,57 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_submodule'), factory.app.create_suite(), "./entry")
+
+    def test_form_links_other_child_module(self):
+        # This test demonstrates current behavior that I believe to be flawed
+
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        factory.form_opens_case(m0f0)
+        m1, m1f0 = factory.new_basic_module('child', 'baby', parent_module=m0)
+        factory.form_requires_case(m1f0)
+
+        m0f1 = factory.new_form(m0)
+        m0f1.post_form_workflow = WORKFLOW_FORM
+        m0f1.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id)]
+
+        m2, m2f0 = factory.new_basic_module('other_module', 'baby')
+        m2f0.post_form_workflow = WORKFLOW_FORM
+        m2f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id)]
+
+        # m0f1 links to m1f0, a form in its child module. Here's the stack for that:
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m0'"/>
+                    <command value="'m1'"/>
+                    <datum id="case_id_new_mother_0" value="uuid()"/>
+                    <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                    <command value="'m1-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[2]/stack")
+
+        # m2f0 links to m1f0, a form in a separate child module, here's the stack there
+        # Note that the command for m0 is absent. This is because prepend_parent_frame_children
+        # is only called if the target module is one of the current module's child modules,
+        # rather than for all child modules
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m1'"/>
+                    <datum id="case_id_new_mother_0" value="uuid()"/>
+                    <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                    <command value="'m1-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[4]/stack")
 
     def _build_workflow_app(self, mode):
         factory = AppFactory(build_version='2.9.0')

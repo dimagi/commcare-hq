@@ -1,5 +1,6 @@
 hqDefine('registration/js/user_login_form', [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
@@ -7,6 +8,7 @@ hqDefine('registration/js/user_login_form', [
     'hqwebapp/js/knockout_bindings.ko',
 ], function (
     $,
+    _,
     ko,
     initialPageData,
     assertProperties,
@@ -56,7 +58,10 @@ hqDefine('registration/js/user_login_form', [
          * or "Continue to <IdentityProvider>".
          * @param {boolean} expandPasswordField - (optional) if this is true, auto expand password field
          */
-        self.updateContinueText = function (expandPasswordField = false) {
+        self.updateContinueText = function (expandPasswordField) {
+            if (_.isUndefined(expandPasswordField)) {
+                expandPasswordField = false;
+            }
             self.continueTextPromise = $.post(self.checkSsoLoginStatusUrl, {
                 username: self.authUsername(),
             }, function (data) {

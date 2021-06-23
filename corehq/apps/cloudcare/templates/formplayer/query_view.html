@@ -35,10 +35,18 @@
   </td>
   <td class="col-sm-2">
     <% if (input == "select1") { %>
-      <select class="query-field form-control"  data-receive="<%- receive %>">
+      <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
         <option value=""></option>
         <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-          <option value="<%- i %>" <% if (value === i) { %>selected<% } %>>
+          <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
+            <%- itemsetChoices[i] %>
+          </option>
+        <% } %>
+      <select>
+    <% } else if (input == "select") { %>
+      <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
+        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+          <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
             <%- itemsetChoices[i] %>
           </option>
         <% } %>
