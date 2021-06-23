@@ -44,7 +44,7 @@ class LocationsTest(TestCase):
         self.user.set_location(self.loc)
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         SQLLocation.objects.all().delete()
         super(LocationsTest, self).tearDown()
 
