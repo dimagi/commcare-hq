@@ -3,7 +3,6 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.models_sql import (
     migrate_role_assignable_by_to_sql,
     migrate_role_permissions_to_sql,
-    SQLUserRole,
 )
 
 
@@ -23,7 +22,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "TODO: add once the PR adding this file is merged"
+        return "4f5a5ef0a9b5ef9873a9b2dce5646d7aa881c416"
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
