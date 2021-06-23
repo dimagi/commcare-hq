@@ -87,4 +87,5 @@ branches:
     - mk/user-history/report # MK June 23 [QA]
     - cs/SC-1517-openmrs_cancelled_payloads_not_logged # Charl June 21
     - jm/repeater-domain-admins  # Joel June 21
+    - sk/role-to-sql-auth  # Simon June 23
 submodules: { }
