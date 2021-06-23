@@ -613,10 +613,10 @@ def import_app(request, domain):
             valid_request = False
 
         try:
-            source = json.load(file)
+            if valid_request:
+                source = json.load(file)
         except json.decoder.JSONDecodeError:
             messages.error(request, _("The file uploaded is an invalid JSON file"))
-            valid_request = False
 
         if not valid_request:
             return render(request, template, {'domain': domain})
