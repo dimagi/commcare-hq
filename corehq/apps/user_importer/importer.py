@@ -755,7 +755,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
     elif username == upload_user.username:
-        raise UserUploadError(_("You cannot remove a yourself from a domain via bulk upload"))
+        raise UserUploadError(_("You cannot remove yourself from a domain via bulk upload"))
     else:
         user.delete_domain_membership(domain)
         user.save()
