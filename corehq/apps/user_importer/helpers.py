@@ -168,8 +168,9 @@ class CommCareUserImporter(object):
         if self.user.location_id != users_current_primary_location_id:
             self.logger.add_changes({'location_id': self.user.location_id})
             if self.user.location_id:
+                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    _(f"Primary location: {self.user.get_sql_location(self.user_domain).name}"))
+                    _(f"Primary location: {users_updated_primary_location_name}"))
 
     def update_role(self, role, domain_info):
         role_qualified_id = domain_info.roles_by_name[role]
