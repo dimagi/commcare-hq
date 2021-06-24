@@ -2,23 +2,23 @@
 {% load i18n %}
 
 <div id="ko-tabs-manage-downstream" class="ko-template">
+  <h3>{% trans "Manage Downstream Projects" %}</h3>
+  <p>
+    {% blocktrans %}
+      This project is an upstream project space for the projects listed below.<br/>
+      <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about Linked Projects.
+    {% endblocktrans %}
+  </p>
+  {% if is_erm_ff_enabled %}
+    <button type="button"
+            class="btn btn-primary"
+            id="add-downstream-domain"
+            data-toggle="modal"
+            data-target="#new-downstream-domain-modal">
+      <i class="fa fa-plus"></i> {% trans "Add Downstream Project" %}
+    </button>
+  {% endif %}
   <div data-bind="if: domain_links().length">
-    <h3>{% trans "Manage Downstream Projects" %}</h3>
-    <p>
-      {% blocktrans %}
-        This project is an upstream project space for the projects listed below.<br/>
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about Linked Projects.
-      {% endblocktrans %}
-    </p>
-    {% if is_erm_ff_enabled %}
-      <button type="button"
-              class="btn btn-primary"
-              id="add-downstream-domain"
-              data-toggle="modal"
-              data-target="#new-downstream-domain-modal">
-        <i class="fa fa-plus"></i> {% trans "Add Downstream Project" %}
-      </button>
-    {% endif %}
     <div class="spacer"></div>
     <div class="panel panel-default">
       <div class="panel-heading">
