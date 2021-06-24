@@ -1,13 +1,14 @@
+from unittest.mock import Mock
+
 from django.db import IntegrityError
 from django.db.transaction import atomic
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
     Permissions,
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo, UserRole,
-    StaticRole
+    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
+    StaticRole, UserRole
 )
-from corehq.apps.users.tests.test_migrate_roles_to_sql import _drop_couch_only_fields
 
 
 class RolesTests(TestCase):
@@ -41,7 +42,9 @@ class RolesTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        SQLUserRole.objects.all().delete()
+        # user couch role since SQL roles get rolled back with the transaction
+        for role in UserRole.by_domain(cls.domain, include_archived=True):
+            role.delete()
         super().tearDownClass()
 
     def test_set_assignable_by(self):
@@ -66,6 +69,50 @@ class RolesTests(TestCase):
             self.roles[2]
         }
         role.set_assignable_by([r.id for r in new_assignments])
+
+        role2 = SQLUserRole.objects.get(id=role.id)
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role2.get_assignable_by()},
+            {r.name for r in new_assignments}
+        )
+
+    def test_set_assignable_by_clear_prefetched_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            assignable_by=[self.roles[0].id]
+        )
+        self.assertEqual({a.assignable_by_role.name for a in role.get_assignable_by()}, {
+            self.roles[0].name
+        })
+
+        new_assignments = {
+            self.roles[2]
+        }
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([r.id for r in new_assignments])
+
+        self.assertEqual(
+            {a.assignable_by_role.name for a in role_with_prefetch.roleassignableby_set.all()},
+            {r.name for r in new_assignments}
+        )
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch.set_assignable_by([])
+        self.assertEqual(list(role_with_prefetch.roleassignableby_set.all()), [])
+
+    def test_set_assignable_by_couch(self):
+        role = SQLUserRole(
+            domain=self.domain,
+            name="test-role",
+        )
+        role.save()
+
+        new_assignments = {
+            self.roles[1],
+            self.roles[2]
+        }
+        role.set_assignable_by_couch([r.couch_id for r in new_assignments])
 
         role2 = SQLUserRole.objects.get(id=role.id)
         self.assertEqual(
@@ -108,6 +155,52 @@ class RolesTests(TestCase):
 
         role2 = SQLUserRole.objects.get(id=role.id)
         self.assertEqual(set(role2.get_permission_infos()), new_permissions)
+
+    def test_set_permissions_clear_prefetch_cache(self):
+        role = SQLUserRole.create(
+            domain=self.domain,
+            name="test-role",
+            permissions=Permissions()
+        )
+
+        self.assertEqual(set(role.get_permission_infos()), set(Permissions().to_list()))
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        new_permissions = {PermissionInfo(Permissions.access_api.name)}
+        role_with_prefetch.set_permissions(new_permissions)
+
+        self.assertEqual(set(role_with_prefetch.get_permission_infos()), new_permissions)
+
+        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        role_with_prefetch.set_permissions([])
+        self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
+
+    def test_by_couch_id(self):
+        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id)
+        self.assertEqual(role.id, self.roles[0].id)
+
+        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain=self.roles[0].domain)
+        self.assertEqual(role.id, self.roles[0].id)
+
+        with self.assertRaises(SQLUserRole.DoesNotExist):
+            SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain="other-domain")
+
+    def test_create_atomic(self):
+        sql_roles_in_domain = {role.get_id for role in self.roles[0:2]}
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
+
+        permissions_raises_exception = Mock(side_effect=Exception)
+        with self.assertRaises(Exception):
+            SQLUserRole.create(self.domain, 'test_atomic', permissions=permissions_raises_exception)
+
+        # check sql role not created
+        sql_roles = SQLUserRole.objects.get_by_domain(self.domain)
+        self.assertEqual({role.get_id for role in sql_roles}, sql_roles_in_domain)
+
+        # check couch role not created
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
 
 class TestRolePermissionsModel(TestCase):
@@ -172,15 +265,27 @@ class TestRolePermissionsModel(TestCase):
 class TestStaticRoles(SimpleTestCase):
     domain = "static-role-test"
 
+    expected_role_dict = {
+        "domain": "static-role-test",
+        "name": None,
+        "permissions": None,
+        "default_landing_page": None,
+        "is_non_admin_editable": False,
+        "assignable_by": [],
+        "is_archived": False,
+        "upstream_id": None
+    }
+
     def test_static_role_default(self):
         static_dict = StaticRole.domain_default(self.domain).to_json()
-        couch_dict = UserRole(domain=self.domain, name=None, permissions=Permissions()).to_json()
-        _drop_couch_only_fields(couch_dict)
-        self.assertDictEqual(couch_dict, static_dict)
+        expected = self.expected_role_dict.copy()
+        expected["permissions"] = Permissions().to_json()
+        self.assertDictEqual(expected, static_dict)
 
     def test_static_role_admin(self):
         static_admin_role = StaticRole.domain_admin(self.domain)
-        couch_dict = UserRole(domain=self.domain, name="Admin", permissions=Permissions.max()).to_json()
-        _drop_couch_only_fields(couch_dict)
-        self.assertDictEqual(couch_dict, static_admin_role.to_json())
+        expected = self.expected_role_dict.copy()
+        expected["name"] = "Admin"
+        expected["permissions"] = Permissions.max().to_json()
+        self.assertDictEqual(expected, static_admin_role.to_json())
         self.assertEqual(static_admin_role.get_qualified_id(), "admin")

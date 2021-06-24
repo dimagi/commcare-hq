@@ -1358,7 +1358,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     # These were originally DictProperty(JRResourceProperty),
     # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
-    # so it was actually wrapping as a StringPropery
+    # so it was actually wrapping as a StringProperty
     # too late to retroactively apply that validation,
     # so now these are DictProperty(StringProperty)
     media_image = DictProperty(StringProperty)
@@ -1461,7 +1461,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return custom_icon.form, custom_icon_text
         return None, None
 
-    def _set_media(self, media_attr, lang, media_path):
+    def set_media(self, media_attr, lang, media_path):
         """
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
@@ -1484,10 +1484,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
+        self.set_media('media_image', lang, icon_path)
 
     def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
+        self.set_media('media_audio', lang, audio_path)
 
     def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
@@ -1792,9 +1792,15 @@ class DetailTab(IndexedSchema):
     starting_index = IntegerProperty()
 
     # A tab may be associated with a nodeset, resulting in a detail that
-    # iterates through sub-nodes of an entity rather than a single entity
+    # iterates through a set of entities rather than a single entity.
+    # A nodeset is represented by one of the two properties:
+    #   nodeset: An absolute xpath expression to iterate over
+    #   nodeset_case_type: Iterate over all child cases of this type
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    nodeset_case_type = StringProperty()
+
+    # Display condition for the tab
     relevant = StringProperty()
 
 
@@ -1965,7 +1971,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     instance_name = StringProperty(default='casedb')
@@ -2016,9 +2021,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def sort_nodeset_columns_for_detail(self):
         return (
-            self.display == "long" and
-            self.sort_nodeset_columns and
-            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+            self.display == "long"
+            and any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
     def has_persistent_tile(self):
@@ -2083,6 +2087,7 @@ class CaseSearchProperty(DocumentSchema):
     input_ = StringProperty()
     default_value = StringProperty()
     hint = DictProperty()
+    hidden = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
@@ -2095,11 +2100,16 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
-class CaseSearchLabel(DocumentSchema):
+class BaseCaseSearchLabel(NavMenuItemMediaMixin):
+    def get_app(self):
+        return self._module.get_app()
+
+
+class CaseSearchLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search All Cases'})
 
 
-class CaseSearchAgainLabel(DocumentSchema):
+class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
@@ -2227,6 +2237,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.case_list._module = self
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
+        if hasattr(self, 'search_config'):
+            self.search_config.search_label._module = self
+            self.search_config.search_again_label._module = self
 
     @classmethod
     def wrap(cls, data):

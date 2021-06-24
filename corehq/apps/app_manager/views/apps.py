@@ -106,7 +106,6 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.util.compression import decompress
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -603,23 +602,28 @@ def import_app(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
-        compressed = request.POST.get('compressed')
+        file = request.FILES.get('source_file')
 
         valid_request = True
         if not name:
             messages.error(request, _("You must submit a name for the application you are importing."))
             valid_request = False
-        if not compressed:
-            messages.error(request, _("You must submit the source data."))
+        if not file:
+            messages.error(request, _("You must upload the app source file."))
+            valid_request = False
+
+        try:
+            if valid_request:
+                source = json.load(file)
+        except json.decoder.JSONDecodeError:
+            messages.error(request, _("The file uploaded is an invalid JSON file"))
             valid_request = False
 
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
-        source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, {'name': name})
+        app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
     else:
