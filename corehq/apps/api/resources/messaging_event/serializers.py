@@ -108,8 +108,8 @@ def _get_messages_for_email(event):
         recipient_address = email.recipient_address
         message_id = email.id
     except Email.DoesNotExist:
-        content = '-'
-        recipient_address = '-'
+        content = None
+        recipient_address = None
         message_id = None
 
     return [{
