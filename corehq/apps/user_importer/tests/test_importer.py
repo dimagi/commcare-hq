@@ -233,6 +233,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=self.user.get_id,
                                                changed_by=self.uploading_user.get_id)
+        # no message for any location change
+        self.assertFalse("location" in user_history.message)
         self.assertEqual(user_history.details['changes']['assigned_location_ids'], [])
         self.assertEqual(user_history.details['changes']['location_id'], None)
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
@@ -258,6 +260,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                                                changed_by=self.uploading_user.get_id)
         self.assertEqual(user_history.message, "Assigned locations: ['loc1', 'loc2']. Primary location: loc1")
         self.assertEqual(user_history.details['changes']['location_id'], self.loc1._id)
+        self.assertEqual(user_history.details['changes']['assigned_location_ids'],
+                         [self.loc1.get_id, self.loc2.get_id])
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
         # reassign to loc2
@@ -278,6 +282,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                                                changed_by=self.uploading_user.get_id)
         self.assertTrue("Assigned locations: ['loc2']" in user_history.message)
         self.assertTrue("Primary location: loc2" in user_history.message)
+        self.assertEqual(user_history.details['changes']['assigned_location_ids'], [self.loc2.get_id])
         self.assertEqual(user_history.details['changes']['location_id'], self.loc2._id)
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
@@ -297,6 +302,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                                                changed_by=self.uploading_user.get_id)
         self.assertEqual(user_history.message, "Assigned locations: ['loc1']. Primary location: loc1")
         self.assertEqual(user_history.details['changes']['location_id'], self.loc1._id)
+        self.assertEqual(user_history.details['changes']['assigned_location_ids'], [self.loc1.get_id])
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
         # reassign to loc2
@@ -317,6 +323,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertTrue("Assigned locations: ['loc2']" in user_history.message)
         self.assertTrue("Primary location: loc2" in user_history.message)
         self.assertEqual(user_history.details['changes']['location_id'], self.loc2._id)
+        self.assertEqual(user_history.details['changes']['assigned_location_ids'], [self.loc2.get_id])
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
     def setup_locations(self):
@@ -603,7 +610,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
 
         # create
-        created_user = CommCareUser.get_by_username("hello@mydomain.commcarehq.org")
+        created_user = self.user
         self.assertEqual(
             LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
             0
@@ -615,6 +622,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(log_entry.user_id, created_user.get_id)
         self.assertEqual(log_entry.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(log_entry.details['changes']['username'], created_user.username)
+        self.assertEqual(log_entry.message, f"Role: {self.role.name}[{self.role.get_id}]")
 
     def test_tracking_update_to_existing_commcare_user(self):
         CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
@@ -762,6 +770,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
 
+        # only one entry for the mobile worker created
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.user_id, self.user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
+
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
         username = 'a@a.com'
@@ -779,6 +792,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertFalse(mock_invite.send_activation_email.called)
         self.assertTrue(web_user.is_member_of(self.domain.name))
 
+        # History record for the web user getting added as web user
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=web_user.get_id,
                                                changed_by=self.uploading_user.get_id)
@@ -839,9 +853,14 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock(),
             False
         )
-        self.assertIsNotNone(
-            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
-        )
+        commcare_user = CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
+        self.assertIsNotNone(commcare_user)
+
+        # logged under correct domain
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.user_id, commcare_user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
     def test_update_pending_user_role(self, mock_send_activation_email):
@@ -865,9 +884,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role.get_id)
 
         # only one entry for mobile user create, none for corresponding web user
-        self.assertEqual(UserHistory.objects.filter(
-            changed_by=self.uploading_user.get_id
-        ).count(), 1)
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.user_id, self.user.get_id)
+        self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
         added_user_id = self.user._id
         import_users_and_groups(
@@ -892,9 +911,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(Invitation.by_email('a@a.com')[0].role, self.other_role.get_qualified_id())
 
         # one more added just for commcare user update, none for corresponding web user
-        self.assertEqual(UserHistory.objects.filter(
-            changed_by=self.uploading_user.get_id
-        ).count(), 2)
+        user_historys = list(UserHistory.objects.filter(changed_by=self.uploading_user.get_id))
+        self.assertEqual(len(user_historys), 2)
+        last_entry = user_historys[1]
+        self.assertEqual(last_entry.user_id, self.user.user_id)
+        self.assertEqual(last_entry.action, UserModelAction.UPDATE.value)
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
@@ -1111,13 +1132,14 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             True
         )
         self.assertIsNotNone(Invitation.objects.filter(email='existing@user.com').first())
-        user_history = UserHistory.objects.filter(
+        user_history = UserHistory.objects.get(
             user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
-        ).last()
+        )
+        self.assertEqual(user_history.domain, self.domain.name)
         self.assertEqual(user_history.message, 'Invited to domain')
         self.assertDictEqual(
             user_history.details,
-            {'changed_via': 'bulk_importer', 'changes': {}}
+            {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
         )
 
     def test_web_user_user_name_change(self):
@@ -1134,6 +1156,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertNotEqual(self.user.first_name, "")
         self.assertNotEqual(self.user.last_name, "")
 
+        user_history = UserHistory.objects.get()
+        self.assertNotIn('first_name', user_history.details['changes'])
+        self.assertNotIn('last_name', user_history.details['changes'])
+
     def test_upper_case_email(self):
         self.setup_users()
         email = 'hELlo@WoRld.Com'
@@ -1147,6 +1173,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.email, email.lower())
 
+        # no change recorded for email
+        user_history = UserHistory.objects.get()
+        self.assertNotIn('email', user_history.details['changes'])
+
     def test_set_role(self):
         self.setup_users()
         import_users_and_groups(
@@ -1158,13 +1188,13 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             True
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
-        user_history = UserHistory.objects.filter(
+        user_history = UserHistory.objects.get(
             changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
-        ).last()
+        )
         self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
         self.assertDictEqual(
             user_history.details,
-            {'changed_via': 'bulk_importer', 'changes': {}}
+            {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
         )
 
     def test_update_role_current_user(self):
