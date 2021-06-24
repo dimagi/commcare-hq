@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -8,15 +9,13 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
-    HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
@@ -26,20 +25,25 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from corehq.apps.users.analytics import get_role_user_count
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
+
 from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
+
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+    requires_privilege_with_fallback,
+)
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM,
@@ -48,6 +52,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -55,7 +60,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, filters, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -75,8 +80,16 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
     initiate_sms_verification_workflow,
 )
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.translations.models import SMSTranslations
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.user_importer.tasks import (
+    import_users_and_groups,
+    parallel_user_import,
+)
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.analytics import get_role_user_count
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -87,6 +100,7 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
+    CreateDomainPermissionsMirrorForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
@@ -104,14 +118,14 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
-from corehq.apps.users.tasks import (
-    bulk_download_users_async,
+from corehq.apps.users.tasks import bulk_download_users_async
+from corehq.apps.users.views.utils import (
+    BulkUploadResponseWrapper,
+    get_editable_role_choices,
 )
-from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError
-from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.pillows.utils import WEB_USER_TYPE
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -538,6 +552,14 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(require_can_edit_or_view_web_users, name='dispatch')  # TODO: also mobile users
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
@@ -677,6 +699,86 @@ class ListRolesView(BaseRoleAccessView):
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
         }
+
+
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_enterprise_users(request, domain):
+    # TODO: do they really need to see both web and mobile users at once?
+    # Would it be good enough to see either web or mobile users, but
+    # also include linked users if relevant?
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+
+    web_result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+    web_users = [WebUser.wrap(w) for w in web_result.hits]
+
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().domains(domains).mobile_users().sort('username.exact')
+        .filter(    # TODO: extract as function and maybe DRY up with login_as_user_query
+            queries.nested(
+                'user_data_es',
+                filters.AND(
+                    filters.term('user_data_es.key', 'login_as_user'),
+                    filters.term('user_data_es.value', web_user_usernames),
+                )
+            )
+        )
+        .run()
+    )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
+
+    users = []
+    for web_user in web_users:
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'otherDomains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'loginAsUserCount': len(mobile_users[web_user.username]),
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            profile = mobile_user._get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
+            })
+
+    return JsonResponse({
+        'users': users,
+        'total': web_result.total,
+        'page': page,
+        'query': query,
+    })
+
+
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    # TODO: this does UserRole.get, maybe switch to pulling all roles before this loop?
+    # TODO: show all roles for web user?
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.raw_username,
+        'created_on': user.created_on.strftime(USER_DATETIME_FORMAT),
+        'id': user.get_id,
+        'editUrl': reverse('user_account', args=[domain, user.get_id]),
+        'role': role.name if role else None,
+    }
 
 
 @always_allow_project_access

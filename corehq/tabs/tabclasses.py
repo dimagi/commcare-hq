@@ -1177,12 +1177,14 @@ class MessagingTab(UITab):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+
         whatsapp_urls = []
 
         domain_has_turn_integration = (
             SQLTurnWhatsAppBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
@@ -1385,11 +1387,16 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,    # TODO: only show if you can edit both web and mobile, and this is an enterprise
                 EditWebUserView,
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-            menu.append({
+            menu = menu + [{
+                'title': _(EnterpriseUsersView.page_title),
+                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            }, {
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1414,7 +1421,7 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
