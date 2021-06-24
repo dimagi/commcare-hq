@@ -168,6 +168,7 @@ from no_exceptions.exceptions import Http403
 from .dispatcher import ProjectReportDispatcher
 from .forms import SavedReportConfigForm, TableauServerForm, TableauVisualizationForm
 from .lookup import ReportLookup, get_full_report_name
+from .models import TableauVisualization, TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
