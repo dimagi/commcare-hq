@@ -1391,11 +1391,15 @@ class ProjectUsersTab(UITab):
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+
+            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+                menu.append({
+                    'title': _(EnterpriseUsersView.page_title),
+                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+
             menu = menu + [{
-                'title': _(EnterpriseUsersView.page_title),
-                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-            }, {
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),

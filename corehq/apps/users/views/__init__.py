@@ -536,6 +536,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
 class EnterpriseUsersView(BaseRoleAccessView):
     template_name = 'users/enterprise_users.html'
     page_title = ugettext_lazy("Enterprise Users")
