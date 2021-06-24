@@ -10,5 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        block_upgrade_for_removed_migration('4c7d3a96e061680bc87567d5916ae1e90dd60858')
+        block_upgrade_for_removed_migration('a7c40ca6acf609b22b495ab986c11f3524b47ce7')
     }
