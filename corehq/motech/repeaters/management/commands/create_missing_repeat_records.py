@@ -9,20 +9,23 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.util.argparse_types import date_type
 
 
-def create_missing_repeat_records(startdate, enddate, should_create):
-
-    domains_with_repeaters = get_domains_that_have_repeat_records()
+def create_missing_repeat_records(startdate, enddate, domain, should_create):
+    if domain:
+        domains_with_repeaters = [domain]
+    else:
+        domains_with_repeaters = get_domains_that_have_repeat_records()
     missing_records_per_domain = {}
     for domain in domains_with_repeaters:
         forms = get_forms_in_domain_between_dates(domain, startdate, enddate)
         repeaters = get_repeaters_by_domain(domain)
+        count_missing = 0
         for form in forms:
             if should_create:
-                count_missing = create_missing_repeat_records_for_form(domain, repeaters, form)
+                count_missing += create_missing_repeat_records_for_form(domain, repeaters, form)
             else:
-                count_missing = count_missing_repeat_records_for_form(domain, repeaters, form)
-            if count_missing > 0:
-                missing_records_per_domain[domain] = count_missing
+                count_missing += count_missing_repeat_records_for_form(domain, repeaters, form)
+        if count_missing > 0:
+            missing_records_per_domain[domain] = count_missing
 
     print(f"Missing records per domain:\n {missing_records_per_domain}")
 
@@ -65,7 +68,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-e', '--enddate', default="2021-06-22", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
 
-    def handle(self, startdate, enddate, create, **options):
-        create_missing_repeat_records(startdate, enddate, create)
+    def handle(self, startdate, enddate, domain, create, **options):
+        create_missing_repeat_records(startdate, enddate, domain, create)
