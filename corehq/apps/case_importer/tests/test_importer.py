@@ -60,7 +60,7 @@ class ImporterTest(TestCase):
         delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain, deleted_by=None)
         self.domain_obj.delete()
         self.subdomain1.delete()
         self.subdomain2.delete()
@@ -585,7 +585,7 @@ class ImporterTest(TestCase):
 
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
-                restrict_user_to_location(self, dsa):
+                restrict_user_to_location(self.domain, self, dsa):
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
                 ['', 'Leonard Nimoy', inc.location_id],
@@ -603,7 +603,7 @@ class ImporterTest(TestCase):
 
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
-                restrict_user_to_location(self, dsa):
+                restrict_user_to_location(self.domain, self, dsa):
             inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', None, None, location=inc)
             dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', None, None, location=dsi)
             dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', None, None, location=dsa)
@@ -644,7 +644,7 @@ def make_worksheet_wrapper(*rows):
 
 
 @contextmanager
-def restrict_user_to_location(test_case, location):
+def restrict_user_to_location(domain, test_case, location):
     orig_user = test_case.couch_user
 
     restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t", None, None)
@@ -655,7 +655,7 @@ def restrict_user_to_location(test_case, location):
         yield
     finally:
         test_case.couch_user = orig_user
-        restricted_user.delete(deleted_by=None)
+        restricted_user.delete(domain, deleted_by=None)
 
 
 @contextmanager
@@ -678,4 +678,4 @@ def get_commcare_user(domain_name):
     try:
         yield user
     finally:
-        user.delete(deleted_by=None)
+        user.delete(domain_name, deleted_by=None)
