@@ -10,7 +10,7 @@ from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater
 from corehq.util.argparse_types import date_type
 
 
-def create_missing_repeat_records(startdate, enddate, domain, detailed_count=False, should_create=False):
+def create_missing_repeat_records(startdate, enddate, domain=None, detailed_count=False, should_create=False):
     if domain:
         domains_with_repeaters = [domain]
     else:
