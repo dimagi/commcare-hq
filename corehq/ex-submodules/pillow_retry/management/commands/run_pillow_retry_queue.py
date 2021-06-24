@@ -14,7 +14,7 @@ from pillow_retry.models import PillowError
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.sql_db.util import handle_connection_failure
 
-BATCH_SIZE = 10000
+BATCH_SIZE = 100
 
 producer = ChangeProducer(auto_flush=False)
 
