@@ -26,7 +26,7 @@ def create_missing_repeat_records():
 
 def check_repeat_records_for_submission(domain, repeaters, form, create=False):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form.form_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
     for repeater in repeaters:
         found = False
         for repeat_record in repeat_records:
@@ -45,7 +45,7 @@ def check_repeat_records_for_submission(domain, repeaters, form, create=False):
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
-    return FormES().domain(domain).date_range('modified_on', gte=startdate, lte=enddate).run()
+    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).run().hits
 
 
 class Command(BaseCommand):
