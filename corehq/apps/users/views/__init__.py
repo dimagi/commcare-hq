@@ -784,7 +784,6 @@ def paginate_enterprise_users(request, domain):
             'name': web_user.full_name,
             #'role': web_user.role_label(domain),  # TODO: roles for each domain
             'id': web_user.get_id,
-            'editUrl': reverse('user_account', args=[domain, web_user.get_id]),    # TODO: link into different domains
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             # TODO: DRY up with above?
@@ -793,7 +792,6 @@ def paginate_enterprise_users(request, domain):
                 'domain': domain,
                 'name': mobile_user.full_name,
                 'id': mobile_user.get_id,
-                'editUrl': reverse('user_account', args=[domain, mobile_user.get_id]),
             })
 
     return JsonResponse({
