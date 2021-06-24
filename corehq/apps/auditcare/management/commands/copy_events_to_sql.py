@@ -49,7 +49,7 @@ class Command(BaseCommand):
                     exit(1)
             else:
                 batches = self.generate_batches(workers, batch_by)
-            batched_processes = [gevent.spawn(copy_events_to_sql, batch[0], batch[1]) for batch in batches]
+            batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
             gevent.joinall([*batched_processes])
 
         #count = copy_events_to_sql(int(limit))
