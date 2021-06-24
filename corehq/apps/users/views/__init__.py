@@ -100,7 +100,6 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    CreateDomainPermissionsMirrorForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
@@ -713,7 +712,8 @@ def paginate_enterprise_users(request, domain):
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
-    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    from corehq.apps.enterprise.models import EnterprisePermissions
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
 
     web_result = (
         UserES().domains(domains).web_users().sort('username.exact')
