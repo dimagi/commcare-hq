@@ -263,6 +263,20 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
+    var GettingStartedViewModel = function (data) {
+        var self = {};
+        self.makeUpstream = function () {
+            console.log('Make upstream');
+        };
+        self.makeDownstream = function () {
+            console.log('Make downstream');
+        };
+        self.upstreamDomains = data.upstream_domains.sort();
+        return self;
+    }
+
+
+
     var setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);
         _private.RMI = function (remoteMethod, data) {
@@ -289,6 +303,11 @@ hqDefine("linked_domain/js/domain_links", [
         if ($("#new-downstream-domain-modal").length) {
             $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainViewModel);
         }
+
+        if ($("#ko-getting-started").length) {
+            var gettingStartedViewModel = GettingStartedViewModel(view_data);
+            $("#ko-getting-started").koApplyBindings(gettingStartedViewModel);
+        };
 
     });
 });

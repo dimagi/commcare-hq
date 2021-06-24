@@ -1,0 +1,36 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-getting-started" class="ko-template">
+  <h3>{% trans "Linked Projects" %}</h3>
+  <p>
+    {% blocktrans %}
+      Get started by creating a link between two projects, allowing you to push and pull content.<br/>
+      If you want to pull content from another project into this project, make it a downstream project.<br/>
+      <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about linked projects.
+    {% endblocktrans %}
+  </p>
+  <div class="spacer"></div>
+  <div class="row">
+    <div class="col-sm-6">
+      <h4>Make Downstream Project</h4>
+      <ul data-bind="foreach: upstreamDomains">
+          <li data-bind="text: $data"></li>
+      </ul>
+    </div>
+    <div class="col-sm-6">
+      <h4>{% trans "Make Upstream Project" %}</h4>
+      <p>
+        {% blocktrans %}
+          If you want to push content in this project to other projects, make it an upstream project.<br/>
+        {% endblocktrans %}
+      </p>
+      <button type="button"
+            class="btn btn-primary"
+            id="add-downstream-domain"
+            data-bind="click: makeUpstream">
+        {% trans "Yes, make upstream project" %}
+      </button>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,8 @@ from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.filters import clean_options
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -46,7 +48,7 @@ from corehq.apps.linked_domain.const import (
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
     get_domain_master_link,
-    get_linked_domains,
+    get_linked_domains, get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import (
@@ -253,6 +255,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         )
 
         available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
+        available_upstream_domains = get_upstream_domains(self.request.domain, self.request.couch_user)
 
         return {
             'domain': self.domain,
@@ -261,6 +264,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'is_master_domain': bool(len(linked_domains)),
             'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
+                'upstream_domains': available_upstream_domains,
                 'available_domains': available_domains_to_link,
                 'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
