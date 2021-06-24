@@ -4,7 +4,7 @@ hqDefine("dhis2/js/dataset_map_update", [
     "hqwebapp/js/widgets",
     'jquery-ui/ui/widgets/datepicker',
 ], function ($) {
-        function showCompleteDateColumnInput(shouldShow) {
+    function showCompleteDateColumnInput(shouldShow) {
         var label = $('label[for="id_complete_date_column"]').hide();
         var element = $('#id_complete_date_column').hide();
 
@@ -17,13 +17,13 @@ hqDefine("dhis2/js/dataset_map_update", [
         }
     }
 
-    function evaluateCompleteDateSelection(event) {
-        var cdoElement = document.getElementById('id_complete_date_option')
+    function evaluateCompleteDateSelection() {
+        var cdoElement = document.getElementById('id_complete_date_option');
 
         // Second element corresponds to UCR Column,
         // but this is maybe not the best way of determining that
         // this option was selected ...
-        if (cdoElement.selectedIndex == 1) {
+        if (cdoElement.selectedIndex === 1) {
             showCompleteDateColumnInput(true);
         } else {
             showCompleteDateColumnInput(false);
@@ -31,6 +31,6 @@ hqDefine("dhis2/js/dataset_map_update", [
     }
 
     evaluateCompleteDateSelection(null);
-    completeDateOptionsElement = document.getElementById('id_complete_date_option');
+    var completeDateOptionsElement = document.getElementById('id_complete_date_option');
     completeDateOptionsElement.addEventListener("change", evaluateCompleteDateSelection);
 });

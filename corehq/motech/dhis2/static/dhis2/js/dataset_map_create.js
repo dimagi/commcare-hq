@@ -16,13 +16,13 @@ hqDefine("dhis2/js/dataset_map_create", [
         }
     }
 
-    function evaluateCompleteDateSelection(event) {
-        var cdoElement = document.getElementById('id_complete_date_option')
+    function evaluateCompleteDateSelection() {
+        var cdoElement = document.getElementById('id_complete_date_option');
 
         // Second element corresponds to UCR Column,
         // but this is maybe not the best way of determining that
         // this option was selected ...
-        if (cdoElement.selectedIndex == 1) {
+        if (cdoElement.selectedIndex === 1) {
             showCompleteDateColumnInput(true);
         } else {
             showCompleteDateColumnInput(false);
@@ -30,6 +30,6 @@ hqDefine("dhis2/js/dataset_map_create", [
     }
 
     evaluateCompleteDateSelection(null);
-    completeDateOptionsElement = document.getElementById('id_complete_date_option');
+    var completeDateOptionsElement = document.getElementById('id_complete_date_option');
     completeDateOptionsElement.addEventListener("change", evaluateCompleteDateSelection);
 });
