@@ -259,6 +259,7 @@ def parse_dataset_for_request(
         dataset['completeDate'] = str(dataset_map.complete_date)
         datavalues_sets = group_dataset_datavalues(dataset, datavalues_list)
     else:
+        dataset['dataValues'] = datavalues_list
         datavalues_sets = [dataset]
 
     return datavalues_sets
