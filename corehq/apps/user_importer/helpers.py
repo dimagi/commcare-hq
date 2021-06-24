@@ -226,17 +226,18 @@ class WebUserImporter(object):
             self.user.set_role(self.user_domain, role_qualified_id)
 
     def update_primary_location(self, location_id):
-        current_primary_location_id = self.user.location_id
+        current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
         if location_id:
             self.user.set_location(self.user_domain, location_id)
-            self.logger.add_changes({'location_id': self.user.location_id})
-            if self.user.location_id != current_primary_location_id:
+            if current_primary_location_id != location_id:
+                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    _(f"Primary location: {self.user.get_sql_location(self.user_domain).name}"))
+                    _(f"Primary location: {users_updated_primary_location_name}[{location_id}]"))
         else:
             self.user.unset_location(self.user_domain)
-            if self.user.location_id != current_primary_location_id:
-                self.logger.add_changes({'location_id': ''})
+            # if there was a location before, log that it was cleared
+            if current_primary_location_id:
+                self.logger.add_info("Primary location: None")
 
     def update_locations(self, location_codes, membership, domain_info):
         from corehq.apps.user_importer.importer import (
@@ -246,7 +247,7 @@ class WebUserImporter(object):
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
-        users_current_primary_location_id = self.user.location_id
+        users_current_primary_location_id = membership.location_id
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
                                                                          membership.location_id,
                                                                          membership.assigned_location_ids)
@@ -254,17 +255,24 @@ class WebUserImporter(object):
             self.user.unset_location(self.user_domain, commit=False)
         if locations_updated:
             self.user.reset_locations(self.user_domain, location_ids, commit=False)
-            self.logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = [get_location_from_site_code(code, domain_info.location_cache).name
-                                  for code in location_codes]
-                self.logger.add_info(_(f"Assigned locations: {location_names}"))
+                locations = [get_location_from_site_code(code, domain_info.location_cache)
+                             for code in location_codes]
+                locations_info = ", ".join([f"{location.name}[{location.location_id}]" for location in locations])
+            else:
+                locations_info = []
+            self.logger.add_info(_(f"Assigned locations: {locations_info}"))
 
         # log this after assigned locations are updated, which can re-set primary location
-        if self.user.location_id != users_current_primary_location_id:
-            self.logger.add_changes({'location_id': self.user.location_id})
-            if self.user.location_id:
-                self.logger.add_info(_(f"Primary location: {self.user.get_sql_location(self.user_domain).name}"))
+        users_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
+        if users_updated_primary_location_id != users_current_primary_location_id:
+            if users_updated_primary_location_id:
+                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
+                location_info = f"{users_updated_primary_location_name}[{users_updated_primary_location_id}]"
+            else:
+                location_info = None
+            self.logger.add_info(
+                _(f"Primary location: {location_info}"))
 
     def save(self):
         # Tracking for role is done post user save to have role setup correctly on save
@@ -275,3 +283,15 @@ class WebUserImporter(object):
             else:
                 self.logger.add_change_message("Role: None")
         self.logger.save()
+
+
+def get_user_primary_location_id(user, domain):
+    primary_location = user.get_sql_location(domain)
+    if primary_location:
+        return primary_location.location_id
+
+
+def get_user_primary_location_name(user, domain):
+    primary_location = user.get_sql_location(domain)
+    if primary_location:
+        return primary_location.name

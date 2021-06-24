@@ -1346,6 +1346,14 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # test for multiple locations
         self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], membership.assigned_location_ids)
 
+        user_history = UserHistory.objects.get()
+        self.assertEqual(
+            user_history.message,
+            f"Assigned locations: loc1[{self.loc1.location_id}], loc2[{self.loc2.location_id}]. "
+            f"Primary location: loc1[{self.loc1.location_id}]. "
+            f"Role: {self.role.name}[{self.role.get_id}]"
+        )
+
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_web_user_location_remove(self):
         self.setup_users()
@@ -1358,6 +1366,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock(),
             True
         )
+
+        user_history = UserHistory.objects.get()
+        self.assertEqual(
+            user_history.message,
+            f"Assigned locations: loc1[{self.loc1.location_id}], loc2[{self.loc2.location_id}]. "
+            f"Primary location: loc1[{self.loc1.location_id}]. "
+            f"Role: {self.role.name}[{self.role.get_id}]"
+        )
+
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id)],
@@ -1369,6 +1386,11 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         membership = self.user.get_domain_membership(self.domain_name)
         self.assertEqual(membership.location_id, None)
         self.assertListEqual(membership.assigned_location_ids, [])
+        user_history = UserHistory.objects.filter(user_id=self.user.get_id).last()
+        self.assertEqual(
+            user_history.message,
+            "Assigned locations: []. Primary location: None"
+        )
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_invite_location_add(self):
