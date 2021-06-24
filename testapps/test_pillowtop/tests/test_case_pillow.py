@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
+from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
+    clear_local_domain_sql_backend_override
 from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -60,6 +62,20 @@ class CasePillowTest(TestCase):
         self.assertEqual(self.domain, case_doc['domain'])
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
+
+    def test_case_pillow_couch_to_sql(self):
+        self.process_case_changes.__enter__()
+        case_id = uuid.uuid4().hex
+        case_name = 'case-name-{}'.format(uuid.uuid4().hex)
+        case = create_and_save_a_case(self.domain, case_id, case_name)
+        self.assertTrue(hasattr(case, "_rev"))  # make sure it's a couch case
+
+        set_local_domain_sql_backend_override(self.domain)
+        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
+
+        self.process_case_changes.__exit__(None, None, None)
+        results = CaseES().run()
+        self.assertEqual(0, results.total)
 
     @run_with_all_backends
     def test_case_pillow_error_in_case_es(self):

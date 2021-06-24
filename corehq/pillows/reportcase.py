@@ -11,7 +11,7 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
-from .base import convert_property_dict
+from .base import convert_property_dict, is_couch_change_for_sql_domain
 
 
 def report_case_filter(doc_dict):
@@ -38,6 +38,7 @@ def get_case_to_report_es_processor():
         index_info=REPORT_CASE_INDEX_INFO,
         doc_prep_fn=transform_case_to_report_es,
         doc_filter_fn=report_case_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
 
 

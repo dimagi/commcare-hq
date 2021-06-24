@@ -39,6 +39,7 @@ class UserES(HQESQuery):
     def builtin_filters(self):
         return [
             domain,
+            domains,
             created,
             mobile_users,
             web_users,
@@ -64,12 +65,15 @@ class UserES(HQESQuery):
 
 
 def domain(domain, allow_enterprise=False):
-    domains = [domain]
     if allow_enterprise:
         from corehq.apps.enterprise.models import EnterprisePermissions
         config = EnterprisePermissions.get_by_domain(domain)
         if config.is_enabled and domain in config.domains:
-            domains.append(config.source_domain)
+            return domains([domain, config.source_domain])
+    return domains([domain])
+
+
+def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
