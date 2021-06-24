@@ -42,7 +42,7 @@ hqDefine("users/js/web_users",[
             self.error('');
             $.ajax({
                 method: 'GET',
-                url: initialPageData.reverse('paginate_web_users'),
+                url: initialPageData.reverse('paginate_enterprise_users'),
                 data: {
                     page: page,
                     query: self.query() || '',
