@@ -106,11 +106,14 @@ def _get_messages_for_email(event):
         email = Email.objects.get(messaging_subevent=event.pk)
         content = email.body
         recipient_address = email.recipient_address
+        message_id = email.id
     except Email.DoesNotExist:
         content = '-'
         recipient_address = '-'
+        message_id = None
 
     return [{
+        "message_id": message_id,
         "date": event.date,
         "type": "email",
         "direction": "outgoing",
@@ -149,6 +152,7 @@ def _get_message_dicts_for_sms(event, messages, type_):
             status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
 
         message_data = {
+            "message_id": sms.id,
             "date": sms.date,
             "type": type_,
             "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
