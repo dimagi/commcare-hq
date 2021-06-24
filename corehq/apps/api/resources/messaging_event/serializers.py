@@ -69,7 +69,7 @@ def _serialize_event_recipient(event):
             "couch_recipient_doc_type": event.get_recipient_doc_type()
         })
     return {
-        "id": event.recipient_id,
+        "recipient_id": event.recipient_id,
         "type": MessagingSubEvent.RECIPIENT_SLUGS.get(event.recipient_type, "unknown"),
         "name": name or "unknown",
     }
@@ -80,7 +80,7 @@ def _serialize_event_source(event):
     parent = event.parent
 
     return {
-        "id": parent.source_id,
+        "source_id": parent.source_id,
         "type": MessagingEvent.SOURCE_SLUGS.get(parent.source, 'unknown'),
         "name": get_event_display_api(parent),
     }
