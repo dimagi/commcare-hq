@@ -5,26 +5,39 @@ from django.core.management.base import BaseCommand
 from corehq.apps.es.forms import FormES
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
-    get_repeaters_by_domain, get_repeat_records_by_payload_id,
+    get_repeat_records_by_payload_id,
+    get_repeaters_by_domain,
 )
+from corehq.util.argparse_types import date_type
 
 
-def create_missing_repeat_records():
-    startdate = datetime(2021, 6, 19)
-    enddate = datetime(2021, 6, 21)
+def create_missing_repeat_records(startdate, enddate, should_create):
+
     domains_with_repeaters = get_domains_that_have_repeat_records()
-    num_of_missing_records = 0
+    missing_records_per_domain = {}
     for domain in domains_with_repeaters:
         forms = get_forms_in_domain_between_dates(domain, startdate, enddate)
         repeaters = get_repeaters_by_domain(domain)
         for form in forms:
-            count_missing = check_repeat_records_for_submission(domain, repeaters, form, create=False)
-            num_of_missing_records += count_missing
+            if should_create:
+                count_missing = create_missing_repeat_records_for_form(domain, repeaters, form)
+            else:
+                count_missing = count_missing_repeat_records_for_form(domain, repeaters, form)
+            if count_missing > 0:
+                missing_records_per_domain[domain] = count_missing
 
-    print(f"{num_of_missing_records} repeat records are missing.")
+    print(f"Missing records per domain:\n {missing_records_per_domain}")
 
 
-def check_repeat_records_for_submission(domain, repeaters, form, create=False):
+def count_missing_repeat_records_for_form(domain, repeaters, form):
+    count_missing = 0
+    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
+    if len(repeat_records) != len(repeaters):
+        count_missing += len(repeaters) - len(repeat_records)
+    return count_missing
+
+
+def create_missing_repeat_records_for_form(domain, repeaters, form):
     count_missing = 0
     repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
     for repeater in repeaters:
@@ -36,10 +49,8 @@ def check_repeat_records_for_submission(domain, repeaters, form, create=False):
 
         if not found:
             count_missing += 1
-            # print(f"COULD NOT FIND PAYLOAD {form.form_id} FOR REPEATER {repeater.get_id}.\nSHOULD CREATE")
-            if create:
-                # will attempt to send now if registered
-                repeater.register(form)
+            # will attempt to send now if registered
+            repeater.register(form)
 
     return count_missing
 
@@ -53,5 +64,10 @@ class Command(BaseCommand):
     Find case/form submissions/updates that do not have a corresponding repeat record and create a repeat record
     """
 
-    def handle(self, *args, **options):
-        create_missing_repeat_records()
+    def add_arguments(self, parser):
+        parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-e', '--enddate', default="2021-06-22", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
+
+    def handle(self, startdate, enddate, create, **options):
+        create_missing_repeat_records(startdate, enddate, create)
