@@ -1484,6 +1484,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
