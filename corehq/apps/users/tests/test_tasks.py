@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import WebUser, DomainPermissionsMirror
+from corehq.apps.users.models import WebUser
 from corehq.apps.users.tasks import update_domain_date
 
 
@@ -18,8 +19,7 @@ class TasksTest(TestCase):
         # Set up domains
         cls.domain = create_domain('test')
         cls.mirror_domain = create_domain('mirror')
-        cls.mirror = DomainPermissionsMirror(source=cls.domain.name, mirror=cls.mirror_domain.name)
-        cls.mirror.save()
+        create_enterprise_permissions('web@web.com', 'test', ['mirror'])
 
         # Set up user
         cls.web_user = WebUser.create(
@@ -41,7 +41,7 @@ class TasksTest(TestCase):
         super().tearDownClass()
 
     def _last_accessed(self, user, domain):
-        domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
+        domain_membership = user.get_domain_membership(domain, allow_enterprise=False)
         if domain_membership:
             return domain_membership.last_accessed
         return None
