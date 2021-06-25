@@ -540,7 +540,7 @@ xlrd==1.0.0
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-xmlsec==1.3.9
+xmlsec==1.3.11
     # via python3-saml
 zipp==3.4.0
     # via importlib-metadata
