@@ -15,37 +15,63 @@ def create_missing_repeat_records(startdate, enddate, domain=None, detailed_coun
         domains_with_repeaters = [domain]
     else:
         domains_with_repeaters = get_domains_that_have_repeat_records()
+
+    missing_form_records_per_domain = create_missing_repeat_records_for_form_repeaters(
+        startdate,
+        enddate,
+        domains_with_repeaters,
+        detailed_count,
+        should_create
+    )
+
+    return missing_form_records_per_domain
+
+
+def create_missing_repeat_records_for_form_repeaters(startdate,
+                                                     enddate,
+                                                     domains,
+                                                     detailed_count=False,
+                                                     should_create=False):
     missing_records_per_domain = {}
-    for domain in domains_with_repeaters:
-        form_ids = get_form_ids_in_domain_between_dates(domain, startdate, enddate)
-        repeaters_with_form_payloads = (FormRepeater, ShortFormRepeater)
+    missing_form_ids = {}
+    repeaters_with_form_payloads = (
+        FormRepeater,
+        ShortFormRepeater,
+    )
+
+    for domain in domains:
+
         form_repeaters = [repeater for repeater in get_repeaters_by_domain(domain)
                           if isinstance(repeater, repeaters_with_form_payloads)]
-        count_missing = 0
-        for form_id in form_ids:
+        total_count_missing = 0
+        for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
             if detailed_count:
-                count_missing += create_missing_repeat_records_for_form(domain, form_repeaters, form_id,
+                count_missing = create_missing_repeat_records_for_form(domain, form_repeaters, form,
                                                                         should_create)
+                total_count_missing += count_missing
             else:
-                count_missing += count_missing_repeat_records_for_form(domain, form_repeaters, form_id)
-        if count_missing > 0:
-            missing_records_per_domain[domain] = count_missing
+                count_missing = count_missing_repeat_records_for_form(domain, form_repeaters, form)
+                total_count_missing += count_missing
+            if count_missing > 0:
+                missing_form_ids.update(form.get_id)
+        if total_count_missing > 0:
+            missing_records_per_domain[domain] = total_count_missing
 
     print(f"Missing records per domain:\n {missing_records_per_domain}")
-    return missing_records_per_domain
+    return missing_records_per_domain, missing_form_ids
 
 
-def count_missing_repeat_records_for_form(domain, repeaters, form_id):
+def count_missing_repeat_records_for_form(domain, repeaters, form):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
     if len(repeat_records) != len(repeaters):
         count_missing += len(repeaters) - len(repeat_records)
     return count_missing
 
 
-def create_missing_repeat_records_for_form(domain, repeaters, form_id, should_create):
+def create_missing_repeat_records_for_form(domain, repeaters, form, should_create):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
     for repeater in repeaters:
         for repeat_record in repeat_records:
             if repeat_record.repeater_id == repeater.get_id:
@@ -53,19 +79,14 @@ def create_missing_repeat_records_for_form(domain, repeaters, form_id, should_cr
         else:
             count_missing += 1
             if should_create:
-                forms = FormES().form_ids([form_id]).run().hits
-                if len(forms) == 1:
-                    # will attempt to send now if registered
-                    repeater.register(forms[0])
-                else:
-                    print(f"Error retrieving form for id {form_id}")
+                # will attempt to send now if registered
+                repeater.register(form)
 
     return count_missing
 
 
-def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
-    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate)\
-        .values_list('_id', flat=True)
+def get_forms_in_domain_between_dates(domain, startdate, enddate):
+    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).scroll()
 
 
 class Command(BaseCommand):
