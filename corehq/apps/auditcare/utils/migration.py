@@ -18,6 +18,27 @@ class AuditCareMigrationUtil():
             return self.get_next_batch_start(counter=counter + 1)
         return cache.get(self.start_key)
 
+    def generate_batches(self, worker_count, batch_by):
+        batches = []
+        with cache.lock(self.start_lock_key, timeout=10):
+            start_datetime = self.get_next_batch_start()
+            if not start_datetime:
+                # for the first call
+                start_datetime = INITIAL_START_DATE
+
+            start_time = _get_formatted_start_time(start_datetime, batch_by)
+            end_time = None
+
+            for index in range(worker_count):
+                end_time = _get_end_time(start_time, batch_by)
+                batches.append([start_time, end_time])
+                start_time = end_time
+            self.set_next_batch_start(end_time)
+            if end_time > datetime.now():
+                print("Migration successfully done")
+                exit(1)
+        return batches
+
     def set_next_batch_start(self, value):
         cache.set(self.start_key, value)
 
@@ -59,3 +80,15 @@ def get_formatted_datetime_string(datetime_obj):
 def get_datetimes_from_key(key):
     start, end = key.split("_")
     return [force_to_datetime(start), force_to_datetime(end)]
+
+
+def _get_end_time(start_time, batch_by):
+    delta = timedelta(hours=1) if batch_by == 'h' else timedelta(days=1)
+    return start_time + delta
+
+
+def _get_formatted_start_time(start_time, batch_by):
+    if batch_by == 'h':
+        return start_time.replace(minute=0, second=0, microsecond=0)
+    else:
+        return start_time.replace(hour=0, minute=0, second=0, microsecond=0)
