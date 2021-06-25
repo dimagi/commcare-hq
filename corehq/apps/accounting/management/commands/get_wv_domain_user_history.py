@@ -40,7 +40,7 @@ class Command(BaseCommand):
         start_date = parser.parse(start_date).date()
         end_date = parser.parse(end_date).date()
 
-        self.stdout.writeln('\nproject\tmonth\tmobile users\tsubmissions\tweb users')
+        self.stdout.write('\nproject\tmonth\tmobile users\tsubmissions\tweb users')
         for domain in WORLDVISION_DOMAINS:
             domain_user_histories = DomainUserHistory.objects.filter(
                 domain=domain,
@@ -89,6 +89,6 @@ class Command(BaseCommand):
                 num_mobile_users = history.num_users
                 month = current_month.strftime('%b %Y')
 
-                self.stdout.writeln(
+                self.stdout.write(
                     f'\n{domain}\t{month}\t{num_mobile_users}\t{num_submissions}\tweb {num_web_users}'
                 )
