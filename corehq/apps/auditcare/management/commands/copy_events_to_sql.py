@@ -1,14 +1,9 @@
-from datetime import datetime, timedelta
-
 from django.core.management.base import BaseCommand
 
 import gevent
 
 from corehq.apps.auditcare.tasks import copy_events_to_sql
 from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
-
-
-INITIAL_START_DATE = datetime(2013, 1, 1)
 
 
 class Command(BaseCommand):
