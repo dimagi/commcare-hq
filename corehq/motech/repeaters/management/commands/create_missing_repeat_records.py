@@ -53,7 +53,7 @@ def create_missing_repeat_records_for_form_repeaters(startdate,
                 count_missing = count_missing_repeat_records_for_form(domain, form_repeaters, form)
                 total_count_missing += count_missing
             if count_missing > 0:
-                missing_form_ids.update(form.get_id)
+                missing_form_ids.update(form['_id'])
         if total_count_missing > 0:
             missing_records_per_domain[domain] = total_count_missing
 
@@ -63,7 +63,7 @@ def create_missing_repeat_records_for_form_repeaters(startdate,
 
 def count_missing_repeat_records_for_form(domain, repeaters, form):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
     if len(repeat_records) != len(repeaters):
         count_missing += len(repeaters) - len(repeat_records)
     return count_missing
@@ -71,7 +71,7 @@ def count_missing_repeat_records_for_form(domain, repeaters, form):
 
 def create_missing_repeat_records_for_form(domain, repeaters, form, should_create):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
     for repeater in repeaters:
         for repeat_record in repeat_records:
             if repeat_record.repeater_id == repeater.get_id:
