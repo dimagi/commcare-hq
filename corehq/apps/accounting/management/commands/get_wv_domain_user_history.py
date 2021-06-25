@@ -90,5 +90,5 @@ class Command(BaseCommand):
                 month = current_month.strftime('%b %Y')
 
                 self.stdout.write(
-                    f'\n{domain}\t{month}\t{num_mobile_users}\t{num_submissions}\t{num_web_users}'
+                    f'{domain}\t{month}\t{num_mobile_users}\t{num_submissions}\t{num_web_users}'
                 )
