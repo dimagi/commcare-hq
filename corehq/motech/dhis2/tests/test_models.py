@@ -31,6 +31,7 @@ from ..models import (
     get_grouped_datavalues_sets,
     _group_data_by_keys,
     parse_dataset_for_request,
+    get_end_of_period,
 )
 from mock import patch
 
@@ -466,6 +467,30 @@ class TestGetGroupedDatasets(TestCase):
                 break
 
         self.assertEqual(result_of_interest.get('dataValues'), expected_results)
+
+
+class TestGetEndOfPeriod(TestCase):
+
+    def test_end_of_week_period(self):
+        expected_date = '2021-01-28'
+        self.assertEqual(expected_date, str(get_end_of_period(
+            SEND_FREQUENCY_WEEKLY,
+            '2021W04'
+        )))
+
+    def test_end_of_month_period(self):
+        expected_date = '2021-02-28'
+        self.assertEqual(expected_date, str(get_end_of_period(
+            SEND_FREQUENCY_MONTHLY,
+            '202102'
+        )))
+
+    def test_end_of_quarter_period(self):
+        expected_date = '2021-09-30'
+        self.assertEqual(expected_date, str(get_end_of_period(
+            SEND_FREQUENCY_QUARTERLY,
+            '2021Q3'
+        )))
 
 
 class TestParseDatasetForRequest(TestCase):

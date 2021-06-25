@@ -36,8 +36,6 @@ from .const import (
     COMPLETE_DATE_EMPTY,
     COMPLETE_DATE_ON_PERIOD_END,
     COMPLETE_DATE_ON_SEND,
-    DAYS_IN_ONE_WEEK,
-    MONTHS_IN_ONE_QUARTER
 )
 
 
@@ -522,12 +520,11 @@ def get_end_of_period(frequency, period):
     period = "200403" for March 2004, frequency = SEND_FREQUENCY_MONTHLY.
     period = "2004Q1" for January-March 2004, frequency = SEND_FREQUENCY_QUARTERLY
     """
-    end_of_period = None
 
     if frequency == SEND_FREQUENCY_WEEKLY:
         (year, week) = period.split('W')
         start_of_year = datetime(int(year), 1, 1)
-        days_in_n_weeks = int(week) * DAYS_IN_ONE_WEEK
+        days_in_n_weeks = int(week) * 7
         end_of_period = start_of_year + relativedelta(days=days_in_n_weeks)
 
     elif frequency == SEND_FREQUENCY_MONTHLY:
@@ -539,11 +536,11 @@ def get_end_of_period(frequency, period):
     elif frequency == SEND_FREQUENCY_QUARTERLY:
         (year, quarter) = period.split('Q')
         start_of_year = datetime(int(year), 1, 1)
-        months = int(quarter) * MONTHS_IN_ONE_QUARTER
+        months = int(quarter) * 3
         end_of_period = start_of_year + relativedelta(months=months)
     else:
         return None
 
-    # Subtract 1 day for last day of month instead of 1 day of next month, or
-    # last day the week
+    # Subtract 1 day for last day of month/week instead of 1st day of
+    # next month/week
     return (end_of_period - relativedelta(days=1)).date()

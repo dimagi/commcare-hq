@@ -77,5 +77,3 @@ COMPLETE_DATE_CHOICES = [
     (COMPLETE_DATE_ON_PERIOD_END, _('Use last day of period')),
     (COMPLETE_DATE_ON_SEND, _('Use date that dataValues are sent')),
 ]
-DAYS_IN_ONE_WEEK = 7
-MONTHS_IN_ONE_QUARTER = 3
