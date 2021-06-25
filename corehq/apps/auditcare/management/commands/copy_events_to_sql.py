@@ -43,7 +43,7 @@ class Command(BaseCommand):
                     print("No errored keys present")
                     exit(1)
             else:
-                batches = self.generate_batches(workers, batch_by)
+                batches = util.generate_batches(workers, batch_by)
             batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
             gevent.joinall([*batched_processes])
 
