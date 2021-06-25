@@ -13,14 +13,9 @@ class AuditCareMigrationUtil():
 
     def __init__(self):
         self.start_key = "auditcare_migration_2021_next_batch_time"
-        self.start_lock_key = f"{self.start_key}_lock"
+        self.start_lock_key = "auditcare_migration_batch_lock"
 
-    def get_next_batch_start(self, counter=0):
-        if self.is_start_key_lock_acquired():
-            gevent.sleep(1)
-            if counter >= 10:
-                raise Exception("Unable to get next batch start time")
-            return self.get_next_batch_start(counter=counter + 1)
+    def get_next_batch_start(self):
         return cache.get(self.start_key)
 
     def generate_batches(self, worker_count, batch_by):
