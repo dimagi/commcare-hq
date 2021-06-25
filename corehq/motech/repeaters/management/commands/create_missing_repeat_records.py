@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.es.forms import FormES
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id,
@@ -45,15 +46,17 @@ def create_missing_repeat_records_for_form_repeaters(startdate,
                           if isinstance(repeater, repeaters_with_form_payloads)]
         total_count_missing = 0
         for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
+            # results returned from scroll() are making me do this
+            form_id = form['form']['meta']['instanceID']
             if detailed_count:
-                count_missing = create_missing_repeat_records_for_form(domain, form_repeaters, form,
-                                                                        should_create)
+                count_missing = create_missing_repeat_records_for_form(
+                    domain, form_repeaters, form_id, should_create)
                 total_count_missing += count_missing
             else:
-                count_missing = count_missing_repeat_records_for_form(domain, form_repeaters, form)
+                count_missing = count_missing_repeat_records_for_form(domain, form_repeaters, form_id)
                 total_count_missing += count_missing
             if count_missing > 0:
-                missing_form_ids.update(form['_id'])
+                missing_form_ids.update(form_id)
         if total_count_missing > 0:
             missing_records_per_domain[domain] = total_count_missing
 
@@ -61,17 +64,17 @@ def create_missing_repeat_records_for_form_repeaters(startdate,
     return missing_records_per_domain, missing_form_ids
 
 
-def count_missing_repeat_records_for_form(domain, repeaters, form):
+def count_missing_repeat_records_for_form(domain, repeaters, form_id):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
+    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
     if len(repeat_records) != len(repeaters):
         count_missing += len(repeaters) - len(repeat_records)
     return count_missing
 
 
-def create_missing_repeat_records_for_form(domain, repeaters, form, should_create):
+def create_missing_repeat_records_for_form(domain, repeaters, form_id, should_create):
     count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
+    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
     for repeater in repeaters:
         for repeat_record in repeat_records:
             if repeat_record.repeater_id == repeater.get_id:
@@ -80,7 +83,7 @@ def create_missing_repeat_records_for_form(domain, repeaters, form, should_creat
             count_missing += 1
             if should_create:
                 # will attempt to send now if registered
-                repeater.register(form)
+                repeater.register(FormAccessors(domain).get_form(form_id))
 
     return count_missing
 
