@@ -32,6 +32,7 @@ def create_missing_repeat_records(startdate, enddate, domain=None, detailed_coun
             missing_records_per_domain[domain] = count_missing
 
     print(f"Missing records per domain:\n {missing_records_per_domain}")
+    return missing_records_per_domain
 
 
 def count_missing_repeat_records_for_form(domain, repeaters, form_id):
