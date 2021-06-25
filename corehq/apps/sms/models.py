@@ -92,6 +92,13 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.messaging_subevent_id:
+            MessagingSubEvent.objects.filter(id=self.messaging_subevent_id).update(
+                date_modified=datetime.utcnow()
+            )
+
     def set_gateway_error(self, message):
         """Set gateway error message or code
 
@@ -2576,3 +2583,10 @@ class Email(models.Model):
     recipient_address = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.messaging_subevent_id:
+            MessagingSubEvent.objects.filter(id=self.messaging_subevent_id).update(
+                date_modified=datetime.utcnow()
+            )
