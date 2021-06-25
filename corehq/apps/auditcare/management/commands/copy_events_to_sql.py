@@ -46,39 +46,3 @@ class Command(BaseCommand):
                 batches = util.generate_batches(workers, batch_by)
             batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
             gevent.joinall([*batched_processes])
-
-        #count = copy_events_to_sql(int(limit))
-
-    def generate_batches(self, worker_count, batch_by):
-        migration_util = AuditCareMigrationUtil()
-        start_datetime = migration_util.get_next_batch_start()
-        migration_util.acquire_read_lock()
-        if not start_datetime:
-            # for the first call
-            start_datetime = INITIAL_START_DATE
-
-        start_time = _get_formatted_start_time(start_datetime, batch_by)
-        end_time = None
-        batches = []
-        for index in range(worker_count):
-            end_time = _get_end_time(start_time, batch_by)
-            batches.append([start_time, end_time])
-            start_time = end_time
-        migration_util.set_next_batch_start(end_time)
-        migration_util.release_read_lock()
-        if end_time > datetime.now():
-            print("Migration successfully done")
-            exit(1)
-        return batches
-
-
-def _get_end_time(start_time, batch_by):
-    delta = timedelta(hours=1) if batch_by == 'h' else timedelta(days=1)
-    return start_time + delta
-
-
-def _get_formatted_start_time(start_time, batch_by):
-    if batch_by == 'h':
-        return start_time.replace(minute=0, second=0, microsecond=0)
-    else:
-        return start_time.replace(hour=0, minute=0, second=0, microsecond=0)
