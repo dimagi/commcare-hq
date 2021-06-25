@@ -150,3 +150,31 @@ def run_management_command_or_exit(command_name, *args, required_commit=None, cu
                 commcare-cloud <env> deploy commcare
             """)
         sys.exit(1)
+
+
+def block_upgrade_for_removed_migration(commit_with_migration):
+    """Returns a Django migration operation that will block the upgrade if the migration
+    has not run (fresh installs will not get blocked).
+
+    :param commit_with_migration: A Git commit hash that contains the migration.
+    """
+    @skip_on_fresh_install
+    def show_message(apps, schema_editor):
+        print("""
+            A migration must be performed before this environment can be upgraded to the latest version
+            of CommCareHQ. The migration has been removed from the current version of the code so an older
+            version must be used.
+        """)
+        print("")
+        print("""
+        Run the following commands to run the migration and get up to date:
+
+            commcare-cloud <env> fab setup_limited_release --set code_branch={commit_with_migration}
+
+            commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
+
+            commcare-cloud <env> deploy commcare
+        """)
+        sys.exit(1)
+
+    return migrations.RunPython(show_message, reverse_code=migrations.RunPython.noop, elidable=True)
