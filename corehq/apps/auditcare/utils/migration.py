@@ -1,7 +1,12 @@
-from corehq.apps.auditcare.models import AuditcareMigrationMeta
+from datetime import datetime, timedelta
+
 from django.core.cache import cache
-import gevent
+
 from dimagi.utils.dates import force_to_datetime
+
+from corehq.apps.auditcare.models import AuditcareMigrationMeta
+
+INITIAL_START_DATE = datetime(2013, 1, 1)
 
 
 class AuditCareMigrationUtil():
