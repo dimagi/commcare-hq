@@ -3,34 +3,8 @@ from corehq.apps.auditcare.models import AuditcareMigrationMeta
 from datetime import datetime
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
-from corehq.apps.auditcare.management.commands.copy_events_to_sql import Command
 from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil, get_formatted_datetime_string
 from django.core.cache import cache
-
-
-class TestCopyEventsToSQL(SimpleTestCase):
-    start_time = datetime(2020, 6, 1)
-
-    @classmethod
-    def setUpClass(cls):
-        return super().setUpClass()
-
-    @patch('corehq.apps.auditcare.management.commands.copy_events_to_sql.AuditCareMigrationUtil.get_next_batch_start', return_value=start_time)
-    def test_generate_batches(self, _):
-        batches = Command().generate_batches(2, 'h')
-        expected_batches = [
-            [datetime(2020, 6, 1), datetime(2020, 6, 1, 1)],
-            [datetime(2020, 6, 1, 1), datetime(2020, 6, 1, 2)]
-        ]
-        self.assertEquals(batches, expected_batches)
-
-        batches = Command().generate_batches(2, 'd')
-        expected_batches = [
-            [datetime(2020, 6, 1), datetime(2020, 6, 2)],
-            [datetime(2020, 6, 2), datetime(2020, 6, 3)]
-        ]
-        self.assertEquals(batches, expected_batches)
 
 
 class TestAuditcareMigrationUtil(TransactionTestCase):
@@ -47,12 +21,21 @@ class TestAuditcareMigrationUtil(TransactionTestCase):
         start_time = self.util.get_next_batch_start()
         self.assertEqual(start_time, self.start_time)
 
-    def test_locking_functionality(self):
-        self.util.acquire_read_lock()
-        self.assertRaises(Exception, self.util.get_next_batch_start)
-        self.util.release_read_lock()
-        start_time = self.util.get_next_batch_start()
-        self.assertEqual(start_time, self.start_time)
+    @patch('corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start', return_value=start_time)
+    def test_generate_batches(self, _):
+        batches = self.util.generate_batches(2, 'h')
+        expected_batches = [
+            [datetime(2020, 6, 1), datetime(2020, 6, 1, 1)],
+            [datetime(2020, 6, 1, 1), datetime(2020, 6, 1, 2)]
+        ]
+        self.assertEquals(batches, expected_batches)
+
+        batches = self.util.generate_batches(2, 'd')
+        expected_batches = [
+            [datetime(2020, 6, 1), datetime(2020, 6, 2)],
+            [datetime(2020, 6, 2), datetime(2020, 6, 3)]
+        ]
+        self.assertEquals(batches, expected_batches)
 
     def test_log_batch_start(self):
         self.util.log_batch_start(self.key)
@@ -96,6 +79,5 @@ class TestAuditcareMigrationUtil(TransactionTestCase):
     @classmethod
     def tearDownClass(cls):
         cache.delete(cls.util.start_key)
-        cache.delete(cls.util.start_lock_key)
         AuditcareMigrationMeta.objects.all().delete()
         return super().tearDownClass()
