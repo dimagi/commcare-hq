@@ -49,7 +49,7 @@ def obtain_missing_form_repeat_records(startdate,
             stats_per_domain[domain] = {
                 'missing_count': total_missing_count,
                 'form_ids': missing_form_ids,
-                'percentage_missing': (total_missing_count / total_count) * 100,
+                'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
             }
 
     return stats_per_domain
@@ -101,5 +101,4 @@ class Command(BaseCommand):
         else:
             domains_with_repeaters = get_domains_that_have_repeat_records()
 
-        missing_records = obtain_missing_form_repeat_records(startdate, enddate, domains_with_repeaters, create)
-        print(missing_records)
+        _ = obtain_missing_form_repeat_records(startdate, enddate, domains_with_repeaters, create)
