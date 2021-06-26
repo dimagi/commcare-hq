@@ -10,86 +10,76 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater
 from corehq.util.argparse_types import date_type
 
-
-def create_missing_repeat_records(startdate, enddate, domain=None, detailed_count=False, should_create=False):
-    if domain:
-        domains_with_repeaters = [domain]
-    else:
-        domains_with_repeaters = get_domains_that_have_repeat_records()
-
-    missing_form_records_per_domain = create_missing_repeat_records_for_form_repeaters(
-        startdate,
-        enddate,
-        domains_with_repeaters,
-        detailed_count,
-        should_create
-    )
-
-    return missing_form_records_per_domain
+REPEATERS_WITH_FORM_PAYLOADS = (
+    FormRepeater,
+    ShortFormRepeater,
+)
 
 
-def create_missing_repeat_records_for_form_repeaters(startdate,
-                                                     enddate,
-                                                     domains,
-                                                     detailed_count=False,
-                                                     should_create=False):
-    missing_records_per_domain = {}
-    missing_form_ids = set()
-    repeaters_with_form_payloads = (
-        FormRepeater,
-        ShortFormRepeater,
-    )
-
+def obtain_missing_form_repeat_records(startdate,
+                                       enddate,
+                                       domains,
+                                       should_create=False):
+    """
+    :param startdate: filter out forms with a server_modified_on prior to this date
+    :param enddate: filter out forms with a server_modified_on after this date
+    :param domains: list of domains to check
+    :param should_create: if  True, missing repeat records that are discovered will be registered with the repeater
+    :return: a dictionary containing stats about number of missing records, impacted form_ids, percentage missing
+    """
+    stats_per_domain = {}
     for domain in domains:
+        missing_form_ids = set()
+        total_missing_count = 0
+        total_count = 0
+        form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
 
-        form_repeaters = [repeater for repeater in get_repeaters_by_domain(domain)
-                          if isinstance(repeater, repeaters_with_form_payloads)]
-        total_count_missing = 0
         for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
-            # results returned from scroll() are making me do this
+            # results returned from scroll() do not include '_id'
             form_id = form['form']['meta']['instanceID']
-            if detailed_count:
-                count_missing = create_missing_repeat_records_for_form(
-                    domain, form_repeaters, form_id, should_create)
-                total_count_missing += count_missing
-            else:
-                count_missing = count_missing_repeat_records_for_form(domain, form_repeaters, form_id)
-                total_count_missing += count_missing
-            if count_missing > 0:
+            missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
+                domain, form_repeaters_in_domain, form_id, should_create
+            )
+            total_missing_count += missing_count
+            total_count += missing_count + successful_count
+            if missing_count > 0:
                 missing_form_ids.add(form_id)
-        if total_count_missing > 0:
-            missing_records_per_domain[domain] = total_count_missing
 
-    print(f"Missing records per domain:\n {missing_records_per_domain}")
-    return missing_records_per_domain, missing_form_ids
+        if total_missing_count > 0:
+            stats_per_domain[domain]['missing_count'] = total_missing_count
+            stats_per_domain[domain]['form_ids'] = missing_form_ids
+            stats_per_domain[domain]['percentage_missing'] = (total_missing_count / total_count) * 100
 
-
-def count_missing_repeat_records_for_form(domain, repeaters, form_id):
-    count_missing = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
-    if len(repeat_records) != len(repeaters):
-        count_missing += len(repeaters) - len(repeat_records)
-    return count_missing
+    return stats_per_domain
 
 
-def create_missing_repeat_records_for_form(domain, repeaters, form_id, should_create):
-    count_missing = 0
+def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, should_create):
+    missing_count = 0
+    successful_count = 0
     repeat_records = get_repeat_records_by_payload_id(domain, form_id)
     for repeater in repeaters:
+        # for each repeater, make sure a repeat record exists
         for repeat_record in repeat_records:
             if repeat_record.repeater_id == repeater.get_id:
+                successful_count += 1
                 break
         else:
-            count_missing += 1
+            # did not find a matching repeat record for the payload
+            missing_count += 1
             if should_create:
-                # will attempt to send now if registered
+                # will attempt to send now
                 repeater.register(FormAccessors(domain).get_form(form_id))
 
-    return count_missing
+    return missing_count, successful_count
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
     return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).scroll()
+
+
+def get_form_repeaters_in_domain(domain):
+    return [repeater for repeater in get_repeaters_by_domain(domain)
+            if isinstance(repeater, REPEATERS_WITH_FORM_PAYLOADS)]
 
 
 class Command(BaseCommand):
@@ -101,9 +91,13 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-e', '--enddate', default="2021-06-22", type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
-        parser.add_argument('-dc', '--detailed-count', action='store_true',
-                            help='Count missing repeat records using detailed method')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
 
-    def handle(self, startdate, enddate, domain, detailed_count, create, **options):
-        create_missing_repeat_records(startdate, enddate, domain, detailed_count, create)
+    def handle(self, startdate, enddate, domain, create, **options):
+        if domain:
+            domains_with_repeaters = [domain]
+        else:
+            domains_with_repeaters = get_domains_that_have_repeat_records()
+
+        missing_records = obtain_missing_form_repeat_records(startdate, enddate, domains_with_repeaters, create)
+        print(missing_records)
