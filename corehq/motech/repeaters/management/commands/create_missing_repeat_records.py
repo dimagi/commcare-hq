@@ -46,9 +46,11 @@ def obtain_missing_form_repeat_records(startdate,
                 missing_form_ids.add(form_id)
 
         if total_missing_count > 0:
-            stats_per_domain[domain]['missing_count'] = total_missing_count
-            stats_per_domain[domain]['form_ids'] = missing_form_ids
-            stats_per_domain[domain]['percentage_missing'] = (total_missing_count / total_count) * 100
+            stats_per_domain[domain] = {
+                'missing_count': total_missing_count,
+                'form_ids': missing_form_ids,
+                'percentage_missing': (total_missing_count / total_count) * 100,
+            }
 
     return stats_per_domain
 
