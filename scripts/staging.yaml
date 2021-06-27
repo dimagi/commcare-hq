@@ -85,6 +85,6 @@ branches:
     - mk/user-history/report # MK June 23 [QA]
     - jm/repeater-domain-admins  # Joel June 21
     - sk/role-to-sql-auth  # Simon June 23
-#    - jls/enterprise-user-overview  # Jenny June 24
+    - jls/enterprise-user-overview  # Jenny June 24
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
 submodules: { }
