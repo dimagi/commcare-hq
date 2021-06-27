@@ -1,8 +1,7 @@
 from couchdbkit.ext.django.schema import ListProperty
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 
 import mock
-from memoized import Memoized
 from testil import eq, assert_raises
 
 from corehq.apps.export.views.utils import user_can_view_deid_exports
@@ -10,7 +9,6 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import (
     DomainMembership,
     Permissions,
-    UserRole,
     WebUser, PARAMETERIZED_PERMISSIONS, PermissionInfo,
 )
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION, has_permission_to_view_report, \
@@ -38,9 +36,10 @@ class PermissionsHelpersTest(SimpleTestCase):
         test_self = self
 
         def get_role(self, domain=None):
-            return UserRole(
+            return mock.Mock(
                 domain=test_self.domain,
-                permissions=test_self.permissions
+                permissions=test_self.permissions,
+                spec=["domain", "permissions"]
             )
 
         assert hasattr(WebUser.has_permission, "get_cache"), "not memoized?"
