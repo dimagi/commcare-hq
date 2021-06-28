@@ -119,7 +119,8 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, sta
     missing_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
-    records_in_daterange = [record for record in repeat_records if startdate < record.registered_on < enddate]
+    records_in_daterange = [record for record in repeat_records
+                            if startdate <= record.registered_on.date() <= enddate]
 
     triggered_repeater_ids_and_counts = {}
     for record in records_in_daterange:
@@ -158,7 +159,7 @@ def number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddat
             filtered_transactions = case.transactions
 
     transactions_in_daterange = [transaction for transaction in filtered_transactions
-                                 if startdate < get_transaction_date(transaction) < enddate]
+                                 if startdate <= get_transaction_date(transaction) <= enddate]
 
     return len(transactions_in_daterange)
 
