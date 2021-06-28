@@ -129,7 +129,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
             triggered_repeater_ids_and_counts[record.repeater_id] = 1
 
     for repeater in repeaters:
-        expected_record_count = number_of_repeat_records_triggered_by_case(case.transactions, repeater)
+        expected_record_count = number_of_repeat_records_triggered_by_case(case, repeater)
         actual_record_count = triggered_repeater_ids_and_counts.get(repeater.get_id, 0)
 
         # worry about specifying create vs update vs normal later
@@ -140,13 +140,18 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
     return missing_count, successful_count
 
 
-def number_of_repeat_records_triggered_by_case(transactions, repeater):
+def number_of_repeat_records_triggered_by_case(case, repeater):
+    filtered_transactions = []
     if isinstance(repeater, CreateCaseRepeater):
-        filtered_transactions = transactions[0:1]
+        # to avoid modifying CreateCaseRepeater's allowed_to_forward method
+        if repeater._allowed_case_type(case) and repeater._allowed_user(case):
+            filtered_transactions = case.transactions[0:1]
     elif isinstance(repeater, UpdateCaseRepeater):
-        filtered_transactions = transactions[1:]
+        if repeater.allowed_to_forward(case):
+            filtered_transactions = case.transactions[1:]
     else:
-        filtered_transactions = transactions
+        if repeater.allowed_to_forward(case):
+            filtered_transactions = case.transactions
 
     return len(filtered_transactions)
 
