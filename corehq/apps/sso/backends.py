@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
+from django.db import transaction, DatabaseError
 from django.utils.translation import ugettext as _
 
 from corehq.apps.registration.models import AsyncSignupRequest
@@ -76,8 +77,26 @@ class SsoBackend(ModelBackend):
             is_new_user = False
             web_user = WebUser.get_by_username(username)
         except User.DoesNotExist:
-            user, web_user = self._create_new_user(request, username, async_signup)
-            is_new_user = True
+            try:
+                # the atomic block is necessary to avoid any race conditions
+                # that came up during testing of this feature.
+                with transaction.atomic():
+                    user, web_user = self._create_new_user(request, username, async_signup)
+                    is_new_user = True
+            except DatabaseError:
+                if async_signup and async_signup.invitation:
+                    request.sso_login_error = (
+                        "An unexpected error has occurred. Please try "
+                        "accepting the invitation again. If this continues, "
+                        "please contact support."
+                    )
+                else:
+                    request.sso_login_error = (
+                        "An unexpected error has occurred. Please try moving "
+                        "through the signup process again. If this continues, "
+                        "please contact support."
+                    )
+                return None
 
         if async_signup and async_signup.invitation:
             self._process_invitation(request, async_signup.invitation, web_user, is_new_user)
