@@ -83,8 +83,8 @@ class UserChangeLogger(object):
 
 class BaseUserImporter(object):
     """
-    Imports a CommCareUser added via bulk importer
-    Also handles the logging, eventually saved by calling save
+    Imports a Web/CommCareUser via bulk importer and also handles the logging
+    save_log should be called explicitly to save logs, after user is saved
     """
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via):
         self.user_domain = user_domain
@@ -187,6 +187,7 @@ class CommCareUserImporter(BaseUserImporter):
                 location_names = [get_location_from_site_code(code, domain_info.location_cache).name
                                   for code in location_codes]
                 self.logger.add_info(_(f"Assigned locations: {location_names}"))
+
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != users_current_primary_location_id:
             self.logger.add_changes({'location_id': self.user.location_id})
