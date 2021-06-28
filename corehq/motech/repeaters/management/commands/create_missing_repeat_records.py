@@ -131,7 +131,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, sta
             triggered_repeater_ids_and_counts[record.repeater_id] = 1
 
     for repeater in repeaters:
-        if repeater.started_at > enddate:
+        if repeater.started_at.date() >= enddate:
             # don't count a repeater that was created after the window we care about
             continue
         expected_record_count = number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddate)
