@@ -65,22 +65,18 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should
     repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
     triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
-        if is_repeat_record_missing(repeater, form, triggered_repeater_ids):
+        if not repeater.allowed_to_forward(form):
+            continue
+
+        if repeater.get_id in triggered_repeater_ids:
+            successful_count += 1
+        else:
             missing_count += 1
             if should_create:
                 # will attempt to send now
                 repeater.register(form)
-        else:
-            successful_count += 1
 
     return missing_count, successful_count
-
-
-def is_repeat_record_missing(repeater, payload, triggered_repeater_ids):
-    if not repeater.allowed_to_forward(payload):
-        return False
-
-    return repeater.get_id not in triggered_repeater_ids
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
@@ -113,9 +109,22 @@ def obtain_missing_case_repeat_records(startdate,
             }
 
 
-def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, should_create):
+def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, should_create):
     missing_count = 0
     successful_count = 0
+    repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
+    triggered_repeater_ids = [record.repeater_id for record in repeat_records]
+    for repeater in repeaters:
+        if not repeater.allowed_to_forward(case):
+            continue
+
+        if repeater.get_id in triggered_repeater_ids:
+            successful_count += 1
+        else:
+            missing_count += 1
+            if should_create:
+                # will attempt to send now
+                repeater.register(case)
 
     return missing_count, successful_count
 
