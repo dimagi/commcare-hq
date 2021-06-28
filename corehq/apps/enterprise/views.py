@@ -331,8 +331,13 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         return self.paginate_crud_response
 
 
+# This view, and related views, require enterprise admin permissions to be consistent
+# with other views in this area. They also require superuser access because these views
+# used to be in another part of HQ, where they were limited to superusers, and we don't
+# want them to be visible to any external users until we're ready to GA this feature.
 @require_can_edit_or_view_web_users
 @require_superuser
+@require_enterprise_admin
 def enterprise_permissions(request, domain):
     config = EnterprisePermissions.get_by_domain(domain)
     all_domains = set(config.account.get_domains())
@@ -354,6 +359,7 @@ def enterprise_permissions(request, domain):
 
 
 @require_superuser
+@require_enterprise_admin
 @require_POST
 def disable_enterprise_permissions(request, domain):
     config = EnterprisePermissions.get_by_domain(domain)
@@ -368,6 +374,7 @@ def disable_enterprise_permissions(request, domain):
 
 
 @require_superuser
+@require_enterprise_admin
 @require_POST
 def add_enterprise_permissions_domain(request, domain, target_domain):
     config = EnterprisePermissions.get_by_domain(domain)
@@ -387,6 +394,7 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
 
 
 @require_superuser
+@require_enterprise_admin
 @require_POST
 def remove_enterprise_permissions_domain(request, domain, target_domain):
     config = EnterprisePermissions.get_by_domain(domain)
@@ -407,6 +415,7 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
 
 
 @require_superuser
+@require_enterprise_admin
 @require_POST
 def update_enterprise_permissions_source_domain(request, domain):
     source_domain = request.POST.get('source_domain')
