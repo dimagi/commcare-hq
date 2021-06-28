@@ -165,7 +165,7 @@ def number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddat
 
 
 def get_transaction_date(transaction):
-    return string_to_utc_datetime(transaction['server_date']).date()
+    return string_to_utc_datetime(transaction.server_date).date()
 
 
 def get_cases_in_domain_since_date(domain, startdate):
