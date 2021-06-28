@@ -99,6 +99,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
                     "app_id": params.appId,
+                    "endpoint_id": params.endpointId,
+                    "endpoint_args": params.endpointArgs,
                     "locale": displayOptions.language,
                     "selections": params.steps,
                     "offset": params.page * casesPerPage,
@@ -131,8 +133,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
-        var isInitial = options.isInitial;
-        return API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
+        var route = "navigate_menu";
+        if (options.isInitial) {
+            route = "navigate_menu_start";
+        } else if (options.endpointId) {
+            route = "get_endpoint";
+        }
+        return API.queryFormplayer(options, route);
     });
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {

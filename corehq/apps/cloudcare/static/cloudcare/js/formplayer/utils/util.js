@@ -160,6 +160,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.copyOf = options.copyOf;
         this.sessionId = options.sessionId;
         this.steps = options.steps;
+        this.endpointId = options.endpointId;
+        this.endpointArgs = options.endpointArgs;
         this.page = options.page;
         this.search = options.search;
         this.casesPerPage = options.casesPerPage;
@@ -224,6 +226,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.forceManualAction = force;
         };
 
+        this.replaceEndpoint = function (steps) {
+            delete this.endpointId;
+            delete this.endpointArgs;
+            this.steps = steps;
+        };
+
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.steps = null;
@@ -270,6 +278,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         var dict = {
             appId: self.appId,
             copyOf: self.copyOf,
+            endpointId: self.endpointId,
+            endpointArgs: self.endpointArgs,
             sessionId: self.sessionId,
             steps: self.steps,
             page: self.page,
@@ -287,6 +297,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         var options = {
             'appId': data.appId,
             'copyOf': data.copyOf,
+            'endpointId': data.endpointId,
+            'endpointArgs': data.endpointArgs,
             'sessionId': data.sessionId,
             'steps': data.steps,
             'page': data.page,
