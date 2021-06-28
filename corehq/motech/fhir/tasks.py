@@ -12,7 +12,7 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.exceptions import RemoteAPIError
+from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
@@ -56,6 +56,7 @@ def run_importer(importer):
             .all()
     ):
         import_resource_type(requests, resource_type, child_cases)
+    create_parent_indices(importer, child_cases)
 
 
 def import_resource_type(
@@ -288,6 +289,53 @@ def get_resource(requests, reference):
     """
     response = requests.get(endpoint=reference, raise_for_status=True)
     return response.json()
+
+
+def create_parent_indices(
+    importer: FHIRImporter,
+    child_cases: List[ParentInfo],
+):
+    """
+    Creates parent-child relationships on imported cases.
+
+    If ``JSONPathToResourceType.related_resource_is_parent`` is ``True``
+    then this function will add an ``index`` on the child case to its
+    parent case.
+    """
+    if not child_cases:
+        return
+
+    case_blocks = []
+    for child_case_id, parent_ref, parent_resource_type in child_cases:
+        # `parent_ref` must be a relative reference. e.g. "Patient/12345"
+        try:
+            resource_type_name, external_id = parent_ref.split('/')
+        except (AttributeError, ValueError):
+            raise ConfigurationError(
+                f'Unexpected reference format {parent_ref!r}')
+        if resource_type_name != parent_resource_type.name:
+            raise ConfigurationError(
+                'Resource type does not match expected parent resource type')
+
+        parent_case = get_case_by_external_id(
+            parent_resource_type.domain,
+            external_id,
+            parent_resource_type.case_type.name,
+        )
+        if not parent_case:
+            raise ConfigurationError(
+                f'Case not found with external_id {external_id!r}')
+
+        case_blocks.append(CaseBlock(
+            child_case_id,
+            index={'parent': (parent_case.type, parent_case.case_id)},
+        ))
+    submit_case_blocks(
+        [cb.as_text() for cb in case_blocks],
+        importer.domain,
+        xmlns=XMLNS_FHIR,
+        device_id=f'FHIRImporter-{importer.pk}',
+    )
 
 
 class ServiceRequestNotActive(Exception):
