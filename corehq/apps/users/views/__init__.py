@@ -816,9 +816,9 @@ def post_user_role(request, domain):
     try:
         role = _update_role_from_view(domain, role_data)
     except ValueError as e:
-        response = HttpResponseBadRequest()
-        response.content = str(e)
-        return response
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
 
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
