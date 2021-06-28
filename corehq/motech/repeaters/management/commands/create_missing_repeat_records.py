@@ -1,18 +1,22 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.es.forms import FormES
+from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id,
     get_repeaters_by_domain,
 )
-from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater
+from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater
 from corehq.util.argparse_types import date_type
 
 REPEATERS_WITH_FORM_PAYLOADS = (
     FormRepeater,
     ShortFormRepeater,
+)
+
+REPEATERS_WITH_CASE_PAYLOADS = (
+    CaseRepeater,
 )
 
 
@@ -47,9 +51,10 @@ def obtain_missing_form_repeat_records(startdate,
 
         if total_missing_count > 0:
             stats_per_domain[domain] = {
-                'missing_count': total_missing_count,
-                'form_ids': missing_form_ids,
-                'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+                'forms': {
+                    'missing_count': total_missing_count,
+                    'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+                }
             }
 
     return stats_per_domain
@@ -59,12 +64,11 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, sho
     missing_count = 0
     successful_count = 0
     repeat_records = get_repeat_records_by_payload_id(domain, form_id)
+    found_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
         # for each repeater, make sure a repeat record exists
-        for repeat_record in repeat_records:
-            if repeat_record.repeater_id == repeater.get_id:
-                successful_count += 1
-                break
+        if repeater.get_id in found_repeater_ids:
+            successful_count += 1
         else:
             # did not find a matching repeat record for the payload
             missing_count += 1
@@ -79,9 +83,54 @@ def get_forms_in_domain_between_dates(domain, startdate, enddate):
     return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).scroll()
 
 
+def obtain_missing_case_repeat_records(startdate,
+                                       domains,
+                                       should_create=False):
+    stats_per_domain = {}
+    for domain in domains:
+        total_missing_count = 0
+        total_count = 0
+        case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
+
+        for case in get_cases_in_domain_since_date(domain, startdate):
+            case_id = case['case_id']
+            missing_count, successful_count = obtain_missing_case_repeat_records_in_domain(
+                domain, case_repeaters_in_domain, case_id, should_create
+            )
+            total_missing_count += missing_count
+            total_count += missing_count + successful_count
+
+        if total_missing_count > 0:
+            stats_per_domain[domain] = {
+                'cases': {
+                    'missing_count': total_missing_count,
+                    'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+                }
+            }
+
+
+def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, should_create):
+    missing_count = 0
+    successful_count = 0
+
+    return missing_count, successful_count
+
+
+def get_cases_in_domain_since_date(domain, startdate):
+    """
+    Can only search for cases modified since a date
+    """
+    return CaseES().domain(domain).server_modified_range(gte=startdate).scroll()
+
+
 def get_form_repeaters_in_domain(domain):
     return [repeater for repeater in get_repeaters_by_domain(domain)
             if isinstance(repeater, REPEATERS_WITH_FORM_PAYLOADS)]
+
+
+def get_case_repeaters_in_domain(domain):
+    return [repeater for repeater in get_repeaters_by_domain(domain)
+            if isinstance(repeater, REPEATERS_WITH_CASE_PAYLOADS)]
 
 
 class Command(BaseCommand):
@@ -91,7 +140,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
-        parser.add_argument('-e', '--enddate', default="2021-06-22", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-e', '--enddate', default="2021-06-23", type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
 
