@@ -60,7 +60,8 @@ def obtain_missing_form_repeat_records(startdate,
 
 
 def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should_create):
-    if form.is_duplicate:
+    # hack for now
+    if form['state'] == 8:
         return 0, 0
 
     missing_count = 0
@@ -107,6 +108,8 @@ def obtain_missing_case_repeat_records(startdate, domains):
                     'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
                 }
             }
+
+    return stats_per_domain
 
 
 def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case):
