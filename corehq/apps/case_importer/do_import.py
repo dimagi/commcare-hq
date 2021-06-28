@@ -14,6 +14,7 @@ from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
+from corehq.apps.data_dictionary.util import validated_fields
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
@@ -80,6 +81,7 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
+        self.validated_fields = validated_fields(domain, config.case_type)
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
@@ -249,6 +251,17 @@ class _Importer(object):
                 update_value = ''
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
+
+            if update_field_name in self.validated_fields:
+                case_property = self.validated_fields[update_field_name]
+                if not case_property.valid_value(update_value):
+                    # note: probably want to accumulate full list of invalid
+                    # columns for this row and raise an exception with that
+                    # full set of info rather than bailing out on first one
+                    # as we're currently doing here.
+                    if case_property.data_type == 'date':
+                        raise exceptions.InvalidDate(update_field_name)
+                    # else select type would be handled here, when that's added
 
             fields_to_update[update_field_name] = update_value
 
