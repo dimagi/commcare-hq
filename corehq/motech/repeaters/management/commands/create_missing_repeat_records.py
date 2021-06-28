@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.es import CaseES, FormES
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id,
@@ -43,7 +44,7 @@ def obtain_missing_form_repeat_records(startdate,
         for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
             # results returned from scroll() do not include '_id'
             missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
-                domain, form_repeaters_in_domain, form, should_create
+                domain, form_repeaters_in_domain, form['_id'], should_create
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
@@ -59,14 +60,14 @@ def obtain_missing_form_repeat_records(startdate,
     return stats_per_domain
 
 
-def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should_create):
-    # hack for now
-    if form['state'] == 8:
+def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, should_create):
+    form = FormAccessors(domain).get_form(form_id)
+    if form.is_duplicate:
         return 0, 0
 
     missing_count = 0
     successful_count = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
+    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
     triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
         if not repeater.allowed_to_forward(form):
@@ -96,7 +97,7 @@ def obtain_missing_case_repeat_records(startdate, domains):
 
         for case in get_cases_in_domain_since_date(domain, startdate):
             missing_count, successful_count = obtain_missing_case_repeat_records_in_domain(
-                domain, case_repeaters_in_domain, case
+                domain, case_repeaters_in_domain, case['_id']
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
@@ -112,11 +113,12 @@ def obtain_missing_case_repeat_records(startdate, domains):
     return stats_per_domain
 
 
-def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case):
+def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
+    case = CaseAccessors(domain).get_case(case_id)
     successful_count = 0
     missing_count = 0
 
-    repeat_records = get_repeat_records_by_payload_id(domain, case['_id'])
+    repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     # triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     triggered_repeater_ids_and_counts = {}
     for record in repeat_records:
@@ -126,10 +128,8 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case):
         else:
             triggered_repeater_ids_and_counts[record.repeater_id] = 1
 
-    transactions = case['transactions']
-
     for repeater in repeaters:
-        expected_record_count = number_of_repeat_records_triggered_by_case(transactions, repeater)
+        expected_record_count = number_of_repeat_records_triggered_by_case(case.transactions, repeater)
         actual_record_count = triggered_repeater_ids_and_counts[repeater.get_id]
 
         # worry about specifying create vs update vs normal later
