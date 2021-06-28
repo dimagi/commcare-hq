@@ -45,4 +45,5 @@ SUPPORTED_FHIR_RESOURCE_TYPES = (
     'Immunization',
     'Observation',
     'Patient',
+    'ServiceRequest',
 )
