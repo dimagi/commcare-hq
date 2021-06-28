@@ -130,7 +130,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
 
     for repeater in repeaters:
         expected_record_count = number_of_repeat_records_triggered_by_case(case.transactions, repeater)
-        actual_record_count = triggered_repeater_ids_and_counts[repeater.get_id]
+        actual_record_count = triggered_repeater_ids_and_counts.get(repeater.get_id, 0)
 
         # worry about specifying create vs update vs normal later
         temp_missing_count = expected_record_count - actual_record_count
