@@ -10,10 +10,11 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.auth import AuthManager
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
-from corehq.motech.exceptions import RemoteAPIError
+from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
@@ -34,6 +35,7 @@ from ..tasks import (
     ServiceRequestNotActive,
     build_case_block,
     claim_service_request,
+    create_parent_indices,
     get_case_id_or_none,
     get_caseblock_kwargs,
     get_name,
@@ -799,6 +801,93 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.external_id, '12345')
         self.assertEqual(case_block.case_name, 'Alice Amelia Anna')
         self.assertEqual(case_block.update, {'phone_number': '555-1234'})
+
+
+class TestCreateParentIndices(TestCaseWithFHIRResources):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.domain_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.domain_obj.delete()
+
+    def run(self, result=None):
+        mother_kwargs = {
+            'external_id': '12345',
+            'update': {
+                'given_names': 'Alica Amelia',
+                'family_name': 'Apple',
+                'phone_number': '555-1234',
+            },
+        }
+        with create_case(DOMAIN, 'referral') as referral, \
+                create_case(DOMAIN, 'mother', **mother_kwargs) as mother:
+            self.referral_case = referral
+            self.mother_case = mother
+            super().run(result)
+
+    def test_no_child_cases(self):
+        child_cases = []
+        with patch('corehq.motech.fhir.tasks.submit_case_blocks') as \
+                submit_case_blocks:
+            create_parent_indices(self.fhir_importer, child_cases)
+            submit_case_blocks.assert_not_called()
+
+    def test_bad_parent_ref(self):
+        parent_ref = '12345'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_none_parent_ref(self):
+        parent_ref = None
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_bad_resource_type(self):
+        parent_ref = 'Practitioner/12345'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_parent_case_missing(self):
+        parent_ref = 'Patient/67890'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_submit_case_blocks(self):
+        index_xml = (
+            '<index>'
+            f'<parent case_type="mother">{self.mother_case.case_id}</parent>'
+            '</index>'
+        )
+
+        child_case_id = self.referral_case.case_id
+        parent_ref = 'Patient/12345'
+        child_cases = [
+            ParentInfo(child_case_id, parent_ref, self.patient_type)
+        ]
+        with patch('corehq.motech.fhir.tasks.'
+                   'submit_case_blocks') as submit_case_blocks:
+            create_parent_indices(self.fhir_importer, child_cases)
+
+            ([case_block], domain), kwargs = submit_case_blocks.call_args
+            self.assertIn(index_xml, case_block)
 
 
 @contextmanager
