@@ -80,7 +80,7 @@ def is_repeat_record_missing(repeater, payload, triggered_repeater_ids):
     if not repeater.allowed_to_forward(payload):
         return False
 
-    return repeater.get_id in triggered_repeater_ids
+    return repeater.get_id not in triggered_repeater_ids
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
