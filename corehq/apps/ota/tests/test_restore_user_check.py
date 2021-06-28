@@ -39,7 +39,7 @@ class UserCheckSyncTests(TestCase):
 
         original_user = CommCareUser.create(self.domain, username, password, None, None)
         original_user_id = original_user.user_id
-        original_user.delete(deleted_by=None)
+        original_user.delete(self.domain, deleted_by=None)
 
         # user deleted so can't auth
         self._assert_restore_response_code(401, auth_header)
