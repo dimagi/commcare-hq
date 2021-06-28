@@ -371,6 +371,9 @@ class FHIRImporterResourceType(models.Model):
     import_related_only = models.BooleanField(default=False)
     search_params = JSONField(default=dict, blank=True)
 
+    def __str__(self):
+        return self.name
+
     @property
     def domain(self):
         return self.fhir_importer.domain
@@ -433,6 +436,13 @@ class JSONPathToResourceType(models.Model):
         FHIRImporterResourceType,
         on_delete=models.CASCADE,
     )
+
+    def __str__(self):
+        jsonpath = self.jsonpath
+        if jsonpath.startswith('$.'):
+            jsonpath = jsonpath[2:]
+        return (f'{self.resource_type.name}.{jsonpath} → '
+                f'{self.related_resource_type.name}')
 
 
 class FHIRImporterResourceProperty(models.Model):
