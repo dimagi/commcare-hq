@@ -36,6 +36,7 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 
     def handle_response(self, response, repeat_record):
         attempt = super().handle_response(response, repeat_record)
+        # successful response is always 200. 40x and 500 are errors
         if response.status_code == 200:
             beneficiary_reference_id = response.json()['beneficiary_reference_id']
             update_case(self.domain, repeat_record.payload_id,

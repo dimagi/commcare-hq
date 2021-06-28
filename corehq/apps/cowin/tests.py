@@ -1,6 +1,7 @@
 import datetime
 import json
 import uuid
+import requests
 
 from django.test import SimpleTestCase
 
@@ -58,6 +59,31 @@ class TestRepeaters(SimpleTestCase):
                 'photo_id_number': 'XXXXXXXX1234',
                 "consent_version": "1"
             }
+        )
+
+    @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
+    @patch('corehq.apps.cowin.repeaters.update_case')
+    @patch('requests.Response.json')
+    def test_registration_response(self, json_response_mock, update_case_mock):
+        case_id = uuid.uuid4().hex
+
+        response_json = {
+            "beneficiary_reference_id": "1234567890123",
+            "isNewAccount": "Y"
+        }
+
+        response = requests.Response()
+        response.status_code = 200
+        json_response_mock.return_value = response_json
+
+        repeat_record = RepeatRecord(payload_id=case_id)
+        repeater = BeneficiaryRegistrationRepeater(domain=self.domain)
+
+        repeater.handle_response(response, repeat_record)
+
+        update_case_mock.assert_called_with(
+            self.domain, case_id, case_properties={'cowin_id': "1234567890123"},
+            device_id='corehq.apps.cowin.repeaters.BeneficiaryRegistrationRepeater'
         )
 
     @patch('corehq.motech.repeaters.models.Repeater.connection_settings', new_callable=PropertyMock)
