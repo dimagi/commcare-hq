@@ -172,8 +172,7 @@ class CommCareUserImporter(object):
                 self.logger.add_info(
                     _(f"Primary location: {users_updated_primary_location_name}"))
 
-    def update_role(self, role, domain_info):
-        role_qualified_id = domain_info.roles_by_name[role]
+    def update_role(self, role_qualified_id):
         user_current_role = self.user.get_role(domain=self.user_domain)
         self.role_updated = not (user_current_role
                                  and user_current_role.get_qualified_id() == role_qualified_id)
