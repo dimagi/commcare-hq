@@ -40,11 +40,7 @@ def obtain_missing_form_repeat_records(startdate,
 
         for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
             # results returned from scroll() do not include '_id'
-            try:
-                form_id = form['form']['meta']['instanceID']
-            except KeyError:
-                print(f"KeyError - instanceID not found for form:\n{form}\n")
-                continue
+            form_id = form['_id']
             missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
                 domain, form_repeaters_in_domain, form_id, should_create
             )
@@ -65,12 +61,19 @@ def obtain_missing_form_repeat_records(startdate,
 
 
 def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, should_create):
+    form = FormAccessors(domain).get_form(form_id)
+    if form.is_duplicate:
+        return 0, 0
+
     missing_count = 0
     successful_count = 0
     repeat_records = get_repeat_records_by_payload_id(domain, form_id)
     found_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
-        # for each repeater, make sure a repeat record exists
+        if not repeater.allowed_to_forward(form):
+            continue
+
+        # if able to forward, make sure it did
         if repeater.get_id in found_repeater_ids:
             successful_count += 1
         else:
@@ -78,13 +81,13 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, sho
             missing_count += 1
             if should_create:
                 # will attempt to send now
-                repeater.register(FormAccessors(domain).get_form(form_id))
+                repeater.register(form)
 
     return missing_count, successful_count
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
-    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).scroll()
+    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).run().hits
 
 
 def obtain_missing_case_repeat_records(startdate,
