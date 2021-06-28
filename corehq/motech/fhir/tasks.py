@@ -139,9 +139,9 @@ def claim_service_request(requests, service_request, case_id):
         })
     headers = {'If-Match': etag}
     response = requests.put(endpoint, json=service_request, headers=headers)
-    if 200 <= response.status < 300:
+    if 200 <= response.status_code < 300:
         return service_request
-    if response.status == 412:
+    if response.status_code == 412:
         # ETag didn't match. Try again.
         return claim_service_request(requests, service_request, case_id)
     else:

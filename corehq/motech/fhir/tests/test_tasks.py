@@ -186,7 +186,7 @@ class TestClaimServiceRequest(TestCase):
         response_active = ServiceRequestResponse()
         response_on_hold = ServiceRequestResponse('on-hold')
         response_412 = ServiceRequestResponse()
-        response_412.status = 412
+        response_412.status_code = 412
 
         with patch.object(Requests, 'get') as requests_get, \
                 patch.object(Requests, 'put') as requests_put:
@@ -235,7 +235,7 @@ class TestClaimServiceRequest(TestCase):
 
 class ServiceRequestResponse:
 
-    status = 200
+    status_code = 200
     headers = {'ETag': 'W/"123"'}
 
     def __init__(self, status='active'):
