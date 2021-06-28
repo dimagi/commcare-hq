@@ -869,6 +869,7 @@ def _update_role_from_view(domain, role_data):
 
     assignable_by = role_data["assignable_by"]
     role.set_assignable_by_couch(assignable_by)
+    role._migration_do_sync()  # update permissions and assignable_by
     return role
 
 
