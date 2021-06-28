@@ -505,7 +505,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     user.update_metadata({'login_as_user': web_user_username})
 
                 user.save()
-                commcare_user_importer.save()
+                commcare_user_importer.save_log()
 
                 if web_user_username:
                     check_can_upload_web_users(upload_user)
@@ -544,7 +544,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                                 web_user_importer.update_primary_location(user.location_id)
                             web_user.save()
                     if web_user_importer:
-                        web_user_importer.save()
+                        web_user_importer.save_log()
                 if send_account_confirmation_email and not web_user_username:
                     send_account_confirmation_if_necessary(user)
 
@@ -671,7 +671,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                     else:
                         create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                          user.location_id, user_change_logger)
-                web_user_importer.save()
+                web_user_importer.save_log()
                 status_row['flag'] = 'updated'
 
             else:

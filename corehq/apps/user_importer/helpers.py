@@ -180,7 +180,7 @@ class CommCareUserImporter(object):
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
-    def save(self):
+    def save_log(self):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
@@ -275,7 +275,7 @@ class WebUserImporter(object):
             self.logger.add_info(
                 _(f"Primary location: {location_info}"))
 
-    def save(self):
+    def save_log(self):
         # Tracking for role is done post user save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
