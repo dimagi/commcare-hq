@@ -66,7 +66,7 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should
 
     missing_count = 0
     successful_count = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, form['_id'])
     triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
         if not repeater.allowed_to_forward(form):
@@ -116,7 +116,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case):
     successful_count = 0
     missing_count = 0
 
-    repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
+    repeat_records = get_repeat_records_by_payload_id(domain, case['_id'])
     # triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     triggered_repeater_ids_and_counts = {}
     for record in repeat_records:
