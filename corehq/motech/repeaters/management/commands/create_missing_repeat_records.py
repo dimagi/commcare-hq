@@ -40,7 +40,11 @@ def obtain_missing_form_repeat_records(startdate,
 
         for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
             # results returned from scroll() do not include '_id'
-            form_id = form['form']['meta']['instanceID']
+            try:
+                form_id = form['form']['meta']['instanceID']
+            except KeyError:
+                print(f"KeyError - instanceID not found for form:\n{form}\n")
+                continue
             missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
                 domain, form_repeaters_in_domain, form_id, should_create
             )
