@@ -88,7 +88,7 @@ def get_forms_in_domain_between_dates(domain, startdate, enddate):
     return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).run().hits
 
 
-def obtain_missing_case_repeat_records(startdate, domains):
+def obtain_missing_case_repeat_records(startdate, enddate, domains):
     stats_per_domain = {}
     for domain in domains:
         total_missing_count = 0
@@ -97,7 +97,7 @@ def obtain_missing_case_repeat_records(startdate, domains):
 
         for case in get_cases_in_domain_since_date(domain, startdate):
             missing_count, successful_count = obtain_missing_case_repeat_records_in_domain(
-                domain, case_repeaters_in_domain, case['_id']
+                domain, case_repeaters_in_domain, case['_id'], startdate, enddate
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
@@ -113,15 +113,16 @@ def obtain_missing_case_repeat_records(startdate, domains):
     return stats_per_domain
 
 
-def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
+def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, startdate, enddate):
     case = CaseAccessors(domain).get_case(case_id)
     successful_count = 0
     missing_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
-    # triggered_repeater_ids = [record.repeater_id for record in repeat_records]
+    records_in_daterange = [record for record in repeat_records if startdate < record.registered_on < enddate]
+
     triggered_repeater_ids_and_counts = {}
-    for record in repeat_records:
+    for record in records_in_daterange:
         current_count = triggered_repeater_ids_and_counts.get(record.repeater_id, 0)
         if current_count > 0:
             triggered_repeater_ids_and_counts[record.repeater_id] += 1
@@ -129,7 +130,10 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
             triggered_repeater_ids_and_counts[record.repeater_id] = 1
 
     for repeater in repeaters:
-        expected_record_count = number_of_repeat_records_triggered_by_case(case, repeater)
+        if repeater.started_at > enddate:
+            # don't count a repeater that was created after the window we care about
+            continue
+        expected_record_count = number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddate)
         actual_record_count = triggered_repeater_ids_and_counts.get(repeater.get_id, 0)
 
         # worry about specifying create vs update vs normal later
@@ -140,7 +144,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id):
     return missing_count, successful_count
 
 
-def number_of_repeat_records_triggered_by_case(case, repeater):
+def number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddate):
     filtered_transactions = []
     if isinstance(repeater, CreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
@@ -153,7 +157,10 @@ def number_of_repeat_records_triggered_by_case(case, repeater):
         if repeater.allowed_to_forward(case):
             filtered_transactions = case.transactions
 
-    return len(filtered_transactions)
+    transactions_in_daterange = [transaction for transaction in filtered_transactions
+                                 if startdate < get_transaction_date(transaction) < enddate]
+
+    return len(transactions_in_daterange)
 
 
 def get_transaction_date(transaction):
