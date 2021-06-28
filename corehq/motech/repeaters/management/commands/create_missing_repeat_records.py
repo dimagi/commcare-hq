@@ -33,21 +33,17 @@ def obtain_missing_form_repeat_records(startdate,
     """
     stats_per_domain = {}
     for domain in domains:
-        missing_form_ids = set()
         total_missing_count = 0
         total_count = 0
         form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
 
-        for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
+        for form in FormAccessors(domain).iter_forms_by_last_modified_in_domain(startdate, enddate):
             # results returned from scroll() do not include '_id'
-            form_id = form['_id']
             missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
-                domain, form_repeaters_in_domain, form_id, should_create
+                domain, form_repeaters_in_domain, form, should_create
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
-            if missing_count > 0:
-                missing_form_ids.add(form_id)
 
         if total_missing_count > 0:
             stats_per_domain[domain] = {
@@ -60,30 +56,31 @@ def obtain_missing_form_repeat_records(startdate,
     return stats_per_domain
 
 
-def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, should_create):
-    form = FormAccessors(domain).get_form(form_id)
+def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should_create):
     if form.is_duplicate:
         return 0, 0
 
     missing_count = 0
     successful_count = 0
-    repeat_records = get_repeat_records_by_payload_id(domain, form_id)
-    found_repeater_ids = [record.repeater_id for record in repeat_records]
+    repeat_records = get_repeat_records_by_payload_id(domain, form.get_id)
+    triggered_repeater_ids = [record.repeater_id for record in repeat_records]
     for repeater in repeaters:
-        if not repeater.allowed_to_forward(form):
-            continue
-
-        # if able to forward, make sure it did
-        if repeater.get_id in found_repeater_ids:
-            successful_count += 1
-        else:
-            # did not find a matching repeat record for the payload
+        if is_repeat_record_missing(repeater, form, triggered_repeater_ids):
             missing_count += 1
             if should_create:
                 # will attempt to send now
                 repeater.register(form)
+        else:
+            successful_count += 1
 
     return missing_count, successful_count
+
+
+def is_repeat_record_missing(repeater, payload, triggered_repeater_ids):
+    if not repeater.allowed_to_forward(payload):
+        return False
+
+    return repeater.get_id in triggered_repeater_ids
 
 
 def get_forms_in_domain_between_dates(domain, startdate, enddate):
