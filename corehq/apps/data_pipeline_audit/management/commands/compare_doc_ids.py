@@ -119,7 +119,7 @@ def compare_cases(domain, doc_type, startdate, enddate):
     # large domain, so break up by month
     startdate, enddate = get_es_case_range(domain)
     primary_count, es_count, primary_ids, es_ids = 0, 0, set(), set()
-    months = (enddate - startdate).days / 30 + 1
+    months = (enddate - startdate).days // 30 + 1
     for month in range(0, months):
         enddate = (startdate + timedelta(days=(month + 1) * 30)).date()
         startdate = (startdate + timedelta(days=month * 30)).date()
