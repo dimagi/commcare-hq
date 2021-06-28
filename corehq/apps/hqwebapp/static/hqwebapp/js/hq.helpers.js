@@ -151,7 +151,10 @@ hqDefine("hqwebapp/js/hq.helpers", [
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
                 var $csrf_token = $("#csrfTokenContainer").val();
                 xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+                var xsrf_token = $.cookie('XSRF-TOKEN');
+                xhr.setRequestHeader('X-XSRF-TOKEN', xsrf_token);
             }
+            xhr.withCredentials = true;
         },
     });
 
