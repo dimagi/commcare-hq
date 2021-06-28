@@ -25,6 +25,7 @@ class BaseCOWINRepeater(CaseRepeater):
             'User-Agent': '',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'X-Api-Key': self.connection_settings.plaintext_password,
         })
         return headers
 
@@ -32,13 +33,6 @@ class BaseCOWINRepeater(CaseRepeater):
 class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryRegistrationPayloadGenerator,)
     friendly_name = _("Register beneficiaries on COWIN")
-
-    def get_headers(self, repeat_record):
-        headers = super(BeneficiaryRegistrationRepeater, self).get_headers(repeat_record)
-        headers.update({
-            'X-Api-Key': self.connection_settings.plaintext_password,
-        })
-        return headers
 
     def handle_response(self, response, repeat_record):
         attempt = super().handle_response(response, repeat_record)
@@ -59,13 +53,6 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryVaccinationPayloadGenerator,)
     friendly_name = _("Update vaccination for beneficiaries on COWIN")
-
-    def get_headers(self, repeat_record):
-        headers = super(BeneficiaryVaccinationRepeater, self).get_headers(repeat_record)
-        headers.update({
-            'X-Api-Key': self.connection_settings.plaintext_password,
-        })
-        return headers
 
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
