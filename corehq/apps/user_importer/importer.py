@@ -513,8 +513,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     if web_user:
                         web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
                                                             is_new_user=False,
-                                                            via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                            is_web_users_upload=False)
+                                                            via=USER_CHANGE_VIA_BULK_IMPORTER)
                         user_change_logger = web_user_importer.logger
                     else:
                         web_user_importer = None
@@ -656,8 +655,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, update_pr
                 check_changing_username(user, username)
                 web_user_importer = WebUserImporter(upload_domain, domain, user, upload_user,
                                                     is_new_user=False,
-                                                    via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                    is_web_users_upload=True)
+                                                    via=USER_CHANGE_VIA_BULK_IMPORTER)
                 user_change_logger = web_user_importer.logger
                 if remove:
                     remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger,

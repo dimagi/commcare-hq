@@ -81,7 +81,7 @@ class UserChangeLogger(object):
             self._save = True
 
 
-class CommCareUserImporter(object):
+class BaseUserImporter(object):
     """
     Imports a CommCareUser added via bulk importer
     Also handles the logging, eventually saved by calling save
@@ -89,10 +89,33 @@ class CommCareUserImporter(object):
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via):
         self.user_domain = user_domain
         self.user = user
+        self.upload_user = upload_user
         self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
                                        changed_by_user=upload_user, changed_via=via)
+
         self.role_updated = False
 
+    def update_role(self, role_qualified_id):
+        user_current_role = self.user.get_role(domain=self.user_domain)
+        self.role_updated = not (user_current_role
+                                 and user_current_role.get_qualified_id() == role_qualified_id)
+        if self.role_updated:
+            self.user.set_role(self.user_domain, role_qualified_id)
+
+    def save_log(self):
+        # Tracking for role is done post save to have role setup correctly on save
+        if self.role_updated:
+            new_role = self.user.get_role(domain=self.user_domain)
+            if new_role:
+                self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+            else:
+                self.logger.add_change_message("Role: None")
+
+        # ToDo: save log before saving user
+        self.logger.save()
+
+
+class CommCareUserImporter(BaseUserImporter):
     def update_password(self, password):
         self.user.set_password(password)
         self.logger.add_change_message(_("Password Reset"))
@@ -172,25 +195,6 @@ class CommCareUserImporter(object):
                 self.logger.add_info(
                     _(f"Primary location: {users_updated_primary_location_name}"))
 
-    def update_role(self, role_qualified_id):
-        user_current_role = self.user.get_role(domain=self.user_domain)
-        self.role_updated = not (user_current_role
-                                 and user_current_role.get_qualified_id() == role_qualified_id)
-        if self.role_updated:
-            self.user.set_role(self.user_domain, role_qualified_id)
-
-    def save_log(self):
-        # Tracking for role is done post save to have role setup correctly on save
-        if self.role_updated:
-            new_role = self.user.get_role(domain=self.user_domain)
-            if new_role:
-                self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
-            else:
-                self.logger.add_change_message("Role: None")
-
-        # ToDo: save log before saving user
-        self.logger.save()
-
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, str):
@@ -198,32 +202,10 @@ def _fmt_phone(phone_number):
     return phone_number.lstrip("+")
 
 
-class WebUserImporter(object):
-    """
-    Imports a WebUser added via bulk importer
-    Also handles the logging, if the web user is present, eventually saved by calling save
-    """
-    def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, is_web_users_upload):
-        self.user_domain = user_domain
-        self.user = user
-        self.upload_user = upload_user
-        self.role_updated = False
-
-        self.is_web_users_upload = is_web_users_upload
-        self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
-                                       changed_by_user=upload_user,
-                                       changed_via=via)
-
+class WebUserImporter(BaseUserImporter):
     def add_to_domain(self, role_qualified_id, location_id):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
         self.logger.add_change_message(_("Added as web user"))
-
-    def update_role(self, role_qualified_id):
-        user_current_role = self.user.get_role(domain=self.user_domain)
-        self.role_updated = not (user_current_role
-                                 and user_current_role.get_qualified_id() == role_qualified_id)
-        if self.role_updated:
-            self.user.set_role(self.user_domain, role_qualified_id)
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -273,16 +255,6 @@ class WebUserImporter(object):
                 location_info = None
             self.logger.add_info(
                 _(f"Primary location: {location_info}"))
-
-    def save_log(self):
-        # Tracking for role is done post user save to have role setup correctly on save
-        if self.role_updated:
-            new_role = self.user.get_role(domain=self.user_domain)
-            if new_role:
-                self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
-            else:
-                self.logger.add_change_message("Role: None")
-        self.logger.save()
 
 
 def get_user_primary_location_id(user, domain):
