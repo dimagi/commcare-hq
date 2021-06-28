@@ -18,7 +18,8 @@ class BaseCOWINRepeater(CaseRepeater):
         return toggles.COWIN_INTEGRATION.enabled(domain)
 
     def get_headers(self, repeat_record):
-        headers = super(BaseCOWINRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
+
         headers.update({
             'Accept-Language': 'en_US',
             'User-Agent': '',
