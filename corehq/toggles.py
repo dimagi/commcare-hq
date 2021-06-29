@@ -2071,7 +2071,6 @@ ERM_DEVELOPMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
     'Allow limited fixtures to be available in case restore for SMS workflows. '
@@ -2079,4 +2078,11 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'Do not enable on your own.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
+    'case_import_data_dictionary_validaton',
+    'Validate data per data dictionary definitions during case import',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

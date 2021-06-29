@@ -23,7 +23,11 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import (
+    BULK_UPLOAD_DATE_OPENED,
+    CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
+    DOMAIN_PERMISSIONS_MIRROR,
+)
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
@@ -81,7 +85,10 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
-        self.validated_fields = validated_fields(domain, config.case_type)
+        if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
+            self.validated_fields = validated_fields(domain, config.case_type)
+        else:
+            self.validated_fields = {}
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
