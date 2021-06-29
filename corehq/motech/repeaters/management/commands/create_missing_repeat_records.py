@@ -1,5 +1,6 @@
 from collections import defaultdict
 import time
+from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
@@ -13,10 +14,12 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeaters_by_domain,
 )
 from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater, CreateCaseRepeater, \
-    UpdateCaseRepeater
+    UpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
+
+from corehq.util.metrics import metrics_counter
 
 REPEATERS_WITH_FORM_PAYLOADS = (
     FormRepeater,
@@ -38,8 +41,6 @@ MISSING_CREATE_COUNT = 'missing_create_count'  # CreateCaseRepeater
 MISSING_UPDATE_COUNT = 'missing_update_count'  # UpdateCaseRepeater
 CALLS_TO_REGISTER_COUNT = 'calls_to_register_count'
 PCT_MISSING = 'percentage_missing'
-CAN_REGISTER_CREATE = 'can_register_create'
-CANNOT_REGISTER_CREATE = 'cannot_register_create'
 
 
 def obtain_missing_form_repeat_records(startdate,
@@ -54,7 +55,7 @@ def obtain_missing_form_repeat_records(startdate,
     :return: a dictionary containing stats about the missing repeat records and metadata
     """
     stats_per_domain = {}
-    for domain in domains:
+    for index, domain in enumerate(domains):
         t0 = time.time()
         total_missing_count = 0
         total_count = 0
@@ -79,6 +80,9 @@ def obtain_missing_form_repeat_records(startdate,
                     TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
                 }
             }
+            print(f'{domain} complete!\n{stats_per_domain[domain][FORMS]}')
+
+        print(f"{len(domains) - (index + 1)} domains left")
 
     return stats_per_domain
 
@@ -135,7 +139,6 @@ def obtain_missing_case_repeat_records(startdate,
             total_missing_create_count = 0
             total_missing_update_count = 0
             total_count = 0
-            total_can_call_register_on_create = total_cannot_call_register_on_create = 0
             case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
 
             case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
@@ -150,8 +153,6 @@ def obtain_missing_case_repeat_records(startdate,
                 total_missing_update_count += stats_for_case[MISSING_UPDATE_COUNT]
                 total_missing_all_count += stats_for_case[MISSING_ALL_COUNT]
                 total_count += stats_for_case[TOTAL_COUNT]
-                total_can_call_register_on_create += stats_for_case[CAN_REGISTER_CREATE]
-                total_cannot_call_register_on_create += stats_for_case[CANNOT_REGISTER_CREATE]
 
             total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
             t1 = time.time()
@@ -167,8 +168,6 @@ def obtain_missing_case_repeat_records(startdate,
                         MISSING_UPDATE_COUNT: total_missing_update_count,
                         PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
                         TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
-                        CAN_REGISTER_CREATE: total_can_call_register_on_create,
-                        CANNOT_REGISTER_CREATE: total_cannot_call_register_on_create,
                     }
                 }
                 print(f'{domain} complete!\n{stats_per_domain[domain][CASES]}')
@@ -183,7 +182,7 @@ def obtain_missing_case_repeat_records(startdate,
 
 def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate, should_create):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
-    calls_to_register_count = create_calls_to_register_count = cannot_call_register_on_create = 0
+    calls_to_register_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     # grab repeat records that were registered during the outage
@@ -228,17 +227,11 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
 
         if missing_count > 0:
             calls_to_register_count += 1
-            if isinstance(repeater, CreateCaseRepeater):
-                if len(case.transactions) > 1:
-                    cannot_call_register_on_create += 1
-                    print(f"""
-                        Cannot trigger create case repeat record for repeater {repeater.get_id} and case
-                        {case.get_id}
-                    """)
+            if should_create:
+                if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
+                    create_case_repeater_register(repeater, domain, case)
                 else:
-                    create_calls_to_register_count += 1
-            elif should_create:
-                repeater.register(case)
+                    repeater.register(case)
 
         # just using this to count up each type
         if isinstance(repeater, CreateCaseRepeater):
@@ -257,8 +250,6 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
         MISSING_ALL_COUNT: missing_all_count,
         SUCCESSFUL_COUNT: successful_count,
         TOTAL_COUNT: missing_create_count + missing_update_count + missing_all_count + successful_count,
-        CAN_REGISTER_CREATE: create_calls_to_register_count,
-        CANNOT_REGISTER_CREATE: cannot_call_register_on_create,
     }
 
 
@@ -269,7 +260,7 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     filtered_transactions = []
     if isinstance(repeater, CreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
-        if repeater._allowed_case_type(case) and repeater._allowed_user(case):
+        if create_case_repeater_allowed_to_forward(repeater, case):
             filtered_transactions = case.transactions[0:1]
     elif isinstance(repeater, UpdateCaseRepeater):
         if repeater.allowed_to_forward(case):
@@ -304,6 +295,41 @@ def get_form_repeaters_in_domain(domain):
 def get_case_repeaters_in_domain(domain):
     return [repeater for repeater in get_repeaters_by_domain(domain)
             if isinstance(repeater, REPEATERS_WITH_CASE_PAYLOADS)]
+
+
+def create_case_repeater_allowed_to_forward(repeater, case):
+    return repeater._allowed_case_type(case) and repeater._allowed_user(case)
+
+
+def create_case_repeater_register(repeater, domain, payload):
+    """
+    Only useful in a very specific edge case for CreateCaseRepeater
+    If a CreateCaseRepeater has a missing repeat record, but the case now contains update transactions
+    This can be used to properly trigger the missing repeat record.
+    """
+    if not isinstance(repeater, CreateCaseRepeater):
+        print(f"Error - cannot call create_case_repeater_register on repeater type f{type(repeater)}")
+        return
+
+    if not create_case_repeater_allowed_to_forward(repeater, payload):
+        return
+
+    now = datetime.utcnow()
+    repeat_record = RepeatRecord(
+        repeater_id=repeater.get_id,
+        repeater_type=repeater.doc_type,
+        domain=domain,
+        registered_on=now,
+        next_check=now,
+        payload_id=payload.get_id
+    )
+    metrics_counter('commcare.repeaters.new_record', tags={
+        'domain': domain,
+        'doc_type': repeater.doc_type
+    })
+    repeat_record.save()
+    repeat_record.attempt_forward_now()
+    return repeat_record
 
 
 class Command(BaseCommand):
