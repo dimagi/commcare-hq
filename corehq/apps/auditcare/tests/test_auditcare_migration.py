@@ -100,3 +100,52 @@ class TestAuditcareMigrationUtil(TransactionTestCase):
         cache.delete(cls.util.start_key)
         AuditcareMigrationMeta.objects.all().delete()
         return super().tearDownClass()
+
+
+class TestManagementCommand(TransactionTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        AuditCareMigrationUtil().set_next_batch_start(datetime(2021, 6, 1))
+        cls.couch_doc_ids = [save_couch_doc(**doc) for doc in navigation_test_docs + audit_test_docs + failed_docs]
+
+        # setup for adding errored batches
+        cls.errored_keys = [
+            f'{datetime(2021,5,15)}_{datetime(2021,5,16)}',
+            f'{datetime(2021,5,1)}_{datetime(2021,5,2)}',
+        ]
+        AuditcareMigrationMeta(key=cls.errored_keys[0], state=AuditcareMigrationMeta.ERRORED).save()
+        AuditcareMigrationMeta(key=cls.errored_keys[1], state=AuditcareMigrationMeta.ERRORED).save()
+
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        cache.delete(AuditCareMigrationUtil().start_key)
+        NavigationEventAudit.objects.all().delete()
+        AccessAudit.objects.all().delete()
+        AuditcareMigrationMeta.objects.all().delete()
+        delete_couch_docs(cls.couch_doc_ids)
+        return super().tearDownClass()
+
+    def test_copy_all_events(self):
+        call_command("copy_events_to_sql", "--workers=10", "--batch_by=d")
+        total_object_count = NavigationEventAudit.objects.all().count() + AccessAudit.objects.all().count()
+        expected_object_count = len(audit_test_docs) + len(navigation_test_docs)
+        self.assertEqual(total_object_count, expected_object_count)
+
+    def test_copy_failed_events(self):
+        call_command("copy_events_to_sql", "--only_errored=True")
+
+        count_access_objects = AccessAudit.objects.filter(event_date__lte=datetime(2021, 5, 30)).count()
+        count_navigation_objects = NavigationEventAudit.objects.filter(
+            event_date__lte=datetime(2021, 5, 30)
+        ).count()
+        self.assertEqual(count_access_objects, 1)
+        self.assertEqual(count_navigation_objects, 1)
+
+        meta_state = AuditcareMigrationMeta.objects.filter(
+            key__in=self.errored_keys
+        ).values_list('state', flat=True)
+
+        self.assertListEqual(meta_state, ['f', 'f'])
