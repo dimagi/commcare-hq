@@ -102,7 +102,7 @@ def get_events_from_couch(start_key, end_key):
     return res_obj
 
 
-def copy_events_to_sql(start_time, end_time, retry=0):
+def copy_events_to_sql(start_time, end_time):
     util = AuditCareMigrationUtil()
     print(f"Starting batch: {start_time} - {end_time}")
     key = get_migration_key(start_time, end_time)
@@ -121,14 +121,12 @@ def copy_events_to_sql(start_time, end_time, retry=0):
             count += events_info['count']
             break_query = events_info['break_query']
     except Exception as e:
-        if retry >= 3:
-            message = f"Error in copy_events_to_sql on doc {str(e)}"
-            notify_exception(None, message=message)
-            _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
-            _soft_assert(False, message)
-            util.set_batch_as_errored(key)
-            return
-        copy_events_to_sql(start_time, end_time, retry + 1)
+        message = f"Error in copy_events_to_sql on doc {str(e)}"
+        notify_exception(None, message=message)
+        _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
+        _soft_assert(False, message)
+        util.set_batch_as_errored(key)
+        return
     util.set_batch_as_finished(key, count)
 
 
