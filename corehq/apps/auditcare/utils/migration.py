@@ -46,15 +46,6 @@ class AuditCareMigrationUtil():
     def set_next_batch_start(self, value):
         cache.set(self.start_key, value)
 
-    def acquire_read_lock(self):
-        cache.set(self.start_lock_key, 1)
-
-    def release_read_lock(self):
-        cache.delete(self.start_lock_key)
-
-    def is_start_key_lock_acquired(self):
-        return cache.get(self.start_lock_key)
-
     def get_errored_keys(self, limit):
         errored_keys = (AuditcareMigrationMeta.objects
             .filter(state=AuditcareMigrationMeta.ERRORED)
