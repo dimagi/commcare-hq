@@ -27,6 +27,8 @@ ACCESS_LOOKUP = {
     "login_failed": ACCESS_FAILED,
 }
 
+COUCH_QUERY_LIMIT = 1000
+
 
 def get_couch_key(time):
     return [time.year, time.month, time.day, time.hour, time.minute, time.second]
@@ -37,20 +39,26 @@ def get_migration_key(start_time, end_time):
 
 
 @retry_on_couch_error
-def get_events_from_couch(start_key, end_key, limit=1000):
+def _get_couch_docs(start_key, end_key):
     db = get_db("auditcare")
-    navigation_objects = []
-    audit_objects = []
-    count = 0
-    next_start_time = None
-    for result in db.view(
+    result = db.view(
         "auditcare/all_events",
         startkey=start_key,
         endkey=end_key,
         reduce=False,
         include_docs=True,
-        limit=limit
-    ):
+        limit=COUCH_QUERY_LIMIT
+    )
+    return list(result)
+
+
+def get_events_from_couch(start_key, end_key):
+    navigation_objects = []
+    audit_objects = []
+    count = 0
+    next_start_time = None
+    couch_docs = _get_couch_docs(start_key, end_key)
+    for result in couch_docs:
         doc = result["doc"]
         try:
             next_start_time = force_to_datetime(doc.get("event_date"))
