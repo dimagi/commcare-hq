@@ -2060,17 +2060,24 @@ DETAILED_TAGGING = StaticToggle(
 )
 
 
-TURN_IO_BACKEND = StaticToggle(
-    'turn_io_backend',
-    'Enable Turn.io SMS backend',
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-
 USER_HISTORY_REPORT = StaticToggle(
     'user_history_report',
     'View user history report under user management',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+)
+
+
+COWIN_INTEGRATION = StaticToggle(
+    'cowin_integration',
+    'Integrate with COWIN APIs',
+    TAG_CUSTOM,
+)
+
+
+TURN_IO_BACKEND = StaticToggle(
+    'turn_io_backend',
+    'Enable Turn.io SMS backend',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )
