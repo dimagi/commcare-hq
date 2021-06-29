@@ -95,22 +95,33 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains):
     stats_per_domain = {}
     for domain in domains:
         total_missing_count = 0
+        total_missing_all_count = 0
+        total_missing_create_count = 0
+        total_missing_update_count = 0
         total_count = 0
         case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
 
         case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
         cases = CaseAccessors(domain).get_cases(case_ids)
         for case in cases:
-            missing_count, successful_count = obtain_missing_case_repeat_records_in_domain(
-                domain, case_repeaters_in_domain, case, startdate, enddate
-            )
-            total_missing_count += missing_count
-            total_count += missing_count + successful_count
+            missing_create_count, missing_update_count, missing_count, successful_count = \
+                obtain_missing_case_repeat_records_in_domain(
+                    domain, case_repeaters_in_domain, case, startdate, enddate
+                )
+
+            total_missing_create_count += missing_create_count
+            total_missing_update_count += missing_update_count
+            total_missing_all_count += missing_count
+            total_missing_count += total_missing_update_count + total_missing_create_count + total_missing_all_count
+            total_count += missing_count + missing_update_count + missing_create_count + successful_count
 
         if total_missing_count > 0:
             stats_per_domain[domain] = {
                 'cases': {
                     'missing_count': total_missing_count,
+                    'missing_all_count': total_missing_all_count,
+                    'missing_create_count': total_missing_create_count,
+                    'missing_update_count': total_missing_update_count,
                     'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
                 }
             }
@@ -120,7 +131,9 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains):
 
 def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate):
     successful_count = 0
-    missing_count = 0
+    missing_total_count = 0
+    missing_create_count = 0
+    missing_update_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     records_in_daterange = [record for record in repeat_records
@@ -143,24 +156,37 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
         if repeater.started_at.date() >= enddate:
             # don't count a repeater that was created after the window we care about
             continue
-        expected_record_count = number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddate)
+        repeater_type, expected_record_count = number_of_repeat_records_triggered_by_case(
+            case, repeater, startdate, enddate
+        )
         actual_record_count = triggered_repeater_ids_and_counts.get(repeater.get_id, 0)
 
-        # worry about specifying create vs update vs normal later
-        temp_missing_count = expected_record_count - actual_record_count
-        missing_count += temp_missing_count if temp_missing_count > 0 else 0
+        missing_count = expected_record_count - actual_record_count
+        if missing_count < 0:
+            print(f"ERROR: negative count\nExpected: {expected_record_count} Actual: {actual_record_count} Case: {case.get_id}")
+            missing_count = 0
+        if repeater_type == 'create':
+            missing_create_count += missing_count
+        elif repeater_type == 'update':
+            missing_update_count += missing_count
+        else:
+            missing_total_count += missing_count
+
         successful_count += actual_record_count
 
-    return missing_count, successful_count
+    return missing_create_count, missing_update_count, missing_total_count, successful_count
 
 
 def number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddate):
+    case_repeater_type = 'all'
     filtered_transactions = []
     if isinstance(repeater, CreateCaseRepeater):
+        case_repeater_type = 'create'
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
         if repeater._allowed_case_type(case) and repeater._allowed_user(case):
             filtered_transactions = case.transactions[0:1]
     elif isinstance(repeater, UpdateCaseRepeater):
+        case_repeater_type = 'update'
         if repeater.allowed_to_forward(case):
             filtered_transactions = case.transactions[1:]
     else:
@@ -170,7 +196,7 @@ def number_of_repeat_records_triggered_by_case(case, repeater, startdate, enddat
     transactions_in_daterange = [transaction for transaction in filtered_transactions
                                  if startdate <= get_transaction_date(transaction) <= enddate]
 
-    return len(transactions_in_daterange)
+    return case_repeater_type, len(transactions_in_daterange)
 
 
 def get_transaction_date(transaction):
