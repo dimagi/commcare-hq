@@ -1,10 +1,26 @@
-from django.test.testcases import TransactionTestCase
-from corehq.apps.auditcare.models import AuditcareMigrationMeta
 from datetime import datetime
 from unittest.mock import patch
 
-from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil, get_formatted_datetime_string
 from django.core.cache import cache
+from django.core.management import call_command
+from django.test.testcases import TransactionTestCase
+
+from corehq.apps.auditcare.models import (
+    AccessAudit,
+    AuditcareMigrationMeta,
+    NavigationEventAudit,
+)
+from corehq.apps.auditcare.utils.migration import (
+    AuditCareMigrationUtil,
+    get_formatted_datetime_string,
+)
+
+from .data.audicare_migraion import (
+    audit_test_docs,
+    failed_docs,
+    navigation_test_docs,
+)
+from .testutils import delete_couch_docs, save_couch_doc
 
 
 class TestAuditcareMigrationUtil(TransactionTestCase):
