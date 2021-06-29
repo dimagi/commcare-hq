@@ -26,17 +26,21 @@ class AuditCareMigrationUtil():
                 # for the first call
                 start_datetime = INITIAL_START_DATE
 
+            if start_datetime > datetime.now():
+                print("Migration Successfull")
+                return
+
             start_time = _get_formatted_start_time(start_datetime, batch_by)
             end_time = None
 
             for index in range(worker_count):
                 end_time = _get_end_time(start_time, batch_by)
                 batches.append([start_time, end_time])
+                if end_time > datetime.now():
+                    break
                 start_time = end_time
             self.set_next_batch_start(end_time)
-            if end_time > datetime.now():
-                print("Migration successfully done")
-                exit(1)
+
         return batches
 
     def set_next_batch_start(self, value):
