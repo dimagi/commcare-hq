@@ -28,6 +28,7 @@ REPEATERS_WITH_CASE_PAYLOADS = (
 )
 
 CASES = 'cases'
+FORMS = 'forms'
 TIME_TO_RUN = 'time_to_run'
 TOTAL_COUNT = 'total_count'
 SUCCESSFUL_COUNT = 'successful_count'
@@ -36,7 +37,7 @@ MISSING_ALL_COUNT = 'missing_all_count'  # CaseRepeater
 MISSING_CREATE_COUNT = 'missing_create_count'  # CreateCaseRepeater
 MISSING_UPDATE_COUNT = 'missing_update_count'  # UpdateCaseRepeater
 CALLS_TO_REGISTER_COUNT = 'calls_to_register_count'
-PCT_MISSING_COUNT = 'percentage_missing'
+PCT_MISSING = 'percentage_missing'
 
 
 def obtain_missing_form_repeat_records(startdate,
@@ -44,14 +45,15 @@ def obtain_missing_form_repeat_records(startdate,
                                        domains,
                                        should_create=False):
     """
-    :param startdate: filter out forms with a server_modified_on prior to this date
-    :param enddate: filter out forms with a server_modified_on after this date
+    :param startdate: search for missing form repeat records after this date
+    :param enddate: search for missing form repeat records before this date
     :param domains: list of domains to check
     :param should_create: if  True, missing repeat records that are discovered will be registered with the repeater
-    :return: a dictionary containing stats about number of missing records, impacted form_ids, percentage missing
+    :return: a dictionary containing stats about the missing repeat records and metadata
     """
     stats_per_domain = {}
     for domain in domains:
+        t0 = time.time()
         total_missing_count = 0
         total_count = 0
         form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
@@ -65,11 +67,14 @@ def obtain_missing_form_repeat_records(startdate,
             total_missing_count += missing_count
             total_count += missing_count + successful_count
 
+        t1 = time.time()
+        time_to_run = t1 - t0
         if total_missing_count > 0:
             stats_per_domain[domain] = {
-                'forms': {
-                    'missing_count': total_missing_count,
-                    'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+                FORMS: {
+                    MISSING_COUNT: total_missing_count,
+                    PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
+                    TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
                 }
             }
 
@@ -108,10 +113,19 @@ def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
         .date_range('server_modified_on', gte=startdate, lte=enddate).source(['_id']).run().hits
 
 
-def obtain_missing_case_repeat_records(startdate, enddate, domains, should_create=False):
+def obtain_missing_case_repeat_records(startdate,
+                                       enddate,
+                                       domains,
+                                       should_create=False):
+    """
+    :param startdate: search for missing case repeat records after this date
+    :param enddate: search for missing case repeat records before this date
+    :param domains: list of domains to check
+    :param should_create: if  True, missing repeat records that are discovered will be registered with the repeater
+    :return: a dictionary containing stats about the missing repeat records and metadata
+    """
     stats_per_domain = {}
     for index, domain in enumerate(domains):
-
         t0 = time.time()
         try:
             total_register_count = 0
@@ -146,7 +160,7 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
                         MISSING_ALL_COUNT: total_missing_all_count,
                         MISSING_CREATE_COUNT: total_missing_create_count,
                         MISSING_UPDATE_COUNT: total_missing_update_count,
-                        PCT_MISSING_COUNT: f'{round((total_missing_count / total_count) * 100, 2)}%',
+                        PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
                         TIME_TO_RUN: f'{round(time_to_run, 2)} seconds'
                     }
                 }
@@ -238,6 +252,9 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
 
 
 def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, enddate):
+    """
+    Based on a case's transactions, and the number of repeat records
+    """
     filtered_transactions = []
     if isinstance(repeater, CreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
