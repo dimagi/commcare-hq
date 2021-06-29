@@ -107,7 +107,10 @@ class BaseUserImporter(object):
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
             if new_role:
-                self.logger.add_info(_(f"Role: {new_role.name}[{new_role.get_id}]"))
+                self.logger.add_info(_("Role: {new_role_name}[{new_role_id}]").format(
+                    new_role_name=new_role.name,
+                    new_role_id=new_role.get_id
+                ))
             else:
                 self.logger.add_change_message("Role: None")
 
@@ -123,7 +126,9 @@ class CommCareUserImporter(BaseUserImporter):
     def update_phone_number(self, phone_number):
         fmt_phone_number = _fmt_phone(phone_number)
         if fmt_phone_number not in self.user.phone_numbers:
-            self.logger.add_change_message(_(f"Added phone number {fmt_phone_number}"))
+            self.logger.add_change_message(_("Added phone number {new_phone_number}").format(
+                new_phone_number=fmt_phone_number)
+            )
         # always call this to set phone number as default if needed
         self.user.add_phone_number(fmt_phone_number, default=True)
 
@@ -186,7 +191,9 @@ class CommCareUserImporter(BaseUserImporter):
             if location_ids:
                 location_names = [get_location_from_site_code(code, domain_info.location_cache).name
                                   for code in location_codes]
-                self.logger.add_info(_(f"Assigned locations: {location_names}"))
+                self.logger.add_info(_("Assigned locations: {location_names}").format(
+                    location_names=location_names
+                ))
 
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != users_current_primary_location_id:
@@ -194,7 +201,9 @@ class CommCareUserImporter(BaseUserImporter):
             if self.user.location_id:
                 users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    _(f"Primary location: {users_updated_primary_location_name}"))
+                    _("Primary location: {primary_location_name}").format(
+                        primary_location_name=users_updated_primary_location_name
+                    ))
 
 
 def _fmt_phone(phone_number):
@@ -215,7 +224,10 @@ class WebUserImporter(BaseUserImporter):
             if current_primary_location_id != location_id:
                 users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    _(f"Primary location: {users_updated_primary_location_name}[{location_id}]"))
+                    _("Primary location: {primary_location_name}[{primary_location_id}]").format(
+                        primary_location_name=users_updated_primary_location_name,
+                        primary_location_id=location_id
+                    ))
         else:
             self.user.unset_location(self.user_domain)
             # if there was a location before, log that it was cleared
@@ -244,7 +256,9 @@ class WebUserImporter(BaseUserImporter):
                 locations_info = ", ".join([f"{location.name}[{location.location_id}]" for location in locations])
             else:
                 locations_info = []
-            self.logger.add_info(_(f"Assigned locations: {locations_info}"))
+            self.logger.add_info(_("Assigned locations: {locations_info}").format(
+                locations_info=locations_info
+            ))
 
         # log this after assigned locations are updated, which can re-set primary location
         users_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -255,7 +269,7 @@ class WebUserImporter(BaseUserImporter):
             else:
                 location_info = None
             self.logger.add_info(
-                _(f"Primary location: {location_info}"))
+                _("Primary location: {location_info}").format(location_info=location_info))
 
 
 def get_user_primary_location_id(user, domain):
