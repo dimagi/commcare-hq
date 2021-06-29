@@ -213,6 +213,7 @@ else
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
 # export variables for compose file (they must be set or it complains)
+export CODECOV_TOKEN="$CODECOV_TOKEN"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"

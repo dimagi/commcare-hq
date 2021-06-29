@@ -159,8 +159,15 @@ function _run_tests {
 
     function _test_python {
         ./manage.py create_kafka_topics
-        logmsg INFO "./manage.py test ${py_test_args[*]}"
-        ./manage.py test "${py_test_args[@]}"
+        if [ "$TRAVIS_EVENT_TYPE" ]; then
+            logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
+            # `coverage` generates a file that's then sent to codecov
+            coverage run --parallel-mode manage.py test "${py_test_args[@]}"
+            bash <(curl -s https://codecov.io/bash)
+        else
+            logmsg INFO "./manage.py test ${py_test_args[*]}"
+            ./manage.py test "${py_test_args[@]}"
+        fi
     }
 
     function _test_javascript {

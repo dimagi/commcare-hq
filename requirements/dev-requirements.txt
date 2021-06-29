@@ -70,6 +70,8 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
+coverage==5.5
+    # via -r test-requirements.in
 cryptography==3.4.7
     # via
     #   jwcrypto
