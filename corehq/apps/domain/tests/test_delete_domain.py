@@ -871,6 +871,15 @@ class TestDeleteDomain(TestCase):
     def test_users_domain_membership(self):
         web_user = WebUser.create(self.domain.name, f'webuser@{self.domain.name}.{HQ_ACCOUNT_ROOT}', '******',
                                   created_by=None, created_via=None)
+
+        another_domain = Domain(name="another-test", is_active=True)
+        another_domain.save()
+        self.addCleanup(another_domain.delete)
+
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed
+        web_user.add_domain_membership(another_domain.name)
+        web_user.save()
+
         self.domain.delete()
 
         user_history = UserHistory.objects.last()

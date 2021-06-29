@@ -138,8 +138,6 @@ def _delete_web_user_membership(domain_name):
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
         if settings.UNIT_TESTING and not web_user.domain_memberships:
-            # log before delete, if user is being deleted
-            _log_web_user_membership_removed(web_user, __name__ + "._delete_web_user_membership")
             web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
