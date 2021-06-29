@@ -42,6 +42,5 @@ script:
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
-  - bash <(curl -s https://codecov.io/bash)
 services:
   - docker
