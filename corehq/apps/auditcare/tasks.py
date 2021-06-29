@@ -31,6 +31,8 @@ COUCH_QUERY_LIMIT = 1000
 
 
 def get_couch_key(time):
+    if not time:
+        return
     return [time.year, time.month, time.day, time.hour, time.minute, time.second]
 
 
@@ -97,7 +99,7 @@ def get_events_from_couch(start_key, end_key):
     res_obj = {
         "navigation_events": navigation_objects,
         "audit_events": audit_objects,
-        "break_query": count < limit,
+        "break_query": count < COUCH_QUERY_LIMIT or not next_start_time,
         "next_start_key": get_couch_key(next_start_time),
         "count": count
     }
