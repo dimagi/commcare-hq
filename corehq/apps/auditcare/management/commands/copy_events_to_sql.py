@@ -37,12 +37,14 @@ class Command(BaseCommand):
         batches = []
         while True:
             if options['only_errored']:
-                if util.total_errored_keys() > 0:
-                    batches = util.get_errored_keys(5)
-                else:
+                batches = util.get_errored_keys(5)
+                if not batches:
                     print("No errored keys present")
-                    exit(1)
+                    return
             else:
                 batches = util.generate_batches(workers, batch_by)
+            if not batches:
+                print("No batches to process")
+                return
             batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
             gevent.joinall([*batched_processes])
