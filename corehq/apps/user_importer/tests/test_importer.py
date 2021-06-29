@@ -615,14 +615,14 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
             0
         )  # deprecated
-        log_entry = UserHistory.objects.get(action=UserModelAction.CREATE.value,
-                                            changed_by=self.uploading_user.get_id)
-        self.assertEqual(log_entry.domain, self.domain.name)
-        self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.user_id, created_user.get_id)
-        self.assertEqual(log_entry.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
-        self.assertEqual(log_entry.details['changes']['username'], created_user.username)
-        self.assertEqual(log_entry.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.user_type, "CommCareUser")
+        self.assertEqual(user_history.user_id, created_user.get_id)
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.details['changes']['username'], created_user.username)
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
 
     def test_tracking_update_to_existing_commcare_user(self):
         CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
@@ -657,6 +657,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 'user_data': {'commcare_project': 'mydomain', 'post': 'SE'}
             }
         )
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(
             user_history.message,
             f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_id}]"

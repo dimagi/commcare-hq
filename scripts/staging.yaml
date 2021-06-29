@@ -83,9 +83,10 @@ branches:
     - mk/user-history/base # MK June 21 [QA]
     - cs/SC-1390-put_turn_behind_ff+mk/user-history/report
     - mk/user-history/report # MK June 23 [QA]
-    - mk/user-history/bulk-upload # MK June 28 [QA]
+    #- mk/user-history/bulk-upload # MK June 28 [QA]
     - jm/repeater-domain-admins  # Joel June 21
     - sk/role-to-sql-auth  # Simon June 23
     #- jls/enterprise-user-overview  # Jenny June 24
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
+    - caktus:case-upload-code-movement # Jenny June 28
 submodules: { }
