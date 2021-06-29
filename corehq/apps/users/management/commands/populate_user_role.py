@@ -48,11 +48,11 @@ class Command(PopulateSQLCommand):
                 name_prefix=f"permissions.{name}"
             ))
 
-        couch_assignable_by = couch.get("assignable_by", [])
+        couch_assignable_by = couch.get("assignable_by")
         sql_assignable_by = list(sql.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True))
         diffs.extend(cls.diff_lists(
             "assignable_by",
-            sorted(couch_assignable_by),
+            sorted(couch_assignable_by) if couch_assignable_by else [],
             sorted(sql_assignable_by),
         ))
         return diffs
