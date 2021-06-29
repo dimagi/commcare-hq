@@ -172,7 +172,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
             # no need to trigger a repeater if it has fired since the outage time.
             continue
 
-        repeater_type, expected_record_count = number_of_repeat_records_fired_for_case(
+        expected_record_count = number_of_repeat_records_fired_for_case(
             case, repeater, startdate, enddate
         )
         actual_record_count = fired_repeater_ids_and_counts_during_outage.get(repeater.get_id, 0)
