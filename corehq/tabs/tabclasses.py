@@ -1923,6 +1923,19 @@ def _get_integration_section(domain):
             'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
+    if toggles.EMBEDDED_TABLEAU.enabled(domain):
+        from corehq.apps.reports.views import TableauServerView
+        integration.append({
+            'title': _(TableauServerView.page_title),
+            'url': reverse(TableauServerView.urlname, args=[domain])
+        })
+
+        from corehq.apps.reports.views import TableauVisualizationListView
+        integration.append({
+            'title': _(TableauVisualizationListView.page_title),
+            'url': reverse(TableauVisualizationListView.urlname, args=[domain])
+        })
+
     return integration
 
 

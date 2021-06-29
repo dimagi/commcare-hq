@@ -31,6 +31,7 @@ from django.views.decorators.http import (
     require_http_methods,
     require_POST,
 )
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
@@ -93,6 +94,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import (
     can_edit_form_location,
@@ -164,8 +166,9 @@ from corehq.util.view_utils import (
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
-from .forms import SavedReportConfigForm
+from .forms import SavedReportConfigForm, TableauServerForm, TableauVisualizationForm
 from .lookup import ReportLookup, get_full_report_name
+from .models import TableauVisualization, TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
@@ -2183,3 +2186,143 @@ def project_health_user_details(request, domain, user_id):
         'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })
+
+
+class TableauServerView(BaseProjectReportSectionView):
+    urlname = 'tableau_server_view'
+    page_title = ugettext_lazy('Tableau Server Config')
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauServerView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def tableau_server_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return TableauServerForm(
+            data, domain=self.domain
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['initial'] = TableauServer.objects.get_or_create(domain=self.domain)
+        return kwargs
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.tableau_server_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.tableau_server_form.is_valid():
+            self.tableau_server_form.save()
+            messages.success(
+                request, ugettext_lazy("Tableau Server Settings Updated")
+            )
+        else:
+            messages.error(
+                request, ugettext_lazy("Could not update Tableau Server Settings")
+            )
+        return self.get(request, *args, **kwargs)
+
+
+class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedViewMixin):
+    urlname = 'tableau_visualization_list_view'
+    page_title = _('Tableau Visualizations')
+    template_name = 'reports/tableau_visualization.html'
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def base_query(self):
+        return TableauVisualization.objects.filter(domain=self.domain)
+
+    @property
+    def column_names(self):
+        return [
+            _("Server"),
+            _("View URL"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        start, end = self.skip, self.skip + self.limit
+        for tableau_visualization in self.base_query.all()[start:end]:
+            yield {
+                "itemData": self._get_item_data(tableau_visualization),
+                "template": "tableau-visualization-template",
+            }
+
+    def _get_item_data(self, tableau_visualization):
+        data = {
+            'id': tableau_visualization.id,
+            'server': tableau_visualization.server.server_name,
+            'view_url': tableau_visualization.view_url,
+        }
+        return data
+
+    def get_deleted_item_data(self, item_id):
+        tableau_viz = TableauVisualization.objects.get(
+            pk=item_id,
+            domain=self.domain,
+        )
+        tableau_viz.delete()
+        return {
+            'itemData': self._get_item_data(tableau_viz),
+            'template': 'tableau-visualization-deleted-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
+class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixin, ProcessFormView):
+    urlname = 'tableau_visualization_detail_view'
+    page_title = _('Tableau Visualization')
+    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    model = TableauVisualization
+    form_class = TableauVisualizationForm
+
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(TableauVisualizationDetailView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return super().get_queryset().filter(domain=self.domain)
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().post(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            TableauVisualizationListView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
