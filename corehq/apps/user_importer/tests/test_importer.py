@@ -541,19 +541,19 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             LogEntry.objects.filter(action_flag=UserModelAction.CREATE.value).count(),
             0
         )  # deprecated
-        log_entry = UserHistory.objects.get(action=UserModelAction.CREATE.value,
-                                            changed_by=self.uploading_user.get_id)
-        self.assertEqual(log_entry.domain, self.domain.name)
-        self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.user_id, created_user.get_id)
-        self.assertEqual(log_entry.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
-        self.assertEqual(log_entry.details['changes']['username'], created_user.username)
+        user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.user_type, "CommCareUser")
+        self.assertEqual(user_history.user_id, created_user.get_id)
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.details['changes']['username'], created_user.username)
 
         # update
-        log_entry = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
-                                            changed_by=self.uploading_user.get_id)
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               changed_by=self.uploading_user.get_id)
         self.assertEqual(
-            log_entry.details,
+            user_history.details,
             {
                 'changes': {
                     'role': self.role.get_qualified_id()
@@ -561,7 +561,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 'changed_via': USER_CHANGE_VIA_BULK_IMPORTER
             }
         )
-        self.assertEqual(log_entry.message, f"role: {self.role.name}")
+        self.assertEqual(user_history.message, f"role: {self.role.name}")
 
     def test_blank_is_active(self):
         import_users_and_groups(

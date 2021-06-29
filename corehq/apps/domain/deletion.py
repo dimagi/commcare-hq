@@ -373,6 +373,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('reports', 'TableauServer', 'domain'),
+    ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),

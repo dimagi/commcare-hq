@@ -71,12 +71,12 @@ class RetireUserTestCase(TestCase):
         deleted_via = "Test test"
 
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
-        log_entry = UserHistory.objects.get(user_id=self.commcare_user.get_id,
-                                            action=UserModelAction.DELETE.value)
-        self.assertEqual(log_entry.domain, self.domain)
-        self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.changed_by, self.other_user.get_id)
-        self.assertEqual(log_entry.details['changed_via'], deleted_via)
+        user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id,
+                                               action=UserModelAction.DELETE.value)
+        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.user_type, "CommCareUser")
+        self.assertEqual(user_history.changed_by, self.other_user.get_id)
+        self.assertEqual(user_history.details['changed_via'], deleted_via)
 
     @override_settings(UNIT_TESTING=False)
     def test_unretire_missing_unretired_by(self):
@@ -115,14 +115,14 @@ class RetireUserTestCase(TestCase):
         )
         self.commcare_user.unretire(self.domain, unretired_by=self.other_user, unretired_via="Test")
 
-        log_entry = UserHistory.objects.get(
+        user_history = UserHistory.objects.get(
             user_id=self.commcare_user.get_id,
             action=UserModelAction.CREATE.value
         )
-        self.assertEqual(log_entry.domain, self.domain)
-        self.assertEqual(log_entry.user_type, "CommCareUser")
-        self.assertEqual(log_entry.changed_by, self.other_user.get_id)
-        self.assertEqual(log_entry.details['changed_via'], "Test")
+        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.user_type, "CommCareUser")
+        self.assertEqual(user_history.changed_by, self.other_user.get_id)
+        self.assertEqual(user_history.details['changed_via'], "Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))

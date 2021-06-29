@@ -25,7 +25,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider('Program'),
     WebUserIDProvider(),
     DocTypeIDProvider('CommCareUser'),
-    DocTypeIDProvider('UserRole'),
     DocTypeIDProvider('Group'),
     DocTypeIDProvider('ReportConfiguration'),
     DocTypeIDProvider('ReportNotification'),
