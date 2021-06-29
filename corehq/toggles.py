@@ -2059,6 +2059,14 @@ DETAILED_TAGGING = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
+COWIN_INTEGRATION = StaticToggle(
+    'cowin_integration',
+    'Integrate with COWIN APIs',
+    TAG_CUSTOM,
+)
+
+
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
