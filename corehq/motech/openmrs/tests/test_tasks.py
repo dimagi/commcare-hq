@@ -350,8 +350,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.mobile_worker.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):

@@ -704,9 +704,9 @@ class SchedulingRecipientTest(TestCase):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
-        self.addCleanup(user1.delete, deleted_by=None)
-        self.addCleanup(user2.delete, deleted_by=None)
-        self.addCleanup(user3.delete, deleted_by=None)
+        self.addCleanup(user1.delete, self.domain, deleted_by=None)
+        self.addCleanup(user2.delete, self.domain, deleted_by=None)
+        self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
@@ -757,9 +757,9 @@ class SchedulingRecipientTest(TestCase):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
-        self.addCleanup(user1.delete, deleted_by=None)
-        self.addCleanup(user2.delete, deleted_by=None)
-        self.addCleanup(user3.delete, deleted_by=None)
+        self.addCleanup(user1.delete, self.domain, deleted_by=None)
+        self.addCleanup(user2.delete, self.domain, deleted_by=None)
+        self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
@@ -808,9 +808,9 @@ class SchedulingRecipientTest(TestCase):
             user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
             user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
             user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
-            self.addCleanup(user1.delete, deleted_by=None)
-            self.addCleanup(user2.delete, deleted_by=None)
-            self.addCleanup(user3.delete, deleted_by=None)
+            self.addCleanup(user1.delete, self.domain, deleted_by=None)
+            self.addCleanup(user2.delete, self.domain, deleted_by=None)
+            self.addCleanup(user3.delete, self.domain, deleted_by=None)
 
             self.assertIsNone(user1.memoized_usercase)
             self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
@@ -840,7 +840,7 @@ class SchedulingRecipientTest(TestCase):
     @run_with_all_backends
     def test_phone_number_preference(self):
         user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
 
         user.add_phone_number('12345')
         user.add_phone_number('23456')
