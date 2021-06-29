@@ -2045,6 +2045,13 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+EMBEDDED_TABLEAU = StaticToggle(
+    'embedded_tableau',
+    'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
     'Send additional metrics to datadog and sentry.',
@@ -2058,4 +2065,12 @@ USER_HISTORY_REPORT = StaticToggle(
     'View user history report under user management',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+)
+
+
+TURN_IO_BACKEND = StaticToggle(
+    'turn_io_backend',
+    'Enable Turn.io SMS backend',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )

@@ -44,7 +44,7 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
@@ -118,6 +118,10 @@ def REPORTS(project):
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
+
+    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
+        tableau_reports = tableau.get_reports(project.name)
+        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
 
     if project.commtrack_enabled:
         supply_reports = (

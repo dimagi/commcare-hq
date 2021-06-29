@@ -123,8 +123,8 @@ class TestLogUserChange(TestCase):
 
         new_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__)
 
-        log_entry = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=UserModelAction.DELETE.value)
-        self.assertEqual(log_entry.user_id, new_user_id)
+        user_history = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=UserModelAction.DELETE.value)
+        self.assertEqual(user_history.user_id, new_user_id)
 
 
 def _get_expected_changes_json(user):
