@@ -80,11 +80,11 @@ class UserRoleCouchToSqlTests(TestCase):
             PermissionInfo(Permissions.edit_reports.name),
             PermissionInfo(Permissions.view_reports.name, allow=['corehq.reports.DynamicReportmaster_report_id']),
             PermissionInfo(Permissions.view_apps.name),
-        ])
+        ], sync_to_couch=False)
 
         sql_role.set_assignable_by(list(
             SQLUserRole.objects.filter(couch_id=self.app_editor.get_id).values_list("id", flat=True)
-        ))
+        ), sync_to_couch=False)
 
         # sync the permissions
         sql_role._migration_do_sync()
@@ -130,7 +130,7 @@ class UserRoleCouchToSqlTests(TestCase):
         sql_permissions = sql.get_permission_infos()
         sql.set_permissions(sql_permissions + [
             PermissionInfo(Permissions.login_as_all_users.name, allow=PermissionInfo.ALLOW_ALL)
-        ])
+        ], sync_to_couch=False)
         self.assertListEqual(Command.get_filtered_diffs(couch.to_json(), sql), [
             "permissions.edit_reports.allow: couch value None != sql value '*'",
             "permissions.login_as_all_users.allow: couch value None != sql value '*'",
@@ -147,7 +147,7 @@ class UserRoleCouchToSqlTests(TestCase):
 
     def test_diff_assignable_by_sql_None(self):
         couch, sql = self._create_identical_objects_for_diff()
-        sql.set_assignable_by(None)
+        sql.set_assignable_by(None, sync_to_couch=False)
         self.assertListEqual(Command.get_filtered_diffs(couch.to_json(), sql), [
             'assignable_by: 1 in couch != 0 in sql'
         ])
@@ -201,8 +201,8 @@ class UserRoleCouchToSqlTests(TestCase):
             is_non_admin_editable=False,
             upstream_id=self.app_editor.get_id
         )
-        sql_role.set_permissions(permissions.to_list())
-        sql_role.set_assignable_by([self.app_editor_sql.id])
+        sql_role.set_permissions(permissions.to_list(), sync_to_couch=False)
+        sql_role.set_assignable_by([self.app_editor_sql.id], sync_to_couch=False)
         return couch_role, sql_role
 
 
@@ -230,7 +230,7 @@ class TestPopulateCommand(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for role in cls.roles:
+        for role in UserRole.by_domain(cls.domain):
             role.delete()
 
     def test_command(self):
