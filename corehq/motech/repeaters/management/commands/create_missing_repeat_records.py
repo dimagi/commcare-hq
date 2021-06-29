@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id,
@@ -133,6 +134,10 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
             triggered_repeater_ids_and_counts[record.repeater_id] = 1
 
     for repeater in repeaters:
+        if isinstance(repeater, Dhis2EntityRepeater):
+            # not dealing with this right now
+            continue
+
         if repeater.started_at.date() >= enddate:
             # don't count a repeater that was created after the window we care about
             continue
