@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.management import call_command
-from django.test.testcases import TransactionTestCase
+from django.test.testcases import TestCase
 
 from corehq.apps.auditcare.models import (
     AccessAudit,
@@ -23,15 +23,22 @@ from .data.audicare_migraion import (
 from .testutils import delete_couch_docs, save_couch_doc
 
 
-class TestAuditcareMigrationUtil(TransactionTestCase):
+class TestAuditcareMigrationUtil(TestCase):
     util = AuditCareMigrationUtil()
     start_time = datetime(2020, 6, 1)
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.key = get_formatted_datetime_string(datetime.now()) + '_' + get_formatted_datetime_string(datetime.now())
-        cache.set(cls.util.start_key, cls.start_time)
-        return super().setUpClass()
+
+    def setUp(self):
+        cache.set(self.util.start_key, self.start_time)
+        return super().setUp()
+
+    def teardown(self):
+        cache.delete(self.util.start_key)
+        super().tearDown()
 
     def test_get_next_batch_start(self):
         start_time = self.util.get_next_batch_start()
@@ -102,7 +109,7 @@ class TestAuditcareMigrationUtil(TransactionTestCase):
         return super().tearDownClass()
 
 
-class TestManagementCommand(TransactionTestCase):
+class TestManagementCommand(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -148,4 +155,4 @@ class TestManagementCommand(TransactionTestCase):
             key__in=self.errored_keys
         ).values_list('state', flat=True)
 
-        self.assertListEqual(meta_state, ['f', 'f'])
+        self.assertListEqual(list(meta_state), ['f', 'f'])
