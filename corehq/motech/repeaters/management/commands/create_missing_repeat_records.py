@@ -1,4 +1,5 @@
 from collections import defaultdict
+import time
 
 from django.core.management.base import BaseCommand
 
@@ -26,6 +27,8 @@ REPEATERS_WITH_CASE_PAYLOADS = (
     CaseRepeater,
 )
 
+CASES = 'cases'
+TIME_TO_RUN = 'time_to_run'
 TOTAL_COUNT = 'total_count'
 SUCCESSFUL_COUNT = 'successful_count'
 MISSING_COUNT = 'missing_count'
@@ -107,7 +110,9 @@ def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
 
 def obtain_missing_case_repeat_records(startdate, enddate, domains, should_create=False):
     stats_per_domain = {}
-    for domain in domains:
+    for index, domain in enumerate(domains):
+
+        t0 = time.time()
         try:
             total_register_count = 0
             total_missing_all_count = 0
@@ -130,17 +135,25 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
                 total_count += stats_for_case[TOTAL_COUNT]
 
             total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
+            t1 = time.time()
+            time_to_run = t1 - t0
+
             if total_missing_count > 0:
                 stats_per_domain[domain] = {
-                    'cases': {
+                    CASES: {
                         CALLS_TO_REGISTER_COUNT: total_register_count,
                         MISSING_COUNT: total_missing_count,
                         MISSING_ALL_COUNT: total_missing_all_count,
                         MISSING_CREATE_COUNT: total_missing_create_count,
                         MISSING_UPDATE_COUNT: total_missing_update_count,
                         PCT_MISSING_COUNT: f'{round((total_missing_count / total_count) * 100, 2)}%',
+                        TIME_TO_RUN: f'{round(time_to_run, 2)} seconds'
                     }
                 }
+                print(f'{domain} complete!\n{stats_per_domain[domain][CASES]}')
+
+            print(f"{len(domains) - (index + 1)} domains left")
+
         except Exception as e:
             print(f"Encountered error with {domain}: {e}")
 
