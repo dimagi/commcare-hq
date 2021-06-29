@@ -95,6 +95,7 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
     stats_per_domain = {}
     for domain in domains:
         try:
+            total_register_count = 0
             total_missing_all_count = 0
             total_missing_create_count = 0
             total_missing_update_count = 0
@@ -104,11 +105,12 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
             case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
             cases = CaseAccessors(domain).get_cases(case_ids)
             for case in cases:
-                missing_create_count, missing_update_count, missing_all_count, successful_count = \
+                register_count, missing_create_count, missing_update_count, missing_all_count, successful_count = \
                     obtain_missing_case_repeat_records_in_domain(
                         domain, case_repeaters_in_domain, case, startdate, enddate, should_create
                     )
 
+                total_register_count += register_count
                 total_missing_create_count += missing_create_count
                 total_missing_update_count += missing_update_count
                 total_missing_all_count += missing_all_count
@@ -118,6 +120,7 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
             if total_missing_count > 0:
                 stats_per_domain[domain] = {
                     'cases': {
+                        'register_count': total_register_count,
                         'missing_count': total_missing_count,
                         'missing_all_count': total_missing_all_count,
                         'missing_create_count': total_missing_create_count,
@@ -125,8 +128,8 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains, should_creat
                         'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
                     }
                 }
-        except:
-            print(f"Encountered error with {domain}")
+        except Exception as e:
+            print(f"Encountered error with {domain}: {e}")
 
     return stats_per_domain
 
@@ -136,6 +139,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
     missing_total_count = 0
     missing_create_count = 0
     missing_update_count = 0
+    call_register_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     records_during_outage = [record for record in repeat_records
@@ -186,6 +190,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
             if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
                 print(f"Cannot trigger create case repeat record for repeater {repeater.get_id} and case {case.get_id}")
             elif should_create:
+                call_register_count += 1
                 repeater.register(case)
 
         # just using this to count up each type
@@ -198,7 +203,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
 
         successful_count += actual_record_count
 
-    return missing_create_count, missing_update_count, missing_total_count, successful_count
+    return call_register_count, missing_create_count, missing_update_count, missing_total_count, successful_count
 
 
 def number_of_repeat_records_fired_for_case(case, repeater, startdate, enddate):
