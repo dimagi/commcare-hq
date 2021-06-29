@@ -38,6 +38,8 @@ MISSING_CREATE_COUNT = 'missing_create_count'  # CreateCaseRepeater
 MISSING_UPDATE_COUNT = 'missing_update_count'  # UpdateCaseRepeater
 CALLS_TO_REGISTER_COUNT = 'calls_to_register_count'
 PCT_MISSING = 'percentage_missing'
+CAN_REGISTER_CREATE = 'can_register_create'
+CANNOT_REGISTER_CREATE = 'cannot_register_create'
 
 
 def obtain_missing_form_repeat_records(startdate,
@@ -133,6 +135,7 @@ def obtain_missing_case_repeat_records(startdate,
             total_missing_create_count = 0
             total_missing_update_count = 0
             total_count = 0
+            total_can_call_register_on_create = total_cannot_call_register_on_create = 0
             case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
 
             case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
@@ -147,6 +150,8 @@ def obtain_missing_case_repeat_records(startdate,
                 total_missing_update_count += stats_for_case[MISSING_UPDATE_COUNT]
                 total_missing_all_count += stats_for_case[MISSING_ALL_COUNT]
                 total_count += stats_for_case[TOTAL_COUNT]
+                total_can_call_register_on_create += stats_for_case[CAN_REGISTER_CREATE]
+                total_cannot_call_register_on_create += stats_for_case[CANNOT_REGISTER_CREATE]
 
             total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
             t1 = time.time()
@@ -161,7 +166,9 @@ def obtain_missing_case_repeat_records(startdate,
                         MISSING_CREATE_COUNT: total_missing_create_count,
                         MISSING_UPDATE_COUNT: total_missing_update_count,
                         PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
-                        TIME_TO_RUN: f'{round(time_to_run, 2)} seconds'
+                        TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
+                        CAN_REGISTER_CREATE: total_can_call_register_on_create,
+                        CANNOT_REGISTER_CREATE: total_cannot_call_register_on_create,
                     }
                 }
                 print(f'{domain} complete!\n{stats_per_domain[domain][CASES]}')
@@ -175,11 +182,8 @@ def obtain_missing_case_repeat_records(startdate,
 
 
 def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate, should_create):
-    successful_count = 0
-    missing_all_count = 0
-    missing_create_count = 0
-    missing_update_count = 0
-    calls_to_register_count = 0
+    successful_count = missing_all_count = missing_create_count = missing_update_count = 0
+    calls_to_register_count = create_calls_to_register_count = cannot_call_register_on_create = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     # grab repeat records that were registered during the outage
@@ -224,10 +228,15 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
 
         if missing_count > 0:
             calls_to_register_count += 1
-            if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
-                print(f"""
-                    Cannot trigger create case repeat record for repeater {repeater.get_id} and case {case.get_id}
-                """)
+            if isinstance(repeater, CreateCaseRepeater):
+                if len(case.transactions) > 1:
+                    cannot_call_register_on_create += 1
+                    print(f"""
+                        Cannot trigger create case repeat record for repeater {repeater.get_id} and case
+                        {case.get_id}
+                    """)
+                else:
+                    create_calls_to_register_count += 1
             elif should_create:
                 repeater.register(case)
 
@@ -247,7 +256,9 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
         MISSING_UPDATE_COUNT: missing_update_count,
         MISSING_ALL_COUNT: missing_all_count,
         SUCCESSFUL_COUNT: successful_count,
-        TOTAL_COUNT: missing_create_count + missing_update_count + missing_all_count + successful_count
+        TOTAL_COUNT: missing_create_count + missing_update_count + missing_all_count + successful_count,
+        CAN_REGISTER_CREATE: create_calls_to_register_count,
+        CANNOT_REGISTER_CREATE: cannot_call_register_on_create,
     }
 
 
