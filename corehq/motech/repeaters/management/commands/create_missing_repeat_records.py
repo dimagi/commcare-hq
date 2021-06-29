@@ -94,37 +94,39 @@ def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
 def obtain_missing_case_repeat_records(startdate, enddate, domains):
     stats_per_domain = {}
     for domain in domains:
-        total_missing_count = 0
-        total_missing_all_count = 0
-        total_missing_create_count = 0
-        total_missing_update_count = 0
-        total_count = 0
-        case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
+        try:
+            total_missing_all_count = 0
+            total_missing_create_count = 0
+            total_missing_update_count = 0
+            total_count = 0
+            case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
 
-        case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
-        cases = CaseAccessors(domain).get_cases(case_ids)
-        for case in cases:
-            missing_create_count, missing_update_count, missing_all_count, successful_count = \
-                obtain_missing_case_repeat_records_in_domain(
-                    domain, case_repeaters_in_domain, case, startdate, enddate
-                )
+            case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
+            cases = CaseAccessors(domain).get_cases(case_ids)
+            for case in cases:
+                missing_create_count, missing_update_count, missing_all_count, successful_count = \
+                    obtain_missing_case_repeat_records_in_domain(
+                        domain, case_repeaters_in_domain, case, startdate, enddate
+                    )
 
-            total_missing_create_count += missing_create_count
-            total_missing_update_count += missing_update_count
-            total_missing_all_count += missing_all_count
-            total_count += missing_all_count + missing_update_count + missing_create_count + successful_count
+                total_missing_create_count += missing_create_count
+                total_missing_update_count += missing_update_count
+                total_missing_all_count += missing_all_count
+                total_count += missing_all_count + missing_update_count + missing_create_count + successful_count
 
-        total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
-        if total_missing_count > 0:
-            stats_per_domain[domain] = {
-                'cases': {
-                    'missing_count': total_missing_count,
-                    'missing_all_count': total_missing_all_count,
-                    'missing_create_count': total_missing_create_count,
-                    'missing_update_count': total_missing_update_count,
-                    'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+            total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
+            if total_missing_count > 0:
+                stats_per_domain[domain] = {
+                    'cases': {
+                        'missing_count': total_missing_count,
+                        'missing_all_count': total_missing_all_count,
+                        'missing_create_count': total_missing_create_count,
+                        'missing_update_count': total_missing_update_count,
+                        'percentage_missing': f'{round((total_missing_count / total_count) * 100, 2)}%',
+                    }
                 }
-            }
+        except:
+            print(f"Encountered error with {domain}")
 
     return stats_per_domain
 
