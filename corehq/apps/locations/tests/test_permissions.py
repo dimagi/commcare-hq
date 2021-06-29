@@ -171,7 +171,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete(deleted_by=None)
+        cls.suffolk_user.delete(cls.domain, deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 
