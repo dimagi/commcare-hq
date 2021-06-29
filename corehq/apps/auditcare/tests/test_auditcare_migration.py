@@ -37,7 +37,10 @@ class TestAuditcareMigrationUtil(TransactionTestCase):
         start_time = self.util.get_next_batch_start()
         self.assertEqual(start_time, self.start_time)
 
-    @patch('corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start', return_value=start_time)
+    @patch(
+        'corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start',
+        return_value=start_time
+    )
     def test_generate_batches(self, _):
         batches = self.util.generate_batches(2, 'h')
         expected_batches = [
