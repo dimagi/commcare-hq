@@ -94,10 +94,7 @@ from corehq.apps.hqwebapp.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
-from corehq.apps.users.landing_pages import (
-    get_cloudcare_urlname,
-    get_redirect_url,
-)
+from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -107,6 +104,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
@@ -194,52 +192,64 @@ def not_found(request, template_name='404.html', exception=None):
 @always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
-        if domain != None:
+        if domain is not None:
             url = reverse('domain_login', args=[domain])
         else:
             url = reverse('login')
-    elif domain and _two_factor_needed(domain, req):
+        return HttpResponseRedirect(url)
+
+    if domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
             status=403,
         )
-    else:
-        if domain:
-            domain = normalize_domain_name(domain)
-            domains = [Domain.get_by_name(domain)]
-        else:
-            domains = Domain.active_for_user(req.user)
 
-        if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain')
-        elif 1 == len(domains):
-            from corehq.apps.users.models import DomainMembershipError
-            if domains[0]:
-                domain = domains[0].name
-                couch_user = req.couch_user
-                try:
-                    role = couch_user.get_role(domain)
-                except DomainMembershipError:
-                    # commcare users without roles should always be denied access
-                    if couch_user.is_commcare_user():
-                        raise Http404()
-                    else:
-                        # web users without roles are redirected to the dashboard default
-                        # view since some domains allow web users to request access if they
-                        # don't have it
-                        url = reverse("dashboard_domain", args=[domain])
-                else:
-                    if role and role.default_landing_page:
-                        url = get_redirect_url(role.default_landing_page, domain)
-                    elif couch_user.is_commcare_user():
-                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
-                    else:
-                        url = reverse("dashboard_domain", args=[domain])
-            else:
-                raise Http404()
+    if domain:
+        domain = normalize_domain_name(domain)
+        domains = [Domain.get_by_name(domain)]
+    else:
+        domains = Domain.active_for_user(req.user)
+
+    if not domains and not req.user.is_superuser:
+        return redirect('registration_domain')
+
+    if len(domains) > 1:
+        return HttpResponseRedirect(settings.DOMAIN_SELECT_URL)
+
+    from corehq.apps.users.models import DomainMembershipError
+
+    domain = domains[0]
+    if not domain:
+        raise Http404()
+
+    domain_name = domain.name
+    couch_user = req.couch_user
+    try:
+        role = couch_user.get_role(domain_name)
+    except DomainMembershipError:
+        # commcare users without roles should always be denied access
+        if couch_user.is_commcare_user():
+            raise Http404()
         else:
-            url = settings.DOMAIN_SELECT_URL
+            # web users without roles are redirected to the dashboard default
+            # view since some domains allow web users to request access if they
+            # don't have it
+            url = reverse("dashboard_domain", args=[domain_name])
+    else:
+        url = None
+        if role and role.default_landing_page:
+            try:
+                url = get_redirect_url(role.default_landing_page, domain_name)
+            except ValueError:
+                pass  # landing page no longer accessible to domain
+
+        if url is None:
+            if couch_user.is_commcare_user():
+                url = reverse('formplayer_main', args=[domain_name])
+            else:
+                url = reverse("dashboard_domain", args=[domain_name])
+
     return HttpResponseRedirect(url)
 
 
@@ -252,18 +262,6 @@ def _two_factor_needed(domain_name, request):
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
-
-
-def yui_crossdomain(req):
-    x_domain = """<?xml version="1.0"?>
-<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
-<cross-domain-policy>
-    <allow-access-from domain="yui.yahooapis.com"/>
-    <allow-access-from domain="%s"/>
-    <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, content_type="application/xml")
-
 
 @login_required()
 def password_change(req):
@@ -455,6 +453,9 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 def iframe_domain_login(req, domain):
     return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
+        'restrict_domain_creation': True,
+        'is_session_expiration': True,
+        'ANALYTICS_IDS': {},
     })
 
 
@@ -466,6 +467,15 @@ class HQLoginView(LoginView):
     ]
     extra_context = {}
 
+    def post(self, *args, **kwargs):
+        if settings.ENFORCE_SSO_LOGIN and self.steps.current == 'auth':
+            # catch anyone who by-passes the javascript and tries to log in directly
+            username = self.request.POST.get('auth-username')
+            idp = IdentityProvider.get_required_identity_provider(username) if username else None
+            if idp:
+                return HttpResponseRedirect(idp.get_login_url(username=username))
+        return super().post(*args, **kwargs)
+
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
@@ -475,6 +485,10 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['enforce_sso_login'] = (
+            settings.ENFORCE_SSO_LOGIN
+            and self.steps.current == 'auth'
+        )
         return context
 
 
@@ -1368,3 +1382,29 @@ class OauthApplicationRegistration(BasePageView):
             ))
 
         return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
+
+
+@require_POST
+def check_sso_login_status(request):
+    """
+    Checks to see if a given username must sign in or sign up with SSO and
+    returns the url for the SSO's login endpoint.
+    :param request: HttpRequest
+    :return: HttpResponse (as JSON)
+    """
+    username = request.POST['username']
+    is_sso_required = False
+    sso_url = None
+    continue_text = None
+
+    idp = IdentityProvider.get_required_identity_provider(username)
+    if idp:
+        is_sso_required = True
+        sso_url = idp.get_login_url(username=username)
+        continue_text = _("Continue to {}").format(idp.name)
+
+    return JsonResponse({
+        'is_sso_required': is_sso_required,
+        'sso_url': sso_url,
+        'continue_text': continue_text,
+    })

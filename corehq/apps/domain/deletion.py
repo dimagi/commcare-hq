@@ -302,9 +302,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
-    ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain', [
-        'SQLActionConfig', 'SQLAlertConfig', 'SQLConsumptionConfig',
-        'SQLStockLevelsConfig', 'SQLStockRestoreConfig',
+    ModelDeletion('commtrack', 'CommtrackConfig', 'domain', [
+        'ActionConfig', 'AlertConfig', 'ConsumptionConfig',
+        'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', ['CustomDataFieldsProfile', 'Field']),
@@ -354,7 +354,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'IncrementalExport', 'domain', ['IncrementalExportCheckpoint']),
     CustomDeletion('export', _delete_data_files, []),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('ota', 'DeviceLogRequest', 'domain'),
@@ -366,6 +365,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('reports', 'TableauServer', 'domain'),
+    ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
@@ -381,9 +382,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
+    ModelDeletion('users', 'SQLUserRole', 'domain', [
+        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+    ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
-    ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
     ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),

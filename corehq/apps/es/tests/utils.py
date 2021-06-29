@@ -1,11 +1,14 @@
 import json
+
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 
-from corehq.elastic import get_es_new
-from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
+
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 
 
 class ElasticTestMixin(object):
@@ -54,3 +57,12 @@ def es_test(test):
     :param test: A test class, method, or function.
     """
     return attr(es_test=True)(test)
+
+
+def populate_user_index(user_docs):
+    es = get_es_new()
+    ensure_index_deleted(USER_INDEX)
+    initialize_index_and_mapping(es, USER_INDEX_INFO)
+    for user_doc in user_docs:
+        send_to_elasticsearch('users', user_doc)
+    es.indices.refresh(USER_INDEX)

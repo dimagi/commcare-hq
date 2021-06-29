@@ -4,7 +4,8 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole, SQLUserRole
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -57,17 +58,28 @@ def get_all_commcare_users_by_domain(domain):
     return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
 
 
+def get_all_web_users_by_domain(domain):
+    """Returns all WebUsers by domain"""
+    from corehq.apps.users.models import WebUser
+    ids = get_all_user_ids_by_domain(domain, include_mobile_users=False)
+    return map(WebUser.wrap, iter_docs(WebUser.get_db(), ids))
+
+
 def get_mobile_usernames_by_filters(domain, user_filters):
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, MOBILE_USER_TYPE, user_filters)
     return query.values_list('base_username', flat=True)
 
 
-def _get_es_query(domain, user_filters):
+def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
 
-    query = UserES().domain(domain).mobile_users().remove_default_filter('active')
+    query = UserES().domain(domain).remove_default_filter('active')
+    if user_type == MOBILE_USER_TYPE:
+        query = query.mobile_users()
+    if user_type == WEB_USER_TYPE:
+        query = query.web_users()
 
     if role_id:
         query = query.role_id(role_id)
@@ -79,12 +91,29 @@ def _get_es_query(domain, user_filters):
     return query
 
 
-def get_commcare_users_by_filters(domain, user_filters, count_only=False):
+def count_mobile_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, MOBILE_USER_TYPE, user_filters, count_only=True)
+
+
+def count_web_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, WEB_USER_TYPE, user_filters, count_only=True)
+
+
+def get_mobile_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, MOBILE_USER_TYPE, user_filters, count_only=False)
+
+
+def get_web_users_by_filters(domain, user_filters):
+    return _get_users_by_filters(domain, WEB_USER_TYPE, user_filters, count_only=False)
+
+
+def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
     """
-    Returns CommCareUsers in domain per given filters. If user_filters is empty
+    Returns users in domain per given filters. If user_filters is empty,
         returns all users in the domain
 
     args:
+        user_type: MOBILE_USER_TYPE or WEB_USER_TYPE
         user_filters: a dict with below structure.
             {'role_id': <Role ID to filter users by>,
              'search_string': <string to search users by username>,
@@ -94,14 +123,48 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     """
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
                 user_filters.get('location_id', None), count_only]):
-        return get_all_commcare_users_by_domain(domain)
+        if user_type == MOBILE_USER_TYPE:
+            return get_all_commcare_users_by_domain(domain)
+        if user_type == WEB_USER_TYPE:
+            return get_all_web_users_by_domain(domain)
 
-    query = _get_es_query(domain, user_filters)
+    query = _get_es_query(domain, user_type, user_filters)
 
     if count_only:
         return query.count()
     user_ids = query.scroll_ids()
-    return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
+    return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
+
+
+def count_invitations_by_filters(domain, user_filters):
+    return _get_invitations_by_filters(domain, user_filters, count_only=True)
+
+
+def get_invitations_by_filters(domain, user_filters):
+    return _get_invitations_by_filters(domain, user_filters)
+
+
+def _get_invitations_by_filters(domain, user_filters, count_only=False):
+    """
+    Similar to _get_users_by_filters, but applites to invitations.
+
+    Applies "search_string" filter to the invitations' emails. This does not
+    support ES search syntax, it's just a case-insensitive substring search.
+    Ignores any other filters.
+    """
+    filters = {}
+    search_string = user_filters.get("search_string", None)
+    if search_string:
+        filters["email__icontains"] = search_string
+    role_id = user_filters.get("role_id", None)
+    if role_id:
+        role = SQLUserRole.objects.by_couch_id(role_id)
+        filters["role"] = role.get_qualified_id()
+
+    invitations = Invitation.by_domain(domain, **filters)
+    if count_only:
+        return invitations.count()
+    return invitations
 
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):
@@ -167,7 +230,7 @@ def get_mobile_user_ids(domain, include_inactive=True):
 
 
 def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
-                       include_inactive=True, count_only=False, include_docs=False):
+                      include_inactive=True, count_only=False, include_docs=False):
     from corehq.apps.users.models import CommCareUser, WebUser
     assert include_web_users or include_mobile_users
 
@@ -298,12 +361,3 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
-
-
-def get_all_role_ids():
-    roles = UserRole.view(
-        'users/roles_by_domain',
-        include_docs=False,
-        reduce=False
-    ).all()
-    return [r['id'] for r in roles]

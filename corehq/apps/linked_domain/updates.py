@@ -86,7 +86,7 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import SQLUserRole, Permissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 
@@ -215,7 +215,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.by_domain(domain_link.linked_domain, include_archived=True)
+    local_roles = SQLUserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:
@@ -226,27 +226,29 @@ def update_user_roles(domain_link):
     # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
-        if role:
-            role_json = role.to_json()
-        else:
-            role_json = {'domain': domain_link.linked_domain}
-        role_json['upstream_id'] = role_def['_id']
+        if not role:
+            role = SQLUserRole(domain=domain_link.linked_domain)
+        local_roles_by_upstream_id[role_def['_id']] = role
+        role.upstream_id = role_def['_id']
 
-        upstream_role = copy(role_def)
-        upstream_role.pop('_id')
-        upstream_role.pop('upstream_id')
-        role_json.update(upstream_role)
-        local_roles_by_upstream_id[role_json['upstream_id']] = role_json
-        UserRole.wrap(role_json).save()
+        role.name = role_def["name"]
+        role.default_landing_page = role_def["default_landing_page"]
+        role.is_non_admin_editable = role_def["is_non_admin_editable"]
+        role.save()
+
+        permissions = Permissions.wrap(role_def["permissions"])
+        role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role in local_roles_by_upstream_id.values():
-        if role['assignable_by']:
-            role['assignable_by'] = [
-                local_roles_by_upstream_id[role_id]['_id']
-                for role_id in role['assignable_by']
+    for role_def in master_results:
+        local_role = local_roles_by_upstream_id[role_def['_id']]
+        assignable_by = []
+        if role_def["assignable_by"]:
+            assignable_by = [
+                local_roles_by_upstream_id[role_id].id
+                for role_id in role_def["assignable_by"]
             ]
-            UserRole.wrap(role).save()
+        local_role.set_assignable_by(assignable_by)
 
 
 def update_case_search_config(domain_link):

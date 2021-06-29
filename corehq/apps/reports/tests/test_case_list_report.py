@@ -10,7 +10,6 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembership,
-    UserRole,
     WebUser,
 )
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -28,7 +27,6 @@ class TestCaseListReport(TestCase):
         cls.domain = 'case-list-test'
         cls.user = WebUser(username='test@cchq.com', domains=[cls.domain])
         cls.user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='admin')]
-        UserRole.init_domain_with_presets(cls.domain)
         cls.request_factory = RequestFactory()
 
         from corehq.apps.reports.tests.data.case_list_report_data import (

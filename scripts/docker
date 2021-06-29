@@ -11,7 +11,7 @@ function usage() {
             echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
-            echo "  TEST=python|python-sharded|javascript"
+            echo "  TEST=python|python-sharded|javascript|python-sharded-and-javascript"
             echo ""
             echo "The default is python."
             echo ""
@@ -227,6 +227,7 @@ export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export UCR_CITUS_DB="${UCR_CITUS_DB:-commcare_ucr_citus}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
+export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
 
 if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis
@@ -234,8 +235,15 @@ if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     export RO=""
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
+    # TODO: use overlayfs and drop support for aufs
     export RO=":ro"
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
+fi
+
+if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
+    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-yes}"
+else
+    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-no}"
 fi
 
 case $CMD in

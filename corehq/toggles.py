@@ -38,20 +38,20 @@ TAG_CUSTOM = Tag(
     name='One-Off / Custom',
     css_class='warning',
     description="This feature flag was created for one specific project. "
-    "Please don't enable it for any other projects. "
-    "This is NOT SUPPORTED outside of that project and may break other features.",
+                "Please don't enable it for any other projects. "
+                "This is NOT SUPPORTED outside of that project and may break other features.",
 )
 TAG_DEPRECATED = Tag(
     name='Deprecated',
     css_class='danger',
     description="This feature flag is being removed. "
-    "Do not add any new projects to this list.",
+                "Do not add any new projects to this list.",
 )
 TAG_PRODUCT = Tag(
     name='Product',
     css_class='success',
     description="This is a core-product feature that you should feel free to "
-    "use.  We've feature-flagged until release.",
+                "use.  We've feature-flagged until release.",
 )
 TAG_PREVIEW = Tag(
     name='Preview',
@@ -62,28 +62,28 @@ TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
     css_class='primary',
     description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
-    "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "
-    "customer."
+                "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "
+                "customer."
 )
 TAG_SOLUTIONS = Tag(
     name='Solutions',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
-    "pricing when the project is transitioned to a subscription."
+                "pricing when the project is transitioned to a subscription."
 )
 TAG_SOLUTIONS_OPEN = Tag(
     name='Solutions - Open Use',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
-    "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "
-    "enabled by GS."
+                "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "
+                "enabled by GS."
 )
 TAG_SOLUTIONS_CONDITIONAL = Tag(
     name='Solutions - Conditional Use',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
-    "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "
-    "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."
+                "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "
+                "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."
 )
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
@@ -105,11 +105,11 @@ TAG_INTERNAL = Tag(
 # Order roughly corresponds to how much we want you to use it
 ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
 ALL_TAGS = [
-    TAG_SOLUTIONS_OPEN,
-    TAG_SOLUTIONS_CONDITIONAL,
-    TAG_SOLUTIONS_LIMITED,
-    TAG_SAAS_CONDITIONAL,
-] + ALL_TAG_GROUPS
+               TAG_SOLUTIONS_OPEN,
+               TAG_SOLUTIONS_CONDITIONAL,
+               TAG_SOLUTIONS_LIMITED,
+               TAG_SAAS_CONDITIONAL,
+           ] + ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -165,7 +165,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-                and was_domain_created_after(item, domain_enabled_after)):
+            and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -177,21 +177,21 @@ class StaticToggle(object):
 
     def enabled_for_request(self, request):
         return (
-            None in self.namespaces
-            and hasattr(request, 'user')
-            and self.enabled(request.user.username, namespace=None)
-        ) or (
-            NAMESPACE_DOMAIN in self.namespaces
-            and hasattr(request, 'domain')
-            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
-        ) or (
-            NAMESPACE_EMAIL_DOMAIN in self.namespaces
-            and hasattr(request, 'user')
-            and self.enabled(
-                request.user.email or request.user.username,
-                namespace=NAMESPACE_EMAIL_DOMAIN
-            )
-        )
+                   None in self.namespaces
+                   and hasattr(request, 'user')
+                   and self.enabled(request.user.username, namespace=None)
+               ) or (
+                   NAMESPACE_DOMAIN in self.namespaces
+                   and hasattr(request, 'domain')
+                   and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
+               ) or (
+                   NAMESPACE_EMAIL_DOMAIN in self.namespaces
+                   and hasattr(request, 'user')
+                   and self.enabled(
+                   request.user.email or request.user.username,
+                   namespace=NAMESPACE_EMAIL_DOMAIN
+               )
+               )
 
     def set(self, item, enabled, namespace=None):
         if namespace == NAMESPACE_USER:
@@ -204,6 +204,7 @@ class StaticToggle(object):
         Returns a view function decorator that checks to see if the domain
         or user in the request has the appropriate toggle enabled.
         """
+
         def decorator(view_func):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
@@ -222,7 +223,9 @@ class StaticToggle(object):
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
                 raise Http404()
+
             return wrapped_view
+
         return decorator
 
     def get_enabled_domains(self):
@@ -405,6 +408,7 @@ def any_toggle_enabled(*toggles):
         pass
 
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
@@ -412,7 +416,9 @@ def any_toggle_enabled(*toggles):
                 if t.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
             raise Http404()
+
         return wrapped_view
+
     return decorator
 
 
@@ -533,7 +539,7 @@ APP_BUILDER_ADVANCED = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="Advanced Modules allow you to autoload and manage multiple case types, "
                 "but may behave in unexpected ways.",
-    help_link='https://confluence.dimagi.com/display/ccinternal/Advanced+Modules',
+    help_link='https://confluence.dimagi.com/display/saas/Advanced+Modules',
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
@@ -541,7 +547,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
+    help_link='https://confluence.dimagi.com/display/saas/Shadow+Modules+and+Forms',
 )
 
 V1_SHADOW_MODULES = StaticToggle(
@@ -557,7 +563,8 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'Allow custom XML to define case lists (ex. for case tiles)',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
+    help_link='https://confluence.dimagi.com/pages/viewpage.action?'
+              'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
 )
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
@@ -621,7 +628,7 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
     TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -629,7 +636,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/saas/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -644,7 +651,7 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/RD/Graphing+in+HQ',
+    help_link='https://confluence.dimagi.com/display/GTDArchive/Graphing+in+HQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -670,7 +677,6 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -679,7 +685,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
-    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+    help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -727,8 +733,8 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
-    "We are actively trying to remove projects from this list. This functionality is now possible by using the "
-    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
+                "We are actively trying to remove projects from this list. This functionality is now possible by using the "
+                "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -747,13 +753,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
+    help_link='https://confluence.dimagi.com/display/saas/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
 )
 
 USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     'ush_dont_close_patient_extensions',
-    'COVID: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
+    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -768,25 +774,16 @@ DISABLE_WEB_APPS = StaticToggle(
     'Disable access to Web Apps UI',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Disable+access+to+Web+Apps+UI',
+    help_link='https://confluence.dimagi.com/display/saas/Disable+access+to+Web+Apps+UI',
 )
-
-ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
-    'role_webapps_permissions',
-    'ICDS: Toggle which webapps to see based on role',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_SOLUTIONS_CONDITIONAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
-
 
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
@@ -796,16 +793,16 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
         and other options in Webapps Case Search.
     ''',
     TAG_INTERNAL,
+    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     'webapps_sticky_search',
-    'COVID: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
+    'USH: Sticky search: In web apps, save user\'s most recent inputs on case search & claim screen.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/COVID%3A+Web+Apps+Sticky+Search',
+    help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 
@@ -907,21 +904,20 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Form+Link+Workflow+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
-    "COVID: Allow domain to override default length of inactivity timeout",
+    "USH: Allow domain to override default length of inactivity timeout",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Allow+domain+to+override+default+length+of+inactivity+timeout",
+    help_link="https://confluence.dimagi.com/display/saas/Allow+domain+to+override+default+length+of+inactivity+timeout",
 )
 
 # not referenced in code directly but passed through to vellum
@@ -933,7 +929,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     TAG_SAAS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
-    help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Save+to+Case+Feature+Flag',
 )
 
 VELLUM_PRINTING = StaticToggle(
@@ -942,7 +938,7 @@ VELLUM_PRINTING = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
-    help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
+    help_link='https://confluence.dimagi.com/display/saas/Printing+from+a+form+in+CommCare+Android',
 )
 
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
@@ -976,7 +972,7 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_SOLUTIONS_LIMITED,
-    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#'
+    help_link='https://confluence.dimagi.com/display/GS/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -993,7 +989,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/saas/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -1025,9 +1021,9 @@ API_BLACKLIST = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
     description="For temporary, emergency use only. If a partner doesn't properly "
-    "throttle their API requests, it can hammer our infrastructure, causing "
-    "outages. This will cut off the tide, but we should communicate with them "
-    "immediately.",
+                "throttle their API requests, it can hammer our infrastructure, causing "
+                "outages. This will cut off the tide, but we should communicate with them "
+                "immediately.",
 )
 
 FORM_SUBMISSION_BLACKLIST = StaticToggle(
@@ -1036,8 +1032,8 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description="This is a temporary solution to an unusually high volume of "
-    "form submissions from a domain.  We have some projects that automatically "
-    "send forms. If that ever causes problems, we can use this to cut them off.",
+                "form submissions from a domain.  We have some projects that automatically "
+                "send forms. If that ever causes problems, we can use this to cut them off.",
 )
 
 
@@ -1097,14 +1093,14 @@ CUSTOM_ASSERTIONS = StaticToggle(
         'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
+    help_link="https://confluence.dimagi.com/display/saas/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -1126,7 +1122,7 @@ SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',
     TAG_INTERNAL,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Support+Flag',
 )
 
 LEGACY_CHILD_MODULES = StaticToggle(
@@ -1226,14 +1222,12 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
-
 
 INBOUND_SMS_LENIENCY = StaticToggle(
     'inbound_sms_leniency',
@@ -1243,14 +1237,12 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 WHATSAPP_MESSAGING = StaticToggle(
     'whatsapp_messaging',
     "Default SMS to send messages via Whatsapp, where available",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
-
 
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
@@ -1265,7 +1257,7 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Enable+creation+of+report+builder+reports+that+are+location+safe',
+    help_link='https://confluence.dimagi.com/display/saas/Enable+creation+of+report+builder+reports+that+are+location+safe',
 )
 
 SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
@@ -1279,7 +1271,7 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
     TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1297,16 +1289,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-
-DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
-    'data_export_tool_schema_export',
-    'Show an option to download data export tool schemas from the exports list view (Experimental)',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
-)
-
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
@@ -1316,7 +1298,7 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
 
 OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
     'override_expanded_column_limit_in_report_builder',
-    'COVID: Override the limit for expanded columns in report builder from 10 to 50',
+    'USH: Override the limit for expanded columns in report builder from 10 to 50',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
@@ -1348,7 +1330,7 @@ BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'Bulk multimedia path management',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
+    help_link="https://confluence.dimagi.com/display/IndiaDivision/Multimedia+Path+Manager"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1406,7 +1388,7 @@ VIEW_APP_CHANGES = StaticToggle(
     'Improved app changes view',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Viewing+App+Changes+between+versions",
+    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
@@ -1437,7 +1419,7 @@ INCREMENTAL_EXPORTS = StaticToggle(
     'Allows sending of incremental CSV exports to a particular endpoint',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Incremental+Data+Exports"
+    help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1494,10 +1476,14 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
+    """
+        Bulk user management features:
+        For mobile users, enables filtered download page, bulk deletion page, and bulk lookup page.
+        For web users, enables filtered download page.
+    """,
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
+    help_link='https://confluence.dimagi.com/display/saas/Bulk+User+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1505,7 +1491,7 @@ FILTERED_LOCATION_DOWNLOAD = StaticToggle(
     "Ability to filter location download to include only a specified location and its descendants.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
+    help_link='https://confluence.dimagi.com/display/saas/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
@@ -1523,7 +1509,7 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     description="This flag adds the option to specify a regular expression "
                 "(regex) to validate custom user data, custom location data, "
                 "and/or custom product data fields.",
-    help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
+    help_link='https://confluence.dimagi.com/display/saas/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
@@ -1564,8 +1550,7 @@ LINKED_DOMAINS = StaticToggle(
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
-    notification_emails=['aking'],
+    help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -1605,14 +1590,12 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-
 EXPORT_MULTISORT = StaticToggle(
     'export_multisort',
     'Sort multiple rows in exports at once.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
-
 
 EXPORT_OWNERSHIP = StaticToggle(
     'export_ownership',
@@ -1621,14 +1604,12 @@ EXPORT_OWNERSHIP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-
 APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'app_trans_with_transifex',
     'Translate Application Content With Transifex',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER]
 )
-
 
 VALIDATE_APP_TRANSLATIONS = StaticToggle(
     'validate_app_translations',
@@ -1637,7 +1618,6 @@ VALIDATE_APP_TRANSLATIONS = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-
 AGGREGATE_UCRS = StaticToggle(
     'aggregate_ucrs',
     'Enable experimental aggregate UCR support',
@@ -1645,7 +1625,6 @@ AGGREGATE_UCRS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
 )
-
 
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
@@ -1691,15 +1670,6 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 )
 
 
-RESTRICT_APP_RELEASE = StaticToggle(
-    'restrict_app_release',
-    'ICDS: Show permission to manage app releases on user roles',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
-)
-
-
 RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     'release_builds_per_profile',
     'Do not release builds for all app profiles by default. Then manage via Source files view',
@@ -1712,9 +1682,8 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'Manage releases per location',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
+    help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
-
 
 LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     'location_safe_case_imports',
@@ -1737,14 +1706,12 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 DASHBOARD_REACH_REPORT = StaticToggle(
     'dashboard_reach_reports',
     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
-
 
 PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'partial_ui_translations',
@@ -1857,18 +1824,18 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
 
 RESTRICT_MOBILE_ACCESS = StaticToggle(
     'restrict_mobile_endpoints',
-    'COVID: Require explicit permissions to access mobile app endpoints',
+    'USH: Require explicit permissions to access mobile app endpoints',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
 )
 
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
-    "COVID: Enterprise Permissions: mirror a project space's permissions in other project spaces",
+    "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Enterprise+Permissions',
+    help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
 
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
@@ -1877,7 +1844,6 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
-
 
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',
@@ -1897,7 +1863,6 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
@@ -1905,13 +1870,12 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
 TWO_STAGE_USER_PROVISIONING = StaticToggle(
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
+    help_link='https://confluence.dimagi.com/display/saas/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
@@ -1924,46 +1888,47 @@ DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
 
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
-    'COVID: Allow refer case repeaters to be setup',
+    'USH: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
-    'COVID: Enable usage of AWS Connect Dialer',
+    'USH: Enable usage of AWS Connect Dialer',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
 )
 
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
-    'COVID: Enable signed messaging url callouts in cloudcare',
+    'USH: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",
 )
 
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
-    'COVID: Enable retrieving OTPs from a GAEN Server',
+    'USH: Enable retrieving OTPs from a GAEN Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
 )
 
 PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
-    'COVID: Process user imports in parallel on a dedicated queue',
+    'USH: Process user imports in parallel on a dedicated queue',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Parallel+User+Imports"
 )
 
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
-    'COVID: Limit allowed users for login as',
+    'USH: Limit allowed users for login as',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -1976,7 +1941,7 @@ RESTRICT_LOGIN_AS = StaticToggle(
     they can only login as mobile users who have the custom property
     "login_as_user" set to "a@a.com".
     """,
-    help_link="https://confluence.dimagi.com/display/ccinternal/Limited+Login+As",
+    help_link="https://confluence.dimagi.com/display/saas/Limited+Login+As",
 )
 
 ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
@@ -1995,18 +1960,18 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """,
-    help_link="https://confluence.dimagi.com/display/ccinternal/One+Phone+Number+-+Multiple+Contacts"
+    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts"
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
     'change_form_language',
-    'Allow user to change form language in web apps',
+    'USH: Allow user to change form language in web apps',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Allows the user to change the language of the form content while in the form itself in Web Apps
     """,
-    help_link="https://confluence.dimagi.com/display/ccinternal/Change+Form+Language"
+    help_link="https://confluence.dimagi.com/display/saas/Change+Form+Language"
 )
 
 APP_ANALYTICS = StaticToggle(
@@ -2014,7 +1979,7 @@ APP_ANALYTICS = StaticToggle(
     'Allow user to use app analytics in web apps',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/App+Analytics",
+    help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
 )
 
 ENTERPRISE_SSO = StaticToggle(
@@ -2050,10 +2015,10 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
 
 PRIME_FORMPLAYER_DBS = StaticToggle(
     'prime_formplayer_dbs',
-    'COVID: Control which domains will be included in the prime formplayer task runs',
+    'USH: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Prime+Formplayer+DBS"
+    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
 )
 
 FHIR_INTEGRATION = StaticToggle(
@@ -2079,6 +2044,37 @@ ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+EMBEDDED_TABLEAU = StaticToggle(
+    'embedded_tableau',
+    'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+DETAILED_TAGGING = StaticToggle(
+    'detailed_tagging',
+    'Send additional metrics to datadog and sentry.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+COWIN_INTEGRATION = StaticToggle(
+    'cowin_integration',
+    'Integrate with COWIN APIs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+TURN_IO_BACKEND = StaticToggle(
+    'turn_io_backend',
+    'Enable Turn.io SMS backend',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',

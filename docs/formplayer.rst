@@ -2,7 +2,7 @@ Formplayer in HQ
 ================
 
 This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`_ fits into the larger
-CommCare system, especially how it relates to CommCare HQ development. For details on building, runnning, and
+CommCare system, especially how it relates to CommCare HQ development. For details on building, running, and
 contributing to formplayer, see the formplayer repository.
 
 What Is Formplayer?
@@ -12,7 +12,7 @@ Formplayer is a Java Spring Boot server that wraps `commcare-core <https://githu
 and presents its main features as an HTTP API. CommCare HQ's Web Apps, App Preview, and SMS Forms features are
 built on top of it:
 
-* Web Apps is a single-page application, inlined into a CommCare HQ template, the provides a web UI backed by the formplayer API.
+* Web Apps is a single-page application, inlined into a CommCare HQ template, that provides a web UI backed by the formplayer API.
 * App Preview is essentially the same as web apps, but embedded as a cell-phone-shaped iframe within the App Builder.
 * SMS Forms serializes a form filling session over SMS in a question / answer sequence that is handled
 by the main HQ process, which hits formplayer's API to send answers and get the next question.

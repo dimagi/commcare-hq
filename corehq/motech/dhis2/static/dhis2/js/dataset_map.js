@@ -10,7 +10,9 @@ hqDefine("dhis2/js/dataset_map", [
     initialPageData
 ) {
     $(function () {
-        var $sendNowResult = $('#send-now-result');
+        var $sendNowResult = $('#send-now-result'),
+            $remoteLogsLink = $('#remote-logs');
+        $remoteLogsLink.hide();
 
         var handleSuccess = function (response) {
             $sendNowResult.removeClass("hide text-danger text-success");
@@ -20,6 +22,10 @@ hqDefine("dhis2/js/dataset_map", [
                 $sendNowResult.addClass("text-danger");
             }
             $sendNowResult.text(gettext('DHIS2 response: ') + response.text);
+            if (response.log_url) {
+                $remoteLogsLink.attr('href', response.log_url);
+                $remoteLogsLink.show();
+            }
         };
 
         var handleFailure = function (resp) {
@@ -30,6 +36,10 @@ hqDefine("dhis2/js/dataset_map", [
                 gettext('CommCare HQ was unable to send the DataSet: ')
                 + (resp.responseJSON ? resp.responseJSON['error'] : resp.statusText)
             );
+            if (resp.responseJSON) {
+                $remoteLogsLink.attr('href', resp.responseJSON['log_url']);
+                $remoteLogsLink.show();
+            }
         };
 
         sendNow = function (dataSetMapId) {
@@ -39,6 +49,5 @@ hqDefine("dhis2/js/dataset_map", [
                 error: handleFailure,
             });
         };
-
     });
 });

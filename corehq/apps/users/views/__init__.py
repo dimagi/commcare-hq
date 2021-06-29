@@ -10,7 +10,6 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
-from dimagi.utils.web import json_response
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -26,6 +25,8 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from corehq.apps.users.analytics import get_role_user_count
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -45,10 +46,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_app_languages,
-    get_brief_apps_in_domain,
-)
+from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -80,6 +78,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
+    can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_can_view_roles,
@@ -88,13 +87,12 @@ from corehq.apps.users.decorators import (
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
-    DomainRequestForm,
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
     CreateDomainPermissionsMirrorForm,
 )
-from corehq.apps.users.landing_pages import get_allowed_landing_pages
+from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -103,8 +101,10 @@ from corehq.apps.users.models import (
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
-    UserRole,
+    StaticRole,
     WebUser,
+    Permissions,
+    SQLUserRole,
 )
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
@@ -113,6 +113,7 @@ from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadR
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -501,25 +502,31 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def user_roles(self):
-        user_roles = [UserRole.admin_role(self.domain)]
-        user_roles.extend(sorted(
-            UserRole.by_domain(self.domain),
+    def non_admin_roles(self):
+        return list(sorted(
+            SQLUserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
+    def get_roles_for_display(self):
         show_es_issue = False
-        # skip the admin role since it's not editable
-        for role in user_roles[1:]:
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
             try:
-                role.hasUsersAssigned = role.has_users_assigned
+                user_count = get_role_user_count(role.domain, role.couch_id)
+                role_data["hasUsersAssigned"] = bool(user_count)
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
-            role.has_unpermitted_location_restriction = (
+
+            role_data["has_unpermitted_location_restriction"] = (
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
             )
+
         if show_es_issue:
             messages.error(
                 self.request,
@@ -531,7 +538,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
                     "data-toggle='modal'>Report an Issue</a>."
                 ))
             )
-        return user_roles
+        return role_view_data
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -544,11 +551,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
+        return {
+            r.get_qualified_id(): r.name
+            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+        }
 
     @property
     @memoized
@@ -567,7 +573,11 @@ class ListWebUsersView(BaseRoleAccessView):
 
     @property
     def page_context(self):
-        bulk_download_url = reverse("download_web_users", args=[self.domain])
+        from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
+        if can_use_filtered_user_download(self.domain):
+            bulk_download_url = reverse(FilteredWebUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_web_users", args=[self.domain])
         return {
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
@@ -580,13 +590,8 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
-    user_filters = {}
-    download = DownloadBase()
-    is_web_download = True
-    res = bulk_download_users_async.delay(domain, download.download_id, user_filters,
-                                          is_web_download, owner_id=request.couch_user.get_id)
-    download.set_task(res)
-    return redirect(DownloadWebUsersStatusView.urlname, domain, download.download_id)
+    from corehq.apps.users.views.mobile.users import download_users
+    return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):
@@ -649,7 +654,7 @@ class ListRolesView(BaseRoleAccessView):
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)):
+                        for role in self.non_admin_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -657,13 +662,11 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
         return {
-            'user_roles': self.user_roles,
-            'non_admin_roles': self.user_roles[1:],
+            'user_roles': self.get_roles_for_display(),
+            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
-            'default_role': UserRole.get_default(),
+            'default_role': StaticRole.domain_default(self.domain),
             'report_list': get_possible_reports(self.domain),
-            'web_apps_list': get_cloudcare_apps(self.domain),
-            'apps_list': get_brief_apps_in_domain(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -713,20 +716,14 @@ def delete_domain_permission_mirror(request, domain, mirror):
 @require_POST
 def create_domain_permission_mirror(request, domain):
     form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if form.is_valid():
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if mirror_domain is not None:
-            mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
-            mirror.save()
-            message = _('You have successfully added the project space "{mirror_domain_name}".')
-            messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-        else:
-            message = _('Please enter a valid project space.')
-            messages.error(request, message.format())
-    else:
+    if not form.is_valid():
         for field, message in form.errors.items():
             messages.error(request, message)
+    else:
+        form.save_mirror_domain()
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        message = _('You have successfully added the project space "{mirror_domain_name}".')
+        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
@@ -821,12 +818,27 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    role_data = dict(
-        (p, role_data[p])
-        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
-    )
+
+    try:
+        role = _update_role_from_view(domain, role_data)
+    except ValueError as e:
+        response = HttpResponseBadRequest()
+        response.content = str(e)
+        return response
+
+    response_data = role.to_json()
+    user_count = get_role_user_count(domain, role.couch_id)
+    response_data['hasUsersAssigned'] = user_count > 0
+    return JsonResponse(response_data)
+
+
+def _update_role_from_view(domain, role_data):
+    landing_page = role_data["default_landing_page"]
+    if landing_page:
+        validate_landing_page(domain, landing_page)
+
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -834,65 +846,47 @@ def post_user_role(request, domain):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    role = UserRole.wrap(role_data)
+    if "_id" in role_data:
+        try:
+            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+        except SQLUserRole.DoesNotExist:
+            role = SQLUserRole()
+        else:
+            if role.domain != domain:
+                raise Http404()
+    else:
+        role = SQLUserRole()
+
     role.domain = domain
-    if role.get_id:
-        old_role = UserRole.get(role.get_id)
-        assert(old_role.doc_type == UserRole.__name__)
-        assert(old_role.domain == domain)
-
-    if not role.permissions.access_all_locations:
-        # The following permissions cannot be granted to location-restricted
-        # roles.
-        role.permissions.edit_web_users = False
-        role.permissions.view_web_users = False
-        role.permissions.edit_groups = False
-        role.permissions.view_groups = False
-        role.permissions.edit_apps = False
-        role.permissions.view_roles = False
-        role.permissions.edit_reports = False
-        role.permissions.edit_billing = False
-
-    if role.permissions.edit_web_users:
-        role.permissions.view_web_users = True
-
-    if role.permissions.edit_commcare_users:
-        role.permissions.view_commcare_users = True
-
-    if role.permissions.edit_groups:
-        role.permissions.view_groups = True
-
-    if role.permissions.edit_locations:
-        role.permissions.view_locations = True
-
-    if role.permissions.edit_apps:
-        role.permissions.view_apps = True
-
-    if not role.permissions.edit_groups:
-        role.permissions.edit_users_in_groups = False
-
-    if not role.permissions.edit_locations:
-        role.permissions.edit_users_in_locations = False
-
+    role.name = role_data["name"]
+    role.default_landing_page = landing_page
+    role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
-    role.__setattr__('hasUsersAssigned', role.has_users_assigned)
-    return json_response(role)
+
+    permissions = Permissions.wrap(role_data["permissions"])
+    permissions.normalize()
+    role.set_permissions(permissions.to_list())
+
+    assignable_by = role_data["assignable_by"]
+    role.set_assignable_by_couch(assignable_by)
+    role._migration_do_sync()  # update permissions and assignable_by
+    return role
 
 
 @domain_admin_required
 @require_POST
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return json_response({})
+        return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = UserRole.get(role_data["_id"])
-    except ResourceNotFound:
-        return json_response({})
-    copy_id = role._id
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except SQLUserRole.DoesNotExist:
+        return JsonResponse({})
+    copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
-    return json_response({"_id": copy_id})
+    return JsonResponse({"_id": copy_id})
 
 
 @always_allow_project_access
@@ -900,7 +894,7 @@ def delete_user_role(request, domain):
 @require_can_edit_web_users
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
-    return json_response({'status': 'ok'})
+    return JsonResponse({'status': 'ok'})
 
 
 @always_allow_project_access
@@ -1150,7 +1144,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-class UserUploadJobPollView(BaseManageWebUserView):
+class UserUploadJobPollView(BaseUserSettingsView):
 
     def get(self, request, domain, download_id):
         try:
@@ -1168,7 +1162,7 @@ class UserUploadJobPollView(BaseManageWebUserView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
-class WebUserUploadJobPollView(UserUploadJobPollView):
+class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
     user_type = 'web users'

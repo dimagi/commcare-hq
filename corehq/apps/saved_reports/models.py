@@ -5,7 +5,8 @@ import json
 import logging
 import uuid
 from collections import defaultdict, namedtuple
-from datetime import date, datetime
+from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -134,10 +135,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return result
 
     @classmethod
-    def default(cls):
+    def default(self):
         return {
             'name': '',
             'description': '',
+            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,
@@ -235,27 +237,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        if not self.is_configurable_report:
-            params.update(self.filters)
-            params.update(self.get_date_range())
+        params.update(self.filters)
+        params.update(self.get_date_range())
 
         return urlencode(params, True)
-
-    @property
-    @memoized
-    def serialized_filters(self):
-        """
-        converts date objects to iso formatted strings
-        """
-        serialized_filters = {}
-        for key, value in self.filters.items():
-            value_to_add = value
-            if isinstance(value, date):
-                value_to_add = value.isoformat()
-
-            serialized_filters[key] = value_to_add
-
-        return serialized_filters
 
     @property
     @memoized
@@ -346,12 +331,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def owner(self):
         return CouchUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, lang, attach_excel=False):
+    def get_report_content(self, lang, attach_excel=False, couch_user=None):
         """
         Get the report's HTML content as rendered by the static view format.
 
         """
         from corehq.apps.locations.middleware import LocationAccessMiddleware
+
+        if couch_user is None:
+            couch_user = self.owner
 
         try:
             if self.report is None:
@@ -375,8 +363,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             )
 
         mock_request = HttpRequest()
-        mock_request.couch_user = self.owner
-        mock_request.user = self.owner.get_django_user()
+        mock_request.couch_user = couch_user
+        mock_request.user = couch_user.get_django_user()
         mock_request.domain = self.domain
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
@@ -545,6 +533,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return True
 
     @classmethod
+    def get_report(cls, report_id):
+        try:
+            notification = ReportNotification.get(report_id)
+        except ResourceNotFound:
+            notification = None
+        else:
+            if notification.doc_type != 'ReportNotification':
+                notification = None
+
+        return notification
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -559,10 +559,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def all_recipient_emails(self):
-        # handle old documents
-        if not self.owner_id:
-            return frozenset([self.owner.get_email()])
-
         emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
             emails |= {self.owner_email}
@@ -789,6 +785,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def verify_start_date(self, start_date):
         if start_date != self.start_date and start_date < datetime.today().date():
             raise ValidationError("You can not specify a start date in the past.")
+
+    def can_be_viewed_by(self, user):
+        return ((user._id == self.owner_id)
+                or (user.is_domain_admin(self.domain)
+                or (user.get_email() in self.all_recipient_emails)))
 
 
 class ScheduledReportsCheckpoint(models.Model):

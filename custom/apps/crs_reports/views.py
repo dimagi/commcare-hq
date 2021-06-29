@@ -12,7 +12,6 @@ from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.users.models import CommCareUser
 from django.template.loader import get_template
 from django.http import HttpResponse
-# import weasyprint
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
 
 

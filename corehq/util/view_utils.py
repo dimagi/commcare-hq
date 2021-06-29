@@ -164,6 +164,9 @@ def request_as_dict(request):
             Dict containing the request data
     """
 
+    # This is a parameter that is provided by middleware that may or may not exist
+    can_access_all_locations = getattr(request, 'can_access_all_locations', False)
+
     request_data = dict(
         GET=request.GET if request.method == 'GET' else request.POST,
         META=dict(
@@ -172,7 +175,7 @@ def request_as_dict(request):
         ),
         datespan=request.datespan,
         couch_user=None,
-        can_access_all_locations=request.can_access_all_locations
+        can_access_all_locations=can_access_all_locations
     )
 
     try:
