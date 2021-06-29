@@ -72,8 +72,6 @@ def get_events_from_couch(start_key, end_key):
             })
 
             if doc["doc_type"] == "NavigationEventAudit":
-                if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
-                    continue
                 kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
                 path, _, params = doc.get("request_path", "").partition("?")
                 kwargs.update({
@@ -82,8 +80,6 @@ def get_events_from_couch(start_key, end_key):
                 })
                 navigation_objects.append(NavigationEventAudit(**kwargs))
             elif doc["doc_type"] == "AccessAudit":
-                if AccessAudit.objects.filter(couch_id=doc["_id"]).exists():
-                    continue
                 kwargs.update(_pick(doc, ["http_accept", "trace_id"]))
                 access_type = doc.get('access_type')
                 kwargs.update({
