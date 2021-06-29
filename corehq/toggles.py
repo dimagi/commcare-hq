@@ -2050,6 +2050,7 @@ EMBEDDED_TABLEAU = StaticToggle(
     'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Embedded+Tableau+Visualizations",
 )
 
 DETAILED_TAGGING = StaticToggle(
