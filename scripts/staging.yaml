@@ -68,7 +68,6 @@ branches:
     #- bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3+jls/enterprise-user-overview
     - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
     - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
-    - rp/enterprize-sms-report #Rynhard June 2
     - fr/remote-linked-ucr      # Farid June 4
     - jls/move-enterprise-permissions-1-of-3  # Jenny June 4
     - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
