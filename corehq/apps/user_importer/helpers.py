@@ -60,7 +60,6 @@ class UserChangeLogger(object):
         self._save = True
 
     def save(self):
-        self._include_user_data_changes()
         if self.is_new_user or self._save:
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
@@ -73,12 +72,6 @@ class UserChangeLogger(object):
                 action=action,
                 fields_changed=fields_changed
             )
-
-    def _include_user_data_changes(self):
-        # ToDo: consider putting just the diff
-        if self.original_user_doc['user_data'] != self.user.user_data:
-            self.fields_changed['user_data'] = self.user.user_data
-            self._save = True
 
 
 class BaseUserImporter(object):
@@ -114,8 +107,15 @@ class BaseUserImporter(object):
             else:
                 self.logger.add_change_message("Role: None")
 
+        self._include_user_data_changes()
         # ToDo: save log before saving user
         self.logger.save()
+
+    def _include_user_data_changes(self):
+        # ToDo: consider putting just the diff
+        if self.logger.original_user_doc['user_data'] != self.user.user_data:
+            self.logger.fields_changed['user_data'] = self.user.user_data
+            self._save = True
 
 
 class CommCareUserImporter(BaseUserImporter):
