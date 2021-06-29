@@ -86,8 +86,8 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should
 
 
 def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
-    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate)\
-        .source(['_id']).run().hits
+    return FormES(es_instance_alias='export').domain(domain)\
+        .date_range('server_modified_on', gte=startdate, lte=enddate).source(['_id']).run().hits
 
 
 def obtain_missing_case_repeat_records(startdate, enddate, domains):
@@ -179,7 +179,8 @@ def get_case_ids_in_domain_since_date(domain, startdate):
     """
     Can only search for cases modified since a date
     """
-    return CaseES().domain(domain).server_modified_range(gte=startdate).source(['_id']).run().hits
+    return CaseES(es_instance_alias='export').domain(domain).server_modified_range(gte=startdate)\
+        .source(['_id']).run().hits
 
 
 def get_form_repeaters_in_domain(domain):
