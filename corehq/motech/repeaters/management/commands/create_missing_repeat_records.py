@@ -41,10 +41,11 @@ def obtain_missing_form_repeat_records(startdate,
         total_count = 0
         form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
 
-        for form in get_forms_in_domain_between_dates(domain, startdate, enddate):
-            # results returned from scroll() do not include '_id'
+        form_ids = [f['_id'] for f in get_form_ids_in_domain_between_dates(domain, startdate, enddate)]
+        forms = FormAccessors(domain).get_forms(form_ids)
+        for form in forms:
             missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
-                domain, form_repeaters_in_domain, form['_id'], should_create
+                domain, form_repeaters_in_domain, form, should_create
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
@@ -60,8 +61,7 @@ def obtain_missing_form_repeat_records(startdate,
     return stats_per_domain
 
 
-def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, should_create):
-    form = FormAccessors(domain).get_form(form_id)
+def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, should_create):
     if form.is_duplicate:
         return 0, 0
 
@@ -84,8 +84,9 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form_id, sho
     return missing_count, successful_count
 
 
-def get_forms_in_domain_between_dates(domain, startdate, enddate):
-    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate).run().hits
+def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
+    return FormES().domain(domain).date_range('server_modified_on', gte=startdate, lte=enddate)\
+        .source(['_id']).run().hits
 
 
 def obtain_missing_case_repeat_records(startdate, enddate, domains):
@@ -95,9 +96,11 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains):
         total_count = 0
         case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
 
-        for case in get_cases_in_domain_since_date(domain, startdate):
+        case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
+        cases = CaseAccessors(domain).get_cases(case_ids)
+        for case in cases:
             missing_count, successful_count = obtain_missing_case_repeat_records_in_domain(
-                domain, case_repeaters_in_domain, case['_id'], startdate, enddate
+                domain, case_repeaters_in_domain, case, startdate, enddate
             )
             total_missing_count += missing_count
             total_count += missing_count + successful_count
@@ -113,8 +116,7 @@ def obtain_missing_case_repeat_records(startdate, enddate, domains):
     return stats_per_domain
 
 
-def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case_id, startdate, enddate):
-    case = CaseAccessors(domain).get_case(case_id)
+def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate):
     successful_count = 0
     missing_count = 0
 
@@ -168,11 +170,11 @@ def get_transaction_date(transaction):
     return string_to_utc_datetime(transaction.server_date).date()
 
 
-def get_cases_in_domain_since_date(domain, startdate):
+def get_case_ids_in_domain_since_date(domain, startdate):
     """
     Can only search for cases modified since a date
     """
-    return CaseES().domain(domain).server_modified_range(gte=startdate).run().hits
+    return CaseES().domain(domain).server_modified_range(gte=startdate).source(['_id']).run().hits
 
 
 def get_form_repeaters_in_domain(domain):
