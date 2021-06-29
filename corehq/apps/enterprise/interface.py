@@ -32,8 +32,8 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     section_name = "Enterprise"
     dispatcher = EnterpriseReportDispatcher
     name = "SMS Detailed Report"
-    description = """This is a report of SMS details that can be altered by using the filter options
-    above. Once you are happy with your filters, simply click Apply."""
+    description = _("This is a report of SMS details that can be altered by using the filter options \
+    above. Once you are happy with your filters, simply click Apply.")
     slug = "Enterprise"
     ajax_pagination = True
     exportable = True
@@ -94,10 +94,6 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
                 {
                     'name': ShowBillablesFilter.slug,
                     'value': ShowBillablesFilter.get_value(self.request, self.domain)
-                },
-                {
-                    'name': NameFilter.slug,
-                    'value': NameFilter.get_value(self.request, self.domain)
                 },
                 {
                     'name': EnterpriseDomainFilter.slug,
@@ -181,7 +177,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
             )
         else:
             account = BillingAccount.get_account_by_domain(self.request.domain)
-            domains = Subscription.get_active_subscription_by_account(account)
+            domains = Subscription.get_active_domains_for_account(account)
             selected_billables = selected_billables.filter(
                 domain__in=domains
             )

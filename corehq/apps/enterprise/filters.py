@@ -12,7 +12,4 @@ class EnterpriseDomainFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         account = BillingAccount.get_account_by_domain(self.request.domain)
-        return clean_options([(domain, domain) for domain in Subscription.visible_objects.filter(
-            is_active=True,
-            account=account,
-        ).values_list('subscriber__domain', flat=True).distinct()])
+        return clean_options([(domain, domain) for domain in Subscription.get_active_domains_for_account(account)])

@@ -1768,7 +1768,7 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
-    def get_active_subscription_by_account(cls, account_name):
+    def get_active_domains_for_account(cls, account_name):
         try:
             return cls.visible_objects.filter(
                 is_active=True,
