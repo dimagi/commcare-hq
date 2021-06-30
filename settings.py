@@ -285,6 +285,7 @@ HQ_APPS = (
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
+    'corehq.apps.cowin',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
@@ -807,6 +808,8 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryRegistrationRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryVaccinationRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
