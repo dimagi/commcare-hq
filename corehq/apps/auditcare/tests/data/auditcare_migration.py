@@ -1,3 +1,4 @@
+from datetime import datetime
 navigation_test_docs = [
     {
         'description': 'Test User',
@@ -140,5 +141,86 @@ failed_docs = [
         'user_agent': 'Mozilla/5.0 (Windows NT 5.1)',
         'event_date': '2021-05-01T00:01:00Z',
         'view': 'corehq.apps.reports.views.default'
+    }
+]
+task_docs = [
+    {
+        'doc_type': 'NavigationEventAudit',
+        'user': 'couch@test.com',
+        'event_date': datetime(2021, 1, 1).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'description': 'User Name',
+        'extra': {},
+        'headers': {
+            'REQUEST_METHOD': 'GET',
+        },
+        'ip_address': '10.1.2.3',
+        'request_path': '/a/delmar/phone/restore/?version=2.0&since=...',
+        'session_key': 'abc123',
+        'status_code': 200,
+        'view_kwargs': {'domain': 'delmar'},
+        'view': 'corehq.apps.ota.views.restore',
+    },
+    {
+        'doc_type': 'NavigationEventAudit',
+        'user': 'couch@test.com',
+        'event_date': datetime(2021, 2, 1, 2).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'description': 'User Name',
+        'extra': {},
+        'headers': {
+            'REQUEST_METHOD': 'GET',
+        },
+        'ip_address': '10.1.2.3',
+        'request_path': '/a/test-space/phone/restore/?version=2.0&since=...',
+        'session_key': 'abc123',
+        'status_code': 200,
+        'view_kwargs': {'domain': 'test-space'},
+        'view': 'corehq.apps.ota.views.restore',
+    },
+    {
+        'doc_type': 'NavigationEventAudit',
+        'user': 'couch@test.com',
+        'event_date': datetime(2021, 2, 1, 2, 1).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'description': 'User Name',
+        'extra': {},
+        'headers': {
+            'REQUEST_METHOD': 'GET',
+        },
+        'ip_address': '10.1.2.3',
+        'request_path': '/a/random/phone/restore/?version=2.0&since=...',
+        'session_key': 'abc123',
+        'status_code': 200,
+        'view_kwargs': {'domain': 'random'},
+        'view': 'corehq.apps.ota.views.restore',
+    },
+    {
+        'doc_type': "AccessAudit",
+        'user': 'couch@test.com',
+        'event_date': datetime(2021, 2, 1, 3).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'access_type': 'login',
+        'description': 'Login Success',
+        'failures_since_start': None,
+        'get_data': [],
+        'http_accept': 'text/html',
+        'ip_address': '10.1.3.2',
+        'path_info': '/a/delmar/login/',
+        'post_data': [],
+        'session_key': 'abc123',
+        'user_agent': 'Mozilla/5.0',
+    },
+    {
+        'doc_type': 'NavigationEventAudit',
+        'user': 'couch@test.com',
+        'event_date': datetime(2021, 2, 1, 5).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'description': 'User Name',
+        'extra': {},
+        'headers': {
+            'REQUEST_METHOD': 'GET',
+        },
+        'ip_address': '10.1.2.3',
+        'request_path': '/a/sandwich/phone/restore/?version=2.0&since=...',
+        'session_key': 'abc123',
+        'status_code': 200,
+        'view_kwargs': {'domain': 'sandwich'},
+        'view': 'corehq.apps.ota.views.restore',
     }
 ]
