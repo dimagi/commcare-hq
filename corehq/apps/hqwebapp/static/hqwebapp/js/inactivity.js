@@ -169,9 +169,9 @@ hqDefine('hqwebapp/js/inactivity', [
                     } else {
                         // Keeps the input value in the outer window in sync with newest token generated in
                         // iframe_close_window after session timeout, avoiding csrf error.
-                        let iframe = $('iframe').get(0).contentWindow.document;
-                        let outerCSRFInput = $('#csrfTokenContainer');
-                        let iframeInputValue;
+                        var iframe = $('iframe').get(0).contentWindow.document;
+                        var outerCSRFInput = $('#csrfTokenContainer');
+                        var iframeInputValue;
                         try {
                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                             outerCSRFInput.val(iframeInputValue);
