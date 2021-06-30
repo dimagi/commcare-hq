@@ -175,7 +175,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         try {
                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                             outerCSRFInput.val(iframeInputValue);
-                        } catch(error) {
+                        } catch (error) {
                             return null;
                         }
                         $modal.modal('hide');
