@@ -666,7 +666,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN],
 )
 
