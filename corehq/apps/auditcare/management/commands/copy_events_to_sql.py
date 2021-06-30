@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 import gevent
 
-from corehq.apps.auditcare.tasks import copy_events_to_sql
+from corehq.apps.auditcare.couch_to_sql import copy_events_to_sql
 from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
 
 
