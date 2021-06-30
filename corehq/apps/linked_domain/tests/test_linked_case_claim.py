@@ -69,7 +69,7 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete(deleted_by=None)
+        cls.couch_user.delete(cls.domain, deleted_by=None)
         cls.api_key.delete()
         super(TestRemoteLinkedCaseClaim, cls).tearDownClass()
 
