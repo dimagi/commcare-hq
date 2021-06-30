@@ -170,6 +170,7 @@ class Permissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
+    email_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
