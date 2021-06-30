@@ -4,8 +4,10 @@ from django.db import migrations, models
 
 from corehq.apps.linked_domain.const import MODEL_PREVIEWS, MODEL_FLAGS
 from corehq.apps.linked_domain.models import DomainLinkHistory
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def _duplicate_toggle_events_into_preview_events(apps, schema_editor):
     all_toggle_events = DomainLinkHistory.objects.filter(model=MODEL_FLAGS)
     # iterate through events, copy into a new entry with model='previews'
