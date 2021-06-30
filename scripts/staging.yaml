@@ -91,4 +91,5 @@ branches:
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
+    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
 submodules: { }
