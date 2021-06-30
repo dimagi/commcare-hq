@@ -285,6 +285,7 @@ HQ_APPS = (
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
+    'corehq.apps.cowin',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
@@ -571,8 +572,8 @@ CELERY_TASK_ANNOTATIONS = {
 CELERY_MAIN_QUEUE = 'celery'
 CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
-CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_rule_queue'  # override in localsettings
-CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_case_update_bulk_queue'
+CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_rule_queue'  # override in localsettings
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
@@ -807,6 +808,8 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryRegistrationRepeater',
+    'corehq.apps.cowin.repeaters.BeneficiaryVaccinationRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
