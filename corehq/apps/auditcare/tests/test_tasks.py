@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from ..models import AccessAudit, NavigationEventAudit
 from ..tasks import copy_events_to_sql
@@ -39,4 +40,22 @@ class TestCopyEventsToSQL(AuditcareTest):
 
         # Re-copying should have no effect
         copy_events_to_sql(start_time=datetime(2021, 2, 1, 2), end_time=datetime(2021, 2, 1, 5))
+        _assert()
+
+    @patch('corehq.apps.auditcare.tasks.COUCH_QUERY_LIMIT', 2)
+    def test_copy_with_small_couch_query_limit(self):
+        def _assert():
+            self.assertEqual(NavigationEventAudit.objects.count(), 4)
+            self.assertEqual(
+                [e.path for e in NavigationEventAudit.objects.order_by("event_date").all()],
+                ['/a/delmar/phone/restore/', '/a/test-space/phone/restore/', '/a/random/phone/restore/', '/a/sandwich/phone/restore/']
+            )
+            self.assertEqual(
+                [e.params for e in NavigationEventAudit.objects.order_by("-event_date").all()],
+                ["version=2.0&since=...", "version=2.0&since=...", "version=2.0&since=...", "version=2.0&since=..."]
+            )
+            self.assertEqual(AccessAudit.objects.count(), 1)
+            self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
+
+        copy_events_to_sql(start_time=datetime(2021, 1, 1), end_time=datetime(2021, 2, 2))
         _assert()
