@@ -254,6 +254,81 @@ class TestSsoBackend(TestCase):
             ]
         )
 
+    def test_new_user_displayname_is_used_if_first_and_last_are_missing(self):
+        """
+        Azure AD does not mark the First and Last names as required, only the
+        Display Name. If First and Last are missing, ensure that this
+        information is then obtained from the Display Name
+        """
+        username = 'v@vaultwax.com'
+        reg_form = RegisterWebUserForm()
+        reg_form.cleaned_data = {
+            'email': username,
+            'phone_number': '+15555555555',
+            'project_name': 'test-vault',
+            'persona': 'Other',
+            'persona_other': "for tests",
+
+        }
+        generator.store_display_name_in_saml_user_data(
+            self.request,
+            'Vanessa van Beek'
+        )
+        AsyncSignupRequest.create_from_registration_form(reg_form)
+        user = auth.authenticate(
+            request=self.request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Vanessa')
+        self.assertEqual(user.last_name, 'van Beek')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                "User account for v@vaultwax.com created."
+            ]
+        )
+
+    def test_new_user_displayname_with_one_name_is_used_as_first_name(self):
+        """
+        Ensure that if the Azure AD "Display Name" has only one name/word in
+        it that only the first name is populated.
+        """
+        username = 'test@vaultwax.com'
+        reg_form = RegisterWebUserForm()
+        reg_form.cleaned_data = {
+            'email': username,
+            'phone_number': '+15555555555',
+            'project_name': 'test-vault',
+            'persona': 'Other',
+            'persona_other': "for tests",
+
+        }
+        generator.store_display_name_in_saml_user_data(
+            self.request,
+            'Test'
+        )
+        AsyncSignupRequest.create_from_registration_form(reg_form)
+        user = auth.authenticate(
+            request=self.request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Test')
+        self.assertEqual(user.last_name, '')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                "User account for test@vaultwax.com created."
+            ]
+        )
+
     def test_new_user_created_and_invitation_accepted(self):
         """
         When SsoBackend creates a new user and an invitation is present, that
