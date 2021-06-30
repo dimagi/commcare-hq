@@ -121,6 +121,25 @@ class UserRoleCouchToSqlTests(TestCase):
         couch_role2 = UserRole.get(sql_role.couch_id)
         self.assertDictEqual(couch_role2.permissions.to_json(), sql_role.permissions.to_json())
 
+    def test_sync_role_sql_to_couch_assignable_by(self):
+        sql_role = SQLUserRole(
+            domain=self.domain,
+            name="test_sql_to_couch",
+            default_landing_page=ALL_LANDING_PAGES[0].id,
+            is_non_admin_editable=False,
+            upstream_id=self.app_editor_sql.couch_id
+        )
+        sql_role.save()
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual(len(couch_roles), 2)
+        couch_role = [r for r in couch_roles if r.name == sql_role.name][0]
+        self.assertEqual(couch_role.assignable_by, [])
+
+        sql_role.set_assignable_by([self.app_editor_sql.id])
+
+        couch_role2 = UserRole.get(sql_role.couch_id)
+        self.assertEqual(couch_role2.assignable_by, [self.app_editor.get_id])
+
     def test_diff_identical(self):
         couch, sql = self._create_identical_objects_for_diff()
         self.assertIsNone(Command.get_diff_as_string(couch.to_json(), sql))
