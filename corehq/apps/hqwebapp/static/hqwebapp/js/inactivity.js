@@ -175,7 +175,10 @@ hqDefine('hqwebapp/js/inactivity', [
                         try {
                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                             outerCSRFInput.val(iframeInputValue);
-                        } catch (error) {
+                        } catch (err) {
+                            $button.removeClass("btn-default").addClass("btn-danger");
+                            error = gettext("There was a problem, please refresh and try again");
+                            $button.text(error);
                             return null;
                         }
                         $modal.modal('hide');
