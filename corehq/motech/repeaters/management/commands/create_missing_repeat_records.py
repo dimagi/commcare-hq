@@ -340,7 +340,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
-        parser.add_argument('-e', '--enddate', default="2021-06-23", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-e', '--enddate', default="2021-06-24", type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
 
