@@ -555,6 +555,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
+        "case_list_form_expression": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
         'case_list_form_use_default_image_for_all': None,
@@ -675,6 +676,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_form_expression'):
+        module.case_list_form.relevancy_expression = request.POST.get('case_list_form_expression')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
 

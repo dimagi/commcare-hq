@@ -74,6 +74,20 @@
         </div>
       {% endif %}
     </div>
+    {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+      <div class="form-group" id="case_list_form-expression" data-bind="visible: caseListForm()">
+        <label class="{% css_label_class %} control-label">
+          {% trans "XPath Expression to Enable Case List Form" %}
+          <span class="hq-help-template"
+                data-title="{% trans "XPath Expression" %}"
+              data-content="{% blocktrans %}Case List Form will be displayed when this xpath expression   is true. This must return a boolean value{% endblocktrans %}"
+          ></span>
+        </label>
+        <div class="{% css_field_class %}">
+          <input type="text" name="case_list_form_expression" value="{{ module.case_list_form.relevancy_expression|default_if_none:"" }}" class="form-control">
+        </div>
+      </div>
+    {% endif %}
     <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
       <label class="{% css_label_class %} control-label">
         {% trans "Label for Case List Registration" %}

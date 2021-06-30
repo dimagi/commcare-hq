@@ -193,7 +193,10 @@ class DetailContributor(SectionContributor):
                 if module.case_list_form.form_id:
                     from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
                     form = self.app.get_form(module.case_list_form.form_id)
-                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    else:
+                        valid_forms = []
                     if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
                         d.actions.append(self._get_case_list_form_action(module))
 
@@ -267,6 +270,9 @@ class DetailContributor(SectionContributor):
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
+        action_relevant = None
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+            action_relevant = module.case_list_form.relevancy_expression
         if self.app.enable_localized_menu_media:
             case_list_form = module.case_list_form
             action = LocalizedAction(
@@ -277,6 +283,7 @@ class DetailContributor(SectionContributor):
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
                 for_action_menu=True,
+                relevant=action_relevant
             )
         else:
             action = Action(
@@ -285,7 +292,8 @@ class DetailContributor(SectionContributor):
                     media_image=module.case_list_form.default_media_image,
                     media_audio=module.case_list_form.default_media_audio,
                 ),
-                stack=Stack()
+                stack=Stack(),
+                relevant=action_relevant
             )
 
         frame = PushFrame()
