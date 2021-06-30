@@ -125,7 +125,7 @@ def copy_events_to_sql(start_time, end_time):
             count += events_info['count']
             break_query = events_info['break_query']
     except Exception as e:
-        message = f"Error in copy_events_to_sql on doc {str(e)}"
+        message = f"Error in copy_events_to_sql in key {key}\n{e}"
         notify_exception(None, message=message)
         _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
         _soft_assert(False, message)
