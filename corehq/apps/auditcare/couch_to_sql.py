@@ -64,40 +64,38 @@ def get_events_from_couch(start_key, end_key):
     for result in couch_docs:
         records_returned += 1
         doc = result["doc"]
-        try:
-            next_start_time = force_to_datetime(doc.get("event_date"))
-            kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
-                                "headers", "status_code", "user_agent"])
-            kwargs.update({
-                "event_date": next_start_time,
-                "couch_id": doc["_id"],
-            })
+        next_start_time = force_to_datetime(doc.get("event_date"))
+        kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
+                            "headers", "status_code", "user_agent"])
+        kwargs.update({
+            "event_date": next_start_time,
+            "couch_id": doc["_id"],
+        })
 
-            if doc["doc_type"] == "NavigationEventAudit":
-                if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
-                    continue
-                kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
-                path, _, params = doc.get("request_path", "").partition("?")
-                kwargs.update({
-                    "path": path,
-                    "params": params,
-                })
-                navigation_objects.append(NavigationEventAudit(**kwargs))
-            elif doc["doc_type"] == "AccessAudit":
-                if AccessAudit.objects.filter(couch_id=doc["_id"]).exists():
-                    continue
-                kwargs.update(_pick(doc, ["http_accept", "trace_id"]))
-                access_type = doc.get('access_type')
-                kwargs.update({
-                    "access_type": ACCESS_LOOKUP.get(doc.get("access_type")),
-                    "path": doc.get("path_info"),
-                })
-                if access_type == "logout":
-                    kwargs.update({"path": "accounts/logout"})
-                audit_objects.append(AccessAudit(**kwargs))
-            records_saved += 1
-        except Exception:
-            raise Exception(doc['_id'])
+        if doc["doc_type"] == "NavigationEventAudit":
+            if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
+                continue
+            kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
+            path, _, params = doc.get("request_path", "").partition("?")
+            kwargs.update({
+                "path": path,
+                "params": params,
+            })
+            navigation_objects.append(NavigationEventAudit(**kwargs))
+        elif doc["doc_type"] == "AccessAudit":
+            if AccessAudit.objects.filter(couch_id=doc["_id"]).exists():
+                continue
+            kwargs.update(_pick(doc, ["http_accept", "trace_id"]))
+            access_type = doc.get('access_type')
+            kwargs.update({
+                "access_type": ACCESS_LOOKUP.get(doc.get("access_type")),
+                "path": doc.get("path_info"),
+            })
+            if access_type == "logout":
+                kwargs.update({"path": "accounts/logout"})
+            audit_objects.append(AccessAudit(**kwargs))
+        records_saved += 1
+
     res_obj = {
         "navigation_events": navigation_objects,
         "audit_events": audit_objects,
