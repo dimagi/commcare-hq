@@ -50,8 +50,8 @@ class TestMessagingEventResource(APIResourceTest):
                 }
             ],
             # "id": 1,  # ids are explicitly removed from comparison
-            "recipient": {'name': 'unknown', 'id': None, 'type': 'case'},
-            "source": {'id': None, 'name': 'sms', 'type': "other"},
+            "recipient": {'name': 'unknown', 'recipient_id': None, 'type': 'case'},
+            "source": {'source_id': None, 'name': 'sms', 'type': "other"},
             "status": "completed",
         }
 
@@ -63,6 +63,8 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(2, len(data))
         for result in data:
             del result['id']  # don't bother comparing ids
+            for message in result['messages']:
+                del message['message_id']
             self.assertEqual(self._serialized_messaging_event(), result)
 
     def test_date_ordering(self):
@@ -254,6 +256,7 @@ class TestMessagingEventResource(APIResourceTest):
             "form": None,
             "messages": [
                 {
+                    "message_id": sms.id,
                     "backend": 'fake-backend-id',
                     "phone_number": "99912345678",
                     "content": "test sms text",
@@ -265,12 +268,13 @@ class TestMessagingEventResource(APIResourceTest):
             ],
             "recipient": {
                 "name": "unknown",
-                "id": "case_id_123",
+                "recipient_id": "case_id_123",
                 "type": "case"
             },
             "source": {
                 "name": "case rule name",
-                "type": "conditional-alert"
+                "type": "conditional-alert",
+                "source_id": str(rule.id),
             },
             "status": "in-progress"
         }
@@ -281,7 +285,6 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(1, len(data))
         for result in data:
             del result['id']
-            del result['source']['id']
             self.assertEqual(expected, result)
 
     def test_survey_sms(self):
@@ -307,6 +310,7 @@ class TestMessagingEventResource(APIResourceTest):
             },
             "messages": [
                 {
+                    "message_id": sms.id,
                     "backend": "fake-backend-id",
                     "phone_number": "99912345678",
                     "content": "test sms text",
@@ -318,12 +322,13 @@ class TestMessagingEventResource(APIResourceTest):
             ],
             "recipient": {
                 "name": "unknown",
-                "id": "user_id_xyz",
+                "recipient_id": "user_id_xyz",
                 "type": "mobile-worker"
             },
             "source": {
                 "name": "test sms survey",
-                "type": "conditional-alert"
+                "type": "conditional-alert",
+                "source_id": str(rule.id)
             },
             "status": "in-progress"
         }
@@ -334,7 +339,6 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(1, len(data))
         for result in data:
             del result['id']
-            del result['source']['id']
             self.assertEqual(expected, result)
 
     def test_email(self):
@@ -362,7 +366,7 @@ class TestMessagingEventResource(APIResourceTest):
             ],
             "recipient": {
                 "name": "bob",
-                "id": user.get_id,
+                "recipient_id": user.get_id,
                 "type": "mobile-worker"
             },
             "source": {
@@ -378,9 +382,10 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(1, len(data))
         for result in data:
             del result['id']
-            del result['source']['id']
+            del result['source']['source_id']
             del result['date']
             del result['messages'][0]['date']
+            del result['messages'][0]['message_id']
             self.assertEqual(expected, result)
 
     def test_cursor(self):
