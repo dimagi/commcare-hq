@@ -350,4 +350,4 @@ class Command(BaseCommand):
         else:
             domains_with_repeaters = get_domains_that_have_repeat_records()
 
-        _ = obtain_missing_form_repeat_records(startdate, enddate, domains_with_repeaters, create)
+        _ = obtain_missing_case_repeat_records(startdate, enddate, domains_with_repeaters, create)
