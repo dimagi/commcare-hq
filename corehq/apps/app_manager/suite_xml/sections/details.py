@@ -226,7 +226,8 @@ class DetailContributor(SectionContributor):
 
         if tab.nodeset_case_type:
             nodeset = CaseTypeXpath(tab.nodeset_case_type)
-            nodeset = nodeset.case(instance_name=detail.instance_name)
+            instance_name = detail.instance_name if detail else 'casedb'
+            nodeset = nodeset.case(instance_name=instance_name)
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")
