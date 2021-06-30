@@ -51,7 +51,8 @@ class ElasticProcessor(PillowProcessor):
       - ES
     """
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None, change_filter_fn=None):
+        self.change_filter_fn = change_filter_fn or noop_filter
         self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
         self.es_interface = ElasticsearchInterface(self.elasticsearch)
@@ -62,6 +63,9 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, change):
+        if self.change_filter_fn and self.change_filter_fn(change):
+            return
+
         if change.deleted and change.id:
             self._delete_doc_if_exists(change.id)
             return
@@ -128,6 +132,11 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        if self.change_filter_fn:
+            changes_chunk = [
+                change for change in changes_chunk
+                if not self.change_filter_fn(change)
+            ]
         with self._datadog_timing('bulk_extract'):
             bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
 

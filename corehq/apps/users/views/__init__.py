@@ -869,6 +869,7 @@ def _update_role_from_view(domain, role_data):
 
     assignable_by = role_data["assignable_by"]
     role.set_assignable_by_couch(assignable_by)
+    role._migration_do_sync()  # update permissions and assignable_by
     return role
 
 
@@ -879,7 +880,7 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except SQLUserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id
