@@ -167,6 +167,17 @@ hqDefine('hqwebapp/js/inactivity', [
                         $button.removeClass("btn-default").addClass("btn-danger");
                         $button.text(error);
                     } else {
+                        // Keeps the input value in the outer window in sync with newest token generated in
+                        // iframe_close_window after session timeout, avoiding csrf error.
+                        let iframe = $('iframe').get(0).contentWindow.document;
+                        let outerCSRFInput = $('#csrfTokenContainer');
+                        let iframeInputValue;
+                        try {
+                            iframeInputValue = iframe.getElementsByTagName('input')[0].value;
+                            outerCSRFInput.val(iframeInputValue);
+                        } catch(error) {
+                            return null;
+                        }
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
