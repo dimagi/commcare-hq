@@ -12,11 +12,11 @@ class Command(AppMigrationCommandBase):
     chunk_size = 1
     include_builds = True
     include_linked_apps = True
-    migration_date = '2018-02-1'
+    migration_date = '2018-02-01'
     default_date = '2017-01-01'
 
     def migrate_app(self, app_doc):
         should_save = False
         last_modified = app_doc.get('last_modified', self.default_date)
-        should_save = last_modified < self.migration_date
+        should_save = last_modified < self.migration_date if last_modified else True
         return get_correct_app_class(app_doc).wrap(app_doc) if should_save else None

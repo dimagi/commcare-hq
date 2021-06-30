@@ -594,7 +594,8 @@ class PropertyXpathGenerator(BaseXpathGenerator):
             case = CaseXPath(UsercaseXPath().case())
         else:
             for index in indexes:
-                case = case.index_id(index).case(instance_name=self.detail.instance_name)
+                instance_name = self.detail.instance_name if self.detail else 'casedb'
+                case = case.index_id(index).case(instance_name=instance_name)
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))
