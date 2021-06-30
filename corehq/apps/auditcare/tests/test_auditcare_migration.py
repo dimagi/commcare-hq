@@ -15,12 +15,14 @@ from corehq.apps.auditcare.utils.migration import (
     get_formatted_datetime_string,
 )
 
-from .data.audicare_migraion import (
+from ..couch_to_sql import copy_events_to_sql
+from .data.auditcare_migration import (
     audit_test_docs,
     failed_docs,
     navigation_test_docs,
+    task_docs,
 )
-from .testutils import delete_couch_docs, save_couch_doc
+from .testutils import AuditcareTest, delete_couch_docs, save_couch_doc
 
 
 class TestAuditcareMigrationUtil(TestCase):
@@ -38,6 +40,7 @@ class TestAuditcareMigrationUtil(TestCase):
 
     def teardown(self):
         cache.delete(self.util.start_key)
+        AuditcareMigrationMeta.objects.all().delete()
         super().tearDown()
 
     def test_get_next_batch_start(self):
@@ -105,7 +108,6 @@ class TestAuditcareMigrationUtil(TestCase):
     @classmethod
     def tearDownClass(cls):
         cache.delete(cls.util.start_key)
-        AuditcareMigrationMeta.objects.all().delete()
         return super().tearDownClass()
 
 
@@ -121,19 +123,22 @@ class TestManagementCommand(TestCase):
             f'{datetime(2021,5,15)}_{datetime(2021,5,16)}',
             f'{datetime(2021,5,1)}_{datetime(2021,5,2)}',
         ]
-        AuditcareMigrationMeta(key=cls.errored_keys[0], state=AuditcareMigrationMeta.ERRORED).save()
-        AuditcareMigrationMeta(key=cls.errored_keys[1], state=AuditcareMigrationMeta.ERRORED).save()
-
         return super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         cache.delete(AuditCareMigrationUtil().start_key)
+        delete_couch_docs(cls.couch_doc_ids)
+        return super().tearDownClass()
+
+    def tearDown(self):
         NavigationEventAudit.objects.all().delete()
         AccessAudit.objects.all().delete()
         AuditcareMigrationMeta.objects.all().delete()
-        delete_couch_docs(cls.couch_doc_ids)
-        return super().tearDownClass()
+        return super().tearDown()
+
+    def setUp(self):
+        return super().setUp()
 
     def test_copy_all_events(self):
         call_command("copy_events_to_sql", "--workers=10", "--batch_by=d")
@@ -142,6 +147,8 @@ class TestManagementCommand(TestCase):
         self.assertEqual(total_object_count, expected_object_count)
 
     def test_copy_failed_events(self):
+        AuditcareMigrationMeta(key=self.errored_keys[0], state=AuditcareMigrationMeta.ERRORED).save()
+        AuditcareMigrationMeta(key=self.errored_keys[1], state=AuditcareMigrationMeta.ERRORED).save()
         call_command("copy_events_to_sql", "--only_errored=True")
 
         count_access_objects = AccessAudit.objects.filter(event_date__lte=datetime(2021, 5, 30)).count()
