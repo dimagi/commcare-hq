@@ -2,8 +2,9 @@ from gevent.pool import Pool
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.es import CaseES
 from corehq.motech.repeaters.dbaccessors import get_couch_repeat_record_ids_by_payload_id, get_domains_that_have_repeat_records
-from coreqh.motech.reepaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 
 class Command(BaseCommand):
 
@@ -25,7 +26,7 @@ class Command(BaseCommand):
         p = Pool(20)
         jobs = []
         for d in domains:
-            j = p.spawn(test_inconsistency, d, startdate, fix)
+            j = p.spawn(self.test_inconsistency, d, startdate, fix)
             jobs.append(j)
         p.join()
         for j in jobs:
@@ -40,17 +41,17 @@ class Command(BaseCommand):
         count = 0
         for i in case_ids:
             if count % 100 == 0:
-                print('{}/{}'.format(count, len(case_ids)))
+                print('{}: {}/{}'.format(domain, count, len(case_ids)))
             repeater_counts = set()
             records = set()
             for n in range(100):
                 repeaters = get_couch_repeat_record_ids_by_payload_id(domain, i)
                 repeater_counts.add(len(repeaters))
-                records.add(set(repeaters))
+                records.update(set(repeaters))
             if len(repeater_counts) > 1:
                 bad_cases.append(i)
             if fix:
-                for c in records:
+                for record in records:
                     RepeatRecord.get(record)
             count += 1
         print('Found {} cases with inconsistent records'.format(len(bad_cases)))
