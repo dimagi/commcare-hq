@@ -3,6 +3,7 @@ from gevent.pool import Pool
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.es import CaseES
+from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.motech.repeaters.dbaccessors import get_couch_repeat_record_ids_by_payload_id, get_domains_that_have_repeat_records
 from corehq.motech.repeaters.models import RepeatRecord
 
@@ -44,7 +45,7 @@ class Command(BaseCommand):
                 print('{}: {}/{}'.format(domain, count, len(case_ids)))
             repeater_counts = set()
             records = set()
-            for n in range(100):
+            for n in range(20):
                 repeaters = get_couch_repeat_record_ids_by_payload_id(domain, i)
                 repeater_counts.add(len(repeaters))
                 records.update(set(repeaters))
