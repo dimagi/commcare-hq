@@ -226,6 +226,7 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
             missing_count = 0
 
         if missing_count > 0:
+            print(f"Missing case {case.get_id} for repeater {repeater.get_id}")
             calls_to_register_count += 1
             if should_create:
                 if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
