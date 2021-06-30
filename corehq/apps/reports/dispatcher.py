@@ -321,3 +321,16 @@ class QuestionTemplateDispatcher(ProjectReportDispatcher):
     def get_question_templates(self, domain, report_slug):
         question_templates = dict(self.get_reports(domain))
         return question_templates.get(report_slug, None)
+
+
+class UserManagementReportDispatcher(ReportDispatcher):
+    prefix = 'user_management_report'
+    map_name = 'USER_MANAGEMENT_REPORTS'
+
+    @cls_to_view_login_and_domain
+    def dispatch(self, request, *args, **kwargs):
+        return super(UserManagementReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        from corehq.toggles import USER_HISTORY_REPORT
+        return USER_HISTORY_REPORT.enabled_for_request(request)
