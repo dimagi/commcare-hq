@@ -57,10 +57,12 @@ def _get_couch_docs(start_key, end_key):
 def get_events_from_couch(start_key, end_key):
     navigation_objects = []
     audit_objects = []
-    count = 0
+    records_saved = 0
+    records_returned = 0
     next_start_time = None
     couch_docs = _get_couch_docs(start_key, end_key)
     for result in couch_docs:
+        records_returned += 1
         doc = result["doc"]
         try:
             next_start_time = force_to_datetime(doc.get("event_date"))
@@ -93,15 +95,15 @@ def get_events_from_couch(start_key, end_key):
                 if access_type == "logout":
                     kwargs.update({"path": "accounts/logout"})
                 audit_objects.append(AccessAudit(**kwargs))
-            count += 1
+            records_saved += 1
         except Exception:
             raise Exception(doc['_id'])
     res_obj = {
         "navigation_events": navigation_objects,
         "audit_events": audit_objects,
-        "break_query": count < COUCH_QUERY_LIMIT or not next_start_time,
+        "break_query": records_returned < COUCH_QUERY_LIMIT or not next_start_time,
         "next_start_key": get_couch_key(next_start_time),
-        "count": count
+        "count": records_saved
     }
     return res_obj
 
