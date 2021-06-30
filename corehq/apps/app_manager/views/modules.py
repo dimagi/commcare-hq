@@ -433,7 +433,7 @@ def _get_shadow_parent(app, module):
 
 def _case_list_form_options(app, module, lang=None):
     options = OrderedDict()
-    forms = [
+    reg_forms = [
         form
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(module.case_type)
@@ -442,12 +442,42 @@ def _case_list_form_options(app, module, lang=None):
     options.update({f.unique_id: {
         'name': trans(f.name, langs),
         'post_form_workflow': f.post_form_workflow,
-    } for f in forms})
-
+        'is_registration_form': True,
+    } for f in reg_forms})
+    parent_case_type = None
+    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active:
+        followup_forms = get_parent_select_followup_forms(app, module)
+        if followup_forms:
+            parent_case_type = followup_forms[0].get_module().case_type
+            options.update({f.unique_id: {
+                'name': trans(f.name, langs),
+                'post_form_workflow': f.post_form_workflow,
+                'is_registration_form': False,
+            } for f in followup_forms})
     return {
         'options': options,
         'form': module.case_list_form,
+        'select_parent_case_type': parent_case_type,
     }
+
+
+def get_parent_select_followup_forms(app, module):
+    if not module.parent_select.active or not module.parent_select.module_id:
+        return []
+    parent_module = app.get_module_by_unique_id(
+        module.parent_select.module_id,
+        error=_("Case list used by parent child selection in '{}' not found").format(
+            module.default_name()),
+    )
+    parent_case_type = parent_module.case_type
+    if module.parent_select.relationship == 'parent' and parent_case_type != module.case_type:
+        return [
+            form
+            for mod in app.get_modules() if mod.case_type == parent_case_type
+            for form in mod.get_forms() if form.requires_case() and not form.is_registration_form()
+        ]
+    else:
+        return []
 
 
 def _get_module_details_context(request, app, module, case_property_builder, messages=messages):

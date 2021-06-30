@@ -7,11 +7,20 @@
   <div id="case-list-form">
     <div class="form-group">
       <label class="{% css_label_class %} control-label">
-        {% trans "Registration Form Accessible from Case List" %}
-        <span class="hq-help-template"
-              data-title="{% trans "Registration Form Accessible from Case List" %}"
-              data-content="{% blocktrans %}Minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.{% endblocktrans %}"
-        ></span>
+        {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+          {% trans "Form Accessible from Case List" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Forms Accessible from Case List" %}"
+                data-content="{% blocktrans %}Use Registration Forms to minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.
+                You can use followup forms for Parent Case button if this module uses Select Parent First workflow{% endblocktrans %}"
+          ></span>
+        {% else %}
+          {% trans "Registration Form Accessible from Case List" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Registration Form Accessible from Case List" %}"
+              data-content="{% blocktrans %}Minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.{%   endblocktrans %}"
+          ></span>
+        {% endif %}
       </label>
       {% if not case_list_form_not_allowed_reasons %}
         <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">
@@ -20,9 +29,28 @@
               <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
             {% endif %}
             <option value="">{% trans "Don't Show" %}</option>
-            {% for id, data in case_list_form_options.options.items %}
-              <option value="{{ id }}">{{ data.name }}</option>
-            {% endfor %}
+            {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+              <optgroup label="{% trans 'Registration Forms' %}">
+                {% for id, data in case_list_form_options.options.items %}
+                  {% if data.is_registration_form %}
+                    <option value="{{ id }}">{{ data.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </optgroup>
+              <optgroup label="{% blocktrans %}Followup Forms for {{case_list_form_options.select_parent_case_type}} case_type {% endblocktrans %}">
+                {% for id, data in case_list_form_options.options.items %}
+                  {% if not data.is_registration_form %}
+                    <option value="{{ id }}">{{ data.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </optgroup>
+            {% else %}
+              {% for id, data in case_list_form_options.options.items %}
+                {% if data.is_registration_form %}
+                  <option value="{{ id }}">{{ data.name }}</option>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           </select>
           <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
           <div data-bind="visible: formMissing()" class="help-block">

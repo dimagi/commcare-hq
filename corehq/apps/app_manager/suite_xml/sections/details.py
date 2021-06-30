@@ -191,9 +191,11 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    target_form = self.app.get_form(module.case_list_form.form_id)
-                    if target_form.is_registration_form(module.case_type):
-                        d.actions.append(self._get_reg_form_action(module))
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    form = self.app.get_form(module.case_list_form.form_id)
+                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+                        d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
                     d.actions.append(self._get_case_search_action(module, in_search="search" in id))
@@ -259,9 +261,9 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_reg_form_action(self, module):
+    def _get_case_list_form_action(self, module):
         """
-        Returns registration form action
+        Returns registration/followup form action
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
