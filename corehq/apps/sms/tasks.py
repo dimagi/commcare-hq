@@ -84,10 +84,22 @@ def remove_from_queue(queued_sms):
 
 def get_sms_from_queued_sms(queued_sms):
     sms = SMS()
-    for field in sms._meta.get_fields():
-        if field.name != 'id':
-            setattr(sms, field.name, getattr(queued_sms, field.name))
+    for field in _get_sms_fields_to_copy():
+        setattr(sms, field, getattr(queued_sms, field))
     return sms
+
+
+def _get_sms_fields_to_copy():
+    """Returns a set of field attribute names to copy from QueuedSMS to SMS.
+    This should be all fields in QueuedSMS except 'id'
+    """
+    res = set()
+    for field in QueuedSMS._meta.get_fields():
+        try:
+            res.add(field.attname)  # use attname to avoid DB lookups for related models
+        except AttributeError:
+            res.add(field.name)
+    return res - {"id"}
 
 
 def handle_unsuccessful_processing_attempt(msg):
