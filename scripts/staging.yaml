@@ -88,4 +88,5 @@ branches:
     - bmb/sso-debug-user-data  # Biyeun June 30
     - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
     - sr/fup-form  # Sravan July 1
+    - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
 submodules: { }
