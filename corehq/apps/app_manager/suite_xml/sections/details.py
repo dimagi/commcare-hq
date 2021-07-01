@@ -270,9 +270,6 @@ class DetailContributor(SectionContributor):
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
-        action_relevant = None
-        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
-            action_relevant = module.case_list_form.relevancy_expression
         if self.app.enable_localized_menu_media:
             case_list_form = module.case_list_form
             action = LocalizedAction(
@@ -283,7 +280,6 @@ class DetailContributor(SectionContributor):
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
                 for_action_menu=True,
-                relevant=action_relevant
             )
         else:
             action = Action(
@@ -293,8 +289,11 @@ class DetailContributor(SectionContributor):
                     media_audio=module.case_list_form.default_media_audio,
                 ),
                 stack=Stack(),
-                relevant=action_relevant
             )
+
+        action_relevant = module.case_list_form.relevancy_expression
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+            action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
