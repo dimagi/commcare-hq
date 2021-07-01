@@ -32,7 +32,11 @@ class UserChangeLogger(object):
         self.changed_by_user = changed_by_user
         self.changed_via = changed_via
 
-        self.original_user_doc = self.user.to_json()
+        if not is_new_user:
+            self.original_user_doc = self.user.to_json()
+        else:
+            self.original_user_doc = None
+
         self.fields_changed = {}
         self.messages = []
 
@@ -113,7 +117,7 @@ class BaseUserImporter(object):
 
     def _include_user_data_changes(self):
         # ToDo: consider putting just the diff
-        if self.logger.original_user_doc['user_data'] != self.user.user_data:
+        if self.logger.original_user_doc and self.logger.original_user_doc['user_data'] != self.user.user_data:
             self.logger.fields_changed['user_data'] = self.user.user_data
             self._save = True
 
