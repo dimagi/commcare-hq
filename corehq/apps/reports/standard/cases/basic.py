@@ -180,7 +180,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
                 extra_tags='html',
             )
         return super(CaseListReport, self).view_response
