@@ -21,7 +21,6 @@ from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
 )
 from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
-from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.es.tests.utils import es_test
@@ -56,10 +55,9 @@ from corehq.apps.reports.analytics.esaccessors import (
     scroll_case_names,
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
@@ -893,12 +891,6 @@ class TestUserESAccessors(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'user-esaccessors-test'
-        cls.domain_obj = create_domain(cls.domain)
-
-        cls.source_domain = cls.domain + "-source"
-        cls.source_domain_obj = create_domain(cls.source_domain)
-        create_enterprise_permissions("a@a.com", cls.source_domain, [cls.domain])
-
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
@@ -934,8 +926,6 @@ class TestUserESAccessors(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
-        cls.source_domain_obj.delete()
         cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
@@ -985,14 +975,19 @@ class TestUserESAccessors(TestCase):
             'location_id': None
         })
 
-    def test_domain_allow_enterprise(self):
+    def test_domain_allow_mirroring(self):
+        source_domain = self.domain + "-source"
+        mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
+        mirror.save()
         self._send_user_to_es()
+
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
         self.assertEqual(
             ['superman'],
-            UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)
+            UserES().domain(self.domain, allow_mirroring=True).values_list('username', flat=True)
         )
+        mirror.delete()
 
 
 @es_test
