@@ -138,30 +138,30 @@ def find_missing_case_repeat_records(startdate, enddate, domains, should_create=
     missing_case_counts_per_domain = {}
     for index, domain in enumerate(domains):
         t0 = time.time()
-        try:
-            missing_case_counts = find_missing_case_repeat_records_for_domain(
-                domain, startdate, enddate, should_create
-            )
-            t1 = time.time()
-            time_to_run = t1 - t0
+        # try:
+        missing_case_counts = find_missing_case_repeat_records_for_domain(
+            domain, startdate, enddate, should_create
+        )
+        t1 = time.time()
+        time_to_run = t1 - t0
 
-            number_of_records_missing = missing_case_counts[MISSING_REPEAT_RECORD_COUNT]
-            number_of_records_expected = missing_case_counts[EXPECTED_REPEAT_RECOUNT_COUNT]
-            if number_of_records_missing > 0:
-                missing_case_counts_per_domain[domain] = missing_case_counts
-                pct_missing = f'{round((number_of_records_missing / number_of_records_expected) * 100, 2)}%'
-                rounded_time = f'{round(time_to_run, 0)} seconds'
-                logger.debug(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
-                             f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
-                             f'the specified date range'
-                             )
-            else:
-                logger.debug(f"Found 0 missing case repeat records in {domain}.")
-            if index + 1 % 10 == 0:
-                logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
+        number_of_records_missing = missing_case_counts[MISSING_REPEAT_RECORD_COUNT]
+        number_of_records_expected = missing_case_counts[EXPECTED_REPEAT_RECOUNT_COUNT]
+        if number_of_records_missing > 0:
+            missing_case_counts_per_domain[domain] = missing_case_counts
+            pct_missing = f'{round((number_of_records_missing / number_of_records_expected) * 100, 2)}%'
+            rounded_time = f'{round(time_to_run, 0)} seconds'
+            logger.debug(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
+                         f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
+                         f'the specified date range'
+                         )
+        else:
+            logger.debug(f"Found 0 missing case repeat records in {domain}.")
+        if index + 1 % 10 == 0:
+            logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
 
-        except Exception as e:
-            logger.error(f"Encountered error with {domain}: {e}")
+        # except Exception as e:
+        #     logger.error(f"Encountered error with {domain}: {e}")
 
     return missing_case_counts_per_domain
 
