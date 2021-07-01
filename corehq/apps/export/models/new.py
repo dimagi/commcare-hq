@@ -573,7 +573,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         # Previously we iterated over self.columns with each call to return the
         # index. Now we do an index lookup on the string-ified path names for
         # self.columns and regenerate it only when the length of self.columns
-        # changes, which probably happens due to some couch db magic in the bg:
+        # changes. This happens frequently when the table is being constructed.
         if (not hasattr(self, '_string_column_paths')
                 or len(self._string_column_paths) != len(self.columns)):
             self._string_column_paths = [
@@ -581,30 +581,27 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                 for column in self.columns
             ]
 
-        try:
-            index = self._string_column_paths.index(string_item_path)
+        # While unlikely, it is possible for the same path to be used for multiple items.
+        # This can occur, for example, when a new reserved case property is introduced.
+        # In this case, the reserved property will be an 'ExportItem', while a user-defined
+        #  case property would be a 'ScalarItem'.
+        # If we can ensure that paths are one-to-one with items, this can be removed in the future.
+        indices = [index for (index, path) in enumerate(self._string_column_paths) if path == string_item_path]
+        for index in indices:
             column = self.columns[index]
-            # on rare occasions, the paths may not match,
-            # and it's a sign to regenerate the cache
-            if column.item.path != item_path:
-                self._string_column_paths = [
-                    _create_index(column.item.path, column.item.transform)
-                    for column in self.columns
-                ]
-                index = self._string_column_paths.index(string_item_path)
-                column = self.columns[index]
-        except ValueError:
-            return None, None
 
-        if (column.item.path == item_path
-                and column.item.transform == column_transform
-                and column.item.doc_type == item_doc_type):
-            return index, column
-        # No item doc type searches for a UserDefinedExportColumn
-        elif (isinstance(column, UserDefinedExportColumn)
-                and column.custom_path == item_path
-                and item_doc_type is None):
-            return index, column
+            # Despite the column being found based on a key containing the item_path and transform,
+            # both still need to be checked here to prevent the edge case where the the path or the transform
+            # contain formatting that makes them blend together.
+            if (column.item.path == item_path
+                    and column.item.transform == column_transform
+                    and column.item.doc_type == item_doc_type):
+                return index, column
+            elif (isinstance(column, UserDefinedExportColumn)
+                    and column.custom_path == item_path
+                    and item_doc_type is None):
+                return index, column
+
         return None, None
 
     @memoized
