@@ -57,6 +57,15 @@ def _get_list(request):
 
 
 def _get_base_query(domain):
+    """The base query includes a 'date_last_activity' field. This field
+    is calculated as:
+      Max(
+        event.date,
+        xform_session.modified_time,  # if it exists
+        Max(sms.date_modified),  # max for the current event
+        Max(email.date_modified)  # max for the current event
+      )
+  """
     query = MessagingSubEvent.objects.select_related("parent").filter(parent__domain=domain)
     newest_sms = (
         SMS.objects.filter(messaging_subevent=OuterRef('pk'))
