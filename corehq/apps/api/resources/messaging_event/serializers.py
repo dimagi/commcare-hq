@@ -104,23 +104,18 @@ def _serialize_event_form(event):
 def _get_messages_for_email(event):
     try:
         email = Email.objects.get(messaging_subevent=event.pk)
-        content = email.body
-        recipient_address = email.recipient_address
-        message_id = email.id
     except Email.DoesNotExist:
-        content = None
-        recipient_address = None
-        message_id = None
+        return []
 
     return [{
-        "message_id": message_id,
-        "date": event.date,
+        "message_id": email.id,
+        "date": email.date,
         "type": "email",
         "direction": "outgoing",
-        "content": content,
+        "content": email.body,
         "status": MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown'),
         "backend": "email",
-        "email_address": recipient_address
+        "email_address": email.recipient_address
     }]
 
 
