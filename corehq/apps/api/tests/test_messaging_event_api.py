@@ -487,7 +487,7 @@ class DateFilteringTestMixin:
         self.assertEqual(actual, expected)
 
 
-class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
+class TestDateFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
     field = "date"
 
     def _setup_for_date_filter_test(self):
@@ -506,8 +506,27 @@ class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest, DateF
         self.assertEqual(actual, expected)
 
 
-class TestMessagingEventResourceDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
+class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
     field = "date_last_activity"
+
+    def test_email_date_last_activity_filtering(self):
+        user_ids = []
+        for i in range(5):
+            user = CommCareUser.create(self.domain.name, f"bob{i}", "123", None, None, email=f"bob{i}@email.com")
+            self.addCleanup(user.delete, deleted_by=None)
+            user_ids.append(user.get_id)
+        events = make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
+
+        emails = [
+            Email.objects.get(messaging_subevent=events[user_id]) for user_id in user_ids
+        ]
+        emails[0].save()  # update date_modified
+        expected_order = emails[1:] + [emails[0]]  # modification order
+        dates = [email.date_modified for email in expected_order]
+
+        self._check_date_filtering_response({
+            f"{self.field}.lt": dates[3].isoformat()
+        }, [d.isoformat() for d in dates[:3]])
 
     def _setup_for_date_filter_test(self):
         results = _create_sms_messages(self.domain, 5, randomize=True)
