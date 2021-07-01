@@ -1,3 +1,5 @@
+from django.db.models import OuterRef, Subquery
+from django.db.models.functions import Greatest
 from django.http import JsonResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from tastypie.exceptions import BadRequest
@@ -11,7 +13,7 @@ from corehq.apps.api.resources.messaging_event.serializers import serialize_even
 from corehq.apps.api.resources.messaging_event.utils import sort_query, get_request_params
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.sms.models import MessagingSubEvent
+from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
 
 
 @csrf_exempt
@@ -47,8 +49,26 @@ def _get_individual(request, event_id):
 
 def _get_list(request):
     request_params = get_request_params(request)
-    query = MessagingSubEvent.objects.select_related("parent").filter(parent__domain=request.domain)
+    query = _get_base_query(request.domain)
     filtered_query = filter_query(query, request_params)
     sorted_query = sort_query(filtered_query, request_params)
     data = get_paged_data(sorted_query, request_params)
     return JsonResponse(data)
+
+
+def _get_base_query(domain):
+    query = MessagingSubEvent.objects.select_related("parent").filter(parent__domain=domain)
+    newest_sms = (
+        SMS.objects.filter(messaging_subevent=OuterRef('pk'))
+        .order_by('-date_modified')
+        .values('date_modified')[:1]
+    )
+    newest_email = (
+       Email.objects.filter(messaging_subevent=OuterRef('pk'))
+       .order_by('-date_modified')
+       .values('date_modified')[:1]
+    )
+    query = query.annotate(date_last_activity=Greatest(
+        'date', 'xforms_session__modified_time', Subquery(newest_sms), Subquery(newest_email)
+    ))
+    return query
