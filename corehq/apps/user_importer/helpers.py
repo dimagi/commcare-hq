@@ -112,7 +112,6 @@ class BaseUserImporter(object):
                 self.logger.add_change_message("Role: None")
 
         self._include_user_data_changes()
-        # ToDo: save log before saving user
         self.logger.save()
 
     def _include_user_data_changes(self):
