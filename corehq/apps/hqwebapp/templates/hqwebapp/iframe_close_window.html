@@ -8,6 +8,7 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
   <body>
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     <div class="hq-container">
       <div class="container-fluid">
         <div class="page-header">

@@ -666,7 +666,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2050,6 +2050,7 @@ EMBEDDED_TABLEAU = StaticToggle(
     'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Embedded+Tableau+Visualizations",
 )
 
 DETAILED_TAGGING = StaticToggle(
