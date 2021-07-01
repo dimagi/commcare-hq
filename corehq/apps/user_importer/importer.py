@@ -306,7 +306,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
-        user_change_logger.add_change_message(_("Invited to domain"))
+        user_change_logger.add_change_message(_("Invited to domain {domain_name}").format(domain_name=domain))
 
 
 def find_location_id(location_codes, location_cache):
@@ -768,7 +768,9 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         if is_web_upload:
             remove_invited_web_user(domain, username)
             if user_change_logger:
-                user_change_logger.add_change_message(_("Invitation revoked"))
+                user_change_logger.add_change_message(_("Invitation revoked from {domain_name}").format(
+                    domain_name=domain
+                ))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -778,4 +780,6 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(_("Removed from domain"))
+            user_change_logger.add_change_message(_("Removed from domain {domain_name}").format(
+                domain_name=domain
+            ))

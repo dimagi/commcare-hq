@@ -226,7 +226,9 @@ def _fmt_phone(phone_number):
 class WebUserImporter(BaseUserImporter):
     def add_to_domain(self, role_qualified_id, location_id):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
-        self.logger.add_change_message(_("Added as web user"))
+        self.logger.add_change_message(_("Added as web user to {domain_name}").format(
+            domain_name=self.user_domain)
+        )
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
