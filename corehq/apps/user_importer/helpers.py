@@ -142,6 +142,8 @@ class CommCareUserImporter(BaseUserImporter):
 
     def update_user_data(self, data, uncategorized_data, profile, domain_info):
         # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
+        current_profile_id = self.user.user_data.get(PROFILE_SLUG)
+
         for key, value in self.user.user_data.items():
             if key not in data:
                 data[key] = value
@@ -162,6 +164,11 @@ class CommCareUserImporter(BaseUserImporter):
             value = self.user.metadata[key]
             if value is None or value == '':
                 self.user.pop_metadata(key)
+
+        if self.user.user_data.get(PROFILE_SLUG) and self.user.user_data[PROFILE_SLUG] != current_profile_id:
+            self.logger.add_info(_("CommCare Profile: {profile_name}").format(
+                profile_name=domain_info.profile_name_by_id[self.user.user_data[PROFILE_SLUG]])
+            )
 
     def update_language(self, language):
         self.user.language = language

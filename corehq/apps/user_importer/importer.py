@@ -286,7 +286,7 @@ def get_location_from_site_code(site_code, location_cache):
 
 DomainInfo = namedtuple('DomainInfo', [
     'validators', 'can_assign_locations', 'location_cache',
-    'roles_by_name', 'profiles_by_name', 'group_memoizer'
+    'roles_by_name', 'profiles_by_name', 'profile_name_by_id', 'group_memoizer'
 ])
 
 
@@ -346,6 +346,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
 
     allowed_group_names = [group.name for group in domain_group_memoizer.groups]
     profiles_by_name = {}
+    profile_name_by_id = {}
     domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
     if is_web_upload:
         roles_by_name = {role[1]: role[0] for role in get_editable_role_choices(domain, upload_user,
@@ -361,9 +362,14 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         roles_by_name = {role.name: role.get_qualified_id() for role in SQLUserRole.objects.get_by_domain(domain)}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
+            profiles = definition.get_profiles()
             profiles_by_name = {
                 profile.name: profile
-                for profile in definition.get_profiles()
+                for profile in profiles
+            }
+            profile_name_by_id = {
+                profile.pk: profile.name
+                for profile in profiles
             }
         validators = get_user_import_validators(
             domain_obj,
@@ -381,6 +387,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
         location_cache,
         roles_by_name,
         profiles_by_name,
+        profile_name_by_id,
         domain_group_memoizer
     )
     domain_info_by_domain[domain] = domain_info

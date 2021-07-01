@@ -510,6 +510,55 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             PROFILE_SLUG: self.profile.id,
         })
 
+        user_history = UserHistory.objects.get(user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+                                               action=UserModelAction.CREATE.value)
+        self.assertEqual(
+            user_history.message,
+            "CommCare Profile: melancholy"
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(
+                data={'key': 'F#', PROFILE_SLUG: ''},
+                password="skyfall",
+                user_id=self.user.get_id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            False
+        )
+
+        user_history = UserHistory.objects.get(
+            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+            action=UserModelAction.UPDATE.value)
+
+        self.assertEqual(
+            user_history.message,
+            "Password Reset"
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(
+                data={'key': 'F#', PROFILE_SLUG: self.profile.id},
+                password="******",
+                user_id=self.user.get_id)],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            False
+        )
+
+        user_history = UserHistory.objects.filter(
+            user_id=self.user.get_id, changed_by=self.uploading_user.get_id,
+            action=UserModelAction.UPDATE.value
+        ).last()
+        self.assertEqual(
+            user_history.message,
+            "CommCare Profile: melancholy"
+        )
+
     def test_metadata_profile_redundant(self):
         import_users_and_groups(
             self.domain.name,
