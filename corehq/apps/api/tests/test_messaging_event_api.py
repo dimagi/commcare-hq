@@ -528,6 +528,31 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
             f"{self.field}.lt": dates[3].isoformat()
         }, [d.isoformat() for d in dates[:3]])
 
+    def test_survey_date_last_activity_filter(self):
+        sessions = []
+        messages = []
+        for i in range(5):
+            rule, xforms_session, event, sms = make_survey_sms_for_test(
+                self.domain.name, "test sms survey", datetime(2016, 1, 1, 12, 0)
+            )
+            self.addCleanup(rule.delete)
+            self.addCleanup(xforms_session.delete)
+            self.addCleanup(event.delete)  # cascades to subevent
+            self.addCleanup(sms.delete)
+            sessions.append(xforms_session)
+            messages.append(sms)
+
+        # update modified time for 1st session to move it to the end of the list
+        sessions[0].modified_time = datetime.utcnow()
+        sessions[0].save()
+
+        # last_activity_date will be the max date so use sms dates except for the session that was updated
+        dates = [sms.date_modified for sms in messages[1:]] + [sessions[0].modified_time]  # modification order
+
+        self._check_date_filtering_response({
+            f"{self.field}.lt": dates[3].isoformat()
+        }, [d.isoformat() for d in dates[:3]])
+
     def _setup_for_date_filter_test(self):
         results = _create_sms_messages(self.domain, 5, randomize=True)
         results[0].save()  # update modification date
