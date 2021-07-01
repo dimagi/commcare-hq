@@ -167,23 +167,22 @@ class TimeoutMiddleware(MiddlewareMixin):
 
     @classmethod
     def _get_relevant_domains(cls, couch_user, domain=None):
-        domains = set()
+        domains = []
 
         # Include current domain, which user may not be a member of
         if domain:
-            domains.add(domain)
+            domains.append(domain)
 
         if not couch_user:
             return domains
 
-        domains = domains | set(couch_user.get_domains())
+        domains.extend(couch_user.get_domains())
 
-        from corehq.apps.enterprise.models import EnterprisePermissions
-        subdomains = set()
+        from corehq.apps.users.models import DomainPermissionsMirror
         for domain in domains:
-            subdomains = subdomains | set(EnterprisePermissions.get_domains(domain))
+            domains.extend(DomainPermissionsMirror.mirror_domains(domain))
 
-        return domains | subdomains
+        return domains
 
     @staticmethod
     def _session_expired(timeout, activity):
