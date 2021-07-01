@@ -43,7 +43,7 @@ PCT_MISSING = 'percentage_missing'  # Percentage of repeat records missing relat
 TIME_TO_RUN = 'time_to_run'
 
 
-def obtain_missing_form_repeat_records(startdate,
+def find_missing_form_repeat_records(startdate,
                                        enddate,
                                        domains,
                                        should_create=False):
@@ -57,19 +57,9 @@ def obtain_missing_form_repeat_records(startdate,
     stats_per_domain = {}
     for index, domain in enumerate(domains):
         t0 = time.time()
-        total_missing_count = 0
-        total_count = 0
-        form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
-
-        form_ids = [f['_id'] for f in get_form_ids_in_domain_between_dates(domain, startdate, enddate)]
-        forms = FormAccessors(domain).get_forms(form_ids)
-        for form in forms:
-            missing_count, successful_count = obtain_missing_form_repeat_records_in_domain(
-                domain, form_repeaters_in_domain, form, enddate, should_create
-            )
-            total_missing_count += missing_count
-            total_count += missing_count + successful_count
-
+        total_missing_count, total_count = find_missing_form_repeat_records_for_domain(
+            domain, startdate, enddate, should_create
+        )
         t1 = time.time()
         time_to_run = t1 - t0
         if total_missing_count > 0:
@@ -89,12 +79,27 @@ def obtain_missing_form_repeat_records(startdate,
                          )
 
         if index % 5 == 0:
-            logger.info(f"{(index+1)}/{len(domains)} domains complete.")
+            logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
 
     return stats_per_domain
 
 
-def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, enddate, should_create):
+def find_missing_form_repeat_records_for_domain(domain, startdate, enddate, should_create):
+    total_missing_count = total_count = 0
+    form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
+    form_ids = [f['_id'] for f in get_form_ids_in_domain_between_dates(domain, startdate, enddate)]
+    forms = FormAccessors(domain).get_forms(form_ids)
+    for form in forms:
+        missing_count, successful_count = find_missing_form_repeat_records_for_form(
+            form, domain, form_repeaters_in_domain, enddate, should_create
+        )
+        total_missing_count += missing_count
+        total_count += missing_count + successful_count
+
+    return total_missing_count, total_count
+
+
+def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, should_create):
     if form.is_duplicate:
         return 0, 0
 
@@ -123,10 +128,7 @@ def obtain_missing_form_repeat_records_in_domain(domain, repeaters, form, enddat
     return missing_count, successful_count
 
 
-def obtain_missing_case_repeat_records(startdate,
-                                       enddate,
-                                       domains,
-                                       should_create=False):
+def find_missing_case_repeat_records(startdate, enddate, domains, should_create=False):
     """
     :param startdate: search for missing case repeat records after this date
     :param enddate: search for missing case repeat records before this date
@@ -134,73 +136,80 @@ def obtain_missing_case_repeat_records(startdate,
     :param should_create: if  True, missing repeat records that are discovered will be registered with the repeater
     :return: a dictionary containing stats about the missing repeat records and metadata
     """
-    stats_per_domain = {}
+    missing_case_counts_per_domain = {}
     for index, domain in enumerate(domains):
         t0 = time.time()
         try:
-            total_missing_all_count = 0
-            total_missing_create_count = 0
-            total_missing_update_count = 0
-            total_count = 0
-            case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
-
-            case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
-            cases = CaseAccessors(domain).get_cases(case_ids)
-            for case in cases:
-                stats_for_case = obtain_missing_case_repeat_records_in_domain(
-                    domain, case_repeaters_in_domain, case, startdate, enddate, should_create
-                )
-
-                total_missing_all_count += stats_for_case[MISSING_REPEAT_RECORD_COUNT]
-                total_missing_create_count += stats_for_case[MISSING_CREATE_CASE_RECORD_COUNT]
-                total_missing_update_count += stats_for_case[MISSING_UPDATE_CASE_RECORD_COUNT]
-                total_count += stats_for_case[EXPECTED_REPEAT_RECOUNT_COUNT]
-
-            total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
+            missing_case_counts = find_missing_case_repeat_records_for_domain(
+                domain, startdate, enddate, should_create
+            )
             t1 = time.time()
             time_to_run = t1 - t0
 
-            if total_missing_count > 0:
-                pct_missing = f'{round((total_missing_count / total_count) * 100, 2)}%'
+            number_of_records_missing = missing_case_counts[MISSING_REPEAT_RECORD_COUNT]
+            number_of_records_expected = missing_case_counts[EXPECTED_REPEAT_RECOUNT_COUNT]
+            if number_of_records_missing > 0:
+                missing_case_counts_per_domain[domain] = missing_case_counts
+                pct_missing = f'{round((number_of_records_missing / number_of_records_expected) * 100, 2)}%'
                 rounded_time = f'{round(time_to_run, 0)} seconds'
-                stats_per_domain[domain] = {
-                    CASES: {
-                        MISSING_REPEAT_RECORD_COUNT: total_missing_all_count,
-                        MISSING_CREATE_CASE_RECORD_COUNT: total_missing_create_count,
-                        MISSING_UPDATE_CASE_RECORD_COUNT: total_missing_update_count,
-                        PCT_MISSING: pct_missing,
-                        TIME_TO_RUN: rounded_time,
-                    }
-                }
-                logger.debug(f'{domain} complete. Found {total_missing_count}" missing case repeat records in '
-                             f'{rounded_time}. This accounts for {pct_missing} of all case repeat records in the '
-                             f'specified date range'
+                logger.debug(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
+                             f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
+                             f'the specified date range'
                              )
-            if index % 5 == 0:
+            else:
+                logger.debug(f"Found 0 missing case repeat records in {domain}.")
+            if index + 1 % 10 == 0:
                 logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
 
         except Exception as e:
             logger.error(f"Encountered error with {domain}: {e}")
 
-    return stats_per_domain
+    return missing_case_counts_per_domain
 
 
-def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate, should_create):
+def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, should_create=False):
+
+    # get all cases in domain
+    case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
+    case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
+    cases = CaseAccessors(domain).get_cases(case_ids)
+
+    missing_case_counts = defaultdict(int)
+    for case in cases:
+        missing_case_counts_for_case = find_missing_case_repeat_records_for_case(
+            domain, case_repeaters_in_domain, case, startdate, enddate, should_create
+        )
+
+        missing_case_counts[MISSING_REPEAT_RECORD_COUNT] += \
+            missing_case_counts_for_case[MISSING_REPEAT_RECORD_COUNT]
+        missing_case_counts[MISSING_CREATE_CASE_RECORD_COUNT] += \
+            missing_case_counts_for_case[MISSING_CREATE_CASE_RECORD_COUNT]
+        missing_case_counts[MISSING_UPDATE_CASE_RECORD_COUNT] += \
+            missing_case_counts_for_case[MISSING_UPDATE_CASE_RECORD_COUNT]
+        missing_case_counts[ACTUAL_REPEAT_RECORD_COUNT] += \
+            missing_case_counts_for_case[ACTUAL_REPEAT_RECORD_COUNT]
+        missing_case_counts[EXPECTED_REPEAT_RECOUNT_COUNT] += \
+            missing_case_counts_for_case[EXPECTED_REPEAT_RECOUNT_COUNT]
+
+    return missing_case_counts
+
+
+def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate, enddate, should_create=False):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
-    # grab repeat records that were registered during the outage
-    records_during_outage = [record for record in repeat_records
-                             if startdate <= record.registered_on.date() <= enddate]
-    fired_repeater_ids_and_counts_during_outage = defaultdict(int)
-    for record in records_during_outage:
-        fired_repeater_ids_and_counts_during_outage[record.repeater_id] += 1
+    # grab repeat records that were registered during the date range
+    records_during_daterange = [record for record in repeat_records
+                                if startdate <= record.registered_on.date() <= enddate]
+    fired_repeater_ids_and_counts_during_daterange = defaultdict(int)
+    for record in records_during_daterange:
+        fired_repeater_ids_and_counts_during_daterange[record.repeater_id] += 1
 
-    # grab repeat records that were registered after the outage
-    records_after_outage = [record for record in repeat_records if record.registered_on.date() >= enddate]
-    fired_repeater_ids_and_counts_after_outage = defaultdict(int)
-    for record in records_after_outage:
-        fired_repeater_ids_and_counts_after_outage[record.repeater_id] += 1
+    # grab repeat records that were registered after the enddate
+    records_after_daterange = [record for record in repeat_records if record.registered_on.date() >= enddate]
+    fired_repeater_ids_and_counts_after_enddate = defaultdict(int)
+    for record in records_after_daterange:
+        fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
 
     for repeater in repeaters:
         repeaters_to_ignore = (Dhis2EntityRepeater, OpenmrsRepeater)
@@ -212,14 +221,14 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
             # don't count a repeater that was created after the outage
             continue
 
-        if fired_repeater_ids_and_counts_after_outage.get(repeater.get_id, 0) > 0:
+        if fired_repeater_ids_and_counts_after_enddate.get(repeater.get_id, 0) > 0:
             # no need to trigger a repeater if it has fired since the outage ended
             continue
 
         expected_record_count = expected_number_of_repeat_records_fired_for_case(
             case, repeater, startdate, enddate
         )
-        actual_record_count = fired_repeater_ids_and_counts_during_outage.get(repeater.get_id, 0)
+        actual_record_count = fired_repeater_ids_and_counts_during_daterange.get(repeater.get_id, 0)
 
         missing_count = expected_record_count - actual_record_count
         if missing_count < 0:
@@ -278,7 +287,7 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     return len(transactions_in_daterange)
 
 
-def obtain_missing_location_repeat_records(startdate, enddate, domains, should_create):
+def find_missing_location_repeat_records(startdate, enddate, domains, should_create):
     stats_per_domain = {}
     for index, domain in enumerate(domains):
         t0 = time.time()
@@ -287,7 +296,7 @@ def obtain_missing_location_repeat_records(startdate, enddate, domains, should_c
 
         locations = get_locations_modified_since_startdate(domain, startdate)
         for location in locations:
-            missing_count = obtain_missing_repeat_records_in_domain(
+            missing_count = find_missing_repeat_records_in_domain(
                 domain, location_repeaters_in_domain, location, enddate, should_create
             )
             total_missing_count += missing_count
@@ -314,7 +323,7 @@ def obtain_missing_location_repeat_records(startdate, enddate, domains, should_c
     return stats_per_domain
 
 
-def obtain_missing_user_repeat_records(startdate, enddate, domains, should_create):
+def find_missing_user_repeat_records(startdate, enddate, domains, should_create):
     stats_per_domain = {}
     for index, domain in enumerate(domains):
         t0 = time.time()
@@ -324,7 +333,7 @@ def obtain_missing_user_repeat_records(startdate, enddate, domains, should_creat
         user_dicts = get_users_created_since_startdate(domain, startdate)
         users = [CommCareUser.wrap(user_dict) for user_dict in user_dicts]
         for user in users:
-            missing_count = obtain_missing_repeat_records_in_domain(
+            missing_count = find_missing_repeat_records_in_domain(
                 domain, location_repeaters_in_domain, user, enddate, should_create
             )
             total_missing_count += missing_count
@@ -351,7 +360,7 @@ def obtain_missing_user_repeat_records(startdate, enddate, domains, should_creat
     return stats_per_domain
 
 
-def obtain_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, should_create):
+def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, should_create):
     """
     Generic method to obtain repeat records (used for Locations, Users)
     NOTE: Assumes the payload passed in was modified since the startdate
@@ -359,7 +368,7 @@ def obtain_missing_repeat_records_in_domain(domain, repeaters, payload, enddate,
     missing_count = 0
     repeat_records = get_repeat_records_by_payload_id(domain, payload.get_id)
     records_since_last_modified_date = [record for record in repeat_records
-                                        if record.registered_on.date() >= payload.last_modified]
+                                        if record.registered_on.date() >= payload.last_modified.date()]
     fired_repeater_ids_and_counts = defaultdict(int)
     for record in records_since_last_modified_date:
         fired_repeater_ids_and_counts[record.repeater_id] += 1
@@ -405,7 +414,8 @@ def get_users_created_since_startdate(domain, startdate):
     """
     Had to use created_on because last_modified did not seem to work
     """
-    return UserES(es_instance_alias='export').domain(domain).date_range('created_on', gte=startdate).run().hits
+    return UserES(es_instance_alias='export').mobile_users().domain(domain)\
+        .date_range('created_on', gte=startdate).run().hits
 
 
 def get_transaction_date(transaction):
@@ -506,13 +516,13 @@ class Command(BaseCommand):
         logger.setLevel(logging.DEBUG if options["verbose"] else logging.INFO)
 
         if command == CASES:
-            stats = obtain_missing_case_repeat_records(startdate, enddate, domains_to_inspect, create)
+            stats = find_missing_case_repeat_records(startdate, enddate, domains_to_inspect, create)
         elif command == FORMS:
-            stats = obtain_missing_form_repeat_records(startdate, enddate, domains_to_inspect, create)
+            stats = find_missing_form_repeat_records(startdate, enddate, domains_to_inspect, create)
         elif command == LOCATIONS:
-            stats = obtain_missing_location_repeat_records(startdate, enddate, domains_to_inspect, create)
+            stats = find_missing_location_repeat_records(startdate, enddate, domains_to_inspect, create)
         elif command == USERS:
-            stats = obtain_missing_user_repeat_records(startdate, enddate, domains_to_inspect, create)
+            stats = find_missing_user_repeat_records(startdate, enddate, domains_to_inspect, create)
         else:
             raise CommandError(f"The '{command}' command is not support at this time.")
         if stats:
