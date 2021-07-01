@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django_digest.models import PartialDigest, UserNonce
 
-from .models import DomainPermissionsMirror, HQApiKey, UserHistory
+from .models import HQApiKey, UserHistory
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
