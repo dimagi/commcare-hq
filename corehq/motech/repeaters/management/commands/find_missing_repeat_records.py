@@ -77,7 +77,7 @@ def find_missing_form_repeat_records(startdate,
                          f'specified date range.'
                          )
 
-        if index % 5 == 0:
+        if index + 1 % 10 == 0:
             logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
 
     return stats_per_domain
@@ -316,7 +316,7 @@ def find_missing_location_repeat_records(startdate, enddate, domains, should_cre
                          f'records for newly created locations, not recently modified.'
                          )
 
-        if index % 5 == 0:
+        if index + 1 % 5 == 0:
             logger.info(f"{(index+1)}/{len(domains)} domains complete.")
 
     return stats_per_domain
@@ -353,7 +353,7 @@ def find_missing_user_repeat_records(startdate, enddate, domains, should_create)
                          f'records for newly created users, not recently modified.'
                          )
 
-        if index % 5 == 0:
+        if index + 1 % 5 == 0:
             logger.info(f"{(index+1)}/{len(domains)} domains complete.")
 
     return stats_per_domain
