@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from pip._internal.exceptions import CommandError
 
 from corehq.apps.es import CaseES, FormES
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
@@ -15,26 +16,18 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeaters_by_domain,
 )
 from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater, CreateCaseRepeater, \
-    UpdateCaseRepeater, RepeatRecord
+    UpdateCaseRepeater, RepeatRecord, LocationRepeater
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.util.metrics import metrics_counter
 
-REPEATERS_WITH_FORM_PAYLOADS = (
-    FormRepeater,
-    ShortFormRepeater,
-)
-
-REPEATERS_WITH_CASE_PAYLOADS = (
-    CaseRepeater,
-)
-
 CASES = 'cases'
 FORMS = 'forms'
+LOCATIONS = 'locations'
 ALL = 'all'
-COMMAND_CHOICES = [CASES, FORMS, ALL]
+COMMAND_CHOICES = [CASES, FORMS, LOCATIONS, ALL]
 EXPECTED_REPEAT_RECOUNT_COUNT = 'expected_repeat_record_count'  # Total count of expected repeat records
 ACTUAL_REPEAT_RECORD_COUNT = 'actual_repeat_record_count'  # Total count of found repeat records
 MISSING_REPEAT_RECORD_COUNT = 'missing_repeat_record_count'  # Total count of missing repeat records
@@ -190,7 +183,6 @@ def obtain_missing_case_repeat_records(startdate,
 
 def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startdate, enddate, should_create):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
-    calls_to_register_count = 0
 
     repeat_records = get_repeat_records_by_payload_id(domain, case.get_id)
     # grab repeat records that were registered during the outage
@@ -235,7 +227,6 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
 
         if missing_count > 0:
             print(f"Missing case {case.get_id} for repeater {repeater.get_id}")
-            calls_to_register_count += 1
             if should_create:
                 if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
                     create_case_repeater_register(repeater, domain, case)
@@ -281,6 +272,73 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     return len(transactions_in_daterange)
 
 
+def obtain_missing_location_repeat_records(startdate, enddate, domains, should_create):
+    stats_per_domain = {}
+    for index, domain in enumerate(domains):
+        t0 = time.time()
+        total_missing_count = 0
+        location_repeaters_in_domain = get_location_repeaters_in_domain(domain)
+
+        locations = get_locations_created_in_domain_between_dates(domain, startdate, enddate)
+        for location in locations:
+            missing_count = obtain_missing_location_repeat_records_in_domain(
+                domain, location_repeaters_in_domain, location, startdate, enddate, should_create
+            )
+            total_missing_count += missing_count
+
+        t1 = time.time()
+        time_to_run = t1 - t0
+        if total_missing_count > 0:
+            rounded_time = f'{round(time_to_run, 0)} seconds'
+            stats_per_domain[domain] = {
+                FORMS: {
+                    MISSING_REPEAT_RECORD_COUNT: total_missing_count,
+                    TIME_TO_RUN: rounded_time,
+                }
+            }
+
+            print(f'{domain} complete. Found {total_missing_count}" missing repeat records in {rounded_time}. '
+                  f'Due to limitations with locations, we only looked for missing repeat records for newly '
+                  f'created locations, not recently modified.'
+                  )
+
+        if index % 10 == 0:
+            print(f"{(index+1)}/{len(domains)} domains complete.")
+
+    return stats_per_domain
+
+
+def obtain_missing_location_repeat_records_in_domain(domain, repeaters, location, startdate, enddate,
+                                                     should_create):
+    missing_count = 0
+    repeat_records = get_repeat_records_by_payload_id(domain, location.location_id)
+    records_since_startdate = [record for record in repeat_records
+                               if record.registered_on.date() >= startdate]
+    fired_repeater_ids_and_counts_since_startdate = defaultdict(int)
+    for record in records_since_startdate:
+        fired_repeater_ids_and_counts_since_startdate[record.repeater_id] += 1
+
+    for repeater in repeaters:
+        if repeater.started_at.date() >= enddate:
+            # don't count a repeater that was created after the outage
+            continue
+
+        if fired_repeater_ids_and_counts_since_startdate.get(repeater.get_id, 0) > 0:
+            # no need to trigger a repeater if it has fired at all
+            continue
+
+        # if we've made it this far, the repeater should have fired
+        missing_count += 1
+        if should_create:
+            repeater.register(location)
+
+    return missing_count
+
+
+def get_locations_created_in_domain_between_dates(domain, startdate, enddate):
+    return SQLLocation.objects.filter(domain=domain, created_at__gte=startdate, created_at__lte=enddate)
+
+
 def get_transaction_date(transaction):
     return string_to_utc_datetime(transaction.server_date).date()
 
@@ -294,13 +352,27 @@ def get_case_ids_in_domain_since_date(domain, startdate):
 
 
 def get_form_repeaters_in_domain(domain):
-    return [repeater for repeater in get_repeaters_by_domain(domain)
-            if isinstance(repeater, REPEATERS_WITH_FORM_PAYLOADS)]
+    return get_repeaters_for_type_in_domain(domain, (FormRepeater, ShortFormRepeater))
 
 
 def get_case_repeaters_in_domain(domain):
-    return [repeater for repeater in get_repeaters_by_domain(domain)
-            if isinstance(repeater, REPEATERS_WITH_CASE_PAYLOADS)]
+    return get_repeaters_for_type_in_domain(domain, (CaseRepeater, ))
+
+
+def get_location_repeaters_in_domain(domain):
+    return get_repeaters_for_type_in_domain(domain, (LocationRepeater, ))
+
+
+def get_repeaters_for_type_in_domain(domain, repeater_types):
+    """
+    :param domain: domain to search in
+    :param repeater_types: a tuple of repeater class types
+    """
+    repeaters = get_repeaters_by_domain(domain)
+    if repeater_types:
+        return [repeater for repeater in get_repeaters_by_domain(domain)
+                if isinstance(repeater, repeater_types)]
+    return repeaters
 
 
 def create_case_repeater_allowed_to_forward(repeater, case):
@@ -365,7 +437,11 @@ class Command(BaseCommand):
         else:
             domains_to_inspect = get_domains_that_have_repeat_records()
 
-        if command == 'cases':
+        if command == CASES:
             _ = obtain_missing_case_repeat_records(startdate, enddate, domains_to_inspect, create)
-        elif command == 'forms':
+        elif command == FORMS:
             _ = obtain_missing_form_repeat_records(startdate, enddate, domains_to_inspect, create)
+        elif command == LOCATIONS:
+            _ = obtain_missing_location_repeat_records(startdate, enddate, domains_to_inspect, create)
+        else:
+            raise CommandError(f"The '{command}' command is not support at this time.")
