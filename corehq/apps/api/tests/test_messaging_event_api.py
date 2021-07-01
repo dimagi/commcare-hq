@@ -22,14 +22,6 @@ class TestMessagingEventResource(APIResourceTest):
     def _get_list_endpoint(cls):
         return reverse('api_messaging_events', kwargs=dict(domain=cls.domain.name))
 
-    def _create_sms_messages(self, count, randomize, domain=None):
-        domain = domain or self.domain.name
-        results = []
-        for i in range(count):
-            sms, _ = create_fake_sms(domain, randomize=randomize)
-            results.append(sms)
-        return results
-
     def _auth_get_resource(self, url):
         return self._assert_auth_get_resource(url, allow_session_auth=True)
 
@@ -63,7 +55,7 @@ class TestMessagingEventResource(APIResourceTest):
 
     def test_get_list_simple(self):
         expected = []
-        for sms in self._create_sms_messages(2, randomize=False):
+        for sms in _create_sms_messages(self.domain, 2, randomize=False):
             expected.append(self._serialized_messaging_event(sms))
         response = self._auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200, response.content)
@@ -74,7 +66,7 @@ class TestMessagingEventResource(APIResourceTest):
             self.assertEqual(expected_result, result)
 
     def test_date_ordering(self):
-        self._create_sms_messages(5, randomize=True)
+        _create_sms_messages(self.domain, 5, randomize=True)
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date')
         self.assertEqual(response.status_code, 200, response.content)
         ordered_data = json.loads(response.content)['objects']
@@ -88,7 +80,7 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(ordered_data, list(reversed(reverse_ordered_data)))
 
     def test_domain_filter(self):
-        self._create_sms_messages(5, randomize=True, domain='different-one')
+        _create_sms_messages('different-one', 5, randomize=True)
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date')
         self.assertEqual(response.status_code, 200, response.content)
         ordered_data = json.loads(response.content)['objects']
@@ -135,7 +127,7 @@ class TestMessagingEventResource(APIResourceTest):
         }, [d.isoformat() for d in dates])
 
     def _setup_for_date_filter_test(self):
-        self._create_sms_messages(5, randomize=True)
+        _create_sms_messages(self.domain, 5, randomize=True)
         return list(
             MessagingSubEvent.objects.filter(parent__domain=self.domain.name)
             .order_by('date')
@@ -192,7 +184,7 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(actual, {"error"})
 
     def test_error_code_filtering(self):
-        self._create_sms_messages(2, True)
+        _create_sms_messages(self.domain, 2, True)
         e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
         e1.error_code = MessagingEvent.ERROR_CANNOT_FIND_FORM
         e1.save()
@@ -203,7 +195,7 @@ class TestMessagingEventResource(APIResourceTest):
         self.assertEqual(actual, {e1.id})
 
     def test_case_id_filter(self):
-        self._create_sms_messages(2, True)
+        _create_sms_messages(self.domain, 2, True)
         e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
         e1.case_id = "123"
         e1.save()
@@ -223,7 +215,7 @@ class TestMessagingEventResource(APIResourceTest):
             self.addCleanup(user.delete, deleted_by=None)
         make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
         make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
-        self._create_sms_messages(1, False)
+        _create_sms_messages(self.domain, 1, False)
 
         self._check_contact_filtering("email_address", "user0@email.com", "email_address")
         self._check_contact_filtering("email_address", "user1@email.com", "email_address")
@@ -478,3 +470,11 @@ class TestMessagingEventResource(APIResourceTest):
         if not expected:
             self.assertIsNone(content["meta"]["next"])
         return content
+
+
+def _create_sms_messages(domain, count, randomize):
+    results = []
+    for i in range(count):
+        sms, _ = create_fake_sms(domain, randomize=randomize)
+        results.append(sms)
+    return results
