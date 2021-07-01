@@ -353,13 +353,12 @@ class ModuleBaseValidator(object):
                             'module': self.get_module_info(),
                             'form': form,
                         })
-                else:
-                    if not form.is_registration_form(self.module.case_type):
-                        errors.append({
-                            'type': 'case list form not registration',
-                            'module': self.get_module_info(),
-                            'form': form,
-                        })
+                elif not form.is_registration_form(self.module.case_type):
+                    errors.append({
+                        'type': 'case list form not registration',
+                        'module': self.get_module_info(),
+                        'form': form,
+                    })
         if self.module.module_filter:
             is_valid, message = validate_xpath(self.module.module_filter)
             if not is_valid:
