@@ -51,11 +51,12 @@ class Command(BaseCommand):
                 records.update(set(repeaters))
             if len(repeater_counts) > 1:
                 bad_cases.append(i)
+                print('inconsistent case {} in domain {}'.format(i, domain))
             if fix:
                 for record in records:
                     RepeatRecord.get(record)
             count += 1
-        print('Found {} cases with inconsistent records'.format(len(bad_cases)))
+        print('Found {} cases with inconsistent records in domain {}'.format(len(bad_cases), domain))
 
 
     def get_case_ids_in_domain_since_date(self, domain, startdate):
