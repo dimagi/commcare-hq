@@ -473,8 +473,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
                 remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
-                user = _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed,
-                                                       web_user_username, password, upload_user)
+                user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
+                                                    web_user_username, password, upload_user)
                 commcare_user_importer = CommCareUserImporter(upload_domain, domain, user, upload_user,
                                                               is_new_user=not bool(user_id),
                                                               via=USER_CHANGE_VIA_BULK_IMPORTER)
@@ -594,8 +594,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     return ret
 
 
-def _setup_commcare_user_for_import(domain, user_id, username, is_account_confirmed, web_user_username, password,
-                                    upload_user):
+def _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed, web_user_username, password,
+                                 upload_user):
     if user_id:
         user = CommCareUser.get_by_user_id(user_id, domain)
         if not user:
