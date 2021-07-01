@@ -1944,6 +1944,19 @@ RESTRICT_LOGIN_AS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Limited+Login+As",
 )
 
+DISABLE_EMAIL_REPORTS_PERMISSION = StaticToggle(
+    'disable_email_reports',
+    'USH: Disable emiling and downloading of reports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be disabled to restrict a user's ability to
+    download and email reports. By default, users have the ability to
+    download and email reports so after the flag is enabled the "Download
+    or Email Reports" must be manually unchecked for the desired roles.
+    """,
+)
+
 ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     'one_phone_number_multiple_contacts',
     'Allow multiple contacts to share a single phone number',

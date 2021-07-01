@@ -238,13 +238,6 @@ hqDefine('users/js/roles',[
                         checkboxText: gettext("Allow role to create and edit reports in report builder."),
                     },
                     {
-                        visibilityRestraint: self.permissions.access_all_locations,
-                        text: gettext("Download or Email Reports"),
-                        checkboxLabel: "download-and-email-reports-checkbox",
-                        checkboxPermission: self.permissions.email_reports,
-                        checkboxText: gettext("Allow role to download and email reports in report builder."),
-                    },
-                    {
                         visibilityRestraint: true,
                         text: gettext("Access All Reports"),
                         checkboxLabel: "access-all-reports-checkbox",
