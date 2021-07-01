@@ -268,7 +268,9 @@ class MyProjectsList(BaseMyAccountView):
                 self.request.couch_user.save()
                 log_user_change(request.domain, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                                message=_("Removed from domain"))
+                                message=_("Removed from domain {domain_name}").format(
+                                    domain_name=self.domain_to_remove)
+                                )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
             except Exception:
                 messages.error(request, _("There was an error removing you from this project."))
