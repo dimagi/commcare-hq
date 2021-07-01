@@ -189,7 +189,7 @@ class CommCareUserImporter(BaseUserImporter):
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
-        users_current_primary_location_id = self.user.location_id
+        user_current_primary_location_id = self.user.location_id
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
                                                                          self.user.location_id,
                                                                          self.user.assigned_location_ids)
@@ -206,13 +206,13 @@ class CommCareUserImporter(BaseUserImporter):
                 ))
 
         # log this after assigned locations are updated, which can re-set primary location
-        if self.user.location_id != users_current_primary_location_id:
+        if self.user.location_id != user_current_primary_location_id:
             self.logger.add_changes({'location_id': self.user.location_id})
             if self.user.location_id:
-                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
+                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
                     _("Primary location: {primary_location_name}").format(
-                        primary_location_name=users_updated_primary_location_name
+                        primary_location_name=user_updated_primary_location_name
                     ))
 
 
@@ -234,10 +234,10 @@ class WebUserImporter(BaseUserImporter):
         if location_id:
             self.user.set_location(self.user_domain, location_id)
             if current_primary_location_id != location_id:
-                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
+                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
                     _("Primary location: {primary_location_name}[{primary_location_id}]").format(
-                        primary_location_name=users_updated_primary_location_name,
+                        primary_location_name=user_updated_primary_location_name,
                         primary_location_id=location_id
                     ))
         else:
@@ -254,7 +254,7 @@ class WebUserImporter(BaseUserImporter):
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
-        users_current_primary_location_id = membership.location_id
+        user_current_primary_location_id = membership.location_id
         locations_updated, primary_loc_removed = check_modified_user_loc(location_ids,
                                                                          membership.location_id,
                                                                          membership.assigned_location_ids)
@@ -273,11 +273,11 @@ class WebUserImporter(BaseUserImporter):
             ))
 
         # log this after assigned locations are updated, which can re-set primary location
-        users_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
-        if users_updated_primary_location_id != users_current_primary_location_id:
-            if users_updated_primary_location_id:
-                users_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
-                location_info = f"{users_updated_primary_location_name}[{users_updated_primary_location_id}]"
+        user_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
+        if user_updated_primary_location_id != user_current_primary_location_id:
+            if user_updated_primary_location_id:
+                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
+                location_info = f"{user_updated_primary_location_name}[{user_updated_primary_location_id}]"
             else:
                 location_info = None
             self.logger.add_info(
