@@ -444,12 +444,10 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    parent_case_type = None
     if (not isinstance(module, AdvancedModule) and  # AdvancedModule doesn't have parent_select
             toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
-            parent_case_type = followup_forms[0].get_module().case_type
             options.update({f.unique_id: {
                 'name': trans(f.name, langs),
                 'post_form_workflow': f.post_form_workflow,
@@ -458,7 +456,6 @@ def _case_list_form_options(app, module, lang=None):
     return {
         'options': options,
         'form': module.case_list_form,
-        'select_parent_case_type': parent_case_type,
     }
 
 

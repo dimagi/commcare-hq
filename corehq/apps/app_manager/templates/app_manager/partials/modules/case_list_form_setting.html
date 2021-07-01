@@ -37,7 +37,7 @@
                   {% endif %}
                 {% endfor %}
               </optgroup>
-              <optgroup label="{% blocktrans %}Followup Forms for {{case_list_form_options.select_parent_case_type}} case_type {% endblocktrans %}">
+              <optgroup label="{% blocktrans %}Followup Forms for parent case {% endblocktrans %}">
                 {% for id, data in case_list_form_options.options.items %}
                   {% if not data.is_registration_form %}
                     <option value="{{ id }}">{{ data.name }}</option>
