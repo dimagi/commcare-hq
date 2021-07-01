@@ -828,12 +828,15 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
+        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+
         username = 'a@a.com'
         web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
         mock_invite = mock_invitation_class.return_value
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
+            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name,
+                            location_code=[self.loc1.site_code])],
             [],
             self.uploading_user,
             mock.MagicMock(),
@@ -847,7 +850,10 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=web_user.get_id,
                                                changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.message, f"Added as web user to {self.domain.name}")
+        self.assertEqual(user_history.message,
+                         f"Added as web user to {self.domain.name}. "
+                         f"Primary location: {self.loc1.name}[{self.loc1.get_id}]. "
+                         f"Role: {self.role.name}[{self.role.get_id}]")
         self.assertEqual(user_history.details['changes'], {})
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 

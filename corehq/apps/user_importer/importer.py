@@ -410,9 +410,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     For the associated web user username passed, for each CommCareUser
         if corresponding web user is present
             if web user has confirmed account but not a member of domain
-                adds them to domain
+                adds them to the domain with same role and primary location as the CommCareUser
             if already a member of domain
-                assigns the same role and primary location, as the CommCareUser
+                update their role and primary location to be same as that of the CommCareUser
         else creates or updates user invitation
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
