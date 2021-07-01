@@ -436,17 +436,19 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         return content
 
 
-class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest):
+class DateFilteringTestMixin:
+    field = None
+
     def test_date_filter_lt(self):
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.lt": dates[3].isoformat()
+            f"{self.field}.lt": dates[3].isoformat()
         }, [d.isoformat() for d in dates[:3]])
 
     def test_date_filter_lte(self):
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.lte": dates[3].isoformat()
+            f"{self.field}.lte": dates[3].isoformat()
         }, [d.isoformat() for d in dates[:4]])
 
     def test_date_filter_lte_date(self):
@@ -454,13 +456,13 @@ class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest):
         on that day."""
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.lte": str(dates[0].date())
+            f"{self.field}.lte": str(dates[0].date())
         }, [d.isoformat() for d in dates])
 
     def test_date_filter_gt(self):
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.gt": dates[2].isoformat(),
+            f"{self.field}.gt": dates[2].isoformat(),
         }, [d.isoformat() for d in dates[3:]])
 
     def test_date_filter_gte(self):
@@ -468,14 +470,25 @@ class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest):
         on that day."""
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.gte": dates[2].isoformat(),
+            f"{self.field}.gte": dates[2].isoformat(),
         }, [d.isoformat() for d in dates[2:]])
 
     def test_date_filter_gte_date(self):
         dates = self._setup_for_date_filter_test()
         self._check_date_filtering_response({
-            "date.gte": str(dates[0].date())
+            f"{self.field}.gte": str(dates[0].date())
         }, [d.isoformat() for d in dates])
+
+    def _check_date_filtering_response(self, filters, expected):
+        url = f'{self.list_endpoint}?order_by={self.field}&' + urllib.parse.urlencode(filters)
+        response = self._auth_get_resource(url)
+        self.assertEqual(response.status_code, 200, response.content)
+        actual = [event[self.field] for event in json.loads(response.content)['objects']]
+        self.assertEqual(actual, expected)
+
+
+class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
+    field = "date"
 
     def _setup_for_date_filter_test(self):
         _create_sms_messages(self.domain, 5, randomize=True)
@@ -493,46 +506,8 @@ class TestMessagingEventResourceDateFilter(BaseMessagingEventResourceTest):
         self.assertEqual(actual, expected)
 
 
-class TestMessagingEventResourceDateLastActivityFilter(BaseMessagingEventResourceTest):
-    def test_date_filter_lt(self):
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.lt": dates[3].isoformat()
-        }, [d.isoformat() for d in dates[:3]])
-
-    def test_date_filter_lte(self):
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.lte": dates[3].isoformat()
-        }, [d.isoformat() for d in dates[:4]])
-
-    def test_date_filter_lte_date(self):
-        """`lte` filter with a date (not datetime) should include data
-        on that day."""
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.lte": str(dates[0].date())
-        }, [d.isoformat() for d in dates])
-
-    def test_date_filter_gt(self):
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.gt": dates[2].isoformat(),
-        }, [d.isoformat() for d in dates[3:]])
-
-    def test_date_filter_gte(self):
-        """`gte` filter with a date (not datetime) should include data
-        on that day."""
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.gte": dates[2].isoformat(),
-        }, [d.isoformat() for d in dates[2:]])
-
-    def test_date_filter_gte_date(self):
-        dates = self._setup_for_date_filter_test()
-        self._check_date_filtering_response({
-            "date_last_activity.gte": str(dates[0].date())
-        }, [d.isoformat() for d in dates])
+class TestMessagingEventResourceDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
+    field = "date_last_activity"
 
     def _setup_for_date_filter_test(self):
         results = _create_sms_messages(self.domain, 5, randomize=True)
@@ -541,13 +516,6 @@ class TestMessagingEventResourceDateLastActivityFilter(BaseMessagingEventResourc
         return list(
             sms.date_modified for sms in expected_order
         )
-
-    def _check_date_filtering_response(self, filters, expected):
-        url = f'{self.list_endpoint}?order_by=date_last_activity&' + urllib.parse.urlencode(filters)
-        response = self._auth_get_resource(url)
-        self.assertEqual(response.status_code, 200, response.content)
-        actual = [event["date_last_activity"] for event in json.loads(response.content)['objects']]
-        self.assertEqual(actual, expected)
 
 
 def _create_sms_messages(domain, count, randomize):
