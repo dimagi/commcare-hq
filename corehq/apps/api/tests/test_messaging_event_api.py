@@ -81,6 +81,23 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         reverse_ordered_data = json.loads(response.content)['objects']
         self.assertEqual(ordered_data, list(reversed(reverse_ordered_data)))
 
+    def test_date_last_activity_ordering(self):
+        sms = _create_sms_messages(self.domain, 5, randomize=True)
+        sms[0].save()  # this should move this one to the end of the list
+
+        response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date_last_activity')
+        self.assertEqual(response.status_code, 200, response.content)
+        ordered_data = json.loads(response.content)['objects']
+        self.assertEqual(5, len(ordered_data))
+        dates = [r['date_last_activity'] for r in ordered_data]
+        expected_order = sms[1:] + [sms[0]]  # modification order
+        self.assertEqual(dates, [sms.date_modified.isoformat() for sms in expected_order])
+
+        response = self._auth_get_resource(f'{self.list_endpoint}?order_by=-date_last_activity')
+        self.assertEqual(response.status_code, 200, response.content)
+        reverse_ordered_data = json.loads(response.content)['objects']
+        self.assertEqual(ordered_data, list(reversed(reverse_ordered_data)))
+
     def test_domain_filter(self):
         _create_sms_messages('different-one', 5, randomize=True)
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date')
