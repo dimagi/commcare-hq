@@ -231,23 +231,22 @@ class WebUserImporter(BaseUserImporter):
             domain_name=self.user_domain)
         )
         if location_id:
-            self.logger.add_info(
-                _("Primary location: {primary_location_name}[{primary_location_id}]").format(
-                    primary_location_name=get_user_primary_location_name(self.user, self.user_domain),
-                    primary_location_id=location_id
-                ))
+            self._log_primary_location_info()
+
+    def _log_primary_location_info(self):
+        primary_location = self.user.get_sql_location(self.user_domain)
+        self.logger.add_info(
+            _("Primary location: {primary_location_name}[{primary_location_id}]").format(
+                primary_location_name=primary_location.name,
+                primary_location_id=primary_location.location_id
+            ))
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
         if location_id:
             self.user.set_location(self.user_domain, location_id)
             if current_primary_location_id != location_id:
-                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
-                self.logger.add_info(
-                    _("Primary location: {primary_location_name}[{primary_location_id}]").format(
-                        primary_location_name=user_updated_primary_location_name,
-                        primary_location_id=location_id
-                    ))
+                self._log_primary_location_info()
         else:
             self.user.unset_location(self.user_domain)
             # if there was a location before, log that it was cleared
@@ -284,12 +283,9 @@ class WebUserImporter(BaseUserImporter):
         user_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
         if user_updated_primary_location_id != user_current_primary_location_id:
             if user_updated_primary_location_id:
-                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
-                location_info = f"{user_updated_primary_location_name}[{user_updated_primary_location_id}]"
+                self._log_primary_location_info()
             else:
-                location_info = None
-            self.logger.add_info(
-                _("Primary location: {location_info}").format(location_info=location_info))
+                self.logger.add_info(_("Primary location: None"))
 
 
 def get_user_primary_location_id(user, domain):
