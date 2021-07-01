@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
+from pip._internal.exceptions import CommandError
 
 from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -32,15 +33,15 @@ REPEATERS_WITH_CASE_PAYLOADS = (
 
 CASES = 'cases'
 FORMS = 'forms'
+ALL = 'all'
+COMMAND_CHOICES = [CASES, FORMS, ALL]
+EXPECTED_REPEAT_RECOUNT_COUNT = 'expected_repeat_record_count'  # Total count of expected repeat records
+ACTUAL_REPEAT_RECORD_COUNT = 'actual_repeat_record_count'  # Total count of found repeat records
+MISSING_REPEAT_RECORD_COUNT = 'missing_repeat_record_count'  # Total count of missing repeat records
+MISSING_CREATE_CASE_RECORD_COUNT = 'missing_create_case_record_count'  # Specifically for CreateCaseRepeater
+MISSING_UPDATE_CASE_RECORD_COUNT = 'missing_update_case_record_count'  # Specifically for UpdateCaseRepeater
+PCT_MISSING = 'percentage_missing'  # Percentage of repeat records missing relative to expected over the date range
 TIME_TO_RUN = 'time_to_run'
-TOTAL_COUNT = 'total_count'
-SUCCESSFUL_COUNT = 'successful_count'
-MISSING_COUNT = 'missing_count'
-MISSING_ALL_COUNT = 'missing_all_count'  # CaseRepeater
-MISSING_CREATE_COUNT = 'missing_create_count'  # CreateCaseRepeater
-MISSING_UPDATE_COUNT = 'missing_update_count'  # UpdateCaseRepeater
-CALLS_TO_REGISTER_COUNT = 'calls_to_register_count'
-PCT_MISSING = 'percentage_missing'
 
 
 def obtain_missing_form_repeat_records(startdate,
@@ -73,16 +74,22 @@ def obtain_missing_form_repeat_records(startdate,
         t1 = time.time()
         time_to_run = t1 - t0
         if total_missing_count > 0:
+            pct_missing = f'{round((total_missing_count / total_count) * 100, 2)}%'
+            rounded_time = f'{round(time_to_run, 0)} seconds'
             stats_per_domain[domain] = {
                 FORMS: {
-                    MISSING_COUNT: total_missing_count,
-                    PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
-                    TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
+                    MISSING_REPEAT_RECORD_COUNT: total_missing_count,
+                    PCT_MISSING: pct_missing,
+                    TIME_TO_RUN: rounded_time,
                 }
             }
-            print(f'{domain} complete!\n{stats_per_domain[domain][FORMS]}')
 
-        print(f"{len(domains) - (index + 1)} domains left")
+            print(f'{domain} complete. Found {total_missing_count}" missing repeat records in {rounded_time}. '
+                  f'This accounts for {pct_missing} of all repeat records in the specified date range'
+                  )
+
+        if index % 10 == 0:
+            print(f"{(index+1)}/{len(domains)} domains complete.")
 
     return stats_per_domain
 
@@ -134,7 +141,6 @@ def obtain_missing_case_repeat_records(startdate,
     for index, domain in enumerate(domains):
         t0 = time.time()
         try:
-            total_register_count = 0
             total_missing_all_count = 0
             total_missing_create_count = 0
             total_missing_update_count = 0
@@ -148,31 +154,33 @@ def obtain_missing_case_repeat_records(startdate,
                     domain, case_repeaters_in_domain, case, startdate, enddate, should_create
                 )
 
-                total_register_count += stats_for_case[CALLS_TO_REGISTER_COUNT]
-                total_missing_create_count += stats_for_case[MISSING_CREATE_COUNT]
-                total_missing_update_count += stats_for_case[MISSING_UPDATE_COUNT]
-                total_missing_all_count += stats_for_case[MISSING_ALL_COUNT]
-                total_count += stats_for_case[TOTAL_COUNT]
+                total_missing_all_count += stats_for_case[MISSING_REPEAT_RECORD_COUNT]
+                total_missing_create_count += stats_for_case[MISSING_CREATE_CASE_RECORD_COUNT]
+                total_missing_update_count += stats_for_case[MISSING_UPDATE_CASE_RECORD_COUNT]
+                total_count += stats_for_case[EXPECTED_REPEAT_RECOUNT_COUNT]
 
             total_missing_count = total_missing_update_count + total_missing_create_count + total_missing_all_count
             t1 = time.time()
             time_to_run = t1 - t0
 
             if total_missing_count > 0:
+                pct_missing = f'{round((total_missing_count / total_count) * 100, 2)}%'
+                rounded_time = f'{round(time_to_run, 0)} seconds'
                 stats_per_domain[domain] = {
                     CASES: {
-                        CALLS_TO_REGISTER_COUNT: total_register_count,
-                        MISSING_COUNT: total_missing_count,
-                        MISSING_ALL_COUNT: total_missing_all_count,
-                        MISSING_CREATE_COUNT: total_missing_create_count,
-                        MISSING_UPDATE_COUNT: total_missing_update_count,
-                        PCT_MISSING: f'{round((total_missing_count / total_count) * 100, 2)}%',
-                        TIME_TO_RUN: f'{round(time_to_run, 2)} seconds',
+                        MISSING_REPEAT_RECORD_COUNT: total_missing_all_count,
+                        MISSING_CREATE_CASE_RECORD_COUNT: total_missing_create_count,
+                        MISSING_UPDATE_CASE_RECORD_COUNT: total_missing_update_count,
+                        PCT_MISSING: pct_missing,
+                        TIME_TO_RUN: rounded_time,
                     }
                 }
-                print(f'{domain} complete!\n{stats_per_domain[domain][CASES]}')
-
-            print(f"{len(domains) - (index + 1)} domains left")
+                print(f'{domain} complete. Found {total_missing_count}" missing case repeat records in '
+                      f'{rounded_time}. This accounts for {pct_missing} of all case repeat records in the '
+                      f'specified date range'
+                      )
+            if index % 10 == 0:
+                print(f"{(index + 1)}/{len(domains)} domains complete.")
 
         except Exception as e:
             print(f"Encountered error with {domain}: {e}")
@@ -234,23 +242,20 @@ def obtain_missing_case_repeat_records_in_domain(domain, repeaters, case, startd
                 else:
                     repeater.register(case)
 
-        # just using this to count up each type
+        missing_all_count += missing_count
         if isinstance(repeater, CreateCaseRepeater):
             missing_create_count += missing_count
         elif isinstance(repeater, UpdateCaseRepeater):
             missing_update_count += missing_count
-        else:
-            missing_all_count += missing_count
 
         successful_count += actual_record_count
 
     return {
-        CALLS_TO_REGISTER_COUNT: calls_to_register_count,
-        MISSING_CREATE_COUNT: missing_create_count,
-        MISSING_UPDATE_COUNT: missing_update_count,
-        MISSING_ALL_COUNT: missing_all_count,
-        SUCCESSFUL_COUNT: successful_count,
-        TOTAL_COUNT: missing_create_count + missing_update_count + missing_all_count + successful_count,
+        MISSING_REPEAT_RECORD_COUNT: missing_all_count,
+        MISSING_CREATE_CASE_RECORD_COUNT: missing_create_count,
+        MISSING_UPDATE_CASE_RECORD_COUNT: missing_update_count,
+        ACTUAL_REPEAT_RECORD_COUNT: successful_count,
+        EXPECTED_REPEAT_RECOUNT_COUNT: missing_all_count + successful_count,
     }
 
 
@@ -299,6 +304,9 @@ def get_case_repeaters_in_domain(domain):
 
 
 def create_case_repeater_allowed_to_forward(repeater, case):
+    """
+    Use this instead of CreateCaseRepeater.allowed_to_forward to get around len(case.transactions) > 1 check
+    """
     return repeater._allowed_case_type(case) and repeater._allowed_user(case)
 
 
@@ -339,15 +347,25 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument('-s', '--startdate', default="2021-06-19", type=date_type, help='Format YYYY-MM-DD')
-        parser.add_argument('-e', '--enddate', default="2021-06-24", type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('command', choices=COMMAND_CHOICES)
+        parser.add_argument('-s', '--startdate', type=date_type, help='Format YYYY-MM-DD')
+        parser.add_argument('-e', '--enddate', type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
 
-    def handle(self, startdate, enddate, domain, create, **options):
-        if domain:
-            domains_with_repeaters = [domain]
-        else:
-            domains_with_repeaters = get_domains_that_have_repeat_records()
+    def handle(self, command, startdate, enddate, domain, create, **options):
+        if not startdate:
+            raise CommandError("Must specify a startdate in the format YYYY-MM-DD")
 
-        _ = obtain_missing_case_repeat_records(startdate, enddate, domains_with_repeaters, create)
+        if not enddate:
+            enddate = datetime.utcnow().date()
+
+        if domain:
+            domains_to_inspect = [domain]
+        else:
+            domains_to_inspect = get_domains_that_have_repeat_records()
+
+        if command == 'cases':
+            _ = obtain_missing_case_repeat_records(startdate, enddate, domains_to_inspect, create)
+        elif command == 'forms':
+            _ = obtain_missing_form_repeat_records(startdate, enddate, domains_to_inspect, create)
