@@ -349,6 +349,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     from corehq.apps.users.model_log import UserModelAction
 
     action = action or UserModelAction.UPDATE
+    fields_changed = fields_changed or {}
 
     # domain is essential to filter changes done in a domain
     if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
