@@ -34,7 +34,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
     LookupTableItemResource,
     LookupTableResource,
 )
-from corehq.apps.hqcase.urls import case_api_urlpatterns
+from corehq.apps.hqcase.views import case_api
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 
@@ -121,7 +121,8 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
     yield url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_events")
     yield url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event")
-    yield url(r'v0.6/case/', include(case_api_urlpatterns))
+    # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
+    yield url(r'v0\.6/case(?:/(?P<case_id>[\w-]+))?/?$', case_api, name='case_api')
     yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
