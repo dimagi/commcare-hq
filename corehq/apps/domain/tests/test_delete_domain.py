@@ -895,7 +895,7 @@ class TestDeleteDomain(TestCase):
         another_domain.save()
         self.addCleanup(another_domain.delete)
 
-        # add more than 1 domain membership to trigger _log_web_user_membership_removed
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed in tests
         web_user.add_domain_membership(another_domain.name)
         web_user.save()
 
