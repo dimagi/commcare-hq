@@ -77,10 +77,10 @@
     {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
       <div class="form-group" id="case_list_form-expression" data-bind="visible: caseListForm()">
         <label class="{% css_label_class %} control-label">
-          {% trans "XPath Expression to Enable Case List Form" %}
+          {% trans "Display Condition" %}
           <span class="hq-help-template"
-                data-title="{% trans "XPath Expression" %}"
-              data-content="{% blocktrans %}Case List Form will be displayed when this xpath expression   is true. This must return a boolean value{% endblocktrans %}"
+                data-title='{% trans_html_attr "Display Condition" %}'
+                data-content='{% trans_html_attr "Case List Form will be displayed when this xpath expression evaluates to true. This must return a boolean value" %}'
           ></span>
         </label>
         <div class="{% css_field_class %}">

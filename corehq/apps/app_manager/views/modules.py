@@ -466,7 +466,7 @@ def get_parent_select_followup_forms(app, module):
         return []
     parent_module = app.get_module_by_unique_id(
         module.parent_select.module_id,
-        error=_("Case list used by parent child selection in '{}' not found").format(
+        error=_("Case list used by Select Parent First in '{}' not found").format(
             module.default_name()),
     )
     parent_case_type = parent_module.case_type
