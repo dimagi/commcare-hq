@@ -110,8 +110,8 @@ def _get_messages_for_email(event):
 
     return [{
         "message_id": email.id,
-        "date": email.date,
-        "date_modified": email.date_modified,
+        "date": email.date.isoformat(),
+        "date_modified": email.date_modified.isoformat(),
         "type": "email",
         "direction": "outgoing",
         "content": email.body,
@@ -151,7 +151,7 @@ def _get_message_dicts_for_sms(event, messages, type_):
         message_data = {
             "message_id": sms.id,
             "date": sms.date,
-            "date_modified": sms.date_modified,
+            "date_modified": sms.date_modified.isoformat(),
             "type": type_,
             "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
             "content": sms.text,

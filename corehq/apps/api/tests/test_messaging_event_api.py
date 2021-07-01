@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from corehq.apps.api.tests.utils import APIResourceTest
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email
 from corehq.apps.sms.tests.data_generator import (
     create_fake_sms,
     make_case_rule_sms_for_test,
@@ -24,26 +24,32 @@ class TestMessagingEventResource(APIResourceTest):
 
     def _create_sms_messages(self, count, randomize, domain=None):
         domain = domain or self.domain.name
+        results = []
         for i in range(count):
-            create_fake_sms(domain, randomize=randomize)
+            sms, _ = create_fake_sms(domain, randomize=randomize)
+            results.append(sms)
+        return results
 
     def _auth_get_resource(self, url):
         return self._assert_auth_get_resource(url, allow_session_auth=True)
 
-    def _serialized_messaging_event(self):
+    def _serialized_messaging_event(self, sms):
         return {
             "content_type": "sms",
             "date": "2016-01-01T12:00:00",
+            "date_last_activity": sms.date_modified.isoformat(),
             "case_id": None,
             "domain": "qwerty",
             "error": None,
             "form": None,
             'messages': [
                 {
+                    'message_id': sms.id,
                     'backend': 'fake-backend-id',
                     'phone_number': '99912345678',
                     'content': 'test sms text',
                     'date': '2016-01-01T12:00:00',
+                    'date_modified': sms.date_modified.isoformat(),
                     'direction': 'outgoing',
                     'status': 'sent',
                     'type': 'sms'
@@ -56,16 +62,16 @@ class TestMessagingEventResource(APIResourceTest):
         }
 
     def test_get_list_simple(self):
-        self._create_sms_messages(2, randomize=False)
+        expected = []
+        for sms in self._create_sms_messages(2, randomize=False):
+            expected.append(self._serialized_messaging_event(sms))
         response = self._auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(2, len(data))
-        for result in data:
+        for result, expected_result in zip(data, expected):
             del result['id']  # don't bother comparing ids
-            for message in result['messages']:
-                del message['message_id']
-            self.assertEqual(self._serialized_messaging_event(), result)
+            self.assertEqual(expected_result, result)
 
     def test_date_ordering(self):
         self._create_sms_messages(5, randomize=True)
@@ -251,6 +257,7 @@ class TestMessagingEventResource(APIResourceTest):
             "case_id": None,
             "content_type": "sms",
             "date": "2016-01-01T12:00:00",
+            "date_last_activity": sms.date_modified.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": None,
@@ -261,6 +268,7 @@ class TestMessagingEventResource(APIResourceTest):
                     "phone_number": "99912345678",
                     "content": "test sms text",
                     "date": "2016-01-01T12:00:00",
+                    "date_modified": sms.date_modified.isoformat(),
                     "direction": "outgoing",
                     "status": "sent",
                     "type": "sms"
@@ -300,6 +308,7 @@ class TestMessagingEventResource(APIResourceTest):
             "case_id": None,
             "content_type": "ivr-survey",
             "date": "2016-01-01T12:00:00",
+            "date_last_activity": sms.date_modified.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": {
@@ -315,6 +324,7 @@ class TestMessagingEventResource(APIResourceTest):
                     "phone_number": "99912345678",
                     "content": "test sms text",
                     "date": "2016-01-01T12:00:00",
+                    "date_modified": sms.date_modified.isoformat(),
                     "direction": "outgoing",
                     "status": "sent",
                     "type": "ivr"
@@ -344,21 +354,25 @@ class TestMessagingEventResource(APIResourceTest):
     def test_email(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
         self.addCleanup(user.delete, deleted_by=None)
-        make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
-
+        events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
+        event = events[user.get_id]
+        email = Email.objects.get(messaging_subevent=event)
         expected = {
             "case_id": None,
             "content_type": "email",
-            # "date": "2021-06-02T15:08:20.546006",
+            "date": event.date.isoformat(),
+            "date_last_activity": email.date_modified.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": None,
             "messages": [
                 {
+                    "message_id": email.id,
                     "backend": "email",
                     "email_address": "bob@email.com",
                     "content": "Check out the new API.",
-                    # "date": "2021-06-02T15:08:20.546006",
+                    "date": email.date.isoformat(),
+                    "date_modified": email.date_modified.isoformat(),
                     "direction": "outgoing",
                     "status": "email-delivered",
                     "type": "email"
@@ -383,9 +397,6 @@ class TestMessagingEventResource(APIResourceTest):
         for result in data:
             del result['id']
             del result['source']['source_id']
-            del result['date']
-            del result['messages'][0]['date']
-            del result['messages'][0]['message_id']
             self.assertEqual(expected, result)
 
     def test_cursor(self):
