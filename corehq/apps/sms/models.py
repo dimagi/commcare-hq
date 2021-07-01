@@ -299,6 +299,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
+
     class Meta:
         indexes = [models.Index(fields=['processed_timestamp'])]
 
@@ -2626,6 +2628,7 @@ class Email(models.Model):
 
     domain = models.CharField(max_length=126, db_index=True)
     date = models.DateTimeField(db_index=True)
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
     couch_recipient_doc_type = models.CharField(max_length=126, db_index=True)
     couch_recipient = models.CharField(max_length=126, db_index=True)
 

@@ -11,9 +11,9 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
-from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
+from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.util.workbook_json.excel import (
     StringTypeRequiredError,
@@ -336,10 +336,11 @@ class ExistingUserValidator(ImportValidator):
 
 
 class TargetDomainValidator(ImportValidator):
-    error_message = _("Target domain {} does not use enterprise permissions of {}")
+    error_message = _("Target domain {} is not a mirror of {}")
 
     def validate_spec(self, spec):
         target_domain = spec.get('domain')
         if target_domain and target_domain != self.domain:
-            if target_domain not in EnterprisePermissions.get_domains(self.domain):
+            mirror_domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            if target_domain not in mirror_domains:
                 return self.error_message.format(target_domain, self.domain)
