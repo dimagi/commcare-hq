@@ -11,17 +11,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('startdate')
-        parser.add_argument('--domain')
+        parser.add_argument('--domains', nargs='*')
         parser.add_argument('--mirror_domains', action='store_true')
         parser.add_argument('--fix', action='store_true')
 
-    def handle(self, startdate, domain, mirror_domains, fix, **options):
-        if mirror_domains and not domain:
+    def handle(self, startdate, domains, mirror_domains, fix, **options):
+        if mirror_domains and not domains:
             raise CommandError('cannot use mirror domains without specifying domain')
-        if domain:
-            domains = [domain]
+        if domains:
             if mirror_domains:
-                domains.extend(DomainPermissionsMirror.mirror_domains(domain))
+                for domain in list(domains):
+                    domains.extend(DomainPermissionsMirror.mirror_domains(domain))
         else:
             domains = get_domains_that_have_repeat_records()
         p = Pool(20)
