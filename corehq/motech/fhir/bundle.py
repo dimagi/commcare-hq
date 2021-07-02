@@ -1,5 +1,9 @@
 """
 Tools for FHIR Bundles
+
+For more information about Bundles, including examples, see the
+`FHIR reference <https://www.hl7.org/fhir/bundle.html>`_.
+
 """
 from typing import Generator, Optional
 
@@ -18,10 +22,10 @@ def get_bundle(requests, endpoint=None, *, url=None, **kwargs) -> dict:
     assert endpoint or url, 'No API endpoint or URL given'
     if endpoint:
         response = requests.get(endpoint, **kwargs)
-        return json_or_http_error(response)
-    # Use requests.send_request() so that `url` is not appended to
-    # `requests.base_url`
-    response = requests.send_request('GET', url, **kwargs)
+    else:
+        # Use requests.send_request() so that `url` is not appended to
+        # `requests.base_url`
+        response = requests.send_request('GET', url, **kwargs)
     return json_or_http_error(response)
 
 
