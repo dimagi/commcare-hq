@@ -405,8 +405,17 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     FormplayerFrontend.on('navigation:back', function () {
         var url = Backbone.history.getFragment();
         if (!url.includes('single_app')) {
-            window.history.back();
+            return;
         }
+        try {
+            var options = JSON.parse(url);
+            if (_.has(options, "endpointId")) {
+                return;
+            }
+        } catch (e) {
+            // do nothing
+        }
+        window.history.back();
     });
 
     FormplayerFrontend.on('setAppDisplayProperties', function (app) {

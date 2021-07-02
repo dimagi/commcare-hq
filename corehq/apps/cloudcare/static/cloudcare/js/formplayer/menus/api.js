@@ -56,6 +56,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 FormplayerFrontend.lastError = currentUrl;
                                 FormplayerFrontend.trigger('navigation:back');
                             }
+                            defer.reject();
 
                         } else {
                             FormplayerFrontend.trigger('clearProgress');
@@ -139,7 +140,14 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         } else if (options.endpointId) {
             route = "get_endpoint";
         }
-        return API.queryFormplayer(options, route);
+
+        var deferred = API.queryFormplayer(options, route);
+        if (options.endpointId) {
+           deferred.fail(function (response) {
+               FormplayerFrontend.trigger('navigateHome');
+           });
+        }
+        return deferred;
     });
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
