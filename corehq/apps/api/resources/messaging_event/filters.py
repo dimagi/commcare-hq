@@ -35,12 +35,12 @@ def filter_query(query, request_data):
     return query
 
 
-def _get_date_filter_consumer():
+def _get_date_filter_consumer(field):
     """date.{lt, lte, gt, gte}=<ISO DATE>"""
-    date_filter = make_date_filter(functools.partial(django_date_filter, field_name="date"))
+    date_filter = make_date_filter(functools.partial(django_date_filter, field_name=field))
 
     def _date_consumer(key, value):
-        if '.' in key and key.split(".")[0] == "date":
+        if '.' in key and key.split(".")[0] == field:
             prefix, qualifier = key.split(".", maxsplit=1)
             try:
                 return date_filter(qualifier, value)
@@ -162,7 +162,8 @@ def _make_simple_consumer(filter_name, model_filter_arg, validator=None):
 
 
 COMPOUND_FILTERS = [
-    _get_date_filter_consumer(),
+    _get_date_filter_consumer("date"),
+    _get_date_filter_consumer("date_last_activity"),  # computed field
 ]
 
 SIMPLE_FILTERS = {
