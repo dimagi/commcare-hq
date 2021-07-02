@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.user_importer.importer import (
-    create_or_update_users_and_groups,
+    create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
@@ -387,7 +387,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'password': 123,
             'email': None
         }]
-        results = create_or_update_users_and_groups(
+        results = create_or_update_commcare_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
             None
