@@ -269,6 +269,7 @@ def import_related(
     for rel in resource_type.jsonpaths_to_related_resource_types.all():
         jsonpath = jsonpath_parse(rel.jsonpath)
         reference = simplify_list([x.value for x in jsonpath.find(resource)])
+        validate_parent_ref(reference, rel.related_resource_type)
         related_resource = get_resource(requests, reference)
 
         if rel.related_resource_is_parent:
@@ -285,6 +286,21 @@ def import_related(
             related_resource,
             child_cases,
         )
+
+
+def validate_parent_ref(parent_ref, parent_resource_type):
+    """
+    Validates that ``parent_ref`` is a relative reference with an
+    expected resource type. e.g. "Patient/12345"
+    """
+    try:
+        resource_type_name, resource_id = parent_ref.split('/')
+    except (AttributeError, ValueError):
+        raise ConfigurationError(
+            f'Unexpected reference format {parent_ref!r}')
+    if resource_type_name != parent_resource_type.name:
+        raise ConfigurationError(
+            'Resource type does not match expected parent resource type')
 
 
 def get_resource(requests, reference):
@@ -313,16 +329,7 @@ def create_parent_indices(
 
     case_blocks = []
     for child_case_id, parent_ref, parent_resource_type in child_cases:
-        # `parent_ref` must be a relative reference. e.g. "Patient/12345"
-        try:
-            resource_type_name, external_id = parent_ref.split('/')
-        except (AttributeError, ValueError):
-            raise ConfigurationError(
-                f'Unexpected reference format {parent_ref!r}')
-        if resource_type_name != parent_resource_type.name:
-            raise ConfigurationError(
-                'Resource type does not match expected parent resource type')
-
+        resource_type_name, external_id = parent_ref.split('/')
         parent_case = get_case_by_external_id(
             parent_resource_type.domain,
             external_id,

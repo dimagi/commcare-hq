@@ -42,6 +42,7 @@ from ..tasks import (
     import_related,
     import_resource,
     run_importer,
+    validate_parent_ref,
 )
 
 DOMAIN = 'test-domain'
@@ -894,6 +895,33 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.update, {'phone_number': '555-1234'})
 
 
+class TestValidateParentRef(TestCaseWithFHIRResources):
+
+    def test_bad_parent_ref(self):
+        parent_ref = '12345'
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_none_parent_ref(self):
+        parent_ref = None
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_bad_resource_type(self):
+        parent_ref = 'Practitioner/67890'
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_list_parent_ref(self):
+        parent_ref = ['Practitioner/67890', 'Patient/12345']
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_good_parent_ref(self):
+        parent_ref = 'Patient/12345'
+        validate_parent_ref(parent_ref, self.patient_type)
+
+
 class TestCreateParentIndices(TestCaseWithFHIRResources):
 
     @classmethod
@@ -928,30 +956,6 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
                 submit_case_blocks:
             create_parent_indices(self.import_config, child_cases)
             submit_case_blocks.assert_not_called()
-
-    def test_bad_parent_ref(self):
-        parent_ref = '12345'
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.import_config, child_cases)
-
-    def test_none_parent_ref(self):
-        parent_ref = None
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.import_config, child_cases)
-
-    def test_bad_resource_type(self):
-        parent_ref = 'Practitioner/12345'
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.import_config, child_cases)
 
     def test_parent_case_missing(self):
         parent_ref = 'Patient/67890'
