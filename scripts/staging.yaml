@@ -86,4 +86,5 @@ branches:
     - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
     - jls/merge-migrations # Jenny July 1
     - gh/split-toggles-and-previews # Graham July 1 [QA]
+    - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
 submodules: { }
