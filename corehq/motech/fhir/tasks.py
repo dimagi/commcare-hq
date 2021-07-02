@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from django.conf import settings
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from casexml.apps.case.mock import CaseBlock
@@ -27,7 +28,10 @@ ParentInfo = namedtuple(
 )
 
 
-@periodic_task(run_every=crontab(hour=5, minute=5), queue='background_queue')
+@periodic_task(
+    run_every=crontab(hour=5, minute=5),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
 def run_daily_importers():
     for importer in (
         FHIRImportConfig.objects.filter(
