@@ -250,7 +250,7 @@ def test_paginated_bundle():
                         auth_manager=BasicAuthManager('user', 'pass'))
     # First requests.get should be called with a search endpoint
     requests.get = Mock(return_value=Response({
-        'resourceType': 'bundle',
+        'resourceType': 'Bundle',
         'link': [
             {'relation': 'self', 'url': base_url + 'Patient/page/1'},  # Page 1
             {'relation': 'next', 'url': base_url + 'Patient/page/2'},
@@ -262,7 +262,7 @@ def test_paginated_bundle():
     }))
     # requests.send_request should be called with urls for subsequent pages
     requests.send_request = Mock(return_value=Response({
-        'resourceType': 'bundle',
+        'resourceType': 'Bundle',
         'link': [
             {'relation': 'self', 'url': base_url + 'Patient/page/2'},  # Page 2
             {'relation': 'previous', 'url': base_url + 'Patient/page/1'},

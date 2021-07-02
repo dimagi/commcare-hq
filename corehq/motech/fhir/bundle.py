@@ -3,26 +3,31 @@ Tools for FHIR Bundles
 """
 from typing import Generator, Optional
 
+from corehq.motech.fhir.models import FHIRResourceType
 from corehq.motech.requests import json_or_http_error
 
 
 def get_bundle(requests, endpoint=None, *, url=None, **kwargs) -> dict:
     """
-    Sends a GET request to an API endpoint or a URL and returns the
-    response JSON.
+    Sends a GET request to an API endpoint or a URL and returns a Bundle
+    resource.
 
     ``endpoint`` is a relative URL, e.g. 'Patient/'. ``url`` is an
     absolute URL, e.g. 'https://example.com/fhir/Patient/'
+
+    Raises ``ConfigurationError`` if the Bundle is invalid.
 
     """
     assert endpoint or url, 'No API endpoint or URL given'
     if endpoint:
         response = requests.get(endpoint, **kwargs)
-        return json_or_http_error(response)
-    # Use requests.send_request() so that `url` is not appended to
-    # `requests.base_url`
-    response = requests.send_request('GET', url, **kwargs)
-    return json_or_http_error(response)
+    else:
+        # Use requests.send_request() so that `url` is not appended to
+        # `requests.base_url`
+        response = requests.send_request('GET', url, **kwargs)
+    bundle = json_or_http_error(response)
+    FHIRResourceType(name="Bundle").validate_resource(bundle)
+    return bundle
 
 
 def iter_bundle(bundle: dict) -> Generator:
