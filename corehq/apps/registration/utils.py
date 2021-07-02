@@ -187,7 +187,13 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
                                            dom_req.activation_guid,
                                            request.user.get_full_name(),
                                            request.user.first_name)
-    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
+    send_new_request_update_email(
+        request.user,
+        get_ip(request),
+        new_domain.name,
+        is_new_user=is_new_user,
+        is_new_sso_user=is_new_sso_user
+    )
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
@@ -207,10 +213,13 @@ def _setup_subscription(domain_name, user):
     billing_contact.save()
 
 
-def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
+def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain",
+                                  is_new_user=False, is_confirming=False, is_new_sso_user=False):
     entity_texts = {"domain": ["project space", "Project"],
                    "org": ["organization", "Organization"]}[entity_type]
-    if is_confirming:
+    if is_new_sso_user:
+        message = f"A new SSO user just requested a {entity_texts[0]} called {entity_name}."
+    elif is_confirming:
         message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
     elif is_new_user:
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
