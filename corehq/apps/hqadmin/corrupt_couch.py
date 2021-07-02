@@ -279,7 +279,7 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     return missing, total_tries, to_repair
 
 
-def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=1000):
+def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=10000):
     if "view" in group:
         view_name = group["view"]
         start = end = "-"
