@@ -36,6 +36,8 @@ from ..tasks import (
     build_case_block,
     claim_service_request,
     create_parent_indices,
+    get_case_by_external_id,
+    get_case_by_id,
     get_case_id_or_none,
     get_caseblock_kwargs,
     get_name,
@@ -438,6 +440,102 @@ class TestGetCaseIDOrNone(SimpleTestCase):
             ]
         }
         self.assertEqual(get_case_id_or_none(resource), 'abc123')
+
+
+class TestGetCaseById(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        self.case_id = uuid4().hex
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=self.case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+            }
+        ))
+
+    def test_case_id_not_found(self):
+        case = get_case_by_id(DOMAIN, '12345')
+        self.assertIsNone(case)
+
+    def test_domain_is_different(self):
+        case = get_case_by_id('not-the-domain', self.case_id)
+        self.assertIsNone(case)
+
+    def test_case_is_deleted(self):
+        case = get_case_by_id(DOMAIN, self.case_id)
+        case.delete()
+
+        case = get_case_by_id(DOMAIN, self.case_id)
+        self.assertIsNone(case)
+
+    def test_happy_path(self):
+        case = get_case_by_id(DOMAIN, self.case_id)
+        self.assertEqual(case.name, 'Alice APPLE')
+
+
+class TestGetCaseByExternalId(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        case_id = uuid4().hex
+        self.external_id = str(uuid4())
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+                'external_id': self.external_id,
+            }
+        ))
+
+    def test_external_id_not_found(self):
+        case = get_case_by_external_id(DOMAIN, '67890', 'mother')
+        self.assertIsNone(case)
+
+    def test_domain_is_different(self):
+        case = get_case_by_external_id('not-the-domain', self.external_id, 'mother')
+        self.assertIsNone(case)
+
+    def test_case_type_is_different(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'father')
+        self.assertIsNone(case)
+
+    def test_case_is_deleted(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        case.delete()
+
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        self.assertIsNone(case)
+
+    def test_happy_path(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        self.assertEqual(case.name, 'Alice APPLE')
 
 
 class TestGetName(SimpleTestCase):

@@ -179,7 +179,10 @@ def build_case_block(resource_type, resource, suggested_case_id):
     external_id = resource['id'] if 'id' in resource else CaseBlock.undefined
     if case_id:
         case = get_case_by_id(domain, case_id)
+        # If we have a case_id we can be pretty sure we can get a case
+        # ... unless it's been deleted. If so, fall back on external_id.
     if case is None and external_id != CaseBlock.undefined:
+        # external_id will almost always be set.
         case = get_case_by_external_id(domain, external_id, case_type)
 
     caseblock_kwargs = get_caseblock_kwargs(resource_type, resource)
@@ -213,7 +216,7 @@ def get_case_by_id(domain, case_id):
         case = accessor.get_case(case_id)
     except (CaseNotFound, KeyError):
         return None
-    return case if case.domain == domain else None
+    return case if case.domain == domain and not case.is_deleted else None
 
 
 def get_case_by_external_id(domain, external_id, case_type):
@@ -222,7 +225,7 @@ def get_case_by_external_id(domain, external_id, case_type):
         [case] = accessor.get_cases_by_external_id(external_id, case_type)
     except ValueError:
         return None
-    return case
+    return case if not case.is_deleted else None
 
 
 def get_caseblock_kwargs(resource_type, resource):
