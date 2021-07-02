@@ -294,6 +294,57 @@ class TestFHIRImportResourceProperty(TestCaseWithReferral):
         with self.assertRaises(ConfigurationError):
             priority.save()
 
+    def test_iter_case_property_value_sources(self):
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/case_type'].value",
+                'case_property': 'case_type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/type'].value",
+                'case_property': 'type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/user_id'].value",
+                'case_property': 'user_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/owner_id'].value",
+                'case_property': 'owner_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/opened_on'].value",
+                'case_property': 'opened_on',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/this_is_fine'].value",
+                'case_property': 'this_is_fine',
+            }
+        )
+        props = [
+            vs.case_property
+            for vs in self.service_request.iter_case_property_value_sources()
+        ]
+        self.assertEqual(props, [
+            'fhir_status', 'fhir_intent', 'fhir_subject', 'this_is_fine',
+        ])
+
 
 class TestConfigurationErrors(TestCase):
 

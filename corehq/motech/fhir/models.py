@@ -39,6 +39,7 @@ from jsonschema import RefResolver, ValidationError, validate
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
@@ -404,6 +405,16 @@ class FHIRImportResourceType(models.Model):
     @property
     def domain(self):
         return self.import_config.domain
+
+    def iter_case_property_value_sources(self):
+        name_properties = {"name", "case_name"}
+        readonly = set(KNOWN_CASE_PROPERTIES) - name_properties | {'case_id'}
+        for prop in self.properties.all():
+            if 'case_property' in prop.value_source_config:
+                case_property = prop.value_source_config['case_property']
+                if case_property in readonly:
+                    continue
+                yield prop.get_value_source()
 
 
 class ResourceTypeRelationship(models.Model):
