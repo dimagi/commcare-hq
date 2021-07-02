@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0028_migrate_roles_to_sql'),
+        ('users', '0029_merge_20210611_1436'),
     ]
 
     operations = [

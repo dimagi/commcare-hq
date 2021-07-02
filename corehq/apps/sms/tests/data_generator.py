@@ -1,14 +1,14 @@
 import random
 import uuid
 from collections import namedtuple
+from datetime import datetime, timedelta
 
 from nose.tools import nottest
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS, OUTGOING
-from datetime import datetime, timedelta
-
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
+from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.messaging.scheduling.models import ImmediateBroadcast, EmailContent, AlertSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, AlertScheduleInstance
@@ -73,13 +73,23 @@ def make_events_for_test(
         case_id=None,
         status=status,
         error_code=None,
-        additional_error_text=None
+        additional_error_text=None,
     )
     sms, sms_dict = _make_sms(domain, message_date, subevent, **sms_kwargs)
     return event, subevent, SmsAndDict(sms=sms, sms_dict=sms_dict)
 
 
 def _make_sms(domain, message_date, subevent, **kwargs):
+    sms_dict = get_test_sms_fields(domain, message_date, subevent.pk)
+    sms_dict.update(kwargs)
+    sms = SMS.objects.create(
+        **sms_dict
+    )
+    return SmsAndDict(sms=sms, sms_dict=sms_dict)
+
+
+@nottest
+def get_test_sms_fields(domain, message_date, subevent_id):
     # Some of the values here don't apply for a simple outgoing SMS,
     # but the point of this is to just test the serialization and that
     # everything makes it to elasticsearch
@@ -100,7 +110,7 @@ def _make_sms(domain, message_date, subevent, **kwargs):
         xforms_session_couch_id='fake-session-couch-id',
         reminder_id='fake-reminder-id',
         location_id='fake-location-id',
-        messaging_subevent_id=subevent.pk,
+        messaging_subevent_id=subevent_id,
         text='test sms text',
         raw_text='raw text',
         datetime_to_process=message_date - timedelta(minutes=1),
@@ -118,11 +128,9 @@ def _make_sms(domain, message_date, subevent, **kwargs):
         fri_id='12345',
         fri_risk_profile='X',
         custom_metadata={'a': 'b'},
+        couch_id=uuid.uuid4().hex
     )
-    sms_dict.update(kwargs)
-    return SMS.objects.create(
-        **sms_dict
-    ), sms_dict
+    return sms_dict
 
 
 @nottest
