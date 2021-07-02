@@ -1,3 +1,31 @@
+"""
+FHIR Models
+===========
+
+FHIRResourceType maps a CommCare case type to a FHIR resource type. It
+is used by FHIRRepeater and the FHIR API for building a FHIR resource
+from case properties and other sources of data.
+
+FHIRResourceProperty determines how to set the value of a property of a
+FHIR resource. FHIRResourceType has many FHIRResourceProperty instances.
+
+For more information, see
+:doc:`the CommCare FHIR Integration docs <docs/index>`.
+
+Importing FHIR data involves more models. The primary one is
+FHIRImportResourceType. It serves the same purpose as FHIRResourceType,
+but for incoming data.
+
+FHIRImportResourceProperty determines how to import the value of a FHIR
+resource property.
+
+ResourceTypeRelationship tracks how to import related resources.
+
+FHIRImportConfig stores information about the remote FHIR API.
+
+For more information, see :doc:`docs/fhir_import_config`.
+
+"""
 import json
 import os
 from typing import Optional, Union
