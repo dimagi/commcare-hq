@@ -17,7 +17,7 @@ from corehq.motech.value_source import ValueSource
 
 from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
 from ..models import (
-    FHIRImporter,
+    FHIRImportConfig,
     FHIRImporterResourceProperty,
     FHIRImporterResourceType,
     FHIRResourceProperty,
@@ -45,24 +45,24 @@ class TestCaseWithConnectionSettings(TestCase):
         super().tearDownClass()
 
 
-class TestFHIRImporter(TestCaseWithConnectionSettings):
+class TestFHIRImportConfig(TestCaseWithConnectionSettings):
 
     def tearDown(self):
-        FHIRImporter.objects.filter(domain=DOMAIN).delete()
+        FHIRImportConfig.objects.filter(domain=DOMAIN).delete()
 
     def test_connection_settings_null(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             owner_id='b0b',
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
         with self.assertRaises(IntegrityError), \
                 transaction.atomic():
-            importer.save()
+            import_config.save()
 
     def test_connection_settings_protected(self):
-        FHIRImporter.objects.create(
+        FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=self.conn,
             owner_id='b0b',
@@ -71,50 +71,50 @@ class TestFHIRImporter(TestCaseWithConnectionSettings):
             self.conn.delete()
 
     def test_fhir_version_good(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version=FHIR_VERSION_4_0_1,
             owner_id='b0b',
         )
-        importer.full_clean()
+        import_config.full_clean()
 
     def test_fhir_version_bad(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version='1.0.2',
             owner_id='b0b',
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
 
     def test_frequency_good(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             frequency=IMPORT_FREQUENCY_DAILY,
             owner_id='b0b',
         )
-        importer.full_clean()
+        import_config.full_clean()
 
     def test_frequency_bad(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             frequency='weekly',
             owner_id='b0b',
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
 
     def test_owner_id_missing(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
 
 
 class TestCaseWithReferral(TestCaseWithConnectionSettings):
@@ -122,7 +122,7 @@ class TestCaseWithReferral(TestCaseWithConnectionSettings):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             owner_id='b0b',
@@ -135,7 +135,7 @@ class TestCaseWithReferral(TestCaseWithConnectionSettings):
     @classmethod
     def tearDownClass(cls):
         cls.referral.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         super().tearDownClass()
 
 
@@ -156,7 +156,7 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
 
     def test_search_params_empty(self):
         service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
@@ -164,12 +164,12 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
 
     def test_related_resource_types(self):
         service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
         patient = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
         )
@@ -187,7 +187,7 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
 
     def test_domain(self):
         service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
@@ -200,7 +200,7 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
     def setUpClass(cls):
         super().setUpClass()
         cls.service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+            import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,
         )

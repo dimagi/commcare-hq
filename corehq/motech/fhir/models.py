@@ -305,7 +305,7 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
         return None
 
 
-class FHIRImporter(models.Model):
+class FHIRImportConfig(models.Model):
     domain = models.CharField(max_length=127, db_index=True)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
@@ -340,7 +340,7 @@ class FHIRImporterResourceType(models.Model):
     types, with different mappings, from those used by ``FHIRRepeater``
     and the FHIR API.
 
-    ``import_related_only`` determines whether the ``FHIRImporter``
+    ``import_related_only`` determines whether the ``FHIRImportConfig``
     searches the remote service for instances, or only imports instances
     related to the resource types it is interested in. e.g. Only import
     the Patients of imported ServiceRequests, not all Patients. Or only
@@ -360,8 +360,8 @@ class FHIRImporterResourceType(models.Model):
     in ``JSONPathToResourceType`` for details of how related resource
     types are set.
     """
-    fhir_importer = models.ForeignKey(
-        FHIRImporter,
+    import_config = models.ForeignKey(
+        FHIRImportConfig,
         on_delete=models.CASCADE,
         related_name='resource_types',
     )
@@ -376,7 +376,7 @@ class FHIRImporterResourceType(models.Model):
 
     @property
     def domain(self):
-        return self.fhir_importer.domain
+        return self.import_config.domain
 
 
 class JSONPathToResourceType(models.Model):

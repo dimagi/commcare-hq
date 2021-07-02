@@ -25,7 +25,7 @@ from ..const import (
     SYSTEM_URI_CASE_ID,
 )
 from ..models import (
-    FHIRImporter,
+    FHIRImportConfig,
     FHIRImporterResourceProperty,
     FHIRImporterResourceType,
     JSONPathToResourceType,
@@ -57,7 +57,7 @@ class TestRunImporter(TestCase):
             name='Test ConnectionSettings',
             url='https://example.com/api/',
         )
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             fhir_version=FHIR_VERSION_4_0_1,
@@ -75,26 +75,26 @@ class TestRunImporter(TestCase):
     def tearDownClass(cls):
         cls.referral.delete()
         cls.mother.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         cls.conn.delete()
         super().tearDownClass()
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_import_related_only(self):
         import_me = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
             search_params={'status': 'active'},
         )
         FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+            import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
             import_related_only=True,  # Don't import me
         )
         with patch('corehq.motech.fhir.tasks.import_resource_type') as import_resource_type:
-            run_importer(self.fhir_importer)
+            run_importer(self.import_config)
 
             import_resource_type.assert_called_once()
             call_arg_2 = import_resource_type.call_args[0][1]
@@ -287,7 +287,7 @@ class TestCaseWithResourceType(TestCase):
             name='Test ConnectionSettings',
             url='https://example.com/api/',
         )
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             fhir_version=FHIR_VERSION_4_0_1,
@@ -297,7 +297,7 @@ class TestCaseWithResourceType(TestCase):
             name='mother',
         )
         cls.patient_type = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+            import_config=cls.import_config,
             name='Patient',
             case_type=cls.mother,
         )
@@ -305,7 +305,7 @@ class TestCaseWithResourceType(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.mother.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         cls.conn.delete()
         super().tearDownClass()
 
@@ -320,7 +320,7 @@ class TestCaseWithFHIRResources(TestCaseWithResourceType):
             name='referral',
         )
         cls.service_request_type = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+            import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,
         )
@@ -835,7 +835,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
         child_cases = []
         with patch('corehq.motech.fhir.tasks.submit_case_blocks') as \
                 submit_case_blocks:
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
             submit_case_blocks.assert_not_called()
 
     def test_bad_parent_ref(self):
@@ -844,7 +844,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
             ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
         ]
         with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
     def test_none_parent_ref(self):
         parent_ref = None
@@ -852,7 +852,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
             ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
         ]
         with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
     def test_bad_resource_type(self):
         parent_ref = 'Practitioner/12345'
@@ -860,7 +860,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
             ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
         ]
         with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
     def test_parent_case_missing(self):
         parent_ref = 'Patient/67890'
@@ -868,7 +868,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
             ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
         ]
         with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
     def test_submit_case_blocks(self):
         index_xml = (
@@ -884,7 +884,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
         ]
         with patch('corehq.motech.fhir.tasks.'
                    'submit_case_blocks') as submit_case_blocks:
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
             ([case_block], domain), kwargs = submit_case_blocks.call_args
             self.assertIn(index_xml, case_block)

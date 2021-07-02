@@ -18,7 +18,7 @@ from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
-from .models import FHIRImporter, FHIRImporterResourceType
+from .models import FHIRImportConfig, FHIRImporterResourceType
 
 
 ParentInfo = namedtuple(
@@ -30,7 +30,7 @@ ParentInfo = namedtuple(
 @periodic_task(run_every=crontab(hour=5, minute=5), queue='background_queue')
 def run_daily_importers():
     for importer in (
-        FHIRImporter.objects.filter(
+        FHIRImportConfig.objects.filter(
             frequency=IMPORT_FREQUENCY_DAILY
         ).select_related('connection_settings').all()
     ):
@@ -121,7 +121,7 @@ def import_resource(
         [case_block.as_text()],
         resource_type.domain,
         xmlns=XMLNS_FHIR,
-        device_id=f'FHIRImporter-{resource_type.fhir_importer.pk}',
+        device_id=f'FHIRImportConfig-{resource_type.import_config.pk}',
     )
     import_related(
         requests,
@@ -168,7 +168,7 @@ def claim_service_request(requests, service_request, case_id):
 def build_case_block(resource_type, resource, suggested_case_id):
     domain = resource_type.domain
     case_type = resource_type.case_type.name
-    owner_id = resource_type.fhir_importer.owner_id
+    owner_id = resource_type.import_config.owner_id
     case = None
 
     case_id = get_case_id_or_none(resource)
@@ -292,7 +292,7 @@ def get_resource(requests, reference):
 
 
 def create_parent_indices(
-    importer: FHIRImporter,
+    importer: FHIRImportConfig,
     child_cases: List[ParentInfo],
 ):
     """
@@ -334,7 +334,7 @@ def create_parent_indices(
         [cb.as_text() for cb in case_blocks],
         importer.domain,
         xmlns=XMLNS_FHIR,
-        device_id=f'FHIRImporter-{importer.pk}',
+        device_id=f'FHIRImportConfig-{importer.pk}',
     )
 
 

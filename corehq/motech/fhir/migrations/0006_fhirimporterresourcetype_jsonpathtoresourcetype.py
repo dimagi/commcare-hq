@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('data_dictionary', '0007_property_type_choices'),
-        ('fhir', '0005_fhirimporter'),
+        ('fhir', '0005_fhirimportconfig'),
     ]
 
     operations = [
@@ -27,10 +27,10 @@ class Migration(migrations.Migration):
                     on_delete=django.db.models.deletion.CASCADE,
                     to='data_dictionary.CaseType',
                 )),
-                ('fhir_importer', models.ForeignKey(
+                ('import_config', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='resource_types',
-                    to='fhir.FHIRImporter',
+                    to='fhir.FHIRImportConfig',
                 )),
             ],
         ),

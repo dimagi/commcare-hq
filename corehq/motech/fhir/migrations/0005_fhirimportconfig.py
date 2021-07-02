@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporter',
+            name='FHIRImportConfig',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -38,14 +38,14 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddIndex(
-            model_name='fhirimporter',
+            model_name='fhirimportconfig',
             index=models.Index(
                 fields=['domain'],
                 name='fhir_fhirim_domain_41a7dc_idx',
             ),
         ),
         migrations.AddIndex(
-            model_name='fhirimporter',
+            model_name='fhirimportconfig',
             index=models.Index(
                 fields=['frequency'],
                 name='fhir_fhirim_frequen_dd0d53_idx',
