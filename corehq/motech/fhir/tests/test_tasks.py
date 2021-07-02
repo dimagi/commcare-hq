@@ -494,6 +494,28 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             {'case_name': 'Alice Amelia Anna', 'update': {}},
         )
 
+    def test_update_name(self):
+        resource = {
+            'name': [{
+                'given': ['Alice', 'Amelia', 'Anna'],
+                'family': 'Apple',
+                'text': 'Alice APPLE',
+            }],
+        }
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': '$.name[0].given',
+                'case_property': 'name',
+                'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
+                'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient_type, resource),
+            {'case_name': 'Alice Amelia Anna', 'update': {}},
+        )
+
     def test_default_case_name(self):
         resource = {
             'name': [{
@@ -563,14 +585,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
         FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
-                'jsonpath': '$.identifier[0].system',
-                'value': SYSTEM_URI_CASE_ID,
-            }
-        )
-        FHIRImportResourceProperty.objects.create(
-            resource_type=self.patient_type,
-            value_source_config={
-                'jsonpath': '$.identifier[0].value',
+                'jsonpath': f"$.identifier[?system='{SYSTEM_URI_CASE_ID}'].value",
                 'case_property': 'case_id',
             }
         )
@@ -593,6 +608,82 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
         self.assertEqual(
             get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': '', 'update': {}},
+        )
+
+    def test_readonly(self):
+        resource = {
+            'extension': [
+                {
+                    'url': 'https://example.com/commcare/case_type',
+                    'value': 'foo',
+                },
+                {
+                    'url': 'https://example.com/commcare/type',
+                    'value': 'bar',
+                },
+                {
+                    'url': 'https://example.com/commcare/user_id',
+                    'value': '12345',
+                },
+                {
+                    'url': 'https://example.com/commcare/owner_id',
+                    'value': '12345',
+                },
+                {
+                    'url': 'https://example.com/commcare/opened_on',
+                    'value': '2021-07-02T17:00:00.000Z',
+                },
+                {
+                    'url': 'https://example.com/commcare/this_is_fine',
+                    'value': 'baz',
+                },
+            ],
+        }
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/case_type'].value",
+                'case_property': 'case_type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/type'].value",
+                'case_property': 'type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/user_id'].value",
+                'case_property': 'user_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/owner_id'].value",
+                'case_property': 'owner_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/opened_on'].value",
+                'case_property': 'opened_on',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/this_is_fine'].value",
+                'case_property': 'this_is_fine',
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient_type, resource),
+            {'case_name': '', 'update': {'this_is_fine': 'baz'}},
         )
 
 

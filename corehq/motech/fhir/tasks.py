@@ -10,6 +10,7 @@ from jsonpath_ng.ext.parser import parse as jsonpath_parse
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -226,7 +227,8 @@ def get_case_by_external_id(domain, external_id, case_type):
 
 
 def get_caseblock_kwargs(resource_type, resource):
-    reserved = {'case_id', 'external_id', 'owner_id', 'user_id', 'case_type'}
+    name_properties = {"name", "case_name"}
+    readonly = set(KNOWN_CASE_PROPERTIES) - name_properties | {'case_id'}
     kwargs = {
         'case_name': get_name(resource),
         'update': {}
@@ -234,13 +236,13 @@ def get_caseblock_kwargs(resource_type, resource):
     for resource_property in resource_type.properties.all():
         if 'case_property' in resource_property.value_source_config:
             case_property = resource_property.value_source_config['case_property']
-            if case_property in reserved:
+            if case_property in readonly:
                 continue
             value_source = resource_property.get_value_source()
             value = value_source.get_import_value(resource)
             if value is not None:
-                if case_property == 'case_name':
-                    kwargs[case_property] = value
+                if case_property in name_properties:
+                    kwargs['case_name'] = value
                 else:
                     kwargs['update'][case_property] = value
     return kwargs
