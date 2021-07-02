@@ -91,7 +91,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self.assertEqual(5, len(ordered_data))
         dates = [r['date_last_activity'] for r in ordered_data]
         expected_order = sms[1:] + [sms[0]]  # modification order
-        self.assertEqual(dates, [sms.date_modified.isoformat() for sms in expected_order])
+        self.assertEqual(dates, [s.date_modified.isoformat() for s in expected_order])
 
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=-date_last_activity')
         self.assertEqual(response.status_code, 200, response.content)
