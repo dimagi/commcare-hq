@@ -322,7 +322,7 @@ class FHIRImportConfig(models.Model):
         default=IMPORT_FREQUENCY_DAILY,
     )
     # ID of user or location that will own imported cases
-    owner_id = models.CharField(max_length=32, null=False, blank=False)
+    owner_id = models.CharField(max_length=36, null=False, blank=False)
 
     class Meta:
         indexes = [

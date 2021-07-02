@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                     default='daily',
                     max_length=12,
                 )),
-                ('owner_id', models.CharField(max_length=32)),
+                ('owner_id', models.CharField(max_length=36)),
                 ('connection_settings', models.ForeignKey(
                     on_delete=django.db.models.deletion.PROTECT,
                     to='motech.ConnectionSettings',

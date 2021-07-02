@@ -116,6 +116,25 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
         with self.assertRaises(ValidationError):
             import_config.full_clean()
 
+    def test_owner_id_too_long(self):
+        uuid = '4d4e6255-2139-49e0-98e9-9418e83a4944'
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id=uuid + 'X',
+        )
+        with self.assertRaises(ValidationError):
+            import_config.full_clean()
+
+    def test_owner_id_max_length(self):
+        uuid = '4d4e6255-2139-49e0-98e9-9418e83a4944'
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id=uuid,
+        )
+        import_config.full_clean()
+
 
 class TestCaseWithReferral(TestCaseWithConnectionSettings):
 
