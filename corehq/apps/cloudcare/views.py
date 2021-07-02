@@ -26,6 +26,7 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from text_unidecode import unidecode
 
+from casexml.apps.case.cleanup import claim_case, get_first_claim
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from corehq.util.view_utils import get_case_or_404
@@ -587,7 +588,8 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         _fail(_("Linking directly into Web Apps has been disabled."))
 
-    for case_id in request.GET.values():
+    case_ids = request.GET.values()
+    for case_id in case_ids:
         try:
             get_case_or_404(domain, case_id)
         except Http404:
