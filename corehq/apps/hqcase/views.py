@@ -140,15 +140,15 @@ def _handle_case_update(request, case_id=None):
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
-            '@form_id': e.form_id,
+            'form_id': e.form_id,
         }, status=400)
 
     if isinstance(case_or_cases, list):
         return JsonResponse({
-            '@form_id': xform.form_id,
+            'form_id': xform.form_id,
             'cases': [serialize_case(case) for case in case_or_cases],
         })
     return JsonResponse({
-        '@form_id': xform.form_id,
+        'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     })

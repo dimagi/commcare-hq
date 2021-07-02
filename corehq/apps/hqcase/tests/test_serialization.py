@@ -95,11 +95,11 @@ class TestAPISerialization(TestCase):
             serialize_case(self.case),
             {
                 "domain": self.domain,
-                "@case_id": self.case.case_id,
-                "@case_type": "match",
+                "case_id": self.case.case_id,
+                "case_type": "match",
                 "case_name": "Harmon/Luchenko",
                 "external_id": "14",
-                "@owner_id": "harmon",
+                "owner_id": "harmon",
                 "date_opened": "2021-02-18T10:59:00.000000Z",
                 "last_modified": "2021-02-18T10:59:00.000000Z",
                 "server_last_modified": "2021-02-18T10:59:00.000000Z",
@@ -112,8 +112,8 @@ class TestAPISerialization(TestCase):
                 "indices": {
                     "parent": {
                         "case_id": self.parent_case_id,
-                        "@case_type": "player",
-                        "@relationship": "child",
+                        "case_type": "player",
+                        "relationship": "child",
                     }
                 }
             }
