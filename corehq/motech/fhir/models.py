@@ -41,7 +41,6 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import (
     CaseTriggerInfo,
