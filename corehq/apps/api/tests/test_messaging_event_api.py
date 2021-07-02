@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from corehq.apps.api.tests.utils import APIResourceTest
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, Email, SMS
 from corehq.apps.sms.tests.data_generator import (
     create_fake_sms,
     make_case_rule_sms_for_test,
@@ -31,7 +31,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         return {
             "content_type": "sms",
             "date": "2016-01-01T12:00:00",
-            "date_last_activity": sms.date_modified.isoformat(),
+            "date_last_activity": sms.date_modified.isoformat() if sms.date_modified else "2016-01-01T12:00:00",
             "case_id": None,
             "domain": "qwerty",
             "error": None,
@@ -43,7 +43,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
                     'phone_number': '99912345678',
                     'content': 'test sms text',
                     'date': '2016-01-01T12:00:00',
-                    'date_modified': sms.date_modified.isoformat(),
+                    'date_modified': sms.date_modified.isoformat() if sms.date_modified else None,
                     'direction': 'outgoing',
                     'status': 'sent',
                     'type': 'sms'
@@ -66,6 +66,21 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         for result, expected_result in zip(data, expected):
             del result['id']  # don't bother comparing ids
             self.assertEqual(expected_result, result)
+
+    def test_sms_null_date_modified(self):
+        sms, _ = create_fake_sms(self.domain, randomize=False)
+        # set date to None to simulate legacy data
+        SMS.objects.filter(id=sms.id).update(date_modified=None)
+        sms = SMS.objects.get(id=sms.id)
+        self.assertIsNone(sms.date_modified)
+
+        response = self._auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = json.loads(response.content)['objects']
+        self.assertEqual(1, len(data))
+        result = data[0]
+        del result['id']  # don't bother comparing ids
+        self.assertEqual(self._serialized_messaging_event(sms), result)
 
     def test_date_ordering(self):
         _create_sms_messages(self.domain, 5, randomize=True)
@@ -354,6 +369,23 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
             del result['id']
             del result['source']['source_id']
             self.assertEqual(expected, result)
+
+    def test_email_null_date_modified(self):
+        user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
+        self.addCleanup(user.delete, deleted_by=None)
+        events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
+        event = events[user.get_id]
+        email = Email.objects.get(messaging_subevent=event)
+        # set date to None to simulate legacy data
+        Email.objects.filter(id=email.id).update(date_modified=None)
+
+        response = self._auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = json.loads(response.content)['objects']
+        self.assertEqual(1, len(data))
+        for result in data:
+            self.assertEqual(result["date_last_activity"], event.date.isoformat())
+            self.assertIsNone(result["messages"][0]["date_modified"])
 
     def test_cursor(self):
         utcnow = datetime.utcnow()

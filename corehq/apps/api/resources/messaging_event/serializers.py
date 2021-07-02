@@ -108,10 +108,11 @@ def _get_messages_for_email(event):
     except Email.DoesNotExist:
         return []
 
+    date_modified = email.date_modified.isoformat() if email.date_modified else None
     return [{
         "message_id": email.id,
         "date": email.date.isoformat(),
-        "date_modified": email.date_modified.isoformat(),
+        "date_modified": date_modified,
         "type": "email",
         "direction": "outgoing",
         "content": email.body,
@@ -148,10 +149,11 @@ def _get_message_dicts_for_sms(event, messages, type_):
         else:
             status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
 
+        date_modified = sms.date_modified.isoformat() if sms.date_modified else None
         message_data = {
             "message_id": sms.id,
             "date": sms.date,
-            "date_modified": sms.date_modified.isoformat(),
+            "date_modified": date_modified,
             "type": type_,
             "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
             "content": sms.text,
