@@ -106,7 +106,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -133,7 +133,7 @@ def request_new_domain(request, project_name, is_new_user=True):
         # Avoid projects created by dimagi.com staff members as self started
         new_domain.internal.self_started = not current_user.is_dimagi
 
-        if not is_new_user:
+        if not is_new_user or is_new_sso_user:
             new_domain.is_active = True
 
         # ensure no duplicate domain documents get created on cloudant
@@ -164,7 +164,7 @@ def request_new_domain(request, project_name, is_new_user=True):
             f"{new_domain.name} during registration"
         )
 
-    if is_new_user:
+    if is_new_user and not is_new_sso_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
             #  Load template apps to the user's new domain in parallel
