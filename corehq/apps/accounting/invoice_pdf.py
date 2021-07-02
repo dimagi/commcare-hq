@@ -172,6 +172,10 @@ class InvoiceTemplate(object):
         else:
             self.draw_table_with_header_and_footer(self.items)
 
+        # should only call save once to avoid reportlab exception
+        self.canvas.showPage()
+        self.canvas.save()
+
     def draw_customer_invoice(self, items, items_to_draw):
         if len(items) <= 4:
             self.draw_table_with_header_and_footer(items)
@@ -180,9 +184,6 @@ class InvoiceTemplate(object):
             self.draw_table(items)
             if len(items_to_draw) == 0:
                 self.draw_totals_on_new_page()
-
-            self.canvas.showPage()
-            self.canvas.save()
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -563,8 +564,6 @@ class InvoiceTemplate(object):
             self.draw_table(items)
         self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(3.5))
         self.draw_footer()
-        self.canvas.showPage()
-        self.canvas.save()
 
     def draw_totals_on_new_page(self):
         self.canvas.setStrokeColor(STROKE_COLOR)
