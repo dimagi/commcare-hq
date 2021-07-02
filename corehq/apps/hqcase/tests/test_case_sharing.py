@@ -15,10 +15,9 @@ class CaseSharingTest(TestCase):
     def setUp(self):
         """
         Two groups A and B, with users A1, A2 and B1, B2 respectively, and supervisor X who belongs to both.
-        
         """
         self.domain = "test-domain"
-        create_domain(self.domain)
+        self.domain_obj = create_domain(self.domain)
         password = "****"
 
         def create_user(username):
@@ -38,6 +37,9 @@ class CaseSharingTest(TestCase):
 
         self.groupA = create_group("A", self.userX, self.userA1, self.userA2)
         self.groupB = create_group("B", self.userX, self.userB1, self.userB2)
+
+    def tearDown(self):
+        self.domain_obj.delete()
 
     def test_sharing(self):
 
