@@ -178,10 +178,11 @@ class InvoiceTemplate(object):
         else:
             self.draw_header()
             self.draw_table(items)
-            self.canvas.showPage()
-            self.canvas.save()
             if len(items_to_draw) == 0:
                 self.draw_totals_on_new_page()
+
+            self.canvas.showPage()
+            self.canvas.save()
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -578,9 +579,6 @@ class InvoiceTemplate(object):
 
         self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(7.0))
         self.draw_footer()
-
-        self.canvas.showPage()
-        self.canvas.save()
 
     def draw_totals(self, totals_x, line_height, subtotal_y):
         tax_y = subtotal_y - line_height
