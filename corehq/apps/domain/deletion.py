@@ -392,7 +392,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
     ModelDeletion('fhir', 'FHIRImportConfig', 'domain', [
-        'FHIRImportResourceType', 'JSONPathToResourceType',
+        'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
     ModelDeletion('repeaters', 'RepeaterStub', 'domain'),

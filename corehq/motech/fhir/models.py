@@ -357,7 +357,7 @@ class FHIRImportResourceType(models.Model):
        empty, then all resources of that type will be imported.
 
     See the ``jsonpath_to_related_resource_type`` related name defined
-    in ``JSONPathToResourceType`` for details of how related resource
+    in ``ResourceTypeRelationship`` for details of how related resource
     types are set.
     """
     import_config = models.ForeignKey(
@@ -379,9 +379,9 @@ class FHIRImportResourceType(models.Model):
         return self.import_config.domain
 
 
-class JSONPathToResourceType(models.Model):
+class ResourceTypeRelationship(models.Model):
     """
-    ``JSONPathToResourceType`` maps a ``FHIRImportResourceType`` to a
+    ``ResourceTypeRelationship`` maps a ``FHIRImportResourceType`` to a
     related ``FHIRImportResourceType`` by the JSONPath of a property.
     e.g. Consider the following ServiceRequest:
 
@@ -411,7 +411,7 @@ class JSONPathToResourceType(models.Model):
             name='Patient',
             import_related_only=True,
         )
-        service_request_patient = JSONPathToResourceType(
+        service_request_patient = ResourceTypeRelationship(
             resource_type=service_request,
             jsonpath='$.subject.reference',
             related_resource_type=patient,

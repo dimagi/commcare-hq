@@ -8,7 +8,7 @@ from corehq.motech.fhir.models import (
     FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
-    JSONPathToResourceType,
+    ResourceTypeRelationship,
 )
 
 
@@ -97,8 +97,8 @@ class FHIRImportResourceTypeAdmin(admin.ModelAdmin):
         return obj.import_config.domain
 
 
-class JSONPathToResourceTypeAdmin(admin.ModelAdmin):
-    model = JSONPathToResourceType
+class ResourceTypeRelationshipAdmin(admin.ModelAdmin):
+    model = ResourceTypeRelationship
     list_display = (
         'domain',
         'resource_type',
@@ -119,4 +119,4 @@ class JSONPathToResourceTypeAdmin(admin.ModelAdmin):
 admin.site.register(FHIRResourceType, FHIRResourceTypeAdmin)
 admin.site.register(FHIRImportConfig, FHIRImportConfigAdmin)
 admin.site.register(FHIRImportResourceType, FHIRImportResourceTypeAdmin)
-admin.site.register(JSONPathToResourceType, JSONPathToResourceTypeAdmin)
+admin.site.register(ResourceTypeRelationship, ResourceTypeRelationshipAdmin)

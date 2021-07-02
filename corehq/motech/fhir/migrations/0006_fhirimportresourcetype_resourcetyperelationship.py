@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='JSONPathToResourceType',
+            name='ResourceTypeRelationship',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,

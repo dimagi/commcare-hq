@@ -28,7 +28,7 @@ from ..models import (
     FHIRImportConfig,
     FHIRImportResourceProperty,
     FHIRImportResourceType,
-    JSONPathToResourceType,
+    ResourceTypeRelationship,
 )
 from ..tasks import (
     ParentInfo,
@@ -350,7 +350,7 @@ class TestCaseWithFHIRResources(TestCaseWithResourceType):
 class TestImportRelated(TestCaseWithFHIRResources):
 
     def test_import_related_calls_get_resource_with_reference(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,
@@ -370,7 +370,7 @@ class TestImportRelated(TestCaseWithFHIRResources):
             self.assertEqual(call_arg_2, 'Patient/12345')
 
     def test_import_related_is_parent(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,
@@ -395,7 +395,7 @@ class TestImportRelated(TestCaseWithFHIRResources):
             )])
 
     def test_import_related_is_not_parent(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,

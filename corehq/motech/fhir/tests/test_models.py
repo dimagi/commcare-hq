@@ -22,7 +22,7 @@ from ..models import (
     FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
-    JSONPathToResourceType,
+    ResourceTypeRelationship,
 )
 
 DOMAIN = 'test-domain'
@@ -173,7 +173,7 @@ class TestFHIRImportResourceType(TestCaseWithReferral):
             name='Patient',
             case_type=self.mother,
         )
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=service_request,
             jsonpath='$.subject.reference',
             related_resource_type=patient,

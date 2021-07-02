@@ -298,9 +298,9 @@ def create_parent_indices(
     """
     Creates parent-child relationships on imported cases.
 
-    If ``JSONPathToResourceType.related_resource_is_parent`` is ``True``
-    then this function will add an ``index`` on the child case to its
-    parent case.
+    If ``ResourceTypeRelationship.related_resource_is_parent`` is
+    ``True`` then this function will add an ``index`` on the child case
+    to its parent case.
     """
     if not child_cases:
         return
