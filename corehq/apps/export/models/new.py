@@ -553,6 +553,16 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                 ))
         return rows
 
+    @staticmethod
+    def _create_index(_path, _transform):
+        return f'{_path_nodes_to_string(_path)} t.{_transform}'
+
+    def _regenerate_column_cache(self):
+        self._string_column_paths = [
+            self._create_index(column.item.path, column.item.transform)
+            for column in self.columns
+        ]
+
     def get_column(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
@@ -565,10 +575,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         :returns index, column: The index of the column in the list and an ExportColumn
         """
 
-        def _create_index(_path, _transform):
-            return f'{_path_nodes_to_string(_path)} t.{_transform}'
-
-        string_item_path = _create_index(item_path, column_transform)
+        string_item_path = self._create_index(item_path, column_transform)
 
         # Previously we iterated over self.columns with each call to return the
         # index. Now we do an index lookup on the string-ified path names for
@@ -576,10 +583,7 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         # changes. This happens frequently when the table is being constructed.
         if (not hasattr(self, '_string_column_paths')
                 or len(self._string_column_paths) != len(self.columns)):
-            self._string_column_paths = [
-                _create_index(column.item.path, column.item.transform)
-                for column in self.columns
-            ]
+            self._regenerate_column_cache()
 
         # While unlikely, it is possible for the same path to be used for multiple items.
         # This can occur, for example, when a new reserved case property is introduced.
@@ -589,6 +593,15 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         indices = [index for (index, path) in enumerate(self._string_column_paths) if path == string_item_path]
         for index in indices:
             column = self.columns[index]
+
+            # The column cache can currently get out of sync because other code directly modifies
+            # the columns. For example, ExportInstance._move_selected_columns_to_top just completely
+            # overwrites column order without updating our cache.
+            # TODO: Modify code such that all table manipulation is done through this class
+            if column.item.path != item_path:
+                self._regenerate_column_cache()
+                index = self._string_column_paths.index(string_item_path)
+                column = self.columns[index]
 
             # Despite the column being found based on a key containing the item_path and transform,
             # both still need to be checked here to prevent the edge case where the the path or the transform
