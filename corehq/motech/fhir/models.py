@@ -306,7 +306,7 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
 
 
 class FHIRImportConfig(models.Model):
-    domain = models.CharField(max_length=127, db_index=True)
+    domain = models.CharField(max_length=127)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
         on_delete=models.PROTECT,

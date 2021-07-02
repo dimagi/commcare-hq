@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                     serialize=False,
                     verbose_name='ID',
                 )),
-                ('domain', models.CharField(db_index=True, max_length=127)),
+                ('domain', models.CharField(max_length=127)),
                 ('fhir_version', models.CharField(
                     choices=[('4.0.1', 'R4')],
                     default='4.0.1',
@@ -41,14 +41,14 @@ class Migration(migrations.Migration):
             model_name='fhirimportconfig',
             index=models.Index(
                 fields=['domain'],
-                name='fhir_fhirim_domain_41a7dc_idx',
+                name='fhir_fhirim_domain_b72369_idx',
             ),
         ),
         migrations.AddIndex(
             model_name='fhirimportconfig',
             index=models.Index(
                 fields=['frequency'],
-                name='fhir_fhirim_frequen_dd0d53_idx',
+                name='fhir_fhirim_frequen_099cd5_idx',
             ),
         ),
     ]
