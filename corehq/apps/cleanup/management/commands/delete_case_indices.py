@@ -66,7 +66,7 @@ class Command(BaseCommand):
                     case_blocks_and_meta.append((
                         meta,
                         CaseBlock(
-                            case_id, index={
+                            case.case_id, index={
                                 meta.index_identifier: (index.referenced_type, '', index.relationship)
                             }
                         ).as_text()
