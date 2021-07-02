@@ -15,6 +15,7 @@ from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
@@ -140,6 +141,13 @@ def _delete_web_user_membership(domain_name):
             web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
+            _log_web_user_membership_removed(web_user, __name__ + "._delete_web_user_membership")
+
+
+def _log_web_user_membership_removed(user, via):
+    log_user_change(None, couch_user=user,
+                    changed_by_user=SYSTEM_USER_ID, changed_via=via,
+                    message="Removed from domain")
 
 
 def _terminate_subscriptions(domain_name):
