@@ -50,6 +50,7 @@ from corehq.apps.reports.standard.cases.case_list_explorer import (
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -368,5 +369,12 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+    )),
+)
+
+
+USER_MANAGEMENT_REPORTS = (
+    (_("User Management"), (
+        UserHistoryReport,
     )),
 )
