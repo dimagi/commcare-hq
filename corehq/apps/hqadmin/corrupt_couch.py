@@ -269,18 +269,14 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     total_tries = 0
     to_repair = len(missing)
     max_repairs = min_tries
-    for n in range(max_repairs):
-        for doc_id in missing:
-            db.repair(doc_id)
-        repaired = missing
-        missing, tries = find_missing_ids(get_doc_ids, min_tries=min_tries)
-        total_tries += tries
-        if log.isEnabledFor(logging.DEBUG):
-            repaired -= missing
-            log.debug(f"repaired {to_repair - len(missing)} of {to_repair}: {repaired or ''}")
-        if not missing:
-            break
-    return missing, total_tries, to_repair - len(missing)
+    for doc_id in missing:
+        db.repair(doc_id)
+    repaired = missing
+    total_tries += tries
+    if log.isEnabledFor(logging.DEBUG):
+        repaired -= missing
+        log.debug(f"repaired {len(repaired)} of {to_repair}: {repaired or ''}")
+    return missing, total_tries, to_repair
 
 
 def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=1000):
@@ -345,7 +341,7 @@ def find_missing_ids(get_doc_ids, min_tries, limit=None):
     """
     if min_tries < 2:
         raise ValueError("min_tries must be greater than 1")
-    limit = limit or min_tries * 20
+    limit = min_tries
     min_tries -= 1
     missing = set()
     all_ids = set()
