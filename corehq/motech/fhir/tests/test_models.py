@@ -18,7 +18,7 @@ from corehq.motech.value_source import ValueSource
 from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
 from ..models import (
     FHIRImportConfig,
-    FHIRImporterResourceProperty,
+    FHIRImportResourceProperty,
     FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
@@ -194,7 +194,7 @@ class TestFHIRImportResourceType(TestCaseWithReferral):
         self.assertEqual(service_request.domain, DOMAIN)
 
 
-class TestFHIRImporterResourceProperty(TestCaseWithReferral):
+class TestFHIRImportResourceProperty(TestCaseWithReferral):
 
     @classmethod
     def setUpClass(cls):
@@ -204,21 +204,21 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
             name='ServiceRequest',
             case_type=cls.referral,
         )
-        cls.status_property = FHIRImporterResourceProperty.objects.create(
+        cls.status_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.status',
                 'case_property': 'fhir_status',
             }
         )
-        cls.intent_property = FHIRImporterResourceProperty.objects.create(
+        cls.intent_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.intent',
                 'case_property': 'fhir_intent',
             }
         )
-        cls.subject_property = FHIRImporterResourceProperty.objects.create(
+        cls.subject_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.subject.reference',  # e.g. "Patient/12345"
@@ -255,7 +255,7 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
         )
 
     def test_jsonpath_notset(self):
-        priority = FHIRImporterResourceProperty(
+        priority = FHIRImportResourceProperty(
             resource_type=self.service_request,
             value_source_config={
                 'case_property': 'fhir_priority',
@@ -269,7 +269,7 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
         self.assertIsInstance(value_source, CasePropertyValueSource)
 
     def test_value_source_bad(self):
-        priority = FHIRImporterResourceProperty(
+        priority = FHIRImportResourceProperty(
             resource_type=self.service_request,
         )
         with self.assertRaises(ConfigurationError):

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporterResourceProperty',
+            name='FHIRImportResourceProperty',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,

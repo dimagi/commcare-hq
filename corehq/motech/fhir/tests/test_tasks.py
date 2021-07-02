@@ -26,7 +26,7 @@ from ..const import (
 )
 from ..models import (
     FHIRImportConfig,
-    FHIRImporterResourceProperty,
+    FHIRImportResourceProperty,
     FHIRImportResourceType,
     JSONPathToResourceType,
 )
@@ -480,7 +480,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'text': 'Alice APPLE',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
@@ -513,7 +513,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'text': 'John',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
@@ -534,14 +534,14 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'value': '555-1234',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].system',
                 'value': 'phone',
             }
         )
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].value',
@@ -560,14 +560,14 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'value': '12345'
             }]
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.identifier[0].system',
                 'value': SYSTEM_URI_CASE_ID,
             }
         )
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.identifier[0].value',
@@ -583,7 +583,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
         resource = {
             'id': '12345',
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.id',
@@ -774,7 +774,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }],
             'resourceType': 'Patient',
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
@@ -783,7 +783,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
                 'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
             }
         )
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': "$.telecom[?system='phone'].value",

@@ -5,7 +5,7 @@ import jsonfield.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fhir', '0007_fhirimporterresourceproperty'),
+        ('fhir', '0007_fhirimportresourceproperty'),
     ]
 
     operations = [

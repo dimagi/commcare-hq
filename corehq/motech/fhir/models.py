@@ -448,7 +448,7 @@ class JSONPathToResourceType(models.Model):
                 f'{self.related_resource_type.name}')
 
 
-class FHIRImporterResourceProperty(models.Model):
+class FHIRImportResourceProperty(models.Model):
     resource_type = models.ForeignKey(
         FHIRImportResourceType,
         on_delete=models.CASCADE,

@@ -4,7 +4,7 @@ from django.contrib import admin
 
 from corehq.motech.fhir.models import (
     FHIRImportConfig,
-    FHIRImporterResourceProperty,
+    FHIRImportResourceProperty,
     FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
@@ -71,8 +71,8 @@ class FHIRImportConfigAdmin(admin.ModelAdmin):
     list_select_related = ('connection_settings',)
 
 
-class FHIRImporterResourcePropertyInline(admin.TabularInline):
-    model = FHIRImporterResourceProperty
+class FHIRImportResourcePropertyInline(admin.TabularInline):
+    model = FHIRImportResourceProperty
     verbose_name_plural = 'FHIR Importer resource properties'
     fields = ('value_source_config',)
 
@@ -91,7 +91,7 @@ class FHIRImportResourceTypeAdmin(admin.ModelAdmin):
     )
     list_filter = ('import_config__domain',)
     list_select_related = ('import_config',)
-    inlines = [FHIRImporterResourcePropertyInline]
+    inlines = [FHIRImportResourcePropertyInline]
 
     def domain(self, obj):
         return obj.import_config.domain
