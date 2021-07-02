@@ -29,11 +29,6 @@ XMLNS_FHIR = 'http://commcarehq.org/x/fhir/engine-read'
 # case IDs. See https://www.hl7.org/fhir/datatypes.html#Identifier
 SYSTEM_URI_CASE_ID = 'http://commcarehq.org/x/fhir/case-id'
 
-IMPORT_FREQUENCY_DAILY = 'daily'
-IMPORT_FREQUENCY_CHOICES = (
-    (IMPORT_FREQUENCY_DAILY, _('Daily')),
-)
-
 FHIR_DATA_TYPE_LIST_OF_STRING = 'fhir_list_of_string'
 FHIR_DATA_TYPES = (
     FHIR_DATA_TYPE_LIST_OF_STRING,

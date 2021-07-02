@@ -13,12 +13,13 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.const import IMPORT_FREQUENCY_DAILY
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
-from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
+from .const import SYSTEM_URI_CASE_ID, XMLNS_FHIR
 from .models import FHIRImportConfig, FHIRImportResourceType
 
 

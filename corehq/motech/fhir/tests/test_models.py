@@ -9,13 +9,14 @@ from django.test import TestCase
 from nose.tools import assert_in
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.motech.const import IMPORT_FREQUENCY_DAILY
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseProperty as CasePropertyValueSource
 from corehq.motech.value_source import ValueSource
 
-from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
+from ..const import FHIR_VERSION_4_0_1
 from ..models import (
     FHIRImportConfig,
     FHIRImportResourceProperty,
@@ -102,7 +103,7 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
         import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
-            frequency='weekly',
+            frequency='annually',
             owner_id='b0b',
         )
         with self.assertRaises(ValidationError):

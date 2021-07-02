@@ -41,6 +41,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.motech.const import (
+    IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
+)
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import (
@@ -49,12 +53,7 @@ from corehq.motech.value_source import (
     as_value_source,
 )
 
-from .const import (
-    FHIR_VERSION_4_0_1,
-    FHIR_VERSIONS,
-    IMPORT_FREQUENCY_CHOICES,
-    IMPORT_FREQUENCY_DAILY,
-)
+from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
 from .validators import validate_supported_type
 
 
