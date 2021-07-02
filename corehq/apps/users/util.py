@@ -331,7 +331,7 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
                     message=None, fields_changed=None, action=None,
-                    domain_required_for_log=True):
+                    domain_required_for_log=True, bulk_upload_record_id=None):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
@@ -344,6 +344,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
     :param domain_required_for_log: set to False to allow domain less log for specific changes
+    :param bulk_upload_record_id: ID of bulk upload record if changed via bulk upload
     """
     from corehq.apps.users.models import UserHistory
     from corehq.apps.users.model_log import UserModelAction
@@ -369,6 +370,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
         },
         message=message,
         action=action.value,
+        user_upload_record_id=bulk_upload_record_id,
     )
 
 

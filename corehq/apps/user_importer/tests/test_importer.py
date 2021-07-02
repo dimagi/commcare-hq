@@ -47,6 +47,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+        cls.upload_record.save()
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -78,6 +83,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        cls.upload_record.delete()
         cls.domain.delete()
         cls.other_domain.delete()
         cls.patcher.stop()
@@ -116,7 +122,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id='missing')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -132,7 +138,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -159,7 +165,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         result = create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code='unknownsite')],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -171,7 +178,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         # first location should be primary location
@@ -201,7 +208,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -221,7 +228,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -246,7 +253,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's primary location should be loc1
@@ -268,7 +276,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's location should now be loc2
@@ -294,7 +303,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc1.site_code])],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
@@ -309,7 +319,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_commcare_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
-            self.uploading_user
+            self.uploading_user,
+            self.upload_record.pk,
         )
 
         # user's location should now be loc2
@@ -339,7 +350,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(name=1234)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.full_name, "1234")
@@ -354,7 +365,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(name=None)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.full_name, "")
@@ -366,7 +377,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#'})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
@@ -377,7 +388,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'Bb'})
@@ -388,7 +399,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
@@ -399,7 +410,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'play_count': 0})
@@ -411,7 +422,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': 'presto'})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'presto'})
@@ -422,7 +433,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': 'andante'}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
@@ -433,7 +444,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
@@ -444,7 +455,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'tempo': 'andante'})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
@@ -454,7 +465,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
@@ -467,7 +478,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {
@@ -483,7 +494,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {
@@ -500,7 +511,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {
@@ -525,7 +536,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 user_id=self.user.get_id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -546,7 +557,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 user_id=self.user.get_id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -565,7 +576,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {
@@ -585,7 +596,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.metadata, {
@@ -600,7 +611,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
@@ -612,7 +623,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(data={PROFILE_SLUG: bad_id})],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "Could not find profile with id {}".format(bad_id))
@@ -627,7 +638,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(email=email)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.email, email.lower())
@@ -638,7 +649,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
@@ -654,7 +665,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -690,7 +701,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             )],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
@@ -718,7 +729,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(is_active='')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertTrue(self.user.is_active)
@@ -729,7 +740,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec()],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertIsNotNone(self.user)
@@ -739,7 +750,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(user_id=self.user._id, username='')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
 
@@ -749,7 +760,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(username=123)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertIsNotNone(
@@ -762,7 +773,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         user = self.user
@@ -795,7 +806,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(mock_account_confirm_email.call_count, 1)
@@ -815,7 +826,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
@@ -838,7 +849,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                             location_code=[self.loc1.site_code])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         web_user = WebUser.get_by_username(username)
@@ -864,7 +875,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(web_user='a@a.com', role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         web_user = WebUser.get_by_username(username)
@@ -885,7 +896,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(web_user='a@a.com', remove_web_user='True')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         web_user = WebUser.get_by_username(username)
@@ -906,7 +917,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(username=123, domain=self.other_domain.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         commcare_user = CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
@@ -932,7 +943,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
@@ -958,7 +969,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             ],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)  # invite only sent once
@@ -986,9 +997,15 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         cls.domain.save()
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+        cls.upload_record.save()
 
     @classmethod
     def tearDownClass(cls):
+        cls.upload_record.delete()
         cls.domain.delete()
         cls.patcher.stop()
         super().tearDownClass()
@@ -1024,7 +1041,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list(user_spec + self.user_specs),
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
@@ -1039,7 +1056,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list([updated_user_spec]),
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
@@ -1073,9 +1090,10 @@ class TestUserUploadRecord(TestCase):
     def test_user_upload_record(self):
         upload_record = UserUploadRecord(
             domain=self.domain,
-            user_id='5'
+            user_id=self.uploading_user.get_id
         )
         upload_record.save()
+        self.addCleanup(upload_record.delete)
 
         task_result = import_users_and_groups.si(
             self.domain.name,
@@ -1105,8 +1123,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=1,
+        )
+        cls.upload_record.save()
+
     @classmethod
     def tearDownClass(cls):
+        cls.upload_record.delete()
         cls.domain.delete()
         cls.other_domain.delete()
         cls.patcher.stop()
@@ -1166,7 +1191,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec(role='')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertIsNone(self.user_invite)
@@ -1184,7 +1209,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
               'role': self.role.name}],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertIsNotNone(Invitation.objects.filter(email='existing@user.com').first())
@@ -1205,7 +1230,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(first_name='', last_name='')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         # should not be changed
@@ -1224,7 +1249,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(email=email)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user.email, email.lower())
@@ -1240,7 +1265,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
@@ -1260,7 +1285,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
@@ -1269,7 +1294,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(role=self.other_role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.other_role.name)
@@ -1281,7 +1306,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec(role=self.role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user_invite.get_role_name(), self.role.name)
@@ -1291,7 +1316,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec(role=self.other_role.name)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user_invite.get_role_name(), self.other_role.name)
@@ -1305,7 +1330,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(username='a@a.com', remove='True')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         web_user = WebUser.get_by_username(username)
@@ -1325,7 +1350,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec()],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertIsNotNone(self.user_invite)
@@ -1334,7 +1359,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec(remove='True')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertIsNone(self.user_invite)
@@ -1346,7 +1371,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(username=self.uploading_user.username, remove='True')],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         web_user = WebUser.get_by_username(self.uploading_user.username)
@@ -1360,7 +1385,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec()],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(mock_send_activation_email.call_count, 1)
@@ -1378,7 +1403,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
                             )],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertIsNotNone(Invitation.objects.filter(email='123@email.com').first())
@@ -1393,7 +1418,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         membership = self.user.get_domain_membership(self.domain_name)
@@ -1419,7 +1444,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
 
@@ -1436,7 +1461,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         membership = self.user.get_domain_membership(self.domain_name)
@@ -1457,7 +1482,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             True
         )
         self.assertEqual(self.user_invite.supply_point, self.loc1._id)

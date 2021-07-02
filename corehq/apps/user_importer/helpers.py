@@ -25,12 +25,13 @@ class UserChangeLogger(object):
         messages for changes or
         useful info text for user display like names
     """
-    def __init__(self, domain, user, is_new_user, changed_by_user, changed_via):
+    def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
         self.domain = domain
         self.user = user
         self.is_new_user = is_new_user
         self.changed_by_user = changed_by_user
         self.changed_via = changed_via
+        self.upload_record_id = upload_record_id
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
@@ -74,7 +75,8 @@ class UserChangeLogger(object):
                 changed_via=self.changed_via,
                 message=". ".join(self.messages),
                 action=action,
-                fields_changed=fields_changed
+                fields_changed=fields_changed,
+                bulk_upload_record_id=self.upload_record_id,
             )
 
 
@@ -83,12 +85,13 @@ class BaseUserImporter(object):
     Imports a Web/CommCareUser via bulk importer and also handles the logging
     save_log should be called explicitly to save logs, after user is saved
     """
-    def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via):
+    def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, upload_record_id):
         self.user_domain = user_domain
         self.user = user
         self.upload_user = upload_user
         self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
-                                       changed_by_user=upload_user, changed_via=via)
+                                       changed_by_user=upload_user, changed_via=via,
+                                       upload_record_id=upload_record_id)
 
         self.role_updated = False
 

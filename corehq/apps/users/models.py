@@ -81,6 +81,7 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -3102,6 +3103,7 @@ class UserHistory(models.Model):
     message = models.TextField(blank=True, null=True)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         indexes = [
