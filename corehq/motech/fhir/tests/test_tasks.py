@@ -27,7 +27,7 @@ from ..const import (
 from ..models import (
     FHIRImportConfig,
     FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
+    FHIRImportResourceType,
     JSONPathToResourceType,
 )
 from ..tasks import (
@@ -81,13 +81,13 @@ class TestRunImporter(TestCase):
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_import_related_only(self):
-        import_me = FHIRImporterResourceType.objects.create(
+        import_me = FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
             search_params={'status': 'active'},
         )
-        FHIRImporterResourceType.objects.create(
+        FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
@@ -296,7 +296,7 @@ class TestCaseWithResourceType(TestCase):
             domain=DOMAIN,
             name='mother',
         )
-        cls.patient_type = FHIRImporterResourceType.objects.create(
+        cls.patient_type = FHIRImportResourceType.objects.create(
             import_config=cls.import_config,
             name='Patient',
             case_type=cls.mother,
@@ -319,7 +319,7 @@ class TestCaseWithFHIRResources(TestCaseWithResourceType):
             domain=DOMAIN,
             name='referral',
         )
-        cls.service_request_type = FHIRImporterResourceType.objects.create(
+        cls.service_request_type = FHIRImportResourceType.objects.create(
             import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,

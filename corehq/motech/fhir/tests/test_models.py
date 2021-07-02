@@ -19,7 +19,7 @@ from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
 from ..models import (
     FHIRImportConfig,
     FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
+    FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
     JSONPathToResourceType,
@@ -139,7 +139,7 @@ class TestCaseWithReferral(TestCaseWithConnectionSettings):
         super().tearDownClass()
 
 
-class TestFHIRImporterResourceType(TestCaseWithReferral):
+class TestFHIRImportResourceType(TestCaseWithReferral):
 
     @classmethod
     def setUpClass(cls):
@@ -155,7 +155,7 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         super().tearDownClass()
 
     def test_search_params_empty(self):
-        service_request = FHIRImporterResourceType.objects.create(
+        service_request = FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
@@ -163,12 +163,12 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         self.assertEqual(service_request.search_params, {})
 
     def test_related_resource_types(self):
-        service_request = FHIRImporterResourceType.objects.create(
+        service_request = FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
-        patient = FHIRImporterResourceType.objects.create(
+        patient = FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
@@ -186,7 +186,7 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         self.assertEqual(case_type.name, 'mother')
 
     def test_domain(self):
-        service_request = FHIRImporterResourceType.objects.create(
+        service_request = FHIRImportResourceType.objects.create(
             import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
@@ -199,7 +199,7 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.service_request = FHIRImporterResourceType.objects.create(
+        cls.service_request = FHIRImportResourceType.objects.create(
             import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,

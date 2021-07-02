@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='fhirimporterresourcetype',
+            model_name='fhirimportresourcetype',
             name='search_params',
             field=jsonfield.fields.JSONField(blank=True, default=dict),
         ),

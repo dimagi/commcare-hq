@@ -18,7 +18,7 @@ from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
-from .models import FHIRImportConfig, FHIRImporterResourceType
+from .models import FHIRImportConfig, FHIRImportResourceType
 
 
 ParentInfo = namedtuple(
@@ -61,7 +61,7 @@ def run_importer(importer):
 
 def import_resource_type(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     child_cases: List[ParentInfo],
 ):
     try:
@@ -73,7 +73,7 @@ def import_resource_type(
 
 def iter_resources(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
 ) -> Generator:
     searchset_bundle = get_bundle(
         requests,
@@ -91,7 +91,7 @@ def iter_resources(
 
 def import_resource(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     resource: dict,
     child_cases: List[ParentInfo],
 ):
@@ -255,7 +255,7 @@ def get_name(resource):
 
 def import_related(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     resource: dict,
     case_id: str,
     child_cases: List[ParentInfo],

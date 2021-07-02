@@ -334,7 +334,7 @@ class FHIRImportConfig(models.Model):
         return f'{self.connection_settings} ({self.frequency})'
 
 
-class FHIRImporterResourceType(models.Model):
+class FHIRImportResourceType(models.Model):
     """
     Similar to ``FHIRResourceType`` but allows importing different case
     types, with different mappings, from those used by ``FHIRRepeater``
@@ -348,7 +348,7 @@ class FHIRImporterResourceType(models.Model):
     Patients, not all Person resources.
 
     If ``import_related_only`` is ``False`` (the default) , then
-    ``FHIRImporterResourceType`` imports resources filtered by the
+    ``FHIRImportResourceType`` imports resources filtered by the
     ``search_params`` field.
 
     .. note::
@@ -381,8 +381,8 @@ class FHIRImporterResourceType(models.Model):
 
 class JSONPathToResourceType(models.Model):
     """
-    ``JSONPathToResourceType`` maps a ``FHIRImporterResourceType`` to a
-    related ``FHIRImporterResourceType`` by the JSONPath of a property.
+    ``JSONPathToResourceType`` maps a ``FHIRImportResourceType`` to a
+    related ``FHIRImportResourceType`` by the JSONPath of a property.
     e.g. Consider the following ServiceRequest:
 
     .. code-block:: javascript
@@ -403,11 +403,11 @@ class JSONPathToResourceType(models.Model):
 
     .. code-block:: python
 
-        service_request = FHIRImporterResourceType(
+        service_request = FHIRImportResourceType(
             name='ServiceRequest',
             search_params={'status': 'active'},
         )
-        patient = FHIRImporterResourceType(
+        patient = FHIRImportResourceType(
             name='Patient',
             import_related_only=True,
         )
@@ -423,7 +423,7 @@ class JSONPathToResourceType(models.Model):
     "Patient/12345".
     """
     resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
         related_name='jsonpaths_to_related_resource_types',
     )
@@ -433,7 +433,7 @@ class JSONPathToResourceType(models.Model):
 
     # Related resource type to import
     related_resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
     )
 
@@ -450,7 +450,7 @@ class JSONPathToResourceType(models.Model):
 
 class FHIRImporterResourceProperty(models.Model):
     resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
         related_name='properties',
     )

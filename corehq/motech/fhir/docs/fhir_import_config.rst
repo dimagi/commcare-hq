@@ -67,7 +67,7 @@ differences:
 The first difference is that FHIRRepeater and the FHIR API use
 FHIRResourceType instances (rendered as "FHIR Resource Types" in Django
 Admin) to configure mapping; FHIRImportConfig uses
-FHIRImporterResourceType instances ("FHIR Importer Resource Types").
+FHIRImportResourceType instances ("FHIR Import Resource Types").
 
 To see what this looks like, navigate to FHIR > FHIR Importer Resource
 Types, and click "Add FHIR Importer Resource Type".
@@ -94,10 +94,10 @@ resource type will tell you what search parameters are available. (e.g.
 "Import related only" and the "Search params" are applied together, to
 allow you to filter related resources.
 
-There is a second important difference between FHIRImporterResourceType
+There is a second important difference between FHIRImportResourceType
 and FHIRResourceType: With FHIRResourceType, the ValueSource
 configurations are used for *building* a FHIR resource. With
-FHIRImporterResourceType they are used for *navigating* a FHIR resource.
+FHIRImportResourceType they are used for *navigating* a FHIR resource.
 
 So FHIRResourceType might include ValueSource configs for setting a
 Patient's phone number. They might look like this:

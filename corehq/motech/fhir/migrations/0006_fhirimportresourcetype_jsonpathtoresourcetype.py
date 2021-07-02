@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporterResourceType',
+            name='FHIRImportResourceType',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -46,12 +46,12 @@ class Migration(migrations.Migration):
                 ('jsonpath', models.TextField(default='')),
                 ('related_resource_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
-                    to='fhir.FHIRImporterResourceType',
+                    to='fhir.FHIRImportResourceType',
                 )),
                 ('resource_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='jsonpaths_to_related_resource_types',
-                    to='fhir.FHIRImporterResourceType',
+                    to='fhir.FHIRImportResourceType',
                 )),
             ],
         ),

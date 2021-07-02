@@ -5,7 +5,7 @@ from django.contrib import admin
 from corehq.motech.fhir.models import (
     FHIRImportConfig,
     FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
+    FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
     JSONPathToResourceType,
@@ -77,8 +77,8 @@ class FHIRImporterResourcePropertyInline(admin.TabularInline):
     fields = ('value_source_config',)
 
 
-class FHIRImporterResourceTypeAdmin(admin.ModelAdmin):
-    model = FHIRImporterResourceType
+class FHIRImportResourceTypeAdmin(admin.ModelAdmin):
+    model = FHIRImportResourceType
     list_display = (
         'domain',
         'name',
@@ -118,5 +118,5 @@ class JSONPathToResourceTypeAdmin(admin.ModelAdmin):
 
 admin.site.register(FHIRResourceType, FHIRResourceTypeAdmin)
 admin.site.register(FHIRImportConfig, FHIRImportConfigAdmin)
-admin.site.register(FHIRImporterResourceType, FHIRImporterResourceTypeAdmin)
+admin.site.register(FHIRImportResourceType, FHIRImportResourceTypeAdmin)
 admin.site.register(JSONPathToResourceType, JSONPathToResourceTypeAdmin)
