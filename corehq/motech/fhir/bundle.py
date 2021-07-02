@@ -7,10 +7,20 @@ from corehq.motech.requests import json_or_http_error
 
 
 def get_bundle(requests, endpoint=None, *, url=None, **kwargs) -> dict:
+    """
+    Sends a GET request to an API endpoint or a URL and returns the
+    response JSON.
+
+    ``endpoint`` is a relative URL, e.g. 'Patient/'. ``url`` is an
+    absolute URL, e.g. 'https://example.com/fhir/Patient/'
+
+    """
     assert endpoint or url, 'No API endpoint or URL given'
     if endpoint:
         response = requests.get(endpoint, **kwargs)
         return json_or_http_error(response)
+    # Use requests.send_request() so that `url` is not appended to
+    # `requests.base_url`
     response = requests.send_request('GET', url, **kwargs)
     return json_or_http_error(response)
 
