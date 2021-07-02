@@ -272,9 +272,7 @@ def repair_couch_docs(db, missing, get_doc_ids, min_tries):
     for doc_id in missing:
         db.repair(doc_id)
     repaired = missing
-    total_tries += tries
     if log.isEnabledFor(logging.DEBUG):
-        repaired -= missing
         log.debug(f"repaired {len(repaired)} of {to_repair}: {repaired or ''}")
     return missing, total_tries, to_repair
 
@@ -286,7 +284,7 @@ def iteration_parameters(db, doc_type, domain, view_range, group, chunk_size=100
         assert doc_type is None, doc_type
         if domain is not None:
             startkey = [domain]
-            endkey = [domain]
+            endkey = []
         else:
             startkey = []
             endkey = []
