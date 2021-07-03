@@ -162,6 +162,17 @@ class TestClaimServiceRequest(TestCase):
         with self.assertRaises(ServiceRequestNotActive):
             claim_service_request(requests, self.service_request, '0f00')
 
+    def test_service_request_always_412(self):
+        response_412 = ServiceRequestResponse()
+        response_412.status_code = 412
+        requests = Mock()
+        # lambda create a new ServiceRequestResponse so that
+        # ServiceRequestResponse.json() returns a clean service_request:
+        requests.get.side_effect = lambda *a, **kw: ServiceRequestResponse()
+        requests.put.return_value = response_412
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
+
     def test_service_request_has_case_id(self):
         response = ServiceRequestResponse()
         response.service_request['identifier'] = [{
@@ -200,6 +211,10 @@ class ServiceRequestResponse:
         # return by reference so that changes are visible on
         # self.service_request
         return self.service_request
+
+    def raise_for_status(self):
+        if not 200 <= self.status_code < 300:
+            raise HTTPError(f'{self.status_code}: Boom!')
 
 
 class TestImportResource(SimpleTestCase):

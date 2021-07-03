@@ -167,7 +167,7 @@ def import_resource(
     )
 
 
-def claim_service_request(requests, service_request, case_id):
+def claim_service_request(requests, service_request, case_id, attempt=0):
     """
     Uses `ETag`_ to prevent a race condition.
 
@@ -193,9 +193,9 @@ def claim_service_request(requests, service_request, case_id):
     response = requests.put(endpoint, json=service_request, headers=headers)
     if 200 <= response.status_code < 300:
         return service_request
-    if response.status_code == 412:
+    if response.status_code == 412 and attempt < 3:
         # ETag didn't match. Try again.
-        return claim_service_request(requests, service_request, case_id)
+        return claim_service_request(requests, service_request, case_id, attempt + 1)
     else:
         response.raise_for_status()
 
