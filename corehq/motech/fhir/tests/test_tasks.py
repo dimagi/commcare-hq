@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
@@ -12,11 +12,9 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.motech.auth import AuthManager
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
 from ..const import (
@@ -112,103 +110,57 @@ class TestClaimServiceRequest(TestCase):
         'status': 'active',
     }
 
-    def setUp(self):
-        self.no_auth = AuthManager()
-
     def test_service_request_404(self):
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.side_effect = HTTPError('Client Error: 404')
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.side_effect = HTTPError('Client Error: 404')
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_500(self):
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.side_effect = HTTPError('Server Error: 500')
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.side_effect = HTTPError('Server Error: 500')
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_on_hold(self):
         response = ServiceRequestResponse('on-hold')
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.return_value = response
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_completed(self):
         response = ServiceRequestResponse('completed')
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.return_value = response
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_claimed(self):
         response = ServiceRequestResponse()
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.return_value = response
-            requests_put.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            resource = claim_service_request(
-                requests,
-                self.service_request,
-                '0f00',
-            )
-            self.assertEqual(resource, response.service_request)
+        requests = Mock()
+        requests.get.return_value = response
+        requests.put.return_value = response
+        resource = claim_service_request(
+            requests,
+            self.service_request,
+            '0f00',
+        )
+        self.assertEqual(resource, response.service_request)
 
     def test_service_request_412(self):
         response_active = ServiceRequestResponse()
         response_on_hold = ServiceRequestResponse('on-hold')
         response_412 = ServiceRequestResponse()
         response_412.status_code = 412
-
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.side_effect = [
-                response_active,  # First call: Ready to be claimed
-                response_on_hold,  # Recursion: Claimed by other CHIS
-            ]
-            requests_put.return_value = response_412
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.side_effect = [
+            response_active,  # First call: Ready to be claimed
+            response_on_hold,  # Recursion: Claimed by other CHIS
+        ]
+        requests.put.return_value = response_412
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_has_case_id(self):
         response = ServiceRequestResponse()
@@ -216,27 +168,20 @@ class TestClaimServiceRequest(TestCase):
             'system': SYSTEM_URI_CASE_ID,
             'value': 'abcde',
         }]
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.return_value = response
-            requests_put.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            resource = claim_service_request(
-                requests,
-                self.service_request,
-                '0f00',
-            )
-            self.assertEqual(
-                resource['identifier'], [{
-                    'system': SYSTEM_URI_CASE_ID,
-                    'value': 'abcde',
-                }],
-            )
+        requests = Mock()
+        requests.get.return_value = response
+        requests.put.return_value = response
+        resource = claim_service_request(
+            requests,
+            self.service_request,
+            '0f00',
+        )
+        self.assertEqual(
+            resource['identifier'], [{
+                'system': SYSTEM_URI_CASE_ID,
+                'value': 'abcde',
+            }],
+        )
 
 
 class ServiceRequestResponse:
@@ -252,6 +197,8 @@ class ServiceRequestResponse:
         }
 
     def json(self):
+        # return by reference so that changes are visible on
+        # self.service_request
         return self.service_request
 
 
