@@ -1,6 +1,3 @@
-from django.utils.translation import ugettext_lazy as _
-
-
 FHIR_VERSION_4_0_1 = '4.0.1'
 FHIR_VERSIONS = [
     (FHIR_VERSION_4_0_1, 'R4'),
