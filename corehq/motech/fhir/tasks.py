@@ -13,7 +13,11 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.const import IMPORT_FREQUENCY_DAILY
+from corehq.motech.const import (
+    IMPORT_FREQUENCY_DAILY,
+    IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
+)
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
@@ -37,6 +41,32 @@ def run_daily_importers():
     for importer in (
         FHIRImportConfig.objects.filter(
             frequency=IMPORT_FREQUENCY_DAILY
+        ).select_related('connection_settings').all()
+    ):
+        run_importer(importer)
+
+
+@periodic_task(
+    run_every=crontab(hour=5, minute=5, day_of_week=6),  # Saturday
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def run_weekly_importers():
+    for importer in (
+        FHIRImportConfig.objects.filter(
+            frequency=IMPORT_FREQUENCY_WEEKLY
+        ).select_related('connection_settings').all()
+    ):
+        run_importer(importer)
+
+
+@periodic_task(
+    run_every=crontab(hour=5, minute=5, day_of_month=1),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def run_monthly_importers():
+    for importer in (
+        FHIRImportConfig.objects.filter(
+            frequency=IMPORT_FREQUENCY_MONTHLY
         ).select_related('connection_settings').all()
     ):
         run_importer(importer)
