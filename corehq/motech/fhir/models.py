@@ -330,6 +330,9 @@ class FHIRImporter(models.Model):
             models.Index(fields=['frequency']),
         ]
 
+    def __str__(self):
+        return f'{self.connection_settings} ({self.frequency})'
+
 
 class FHIRImporterResourceType(models.Model):
     """
@@ -366,7 +369,10 @@ class FHIRImporterResourceType(models.Model):
     case_type = models.ForeignKey(CaseType, on_delete=models.CASCADE)
 
     import_related_only = models.BooleanField(default=False)
-    search_params = JSONField(default=dict)
+    search_params = JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.name
 
     @property
     def domain(self):
@@ -430,6 +436,13 @@ class JSONPathToResourceType(models.Model):
         FHIRImporterResourceType,
         on_delete=models.CASCADE,
     )
+
+    def __str__(self):
+        jsonpath = self.jsonpath
+        if jsonpath.startswith('$.'):
+            jsonpath = jsonpath[2:]
+        return (f'{self.resource_type.name}.{jsonpath} → '
+                f'{self.related_resource_type.name}')
 
 
 class FHIRImporterResourceProperty(models.Model):
