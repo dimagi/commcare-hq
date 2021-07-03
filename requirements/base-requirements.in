@@ -76,7 +76,7 @@ markdown==2.2.1
 mock==2.0.0
 openpyxl~=3.0
 phonenumberslite~=8.12
-Pillow>=8.1.2
+Pillow>=8.2.0
 polib==1.1.0
 prometheus-client==0.7.1
 psycogreen~=1.0
@@ -99,6 +99,7 @@ quickcache~=0.5
 redis==3.5.3
 reportlab==3.5.53
 requests_oauthlib
+requests_toolbelt==0.9.1
 requests~=2.20
 schema
 sentry-sdk==0.19.5
