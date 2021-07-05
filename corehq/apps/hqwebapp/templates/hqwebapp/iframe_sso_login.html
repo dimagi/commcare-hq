@@ -1,0 +1,31 @@
+{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <title>{% trans "Please login in other window!" %}</title>
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    {% include 'hqwebapp/includes/less.html' %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+  </head>
+  <body>
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    <div class="hq-container">
+      <div class="container-fluid">
+        <div class="page-header">
+          <h1>{% trans "Please re-authenticate in other window" %}</h1>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <p>
+              {% blocktrans %}
+                We've opened a new window for you to re-authenticate with
+                Single Sign-On. Once you have re-authenticated there, you
+                may close this popup. Thank you!
+              {% endblocktrans %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

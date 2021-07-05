@@ -543,6 +543,13 @@ def iframe_domain_login_new_window(request):
     return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
+@xframe_options_sameorigin
+@location_safe
+@login_required
+def iframe_sso_login(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_sso_login.html')(request)
+
+
 @login_and_domain_required
 @track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
