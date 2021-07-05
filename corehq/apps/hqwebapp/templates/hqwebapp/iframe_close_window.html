@@ -6,6 +6,13 @@
     <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
     {% include 'hqwebapp/includes/less.html' %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
+    <script type="application/javascript">
+      console.log('hello, testing window situation');
+      console.log('this is window.opener:');
+      console.log(window.opener);
+      console.log()
+
+    </script>
   </head>
   <body>
     <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
