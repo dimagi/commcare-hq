@@ -94,8 +94,9 @@ class TestRunImporter(TestCase):
             case_type=self.mother,
             import_related_only=True,  # Don't import me
         )
-        with patch('corehq.motech.fhir.tasks.import_resource_type') as import_resource_type:
-            run_importer(self.import_config)
+        with patch('corehq.motech.fhir.tasks.import_resource_type') \
+                as import_resource_type:
+            run_importer(self.import_config.id)
 
             import_resource_type.assert_called_once()
             call_arg_2 = import_resource_type.call_args[0][1]

@@ -38,12 +38,12 @@ ParentInfo = namedtuple(
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def run_daily_importers():
-    for importer in (
-        FHIRImportConfig.objects.filter(
-            frequency=IMPORT_FREQUENCY_DAILY
-        ).select_related('connection_settings').all()
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_DAILY)
+            .values_list('id', flat=True)
     ):
-        run_importer.delay(importer)
+        run_importer.delay(importer_id)
 
 
 @periodic_task(
@@ -51,12 +51,12 @@ def run_daily_importers():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def run_weekly_importers():
-    for importer in (
-        FHIRImportConfig.objects.filter(
-            frequency=IMPORT_FREQUENCY_WEEKLY
-        ).select_related('connection_settings').all()
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_WEEKLY)
+            .values_list('id', flat=True)
     ):
-        run_importer.delay(importer)
+        run_importer.delay(importer_id)
 
 
 @periodic_task(
@@ -64,22 +64,27 @@ def run_weekly_importers():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def run_monthly_importers():
-    for importer in (
-        FHIRImportConfig.objects.filter(
-            frequency=IMPORT_FREQUENCY_MONTHLY
-        ).select_related('connection_settings').all()
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_MONTHLY)
+            .values_list('id', flat=True)
     ):
-        run_importer.delay(importer)
+        run_importer.delay(importer_id)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
-def run_importer(importer):
+@task(queue='background_queue', ignore_result=True)
+def run_importer(importer_id):
     """
     Poll remote API and import resources as CommCare cases.
 
     ServiceRequest resources are treated specially for workflows that
     handle referrals across systems like CommCare.
     """
+    importer = (
+        FHIRImportConfig.objects
+        .select_related('connection_settings')
+        .get(pk=importer_id)
+    )
     if not toggles.FHIR_INTEGRATION.enabled(importer.domain):
         return
     requests = importer.connection_settings.get_requests()
