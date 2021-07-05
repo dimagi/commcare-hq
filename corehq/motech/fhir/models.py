@@ -1,19 +1,58 @@
+"""
+FHIR Models
+===========
+
+FHIRResourceType maps a CommCare case type to a FHIR resource type. It
+is used by FHIRRepeater and the FHIR API for building a FHIR resource
+from case properties and other sources of data.
+
+FHIRResourceProperty determines how to set the value of a property of a
+FHIR resource. FHIRResourceType has many FHIRResourceProperty instances.
+
+For more information, see
+:doc:`the CommCare FHIR Integration docs <docs/index>`.
+
+Importing FHIR data involves more models. The primary one is
+FHIRImportResourceType. It serves the same purpose as FHIRResourceType,
+but for incoming data.
+
+FHIRImportResourceProperty determines how to import the value of a FHIR
+resource property.
+
+ResourceTypeRelationship tracks how to import related resources.
+
+FHIRImportConfig stores information about the remote FHIR API.
+
+For more information, see :doc:`docs/fhir_import_config`.
+
+"""
 import json
 import os
 from typing import Optional, Union
 
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 
+from couchdbkit import ResourceNotFound
 from jsonfield import JSONField
-from jsonschema import RefResolver, ValidationError, validate
+from jsonschema import RefResolver
+from jsonschema import ValidationError as JSONValidationError
+from jsonschema import validate
 
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.motech.const import (
+    IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
+)
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.fhir import serializers  # noqa # pylint: disable=unused-import
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -24,8 +63,10 @@ from corehq.motech.value_source import (
 from .const import (
     FHIR_VERSION_4_0_1,
     FHIR_VERSIONS,
-    IMPORT_FREQUENCY_CHOICES,
-    IMPORT_FREQUENCY_DAILY,
+    OWNER_TYPE_CHOICES,
+    OWNER_TYPE_GROUP,
+    OWNER_TYPE_LOCATION,
+    OWNER_TYPE_USER,
 )
 from .validators import validate_supported_type
 
@@ -79,7 +120,7 @@ class FHIRResourceType(models.Model):
                                referrer=schema)
         try:
             validate(fhir_resource, schema, resolver=resolver)
-        except ValidationError as err:
+        except JSONValidationError as err:
             raise ConfigurationError(
                 f'Validation failed for resource {fhir_resource!r}: {err}'
             ) from err
@@ -305,8 +346,8 @@ def get_resource_type_or_none(case, fhir_version) -> Optional[FHIRResourceType]:
         return None
 
 
-class FHIRImporter(models.Model):
-    domain = models.CharField(max_length=127, db_index=True)
+class FHIRImportConfig(models.Model):
+    domain = models.CharField(max_length=127)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
         on_delete=models.PROTECT,
@@ -321,8 +362,9 @@ class FHIRImporter(models.Model):
         choices=IMPORT_FREQUENCY_CHOICES,
         default=IMPORT_FREQUENCY_DAILY,
     )
-    # ID of user or location that will own imported cases
-    owner_id = models.CharField(max_length=32, null=False, blank=False)
+    # ID of group, location or user that will own imported cases
+    owner_id = models.CharField(max_length=36, null=False, blank=False)
+    owner_type = models.CharField(max_length=12, choices=OWNER_TYPE_CHOICES)
 
     class Meta:
         indexes = [
@@ -333,14 +375,41 @@ class FHIRImporter(models.Model):
     def __str__(self):
         return f'{self.connection_settings} ({self.frequency})'
 
+    def clean(self):
+        super().clean()
+        try:
+            self.get_owner()
+        except ConfigurationError as err:
+            raise DjangoValidationError(str(err)) from err
 
-class FHIRImporterResourceType(models.Model):
+    def get_owner(self):
+        if not self.owner_id:
+            raise ConfigurationError('Owner ID missing')
+        try:
+            if self.owner_type == OWNER_TYPE_GROUP:
+                return Group.get(self.owner_id)
+            elif self.owner_type == OWNER_TYPE_LOCATION:
+                return SQLLocation.objects.get(location_id=self.owner_id)
+            elif self.owner_type == OWNER_TYPE_USER:
+                user = CouchUser.get_by_user_id(self.owner_id)
+                if user:
+                    return user
+                else:
+                    raise ResourceNotFound()
+            else:
+                raise ConfigurationError(f'Unknown owner type {self.owner_type!r}')
+        except (ResourceNotFound, SQLLocation.DoesNotExist):
+            raise ConfigurationError(f'{self.owner_type.capitalize()} '
+                                     f'{self.owner_id!r} does not exist')
+
+
+class FHIRImportResourceType(models.Model):
     """
     Similar to ``FHIRResourceType`` but allows importing different case
     types, with different mappings, from those used by ``FHIRRepeater``
     and the FHIR API.
 
-    ``import_related_only`` determines whether the ``FHIRImporter``
+    ``import_related_only`` determines whether the ``FHIRImportConfig``
     searches the remote service for instances, or only imports instances
     related to the resource types it is interested in. e.g. Only import
     the Patients of imported ServiceRequests, not all Patients. Or only
@@ -348,7 +417,7 @@ class FHIRImporterResourceType(models.Model):
     Patients, not all Person resources.
 
     If ``import_related_only`` is ``False`` (the default) , then
-    ``FHIRImporterResourceType`` imports resources filtered by the
+    ``FHIRImportResourceType`` imports resources filtered by the
     ``search_params`` field.
 
     .. note::
@@ -357,11 +426,11 @@ class FHIRImporterResourceType(models.Model):
        empty, then all resources of that type will be imported.
 
     See the ``jsonpath_to_related_resource_type`` related name defined
-    in ``JSONPathToResourceType`` for details of how related resource
+    in ``ResourceTypeRelationship`` for details of how related resource
     types are set.
     """
-    fhir_importer = models.ForeignKey(
-        FHIRImporter,
+    import_config = models.ForeignKey(
+        FHIRImportConfig,
         on_delete=models.CASCADE,
         related_name='resource_types',
     )
@@ -376,13 +445,23 @@ class FHIRImporterResourceType(models.Model):
 
     @property
     def domain(self):
-        return self.fhir_importer.domain
+        return self.import_config.domain
+
+    def iter_case_property_value_sources(self):
+        name_properties = {"name", "case_name"}
+        readonly = set(KNOWN_CASE_PROPERTIES) - name_properties | {'case_id'}
+        for prop in self.properties.all():
+            if 'case_property' in prop.value_source_config:
+                case_property = prop.value_source_config['case_property']
+                if case_property in readonly:
+                    continue
+                yield prop.get_value_source()
 
 
-class JSONPathToResourceType(models.Model):
+class ResourceTypeRelationship(models.Model):
     """
-    ``JSONPathToResourceType`` maps a ``FHIRImporterResourceType`` to a
-    related ``FHIRImporterResourceType`` by the JSONPath of a property.
+    ``ResourceTypeRelationship`` maps a ``FHIRImportResourceType`` to a
+    related ``FHIRImportResourceType`` by the JSONPath of a property.
     e.g. Consider the following ServiceRequest:
 
     .. code-block:: javascript
@@ -403,15 +482,15 @@ class JSONPathToResourceType(models.Model):
 
     .. code-block:: python
 
-        service_request = FHIRImporterResourceType(
+        service_request = FHIRImportResourceType(
             name='ServiceRequest',
             search_params={'status': 'active'},
         )
-        patient = FHIRImporterResourceType(
+        patient = FHIRImportResourceType(
             name='Patient',
             import_related_only=True,
         )
-        service_request_patient = JSONPathToResourceType(
+        service_request_patient = ResourceTypeRelationship(
             resource_type=service_request,
             jsonpath='$.subject.reference',
             related_resource_type=patient,
@@ -423,7 +502,7 @@ class JSONPathToResourceType(models.Model):
     "Patient/12345".
     """
     resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
         related_name='jsonpaths_to_related_resource_types',
     )
@@ -433,7 +512,7 @@ class JSONPathToResourceType(models.Model):
 
     # Related resource type to import
     related_resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
     )
 
@@ -448,9 +527,9 @@ class JSONPathToResourceType(models.Model):
                 f'{self.related_resource_type.name}')
 
 
-class FHIRImporterResourceProperty(models.Model):
+class FHIRImportResourceProperty(models.Model):
     resource_type = models.ForeignKey(
-        FHIRImporterResourceType,
+        FHIRImportResourceType,
         on_delete=models.CASCADE,
         related_name='properties',
     )

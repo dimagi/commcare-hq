@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
@@ -12,11 +12,9 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.motech.auth import AuthManager
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
 
 from ..const import (
@@ -25,10 +23,10 @@ from ..const import (
     SYSTEM_URI_CASE_ID,
 )
 from ..models import (
-    FHIRImporter,
-    FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
-    JSONPathToResourceType,
+    FHIRImportConfig,
+    FHIRImportResourceProperty,
+    FHIRImportResourceType,
+    ResourceTypeRelationship,
 )
 from ..tasks import (
     ParentInfo,
@@ -36,12 +34,15 @@ from ..tasks import (
     build_case_block,
     claim_service_request,
     create_parent_indices,
+    get_case_by_external_id,
+    get_case_by_id,
     get_case_id_or_none,
     get_caseblock_kwargs,
     get_name,
     import_related,
     import_resource,
     run_importer,
+    validate_parent_ref,
 )
 
 DOMAIN = 'test-domain'
@@ -57,7 +58,7 @@ class TestRunImporter(TestCase):
             name='Test ConnectionSettings',
             url='https://example.com/api/',
         )
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             fhir_version=FHIR_VERSION_4_0_1,
@@ -75,26 +76,27 @@ class TestRunImporter(TestCase):
     def tearDownClass(cls):
         cls.referral.delete()
         cls.mother.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         cls.conn.delete()
         super().tearDownClass()
 
     @flag_enabled('FHIR_INTEGRATION')
     def test_import_related_only(self):
-        import_me = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        import_me = FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
             search_params={'status': 'active'},
         )
-        FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
             import_related_only=True,  # Don't import me
         )
-        with patch('corehq.motech.fhir.tasks.import_resource_type') as import_resource_type:
-            run_importer(self.fhir_importer)
+        with patch('corehq.motech.fhir.tasks.import_resource_type') \
+                as import_resource_type:
+            run_importer(self.import_config.id)
 
             import_resource_type.assert_called_once()
             call_arg_2 = import_resource_type.call_args[0][1]
@@ -109,103 +111,68 @@ class TestClaimServiceRequest(TestCase):
         'status': 'active',
     }
 
-    def setUp(self):
-        self.no_auth = AuthManager()
-
     def test_service_request_404(self):
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.side_effect = HTTPError('Client Error: 404')
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.side_effect = HTTPError('Client Error: 404')
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_500(self):
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.side_effect = HTTPError('Server Error: 500')
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(HTTPError):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.side_effect = HTTPError('Server Error: 500')
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_on_hold(self):
         response = ServiceRequestResponse('on-hold')
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.return_value = response
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_completed(self):
         response = ServiceRequestResponse('completed')
-        with patch.object(Requests, 'get') as requests_get:
-            requests_get.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+        requests = Mock()
+        requests.get.return_value = response
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_claimed(self):
         response = ServiceRequestResponse()
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.return_value = response
-            requests_put.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            resource = claim_service_request(
-                requests,
-                self.service_request,
-                '0f00',
-            )
-            self.assertEqual(resource, response.service_request)
+        requests = Mock()
+        requests.get.return_value = response
+        requests.put.return_value = response
+        resource = claim_service_request(
+            requests,
+            self.service_request,
+            '0f00',
+        )
+        self.assertEqual(resource, response.service_request)
 
     def test_service_request_412(self):
         response_active = ServiceRequestResponse()
         response_on_hold = ServiceRequestResponse('on-hold')
         response_412 = ServiceRequestResponse()
         response_412.status_code = 412
+        requests = Mock()
+        requests.get.side_effect = [
+            response_active,  # First call: Ready to be claimed
+            response_on_hold,  # Recursion: Claimed by other CHIS
+        ]
+        requests.put.return_value = response_412
+        with self.assertRaises(ServiceRequestNotActive):
+            claim_service_request(requests, self.service_request, '0f00')
 
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.side_effect = [
-                response_active,  # First call: Ready to be claimed
-                response_on_hold,  # Recursion: Claimed by other CHIS
-            ]
-            requests_put.return_value = response_412
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            with self.assertRaises(ServiceRequestNotActive):
-                claim_service_request(requests, self.service_request, '0f00')
+    def test_service_request_always_412(self):
+        response_412 = ServiceRequestResponse()
+        response_412.status_code = 412
+        requests = Mock()
+        # lambda create a new ServiceRequestResponse so that
+        # ServiceRequestResponse.json() returns a clean service_request:
+        requests.get.side_effect = lambda *a, **kw: ServiceRequestResponse()
+        requests.put.return_value = response_412
+        with self.assertRaises(HTTPError):
+            claim_service_request(requests, self.service_request, '0f00')
 
     def test_service_request_has_case_id(self):
         response = ServiceRequestResponse()
@@ -213,27 +180,20 @@ class TestClaimServiceRequest(TestCase):
             'system': SYSTEM_URI_CASE_ID,
             'value': 'abcde',
         }]
-        with patch.object(Requests, 'get') as requests_get, \
-                patch.object(Requests, 'put') as requests_put:
-            requests_get.return_value = response
-            requests_put.return_value = response
-            requests = Requests(
-                DOMAIN,
-                'https://example.com/api',
-                auth_manager=self.no_auth,
-                logger=lambda level, entry: None,
-            )
-            resource = claim_service_request(
-                requests,
-                self.service_request,
-                '0f00',
-            )
-            self.assertEqual(
-                resource['identifier'], [{
-                    'system': SYSTEM_URI_CASE_ID,
-                    'value': 'abcde',
-                }],
-            )
+        requests = Mock()
+        requests.get.return_value = response
+        requests.put.return_value = response
+        resource = claim_service_request(
+            requests,
+            self.service_request,
+            '0f00',
+        )
+        self.assertEqual(
+            resource['identifier'], [{
+                'system': SYSTEM_URI_CASE_ID,
+                'value': 'abcde',
+            }],
+        )
 
 
 class ServiceRequestResponse:
@@ -249,7 +209,13 @@ class ServiceRequestResponse:
         }
 
     def json(self):
+        # return by reference so that changes are visible on
+        # self.service_request
         return self.service_request
+
+    def raise_for_status(self):
+        if not 200 <= self.status_code < 300:
+            raise HTTPError(f'{self.status_code}: Boom!')
 
 
 class TestImportResource(SimpleTestCase):
@@ -287,7 +253,7 @@ class TestCaseWithResourceType(TestCase):
             name='Test ConnectionSettings',
             url='https://example.com/api/',
         )
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             fhir_version=FHIR_VERSION_4_0_1,
@@ -296,8 +262,8 @@ class TestCaseWithResourceType(TestCase):
             domain=DOMAIN,
             name='mother',
         )
-        cls.patient_type = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+        cls.patient_type = FHIRImportResourceType.objects.create(
+            import_config=cls.import_config,
             name='Patient',
             case_type=cls.mother,
         )
@@ -305,7 +271,7 @@ class TestCaseWithResourceType(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.mother.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         cls.conn.delete()
         super().tearDownClass()
 
@@ -319,8 +285,8 @@ class TestCaseWithFHIRResources(TestCaseWithResourceType):
             domain=DOMAIN,
             name='referral',
         )
-        cls.service_request_type = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+        cls.service_request_type = FHIRImportResourceType.objects.create(
+            import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,
         )
@@ -350,7 +316,7 @@ class TestCaseWithFHIRResources(TestCaseWithResourceType):
 class TestImportRelated(TestCaseWithFHIRResources):
 
     def test_import_related_calls_get_resource_with_reference(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,
@@ -370,7 +336,7 @@ class TestImportRelated(TestCaseWithFHIRResources):
             self.assertEqual(call_arg_2, 'Patient/12345')
 
     def test_import_related_is_parent(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,
@@ -395,7 +361,7 @@ class TestImportRelated(TestCaseWithFHIRResources):
             )])
 
     def test_import_related_is_not_parent(self):
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=self.service_request_type,
             jsonpath='$.subject.reference',
             related_resource_type=self.patient_type,
@@ -439,6 +405,102 @@ class TestGetCaseIDOrNone(SimpleTestCase):
         self.assertEqual(get_case_id_or_none(resource), 'abc123')
 
 
+class TestGetCaseById(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        self.case_id = str(uuid4())
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=self.case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+            }
+        ))
+
+    def test_case_id_not_found(self):
+        case = get_case_by_id(DOMAIN, '12345')
+        self.assertIsNone(case)
+
+    def test_domain_is_different(self):
+        case = get_case_by_id('not-the-domain', self.case_id)
+        self.assertIsNone(case)
+
+    def test_case_is_deleted(self):
+        case = get_case_by_id(DOMAIN, self.case_id)
+        case.delete()
+
+        case = get_case_by_id(DOMAIN, self.case_id)
+        self.assertIsNone(case)
+
+    def test_happy_path(self):
+        case = get_case_by_id(DOMAIN, self.case_id)
+        self.assertEqual(case.name, 'Alice APPLE')
+
+
+class TestGetCaseByExternalId(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        case_id = str(uuid4())
+        self.external_id = str(uuid4())
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case_id,
+            attrs={
+                'create': True,
+                'case_type': 'mother',
+                'case_name': 'Alice APPLE',
+                'owner_id': 'b0b',
+                'external_id': self.external_id,
+            }
+        ))
+
+    def test_external_id_not_found(self):
+        case = get_case_by_external_id(DOMAIN, '67890', 'mother')
+        self.assertIsNone(case)
+
+    def test_domain_is_different(self):
+        case = get_case_by_external_id('not-the-domain', self.external_id, 'mother')
+        self.assertIsNone(case)
+
+    def test_case_type_is_different(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'father')
+        self.assertIsNone(case)
+
+    def test_case_is_deleted(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        case.delete()
+
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        self.assertIsNone(case)
+
+    def test_happy_path(self):
+        case = get_case_by_external_id(DOMAIN, self.external_id, 'mother')
+        self.assertEqual(case.name, 'Alice APPLE')
+
+
 class TestGetName(SimpleTestCase):
 
     def test_name_text(self):
@@ -480,11 +542,33 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'text': 'Alice APPLE',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
                 'case_property': 'case_name',
+                'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
+                'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient_type, resource),
+            {'case_name': 'Alice Amelia Anna', 'update': {}},
+        )
+
+    def test_update_name(self):
+        resource = {
+            'name': [{
+                'given': ['Alice', 'Amelia', 'Anna'],
+                'family': 'Apple',
+                'text': 'Alice APPLE',
+            }],
+        }
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': '$.name[0].given',
+                'case_property': 'name',
                 'external_data_type': FHIR_DATA_TYPE_LIST_OF_STRING,
                 'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
             }
@@ -513,7 +597,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'text': 'John',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
@@ -534,14 +618,14 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'value': '555-1234',
             }],
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].system',
                 'value': 'phone',
             }
         )
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].value',
@@ -560,17 +644,10 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
                 'value': '12345'
             }]
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
-                'jsonpath': '$.identifier[0].system',
-                'value': SYSTEM_URI_CASE_ID,
-            }
-        )
-        FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient_type,
-            value_source_config={
-                'jsonpath': '$.identifier[0].value',
+                'jsonpath': f"$.identifier[?system='{SYSTEM_URI_CASE_ID}'].value",
                 'case_property': 'case_id',
             }
         )
@@ -583,7 +660,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
         resource = {
             'id': '12345',
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.id',
@@ -593,6 +670,82 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
         self.assertEqual(
             get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': '', 'update': {}},
+        )
+
+    def test_readonly(self):
+        resource = {
+            'extension': [
+                {
+                    'url': 'https://example.com/commcare/case_type',
+                    'value': 'foo',
+                },
+                {
+                    'url': 'https://example.com/commcare/type',
+                    'value': 'bar',
+                },
+                {
+                    'url': 'https://example.com/commcare/user_id',
+                    'value': '12345',
+                },
+                {
+                    'url': 'https://example.com/commcare/owner_id',
+                    'value': '12345',
+                },
+                {
+                    'url': 'https://example.com/commcare/opened_on',
+                    'value': '2021-07-02T17:00:00.000Z',
+                },
+                {
+                    'url': 'https://example.com/commcare/this_is_fine',
+                    'value': 'baz',
+                },
+            ],
+        }
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/case_type'].value",
+                'case_property': 'case_type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/type'].value",
+                'case_property': 'type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/user_id'].value",
+                'case_property': 'user_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/owner_id'].value",
+                'case_property': 'owner_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/opened_on'].value",
+                'case_property': 'opened_on',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.patient_type,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/this_is_fine'].value",
+                'case_property': 'this_is_fine',
+            }
+        )
+        self.assertEqual(
+            get_caseblock_kwargs(self.patient_type, resource),
+            {'case_name': '', 'update': {'this_is_fine': 'baz'}},
         )
 
 
@@ -613,8 +766,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         delete_all_cases()
 
     def test_resource_has_case_id(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -642,8 +795,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, case_id)
 
     def test_resource_has_case_id_in_other_domain(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         with other_domain_factory('other-test-domain') as factory:
             factory.create_or_update_case(CaseStructure(
@@ -672,8 +825,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_resource_has_external_id(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -699,8 +852,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, case_id)
 
     def test_resource_has_external_id_in_other_domain(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         with other_domain_factory('other-test-domain') as factory:
             factory.create_or_update_case(CaseStructure(
@@ -727,8 +880,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_same_external_id_different_case_type(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -754,8 +907,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_resource_is_new(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         resource = {
             'id': '12345',
@@ -774,7 +927,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }],
             'resourceType': 'Patient',
         }
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
@@ -783,7 +936,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
                 'commcare_data_type': COMMCARE_DATA_TYPE_TEXT,
             }
         )
-        FHIRImporterResourceProperty.objects.create(
+        FHIRImportResourceProperty.objects.create(
             resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': "$.telecom[?system='phone'].value",
@@ -801,6 +954,33 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.external_id, '12345')
         self.assertEqual(case_block.case_name, 'Alice Amelia Anna')
         self.assertEqual(case_block.update, {'phone_number': '555-1234'})
+
+
+class TestValidateParentRef(TestCaseWithFHIRResources):
+
+    def test_bad_parent_ref(self):
+        parent_ref = '12345'
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_none_parent_ref(self):
+        parent_ref = None
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_bad_resource_type(self):
+        parent_ref = 'Practitioner/67890'
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_list_parent_ref(self):
+        parent_ref = ['Practitioner/67890', 'Patient/12345']
+        with self.assertRaises(ConfigurationError):
+            validate_parent_ref(parent_ref, self.patient_type)
+
+    def test_good_parent_ref(self):
+        parent_ref = 'Patient/12345'
+        validate_parent_ref(parent_ref, self.patient_type)
 
 
 class TestCreateParentIndices(TestCaseWithFHIRResources):
@@ -835,32 +1015,8 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
         child_cases = []
         with patch('corehq.motech.fhir.tasks.submit_case_blocks') as \
                 submit_case_blocks:
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
             submit_case_blocks.assert_not_called()
-
-    def test_bad_parent_ref(self):
-        parent_ref = '12345'
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
-
-    def test_none_parent_ref(self):
-        parent_ref = None
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
-
-    def test_bad_resource_type(self):
-        parent_ref = 'Practitioner/12345'
-        child_cases = [
-            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
-        ]
-        with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
 
     def test_parent_case_missing(self):
         parent_ref = 'Patient/67890'
@@ -868,7 +1024,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
             ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
         ]
         with self.assertRaises(ConfigurationError):
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
     def test_submit_case_blocks(self):
         index_xml = (
@@ -884,7 +1040,7 @@ class TestCreateParentIndices(TestCaseWithFHIRResources):
         ]
         with patch('corehq.motech.fhir.tasks.'
                    'submit_case_blocks') as submit_case_blocks:
-            create_parent_indices(self.fhir_importer, child_cases)
+            create_parent_indices(self.import_config, child_cases)
 
             ([case_block], domain), kwargs = submit_case_blocks.call_args
             self.assertIn(index_xml, case_block)

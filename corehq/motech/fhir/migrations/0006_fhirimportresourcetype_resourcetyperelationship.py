@@ -7,12 +7,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('data_dictionary', '0007_property_type_choices'),
-        ('fhir', '0005_fhirimporter'),
+        ('fhir', '0005_fhirimportconfig'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporterResourceType',
+            name='FHIRImportResourceType',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -27,15 +27,15 @@ class Migration(migrations.Migration):
                     on_delete=django.db.models.deletion.CASCADE,
                     to='data_dictionary.CaseType',
                 )),
-                ('fhir_importer', models.ForeignKey(
+                ('import_config', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='resource_types',
-                    to='fhir.FHIRImporter',
+                    to='fhir.FHIRImportConfig',
                 )),
             ],
         ),
         migrations.CreateModel(
-            name='JSONPathToResourceType',
+            name='ResourceTypeRelationship',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -46,12 +46,12 @@ class Migration(migrations.Migration):
                 ('jsonpath', models.TextField(default='')),
                 ('related_resource_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
-                    to='fhir.FHIRImporterResourceType',
+                    to='fhir.FHIRImportResourceType',
                 )),
                 ('resource_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='jsonpaths_to_related_resource_types',
-                    to='fhir.FHIRImporterResourceType',
+                    to='fhir.FHIRImportResourceType',
                 )),
             ],
         ),

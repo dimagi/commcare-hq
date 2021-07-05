@@ -9,20 +9,27 @@ from django.test import TestCase
 from nose.tools import assert_in
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.users.models import CommCareUser
+from corehq.motech.const import IMPORT_FREQUENCY_DAILY
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseProperty as CasePropertyValueSource
 from corehq.motech.value_source import ValueSource
 
-from ..const import FHIR_VERSION_4_0_1, IMPORT_FREQUENCY_DAILY
+from ..const import (
+    FHIR_VERSION_4_0_1,
+    OWNER_TYPE_GROUP,
+    OWNER_TYPE_LOCATION,
+    OWNER_TYPE_USER,
+)
 from ..models import (
-    FHIRImporter,
-    FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
+    FHIRImportConfig,
+    FHIRImportResourceProperty,
+    FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
-    JSONPathToResourceType,
+    ResourceTypeRelationship,
 )
 
 DOMAIN = 'test-domain'
@@ -45,76 +52,164 @@ class TestCaseWithConnectionSettings(TestCase):
         super().tearDownClass()
 
 
-class TestFHIRImporter(TestCaseWithConnectionSettings):
+class TestFHIRImportConfig(TestCaseWithConnectionSettings):
 
-    def tearDown(self):
-        FHIRImporter.objects.filter(domain=DOMAIN).delete()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = CommCareUser(
+            domain=DOMAIN,
+            username=f'bob@{DOMAIN}.commcarehq.org',
+        )
+        cls.user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by=__name__)
+        super().tearDownClass()
 
     def test_connection_settings_null(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
         with self.assertRaises(IntegrityError), \
                 transaction.atomic():
-            importer.save()
+            import_config.save()
 
     def test_connection_settings_protected(self):
-        FHIRImporter.objects.create(
+        import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=self.conn,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
+        self.addCleanup(import_config.delete)
         with self.assertRaises(ProtectedError):
             self.conn.delete()
 
     def test_fhir_version_good(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version=FHIR_VERSION_4_0_1,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
-        importer.full_clean()
+        import_config.full_clean()
 
     def test_fhir_version_bad(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version='1.0.2',
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
 
     def test_frequency_good(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
             frequency=IMPORT_FREQUENCY_DAILY,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
-        importer.full_clean()
+        import_config.full_clean()
 
     def test_frequency_bad(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
-            frequency='weekly',
-            owner_id='b0b',
+            frequency='annually',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
 
     def test_owner_id_missing(self):
-        importer = FHIRImporter(
+        import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
-            importer.full_clean()
+            import_config.full_clean()
+
+    def test_owner_id_too_long(self):
+        uuid = '4d4e6255-2139-49e0-98e9-9418e83a4944'
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id=uuid + 'X',
+            owner_type=OWNER_TYPE_USER,
+        )
+        try:
+            import_config.full_clean()
+        except ValidationError as err:
+            errors = err.message_dict['owner_id']
+            self.assertEqual(
+                errors,
+                ['Ensure this value has at most 36 characters (it has 37).'],
+            )
+
+
+class TestFHIRImportConfigGetOwner(TestCaseWithConnectionSettings):
+
+    def test_owner_type_missing(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_owner_type_bad(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+            owner_type='0rgunit',
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_user_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+            owner_type=OWNER_TYPE_USER,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_group_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='the-clan-mcb0b',
+            owner_type=OWNER_TYPE_GROUP,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_location_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0bton',
+            owner_type=OWNER_TYPE_LOCATION,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
 
 
 class TestCaseWithReferral(TestCaseWithConnectionSettings):
@@ -122,7 +217,7 @@ class TestCaseWithReferral(TestCaseWithConnectionSettings):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.fhir_importer = FHIRImporter.objects.create(
+        cls.import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=cls.conn,
             owner_id='b0b',
@@ -135,11 +230,11 @@ class TestCaseWithReferral(TestCaseWithConnectionSettings):
     @classmethod
     def tearDownClass(cls):
         cls.referral.delete()
-        cls.fhir_importer.delete()
+        cls.import_config.delete()
         super().tearDownClass()
 
 
-class TestFHIRImporterResourceType(TestCaseWithReferral):
+class TestFHIRImportResourceType(TestCaseWithReferral):
 
     @classmethod
     def setUpClass(cls):
@@ -155,25 +250,25 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         super().tearDownClass()
 
     def test_search_params_empty(self):
-        service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        service_request = FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
         self.assertEqual(service_request.search_params, {})
 
     def test_related_resource_types(self):
-        service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        service_request = FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
-        patient = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        patient = FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='Patient',
             case_type=self.mother,
         )
-        JSONPathToResourceType.objects.create(
+        ResourceTypeRelationship.objects.create(
             resource_type=service_request,
             jsonpath='$.subject.reference',
             related_resource_type=patient,
@@ -186,39 +281,39 @@ class TestFHIRImporterResourceType(TestCaseWithReferral):
         self.assertEqual(case_type.name, 'mother')
 
     def test_domain(self):
-        service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=self.fhir_importer,
+        service_request = FHIRImportResourceType.objects.create(
+            import_config=self.import_config,
             name='ServiceRequest',
             case_type=self.referral,
         )
         self.assertEqual(service_request.domain, DOMAIN)
 
 
-class TestFHIRImporterResourceProperty(TestCaseWithReferral):
+class TestFHIRImportResourceProperty(TestCaseWithReferral):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
+        cls.service_request = FHIRImportResourceType.objects.create(
+            import_config=cls.import_config,
             name='ServiceRequest',
             case_type=cls.referral,
         )
-        cls.status_property = FHIRImporterResourceProperty.objects.create(
+        cls.status_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.status',
                 'case_property': 'fhir_status',
             }
         )
-        cls.intent_property = FHIRImporterResourceProperty.objects.create(
+        cls.intent_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.intent',
                 'case_property': 'fhir_intent',
             }
         )
-        cls.subject_property = FHIRImporterResourceProperty.objects.create(
+        cls.subject_property = FHIRImportResourceProperty.objects.create(
             resource_type=cls.service_request,
             value_source_config={
                 'jsonpath': '$.subject.reference',  # e.g. "Patient/12345"
@@ -255,7 +350,7 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
         )
 
     def test_jsonpath_notset(self):
-        priority = FHIRImporterResourceProperty(
+        priority = FHIRImportResourceProperty(
             resource_type=self.service_request,
             value_source_config={
                 'case_property': 'fhir_priority',
@@ -269,11 +364,62 @@ class TestFHIRImporterResourceProperty(TestCaseWithReferral):
         self.assertIsInstance(value_source, CasePropertyValueSource)
 
     def test_value_source_bad(self):
-        priority = FHIRImporterResourceProperty(
+        priority = FHIRImportResourceProperty(
             resource_type=self.service_request,
         )
         with self.assertRaises(ConfigurationError):
             priority.save()
+
+    def test_iter_case_property_value_sources(self):
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/case_type'].value",
+                'case_property': 'case_type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/type'].value",
+                'case_property': 'type',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/user_id'].value",
+                'case_property': 'user_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/owner_id'].value",
+                'case_property': 'owner_id',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/opened_on'].value",
+                'case_property': 'opened_on',
+            }
+        )
+        FHIRImportResourceProperty.objects.create(
+            resource_type=self.service_request,
+            value_source_config={
+                'jsonpath': "$.extension[?url='https://example.com/commcare/this_is_fine'].value",
+                'case_property': 'this_is_fine',
+            }
+        )
+        props = [
+            vs.case_property
+            for vs in self.service_request.iter_case_property_value_sources()
+        ]
+        self.assertEqual(props, [
+            'fhir_status', 'fhir_intent', 'fhir_subject', 'this_is_fine',
+        ])
 
 
 class TestConfigurationErrors(TestCase):

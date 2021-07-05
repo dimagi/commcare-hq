@@ -24,9 +24,9 @@ FHIR_VERSION = 'R4'
 BASE_URL = f'http://localhost:8000/a/{DOMAIN}/fhir/{FHIR_VERSION}/'
 USERNAME = f'admin@{DOMAIN}.commcarehq.org'
 PASSWORD = 'Passw0rd!'
-PERSON_CASE_ID = uuid4().hex
-DELETED_CASE_ID = uuid4().hex
-TEST_CASE_ID = uuid4().hex
+PERSON_CASE_ID = str(uuid4())
+DELETED_CASE_ID = str(uuid4())
+TEST_CASE_ID = str(uuid4())
 
 
 class BaseFHIRViewTest(TestCase):

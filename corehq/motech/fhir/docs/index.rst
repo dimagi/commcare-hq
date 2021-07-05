@@ -4,7 +4,7 @@ CommCare FHIR Integration
 .. contents::
    :local:
    fhir_repeater
-   fhir_importer
+   fhir_import_config
    fhir_api
 
 

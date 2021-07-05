@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporter',
+            name='FHIRImportConfig',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                     serialize=False,
                     verbose_name='ID',
                 )),
-                ('domain', models.CharField(db_index=True, max_length=127)),
+                ('domain', models.CharField(max_length=127)),
                 ('fhir_version', models.CharField(
                     choices=[('4.0.1', 'R4')],
                     default='4.0.1',
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                     default='daily',
                     max_length=12,
                 )),
-                ('owner_id', models.CharField(max_length=32)),
+                ('owner_id', models.CharField(max_length=36)),
                 ('connection_settings', models.ForeignKey(
                     on_delete=django.db.models.deletion.PROTECT,
                     to='motech.ConnectionSettings',
@@ -38,17 +38,17 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddIndex(
-            model_name='fhirimporter',
+            model_name='fhirimportconfig',
             index=models.Index(
                 fields=['domain'],
-                name='fhir_fhirim_domain_41a7dc_idx',
+                name='fhir_fhirim_domain_b72369_idx',
             ),
         ),
         migrations.AddIndex(
-            model_name='fhirimporter',
+            model_name='fhirimportconfig',
             index=models.Index(
                 fields=['frequency'],
-                name='fhir_fhirim_frequen_dd0d53_idx',
+                name='fhir_fhirim_frequen_099cd5_idx',
             ),
         ),
     ]

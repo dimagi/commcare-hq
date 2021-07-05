@@ -6,12 +6,12 @@ import jsonfield.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fhir', '0006_fhirimporterresourcetype_jsonpathtoresourcetype'),
+        ('fhir', '0006_fhirimportresourcetype_resourcetyperelationship'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FHIRImporterResourceProperty',
+            name='FHIRImportResourceProperty',
             fields=[
                 ('id', models.AutoField(
                     auto_created=True,
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('resource_type', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='properties',
-                    to='fhir.FHIRImporterResourceType',
+                    to='fhir.FHIRImportResourceType',
                 )),
             ],
         ),

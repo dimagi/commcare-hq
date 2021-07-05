@@ -25,8 +25,8 @@ case relationships linking a ServiceRequest as a child case of the
 Patient.
 
 
-Configuring a FHIRImporter
---------------------------
+Configuring a FHIRImportConfig
+------------------------------
 
 Currently, all configuration is managed via Django Admin (except for
 adding Connection Settings).
@@ -39,9 +39,9 @@ adding Connection Settings).
     .. TODO: Is this definitely true? Is there no way to filter select
              box values by domain?
 
-In Django Admin, navigate to FHIR > FHIR Importers. If you have any
-FHIRImporter instances, they will be listed there, and you can filter by
-domain. To add a new one, click "Add FHIR Importer +".
+In Django Admin, navigate to FHIR > FHIR Import Configs. If you have any
+FHIRImportConfig instances, they will be listed there, and you can
+filter by domain. To add a new one, click "Add FHIR Import Config +".
 
 The form is quite straight forward. You will need to provide the ID of a
 mobile worker in the "Owner ID" field. All cases that are imported will
@@ -52,8 +52,8 @@ comes up, we have planned for two approaches, and will implement one or
 both based on the project's requirements:
 
 1. Set the owner to a user, group or location.
-2. Assign a FHIRImporter to a CommCare location, and set ownership to
-   the mobile worker at that location.
+2. Assign a FHIRImportConfig to a CommCare location, and set ownership
+   to the mobile worker at that location.
 
 
 Mapping imported FHIR resource properties
@@ -66,14 +66,14 @@ differences:
 
 The first difference is that FHIRRepeater and the FHIR API use
 FHIRResourceType instances (rendered as "FHIR Resource Types" in Django
-Admin) to configure mapping; FHIRImporter uses FHIRImporterResourceType
-instances ("FHIR Importer Resource Types").
+Admin) to configure mapping; FHIRImportConfig uses
+FHIRImportResourceType instances ("FHIR Import Resource Types").
 
 To see what this looks like, navigate to FHIR > FHIR Importer Resource
 Types, and click "Add FHIR Importer Resource Type".
 
-Select the FHIR Importer, set the name of the FHIR resource type, and
-select the case type.
+Select the FHIR Import Config, set the name of the FHIR resource type,
+and select the case type.
 
 .. note::
     The resource types you can import are not limited to the resource
@@ -94,10 +94,10 @@ resource type will tell you what search parameters are available. (e.g.
 "Import related only" and the "Search params" are applied together, to
 allow you to filter related resources.
 
-There is a second important difference between FHIRImporterResourceType
+There is a second important difference between FHIRImportResourceType
 and FHIRResourceType: With FHIRResourceType, the ValueSource
 configurations are used for *building* a FHIR resource. With
-FHIRImporterResourceType they are used for *navigating* a FHIR resource.
+FHIRImportResourceType they are used for *navigating* a FHIR resource.
 
 So FHIRResourceType might include ValueSource configs for setting a
 Patient's phone number. They might look like this:
@@ -168,8 +168,8 @@ reference. So if a Foo resource has a reference to a Bar resource,
 then in CommCare the "foo" case will be the child of the "bar" case.
 
 
-Testing FHIRImporter configuration
-----------------------------------
+Testing FHIRImportConfig configuration
+--------------------------------------
 
 To make sure your configuration works as expected, add some test data to
 a FHIR server, and import it.

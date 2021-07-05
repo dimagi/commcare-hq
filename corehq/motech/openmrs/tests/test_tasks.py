@@ -16,7 +16,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.auth import AuthManager
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
     get_case_properties,

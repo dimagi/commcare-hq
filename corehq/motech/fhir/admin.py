@@ -3,12 +3,12 @@ import json
 from django.contrib import admin
 
 from corehq.motech.fhir.models import (
-    FHIRImporter,
-    FHIRImporterResourceProperty,
-    FHIRImporterResourceType,
+    FHIRImportConfig,
+    FHIRImportResourceProperty,
+    FHIRImportResourceType,
     FHIRResourceProperty,
     FHIRResourceType,
-    JSONPathToResourceType,
+    ResourceTypeRelationship,
 )
 
 
@@ -56,7 +56,7 @@ class FHIRResourceTypeAdmin(admin.ModelAdmin):
         return False
 
 
-class FHIRImporterAdmin(admin.ModelAdmin):
+class FHIRImportConfigAdmin(admin.ModelAdmin):
     list_display = (
         'domain',
         'connection_settings',
@@ -71,14 +71,14 @@ class FHIRImporterAdmin(admin.ModelAdmin):
     list_select_related = ('connection_settings',)
 
 
-class FHIRImporterResourcePropertyInline(admin.TabularInline):
-    model = FHIRImporterResourceProperty
+class FHIRImportResourcePropertyInline(admin.TabularInline):
+    model = FHIRImportResourceProperty
     verbose_name_plural = 'FHIR Importer resource properties'
     fields = ('value_source_config',)
 
 
-class FHIRImporterResourceTypeAdmin(admin.ModelAdmin):
-    model = FHIRImporterResourceType
+class FHIRImportResourceTypeAdmin(admin.ModelAdmin):
+    model = FHIRImportResourceType
     list_display = (
         'domain',
         'name',
@@ -89,16 +89,16 @@ class FHIRImporterResourceTypeAdmin(admin.ModelAdmin):
         'name',
         'case_type',
     )
-    list_filter = ('fhir_importer__domain',)
-    list_select_related = ('fhir_importer',)
-    inlines = [FHIRImporterResourcePropertyInline]
+    list_filter = ('import_config__domain',)
+    list_select_related = ('import_config',)
+    inlines = [FHIRImportResourcePropertyInline]
 
     def domain(self, obj):
-        return obj.fhir_importer.domain
+        return obj.import_config.domain
 
 
-class JSONPathToResourceTypeAdmin(admin.ModelAdmin):
-    model = JSONPathToResourceType
+class ResourceTypeRelationshipAdmin(admin.ModelAdmin):
+    model = ResourceTypeRelationship
     list_display = (
         'domain',
         'resource_type',
@@ -109,14 +109,14 @@ class JSONPathToResourceTypeAdmin(admin.ModelAdmin):
         'resource_type',
         'related_resource_type',
     )
-    list_filter = ('resource_type__fhir_importer__domain',)
-    list_select_related = ('resource_type__fhir_importer',)
+    list_filter = ('resource_type__import_config__domain',)
+    list_select_related = ('resource_type__import_config',)
 
     def domain(self, obj):
         return obj.resource_type.domain
 
 
 admin.site.register(FHIRResourceType, FHIRResourceTypeAdmin)
-admin.site.register(FHIRImporter, FHIRImporterAdmin)
-admin.site.register(FHIRImporterResourceType, FHIRImporterResourceTypeAdmin)
-admin.site.register(JSONPathToResourceType, JSONPathToResourceTypeAdmin)
+admin.site.register(FHIRImportConfig, FHIRImportConfigAdmin)
+admin.site.register(FHIRImportResourceType, FHIRImportResourceTypeAdmin)
+admin.site.register(ResourceTypeRelationship, ResourceTypeRelationshipAdmin)

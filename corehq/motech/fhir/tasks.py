@@ -3,7 +3,8 @@ from typing import Generator, List
 from uuid import uuid4
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
+from django.conf import settings
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from casexml.apps.case.mock import CaseBlock
@@ -12,13 +13,18 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.const import (
+    IMPORT_FREQUENCY_DAILY,
+    IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
+)
 from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
-from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
-from .models import FHIRImporter, FHIRImporterResourceType
+from .const import SYSTEM_URI_CASE_ID, XMLNS_FHIR
+from .models import FHIRImportConfig, FHIRImportResourceType
 
 
 ParentInfo = namedtuple(
@@ -27,23 +33,58 @@ ParentInfo = namedtuple(
 )
 
 
-@periodic_task(run_every=crontab(hour=5, minute=5), queue='background_queue')
+@periodic_task(
+    run_every=crontab(hour=5, minute=5),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
 def run_daily_importers():
-    for importer in (
-        FHIRImporter.objects.filter(
-            frequency=IMPORT_FREQUENCY_DAILY
-        ).select_related('connection_settings').all()
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_DAILY)
+            .values_list('id', flat=True)
     ):
-        run_importer(importer)
+        run_importer.delay(importer_id)
 
 
-def run_importer(importer):
+@periodic_task(
+    run_every=crontab(hour=5, minute=5, day_of_week=6),  # Saturday
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def run_weekly_importers():
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_WEEKLY)
+            .values_list('id', flat=True)
+    ):
+        run_importer.delay(importer_id)
+
+
+@periodic_task(
+    run_every=crontab(hour=5, minute=5, day_of_month=1),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def run_monthly_importers():
+    for importer_id in (
+            FHIRImportConfig.objects
+            .filter(frequency=IMPORT_FREQUENCY_MONTHLY)
+            .values_list('id', flat=True)
+    ):
+        run_importer.delay(importer_id)
+
+
+@task(queue='background_queue', ignore_result=True)
+def run_importer(importer_id):
     """
     Poll remote API and import resources as CommCare cases.
 
     ServiceRequest resources are treated specially for workflows that
     handle referrals across systems like CommCare.
     """
+    importer = (
+        FHIRImportConfig.objects
+        .select_related('connection_settings')
+        .get(pk=importer_id)
+    )
     if not toggles.FHIR_INTEGRATION.enabled(importer.domain):
         return
     requests = importer.connection_settings.get_requests()
@@ -61,7 +102,7 @@ def run_importer(importer):
 
 def import_resource_type(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     child_cases: List[ParentInfo],
 ):
     try:
@@ -73,7 +114,7 @@ def import_resource_type(
 
 def iter_resources(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
 ) -> Generator:
     searchset_bundle = get_bundle(
         requests,
@@ -91,7 +132,7 @@ def iter_resources(
 
 def import_resource(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     resource: dict,
     child_cases: List[ParentInfo],
 ):
@@ -105,7 +146,7 @@ def import_resource(
             f"resource type {resource['resourceType']!r}."
         )
 
-    case_id = uuid4().hex
+    case_id = str(uuid4())
     if resource_type.name == 'ServiceRequest':
         try:
             resource = claim_service_request(requests, resource, case_id)
@@ -121,7 +162,7 @@ def import_resource(
         [case_block.as_text()],
         resource_type.domain,
         xmlns=XMLNS_FHIR,
-        device_id=f'FHIRImporter-{resource_type.fhir_importer.pk}',
+        device_id=f'FHIRImportConfig-{resource_type.import_config.pk}',
     )
     import_related(
         requests,
@@ -132,7 +173,7 @@ def import_resource(
     )
 
 
-def claim_service_request(requests, service_request, case_id):
+def claim_service_request(requests, service_request, case_id, attempt=0):
     """
     Uses `ETag`_ to prevent a race condition.
 
@@ -158,9 +199,9 @@ def claim_service_request(requests, service_request, case_id):
     response = requests.put(endpoint, json=service_request, headers=headers)
     if 200 <= response.status_code < 300:
         return service_request
-    if response.status_code == 412:
+    if response.status_code == 412 and attempt < 3:
         # ETag didn't match. Try again.
-        return claim_service_request(requests, service_request, case_id)
+        return claim_service_request(requests, service_request, case_id, attempt + 1)
     else:
         response.raise_for_status()
 
@@ -168,14 +209,17 @@ def claim_service_request(requests, service_request, case_id):
 def build_case_block(resource_type, resource, suggested_case_id):
     domain = resource_type.domain
     case_type = resource_type.case_type.name
-    owner_id = resource_type.fhir_importer.owner_id
+    owner_id = resource_type.import_config.owner_id
     case = None
 
     case_id = get_case_id_or_none(resource)
     external_id = resource['id'] if 'id' in resource else CaseBlock.undefined
     if case_id:
         case = get_case_by_id(domain, case_id)
+        # If we have a case_id we can be pretty sure we can get a case
+        # ... unless it's been deleted. If so, fall back on external_id.
     if case is None and external_id != CaseBlock.undefined:
+        # external_id will almost always be set.
         case = get_case_by_external_id(domain, external_id, case_type)
 
     caseblock_kwargs = get_caseblock_kwargs(resource_type, resource)
@@ -209,7 +253,7 @@ def get_case_by_id(domain, case_id):
         case = accessor.get_case(case_id)
     except (CaseNotFound, KeyError):
         return None
-    return case if case.domain == domain else None
+    return case if case.domain == domain and not case.is_deleted else None
 
 
 def get_case_by_external_id(domain, external_id, case_type):
@@ -218,27 +262,22 @@ def get_case_by_external_id(domain, external_id, case_type):
         [case] = accessor.get_cases_by_external_id(external_id, case_type)
     except ValueError:
         return None
-    return case
+    return case if not case.is_deleted else None
 
 
 def get_caseblock_kwargs(resource_type, resource):
-    reserved = {'case_id', 'external_id', 'owner_id', 'user_id', 'case_type'}
+    name_properties = {"name", "case_name"}
     kwargs = {
         'case_name': get_name(resource),
         'update': {}
     }
-    for resource_property in resource_type.properties.all():
-        if 'case_property' in resource_property.value_source_config:
-            case_property = resource_property.value_source_config['case_property']
-            if case_property in reserved:
-                continue
-            value_source = resource_property.get_value_source()
-            value = value_source.get_import_value(resource)
-            if value is not None:
-                if case_property == 'case_name':
-                    kwargs[case_property] = value
-                else:
-                    kwargs['update'][case_property] = value
+    for value_source in resource_type.iter_case_property_value_sources():
+        value = value_source.get_import_value(resource)
+        if value is not None:
+            if value_source.case_property in name_properties:
+                kwargs['case_name'] = value
+            else:
+                kwargs['update'][value_source.case_property] = value
     return kwargs
 
 
@@ -255,7 +294,7 @@ def get_name(resource):
 
 def import_related(
     requests: Requests,
-    resource_type: FHIRImporterResourceType,
+    resource_type: FHIRImportResourceType,
     resource: dict,
     case_id: str,
     child_cases: List[ParentInfo],
@@ -263,6 +302,7 @@ def import_related(
     for rel in resource_type.jsonpaths_to_related_resource_types.all():
         jsonpath = jsonpath_parse(rel.jsonpath)
         reference = simplify_list([x.value for x in jsonpath.find(resource)])
+        validate_parent_ref(reference, rel.related_resource_type)
         related_resource = get_resource(requests, reference)
 
         if rel.related_resource_is_parent:
@@ -281,6 +321,21 @@ def import_related(
         )
 
 
+def validate_parent_ref(parent_ref, parent_resource_type):
+    """
+    Validates that ``parent_ref`` is a relative reference with an
+    expected resource type. e.g. "Patient/12345"
+    """
+    try:
+        resource_type_name, resource_id = parent_ref.split('/')
+    except (AttributeError, ValueError):
+        raise ConfigurationError(
+            f'Unexpected reference format {parent_ref!r}')
+    if resource_type_name != parent_resource_type.name:
+        raise ConfigurationError(
+            'Resource type does not match expected parent resource type')
+
+
 def get_resource(requests, reference):
     """
     Fetches a resource.
@@ -292,31 +347,22 @@ def get_resource(requests, reference):
 
 
 def create_parent_indices(
-    importer: FHIRImporter,
+    importer: FHIRImportConfig,
     child_cases: List[ParentInfo],
 ):
     """
     Creates parent-child relationships on imported cases.
 
-    If ``JSONPathToResourceType.related_resource_is_parent`` is ``True``
-    then this function will add an ``index`` on the child case to its
-    parent case.
+    If ``ResourceTypeRelationship.related_resource_is_parent`` is
+    ``True`` then this function will add an ``index`` on the child case
+    to its parent case.
     """
     if not child_cases:
         return
 
     case_blocks = []
     for child_case_id, parent_ref, parent_resource_type in child_cases:
-        # `parent_ref` must be a relative reference. e.g. "Patient/12345"
-        try:
-            resource_type_name, external_id = parent_ref.split('/')
-        except (AttributeError, ValueError):
-            raise ConfigurationError(
-                f'Unexpected reference format {parent_ref!r}')
-        if resource_type_name != parent_resource_type.name:
-            raise ConfigurationError(
-                'Resource type does not match expected parent resource type')
-
+        resource_type_name, external_id = parent_ref.split('/')
         parent_case = get_case_by_external_id(
             parent_resource_type.domain,
             external_id,
@@ -334,7 +380,7 @@ def create_parent_indices(
         [cb.as_text() for cb in case_blocks],
         importer.domain,
         xmlns=XMLNS_FHIR,
-        device_id=f'FHIRImporter-{importer.pk}',
+        device_id=f'FHIRImportConfig-{importer.pk}',
     )
 
 

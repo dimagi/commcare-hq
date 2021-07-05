@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='jsonpathtoresourcetype',
+            model_name='resourcetyperelationship',
             name='related_resource_is_parent',
             field=models.BooleanField(default=False),
         ),
