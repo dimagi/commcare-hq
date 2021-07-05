@@ -1,4 +1,5 @@
-from typing import Generator
+from collections import namedtuple
+from typing import Generator, List
 from uuid import uuid4
 
 from celery.schedules import crontab
@@ -11,13 +12,19 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.exceptions import RemoteAPIError
+from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
 from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import IMPORT_FREQUENCY_DAILY, SYSTEM_URI_CASE_ID, XMLNS_FHIR
 from .models import FHIRImporter, FHIRImporterResourceType
+
+
+ParentInfo = namedtuple(
+    'ParentInfo',
+    ['child_case_id', 'parent_ref', 'parent_resource_type'],
+)
 
 
 @periodic_task(run_every=crontab(hour=5, minute=5), queue='background_queue')
@@ -41,22 +48,25 @@ def run_importer(importer):
         return
     requests = importer.connection_settings.get_requests()
     # TODO: Check service is online, else retry with exponential backoff
+    child_cases = []
     for resource_type in (
             importer.resource_types
             .filter(import_related_only=False)
             .prefetch_related('jsonpaths_to_related_resource_types')
             .all()
     ):
-        import_resource_type(requests, resource_type)
+        import_resource_type(requests, resource_type, child_cases)
+    create_parent_indices(importer, child_cases)
 
 
 def import_resource_type(
     requests: Requests,
     resource_type: FHIRImporterResourceType,
+    child_cases: List[ParentInfo],
 ):
     try:
         for resource in iter_resources(requests, resource_type):
-            import_resource(requests, resource_type, resource)
+            import_resource(requests, resource_type, resource, child_cases)
     except Exception as err:
         requests.notify_exception(str(err))
 
@@ -83,6 +93,7 @@ def import_resource(
     requests: Requests,
     resource_type: FHIRImporterResourceType,
     resource: dict,
+    child_cases: List[ParentInfo],
 ):
     if 'resourceType' not in resource:
         raise RemoteAPIError(
@@ -112,7 +123,13 @@ def import_resource(
         xmlns=XMLNS_FHIR,
         device_id=f'FHIRImporter-{resource_type.fhir_importer.pk}',
     )
-    import_related(requests, resource_type, resource)
+    import_related(
+        requests,
+        resource_type,
+        resource,
+        case_block.case_id,
+        child_cases,
+    )
 
 
 def claim_service_request(requests, service_request, case_id):
@@ -236,12 +253,32 @@ def get_name(resource):
     return ''
 
 
-def import_related(requests, resource_type, resource):
+def import_related(
+    requests: Requests,
+    resource_type: FHIRImporterResourceType,
+    resource: dict,
+    case_id: str,
+    child_cases: List[ParentInfo],
+):
     for rel in resource_type.jsonpaths_to_related_resource_types.all():
         jsonpath = jsonpath_parse(rel.jsonpath)
         reference = simplify_list([x.value for x in jsonpath.find(resource)])
         related_resource = get_resource(requests, reference)
-        import_resource(requests, rel.related_resource_type, related_resource)
+
+        if rel.related_resource_is_parent:
+            parent_info = ParentInfo(
+                child_case_id=case_id,
+                parent_ref=reference,
+                parent_resource_type=rel.related_resource_type,
+            )
+            child_cases.append(parent_info)
+
+        import_resource(
+            requests,
+            rel.related_resource_type,
+            related_resource,
+            child_cases,
+        )
 
 
 def get_resource(requests, reference):
@@ -252,6 +289,53 @@ def get_resource(requests, reference):
     """
     response = requests.get(endpoint=reference, raise_for_status=True)
     return response.json()
+
+
+def create_parent_indices(
+    importer: FHIRImporter,
+    child_cases: List[ParentInfo],
+):
+    """
+    Creates parent-child relationships on imported cases.
+
+    If ``JSONPathToResourceType.related_resource_is_parent`` is ``True``
+    then this function will add an ``index`` on the child case to its
+    parent case.
+    """
+    if not child_cases:
+        return
+
+    case_blocks = []
+    for child_case_id, parent_ref, parent_resource_type in child_cases:
+        # `parent_ref` must be a relative reference. e.g. "Patient/12345"
+        try:
+            resource_type_name, external_id = parent_ref.split('/')
+        except (AttributeError, ValueError):
+            raise ConfigurationError(
+                f'Unexpected reference format {parent_ref!r}')
+        if resource_type_name != parent_resource_type.name:
+            raise ConfigurationError(
+                'Resource type does not match expected parent resource type')
+
+        parent_case = get_case_by_external_id(
+            parent_resource_type.domain,
+            external_id,
+            parent_resource_type.case_type.name,
+        )
+        if not parent_case:
+            raise ConfigurationError(
+                f'Case not found with external_id {external_id!r}')
+
+        case_blocks.append(CaseBlock(
+            child_case_id,
+            index={'parent': (parent_case.type, parent_case.case_id)},
+        ))
+    submit_case_blocks(
+        [cb.as_text() for cb in case_blocks],
+        importer.domain,
+        xmlns=XMLNS_FHIR,
+        device_id=f'FHIRImporter-{importer.pk}',
+    )
 
 
 class ServiceRequestNotActive(Exception):

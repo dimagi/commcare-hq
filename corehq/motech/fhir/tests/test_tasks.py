@@ -10,10 +10,11 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.auth import AuthManager
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
-from corehq.motech.exceptions import RemoteAPIError
+from corehq.motech.exceptions import ConfigurationError, RemoteAPIError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import flag_enabled
@@ -30,9 +31,11 @@ from ..models import (
     JSONPathToResourceType,
 )
 from ..tasks import (
+    ParentInfo,
     ServiceRequestNotActive,
     build_case_block,
     claim_service_request,
+    create_parent_indices,
     get_case_id_or_none,
     get_caseblock_kwargs,
     get_name,
@@ -257,6 +260,7 @@ class TestImportResource(SimpleTestCase):
                 requests=None,
                 resource_type=FooResourceType(),
                 resource={},
+                child_cases=[],
             )
 
     def test_bad_resource_type(self):
@@ -265,6 +269,7 @@ class TestImportResource(SimpleTestCase):
                 requests=None,
                 resource_type=FooResourceType(),
                 resource={'resourceType': 'Bar'},
+                child_cases=[],
             )
 
 
@@ -272,7 +277,7 @@ class FooResourceType:
     name = 'Foo'
 
 
-class TestImportRelated(TestCase):
+class TestCaseWithResourceType(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -287,46 +292,44 @@ class TestImportRelated(TestCase):
             connection_settings=cls.conn,
             fhir_version=FHIR_VERSION_4_0_1,
         )
-        cls.referral = CaseType.objects.create(
-            domain=DOMAIN,
-            name='referral',
-        )
         cls.mother = CaseType.objects.create(
             domain=DOMAIN,
             name='mother',
         )
-
-        cls.service_request = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
-            name='ServiceRequest',
-            case_type=cls.referral,
-        )
-        patient = FHIRImporterResourceType.objects.create(
+        cls.patient_type = FHIRImporterResourceType.objects.create(
             fhir_importer=cls.fhir_importer,
             name='Patient',
             case_type=cls.mother,
-        )
-        JSONPathToResourceType.objects.create(
-            resource_type=cls.service_request,
-            jsonpath='$.subject.reference',
-            related_resource_type=patient,
         )
 
     @classmethod
     def tearDownClass(cls):
         cls.mother.delete()
-        cls.referral.delete()
         cls.fhir_importer.delete()
         cls.conn.delete()
         super().tearDownClass()
 
-    def test_import_related_calls_get_resource_with_reference(self):
-        patient = {
+
+class TestCaseWithFHIRResources(TestCaseWithResourceType):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.referral = CaseType.objects.create(
+            domain=DOMAIN,
+            name='referral',
+        )
+        cls.service_request_type = FHIRImporterResourceType.objects.create(
+            fhir_importer=cls.fhir_importer,
+            name='ServiceRequest',
+            case_type=cls.referral,
+        )
+        cls.patient = {
             'id': '12345',
             'resourceType': 'Patient',
             'name': [{'text': 'Alice Apple'}]
         }
-        service_request = {
+        cls.service_request = {
             'id': '67890',
             'resourceType': 'ServiceRequest',
             'subject': {
@@ -338,17 +341,78 @@ class TestImportRelated(TestCase):
             'priority': 'routine',
         }
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.referral.delete()
+        super().tearDownClass()
+
+
+class TestImportRelated(TestCaseWithFHIRResources):
+
+    def test_import_related_calls_get_resource_with_reference(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+        )
         with patch('corehq.motech.fhir.tasks.get_resource') as get_resource, \
                 patch('corehq.motech.fhir.tasks.import_resource'):
-            get_resource.return_value = patient
+            get_resource.return_value = self.patient
 
             import_related(
                 requests=None,
-                resource_type=self.service_request,
-                resource=service_request,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=[],
             )
             call_arg_2 = get_resource.call_args[0][1]
             self.assertEqual(call_arg_2, 'Patient/12345')
+
+    def test_import_related_is_parent(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+            related_resource_is_parent=True,
+        )
+        with patch('corehq.motech.fhir.tasks.get_resource'), \
+                patch('corehq.motech.fhir.tasks.import_resource'):
+            child_cases = []
+
+            import_related(
+                requests=None,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=child_cases,
+            )
+
+            self.assertEqual(child_cases, [ParentInfo(
+                child_case_id='1',
+                parent_ref='Patient/12345',
+                parent_resource_type=self.patient_type,
+            )])
+
+    def test_import_related_is_not_parent(self):
+        JSONPathToResourceType.objects.create(
+            resource_type=self.service_request_type,
+            jsonpath='$.subject.reference',
+            related_resource_type=self.patient_type,
+        )
+        with patch('corehq.motech.fhir.tasks.get_resource'), \
+                patch('corehq.motech.fhir.tasks.import_resource'):
+            child_cases = []
+
+            import_related(
+                requests=None,
+                resource_type=self.service_request_type,
+                resource=self.service_request,
+                case_id='1',
+                child_cases=child_cases,
+            )
+
+            self.assertEqual(child_cases, [])
 
 
 class TestGetCaseIDOrNone(SimpleTestCase):
@@ -406,39 +470,6 @@ class TestGetName(SimpleTestCase):
         self.assertEqual(get_name(resource), '')
 
 
-class TestCaseWithResourceType(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.conn = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='Test ConnectionSettings',
-            url='https://example.com/api/',
-        )
-        cls.fhir_importer = FHIRImporter.objects.create(
-            domain=DOMAIN,
-            connection_settings=cls.conn,
-            fhir_version=FHIR_VERSION_4_0_1,
-        )
-        cls.mother = CaseType.objects.create(
-            domain=DOMAIN,
-            name='mother',
-        )
-        cls.patient = FHIRImporterResourceType.objects.create(
-            fhir_importer=cls.fhir_importer,
-            name='Patient',
-            case_type=cls.mother,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.mother.delete()
-        cls.fhir_importer.delete()
-        cls.conn.delete()
-        super().tearDownClass()
-
-
 class TestGetCaseBlockKwargs(TestCaseWithResourceType):
 
     def test_update_case_name(self):
@@ -450,7 +481,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }],
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
                 'case_property': 'case_name',
@@ -459,7 +490,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }
         )
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': 'Alice Amelia Anna', 'update': {}},
         )
 
@@ -472,7 +503,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }],
         }
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': 'Alice APPLE', 'update': {}},
         )
 
@@ -483,7 +514,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }],
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
                 'case_property': 'case_name',
@@ -492,7 +523,7 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }
         )
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': 'John', 'update': {}},
         )
 
@@ -504,21 +535,21 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }],
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].system',
                 'value': 'phone',
             }
         )
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.telecom[0].value',
                 'case_property': 'phone_number',
             }
         )
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': '', 'update': {'phone_number': '555-1234'}},
         )
 
@@ -530,21 +561,21 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             }]
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.identifier[0].system',
                 'value': SYSTEM_URI_CASE_ID,
             }
         )
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.identifier[0].value',
                 'case_property': 'case_id',
             }
         )
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': '', 'update': {}},
         )
 
@@ -553,14 +584,14 @@ class TestGetCaseBlockKwargs(TestCaseWithResourceType):
             'id': '12345',
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.id',
                 'case_property': 'external_id',
             }
         )
         self.assertEqual(
-            get_caseblock_kwargs(self.patient, resource),
+            get_caseblock_kwargs(self.patient_type, resource),
             {'case_name': '', 'update': {}},
         )
 
@@ -603,7 +634,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         }
 
         case_block = build_case_block(
-            self.patient,
+            self.patient_type,
             resource,
             suggested_case_id,
         )
@@ -633,7 +664,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }
 
             case_block = build_case_block(
-                self.patient,
+                self.patient_type,
                 resource,
                 suggested_case_id,
             )
@@ -660,7 +691,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         }
 
         case_block = build_case_block(
-            self.patient,
+            self.patient_type,
             resource,
             suggested_case_id,
         )
@@ -688,7 +719,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }
 
             case_block = build_case_block(
-                self.patient,
+                self.patient_type,
                 resource,
                 suggested_case_id,
             )
@@ -715,7 +746,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         }
 
         case_block = build_case_block(
-            self.patient,
+            self.patient_type,
             resource,
             suggested_case_id,
         )
@@ -744,7 +775,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             'resourceType': 'Patient',
         }
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': '$.name[0].given',
                 'case_property': 'case_name',
@@ -753,7 +784,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             }
         )
         FHIRImporterResourceProperty.objects.create(
-            resource_type=self.patient,
+            resource_type=self.patient_type,
             value_source_config={
                 'jsonpath': "$.telecom[?system='phone'].value",
                 'case_property': 'phone_number',
@@ -761,7 +792,7 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         )
 
         case_block = build_case_block(
-            self.patient,
+            self.patient_type,
             resource,
             suggested_case_id,
         )
@@ -770,6 +801,93 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.external_id, '12345')
         self.assertEqual(case_block.case_name, 'Alice Amelia Anna')
         self.assertEqual(case_block.update, {'phone_number': '555-1234'})
+
+
+class TestCreateParentIndices(TestCaseWithFHIRResources):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.domain_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.domain_obj.delete()
+
+    def run(self, result=None):
+        mother_kwargs = {
+            'external_id': '12345',
+            'update': {
+                'given_names': 'Alica Amelia',
+                'family_name': 'Apple',
+                'phone_number': '555-1234',
+            },
+        }
+        with create_case(DOMAIN, 'referral') as referral, \
+                create_case(DOMAIN, 'mother', **mother_kwargs) as mother:
+            self.referral_case = referral
+            self.mother_case = mother
+            super().run(result)
+
+    def test_no_child_cases(self):
+        child_cases = []
+        with patch('corehq.motech.fhir.tasks.submit_case_blocks') as \
+                submit_case_blocks:
+            create_parent_indices(self.fhir_importer, child_cases)
+            submit_case_blocks.assert_not_called()
+
+    def test_bad_parent_ref(self):
+        parent_ref = '12345'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_none_parent_ref(self):
+        parent_ref = None
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_bad_resource_type(self):
+        parent_ref = 'Practitioner/12345'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_parent_case_missing(self):
+        parent_ref = 'Patient/67890'
+        child_cases = [
+            ParentInfo(self.referral_case.case_id, parent_ref, self.patient_type)
+        ]
+        with self.assertRaises(ConfigurationError):
+            create_parent_indices(self.fhir_importer, child_cases)
+
+    def test_submit_case_blocks(self):
+        index_xml = (
+            '<index>'
+            f'<parent case_type="mother">{self.mother_case.case_id}</parent>'
+            '</index>'
+        )
+
+        child_case_id = self.referral_case.case_id
+        parent_ref = 'Patient/12345'
+        child_cases = [
+            ParentInfo(child_case_id, parent_ref, self.patient_type)
+        ]
+        with patch('corehq.motech.fhir.tasks.'
+                   'submit_case_blocks') as submit_case_blocks:
+            create_parent_indices(self.fhir_importer, child_cases)
+
+            ([case_block], domain), kwargs = submit_case_blocks.call_args
+            self.assertIn(index_xml, case_block)
 
 
 @contextmanager
