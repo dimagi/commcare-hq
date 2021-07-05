@@ -15,6 +15,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_actions_in_domain_link_history,
@@ -29,7 +30,6 @@ from corehq.apps.linked_domain.util import server_to_user_time
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.timezones.utils import get_timezone_for_request
 
 
 def build_domain_link_view_model(link, timezone):
@@ -174,11 +174,12 @@ def build_keyword_view_model(keyword, last_update=None):
     return view_model
 
 
-def build_feature_flag_view_models(domain):
+def build_feature_flag_view_models(domain, ignore_models=None):
+    ignore_models = ignore_models or []
     view_models = []
 
     for model, name in FEATURE_FLAG_DATA_MODELS:
-        if FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
+        if model not in ignore_models and FEATURE_FLAG_DATA_MODEL_TOGGLES[model].enabled(domain):
             view_models.append(
                 build_linked_data_view_model(
                     model_type=model,
@@ -209,6 +210,24 @@ def build_domain_level_view_models(ignore_models=None):
     return view_models
 
 
+def build_superuser_view_models(ignore_models=None):
+    ignore_models = ignore_models or []
+    view_models = []
+
+    for model, name in SUPERUSER_DATA_MODELS:
+        if model not in ignore_models:
+            view_models.append(
+                build_linked_data_view_model(
+                    model_type=model,
+                    name=name,
+                    detail=None,
+                    last_update=_('Never')
+                )
+            )
+
+    return view_models
+
+
 def build_linked_data_view_model(model_type, name, detail, last_update=None, can_update=True):
     return {
         'type': model_type,
@@ -219,17 +238,22 @@ def build_linked_data_view_model(model_type, name, detail, last_update=None, can
     }
 
 
-def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None):
+def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None,
+                                       is_superuser=False):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
     :return: list of view models (dicts) used to render elements on the release content page
     """
     view_models = []
 
+    if is_superuser:
+        superuser_view_models = build_superuser_view_models(ignore_models=ignore_models)
+        view_models.extend(superuser_view_models)
+
     domain_level_view_models = build_domain_level_view_models(ignore_models=ignore_models)
     view_models.extend(domain_level_view_models)
 
-    feature_flag_view_models = build_feature_flag_view_models(domain)
+    feature_flag_view_models = build_feature_flag_view_models(domain, ignore_models=ignore_models)
     view_models.extend(feature_flag_view_models)
 
     for app in apps.values():
@@ -300,7 +324,8 @@ def pop_keyword_for_action(action, keywords):
     return keyword
 
 
-def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords):
+def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords,
+                                                timezone, is_superuser=False):
     """
     Data models that originated in this domain's upstream domain that are available to pull
     :return: list of view models (dicts) used to render linked data models that can be pulled
@@ -311,7 +336,6 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
         return linked_data_view_models
 
     models_seen = set()
-    timezone = get_timezone_for_request()
     history = get_actions_in_domain_link_history(upstream_link)
     for action in history:
         if action.row_number != 1:
@@ -324,19 +348,15 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
         if action.model == MODEL_APP:
             app = pop_app_for_action(action, apps)
             view_model = build_app_view_model(app, last_update=last_update)
-
         elif action.model == MODEL_FIXTURE:
             fixture = pop_fixture_for_action(action, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
-
         elif action.model == MODEL_REPORT:
             report = pop_report_for_action(action, reports)
             view_model = build_report_view_model(report, last_update=last_update)
-
         elif action.model == MODEL_KEYWORD:
             keyword = pop_keyword_for_action(action, keywords)
             view_model = build_keyword_view_model(keyword, last_update=last_update)
-
         else:
             view_model = build_linked_data_view_model(
                 model_type=action.model,
@@ -345,13 +365,14 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
                 last_update=last_update,
             )
 
-        linked_data_view_models.append(view_model)
+        if view_model['type'] not in dict(SUPERUSER_DATA_MODELS).keys() or is_superuser:
+            linked_data_view_models.append(view_model)
 
     # Add data models that have never been pulled into the downstream domain before
     # ignoring any models we have already added via domain history
     linked_data_view_models.extend(
         build_view_models_from_data_models(
-            domain, apps, fixtures, reports, keywords, ignore_models=models_seen)
+            domain, apps, fixtures, reports, keywords, ignore_models=models_seen, is_superuser=is_superuser)
     )
 
     return linked_data_view_models
