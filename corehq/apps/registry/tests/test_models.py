@@ -44,3 +44,16 @@ class RegistryModelsTests(TestCase):
         )
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B')))
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('C')))
+
+    def test_get_accessible_slug(self):
+        invitations = [
+            Invitation('A'),
+            Invitation('B', accepted=False),
+            Invitation('C', accepted=True, rejected=True),  # accepted and later rejected
+        ]
+        create_registry_for_test(self.domain, invitations, name="reg1")
+        create_registry_for_test(self.domain, invitations, name="reg2")
+        self.assertEqual(
+            {"reg1"},
+            {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', slug="reg1")}
+        )
