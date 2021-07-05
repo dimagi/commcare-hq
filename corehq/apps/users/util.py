@@ -349,14 +349,15 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     from corehq.apps.users.model_log import UserModelAction
 
     action = action or UserModelAction.UPDATE
+    fields_changed = fields_changed or {}
 
     # domain is essential to filter changes done in a domain
     if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
-    if action == UserModelAction.UPDATE and not fields_changed:
-        raise ValueError("missing 'fields_changed' argument for update.")
+    if action == UserModelAction.UPDATE and not fields_changed and not message:
+        raise ValueError("missing both 'fields_changed' and 'message' argument for update.")
 
     return UserHistory.objects.create(
         domain=domain,
