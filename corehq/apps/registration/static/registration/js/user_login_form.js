@@ -22,11 +22,14 @@ hqDefine('registration/js/user_login_form', [
             'passwordField',
             'passwordFormGroup',
             'nextUrl',
+            'isSessionExpiration',
         ]);
         var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
+        self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login');
         self.nextUrl = options.nextUrl;
+        self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
         self.passwordFormGroup.hide();
@@ -130,7 +133,19 @@ hqDefine('registration/js/user_login_form', [
                 // note ssoUrl already contains ?username=foo
                 ssoUrl = ssoUrl + "&next=" + self.nextUrl;
             }
-            window.location = ssoUrl;
+            if (self.isSessionExpiration) {
+                // the reason why we do this for the session expiration popup
+                // is that Azure AD does not load in cross origin iframes.
+                console.log("SESH EXPIRATION");
+                window.open(ssoUrl);
+                console.log(ssoUrl);
+                window.location = self.sessionExpirationSsoIframeUrl;
+                console.log("iframe url");
+                console.log(self.sessionExpirationSsoIframeUrl);
+            } else {
+                console.log("NORMAL SSO");
+                window.location = ssoUrl;
+            }
         };
 
         self.continueToPasswordLogin = function () {

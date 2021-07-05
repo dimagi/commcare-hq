@@ -2,29 +2,26 @@
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
   <head>
-    <title>{% trans "Thank you for logging in!" %}</title>
+    <title>{% trans "Please login in other window!" %}</title>
     <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
     {% include 'hqwebapp/includes/less.html' %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <script type="application/javascript">
-      console.log('hello, testing window situation');
-      console.log('this is window.opener:');
-      console.log(window.opener);
-      console.log()
-
-    </script>
   </head>
   <body>
     <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     <div class="hq-container">
       <div class="container-fluid">
         <div class="page-header">
-          <h1>{% trans "Thank you for logging in!" %}</h1>
+          <h1>{% trans "Thank you for logging in with Single Sign-On!" %}</h1>
         </div>
         <div class="row">
           <div class="col-sm-12">
             <p>
-              {% trans "You may close this window and return to your work." %}
+              {% blocktrans %}
+                We opened a new window for you to log in again with
+                Single Sign-On. If you've finished logging in there, you
+                may close this popup. Thank you!
+              {% endblocktrans %}
             </p>
           </div>
         </div>
