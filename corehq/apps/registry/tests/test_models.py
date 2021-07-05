@@ -40,6 +40,11 @@ class RegistryModelsTests(TestCase):
         # no invitation
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B')))
 
+    def test_get_accessible_inactive(self):
+        registry = create_registry_for_test(self.domain, [Invitation('A')], name="reg1")
+        registry.deactivate()
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
+
     def test_get_accessible_not_accepted(self):
         create_registry_for_test(self.domain, [Invitation('A', accepted=False)], name="reg1")
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
