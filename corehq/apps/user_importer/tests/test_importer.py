@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from mock import mock, patch
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.custom_data_fields.models import (
@@ -41,6 +42,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.STANDARD)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
