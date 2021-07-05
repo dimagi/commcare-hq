@@ -361,20 +361,19 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
 
-        self.commonProperties = ko.computed(function (argument) {
+        self.commonProperties = ko.computed(function () {
             var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
                 return p.property;
             });
-            var commonProperties = self.searchProperties().filter(function(n) {
+            var commonProperties = self.searchProperties().filter(function (n) {
                 return n.name().length > 0 && defaultProperties.indexOf(n.name()) !== -1;
             });
             return _.map(
                 commonProperties,
                 function (p) {
-                    return p.name()
+                    return p.name();
                 }
             );
-            debugger;
         });
 
         self.serialize = function () {
