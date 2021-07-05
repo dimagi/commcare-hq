@@ -107,3 +107,15 @@ class RegistryModelsTests(TestCase):
         registry = create_registry_for_test(self.domain, [Invitation("A", rejected=True)])
         with self.assertRaises(RegistryAccessDenied):
             registry.check_access("A")
+
+    def test_get_granted_domains(self):
+        invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
+        grants = [
+            Grant("A", ["B"]),
+            Grant("B", ["A", "C"]),
+            Grant("C", ["A"]),
+        ]
+        registry = create_registry_for_test(self.domain, invitations, grants, name="reg1")
+        self.assertEqual({"A"}, registry.get_granted_domains("B"))
+        self.assertEqual({"B", "C"}, registry.get_granted_domains("A"))
+        self.assertEqual({"B"}, registry.get_granted_domains("C"))
