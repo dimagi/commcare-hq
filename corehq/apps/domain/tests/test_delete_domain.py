@@ -895,7 +895,7 @@ class TestDeleteDomain(TestCase):
         another_domain.save()
         self.addCleanup(another_domain.delete)
 
-        # add more than 1 domain membership to trigger _log_web_user_membership_removed
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed in tests
         web_user.add_domain_membership(another_domain.name)
         web_user.save()
 
@@ -905,7 +905,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(user_history.domain, None)
         self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
         self.assertEqual(user_history.user_id, web_user.get_id)
-        self.assertEqual(user_history.message, "Removed from domain")
+        self.assertEqual(user_history.message, f"Removed from domain {self.domain.name}")
         self.assertEqual(user_history.details['changed_via'],
                          'corehq.apps.domain.deletion._delete_web_user_membership')
         self.assertEqual(user_history.details['changes'], {})
