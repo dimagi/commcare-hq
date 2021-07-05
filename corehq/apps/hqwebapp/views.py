@@ -105,6 +105,7 @@ from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
@@ -546,7 +547,10 @@ def login_new_window(request):
 @location_safe
 @login_required
 def iframe_domain_login_new_window(request):
-    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
+    template = ('hqwebapp/iframe_sso_login_success.html'
+                if is_request_using_sso(request)
+                else 'hqwebapp/iframe_close_window.html')
+    return TemplateView.as_view(template_name=template)(request)
 
 
 @login_and_domain_required
