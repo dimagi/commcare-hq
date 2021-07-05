@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from corehq.apps.registry.exceptions import RegistryAccessDenied
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
 
@@ -41,23 +42,23 @@ class RegistryModelsTests(TestCase):
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B')))
 
     def test_get_accessible_inactive(self):
-        registry = create_registry_for_test(self.domain, [Invitation('A')], name="reg1")
+        registry = create_registry_for_test(self.domain, [Invitation('A')])
         registry.deactivate()
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
 
     def test_get_accessible_not_accepted(self):
-        create_registry_for_test(self.domain, [Invitation('A', accepted=False)], name="reg1")
+        create_registry_for_test(self.domain, [Invitation('A', accepted=False)])
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
 
     def test_get_accessible_rejected(self):
-        create_registry_for_test(self.domain, [Invitation('A', rejected=True)], name="reg1")
+        create_registry_for_test(self.domain, [Invitation('A', rejected=True)])
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
 
     def test_get_accessible_accepted_then_rejected(self):
         invitations = [
             Invitation('A', accepted=True, rejected=True),  # accepted and later rejected
         ]
-        create_registry_for_test(self.domain, invitations, name="reg1")
+        create_registry_for_test(self.domain, invitations)
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
 
     def test_get_accessible_slug(self):
@@ -82,5 +83,27 @@ class RegistryModelsTests(TestCase):
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B', has_grants=True)))
 
     def test_get_accessible_grants_no_invite(self):
-        create_registry_for_test(self.domain, grants=[Grant("B", ["A"])], name="reg1")
-        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A', has_grants=True)))
+        create_registry_for_test(self.domain, grants=[Grant("B", ["A"])])
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain("A", has_grants=True)))
+
+    def test_check_access(self):
+        registry = create_registry_for_test(self.domain, [Invitation("A")])
+        self.assertTrue(registry.check_access("A"))
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_access("B")
+
+    def test_check_access_inactive(self):
+        registry = create_registry_for_test(self.domain, [Invitation("A")])
+        registry.deactivate()
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_access("A")
+
+    def test_check_access_invite_not_accepted(self):
+        registry = create_registry_for_test(self.domain, [Invitation("A", accepted=False)])
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_access("A")
+
+    def test_check_access_invite_rejected(self):
+        registry = create_registry_for_test(self.domain, [Invitation("A", rejected=True)])
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_access("A")

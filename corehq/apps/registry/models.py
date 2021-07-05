@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.text import slugify
 
 from corehq.apps.domain.utils import domain_name_stop_words
+from corehq.apps.registry.exceptions import RegistryAccessDenied
 
 
 def slugify_remove_stops(text):
@@ -55,6 +56,17 @@ class DataRegistry(models.Model):
     def deactivate(self):
         self.is_active = False
         self.save()
+
+    def check_access(self, domain):
+        if not self.is_active:
+            raise RegistryAccessDenied()
+        invites = self.invitations.filter(domain=domain)
+        if not invites:
+            raise RegistryAccessDenied()
+        invite = invites[0]
+        if not invite.accepted_on or invite.rejected_on:
+            raise RegistryAccessDenied()
+        return True
 
 
 class RegistryInvitation(models.Model):
