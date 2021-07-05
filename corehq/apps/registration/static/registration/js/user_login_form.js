@@ -27,7 +27,7 @@ hqDefine('registration/js/user_login_form', [
         var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
-        self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login');
+        self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login_pending');
         self.nextUrl = options.nextUrl;
         self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;

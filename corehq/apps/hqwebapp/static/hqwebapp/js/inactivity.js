@@ -250,7 +250,7 @@ hqDefine('hqwebapp/js/inactivity', [
                 // ignore other messages
                 return;
             }
-            var message = JSON.parse(ev.originalEvent.newValue);
+            var message = JSON.parse(event.originalEvent.newValue);
             if (!message) return;
 
             if (message.isLoggedIn) {
