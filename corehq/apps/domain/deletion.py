@@ -141,13 +141,13 @@ def _delete_web_user_membership(domain_name):
             web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
-            _log_web_user_membership_removed(web_user, __name__ + "._delete_web_user_membership")
+            _log_web_user_membership_removed(web_user, domain_name, __name__ + "._delete_web_user_membership")
 
 
-def _log_web_user_membership_removed(user, via):
+def _log_web_user_membership_removed(user, domain, via):
     log_user_change(None, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message="Removed from domain")
+                    message=f"Removed from domain {domain}")
 
 
 def _terminate_subscriptions(domain_name):
