@@ -181,7 +181,9 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                log_user_role_update(self.domain, self.existing_user, self.request.user, USER_CHANGE_VIA_WEB)
+                user_role = self.existing_user.get_role(self.domain)
+                log_user_role_update(self.domain, user_role, user=self.existing_user,
+                                     by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
         elif is_update_successful:
