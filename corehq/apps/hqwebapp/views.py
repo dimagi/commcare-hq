@@ -459,6 +459,12 @@ def iframe_domain_login(req, domain):
     })
 
 
+@xframe_options_sameorigin
+@location_safe
+def iframe_sso_login(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_sso_login.html')(request)
+
+
 class HQLoginView(LoginView):
     form_list = [
         ('auth', EmailAuthenticationForm),
