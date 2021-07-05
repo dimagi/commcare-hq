@@ -23,7 +23,7 @@ class RegistryManager(models.Manager):
             query = query.filter(is_active=is_active)
         return query
 
-    def accessible_to_domain(self, domain, slug=None):
+    def accessible_to_domain(self, domain, slug=None, has_grants=False):
         query = (
             self.filter(is_active=True)
             .filter(
@@ -34,6 +34,8 @@ class RegistryManager(models.Manager):
         )
         if slug:
             query = query.filter(slug=slug)
+        if has_grants:
+            query = query.filter(grants__to_domains__contains=[domain])
         return query
 
 
