@@ -390,7 +390,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
         results = create_or_update_commcare_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
-            None
+            self.user,
         )
         self.assertEqual(results['errors'], [])
 
