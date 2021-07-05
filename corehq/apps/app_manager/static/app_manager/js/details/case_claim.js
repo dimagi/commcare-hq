@@ -361,6 +361,22 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
 
+        self.commonProperties = ko.computed(function (argument) {
+            var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
+                return p.property;
+            });
+            var commonProperties = self.searchProperties().filter(function(n) {
+                return n.name().length > 0 && defaultProperties.indexOf(n.name()) !== -1;
+            });
+            return _.map(
+                commonProperties,
+                function (p) {
+                    return p.name()
+                }
+            );
+            debugger;
+        });
+
         self.serialize = function () {
             return _.extend({
                 properties: self._getProperties(),
