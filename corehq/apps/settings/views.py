@@ -268,7 +268,7 @@ class MyProjectsList(BaseMyAccountView):
                 self.request.couch_user.save()
                 log_user_change(None, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                                message=_("Removed from domain {domain_name}").format(
+                                message=_("Removed from domain '{domain_name}'").format(
                                     domain_name=self.domain_to_remove),
                                 domain_required_for_log=False,
                                 )

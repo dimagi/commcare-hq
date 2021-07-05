@@ -113,7 +113,7 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertEqual(user_history.domain, self.domain.name)
         self.assertEqual(user_history.changed_by, self.user.get_id)
         self.assertEqual(user_history.user_id, self.transfer.from_user.get_id)
-        self.assertEqual(user_history.message, f"Removed from domain {self.domain}")
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain}'")
         self.assertEqual(user_history.details['changed_via'], 'test')
         self.assertEqual(user_history.details['changes'], {})
 
