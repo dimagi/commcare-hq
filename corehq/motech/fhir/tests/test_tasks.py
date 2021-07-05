@@ -418,7 +418,7 @@ class TestGetCaseById(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.case_id = uuid4().hex
+        self.case_id = str(uuid4())
         self.factory.create_or_update_case(CaseStructure(
             case_id=self.case_id,
             attrs={
@@ -463,7 +463,7 @@ class TestGetCaseByExternalId(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        case_id = uuid4().hex
+        case_id = str(uuid4())
         self.external_id = str(uuid4())
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -765,8 +765,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         delete_all_cases()
 
     def test_resource_has_case_id(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -794,8 +794,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, case_id)
 
     def test_resource_has_case_id_in_other_domain(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         with other_domain_factory('other-test-domain') as factory:
             factory.create_or_update_case(CaseStructure(
@@ -824,8 +824,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_resource_has_external_id(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -851,8 +851,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, case_id)
 
     def test_resource_has_external_id_in_other_domain(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         with other_domain_factory('other-test-domain') as factory:
             factory.create_or_update_case(CaseStructure(
@@ -879,8 +879,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
             self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_same_external_id_different_case_type(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=case_id,
@@ -906,8 +906,8 @@ class TestBuildCaseBlock(TestCaseWithResourceType):
         self.assertEqual(case_block.case_id, suggested_case_id)
 
     def test_resource_is_new(self):
-        case_id = uuid4().hex
-        suggested_case_id = uuid4().hex
+        case_id = str(uuid4())
+        suggested_case_id = str(uuid4())
 
         resource = {
             'id': '12345',

@@ -141,7 +141,7 @@ def import_resource(
             f"resource type {resource['resourceType']!r}."
         )
 
-    case_id = uuid4().hex
+    case_id = str(uuid4())
     if resource_type.name == 'ServiceRequest':
         try:
             resource = claim_service_request(requests, resource, case_id)
