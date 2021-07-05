@@ -9,6 +9,7 @@ from django.test import TestCase
 from nose.tools import assert_in
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.users.models import CommCareUser
 from corehq.motech.const import IMPORT_FREQUENCY_DAILY
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
@@ -16,7 +17,12 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseProperty as CasePropertyValueSource
 from corehq.motech.value_source import ValueSource
 
-from ..const import FHIR_VERSION_4_0_1
+from ..const import (
+    FHIR_VERSION_4_0_1,
+    OWNER_TYPE_GROUP,
+    OWNER_TYPE_LOCATION,
+    OWNER_TYPE_USER,
+)
 from ..models import (
     FHIRImportConfig,
     FHIRImportResourceProperty,
@@ -48,13 +54,25 @@ class TestCaseWithConnectionSettings(TestCase):
 
 class TestFHIRImportConfig(TestCaseWithConnectionSettings):
 
-    def tearDown(self):
-        FHIRImportConfig.objects.filter(domain=DOMAIN).delete()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = CommCareUser(
+            domain=DOMAIN,
+            username=f'bob@{DOMAIN}.commcarehq.org',
+        )
+        cls.user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(deleted_by=__name__)
+        super().tearDownClass()
 
     def test_connection_settings_null(self):
         import_config = FHIRImportConfig(
             domain=DOMAIN,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
             import_config.full_clean()
@@ -63,11 +81,13 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             import_config.save()
 
     def test_connection_settings_protected(self):
-        FHIRImportConfig.objects.create(
+        import_config = FHIRImportConfig.objects.create(
             domain=DOMAIN,
             connection_settings=self.conn,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
+        self.addCleanup(import_config.delete)
         with self.assertRaises(ProtectedError):
             self.conn.delete()
 
@@ -76,7 +96,8 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version=FHIR_VERSION_4_0_1,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         import_config.full_clean()
 
@@ -85,7 +106,8 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             domain=DOMAIN,
             connection_settings=self.conn,
             fhir_version='1.0.2',
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
             import_config.full_clean()
@@ -95,7 +117,8 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             domain=DOMAIN,
             connection_settings=self.conn,
             frequency=IMPORT_FREQUENCY_DAILY,
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         import_config.full_clean()
 
@@ -104,7 +127,8 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             domain=DOMAIN,
             connection_settings=self.conn,
             frequency='annually',
-            owner_id='b0b',
+            owner_id=self.user.user_id,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
             import_config.full_clean()
@@ -113,6 +137,7 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
         import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
+            owner_type=OWNER_TYPE_USER,
         )
         with self.assertRaises(ValidationError):
             import_config.full_clean()
@@ -123,18 +148,68 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
             domain=DOMAIN,
             connection_settings=self.conn,
             owner_id=uuid + 'X',
+            owner_type=OWNER_TYPE_USER,
         )
-        with self.assertRaises(ValidationError):
+        try:
             import_config.full_clean()
+        except ValidationError as err:
+            errors = err.message_dict['owner_id']
+            self.assertEqual(
+                errors,
+                ['Ensure this value has at most 36 characters (it has 37).'],
+            )
 
-    def test_owner_id_max_length(self):
-        uuid = '4d4e6255-2139-49e0-98e9-9418e83a4944'
+
+class TestFHIRImportConfigGetOwner(TestCaseWithConnectionSettings):
+
+    def test_owner_type_missing(self):
         import_config = FHIRImportConfig(
             domain=DOMAIN,
             connection_settings=self.conn,
-            owner_id=uuid,
+            owner_id='b0b',
         )
-        import_config.full_clean()
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_owner_type_bad(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+            owner_type='0rgunit',
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_user_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0b',
+            owner_type=OWNER_TYPE_USER,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_group_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='the-clan-mcb0b',
+            owner_type=OWNER_TYPE_GROUP,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
+
+    def test_location_does_not_exist(self):
+        import_config = FHIRImportConfig(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+            owner_id='b0bton',
+            owner_type=OWNER_TYPE_LOCATION,
+        )
+        with self.assertRaises(ConfigurationError):
+            import_config.get_owner()
 
 
 class TestCaseWithReferral(TestCaseWithConnectionSettings):

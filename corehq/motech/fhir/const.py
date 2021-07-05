@@ -1,6 +1,18 @@
+from django.utils.translation import ugettext_lazy as _
+
+
 FHIR_VERSION_4_0_1 = '4.0.1'
 FHIR_VERSIONS = [
     (FHIR_VERSION_4_0_1, 'R4'),
+]
+
+OWNER_TYPE_GROUP = 'group'
+OWNER_TYPE_LOCATION = 'location'
+OWNER_TYPE_USER = 'user'
+OWNER_TYPE_CHOICES = [
+    (OWNER_TYPE_GROUP, _('Group')),
+    (OWNER_TYPE_LOCATION, _('Location')),
+    (OWNER_TYPE_USER, _('User')),
 ]
 
 # See https://www.hl7.org/fhir/valueset-bundle-type.html

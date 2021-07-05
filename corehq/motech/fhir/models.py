@@ -31,15 +31,22 @@ import os
 from typing import Optional, Union
 
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 
+from couchdbkit import ResourceNotFound
 from jsonfield import JSONField
-from jsonschema import RefResolver, ValidationError, validate
+from jsonschema import RefResolver
+from jsonschema import ValidationError as JSONValidationError
+from jsonschema import validate
 
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.const import (
     IMPORT_FREQUENCY_CHOICES,
@@ -53,7 +60,14 @@ from corehq.motech.value_source import (
     as_value_source,
 )
 
-from .const import FHIR_VERSION_4_0_1, FHIR_VERSIONS
+from .const import (
+    FHIR_VERSION_4_0_1,
+    FHIR_VERSIONS,
+    OWNER_TYPE_CHOICES,
+    OWNER_TYPE_GROUP,
+    OWNER_TYPE_LOCATION,
+    OWNER_TYPE_USER,
+)
 from .validators import validate_supported_type
 
 
@@ -106,7 +120,7 @@ class FHIRResourceType(models.Model):
                                referrer=schema)
         try:
             validate(fhir_resource, schema, resolver=resolver)
-        except ValidationError as err:
+        except JSONValidationError as err:
             raise ConfigurationError(
                 f'Validation failed for resource {fhir_resource!r}: {err}'
             ) from err
@@ -348,8 +362,9 @@ class FHIRImportConfig(models.Model):
         choices=IMPORT_FREQUENCY_CHOICES,
         default=IMPORT_FREQUENCY_DAILY,
     )
-    # ID of user or location that will own imported cases
+    # ID of group, location or user that will own imported cases
     owner_id = models.CharField(max_length=36, null=False, blank=False)
+    owner_type = models.CharField(max_length=12, choices=OWNER_TYPE_CHOICES)
 
     class Meta:
         indexes = [
@@ -359,6 +374,33 @@ class FHIRImportConfig(models.Model):
 
     def __str__(self):
         return f'{self.connection_settings} ({self.frequency})'
+
+    def clean(self):
+        super().clean()
+        try:
+            self.get_owner()
+        except ConfigurationError as err:
+            raise DjangoValidationError(str(err)) from err
+
+    def get_owner(self):
+        if not self.owner_id:
+            raise ConfigurationError('Owner ID missing')
+        try:
+            if self.owner_type == OWNER_TYPE_GROUP:
+                return Group.get(self.owner_id)
+            elif self.owner_type == OWNER_TYPE_LOCATION:
+                return SQLLocation.objects.get(location_id=self.owner_id)
+            elif self.owner_type == OWNER_TYPE_USER:
+                user = CouchUser.get_by_user_id(self.owner_id)
+                if user:
+                    return user
+                else:
+                    raise ResourceNotFound()
+            else:
+                raise ConfigurationError(f'Unknown owner type {self.owner_type!r}')
+        except (ResourceNotFound, SQLLocation.DoesNotExist):
+            raise ConfigurationError(f'{self.owner_type.capitalize()} '
+                                     f'{self.owner_id!r} does not exist')
 
 
 class FHIRImportResourceType(models.Model):
