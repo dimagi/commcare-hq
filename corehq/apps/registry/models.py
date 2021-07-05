@@ -24,7 +24,7 @@ class RegistryManager(models.Manager):
             query = query.filter(is_active=is_active)
         return query
 
-    def accessible_to_domain(self, domain):
+    def accessible_to_domain(self, domain, slug=None):
         query = (
             self.filter(is_active=True)
             .filter(
@@ -33,6 +33,8 @@ class RegistryManager(models.Manager):
                 invitations__rejected_on__isnull=True
             )
         )
+        if slug:
+            query = query.filter(slug=slug)
         return query
 
 
