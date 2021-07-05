@@ -57,6 +57,13 @@ class DataRegistry(models.Model):
         self.is_active = False
         self.save()
 
+    def get_granted_domains(self, domain):
+        self.check_access(domain)
+        return set(
+            self.grants.filter(to_domains__contains=[domain])
+            .values_list('from_domain', flat=True)
+        )
+
     def check_access(self, domain):
         if not self.is_active:
             raise RegistryAccessDenied()
