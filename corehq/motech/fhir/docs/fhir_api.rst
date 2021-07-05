@@ -41,7 +41,7 @@ CommCare HQ is now accessible at ``http://localhost:8000/``
 A Reference API Client
 ^^^^^^^^^^^^^^^^^^^^^^
 
-An simple example of a web service that calls the CommCare HQ FHIR API
+A simple example of a web service that calls the CommCare HQ FHIR API
 to retrieve patient data is available as a reference.
 
 You can find it implemented using the `Flask`_ Python web framework, or
