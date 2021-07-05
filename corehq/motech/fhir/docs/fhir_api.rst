@@ -1,7 +1,7 @@
 The FHIR API
 ============
 
-MOTECH offers a FHIR R4 API. It returns responses in JSON.
+CommCare offers a FHIR R4 API. It returns responses in JSON.
 
 The FHIR API is not yet targeted at external users. API users must be
 superusers.
