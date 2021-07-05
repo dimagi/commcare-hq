@@ -251,9 +251,17 @@ hqDefine('hqwebapp/js/inactivity', [
                 return;
             }
             var message = JSON.parse(event.originalEvent.newValue);
-            if (!message) return;
+            console.log('possible SSO Inactivity message?');
+            console.log(event.originalEvent);
+            if (!message) {
+                console.log('no message');
+                return;
+            }
+            console.log('found message');
+            console.log(message);
 
             if (message.isLoggedIn) {
+                console.log('closing modals?');
                 log("session successfully extended via Single Sign On in external tab");
                 hideWarningModal();
                 $modal.modal('hide');
