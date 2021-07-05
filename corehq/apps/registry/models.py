@@ -16,6 +16,15 @@ def slugify_remove_stops(text):
     return "-".join([word for word in words if word not in stop_words])
 
 
+class RegistryManager(models.Manager):
+
+    def owned_by_domain(self, domain, is_active=None):
+        query = self.filter(domain=domain)
+        if is_active is not None:
+            query = query.filter(is_active=is_active)
+        return query
+
+
 class DataRegistry(models.Model):
     domain = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -26,6 +35,8 @@ class DataRegistry(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
+
+    objects = RegistryManager()
 
 
 class RegistryInvitation(models.Model):
