@@ -21,7 +21,6 @@ def create_registry_for_test(domain, invitations=None, grants=None, name=None):
         registry.grants.create(
             from_domain=grant.from_domain,
             to_domains=grant.to_domains,
-            type=RegistryGrant.TYPE_ALLOW if grant.allow else RegistryGrant.TYPE_DENY
         )
 
     return registry
@@ -38,4 +37,3 @@ class Invitation:
 class Grant:
     from_domain = attrib()
     to_domains = attrib(factory=list)
-    allow = attrib(default=True)

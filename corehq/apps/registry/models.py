@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy
 
 from corehq.apps.domain.utils import domain_name_stop_words
 
@@ -80,18 +79,9 @@ class RegistryInvitation(models.Model):
 
 
 class RegistryGrant(models.Model):
-    TYPE_ALLOW = "allow"
-    TYPE_DENY = "deny"
-
-    TYPE_CHOICES = [
-        (TYPE_ALLOW, gettext_lazy("allow")),
-        (TYPE_DENY, gettext_lazy("deny")),
-    ]
-
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
-    type = models.CharField(max_length=8, choices=TYPE_CHOICES)
 
 
 class RegistryPermission(models.Model):
