@@ -266,6 +266,7 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.registry',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
