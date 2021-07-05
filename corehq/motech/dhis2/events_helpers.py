@@ -32,6 +32,7 @@ def get_event(domain, config, form_json=None, info=None):
         _get_event_status,
         _get_completed_date,
         _get_datavalues,
+        _get_coordinates
     ]
     for func in event_property_functions:
         event.update(func(config, info))
@@ -97,6 +98,29 @@ def _get_datavalues(config, case_trigger_info):
                 'value': value
             })
     return {'dataValues': values}
+
+
+def _get_coordinates(config, case_trigger_info):
+    if config.coordinate:
+        coordinate = get_value(config.coordinate, case_trigger_info)
+
+        if coordinate:
+            return {'coordinate': _to_dhis2_coordinate(coordinate)}
+
+    return {}
+
+
+def _to_dhis2_coordinate(coordinate: str):
+    """
+    Example
+    coordinate: "-35.8655497 14.6940185 138.66 5.4"
+    Returns: {"latitude": -35.8655497, "longitude": 14.6940185}
+    """
+    (lat, lon) = coordinate.split(' ')[:2]
+    return {
+        'latitude': float(lat),
+        'longitude': float(lon)
+    }
 
 
 def validate_event_schema(event):
