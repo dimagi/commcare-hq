@@ -12,7 +12,7 @@ or transform, and publishes it to another database.
 Creating a pillow
 =================
 
-All pillows inherit from `ConstructedPillow` class. A pillow consists of a few parts:
+All pillows inherit from ``ConstructedPillow`` class. A pillow consists of a few parts:
 
 1. Change Feed
 2. Checkpoint
@@ -57,13 +57,13 @@ the checkpoint to the database.
 Error Handling
 ==============
 
-Pillow errors are handled by saving to model `PillowError`. A celery queue
+Pillow errors are handled by saving to model ``PillowError``. A celery queue
 reads from this model and retries any errors on the pillow.
 
 Monitoring
 ==========
 
-There are several datadog metrics with the prefix `commcare.change_feed` that can be helpful for monitoring pillows.
+There are several datadog metrics with the prefix ``commcare.change_feed`` that can be helpful for monitoring pillows.
 Generally these metrics will have tags for pillow name, topic and partition to filter on
 
 .. list-table::
@@ -109,7 +109,7 @@ A pillow is falling behind
 
 A pillow can fall behind for two reasons:
 
-1. The processor is too slow for the number of changes that are coming in. (i.e. `change_lag` for that pillow is very high)
+1. The processor is too slow for the number of changes that are coming in. (i.e. "change_lag" for that pillow is very high)
 2. There has been an issue with the change feed that has caused the checkpoint to be "rewound"
 3. Many exceptions happen during the day which requires pillows to process the same changes later.
 
@@ -117,9 +117,9 @@ Optimizing a processor
 ~~~~~~~~~~~~~~~~~~~~~~
 To solve #1 you should use any monitors that have been set up to attempt to
 pinpoint the issue.
-`commcare.change_feed.processor.timing` can help determine what processors/pillows are the root cause of slow processing.
+``commcare.change_feed.processor.timing`` can help determine what processors/pillows are the root cause of slow processing.
 
-If this is a UCR pillow use the `profile_data_source` management command to
+If this is a UCR pillow use the ``profile_data_source`` management command to
 profile the expensive data sources.
 
 Parallel Processors
@@ -149,7 +149,7 @@ the number of partitions, and and just update the supervisor conf and restarting
 for the change to take effect.
 
 The UCR pillows also have options to split the pillow into multiple. They
-include `ucr_divsion`, `include_ucrs` and `exclude_ucrs`. Look to the pillow
+include ``ucr_divsion``, ``include_ucrs`` and ``exclude_ucrs``. Look to the pillow
 code for more information on these.
 
 Rewound Checkpoint
@@ -158,22 +158,25 @@ Rewound Checkpoint
 Occasionally checkpoints will be "rewound" to a previous state causing pillows
 to process changes that have already been processed. This usually happens when
 a couch node fails over to another. If this occurs, stop the pillow, wait for
-confirmation that the couch nodes are up, and fix the checkpoint using:
-`./manage.py fix_checkpoint_after_rewind <pillow_name>`
+confirmation that the couch nodes are up, and fix the checkpoint using::
+
+    $ ./manage.py fix_checkpoint_after_rewind <pillow_name>
 
 Many pillow exceptions
 ~~~~~~~~~~~~~~~~~~~~~~
 
-`commcare.change_feed.changes.exceptions` has tag `exception_type` that reports the name and path of the exception encountered.
+``commcare.change_feed.changes.exceptions`` has tag ``exception_type`` that reports the name and path of the exception encountered.
 These exceptions could be from coding errors or from infrastructure issues.
 If they are from infrastructure issues (e.g. ES timeouts) some solutions could be:
-    - Scale ES cluster (more nodes, shards, etc)
-    - Reduce number of pillow processes that are writing to ES
-    - Reduce other usages of ES if possible (e.g. if some custom code relies on ES, could it use UCRs, https://github.com/dimagi/commcare-hq/pull/26241)
+
+- Scale ES cluster (more nodes, shards, etc)
+- Reduce number of pillow processes that are writing to ES
+- Reduce other usages of ES if possible (e.g. if some custom code relies
+  on ES, could it use UCRs, https://github.com/dimagi/commcare-hq/pull/26241)
 
 
 Problem with checkpoint for pillow name: First available topic offset for topic is num1 but needed num2
---------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 This happens when the earliest checkpoint that kafka knows about for a topic is
 after the checkpoint the pillow wants to start at. This often happens if a

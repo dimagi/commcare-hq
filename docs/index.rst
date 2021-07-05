@@ -121,6 +121,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     elasticsearch
     es_query
     middleware
+    couch_to_sql_models
     migration_command_pattern
     nfs
     forms_and_cases
@@ -130,6 +131,21 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     metrics
     extensions
     custom
+    js-guide/README.md
+
+.. toctree::
+    :caption: User-Configurable Reports
+    :maxdepth: 1
+
+    ucr/faq
+    ucr/examples
+
+.. toctree::
+    :caption: Record of Decisions
+    :glob:
+    :maxdepth: 1
+
+    decisions/*
 
 .. toctree::
     :caption: Documentation Tips

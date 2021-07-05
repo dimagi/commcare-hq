@@ -1,12 +1,15 @@
-# 2. Keep static UCR configurations in memory
+2: Keep static UCR configurations in memory
+===========================================
 
 Date: 2018-07-04
 
-## Status
+Status
+------
 
 Accepted
 
-## Context
+Context
+-------
 
 As part of the UCR framework configurations for data sources and reports
 may be stored in the database or as static files shipped with the code.
@@ -22,7 +25,8 @@ readying the static configuration files from disk and converting them
 to the JsonObject classes was taking up significant time (14% of restore
 time for ICDS).
 
-## Decision
+Decision
+--------
 
 To improve the performance (primarily of restores) it was decided to maintain
 the list of configurations in memeory rather than re-read them from disk
@@ -36,7 +40,8 @@ There are still some places that re-read the configurations from disk
 each time but these not called in places that require high performance. An
 example of this is the UCR pillow bootstrapping.
 
-## Consequences
+Consequences
+------------
 
 Although this may raise the memory usage of the processes (after the
 configurations have been loaded) it should be noted that even in the current
@@ -46,6 +51,6 @@ released at some point after the initial load.
 
 In terms of actual memory footprint the figures are as follows:
 
-Base memory: 285Mb
-Data sources: 60Mb
-Report configs: 35Mb
+| Base memory: 285Mb
+| Data sources: 60Mb
+| Report configs: 35Mb

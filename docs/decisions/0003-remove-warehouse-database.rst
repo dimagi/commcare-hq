@@ -1,12 +1,15 @@
-# 3. Remove warehouse database
+3: Remove warehouse database
+============================
 
 Date: 2019-10-16
 
-## Status
+Status
+------
 
 Accepted
 
-## Context
+Context
+-------
 
 The data warehouse was intended to house data for all CommCareHQ reports.
 The warehouse would replace Elasticsearch in almost all contexts that it is currently used.
@@ -15,7 +18,8 @@ to move the report to the warehouse and ensure it is stable, performs well and
 provides the same features as the ES-backed reports was much higher than
 anticipated.
 
-## Decision
+Decision
+--------
 
 To reduce our infrastructure dependencies and focus our efforts on existing databases,
 we have decided to remove the warehouse and stop any efforts to iterate on it.
@@ -30,7 +34,8 @@ to reconsider our approach and decide on what will be appropriate long term.
 When there are more dedicated resources for generic reports, we believe that
 a warehouse-style approach should be considered when implementing.
 
-## Consequences
+Consequences
+------------
 
 The warehouse was intended to reduce our usage of Elasticsearch and assist in
 an effort to remove many dependencies on our cluster.

@@ -91,7 +91,7 @@ def get_case_pillow(
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
-      - :py:function:`corehq.pillows.case_search.get_case_search_processor`
+      - :py:func:`corehq.pillows.case_search.get_case_search_processor`
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
