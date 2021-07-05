@@ -41,7 +41,7 @@ class ChampTestCase(TestCase, DomainSubscriptionMixin):
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscriptions()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         clear_plan_version_cache()
         super().tearDownClass()
 
