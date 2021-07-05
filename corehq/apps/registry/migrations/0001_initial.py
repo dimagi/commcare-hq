@@ -37,7 +37,6 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('from_domain', models.CharField(max_length=255)),
                 ('to_domains', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), size=None)),
-                ('type', models.CharField(choices=[('allow', 'allow'), ('deny', 'deny')], max_length=8)),
                 ('registry', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='grants', to='registry.DataRegistry')),
             ],
         ),
