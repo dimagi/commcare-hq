@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.registry.models import DataRegistry
-from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test
+from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
 
 
 class RegistryModelsTests(TestCase):
@@ -57,3 +57,16 @@ class RegistryModelsTests(TestCase):
             {"reg1"},
             {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', slug="reg1")}
         )
+
+    def test_get_accessible_slug_grants(self):
+        invitations = [
+            Invitation('A'),
+            Invitation('B'),
+        ]
+        create_registry_for_test(self.domain, invitations, grants=[Grant("B", ["A"])], name="reg1")
+        self.assertEqual(
+            {"reg1"},
+            {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', has_grants=True)}
+        )
+        # B has no grants
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B', has_grants=True)))
