@@ -52,6 +52,10 @@ class DataRegistry(models.Model):
 
     objects = RegistryManager()
 
+    def deactivate(self):
+        self.is_active = False
+        self.save()
+
 
 class RegistryInvitation(models.Model):
     registry = models.ForeignKey("DataRegistry", related_name="invitations", on_delete=models.CASCADE)
