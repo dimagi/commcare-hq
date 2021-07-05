@@ -31,34 +31,39 @@ class RegistryModelsTests(TestCase):
         )
 
     def test_get_accessible(self):
-        invitations = [
-            Invitation('A'),
-            Invitation('B', accepted=False),
-            Invitation('C', accepted=True, rejected=True),  # accepted and later rejected
-        ]
-        create_registry_for_test(self.domain, invitations, name="reg1")
-        create_registry_for_test(self.domain, invitations, name="reg2")
+        create_registry_for_test(self.domain, [Invitation('A')], name="reg1")
+        create_registry_for_test(self.domain, [Invitation('A')], name="reg2")
         self.assertEqual(
             {"reg1", "reg2"},
             {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A')}
         )
+        # no invitation
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B')))
-        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('C')))
 
-    def test_get_accessible_slug(self):
+    def test_get_accessible_not_accepted(self):
+        create_registry_for_test(self.domain, [Invitation('A', accepted=False)], name="reg1")
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
+
+    def test_get_accessible_rejected(self):
+        create_registry_for_test(self.domain, [Invitation('A', rejected=True)], name="reg1")
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
+
+    def test_get_accessible_accepted_then_rejected(self):
         invitations = [
-            Invitation('A'),
-            Invitation('B', accepted=False),
-            Invitation('C', accepted=True, rejected=True),  # accepted and later rejected
+            Invitation('A', accepted=True, rejected=True),  # accepted and later rejected
         ]
         create_registry_for_test(self.domain, invitations, name="reg1")
-        create_registry_for_test(self.domain, invitations, name="reg2")
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A')))
+
+    def test_get_accessible_slug(self):
+        create_registry_for_test(self.domain, [Invitation('A')], name="reg1")
+        create_registry_for_test(self.domain, [Invitation('A')], name="reg2")
         self.assertEqual(
             {"reg1"},
             {reg.slug for reg in DataRegistry.objects.accessible_to_domain('A', slug="reg1")}
         )
 
-    def test_get_accessible_slug_grants(self):
+    def test_get_accessible_grants(self):
         invitations = [
             Invitation('A'),
             Invitation('B'),
@@ -70,3 +75,7 @@ class RegistryModelsTests(TestCase):
         )
         # B has no grants
         self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('B', has_grants=True)))
+
+    def test_get_accessible_grants_no_invite(self):
+        create_registry_for_test(self.domain, grants=[Grant("B", ["A"])], name="reg1")
+        self.assertEqual(0, len(DataRegistry.objects.accessible_to_domain('A', has_grants=True)))
