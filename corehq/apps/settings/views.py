@@ -266,10 +266,11 @@ class MyProjectsList(BaseMyAccountView):
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
                 self.request.couch_user.save()
-                log_user_change(request.domain, couch_user=request.couch_user,
+                log_user_change(None, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
                                 message=_("Removed from domain {domain_name}").format(
-                                    domain_name=self.domain_to_remove)
+                                    domain_name=self.domain_to_remove),
+                                domain_required_for_log=False,
                                 )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
             except Exception:
