@@ -131,7 +131,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     metrics
     extensions
     custom
-    js-guide/README.md
+    js-guide/README
 
 .. toctree::
     :caption: User-Configurable Reports

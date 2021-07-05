@@ -40,7 +40,7 @@ module.exports = {
 
             NewExpression(node) {
                 if (!allowed[node.callee.name]) {
-                    context.report({ node, message: "Rewrite " + node.callee.name + " in a functional style. See https://github.com/dimagi/js-guide/blob/master/migrating.md#moving-away-from-classical-inheritance" });
+                    context.report({ node, message: "Rewrite " + node.callee.name + " in a functional style. See https://github.com/dimagi/js-guide/blob/master/migrating.rst" });
                 }
             }
 

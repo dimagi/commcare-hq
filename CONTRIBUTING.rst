@@ -74,7 +74,7 @@ to see how that works.
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
-.. _Javascript Guide: docs/js-guide/README.md
+.. _Javascript Guide: docs/js-guide/README.rst
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
