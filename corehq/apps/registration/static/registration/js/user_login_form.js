@@ -136,9 +136,14 @@ hqDefine('registration/js/user_login_form', [
             if (self.isSessionExpiration) {
                 // the reason why we do this for the session expiration popup
                 // is that Azure AD does not load in cross origin iframes.
+                console.log("SESH EXPIRATION");
                 window.open(ssoUrl);
+                console.log(ssoUrl);
                 window.location = self.sessionExpirationSsoIframeUrl;
+                console.log("iframe url");
+                console.log(self.sessionExpirationSsoIframeUrl);
             } else {
+                console.log("NORMAL SSO");
                 window.location = ssoUrl;
             }
         };
