@@ -850,7 +850,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                                                user_id=web_user.get_id,
                                                changed_by=self.uploading_user.get_id)
         self.assertEqual(user_history.message,
-                         f"Added as web user to {self.domain.name}. "
+                         f"Added as web user to domain '{self.domain.name}'. "
                          f"Primary location: {self.loc1.name}[{self.loc1.get_id}]. "
                          f"Role: {self.role.name}[{self.role.get_id}]")
         self.assertEqual(user_history.details['changes'], {})
@@ -894,7 +894,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=web_user.get_id,
                                                changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.message, f"Removed from domain {self.domain.name}")
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain.name}'")
         self.assertEqual(user_history.details['changes'], {})
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
@@ -1192,7 +1192,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         )
         self.assertEqual(user_history.domain, self.domain.name)
-        self.assertEqual(user_history.message, f'Invited to domain {self.domain.name}')
+        self.assertEqual(user_history.message, f"Invited to domain '{self.domain.name}'")
         self.assertDictEqual(
             user_history.details,
             {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
@@ -1315,7 +1315,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.filter(
             user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         ).last()
-        self.assertEqual(user_history.message, f'Removed from domain {self.domain.name}')
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain.name}'")
 
     def test_remove_invited_user(self):
         Invitation.objects.all().delete()

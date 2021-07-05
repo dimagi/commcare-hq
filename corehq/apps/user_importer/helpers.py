@@ -227,7 +227,7 @@ class WebUserImporter(BaseUserImporter):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
         self.role_updated = bool(role_qualified_id)
 
-        self.logger.add_change_message(_("Added as web user to {domain_name}").format(
+        self.logger.add_change_message(_("Added as web user to domain '{domain_name}'").format(
             domain_name=self.user_domain)
         )
         if location_id:
