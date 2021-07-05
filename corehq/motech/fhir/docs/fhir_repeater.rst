@@ -11,6 +11,8 @@ avoid duplicating patient records.
 This documentation follows the process to set up this kind of
 integration.
 
+The "FHIR Integration" feature flag will need to be enabled.
+
 
 Data design
 -----------
