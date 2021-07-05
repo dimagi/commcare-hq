@@ -2,11 +2,11 @@ from django.dispatch import receiver
 
 from casexml.apps.case.signals import case_post_save
 
-from corehq.apps.cowin.repeaters import (
+from corehq.motech.repeaters.signals import create_repeat_records
+from custom.cowin.repeaters import (
     BeneficiaryRegistrationRepeater,
     BeneficiaryVaccinationRepeater,
 )
-from corehq.motech.repeaters.signals import create_repeat_records
 
 
 @receiver(case_post_save, dispatch_uid="create_cowin_repeat_records")

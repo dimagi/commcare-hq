@@ -55,7 +55,6 @@ branches:
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
-    # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
     - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
@@ -66,16 +65,13 @@ branches:
     - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
     - fr/remote-linked-ucr      # Farid June 4
-    - sk/messaging-event-api  # Simon June 7
-    - jm/remove-es7  # Joel June 9
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
-    - gh/improve-erm-ui # Graham June 16
+    - gh/improve-erm-ui # Graham June 16 [QA]
     - rn_disallow_yui_cors # Rohit Negi
     - mk/user-history/base # MK June 21 [QA]
     - cs/SC-1390-put_turn_behind_ff+mk/user-history/report
-    - mk/user-history/report # MK June 23 [QA]
     - mk/user-history/bulk-upload # MK June 28 [QA]
     - mk/user-history/remove-membership+sk/role-to-sql-auth
     - mk/user-history/remove-membership # MK June 29 [QA]
@@ -88,4 +84,9 @@ branches:
     - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
     - sr/fup-form  # Sravan July 1
     - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
+    - jls/merge-migrations # Jenny July 1
+    - gh/split-toggles-and-previews # Graham July 1 [QA]
+    - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
+    - bmb/sso-fix-attempt-session-timeout  # Biyeun July 2
+    - cs/SC-691-add-support-for-geolocation  # Charl July 5
 submodules: { }
