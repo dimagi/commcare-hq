@@ -70,7 +70,7 @@ class XFormPillowTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     @run_with_all_backends

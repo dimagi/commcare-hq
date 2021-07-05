@@ -301,7 +301,7 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.owner.delete(deleted_by=None)
+        cls.owner.delete(DOMAIN, deleted_by=None)
         super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):

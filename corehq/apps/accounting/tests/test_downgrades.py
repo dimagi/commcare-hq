@@ -91,7 +91,7 @@ class TestDowngrades(BaseAccountingTest):
     def tearDown(self):
         for domain in self.domains:
             for user in domain.all_users():
-                user.delete(deleted_by=None)
+                user.delete(domain.name, deleted_by=None)
             domain.delete()
         super(BaseAccountingTest, self).tearDown()
 
