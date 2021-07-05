@@ -24,6 +24,17 @@ class RegistryManager(models.Manager):
             query = query.filter(is_active=is_active)
         return query
 
+    def accessible_to_domain(self, domain):
+        query = (
+            self.filter(is_active=True)
+            .filter(
+                invitations__domain=domain,
+                invitations__accepted_on__isnull=False,
+                invitations__rejected_on__isnull=True
+            )
+        )
+        return query
+
 
 class DataRegistry(models.Model):
     domain = models.CharField(max_length=255)
@@ -54,6 +65,16 @@ class RegistryInvitation(models.Model):
 
     class Meta:
         unique_together = ("registry", "domain")
+
+    def accept(self, accepted_by):
+        self.accepted_on = datetime.utcnow()
+        self.accepted_by = accepted_by
+        self.save()
+
+    def reject(self, rejected_by):
+        self.rejected_on = datetime.utcnow()
+        self.rejected_by = rejected_by
+        self.save()
 
 
 class RegistryGrant(models.Model):
