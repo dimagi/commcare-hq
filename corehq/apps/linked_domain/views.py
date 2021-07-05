@@ -478,7 +478,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
             keyword_name = ugettext_lazy('Unknown Keyword')
             if detail:
                 try:
-                    keyword_name = Keyword.objects.get(couch_id=detail.keyword_id).keyword
+                    keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword
                 except Keyword.DoesNotExist:
                     pass
             return f'{name} ({keyword_name})'
