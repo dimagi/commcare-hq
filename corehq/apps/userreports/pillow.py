@@ -5,10 +5,28 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
-from corehq.apps.userreports.pillow_utils import rebuild_table, migrate_tables_with_logging, rebuild_sql_tables
+from corehq.apps.userreports.const import KAFKA_TOPICS
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.exceptions import (
+    UserReportsWarning,
+)
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.pillow_utils import rebuild_sql_tables
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
+from corehq.util.timer import TimingContext
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.exceptions import PillowConfigError
@@ -16,36 +34,6 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
 from pillowtop.utils import ensure_document_exists, ensure_matched_revisions, bulk_fetch_changes_docs
-
-from corehq.apps.change_feed.consumer.feed import (
-    KafkaChangeFeed,
-    KafkaCheckpointEventHandler,
-)
-from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
-from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
-from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import (
-    DynamicDataSourceProvider,
-    StaticDataSourceProvider,
-)
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    StaleRebuildError,
-    TableRebuildError,
-    UserReportsWarning,
-)
-from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild import (
-    get_table_diffs,
-    get_tables_rebuild_migrate,
-    migrate_tables,
-)
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import get_metadata
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
@@ -471,12 +459,6 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         # retry errors defaults to False because there is not a solution to
         # distinguish between doc save errors and data source config errors
         self.retry_errors = retry_errors
-
-    def bootstrap(self, configs=None):
-        self._processor.table_manager.bootstrap(configs)
-
-    def rebuild_table(self, sql_adapter):
-        rebuild_table(sql_adapter)
 
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
