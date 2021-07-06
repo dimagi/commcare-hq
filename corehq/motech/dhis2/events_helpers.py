@@ -110,6 +110,20 @@ def _get_coordinates(config, case_trigger_info):
     return {}
 
 
+def _get_geo_json(form_config, case_trigger_info):
+    coordinate_dict = _get_coordinates(form_config, case_trigger_info)
+    if coordinate_dict['coordinate']:
+        point = coordinate_dict['coordinate']
+        return {
+            'type': 'Point',
+            'coordinates': [
+                point['latitude'],
+                point['longitude']
+            ]
+        }
+    return {}
+
+
 def _to_dhis2_coordinate(coordinate: str):
     """
     Example

@@ -1,6 +1,6 @@
 import doctest
 
-from django.test import SimpleTestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.motech.dhis2.entities_helpers import validate_tracked_entity
 from corehq.motech.exceptions import ConfigurationError
@@ -48,3 +48,14 @@ def test_doctests():
 
     results = doctest.testmod(entities_helpers)
     assert results.failed == 0
+
+
+class TestGetEnrolments(TesCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_

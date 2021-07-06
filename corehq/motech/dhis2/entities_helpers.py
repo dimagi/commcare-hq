@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.events_helpers import get_event, _get_geo_json
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -287,6 +287,8 @@ def get_enrollments(case_trigger_info, case_config):
             "status": program["status"],
             "events": program["events"],
         }
+        if program.get("geometry"):
+            enrollment["geometry"] = program["geometry"]
         if program.get("enrollmentDate"):
             enrollment["enrollmentDate"] = program["enrollmentDate"]
         if program.get("incidentDate"):
@@ -306,6 +308,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["geometry"] = _get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
