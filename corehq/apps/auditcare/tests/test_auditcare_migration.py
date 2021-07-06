@@ -131,15 +131,6 @@ class TestManagementCommand(TestCase):
         delete_couch_docs(cls.couch_doc_ids)
         return super().tearDownClass()
 
-    def tearDown(self):
-        NavigationEventAudit.objects.all().delete()
-        AccessAudit.objects.all().delete()
-        AuditcareMigrationMeta.objects.all().delete()
-        return super().tearDown()
-
-    def setUp(self):
-        return super().setUp()
-
     def test_copy_all_events(self):
         call_command("copy_events_to_sql", "--workers=10", "--batch_by=d")
         total_object_count = NavigationEventAudit.objects.all().count() + AccessAudit.objects.all().count()
