@@ -63,9 +63,15 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     def _get_queryset(self):
         user_slugs = self.request.GET.getlist(EMWF.slug)
         user_ids = self._get_user_ids(user_slugs)
+        # return empty queryset if no matching users were found
+        if user_slugs and not user_ids:
+            return UserHistory.objects.none()
 
         changed_by_user_slugs = self.request.GET.getlist(ChangedByUserFilter.slug)
         changed_by_user_ids = self._get_user_ids(changed_by_user_slugs)
+        # return empty queryset if no matching users were found
+        if changed_by_user_slugs and not changed_by_user_ids:
+            return UserHistory.objects.none()
 
         actions = self.request.GET.getlist('action')
         query = self._build_query(user_ids, changed_by_user_ids, actions)
