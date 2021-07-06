@@ -468,7 +468,8 @@ def get_parent_select_followup_forms(app, module):
             module.default_name()),
     )
     parent_case_type = parent_module.case_type
-    if module.parent_select.relationship == 'parent' and parent_case_type != module.case_type:
+    rel = module.parent_select.relationship
+    if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
         return [
             form
             for mod in app.get_modules() if mod.case_type == parent_case_type
