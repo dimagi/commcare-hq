@@ -392,7 +392,7 @@ def get_tracked_entity_type(requests, entity_type_id):
 
 
 def get_geo_json(form_config, case_trigger_info, entity_feature_type=None):
-    feature_type = 'NONE'  # feature_type = 'NONE' for most entities, including 'Person'
+    feature_type = 'NONE'
     if entity_feature_type:
         feature_type = entity_feature_type
 
