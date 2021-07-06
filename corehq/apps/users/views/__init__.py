@@ -541,6 +541,12 @@ class EnterpriseUsersView(BaseRoleAccessView):
     page_title = ugettext_lazy("Enterprise Users")
     urlname = 'enterprise_users'
 
+    @property
+    def page_context(self):
+        return {
+            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
+        }
+
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
@@ -774,7 +780,7 @@ def paginate_enterprise_users(request, domain):
             'profile': None,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
-            profile = mobile_user._get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
             users.append({
                 **_format_enterprise_user(mobile_user.domain, mobile_user),
                 'profile': profile.name if profile else None,
