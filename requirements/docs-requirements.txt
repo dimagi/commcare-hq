@@ -453,7 +453,7 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx==4.0.2
+sphinx==4.0.3
     # via
     #   -r docs-requirements.in
     #   recommonmark
