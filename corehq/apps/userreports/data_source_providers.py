@@ -49,7 +49,6 @@ class StaticDataSourceProvider(DataSourceProvider):
         return StaticDataSourceConfiguration.all()
 
     def get_data_sources_modified_since(self, timestamp):
-        # todo: support this if we care to.
         return []
 
 
@@ -63,5 +62,4 @@ class MockDataSourceProvider(DataSourceProvider):
         return [ds for domain, domain_sources in self.data_sources_by_domain.items() for ds in domain_sources]
 
     def get_data_sources_modified_since(self, timestamp):
-        # todo: support this if we care to.
         return []
