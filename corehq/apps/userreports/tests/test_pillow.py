@@ -31,7 +31,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.pillow import (
     REBUILD_CHECK_INTERVAL,
     ConfigurableReportPillowProcessor,
-    ConfigurableReportTableManagerMixin,
+    ConfigurableReportTableManager,
 )
 from corehq.apps.userreports.tasks import (
     queue_async_indicators,
@@ -62,8 +62,11 @@ def teardown_module():
 def _get_pillow(configs, processor_chunk_size=0):
     pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
     # overwrite processors since we're only concerned with UCR here
-    ucr_processor = ConfigurableReportPillowProcessor(data_source_providers=[])
-    ucr_processor.bootstrap(configs)
+    table_manager = ConfigurableReportTableManager(data_source_providers=[])
+    ucr_processor = ConfigurableReportPillowProcessor(
+        table_manager
+    )
+    table_manager.bootstrap(configs)
     pillow.processors = [ucr_processor]
     return pillow
 
@@ -71,12 +74,12 @@ def _get_pillow(configs, processor_chunk_size=0):
 class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_bootstrap_sets_time(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         table_manager.bootstrap([])
         after_now = datetime.utcnow() + timedelta(microseconds=1)
         self.assertTrue(table_manager.bootstrapped)
@@ -86,7 +89,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_window(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider()])
         table_manager.bootstrap([])
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
         self.assertFalse(table_manager.needs_bootstrap())
@@ -102,7 +105,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
     def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
         ds_1_domain = data_source_1.domain
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
             ds_1_domain: [data_source_1]
         })])
         table_manager.bootstrap()
@@ -114,7 +117,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         data_source_1 = get_sample_data_source()
         data_source_1.save()
         ds_1_domain = data_source_1.domain
-        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
             ds_1_domain: [data_source_1]
         })])
         table_manager.bootstrap()
@@ -158,7 +161,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         data_source_1 = get_sample_data_source()
         data_source_1.save()
         ds_1_domain = data_source_1.domain
-        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
         table_manager.bootstrap()
         self.assertEqual(1, len(table_manager.table_adapters_by_domain))
         self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
@@ -191,7 +194,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         data_source_1.save()
         del ExpressionFactory.spec_map["missing_expression"]
         ds_1_domain = data_source_1.domain
-        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager = ConfigurableReportTableManager([DynamicDataSourceProvider()])
         table_manager.bootstrap()
         self.assertEqual(0, len(table_manager.table_adapters_by_domain))
         self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))

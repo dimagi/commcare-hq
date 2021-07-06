@@ -119,7 +119,7 @@ def _filter_invalid_config(configs):
     return valid_configs
 
 
-class ConfigurableReportTableManagerMixin(object):
+class ConfigurableReportTableManager(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
@@ -238,7 +238,7 @@ class ConfigurableReportTableManagerMixin(object):
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
 
-class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
+class ConfigurableReportPillowProcessor(BulkPillowProcessor):
     """Generic processor for UCR.
 
     Reads from:
@@ -250,6 +250,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
       - UCR database
     """
 
+    def __init__(self, table_manager):
+        self.table_manager = table_manager
+
     domain_timing_context = Counter()
 
     @time_ucr_process_change
@@ -259,7 +262,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             table.best_effort_save(doc, eval_context)
         except UserReportsWarning:
             # remove it until the next bootstrap call
-            self.table_adapters_by_domain[domain].remove(table)
+            self.table_manager.table_adapters_by_domain[domain].remove(table)
 
     def process_changes_chunk(self, changes):
         """
@@ -274,7 +277,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             if is_couch_change_for_sql_domain(change):
                 continue
             # skip if no domain or no UCR tables in the domain
-            if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
+            if change.metadata.domain and change.metadata.domain in self.table_manager.table_adapters_by_domain:
                 changes_by_domain[change.metadata.domain].append(change)
 
         retry_changes = set()
@@ -288,7 +291,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         return retry_changes, change_exceptions
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        adapters = list(self.table_adapters_by_domain[domain])
+        adapters = list(self.table_manager.table_adapters_by_domain[domain])
         changes_by_id = {change.id: change for change in changes_chunk}
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
@@ -381,12 +384,12 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain
-        if not domain or domain not in self.table_adapters_by_domain:
+        if not domain or domain not in self.table_manager.table_adapters_by_domain:
             # if no domain we won't save to any UCR table
             return
 
         if change.deleted:
-            adapters = list(self.table_adapters_by_domain[domain])
+            adapters = list(self.table_manager.table_adapters_by_domain[domain])
             for table in adapters:
                 table.delete({'_id': change.metadata.document_id})
 
@@ -401,7 +404,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         with TimingContext() as timer:
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
-            adapters = list(self.table_adapters_by_domain[domain])
+            adapters = list(self.table_manager.table_adapters_by_domain[domain])
             doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
@@ -470,7 +473,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self.retry_errors = retry_errors
 
     def bootstrap(self, configs=None):
-        self._processor.bootstrap(configs)
+        self._processor.table_manager.bootstrap(configs)
 
     def rebuild_table(self, sql_adapter):
         rebuild_table(sql_adapter)
@@ -488,14 +491,15 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[DynamicDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0)  # only first process runs migrations
+    )
     return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_providers=[DynamicDataSourceProvider()],
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-            run_migrations=(process_num == 0)  # only first process runs migrations
-        ),
+        processor=ConfigurableReportPillowProcessor(table_manager),
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
@@ -519,15 +523,16 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[StaticDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
+        run_migrations=(process_num == 0)  # only first process runs migrations
+    )
     return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_providers=[StaticDataSourceProvider()],
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-            bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
-            run_migrations=(process_num == 0)  # only first process runs migrations
-        ),
+        processor=ConfigurableReportPillowProcessor(table_manager),
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
@@ -550,12 +555,16 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
     change_feed = KafkaChangeFeed(
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('Location'), StaticDataSourceProvider('Location')],
-        include_ucrs=include_ucrs,
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('Location'),
+            StaticDataSourceProvider('Location')
+        ],
+        include_ucrs=include_ucrs
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
+        table_manager.bootstrap(ucr_configs)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
