@@ -179,6 +179,8 @@ def linkable_ucr(request, domain):
 @require_linked_domain
 def ucr_config(request, domain, config_id):
     report_config = ReportConfiguration.get(config_id)
+    if report_config.domain != domain:
+        return Http404
     datasource_id = report_config.config_id
     datasource_config = DataSourceConfiguration.get(datasource_id)
 
