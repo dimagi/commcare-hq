@@ -14,7 +14,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.views.internal import TransferDomainView
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, UserHistory
 
 
 class BaseDomainTest(TestCase):
@@ -39,9 +39,9 @@ class BaseDomainTest(TestCase):
         self.muggle.save()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.domain.delete()
-        self.muggle.delete(deleted_by=None)
+        self.muggle.delete(self.domain, deleted_by=None)
         self.another_domain.delete()
 
 
@@ -97,17 +97,25 @@ class TestTransferDomainModel(BaseDomainTest):
         self.transfer.save()
 
         with self.assertRaises(InactiveTransferDomainException):
-            self.transfer.transfer_domain()
+            self.transfer.transfer_domain(by_user=None)
 
         with self.assertRaises(InactiveTransferDomainException):
             self.transfer.send_transfer_request()
 
     def test_domain_transfer(self):
-        self.transfer.transfer_domain()
+        self.transfer.transfer_domain(by_user=self.user, transfer_via='test')
 
         self.assertFalse(self.transfer.active)
         self.assertFalse(self.transfer.from_user.is_member_of(self.domain))
         self.assertTrue(self.transfer.to_user.is_member_of(self.domain))
+
+        user_history = UserHistory.objects.get(user_id=self.transfer.from_user.get_id)
+        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.changed_by, self.user.get_id)
+        self.assertEqual(user_history.user_id, self.transfer.from_user.get_id)
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain}'")
+        self.assertEqual(user_history.details['changed_via'], 'test')
+        self.assertEqual(user_history.details['changes'], {})
 
     def test_send_transfer_request(self):
         with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
@@ -148,7 +156,7 @@ class TestTransferDomainViews(BaseDomainTest):
 
     def tearDown(self):
         self.transfer.delete()
-        self.rando.delete(deleted_by=None)
+        self.rando.delete(self.domain, deleted_by=None)
         super(TestTransferDomainViews, self).tearDown()
 
     def test_permissions_for_activation(self):

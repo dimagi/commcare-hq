@@ -45,6 +45,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
+from corehq.const import USER_CHANGE_VIA_WEB
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -397,7 +398,8 @@ class ActivateTransferDomainView(BasePageView):
         if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        self.active_transfer.transfer_domain(ip=get_ip(request))
+        self.active_transfer.transfer_domain(by_user=request.couch_user, transfer_via=USER_CHANGE_VIA_WEB,
+                                             ip=get_ip(request))
         messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                          .format(domain=self.active_transfer.domain))
 
