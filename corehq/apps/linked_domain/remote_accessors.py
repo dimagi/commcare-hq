@@ -91,6 +91,10 @@ def get_hmac_callout_settings(domain_link):
     return _do_simple_request('linked_domain:hmac_callout_settings', domain_link)
 
 
+def get_remote_linkable_ucr(domain_link):
+    return _do_simple_request('linked_domain:linkable_ucr', domain_link)
+
+
 def _convert_app_from_remote_linking_source(app_json):
     attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
     app = wrap_app(app_json)
