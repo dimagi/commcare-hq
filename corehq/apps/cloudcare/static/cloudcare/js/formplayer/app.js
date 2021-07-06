@@ -404,7 +404,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('navigation:back', function () {
         var url = Backbone.history.getFragment();
-        if (!url.includes('single_app')) {
+        if (url.includes('single_app')) {
             return;
         }
         try {
