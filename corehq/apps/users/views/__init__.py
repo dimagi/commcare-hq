@@ -46,6 +46,7 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
+from corehq.apps.cloudcare.esaccessors import login_as_user_filter
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -54,7 +55,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES, filters, queries
+from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -758,13 +759,10 @@ def paginate_enterprise_users(request, domain):
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
         UserES().domains(domains).mobile_users().sort('username.exact')
-        .filter(    # TODO: extract as function and maybe DRY up with login_as_user_query
+        .filter(
             queries.nested(
                 'user_data_es',
-                filters.AND(
-                    filters.term('user_data_es.key', 'login_as_user'),
-                    filters.term('user_data_es.value', web_user_usernames),
-                )
+                login_as_user_filter(web_user_usernames)
             )
         )
         .run()
