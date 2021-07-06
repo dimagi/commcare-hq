@@ -75,7 +75,7 @@ class TestViews(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.project.name, deleted_by=None)
         cls.build.delete()
         cls.project.delete()
         super(TestViews, cls).tearDownClass()
@@ -330,7 +330,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         # Set up the cls.web_user: set password and give access to the cls.domain.
         old_web_user = WebUser.get_by_username("test_user")
         if old_web_user:
-            old_web_user.delete(deleted_by=None)
+            old_web_user.delete(cls.domain.name, deleted_by=None)
         cls.web_user = WebUser.create(
             cls.domain.name, "test_user", "my_password", None, None, is_active=True
         )
@@ -352,7 +352,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     def tearDownClass(cls):
         cls.app.delete()
         cls.web_user_api_key.delete()
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
     def _encode_basic_credentials(self, username, password):
