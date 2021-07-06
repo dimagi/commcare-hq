@@ -75,6 +75,27 @@ hqDefine("linked_domain/js/domain_links", [
             return DomainLink(link);
         }));
 
+        self.linkable_ucr = ko.observableArray(data.linkable_ucr);
+        self.createRemoteReportLink = function (reportId) {
+            _private.RMI("create_remote_report_link", {
+                "master_domain": self.master_link.master_domain,
+                "linked_domain": self.master_link.linked_domain,
+                "report_id": reportId,
+            }).done(function(data) {
+                if (data.success) {
+                    alertUser.alert_user(gettext('Report successfully linked.'), 'success');
+                } else {
+                    alertUser.alert_user(gettext(
+                        'Something unexpected happened.\n' +
+                        'Please try again, or report an issue if the problem persists.'), 'danger');
+                }
+            }).fail(function() {
+                alertUser.alert_user(gettext(
+                    'Something unexpected happened.\n' +
+                    'Please try again, or report an issue if the problem persists.'), 'danger');
+            });
+        };
+
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
                 "linked_domain": link.linked_domain(),
