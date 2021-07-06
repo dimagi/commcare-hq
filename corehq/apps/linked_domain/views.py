@@ -275,7 +275,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         )
 
         if master_link and master_link.is_remote:
-            remote_linkable_ucr = get_remote_linkable_ucr(master_link).get('reports', [])
+            remote_linkable_ucr = get_remote_linkable_ucr(master_link)
         else:
             remote_linkable_ucr = None
 

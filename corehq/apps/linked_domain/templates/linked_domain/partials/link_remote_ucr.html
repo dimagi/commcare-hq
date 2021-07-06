@@ -12,14 +12,23 @@
   <tbody data-bind="foreach: linkable_ucr">
     <tr>
       <td data-bind="text: title"></td>
-      <td data-bind="text: id"></td>
       <td>
         <button
           type="button"
           class="btn btn-primary"
-          data-bind="click: $root.createRemoteReportLink(id)">
+          data-bind="visible: !alreadyLinked(), click: createLink"
+        >
           <i class="fa fa-link"></i>
           {% trans 'Create Link' %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          disabled="true"
+          data-bind="visible: alreadyLinked"
+        >
+          <i class="fa fa-check"></i>
+          {% trans 'Linked' %}
         </button>
       </td>
     </tr>
