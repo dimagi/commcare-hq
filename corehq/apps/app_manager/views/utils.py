@@ -352,12 +352,11 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
-        if not app.domain_link.is_remote:
-            report_map.update({
-                c.report_meta.master_id: c._id
-                for c in get_report_configs_for_domain(app.domain)
-                if c.report_meta.master_id
-            })
+        report_map.update({
+            c.report_meta.master_id: c._id
+            for c in get_report_configs_for_domain(app.domain)
+            if c.report_meta.master_id
+        })
 
         try:
             app = overwrite_app(app, master_build, report_map)
