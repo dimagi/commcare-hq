@@ -112,7 +112,7 @@ def update_linked_ucr(domain_link, report_id):
     linked_datasource = linked_report.config
 
     if domain_link.is_remote:
-        remote_configs = remote_get_ucr_config(domain_link, report_id)
+        remote_configs = remote_get_ucr_config(domain_link, linked_report.report_meta.master_id)
         master_report = remote_configs["report"]
         master_datasource = remote_configs["datasource"]
     else:
