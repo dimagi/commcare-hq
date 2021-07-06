@@ -11,7 +11,7 @@ from django_prbac.exceptions import PermissionDenied
 from lxml import etree
 from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
@@ -327,6 +327,7 @@ class ModuleBaseValidator(object):
         This is the real validation logic, to be overridden/augmented by subclasses.
         '''
         errors = []
+        app = self.module.get_app()
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
@@ -336,14 +337,23 @@ class ModuleBaseValidator(object):
             ))
         if self.module.case_list_form.form_id:
             try:
-                form = self.module.get_app().get_form(self.module.case_list_form.form_id)
+                form = app.get_form(self.module.case_list_form.form_id)
             except FormNotFoundException:
                 errors.append({
                     'type': 'case list form missing',
                     'module': self.get_module_info()
                 })
             else:
-                if not form.is_registration_form(self.module.case_type):
+                if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                    if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
+                        errors.append({
+                            'type': 'invalid case list followup form',
+                            'module': self.get_module_info(),
+                            'form': form,
+                        })
+                elif not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'case list form not registration',
                         'module': self.get_module_info(),
