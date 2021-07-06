@@ -70,7 +70,7 @@ def find_missing_form_repeat_records(startdate, enddate, domains, should_create=
                     }
                 }
 
-                logger.debug(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
+                logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
                              f'{rounded_time}. This accounts for {pct_missing} of all repeat records in the '
                              f'specified date range.'
                              )
@@ -120,10 +120,10 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
         else:
             missing_count += 1
             if should_create:
-                logger.debug(f"Registering form {form.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Registering form {form.get_id} for repeater {repeater.get_id}")
                 repeater.register(form)
             else:
-                logger.debug(f"Missing form {form.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Missing form {form.get_id} for repeater {repeater.get_id}")
 
     return missing_count, successful_count
 
@@ -152,12 +152,12 @@ def find_missing_case_repeat_records(startdate, enddate, domains, should_create=
                 missing_case_counts_per_domain[domain] = missing_case_counts
                 pct_missing = f'{round((number_of_records_missing / number_of_records_expected) * 100, 2)}%'
                 rounded_time = f'{round(time_to_run, 0)} seconds'
-                logger.debug(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
+                logger.info(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
                              f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
                              f'the specified date range'
                              )
             else:
-                logger.debug(f"Found 0 missing case repeat records in {domain}.")
+                logger.info(f"Found 0 missing case repeat records in {domain}.")
             if index + 1 % 10 == 0:
                 logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
 
@@ -241,12 +241,12 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
             if should_create:
                 if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
                     create_case_repeater_register(repeater, domain, case)
-                    logger.debug(f"Registering case {case.get_id} for create case repeater {repeater.get_id}")
+                    logger.info(f"Registering case {case.get_id} for create case repeater {repeater.get_id}")
                 else:
-                    logger.debug(f"Registering case {case.get_id} for repeater {repeater.get_id}")
+                    logger.info(f"Registering case {case.get_id} for repeater {repeater.get_id}")
                     repeater.register(case)
             else:
-                logger.debug(f"Missing case {case.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Missing case {case.get_id} for repeater {repeater.get_id}")
 
         missing_all_count += missing_count
         if isinstance(repeater, CreateCaseRepeater):
@@ -312,7 +312,7 @@ def find_missing_location_repeat_records(startdate, enddate, domains, should_cre
                 }
             }
 
-            logger.debug(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
+            logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
                          f'{rounded_time}. Due to limitations with locations, we only looked for missing repeat '
                          f'records for newly created locations, not recently modified.'
                          )
@@ -349,7 +349,7 @@ def find_missing_user_repeat_records(startdate, enddate, domains, should_create)
                 }
             }
 
-            logger.debug(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
+            logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
                          f'{rounded_time}. Due to limitations with users, we only looked for missing repeat '
                          f'records for newly created users, not recently modified.'
                          )
@@ -385,10 +385,10 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
         # if we've made it this far, the repeater should have fired
         missing_count += 1
         if should_create:
-            logger.debug(f"Registering {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
+            logger.info(f"Registering {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
             repeater.register(payload)
         else:
-            logger.debug(f"Missing {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
+            logger.info(f"Missing {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
 
     return missing_count
 
@@ -519,8 +519,7 @@ class Command(BaseCommand):
         else:
             domains_to_inspect = get_domains_that_have_repeat_records()
 
-        logger.setLevel(logging.DEBUG if options["verbose"] else logging.INFO)
-
+        logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         if command == CASES:
             stats = find_missing_case_repeat_records(startdate, enddate, domains_to_inspect, create)
         elif command == FORMS:
