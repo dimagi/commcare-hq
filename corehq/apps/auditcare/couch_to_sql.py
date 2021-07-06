@@ -54,12 +54,37 @@ def _get_couch_docs(start_key, end_key):
     return list(result)
 
 
+def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids):
+    existing_access_events = set(AccessAudit.objects.filter(
+        couch_id__in=access_couch_ids
+    ).values_list('couch_id', flat=True))
+    existing_nav_events = set(NavigationEventAudit.objects.filter(
+        couch_id__in=nav_couch_ids
+    ).values_list('couch_id', flat=True))
+
+    final_nav_events = ([
+        nav_obj for nav_obj in nav_objs
+        if nav_obj.couch_id not in existing_nav_events
+    ])
+
+    final_access_events = ([
+        access_obj for access_obj in access_objs
+        if access_obj.couch_id not in existing_access_events
+    ])
+    return {
+        "navigation_events": final_nav_events,
+        "audit_events": final_access_events,
+        "count": len(final_nav_events) + len(final_access_events)
+    }
+
+
 def get_events_from_couch(start_key, end_key):
     navigation_objects = []
-    audit_objects = []
-    records_saved = 0
+    access_objects = []
     records_returned = 0
     next_start_time = None
+    nav_couch_ids = []
+    access_couch_ids = []
     couch_docs = _get_couch_docs(start_key, end_key)
     for result in couch_docs:
         records_returned += 1
@@ -73,8 +98,7 @@ def get_events_from_couch(start_key, end_key):
         })
 
         if doc["doc_type"] == "NavigationEventAudit":
-            if NavigationEventAudit.objects.filter(couch_id=doc["_id"]).exists():
-                continue
+            nav_couch_ids.append(doc['_id'])
             kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
             path, _, params = doc.get("request_path", "").partition("?")
             kwargs.update({
@@ -83,8 +107,7 @@ def get_events_from_couch(start_key, end_key):
             })
             navigation_objects.append(NavigationEventAudit(**kwargs))
         elif doc["doc_type"] == "AccessAudit":
-            if AccessAudit.objects.filter(couch_id=doc["_id"]).exists():
-                continue
+            access_couch_ids.append(doc['_id'])
             kwargs.update(_pick(doc, ["http_accept", "trace_id"]))
             access_type = doc.get('access_type')
             kwargs.update({
@@ -93,16 +116,19 @@ def get_events_from_couch(start_key, end_key):
             })
             if access_type == "logout":
                 kwargs.update({"path": "accounts/logout"})
-            audit_objects.append(AccessAudit(**kwargs))
-        records_saved += 1
+            access_objects.append(AccessAudit(**kwargs))
 
-    res_obj = {
-        "navigation_events": navigation_objects,
-        "audit_events": audit_objects,
+    res_obj = get_unsaved_events(
+        navigation_objects,
+        access_objects,
+        nav_couch_ids,
+        access_couch_ids
+    )
+
+    res_obj.update({
         "break_query": records_returned < COUCH_QUERY_LIMIT or not next_start_time,
         "next_start_key": get_couch_key(next_start_time),
-        "count": records_saved
-    }
+    })
     return res_obj
 
 
