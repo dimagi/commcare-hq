@@ -13,10 +13,15 @@ from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
-from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser, UserHistory
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.apps.reports.extension_points import customize_user_query
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 
 from .. import util
 from ..analytics.esaccessors import get_group_stubs, get_user_stubs
@@ -475,6 +480,27 @@ class ChangeActionFilter(BaseMultipleOptionFilter):
         (str(UserHistory.DELETE), ugettext_noop('Delete')),
     ]
     default_options = ['0']
+
+
+class UserUploadRecordFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('User Bulk Upload')
+    default_text = ugettext_noop('Select upload')
+    slug = 'user_upload_record'
+
+    @property
+    def options(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        records = UserUploadRecord.objects.filter(domain=self.domain).order_by('-date_created')
+        return [
+            (
+                str(record.id),
+                _("Upload by {username} at {time}").format(
+                    username=cached_user_id_to_user_display(record.user_id),
+                    time=ServerTime(record.date_created).user_time(timezone).ui_string(USER_DATETIME_FORMAT)
+                )
+            )
+            for record in records
+        ]
 
 
 def get_user_toggle(request):
