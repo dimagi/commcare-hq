@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
+from corehq.apps.userreports.pillow_utils import rebuild_table, migrate_tables_with_logging, rebuild_sql_tables
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -41,7 +42,6 @@ from corehq.apps.userreports.rebuild import (
 )
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import get_metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -204,82 +204,11 @@ class ConfigurableReportTableManagerMixin(object):
         return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
     def rebuild_tables_if_necessary(self):
-        self._rebuild_sql_tables([
+        rebuild_sql_tables([
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
         ])
-
-    def _rebuild_sql_tables(self, adapters):
-        tables_by_engine = defaultdict(dict)
-        all_adapters = []
-        for adapter in adapters:
-            if getattr(adapter, 'all_adapters', None):
-                all_adapters.extend(adapter.all_adapters)
-            else:
-                all_adapters.append(adapter)
-        for adapter in all_adapters:
-            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
-
-        _assert = soft_assert(notify_admins=True)
-        _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
-
-        for engine_id, table_map in tables_by_engine.items():
-            table_names = list(table_map)
-            engine = connection_manager.get_engine(engine_id)
-
-            diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
-
-            tables_to_act_on = get_tables_rebuild_migrate(diffs)
-            for table_name in tables_to_act_on.rebuild:
-                sql_adapter = table_map[table_name]
-                pillow_logging.info(
-                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
-                    table_name, sql_adapter.config._id, sql_adapter.config._rev
-                )
-                pillow_logging.info("[rebuild] Using config: %r", sql_adapter.config)
-                pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(engine_id).tables[table_name])
-                pillow_logging.info("[rebuild] sqlalchemy table: %r", sql_adapter.get_table())
-                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
-                if not sql_adapter.config.is_static:
-                    try:
-                        self.rebuild_table(sql_adapter, table_diffs)
-                    except TableRebuildError as e:
-                        _notify_rebuild(str(e), sql_adapter.config.to_json())
-                else:
-                    self.rebuild_table(sql_adapter, table_diffs)
-
-            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
-
-    def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
-        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
-        for table in table_names:
-            adapter = adapters_by_table[table]
-            pillow_logging.info("[rebuild] Using config: %r", adapter.config)
-            pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(adapter.engine_id).tables[table])
-            pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
-        changes = migrate_tables(engine, migration_diffs)
-        for table, diffs in changes.items():
-            adapter = adapters_by_table[table]
-            pillow_logging.info(
-                "[rebuild] Migrating table: %s, from config %s at rev %s",
-                table, adapter.config._id, adapter.config._rev
-            )
-            adapter.log_table_migrate(source='pillowtop', diffs=diffs)
-
-    def rebuild_table(self, adapter, diffs=None):
-        config = adapter.config
-        if not config.is_static:
-            latest_rev = config.get_db().get_rev(config._id)
-            if config._rev != latest_rev:
-                raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-
-        diff_dicts = [diff.to_dict() for diff in diffs]
-        if config.disable_destructive_rebuild and adapter.table_exists:
-            adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
-            return
-
-        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
 
     def _pull_in_new_and_modified_data_sources(self):
         """
@@ -544,7 +473,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.bootstrap(configs)
 
     def rebuild_table(self, sql_adapter):
-        self._processor.rebuild_table(sql_adapter)
+        rebuild_table(sql_adapter)
 
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,

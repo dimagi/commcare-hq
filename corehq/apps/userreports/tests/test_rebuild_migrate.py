@@ -61,12 +61,12 @@ class RebuildTableTest(TestCase):
         config.save()
         adapter = get_indicator_adapter(config)
 
-        # mock rebuild table to ensure the table isn't rebuilt when adding index
-        pillow = get_case_pillow(ucr_configs=[config])
-        pillow.processors[0].rebuild_table = mock.MagicMock()
-        pillow.processors[0].bootstrap([config])
+        with mock.patch('corehq.apps.userreports.pillow_utils.rebuild_table') as rebuild_table, \
+            mock.patch('corehq.apps.userreports.pillow_utils.migrate_tables_with_logging') as migrate_table:
+            get_case_pillow(ucr_configs=[config])
+            self.assertFalse(rebuild_table.called)
+            self.assertTrue(migrate_table.called)
 
-        self.assertFalse(pillow.processors[0].rebuild_table.called)
         engine = adapter.engine
         insp = reflection.Inspector.from_engine(engine)
         # note the index is not yet created
@@ -98,9 +98,9 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
 
         # mock rebuild table to ensure the table is rebuilt
-        with mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
-            pillow = get_case_pillow(ucr_configs=[config])
-            self.assertTrue(pillow.processors[0].rebuild_table.called)
+        with mock.patch('corehq.apps.userreports.pillow_utils.rebuild_table') as rebuild_table:
+            get_case_pillow(ucr_configs=[config])
+            self.assertTrue(rebuild_table.called)
         # column doesn't exist because rebuild table was mocked
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
@@ -108,7 +108,7 @@ class RebuildTableTest(TestCase):
         )
 
         # Another time without the mock to ensure the column is there
-        pillow = get_case_pillow(ucr_configs=[config])
+        get_case_pillow(ucr_configs=[config])
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
@@ -140,9 +140,9 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
 
         # mock rebuild table to ensure the column is added without rebuild table
-        with mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
-            pillow = get_case_pillow(ucr_configs=[config])
-            self.assertFalse(pillow.processors[0].rebuild_table.called)
+        with mock.patch('corehq.apps.userreports.pillow_utils.rebuild_table') as rebuild_table:
+            get_case_pillow(ucr_configs=[config])
+            self.assertFalse(rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1

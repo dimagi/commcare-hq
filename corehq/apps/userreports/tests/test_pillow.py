@@ -13,6 +13,7 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.pillow_utils import rebuild_table
 from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import topics
@@ -410,7 +411,7 @@ class IndicatorPillowTest(TestCase):
         later_config.save()
         self.assertNotEqual(self.config._rev, later_config._rev)
         with self.assertRaises(StaleRebuildError):
-            self.pillow.processors[0].rebuild_table(get_indicator_adapter(self.config))
+            rebuild_table(get_indicator_adapter(self.config))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):
