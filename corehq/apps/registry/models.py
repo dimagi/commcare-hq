@@ -46,12 +46,15 @@ class DataRegistry(models.Model):
     # slug used for referencing the registry in app suite files, APIs etc.
     slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
     is_active = models.BooleanField(default=True)
-    schema = JSONField(null=True)
+    schema = JSONField(null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
 
     objects = RegistryManager()
+
+    class Meta:
+        unique_together = ('domain', 'slug')
 
     def deactivate(self):
         self.is_active = False
@@ -80,13 +83,13 @@ class RegistryInvitation(models.Model):
     registry = models.ForeignKey("DataRegistry", related_name="invitations", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
-    accepted_on = models.DateTimeField(null=True)
+    accepted_on = models.DateTimeField(null=True, blank=True)
     accepted_by = models.ForeignKey(
-        User, related_name="registry_accepted_invitations", on_delete=models.CASCADE, null=True
+        User, related_name="registry_accepted_invitations", on_delete=models.CASCADE, null=True, blank=True
     )
-    rejected_on = models.DateTimeField(null=True)
+    rejected_on = models.DateTimeField(null=True, blank=True)
     rejected_by = models.ForeignKey(
-        User, related_name="registry_rejected_invitations", on_delete=models.CASCADE, null=True
+        User, related_name="registry_rejected_invitations", on_delete=models.CASCADE, null=True, blank=True
     )
 
     class Meta:
