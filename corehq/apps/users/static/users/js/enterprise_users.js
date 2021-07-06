@@ -37,11 +37,11 @@ hqDefine("users/js/enterprise_users", [
     var enterpriseUsersList = function (options) {
         var self = webUsersList(options);
 
-        self.toggleLoginAsUsers = function (web_user, e) {
-            web_user.expanded(!web_user.expanded());
+        self.toggleLoginAsUsers = function (webUser) {
+            webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
-                if (user.loginAsUser === web_user.username) {
-                    user.visible(web_user.expanded());
+                if (user.loginAsUser === webUser.username) {
+                    user.visible(webUser.expanded());
                 }
             });
         };
