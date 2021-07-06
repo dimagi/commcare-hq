@@ -110,30 +110,23 @@ def _get_coordinates(config, case_trigger_info):
     return {}
 
 
-def _get_geo_json(form_config, case_trigger_info):
-    coordinate_dict = _get_coordinates(form_config, case_trigger_info)
-    if coordinate_dict['coordinate']:
-        point = coordinate_dict['coordinate']
-        return {
-            'type': 'Point',
-            'coordinates': [
-                point['latitude'],
-                point['longitude']
-            ]
-        }
-    return {}
-
-
-def _to_dhis2_coordinate(coordinate: str):
+def _to_dhis2_coordinate(coordinate_string: str):
     """
     Example
-    coordinate: "-35.8655497 14.6940185 138.66 5.4"
-    Returns: {"latitude": -35.8655497, "longitude": 14.6940185}
+    coordinate: "-35.8655497 14.6941185 138.66 5.4"
+    Returns: {"latitude": "-35.8655", "longitude": "14.6941"} conforming to EPSG:4326
+
+    Notes
+    According to the documentation no more than a maximum of 4
+    significant decimal places should ever be necessary:
+    https://docs.dhis2.org/en/use/user-guides/dhis-core-version-234/configuring-the-system/maps.html#gis_creating_setup
     """
-    (lat, lon) = coordinate.split(' ')[:2]
+    coordinate = coordinate_string.split(' ')[:2]
+    (lat, lon) = [round(float(item), 4) for item in coordinate]
+
     return {
-        'latitude': float(lat),
-        'longitude': float(lon)
+        'latitude': str(lat),
+        'longitude': str(lon)
     }
 
 

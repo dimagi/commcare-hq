@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event, _get_geo_json
+from corehq.motech.dhis2.events_helpers import get_event, _get_coordinates
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -308,7 +308,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program["status"] = get_value(form_config.program_status, case_trigger_info)
-            program["geometry"] = _get_geo_json(form_config, case_trigger_info)
+            program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
@@ -377,3 +377,17 @@ def validate_tracked_entity(tracked_entity):
         Schema(get_tracked_entity_schema()).validate(tracked_entity)
     except SchemaError as err:
         raise ConfigurationError from err
+
+
+def get_geo_json(form_config, case_trigger_info):
+    coordinate_dict = _get_coordinates(form_config, case_trigger_info)
+    if coordinate_dict['coordinate']:
+        point = coordinate_dict['coordinate']
+        return {
+            'type': 'Point',
+            'coordinates': [
+                float(point['latitude']),
+                float(point['longitude'])
+            ]
+        }
+    return {}

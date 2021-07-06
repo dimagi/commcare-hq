@@ -2,7 +2,6 @@ import doctest
 import json
 
 from django.test.testcases import TestCase
-
 from fakecouch import FakeCouchDb
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -61,7 +60,10 @@ class TestDhis2EventsHelpers(TestCase):
                 "completed_date": "2017-05-25T21:06:27.012000",
                 "name": "test event",
                 "meta": {
-                    "location": self.location.location_id,
+                    "location": {
+                        '#text': '-33.8655497 18.6941185 138.66 5.4',
+                        '@xmlns': 'http://commcarehq.org/xforms'
+                    },
                     "timeEnd": "2017-05-25T21:06:27.012000",
                     "timeStart": "2017-05-25T21:06:17.739000",
                     "userID": self.user.user_id,
@@ -92,7 +94,10 @@ class TestDhis2EventsHelpers(TestCase):
                             'form_question': '/data/name'
                         }
                     }
-                ]
+                ],
+                'coordinate': {
+                    "form_question": "/metadata/location/#text"
+                }
             }])
         }
         config_form = Dhis2ConfigForm(data=config)
@@ -102,6 +107,7 @@ class TestDhis2EventsHelpers(TestCase):
         repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
         repeater.save()
         event = get_event(DOMAIN, repeater.dhis2_config.form_configs[0], form)
+
         self.assertDictEqual(
             {
                 'dataValues': [
@@ -114,7 +120,11 @@ class TestDhis2EventsHelpers(TestCase):
                 'completedDate': '2017-05-25',
                 'program': 'test program',
                 'eventDate': '2017-05-26',
-                'orgUnit': 'dhis2_location_id'
+                'orgUnit': 'dhis2_location_id',
+                'coordinate': {
+                    'latitude': "-33.8655",
+                    'longitude': "18.6941"
+                }
             },
             event
         )
