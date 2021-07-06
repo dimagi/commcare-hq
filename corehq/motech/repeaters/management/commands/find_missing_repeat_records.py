@@ -498,18 +498,24 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--startdate', type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-e', '--enddate', type=date_type, help='Format YYYY-MM-DD')
         parser.add_argument('-d', '--domain', default=None, type=str, help='Run on a specific domain')
+        parser.add_argument('-w', '--startswith', default=None, type=str, help='Domains that start with substring')
         parser.add_argument('-c', '--create', action='store_true', help='Create missing repeat records')
         parser.add_argument('--verbose', action="store_true")
 
-    def handle(self, command, startdate, enddate, domain, create, **options):
+    def handle(self, command, startdate, enddate, domain, startswith, create, **options):
         if not startdate:
             raise CommandError("Must specify a startdate in the format YYYY-MM-DD")
 
         if not enddate:
             enddate = datetime.utcnow().date()
 
-        if domain:
+        if domain and startswith:
+            raise CommandError("Cannot specify both domain and startswith")
+        elif domain:
             domains_to_inspect = [domain]
+        elif startswith:
+            all_domains = get_domains_that_have_repeat_records()
+            domains_to_inspect = [d for d in all_domains if d.startswith(startswith)]
         else:
             domains_to_inspect = get_domains_that_have_repeat_records()
 
