@@ -741,19 +741,9 @@ def create_domain_permission_mirror(request, domain):
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_enterprise_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
-
+    # Get web users
     domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
-
-    web_result = (
-        UserES().domains(domains).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
-    )
-    web_users = [WebUser.wrap(w) for w in web_result.hits]
+    (web_users, pagination) = _get_web_users(request, [domain])
 
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
@@ -790,9 +780,7 @@ def paginate_enterprise_users(request, domain):
 
     return JsonResponse({
         'users': users,
-        'total': web_result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
 
 
@@ -812,18 +800,7 @@ def _format_enterprise_user(domain, user):
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
-
-    result = (
-        UserES().domain(domain).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
-    )
-
-    web_users = [WebUser.wrap(w) for w in result.hits]
+    (web_users, pagination) = _get_web_users(request, [domain])
     is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
@@ -846,10 +823,30 @@ def paginate_web_users(request, domain):
 
     return JsonResponse({
         'users': web_users_fmt,
-        'total': result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
+
+
+def _get_web_users(request, domains):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    return (
+        [WebUser.wrap(w) for w in result.hits],
+        {
+            'total': result.total,
+            'page': page,
+            'query': query,
+        },
+    )
 
 
 @always_allow_project_access
