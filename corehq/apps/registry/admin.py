@@ -30,5 +30,3 @@ class DataRegistryAdmin(admin.ModelAdmin):
         RegistryGrantInline,
         RegistryPermissionInline
     ]
-
-
