@@ -1,56 +1,51 @@
-MOTECH on FHIR
-==============
+CommCare FHIR Integration
+=========================
 
-CommCare HQ offers two ways of sharing data over FHIR:
+.. contents::
+   :local:
+   fhir_repeater
+   fhir_import_config
+   fhir_api
 
-#. The FHIR API exposes CommCare cases as FHIR resources.
+
+CommCare HQ offers three ways of sharing data over FHIR:
+
 #. Data forwarding allows CommCare cases to be sent to remote FHIR
    services.
+#. The FHIR Importer fetches resources from a remote FHIR API and
+   imports them as CommCare cases.
+#. The FHIR API exposes CommCare cases as FHIR resources.
 
-FHIR-related functionality is currently enabled using the "FHIR
-integration" feature flag.
-
-
-The FHIR API
-------------
-
-MOTECH offers a FHIR R4 API. It returns responses in JSON.
-
-The FHIR API is not yet targeted at external users. API users must be
-superusers.
-
-The API focuses on the Patient resource. The endpoint for a Patient with
-case ID 11111111 would be
-https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/Patient/11111111
-
-(Throughout this documentation, we will use "PROJECT-SPACE" as a
-placeholder value for the name of a project space on CommCare HQ.)
-
-To search for the patient's Observations, the API accepts the
-"patient_id" search filter. For example,
-https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/Observation/?patient_id=11111111
+FHIR-related functionality is enabled using the "FHIR integration"
+feature flag.
 
 
-Mapping Case Properties
------------------------
+.. _data-dictionary-mapping:
 
-The FHIR Resources to be shared by the FHIR API are configured using the
-Data Dictionary. (The Data Dictionary is enabled using the Data
-Dictionary feature flag.)
+Mapping case properties using the Data Dictionary
+-------------------------------------------------
 
-Click on the "Data" menu, choose "View All", and navigate to "Data
-Dictionary".
+The FHIR Resources to be sent by data forwarding, or shared by the FHIR
+API, are configured using the Data Dictionary. (Under the "Data" menu,
+choose "View All", and navigate to "Data Dictionary")
 
-Select the case type to be mapped to the FHIR "Patient" resource type.
+The Data Dictionary is enabled using the "Data Dictionary" feature flag.
+
+.. image:: data_dictionary.png
+
+For example, let us imagine mapping a "person" case type to the
+"Patient" FHIR resource type. You would select the "person" case type
+from the list of case types on the left.
 
 Set the value of the "FHIR ResourceType" dropdown to "Patient".
 
-You will see a table of case properties, and a column titled "FHIR
-Resource Property Path". This is where to enter the JSONPath to the
-resource property to set.
+The Data Dictionary supports simple mapping of case properties. You will
+see a table of case properties, and a column titled "FHIR Resource
+Property Path". This is where to enter the `JSONPath`_ to the resource
+property to set.
 
-An example will help to illustrate this: Imagine a "person" case type
-with a "first_name" case property, and assume we want to map its value
+An example will help to illustrate this: Imagine the "person" case type
+has a "first_name" case property, and assume we want to map its value
 to the patient's given name.
 
 #. Check the structure of a `FHIR Patient`_ on the HL7 website.
@@ -69,16 +64,16 @@ to the patient's given name.
 #. Fill the value "$.name[0].given[0]" into the "FHIR Resource Property
    Path" field for the "first_name" case property.
 
-#. Using a tool like the `Postman REST Client`_ or the RESTED
-   `Firefox add-on`_ / `Chrome extension`_, call the FHIR API endpoint
-   for a patient. e.g.
-   https://www.commcarehq.org/a/PROJECT-SPACE/fhir/R4/Patient/11111111
-   where the case ID is "11111111". (You will need to configure the REST
-   client for `API key authentication`_.) You will get a result similar
-   to the following::
+#. You can test this using a tool like the `Postman REST Client`_ or the
+   RESTED `Firefox add-on`_ / `Chrome extension`_, call the CommCare
+   FHIR API endpoint for a patient. e.g.
+   ``https://www.commcarehq.org/a/<domain>/fhir/R4/Patient/<case-id>``
+   (You will need to configure the REST client for
+   `API key authentication`_.) You will get a result similar to the
+   following::
 
        {
-         "id": "11111111",
+         "id": "<case-id>",
          "resourceType": "Patient",
          "name": [
            {
@@ -89,10 +84,15 @@ to the patient's given name.
          ]
        }
 
-#. Use JSOPNPath to map the rest of the case properties you wish to
-   represent in the Patient resource.
+#. Use JSONPath to map the rest of the case properties you wish to
+   represent in the Patient resource. For a simpler example, a
+   "date_of_birth" case property would be mapped to "$.birthDate".
+
+Playing with the `JSONPath Online Evaluator`_ can be fun and useful way
+to become more familiar with JSONPath.
 
 
+.. _JSONPath: https://goessner.net/articles/JsonPath/
 .. _FHIR Patient: https://www.hl7.org/fhir/patient.html#resource
 .. _HumanName: https://www.hl7.org/fhir/datatypes.html#HumanName
 .. _JSONPath expression syntax: https://goessner.net/articles/JsonPath/index.html#e2
@@ -103,81 +103,129 @@ to the patient's given name.
 .. _API key authentication: https://confluence.dimagi.com/display/commcarepublic/Authentication#Authentication-ApiKeyauthentication
 
 
-Advanced Mapping
-----------------
+.. _admin-interface-mapping:
 
-The Data Dictionary is useful for mapping values from case properties,
-but what about FHIR resource properties whose values are not stored in
-case properties? Or FHIR resource properties whose data types are not
-the same as their corresponding case properties?
+Advanced mapping using the Admin interface
+------------------------------------------
+
+The Data Dictionary is meant to offer as simple an interface as possible
+for mapping case properties to FHIR resource properties. But what about
+FHIR resource properties whose values are not stored in case properties?
+Or FHIR resource properties whose data types are not the same as their
+corresponding case properties?
 
 This can done using the Admin site, and is accessible to superusers.
 
-#. Open the Admin site, and navigate to "FHIR Resource Types".
+Mappings are configured using ValueSource definitions. For more
+information about ValueSource, see the
+:doc:`Value Source <../../docs/value_source>` documentation.
 
-#. Select the case type.
+Open the Admin site, and navigate to "FHIR" > "FHIR resource types".
 
-#. In an empty "Value Source Config" textarea, configure a value source
-   for setting the FHIR resource property value. For more information
-   about value source configuration, see the
-   :doc:`Value Source <../../docs/value_source.rst>` documentation.
+There is a list of case types that have been mapped to resource types.
+Filter by domain if the list is long. Select the resource-type/case-type
+pair to configure.
+
+Let us imagine we are configuring mappings from a "vaccine_dose" case
+type to the "Immunization" FHIR resource type.
+
+If there are already mappings from case properties to resource
+properties, they are listed under "FHIR resource properties". They
+appear in the "Calculated value source" column, and shown as a JSON
+document. e.g.
+
+.. code:: javascript
+
+    {
+      "case_property": "vaccine_type_code",
+      "jsonpath": "$.vaccineCode.coding[0].code"
+    }
+
+Continuing with the vaccineCode example, a remote service will need more
+context to make sense of a code. The Admin interface allows us to
+specify the coding system that the code applies to. The following two
+resource properties specify that the code is a CPT 2021 vaccine code.
+
+.. code:: javascript
+
+    {
+      "jsonpath": "$.vaccineCode.coding[0].system",
+      "value": "http://www.ama-assn.org/go/cpt"
+    }
+
+.. code:: javascript
+
+    {
+      "jsonpath": "$.vaccineCode.coding[0].version",
+      "value": "2021"
+    }
+
+These set the "system" and "version" properties of the Coding instance
+to constant values.
+
+Next, let us take a look at mapping a property from a parent case. The
+Immunization resource type has a "programEligibility" property. This is
+its coding system:
+
+.. code:: javascript
+
+    {
+      "jsonpath": "$.programEligibility[0].coding[0].system",
+      "value": "http://terminology.hl7.org/CodeSystem/immunization-program-eligibility"
+    }
+
+If the value for programEligibility is stored on CommCare's "person"
+case type, the parent case of the "vaccine_dose" case, here is how to
+specify a value from the "person" case's "eligible" case property:
+
+.. code:: javascript
+
+    {
+      "supercase_value_source": {
+        "jsonpath": "$.programEligibility[0].coding[0].code",
+        "case_property": "eligible"
+      },
+      "identifier": "parent",
+      "referenced_type": "person",
+      "relationship": "child"
+    }
+
+Casting data types is another important use case for the Admin
+interface. Here is an example of how we ensure that an integer is sent
+in JSON format as an integer and not a string:
+
+.. code:: javascript
+
+    {
+      "case_property": "dose_number",
+      "jsonpath": "$.protocolApplied.doseNumberPositiveInt",
+      "external_data_type": "cc_integer"
+    }
+
+We use the same approach to cast a string of space-separated values to a
+list of strings. This is particularly useful for the given names of a
+patient:
+
+.. code:: javascript
+
+    {
+      "case_property": "given_names",
+      "jsonpath": "$.name[0].given",
+      "external_data_type": "fhir_list_of_string",
+      "commcare_data_type": "cc_text"
+    }
+
+For a complete list of the data types available, refer to
+`corehq/motech/const.py`_ and `corehq/motech/fhir/const.py`_ in the
+source code.
+
+.. note::
+    Mappings are not designed for transforming values, just, well,
+    mapping them. It is better to do more complex transformations inside
+    a CommCare form, and store the result in a hidden value question.
+    See the :ref:`multiple-values` section under :doc:`fhir_repeater`
+    as an example.
 
 
-Forwarding Cases as FHIR Resources
-----------------------------------
-
-Data forwarding to FHIR APIs uses the same mapping as the FHIR API.
-
-#. Click the Settings cog in the top right, and choose "Project
-   Settings".
-
-#. Go to "Connection Settings" and click "Add Connection Settings" to
-   add the connection details for the remote FHIR API.
-
-#. Go to "Data Forwarding" and under "Forward Cases to a FHIR API" click
-   "Add a service to forward to".
-
-#. Select the Connection Settings from the dropdown. then click "Start
-   Forwarding"
-
-To check that Data Forwarding is configured correctly, create or update
-a case whose case type has been mapped to a FHIR resource type. Then
-verify in "Remote API Logs" that the data has been sent, and check the
-remote service that the data has been received.
-
-
-Using the FHIR API
-------------------
-
-Dimagi offers tools to help others use the CommCare HQ FHIR API:
-
-
-A CommCare HQ Sandbox
-^^^^^^^^^^^^^^^^^^^^^
-
-The sandbox is a suite of Docker containers that launches a complete
-CommCare HQ instance and the services it needs:
-
-#. Clone the CommCare HQ repository::
-
-       $ git clone https://github.com/dimagi/commcare-hq.git
-
-#. Launch CommCare HQ using the script provided::
-
-       $ scripts/docker runserver
-
-CommCare HQ is now accessible at http://localhost:8000/
-
-
-A Reference API Client
-^^^^^^^^^^^^^^^^^^^^^^
-
-An simple example of a web service that calls the CommCare HQ FHIR API
-to retrieve patient data is available as a reference.
-
-You can find it implemented using the `Flask`_ Python web framework, or
-`FastAPI`_ for async Python.
-
-
-.. _Flask: https://github.com/dimagi/commcare-fhir-web-app/
-.. _FastAPI: https://github.com/dimagi/commcare-fhir-web-app/tree/fast_api
+.. _corehq/motech/const.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/const.py#L34
+.. _corehq/motech/fhir/const.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/fhir/const.py#L31

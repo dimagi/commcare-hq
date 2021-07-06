@@ -18,12 +18,12 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DATETIME,
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
-)
-from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
+)
+from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_MILLISECONDS,
     OPENMRS_DATA_TYPES,
 )
