@@ -61,18 +61,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @memoized
     def _get_queryset(self):
-        user_ids = self._get_user_ids()
-        changed_by_user_ids = self._get_changed_by_user_ids()
+        user_slugs = self.request.GET.getlist(EMWF.slug)
+        user_ids = self._get_user_ids(user_slugs)
+
+        changed_by_user_slugs = self.request.GET.getlist(ChangedByUserFilter.slug)
+        changed_by_user_ids = self._get_user_ids(changed_by_user_slugs)
+
         actions = self.request.GET.getlist('action')
         query = self._build_query(user_ids, changed_by_user_ids, actions)
         return query
 
-    def _get_user_ids(self):
-        es_query = self._get_users_es_query(self.request.GET.getlist(EMWF.slug))
-        return es_query.values_list('_id', flat=True)
-
-    def _get_changed_by_user_ids(self):
-        es_query = self._get_users_es_query(self.request.GET.getlist(ChangedByUserFilter.slug))
+    def _get_user_ids(self, slugs):
+        es_query = self._get_users_es_query(slugs)
         return es_query.values_list('_id', flat=True)
 
     def _get_users_es_query(self, slugs):
