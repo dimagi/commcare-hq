@@ -62,7 +62,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
-    - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
     - fr/remote-linked-ucr      # Farid June 4
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
