@@ -143,9 +143,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
         var deferred = API.queryFormplayer(options, route);
         if (options.endpointId) {
-           deferred.fail(function (response) {
-               FormplayerFrontend.trigger('navigateHome');
-           });
+            deferred.fail(function (response) {
+                FormplayerFrontend.trigger('navigateHome');
+            });
         }
         return deferred;
     });

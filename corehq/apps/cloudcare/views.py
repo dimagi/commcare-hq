@@ -82,7 +82,7 @@ from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
