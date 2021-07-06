@@ -188,6 +188,16 @@ class ConfigurableReportTableManager(object):
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
+    @property
+    def relevant_domains(self):
+        return set(self.table_adapters_by_domain)
+
+    def get_adapters(self, domain):
+        return list(self.table_adapters_by_domain.get(domain, []))
+
+    def remove_adapter(self, domain, adapter):
+        self.table_adapters_by_domain[domain].remove(adapter)
+
     def _get_indicator_adapter(self, config):
         return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
@@ -250,7 +260,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             table.best_effort_save(doc, eval_context)
         except UserReportsWarning:
             # remove it until the next bootstrap call
-            self.table_manager.table_adapters_by_domain[domain].remove(table)
+            self.table_manager.remove_adapter(domain, table)
 
     def process_changes_chunk(self, changes):
         """
@@ -265,7 +275,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             if is_couch_change_for_sql_domain(change):
                 continue
             # skip if no domain or no UCR tables in the domain
-            if change.metadata.domain and change.metadata.domain in self.table_manager.table_adapters_by_domain:
+            if change.metadata.domain and change.metadata.domain in self.table_manager.relevant_domains:
                 changes_by_domain[change.metadata.domain].append(change)
 
         retry_changes = set()
@@ -279,7 +289,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         return retry_changes, change_exceptions
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        adapters = list(self.table_manager.table_adapters_by_domain[domain])
+        adapters = self.table_manager.get_adapters(domain)
         changes_by_id = {change.id: change for change in changes_chunk}
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
@@ -372,12 +382,12 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain
-        if not domain or domain not in self.table_manager.table_adapters_by_domain:
+        if not domain or domain not in self.table_manager.relevant_domains:
             # if no domain we won't save to any UCR table
             return
 
         if change.deleted:
-            adapters = list(self.table_manager.table_adapters_by_domain[domain])
+            adapters = self.table_manager.get_adapters(domain)
             for table in adapters:
                 table.delete({'_id': change.metadata.document_id})
 
@@ -392,7 +402,7 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
         with TimingContext() as timer:
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
-            adapters = list(self.table_manager.table_adapters_by_domain[domain])
+            adapters = self.table_manager.get_adapters(domain)
             doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
