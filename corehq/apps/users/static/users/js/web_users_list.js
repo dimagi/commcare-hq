@@ -46,11 +46,11 @@ hqDefine("users/js/web_users_list", [
         });
 
         self.goToPage = function (page) {
-	    self.showPaginationSpinner(true);
+            self.showPaginationSpinner(true);
             self.error('');
             $.ajax({
                 method: 'GET',
-		url: options.url,
+                url: options.url,
                 data: {
                     page: page,
                     query: self.query() || '',
@@ -62,9 +62,9 @@ hqDefine("users/js/web_users_list", [
                     self.totalItems(data.total);
                     self.users.removeAll();
                     _.each(data.users, function (user) {
-			if (options.userModel) {
-			    user = options.userModel(user);
-			}
+                        if (options.userModel) {
+                            user = options.userModel(user);
+                        }
                         self.users.push(user);
                     });
                 },
