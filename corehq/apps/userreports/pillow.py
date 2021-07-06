@@ -464,7 +464,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         assert self.processors is not None
         assert len(self.processors) == 1
         self._processor = self.processors[0]
-        assert self._processor.bootstrapped is not None
+        assert self._processor.table_manager.bootstrapped is not None
 
         # retry errors defaults to False because there is not a solution to
         # distinguish between doc save errors and data source config errors
