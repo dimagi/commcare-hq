@@ -1982,13 +1982,6 @@ APP_ANALYTICS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
 )
 
-ENTERPRISE_SSO = StaticToggle(
-    'enterprise_sso',
-    'Enable Enterprise SSO options for the users specified in this list.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
