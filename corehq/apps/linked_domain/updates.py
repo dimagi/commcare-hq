@@ -42,6 +42,8 @@ from corehq.apps.linked_domain.const import (
     MODEL_DIALER_SETTINGS,
     MODEL_OTP_SETTINGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_TABLEAU_VISUALIZATION,
+    MODEL_TABLEAU_SERVER,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
@@ -115,6 +117,8 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_OTP_SETTINGS: update_otp_settings,
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
+        MODEL_TABLEAU_VISUALIZATION: update_tableau_visualization,
+        MODEL_TABLEAU_SERVER: update_tableau_server,
     }.get(model_type)
 
     kwargs = model_detail or {}
