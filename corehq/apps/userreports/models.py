@@ -622,6 +622,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
+    """This is a special data source that can contain data from
+    multiple domains. These data sources are built from
+    data accessible to the domain via a Data Registry."""
+
     registry_slug = StringProperty(required=True)
 
     @cached_property
