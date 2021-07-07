@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.views import (
     dropbox_upload,
     iframe_domain_login,
     iframe_domain_login_new_window,
+    iframe_sso_login_pending,
     jserror,
     log_email_event,
     login,
@@ -91,6 +92,7 @@ urlpatterns = [
     url(r'^ping_session/$', ping_response, name='ping_session'),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
     url(r'^relogin/iframe/$', iframe_domain_login_new_window, name='iframe_domain_login_new_window'),
+    url(r'^relogin/sso/$', iframe_sso_login_pending, name='iframe_sso_login_pending'),
     url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
     url(
         r'^oauth/applications/register/',
