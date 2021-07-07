@@ -626,7 +626,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
 
     @cached_property
     def registry_helper(self):
-        pass  # TODO
+        return DataRegistryHelper(self.domain, self.registry_slug)
 
     @property
     def referenced_doc_type(self):
