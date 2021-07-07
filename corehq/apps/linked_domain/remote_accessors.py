@@ -16,6 +16,14 @@ from corehq.apps.linked_domain.exceptions import (
 from corehq.util.view_utils import absolute_reverse
 
 
+def get_tableau_visualizaton(domain_link):
+    return _do_simple_request('linked_domain:tableau_visualizaton', domain_link)
+
+
+def get_tableau_server(domain_link):
+    return _do_simple_request('linked_domain:tableau_server', domain_link)
+
+
 def get_toggles_previews(domain_link):
     return _do_simple_request('linked_domain:toggles', domain_link)
 
