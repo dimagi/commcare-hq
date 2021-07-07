@@ -182,9 +182,9 @@ class TestBlockedHubspotData(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.blocked_user.delete(None)
-        cls.blocked_by_email_user.delete(None)
-        cls.allowed_user.delete(None)
+        cls.blocked_user.delete(cls.blocked_domain.name, deleted_by=None)
+        cls.blocked_by_email_user.delete(cls.allowed_domain.name, deleted_by=None)
+        cls.allowed_user.delete(cls.allowed_domain.name, deleted_by=None)
         cls.blocked_domain.delete()
         cls.second_blocked_domain.delete()
         cls.allowed_domain.delete()
