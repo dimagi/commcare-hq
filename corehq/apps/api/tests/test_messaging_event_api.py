@@ -608,7 +608,6 @@ def _serialized_messaging_event(sms):
                 'type': 'sms'
             }
         ],
-        # "id": 1,  # ids are explicitly removed from comparison
         "recipient": {'name': 'unknown', 'recipient_id': None, 'type': 'case'},
         "source": {'source_id': None, 'name': 'sms', 'type': "other"},
         "status": "completed",
