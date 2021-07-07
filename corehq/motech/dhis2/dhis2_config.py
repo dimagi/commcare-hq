@@ -46,6 +46,9 @@ class Dhis2FormConfig(DocumentSchema):
     })
     completed_date = DictProperty(required=False)
     datavalue_maps = SchemaListProperty(FormDataValueMap)
+    coordinate = DictProperty(required=False, default={
+        "form_question": "/metadata/location/#text"
+    })
 
     @classmethod
     def wrap(cls, data):
