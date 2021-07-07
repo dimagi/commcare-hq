@@ -1,0 +1,86 @@
+{
+    "domain": "user-reports",
+    "doc_type": "RegistryDataSourceConfiguration",
+    "table_id": "sample",
+    "display_name": "CommBugz",
+    "configured_filter": {
+        "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "type"
+        },
+        "operator": "eq",
+        "property_value": "ticket"
+    },
+    "configured_indicators": [
+        {
+            "column_id": "date",
+            "type": "raw",
+            "display_name": "date opened",
+            "datatype": "datetime",
+            "property_name": "opened_on"
+        },
+        {
+            "column_id": "owner",
+            "type": "raw",
+            "display_name": "owner",
+            "datatype": "string",
+            "property_name": "owner_id"
+        },
+        {
+            "column_id": "count",
+            "type": "count",
+            "display_name": "Count"
+        },
+        {
+            "column_id": "category",
+            "type": "choice_list",
+            "display_name": "category",
+            "property_name": "category",
+            "choices": [
+                "bug",
+                "feature",
+                "app",
+                "schedule"
+            ],
+            "select_style": "single"
+        },
+        {
+            "column_id": "tags",
+            "type": "choice_list",
+            "display_name": "tags",
+            "property_name": "tags",
+            "choices": [
+                "easy-win",
+                "potential-dupe",
+                "roadmap",
+                "public"
+            ],
+            "select_style": "multiple"
+        },
+        {
+            "column_id": "is_starred",
+            "type": "boolean",
+            "display_name": "starred?",
+            "filter": {
+                "type": "property_match",
+                "property_name": "is_starred",
+                "property_value": "yes"
+            }
+        },
+        {
+            "column_id": "estimate",
+            "type": "raw",
+            "display_name": "estimate (hours)",
+            "datatype": "decimal",
+            "property_name": "estimate"
+        },
+        {
+            "column_id": "priority",
+            "type": "raw",
+            "display_name": "Priority",
+            "datatype": "integer",
+            "property_name": "priority"
+        }
+    ]
+}

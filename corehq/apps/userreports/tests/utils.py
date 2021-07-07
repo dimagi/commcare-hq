@@ -18,7 +18,7 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    ReportConfiguration,
+    ReportConfiguration, RegistryDataSourceConfiguration,
 )
 from corehq.sql_db.connections import connection_manager
 
@@ -29,6 +29,10 @@ def get_sample_report_config():
 
 def get_sample_data_source():
     return _get_sample_doc('sample_data_source.json', DataSourceConfiguration)
+
+
+def get_sample_registry_data_source():
+    return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration)
 
 
 def get_data_source_with_related_doc_type():
