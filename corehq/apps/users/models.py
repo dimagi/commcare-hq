@@ -2805,6 +2805,9 @@ class AnonymousCouchUser(object):
     def can_edit_reports(self):
         return False
 
+    def can_email_reports(self):
+        return True
+
     def is_eula_signed(self, version=None):
         return True
 
