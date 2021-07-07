@@ -62,7 +62,6 @@ branches:
     - smh/embedded-tableau # Steph May 7
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
-    - fr/remote-linked-ucr      # Farid June 4
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
@@ -84,6 +83,5 @@ branches:
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - smh/tableau-username-override # Steph July 6
-    - ce/ignore-above # Cal July 6
     - ce/bulk-case-search # Cal July 6
 submodules: { }
