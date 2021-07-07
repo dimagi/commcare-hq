@@ -763,10 +763,12 @@ def paginate_enterprise_users(request, domain):
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
 
     users = []
+    allowed_domains = set(domains) - {domain}
     for web_user in web_users:
+        other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
         users.append({
             **_format_enterprise_user(domain, web_user),
-            'otherDomains': [m.domain for m in web_user.domain_memberships if m.domain != domain],
+            'otherDomains': other_domains,
             'loginAsUserCount': len(mobile_users[web_user.username]),
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
