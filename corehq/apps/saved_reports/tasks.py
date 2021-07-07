@@ -33,8 +33,8 @@ def send_delayed_report(report_id):
     """
     domain = ReportNotification.get(report_id).domain
     if (
-        settings.SERVER_ENVIRONMENT == 'production' and
-        any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
+        settings.SERVER_ENVIRONMENT == 'production'
+        and any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
     ):
         # This is to prevent a few scheduled reports from clogging up
         # the background queue.
