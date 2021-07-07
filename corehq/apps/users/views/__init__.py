@@ -743,7 +743,7 @@ def create_domain_permission_mirror(request, domain):
 def paginate_enterprise_users(request, domain):
     # Get web users
     domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
-    (web_users, pagination) = _get_web_users(request, [domain])
+    web_users, pagination = _get_web_users(request, domains)
 
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
@@ -800,7 +800,7 @@ def _format_enterprise_user(domain, user):
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
-    (web_users, pagination) = _get_web_users(request, [domain])
+    web_users, pagination = _get_web_users(request, [domain])
     is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),

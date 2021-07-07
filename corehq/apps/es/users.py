@@ -70,7 +70,7 @@ def domain(domain, allow_mirroring=False):
         source_domain = DomainPermissionsMirror.source_domain(domain)
         return domains([domain, source_domain])
     else:
-        return domains([domain])
+        return domains(domain)
 
 
 def domains(domains):
