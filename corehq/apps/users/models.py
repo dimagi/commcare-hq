@@ -1706,9 +1706,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self.user_data.pop(key, default)
 
     def get_user_data_profile(self, profile_id):
-        if not domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            return None
-
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
         if not profile_id:
