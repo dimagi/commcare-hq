@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 import yaml
@@ -18,6 +19,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -617,6 +619,61 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
+
+
+class RegistryDataSourceConfiguration(DataSourceConfiguration):
+    registry_slug = StringProperty(required=True)
+
+    @cached_property
+    def registry_helper(self):
+        pass  # TODO
+
+    @property
+    def referenced_doc_type(self):
+        return "CommCareCase"
+
+    def _get_domain_filter_spec(self):
+        return {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "in",
+            "property_value": self.registry_helper.visible_domains,
+        }
+
+    @property
+    @memoized
+    def default_indicators(self):
+        default_indicators = super().default_indicators
+        default_indicators.append(IndicatorFactory.from_spec({
+            "column_id": "domain",
+            "type": "expression",
+            "display_name": "Project Space",
+            "datatype": "string",
+            "is_nullable": False,
+            "create_index": True,
+            "expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "domain"
+                }
+            }
+        }, self.get_factory_context()))
+        return default_indicators
+
+    def get_report_count(self):
+        raise NotImplementedError("TODO")
+
+    @classmethod
+    def by_domain(cls, domain):
+        raise NotImplementedError("TODO")
+
+    @classmethod
+    def all_ids(cls):
+        raise NotImplementedError("TODO")
 
 
 class ReportMeta(DocumentSchema):
