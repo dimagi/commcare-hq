@@ -20,4 +20,4 @@ class DataRegistryHelper:
 
     @property
     def visible_domains(self):
-        return self.registry.get_granted_domains(self.current_domain)
+        return {self.current_domain} | self.registry.get_granted_domains(self.current_domain)
