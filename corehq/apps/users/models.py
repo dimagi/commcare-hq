@@ -28,7 +28,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 
-from corehq import privileges
 from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
@@ -56,7 +55,6 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
