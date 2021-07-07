@@ -65,12 +65,13 @@ class UserES(HQESQuery):
 
 
 def domain(domain, allow_mirroring=False):
+    domains = [domain]
     if allow_mirroring:
         from corehq.apps.users.models import DomainPermissionsMirror
         source_domain = DomainPermissionsMirror.source_domain(domain)
-        return domains([domain, source_domain])
-    else:
-        return domains(domain)
+        if source_domain:
+            domains.append(source_domain)
+    return domains(domain)
 
 
 def domains(domains):
