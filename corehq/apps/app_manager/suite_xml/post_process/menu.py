@@ -1,10 +1,12 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Text
+from corehq.util.timer import time_method
 
 
 class GridMenuHelper(PostProcessor):
 
+    @time_method()
     def update_suite(self):
         """
         Ensure that there exists at least one menu where id="root".
