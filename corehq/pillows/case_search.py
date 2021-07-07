@@ -112,7 +112,7 @@ class CaseSearchPillowProcessor(BulkElasticProcessor):
         
     def process_changes_chunk(self, changes_chunk):
         chunk = [change for change in changes_chunk if self._is_case_search_domain(change)]
-        super(CaseSearchPillowProcessor, self).process_changes_chunk(chunk)
+        return super(CaseSearchPillowProcessor, self).process_changes_chunk(chunk)
 
 
 def get_case_search_processor():
