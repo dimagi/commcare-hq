@@ -1982,13 +1982,6 @@ APP_ANALYTICS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
 )
 
-ENTERPRISE_SSO = StaticToggle(
-    'enterprise_sso',
-    'Enable Enterprise SSO options for the users specified in this list.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2003,6 +1996,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     'messaging feature',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+ENTERPRISE_USER_MANAGEMENT = StaticToggle(
+    'enterprise_user_management',
+    'USH: UI for managing all web users in an enterprise',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
 )
 
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
@@ -2058,6 +2058,14 @@ DETAILED_TAGGING = StaticToggle(
     'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )
 
 
