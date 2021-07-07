@@ -1,6 +1,8 @@
 {
     "domain": "user-reports",
     "doc_type": "RegistryDataSourceConfiguration",
+    "referenced_doc_type": "CommCareCase",
+    "registry_slug": "test-registry",
     "table_id": "sample",
     "display_name": "CommBugz",
     "configured_filter": {

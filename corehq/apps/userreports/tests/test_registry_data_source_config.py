@@ -79,3 +79,8 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
             self.assertEqual(expected_indicators[result.column.id], result.value)
+
+    def test_configured_filter_validation(self):
+        source = self.config.to_json()
+        config = RegistryDataSourceConfiguration.wrap(source)
+        config.validate()

@@ -632,9 +632,11 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def registry_helper(self):
         return DataRegistryHelper(self.domain, self.registry_slug)
 
-    @property
-    def referenced_doc_type(self):
-        return "CommCareCase"
+    def validate(self, required=True):
+        super().validate(required)
+        if self.referenced_doc_type != 'CommCareCase':
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
     def _get_domain_filter_spec(self):
         return {
