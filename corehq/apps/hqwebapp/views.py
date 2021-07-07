@@ -1394,7 +1394,6 @@ class OauthApplicationRegistration(BasePageView):
         return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
 
 
-@xframe_options_sameorigin
 @require_POST
 def check_sso_login_status(request):
     """

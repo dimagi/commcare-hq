@@ -246,7 +246,10 @@ hqDefine('hqwebapp/js/inactivity', [
          * iframe in order to complete a full SSO sign in.
          */
         var checkIfSsoMessageReceivedFromExternalTab = function (event) {
+            console.log('checkIfSsoMessageReceivedFromExternalTab');
+            console.log(event);
             if (event.originalEvent.key !== 'ssoInactivityMessage') {
+                console.log('storage updated, but not SSO related');
                 // ignore other messages
                 return;
             }
@@ -269,7 +272,7 @@ hqDefine('hqwebapp/js/inactivity', [
             }
         };
 
-        $(window).on('storage', checkIfSsoMessageReceivedFromExternalTab);
+        window.addEventListener('storage', checkIfSsoMessageReceivedFromExternalTab);
     });
 
     return {
