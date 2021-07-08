@@ -174,6 +174,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
+            user_current_role = self.existing_user.get_role(domain=self.domain)
             try:
                 self.existing_user.set_role(self.domain, role)
                 if self.existing_user.is_commcare_user():
@@ -181,15 +182,25 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                user_role = self.existing_user.get_role(self.domain)
-                log_user_role_update(self.domain, user_role, user=self.existing_user,
-                                     by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
+            else:
+                user_new_role = self.existing_user.get_role(self.domain)
+                if self._role_updated(user_current_role, user_new_role):
+                    log_user_role_update(self.domain, user_new_role, user=self.existing_user,
+                                         by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
         elif is_update_successful:
             self.existing_user.save()
 
         return is_update_successful
+
+    @staticmethod
+    def _role_updated(old_role, new_role):
+        if (old_role and not new_role) or (new_role and not old_role):
+            return True
+        if old_role and new_role and new_role.get_qualified_id() != old_role.get_qualified_id():
+            return True
+        return False
 
     def load_roles(self, role_choices=None, current_role=None):
         if role_choices is None:
