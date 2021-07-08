@@ -39,6 +39,7 @@ class UserES(HQESQuery):
     def builtin_filters(self):
         return [
             domain,
+            domains,
             created,
             mobile_users,
             web_users,
@@ -64,12 +65,16 @@ class UserES(HQESQuery):
 
 
 def domain(domain, allow_mirroring=False):
-    domains = [domain]
+    domain_list = [domain]
     if allow_mirroring:
         from corehq.apps.users.models import DomainPermissionsMirror
         source_domain = DomainPermissionsMirror.source_domain(domain)
         if source_domain:
-            domains.append(source_domain)
+            domain_list.append(source_domain)
+    return domains(domain_list)
+
+
+def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
         filters.term("domain_memberships.domain.exact", domains)
