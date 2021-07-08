@@ -60,6 +60,7 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
+    - jls/enterprise-user-overview+bmb/sso-remove-toggle+mk/user-history/base+mk/user-history/bulk-upload-ui-changes
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!

@@ -23,6 +23,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     StackDatum,
 )
 from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
+from corehq.util.timer import time_method
 
 
 class WorkflowHelper(PostProcessor):
@@ -39,6 +40,7 @@ class WorkflowHelper(PostProcessor):
             for datum in self.get_module_datums('m{}'.format(module.id)).values()
         ]
 
+    @time_method()
     def update_suite(self):
         """
         Add stack elements to form entry elements to configure app workflow. This updates

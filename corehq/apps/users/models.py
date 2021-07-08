@@ -28,7 +28,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 
-from corehq import privileges
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -55,7 +54,6 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -1712,9 +1710,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self.user_data.pop(key, default)
 
     def get_user_data_profile(self, profile_id):
-        if not domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            return None
-
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
         if not profile_id:
