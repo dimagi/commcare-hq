@@ -132,7 +132,7 @@ class BaseUserImporter(object):
             if new_role:
                 self.logger.add_info(_("Role: {new_role_name}[{new_role_id}]").format(
                     new_role_name=new_role.name,
-                    new_role_id=new_role.get_id
+                    new_role_id=new_role.get_qualified_id()
                 ))
             else:
                 self.logger.add_info("Role: None")
