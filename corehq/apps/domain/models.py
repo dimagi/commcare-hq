@@ -49,6 +49,7 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -982,7 +983,7 @@ class TransferDomainRequest(models.Model):
             text_content=text_content)
 
     @requires_active_transfer
-    def transfer_domain(self, *args, **kwargs):
+    def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):
 
         self.confirm_time = datetime.utcnow()
         if 'ip' in kwargs:
@@ -990,6 +991,10 @@ class TransferDomainRequest(models.Model):
 
         self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
         self.from_user.save()
+        if by_user:
+            log_user_change(self.domain, couch_user=self.from_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            message=_("Removed from domain '{domain_name}'").format(domain_name=self.domain))
         self.to_user.save()
         self.active = False
         self.save()

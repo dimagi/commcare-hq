@@ -104,10 +104,12 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
+from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
@@ -856,6 +858,9 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
+        log_user_change(request.domain, couch_user=user,
+                        changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        message=_("Removed from domain '{domain_name}'").format(domain_name=domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
