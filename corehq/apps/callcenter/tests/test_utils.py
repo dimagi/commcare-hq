@@ -86,7 +86,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_full_name(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***', None, None)
-        self.addCleanup(other_user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(other_user.delete, TEST_DOMAIN, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
         sync_call_center_user_case(other_user)
