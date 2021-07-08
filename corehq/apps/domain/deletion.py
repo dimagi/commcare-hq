@@ -391,6 +391,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
+    ModelDeletion('fhir', 'FHIRImportConfig', 'domain', [
+        'FHIRImportResourceType', 'ResourceTypeRelationship',
+        'FHIRImportResourceProperty',
+    ]),
     ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),

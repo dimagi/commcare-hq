@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -32,7 +32,7 @@ class TestCaseAPI(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        role = UserRole.create(
+        role = SQLUserRole.create(
             cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)

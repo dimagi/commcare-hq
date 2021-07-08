@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -19,15 +20,13 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -47,7 +46,8 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.esaccessors import login_as_user_filter
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -55,16 +55,14 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
-    WebUserInvitationForm,
 )
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -105,9 +103,6 @@ from corehq.apps.users.models import (
     WebUser,
     Permissions,
     SQLUserRole,
-)
-from corehq.apps.users.tasks import (
-    bulk_download_users_async,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
@@ -540,6 +535,20 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+    @property
+    def page_context(self):
+        return {
+            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
+        }
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
@@ -729,19 +738,69 @@ def create_domain_permission_mirror(request, domain):
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
-def paginate_web_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
+def paginate_enterprise_users(request, domain):
+    # Get web users
+    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    web_users, pagination = _get_web_users(request, domains)
 
-    result = (
-        UserES().domain(domain).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().domains(domains).mobile_users().sort('username.exact')
+        .filter(
+            queries.nested(
+                'user_data_es',
+                login_as_user_filter(web_user_usernames)
+            )
+        )
+        .run()
     )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
 
-    web_users = [WebUser.wrap(w) for w in result.hits]
+    users = []
+    allowed_domains = set(domains) - {domain}
+    for web_user in web_users:
+        other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'otherDomains': other_domains,
+            'loginAsUserCount': len(mobile_users[web_user.username]),
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
+            })
+
+    return JsonResponse({
+        'users': users,
+        **pagination,
+    })
+
+
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.raw_username,
+        'name': user.full_name,
+        'id': user.get_id,
+        'role': role.name if role else None,
+    }
+
+
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_web_users(request, domain):
+    web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -761,10 +820,30 @@ def paginate_web_users(request, domain):
 
     return JsonResponse({
         'users': web_users_fmt,
-        'total': result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
+
+
+def _get_web_users(request, domains):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    return (
+        [WebUser.wrap(w) for w in result.hits],
+        {
+            'total': result.total,
+            'page': page,
+            'query': query,
+        },
+    )
 
 
 @always_allow_project_access
@@ -819,9 +898,9 @@ def post_user_role(request, domain):
     try:
         role = _update_role_from_view(domain, role_data)
     except ValueError as e:
-        response = HttpResponseBadRequest()
-        response.content = str(e)
-        return response
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
 
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
@@ -873,6 +952,17 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        return JsonResponse({
+            "message": ngettext(
+                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                user_count
+            ).format(role=role_data["name"], user_count=user_count)
+        }, status=400)
     try:
         role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except SQLUserRole.DoesNotExist:
