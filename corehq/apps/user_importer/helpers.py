@@ -135,7 +135,7 @@ class BaseUserImporter(object):
                     new_role_id=new_role.get_id
                 ))
             else:
-                self.logger.add_change_message("Role: None")
+                self.logger.add_info("Role: None")
 
         self._include_user_data_changes()
         self.logger.save()
