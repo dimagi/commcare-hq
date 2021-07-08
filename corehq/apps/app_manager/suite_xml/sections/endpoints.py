@@ -5,8 +5,10 @@ from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    CommandId,
     WorkflowDatumMeta,
     WorkflowHelper,
+    prepend_parent_frame_children,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Argument,
@@ -15,7 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.util.timer import time_method
 
 
 class SessionEndpointContributor(SuiteContributorByModule):
@@ -26,39 +28,44 @@ class SessionEndpointContributor(SuiteContributorByModule):
     case IDs) must be provided to get there.
     """
 
+    @time_method()
     def get_module_contributions(self, module) -> List[SessionEndpoint]:
         endpoints = []
         if module.session_endpoint_id:
-            endpoints.append(self._get_module_endpoint(module))
+            endpoints.append(self._make_session_endpoint(module))
         for form in module.get_suite_forms():
             if form.session_endpoint_id:
-                endpoints.append(self._get_form_endpoint(form, module))
+                endpoints.append(self._make_session_endpoint(module, form))
         return endpoints
 
-    def _get_module_endpoint(self, module):
-        id_string = id_strings.case_list_command(module)
-        return self._make_session_endpoint(id_string, module, module.session_endpoint_id)
+    def _make_session_endpoint(self, module, form=None):
+        if form is not None:
+            endpoint_id = form.session_endpoint_id
+        else:
+            endpoint_id = module.session_endpoint_id
 
-    def _get_form_endpoint(self, form, module):
-        id_string = id_strings.form_command(form)
-        return self._make_session_endpoint(id_string, module, form.session_endpoint_id)
-
-    def _make_session_endpoint(self, id_string, module, endpoint_id):
         stack = Stack()
         frame = PushFrame()
         stack.add_frame(frame)
-        frame.add_command(XPath.string(id_string))
         arguments = []
-        helper = WorkflowHelper(self.suite, self.app, self.modules)
-        for child in helper.get_frame_children(id_string, module):
+        for child in self._get_frame_children(module, form):
             if isinstance(child, WorkflowDatumMeta):
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
                     StackDatum(id=child.id, value=f"${child.id}")
                 )
+            elif isinstance(child, CommandId):
+                frame.add_command(child.to_command())
 
         return SessionEndpoint(
             id=endpoint_id,
             arguments=arguments,
             stack=stack,
         )
+
+    def _get_frame_children(self, module, form):
+        helper = WorkflowHelper(self.suite, self.app, self.modules)
+        frame_children = helper.get_frame_children(module, form)
+        if module.root_module_id:
+            frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
+        return frame_children

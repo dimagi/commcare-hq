@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
@@ -9,7 +11,9 @@ from corehq.apps.saved_reports.scheduled import (
     get_scheduled_report_ids,
     guess_reporting_minute,
 )
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -170,23 +174,35 @@ class ScheduledReportTest(TestCase):
 class ScheduledReportSendingTest(TestCase):
 
     domain = 'test-scheduled-reports'
+    REPORT_NAME_LOOKUP = {
+        'worker_activity': 'corehq.apps.reports.standard.monitoring.WorkerActivityReport'
+    }
 
     @classmethod
     def setUpClass(cls):
+        es = ensure_active_es()
         super(ScheduledReportSendingTest, cls).setUpClass()
+
         cls.domain_obj = create_domain(cls.domain)
+        cls.reports_role = SQLUserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+            view_report_list=[cls.REPORT_NAME_LOOKUP['worker_activity']]
+        ))
         cls.user = WebUser.create(
             domain=cls.domain,
             username='dummy@example.com',
             password='secret',
             created_by=None,
             created_via=None,
+            role_id=cls.reports_role.get_id
         )
+
+        initialize_index_and_mapping(es, CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_report_notifications()
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):
@@ -201,7 +217,8 @@ class ScheduledReportSendingTest(TestCase):
         })
         report_config.save()
         report = ReportNotification(
-            domain=self.domain, hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id]
+            domain=self.domain, hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id],
+            owner_id=self.user._id
         )
         report.save()
         report_text = get_scheduled_report_response(

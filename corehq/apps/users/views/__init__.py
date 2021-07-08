@@ -19,15 +19,13 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -47,7 +45,6 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -57,14 +54,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
-    WebUserInvitationForm,
 )
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -105,9 +100,6 @@ from corehq.apps.users.models import (
     WebUser,
     Permissions,
     SQLUserRole,
-)
-from corehq.apps.users.tasks import (
-    bulk_download_users_async,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
@@ -824,9 +816,9 @@ def post_user_role(request, domain):
     try:
         role = _update_role_from_view(domain, role_data)
     except ValueError as e:
-        response = HttpResponseBadRequest()
-        response.content = str(e)
-        return response
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
 
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
@@ -878,8 +870,19 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        return JsonResponse({
+            "message": ngettext(
+                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                user_count
+            ).format(role=role_data["name"], user_count=user_count)
+        }, status=400)
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"])
+        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except SQLUserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id

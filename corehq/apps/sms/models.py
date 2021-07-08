@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.encoding import force_str
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop, ugettext as _
 
 import jsonfield
 from memoized import memoized
@@ -181,7 +181,28 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
-    STATUS_PENDING = 'STATUS_PENDING'
+    STATUS_PENDING = 'STATUS_PENDING'  # special value for pending status
+
+    STATUS_SENT = "sent"
+    STATUS_ERROR = "error"
+    STATUS_QUEUED = "queued"
+    STATUS_RECEIVED = "received"
+    STATUS_FORWARDED = "forwarded"
+    STATUS_UNKNOWN = "unknown"
+
+    STATUS_DISPLAY = {
+        STATUS_SENT: _('Sent'),
+        STATUS_ERROR: _('Error'),
+        STATUS_QUEUED: _('Queued'),
+        STATUS_RECEIVED: _('Received'),
+        STATUS_FORWARDED: _('Forwarded'),
+        STATUS_UNKNOWN: _('Unknown'),
+    }
+
+    DIRECTION_SLUGS = {
+        INCOMING: "incoming",
+        OUTGOING: "outgoing",
+    }
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -278,6 +299,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
+
     class Meta:
         indexes = [models.Index(fields=['processed_timestamp'])]
 
@@ -902,6 +925,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
     )
 
+    STATUS_SLUGS = {
+        STATUS_IN_PROGRESS: "in-progress",
+        STATUS_COMPLETED: "completed",
+        STATUS_NOT_COMPLETED: "not-completed",
+        STATUS_ERROR: "error",
+        STATUS_EMAIL_SENT: "email-sent",
+        STATUS_EMAIL_DELIVERED: "email-delivered",
+    }
+
     SOURCE_BROADCAST = 'BRD'
     SOURCE_KEYWORD = 'KWD'
     SOURCE_REMINDER = 'RMD'
@@ -923,6 +955,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
         (SOURCE_OTHER, ugettext_noop('Other')),
     )
+
+    SOURCE_SLUGS = {
+        SOURCE_BROADCAST: 'broadcast',
+        SOURCE_SCHEDULED_BROADCAST: 'scheduled-broadcast',
+        SOURCE_IMMEDIATE_BROADCAST: 'immediate-broadcast',
+        SOURCE_KEYWORD: 'keyword',
+        SOURCE_REMINDER: 'reminder',
+        SOURCE_CASE_RULE: 'conditional-alert',
+        SOURCE_UNRECOGNIZED: 'unrecognized',
+        SOURCE_FORWARDED: 'forwarded-message',
+        SOURCE_OTHER: 'other',
+    }
 
     CONTENT_NONE = 'NOP'
     CONTENT_SMS = 'SMS'
@@ -947,6 +991,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, ugettext_noop('Email')),
     )
+
+    CONTENT_TYPE_SLUGS = {
+        CONTENT_NONE: "none",
+        CONTENT_SMS: "sms",
+        CONTENT_SMS_CALLBACK: "sms-callback",
+        CONTENT_SMS_SURVEY: "sms-survey",
+        CONTENT_IVR_SURVEY: "ivr-survey",
+        CONTENT_PHONE_VERIFICATION: "phone-verification",
+        CONTENT_ADHOC_SMS: "manual-sms",
+        CONTENT_API_SMS: "api-sms",
+        CONTENT_CHAT_SMS: "chat-sms",
+        CONTENT_EMAIL: "email",
+    }
 
     RECIPIENT_CASE = 'CAS'
     RECIPIENT_MOBILE_WORKER = 'MOB'
@@ -1481,6 +1538,12 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
+
+    RECIPIENT_SLUGS = {
+        MessagingEvent.RECIPIENT_CASE: 'case',
+        MessagingEvent.RECIPIENT_MOBILE_WORKER: 'mobile-worker',
+        MessagingEvent.RECIPIENT_WEB_USER: 'web-user',
+    }
 
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
@@ -2565,6 +2628,7 @@ class Email(models.Model):
 
     domain = models.CharField(max_length=126, db_index=True)
     date = models.DateTimeField(db_index=True)
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
     couch_recipient_doc_type = models.CharField(max_length=126, db_index=True)
     couch_recipient = models.CharField(max_length=126, db_index=True)
 
