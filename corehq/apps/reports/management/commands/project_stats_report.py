@@ -363,6 +363,6 @@ class Command(BaseCommand):
 
         self.stdout.write('UCR datasource sizes')
         self._print_table(
-            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size', 'Size (bytes)'],
+            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
             rows
         )
