@@ -52,7 +52,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
     sudo apt install python3.6-dev python3-pip python3-venv
     ```
 
-- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+- [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
     ```sh
     sudo python3 -m pip install virtualenvwrapper
@@ -63,6 +63,48 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
     ```
+
+- Java (JDK 8)
+
+  - **Linux**: install `default-jre` via apt:
+
+      ```sh
+      sudo apt install default-jre
+      ```
+
+  - **macOS**: install [Java SE Development Kit 8][oracle_jdk8] from Oracle
+    (requires signing in with an Oracle account to download).
+
+    Example setup using jenv:
+
+      1. Download and install Oracle JDK 8 from [oracle.com downloads page][oracle_jdk8].
+      2. Install jenv
+
+          ```sh
+          brew install jenv
+          ```
+
+      3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
+
+          ```sh
+          echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
+          echo 'eval "$(jenv init -)"' >> ~/.zshrc
+          ```
+
+      4. Add JDK 8 to jenv:
+
+          ```sh
+          jenv add $(/usr/libexec/java_home -v 1.8)
+          ```
+
+      5. Verify jenv config:
+
+          ```sh
+          jenv doctor
+          ```
+
+  [oracle_jdk8]: https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html
+
 
 ##### macOS Notes
 
@@ -77,6 +119,11 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
   - Using [pyenv](https://github.com/pyenv/pyenv-installer)
   - Using homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
+
+- For using Java, consider:
+  - Using [jenv](https://github.com/jenv/jenv)
+  - Trying Homebrew's [openjdk@8 formula](https://formulae.brew.sh/formula/openjdk)
+    instead of Oracle's Java via PKG install.
 
 - Additional requirements:
 
@@ -418,8 +465,9 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
+### JavaScript
 
-### Installing Yarn
+#### Installing Yarn
 
 We use Yarn to manage our JavaScript dependencies. It is able to install older
 `bower` dependencies/repositories that we still need and `npm` repositories.
@@ -442,7 +490,7 @@ NOTE: if you are making changes to `package.json`, please run `yarn install`
 without the `--frozen-lockfile` flag so that `yarn.lock` will get updated.
 
 
-#### Troubleshooting Javascript dependency installation
+##### Troubleshooting Javascript dependency installation
 
 Depending on your operating system, and what version of `nodejs` and `npm` you
 have locally, you might run into issues. Here are minimum version requirements
@@ -463,9 +511,9 @@ curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-### Using LESS: 2 Options
+#### Using LESS (2 Options)
 
-#### Option 1: Let Client Side Javascript (less.js) handle it for you
+##### Option 1: Let Client Side Javascript (less.js) handle it for you
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
@@ -475,7 +523,7 @@ just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 The disadvantage is that this is a different setup than production, where LESS
 files are compressed.
 
-#### Option 2: Compress OFFLINE, just like production
+##### Option 2: Compress OFFLINE, just like production
 
 This mirrors production's setup, but it's really only useful if you're trying to
 debug issues that mirror production that's related to staticfiles and
@@ -499,7 +547,7 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
 ```
 
 
-#### Formplayer
+### Formplayer
 
 Formplayer is a Java service that allows us to use applications on the web
 instead of on a mobile device.
@@ -519,25 +567,22 @@ When running HQ, be sure to use `runserver_plus`:
 
 Then you need to have Formplayer running.
 
-##### Prerequisites
 
-- Install Java
+#### Prerequisites
 
-    ```sh
-    sudo apt install default-jre
-    ```
+Before running Formplayer, you need to [initialize the formplayer database](https://github.com/dimagi/formplayer#building-and-running).
+The password for the "commcarehq" user is in the localsettings.py file in the
+`DATABASES` dictionary.
 
-- [Initialize Formplayer database](https://github.com/dimagi/formplayer#building-and-running).
-  The password for the "commcarehq" user is in the localsettings.py file in the
-  `DATABASES` dictionary.
+```sh
+sudo apt install postgresql-client
+createdb formplayer -U commcarehq -h localhost
+```
 
-    ```sh
-    sudo apt install postgresql-client
-    createdb formplayer -U commcarehq -h localhost
-    ```
-
-To get set up, download the settings file and `formplayer.jar`. You may run
-these in the commcare-hq repo root.
+The fastest way to get Formplayer running outside of docker is to download the
+`application.properties` and `formplayer.jar` files and run it directly. You may
+download and run these in the commcare-hq repo root (these files are excluded
+from git in the `.gitignore` file).
 
 ```sh
 curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o application.properties
@@ -548,7 +593,7 @@ Thereafter, to run Formplayer, navigate to the dir where you installed them
 above (probably the repo root), and run:
 
 ```sh
-java -jar formplayer.jar
+java -jar ./formplayer.jar
 ```
 
 This starts a process in the foreground, so you'll need to keep it open as long
@@ -559,7 +604,7 @@ the `curl` commands above to your `hammer` command, or whatever script you use
 for updating your dev environment.
 
 
-#### Browser Settings
+### Browser Settings
 
 We recommend disabling the cache. In Chrome, go to Dev Tools > Settings >
 Preferences > Network and check "Disable cache (while DevTools is open)"
