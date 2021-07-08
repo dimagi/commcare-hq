@@ -29,6 +29,7 @@ from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.custom_data_fields.models import (
@@ -368,6 +369,13 @@ class CallCenterUtilsUsercaseTests(TestCase):
     def test_bulk_upload_usercases(self):
         self.user.username = format_username('bushy_top', TEST_DOMAIN)
         self.user.save()
+
+        upload_record = UserUploadRecord.objects.create(
+            domain=self.domain.name,
+            user_id=self.user.get_id
+        )
+        self.addCleanup(upload_record.delete)
+
         user_upload = [{
             'username': self.user.raw_username,
             'user_id': self.user.user_id,
@@ -391,6 +399,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             TEST_DOMAIN,
             list(user_upload),
             self.user,
+            upload_record_id=upload_record.pk,
         )
         self.assertEqual(results['errors'], [])
 

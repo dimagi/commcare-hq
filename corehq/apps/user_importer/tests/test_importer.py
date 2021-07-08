@@ -994,7 +994,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [{'data': {'key': 'F#'}, 'user_id': user._id}],
             [],
             self.uploading_user,
-            mock.MagicMock(),
+            self.upload_record.pk,
             False
         )
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
