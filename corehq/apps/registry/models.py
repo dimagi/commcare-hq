@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
@@ -60,6 +62,17 @@ class DataRegistry(models.Model):
 
     class Meta:
         unique_together = ('domain', 'slug')
+
+    @classmethod
+    @transaction.atomic
+    def create(cls, user, domain, name):
+        registry = DataRegistry.objects.create(domain=domain, name=name)
+        # creating domain is automatically added to the registry
+        invitation = registry.invitations.create(
+            domain=domain, accepted_on=datetime.utcnow()
+        )
+        registry.logger.invitation_added(user, invitation)
+        return registry
 
     @transaction.atomic
     def activate(self, user):
