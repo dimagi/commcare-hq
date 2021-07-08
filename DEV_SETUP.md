@@ -152,10 +152,10 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     ```
 
 1. Create a virtual environment for CommCare HQ. "commcare-hq" is a good
-   name, but naming it "cchq" might save you some typing in the future:
+   name, but naming it "hq" might save you some typing in the future:
 
     ```sh
-    python3 -m venv $WORKON_HOME/cchq
+    python3 -m venv $WORKON_HOME/hq
     ```
 
 1. Ubuntu no longer ships with Python 2 and its Python binary is named
@@ -186,7 +186,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 1. Activate your virtual environment:
 
     ```sh
-    workon cchq
+    workon hq
     ```
 
 1. Ensure your vitualenv `pip` is up-to-date:
@@ -300,13 +300,13 @@ needs of most developers.
 
     # re-activate your virtualenv (with your venv tool of choice)
     # (virtualenvwrapper)
-    workon cchq
+    workon hq
 
     # or (pyenv)
-    pyenv activate cchq
+    pyenv activate hq
 
     # or (virtualenv)
-    source $WORKON_HOME/cchq/bin/activate
+    source $WORKON_HOME/hq/bin/activate
     ```
 
 1. Install the `docker-compose` python library.
