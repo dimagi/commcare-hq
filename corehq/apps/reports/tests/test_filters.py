@@ -259,7 +259,7 @@ class TestEMWFilterOutput(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
         for user in cls.user_list:
-            user.delete(deleted_by='')
+            user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def _send_users_to_es(self):
