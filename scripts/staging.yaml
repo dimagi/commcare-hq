@@ -60,7 +60,6 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - smh/embedded-tableau # Steph May 7
-    - jls/enterprise-user-overview+bmb/sso-remove-toggle+mk/user-history/base+mk/user-history/bulk-upload-ui-changes
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
@@ -71,7 +70,6 @@ branches:
     - mk/user-history/base # MK June 21 [QA]
     - mk/user-history/bulk-upload-ui-changes # MK July 6
     - jm/repeater-domain-admins  # Joel June 21
-    - jls/enterprise-user-overview  # Jenny June 24
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
     - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
