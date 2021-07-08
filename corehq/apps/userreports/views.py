@@ -1444,16 +1444,6 @@ def choice_list_api(request, domain, report_id, filter_id):
         return json_response([])
 
 
-def _shared_context(domain):
-    static_reports = list(StaticReportConfiguration.by_domain(domain))
-    static_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
-    return {
-        'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain) + static_reports,
-        'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
-    }
-
-
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
     template_name = "userreports/summary_data_source.html"

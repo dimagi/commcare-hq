@@ -17,7 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.util.timer import time_method
 
 
 class SessionEndpointContributor(SuiteContributorByModule):
@@ -28,6 +28,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
     case IDs) must be provided to get there.
     """
 
+    @time_method()
     def get_module_contributions(self, module) -> List[SessionEndpoint]:
         endpoints = []
         if module.session_endpoint_id:
