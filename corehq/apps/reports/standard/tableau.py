@@ -52,7 +52,7 @@ class TableauReport(ProjectReport):
 
     def get_post_username(self):
         if self.visualization.server.allow_domain_username_override:
-            tableau_trusted_auth_username = self.request.user.get('tableau_trusted_auth_username')
+            tableau_trusted_auth_username = self.request.user.metadata['tableau_trusted_auth_username']
             if tableau_trusted_auth_username:
                 return tableau_trusted_auth_username
         return self.visualization.server.domain_username
