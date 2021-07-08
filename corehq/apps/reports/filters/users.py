@@ -14,7 +14,7 @@ from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserHistory
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.apps.reports.extension_points import customize_user_query
 
@@ -451,6 +451,30 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
+
+
+class ChangedByUserFilter(ExpandedMobileWorkerFilter):
+    slug = "changed_by_user"
+    label = ugettext_lazy("By User(s)")
+
+    def get_default_selections(self):
+        return [('t__6', _("[Web Users]"))]
+
+
+class ChangeActionFilter(BaseMultipleOptionFilter):
+    ALL = '0'
+
+    label = ugettext_noop('Action')
+    default_text = ugettext_noop('Select Action')
+    slug = 'action'
+
+    options = [
+        (ALL, ugettext_noop('All')),
+        (str(UserHistory.CREATE), ugettext_noop('Create')),
+        (str(UserHistory.UPDATE), ugettext_noop('Update')),
+        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+    ]
+    default_options = ['0']
 
 
 def get_user_toggle(request):

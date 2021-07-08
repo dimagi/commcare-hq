@@ -56,6 +56,8 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
@@ -264,6 +266,12 @@ class MyProjectsList(BaseMyAccountView):
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
                 self.request.couch_user.save()
+                log_user_change(None, couch_user=request.couch_user,
+                                changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                                message=_("Removed from domain '{domain_name}'").format(
+                                    domain_name=self.domain_to_remove),
+                                domain_required_for_log=False,
+                                )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
             except Exception:
                 messages.error(request, _("There was an error removing you from this project."))
