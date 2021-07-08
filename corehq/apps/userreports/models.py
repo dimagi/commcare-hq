@@ -626,11 +626,21 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     multiple domains. These data sources are built from
     data accessible to the domain via a Data Registry."""
 
+    # this field indicates whether the data source is available
+    # to all domains participating in the registry
+    globally_accessible = BooleanProperty(default=False)
     registry_slug = StringProperty(required=True)
 
     @cached_property
     def registry_helper(self):
         return DataRegistryHelper(self.domain, self.registry_slug)
+
+    @property
+    def data_domains(self):
+        if self.globally_accessible:
+            return self.registry_helper.participating_domains
+        else:
+            return self.registry_helper.visible_domains
 
     def validate(self, required=True):
         super().validate(required)
@@ -646,7 +656,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
                 "property_name": "domain",
             },
             "operator": "in",
-            "property_value": self.registry_helper.visible_domains,
+            "property_value": self.data_domains,
         }
 
     @property

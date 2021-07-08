@@ -82,6 +82,12 @@ class DataRegistry(models.Model):
             .values_list('from_domain', flat=True)
         )
 
+    def get_participating_domains(self, requesting_domain):
+        return set(self.invitations.filter(
+            accepted_on__isnull=False,
+            rejected_on__isnull=True
+        ).values_list('domain', flat=True))
+
     def check_access(self, domain):
         if not self.is_active:
             raise RegistryAccessDenied()
@@ -92,6 +98,10 @@ class DataRegistry(models.Model):
         if invite.status != RegistryInvitation.STATUS_ACCEPTED:
             raise RegistryAccessDenied()
         return True
+
+    def check_ownership(self,domain):
+        if self.domain != domain:
+            raise RegistryAccessDenied()
 
     @cached_property
     def logger(self):

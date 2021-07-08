@@ -21,3 +21,8 @@ class DataRegistryHelper:
     @property
     def visible_domains(self):
         return {self.current_domain} | self.registry.get_granted_domains(self.current_domain)
+
+    @property
+    def participating_domains(self):
+        self.registry.check_ownership(self.current_domain)
+        return self.registry.get_participating_domains()

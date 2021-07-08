@@ -5,8 +5,9 @@ from unittest.mock import create_autospec, Mock, patch
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration, RegistryDataSourceConfiguration
+from corehq.apps.userreports.models import RegistryDataSourceConfiguration, RegistryDataSourceConfiguration
 from corehq.apps.userreports.tests.utils import (
     get_sample_doc_and_indicators, get_sample_registry_data_source,
 )
@@ -17,7 +18,11 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
         self.config = get_sample_registry_data_source()
-        mock_helper = Mock(visible_domains={"user-reports", "granted-domain"})
+        mock_helper = create_autospec(
+            DataRegistryHelper, spec_set=True, instance=True,
+            visible_domains={"user-reports", "granted-domain"},
+            participating_domains={"user-reports", "granted-domain", "other-domain"}
+        )
         self.patcher = patch("corehq.apps.userreports.models.DataRegistryHelper", return_value=mock_helper)
         self.patcher.start()
 
@@ -32,22 +37,34 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         self.assertEqual('sample', self.config.table_id)
         self.assertEqual(UCR_ENGINE_ID, self.config.engine_id)
 
-    def test_filters(self):
-        not_matching = [
-            {"doc_type": "NotCommCareCase", "domain": 'user-reports', "type": 'ticket'},
-            {"doc_type": "CommCareCase", "domain": 'not-user-reports', "type": 'ticket'},
-            {"doc_type": "CommCareCase", "domain": 'user-reports', "type": 'not-ticket'},
-        ]
-        for document in not_matching:
-            self.assertFalse(self.config.filter(document))
-            self.assertEqual([], self.config.get_all_values(document))
+    def test_filters_doc_type(self):
+        self._test_filters('doc_type', ["CommCareCase"], ["NotCommCareCase"])
 
-        matching = [
-            {"doc_type": "CommCareCase", "domain": 'user-reports', "type": 'ticket'},
-            {"doc_type": "CommCareCase", "domain": 'granted-domain', "type": 'ticket'},
-        ]
-        for document in matching:
-            self.assertTrue(self.config.filter(document))
+    def test_filters_case_type(self):
+        self._test_filters('type', ["ticket"], ["not-ticket"])
+
+    def test_filters_domain(self):
+        print(self.config.data_domains)
+        self._test_filters('domain', ["user-reports", "granted-domain"], ["other-domain"])
+
+    def test_filters_domain_global(self):
+        self.config.globally_accessible = True
+        self._test_filters('domain', ["user-reports", "granted-domain", "other-domain"], ["not-participating"])
+
+    def _test_filters(self, test_field, matching_values, not_matching_values):
+        """Test helper to test filtering on a specific field"""
+
+        base_doc = {"doc_type": "CommCareCase", "domain": 'user-reports', "type": 'ticket'}
+        self.assertTrue(self.config.filter(base_doc), "Test setup error. Base doc does not match the filters")
+
+        for matching_value in matching_values:
+            matching = {**base_doc, **{test_field: matching_value}}
+            self.assertTrue(self.config.filter(matching), matching_value)
+
+        for not_matching_value in not_matching_values:
+            not_matching = {**base_doc, **{test_field: not_matching_value}}
+            self.assertFalse(self.config.filter(not_matching), not_matching_value)
+            self.assertEqual([], self.config.get_all_values(not_matching), not_matching_value)
 
     def test_columns(self):
         expected_columns = [
