@@ -601,7 +601,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
     valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
     if endpoint_id not in valid_endpoint_ids:
-        _fail(_("Could not find endpoint."))
+        _fail(_("This link does not exist. Your app may have changed so that the given link is no longer valid."))
 
     cloudcare_state = json.dumps({
         "appId": build._id,
