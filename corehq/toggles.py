@@ -2061,6 +2061,14 @@ DETAILED_TAGGING = StaticToggle(
 )
 
 
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
     'Integrate with COWIN APIs',
