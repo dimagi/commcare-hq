@@ -612,7 +612,20 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if ((IS_CONTRACTOR.enabled(user.username) or user.is_superuser)
+                and not is_request_using_sso(request)):
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
+
+def require_superuser(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if user.is_superuser and not is_request_using_sso(request):
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -625,10 +638,7 @@ domain_admin_required = domain_admin_required_ex()
 cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 ########################################################################################################
-# couldn't figure how to call reverse, so login_url is the actual url
-require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
-
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
