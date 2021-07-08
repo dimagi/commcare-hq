@@ -181,7 +181,9 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                log_user_role_update(self.domain, self.existing_user, self.request.user, USER_CHANGE_VIA_WEB)
+                user_role = self.existing_user.get_role(self.domain)
+                log_user_role_update(self.domain, user_role, user=self.existing_user,
+                                     by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
         elif is_update_successful:
@@ -248,10 +250,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        self.is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
-            and is_request_using_sso(kwargs['request'])
-        )
+        self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
