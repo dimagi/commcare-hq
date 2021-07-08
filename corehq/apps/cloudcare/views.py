@@ -26,7 +26,6 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 from text_unidecode import unidecode
 
-from casexml.apps.case.cleanup import claim_case, get_first_claim
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
 from corehq.util.view_utils import get_case_or_404
