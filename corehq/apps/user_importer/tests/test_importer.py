@@ -986,6 +986,28 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(last_entry.user_id, self.user.user_id)
         self.assertEqual(last_entry.action, UserModelAction.UPDATE.value)
 
+    def test_ensure_user_history_on_only_userdata_update(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        import_users_and_groups(
+            self.domain.name,
+            [{'data': {'key': 'F#'}, 'user_id': user._id}],
+            [],
+            self.uploading_user,
+            mock.MagicMock(),
+            False
+        )
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               changed_by=self.uploading_user.get_id)
+        self.assertDictEqual(
+            user_history.details['changes'],
+            {
+                'user_data': {'commcare_project': 'mydomain', 'key': 'F#'}
+            }
+        )
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.message, '')
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     @classmethod

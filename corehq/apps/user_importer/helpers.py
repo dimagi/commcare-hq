@@ -120,8 +120,7 @@ class BaseUserImporter(object):
     def _include_user_data_changes(self):
         # ToDo: consider putting just the diff
         if self.logger.original_user_doc and self.logger.original_user_doc['user_data'] != self.user.user_data:
-            self.logger.fields_changed['user_data'] = self.user.user_data
-            self._save = True
+            self.logger.add_changes({'user_data': self.user.user_data})
 
 
 class CommCareUserImporter(BaseUserImporter):
