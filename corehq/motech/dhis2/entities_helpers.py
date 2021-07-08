@@ -9,8 +9,8 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.const import XMLNS_DHIS2, DEFAULT_DHIS2_FEATURE_TYPE
+from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -133,7 +133,11 @@ def update_tracked_entity_instance(
         )
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(case_trigger_info, case_config)
+    enrollments_with_new_events = get_enrollments(
+        case_trigger_info,
+        case_config,
+        tracked_entity.get('featureType')
+    )
     if enrollments_with_new_events:
         tracked_entity["enrollments"] = update_enrollments(
             tracked_entity, enrollments_with_new_events
@@ -190,13 +194,15 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
         "attributes": [],
     }
+    entity_type = get_tracked_entity_type(requests, case_config.te_type_id)
+
     for attr_id, value_source_config in case_config.attributes.items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
         )
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
-    enrollments = get_enrollments(case_trigger_info, case_config)
+    enrollments = get_enrollments(case_trigger_info, case_config, entity_type.get('featureType'))
     if enrollments:
         tracked_entity["enrollments"] = enrollments
     validate_tracked_entity(tracked_entity)
@@ -270,7 +276,7 @@ def generate_value(requests, attr_id, generator_params, case_trigger_info):
     return response.json()["value"]
 
 
-def get_enrollments(case_trigger_info, case_config):
+def get_enrollments(case_trigger_info, case_config, entity_feature_type=None):
     """
     DHIS2 allows tracked entity instances to be enrolled in programs
     without any events, but CommCare does not currently have a mechanism
@@ -278,7 +284,7 @@ def get_enrollments(case_trigger_info, case_config):
     in that program occurs.
     """
     case_org_unit = get_value(case_config.org_unit_id, case_trigger_info)
-    programs_by_id = get_programs_by_id(case_trigger_info, case_config)
+    programs_by_id = get_programs_by_id(case_trigger_info, case_config, entity_feature_type)
     enrollments = []
     for program_id, program in programs_by_id.items():
         enrollment = {
@@ -287,6 +293,8 @@ def get_enrollments(case_trigger_info, case_config):
             "status": program["status"],
             "events": program["events"],
         }
+        if program.get("geometry"):
+            enrollment["geometry"] = program["geometry"]
         if program.get("enrollmentDate"):
             enrollment["enrollmentDate"] = program["enrollmentDate"]
         if program.get("incidentDate"):
@@ -295,7 +303,7 @@ def get_enrollments(case_trigger_info, case_config):
     return enrollments
 
 
-def get_programs_by_id(case_trigger_info, case_config):
+def get_programs_by_id(case_trigger_info, case_config, entity_feature_type=None):
     programs_by_id = defaultdict(lambda: {"events": []})
     for form_config in case_config.form_configs:
         if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config.xmlns:
@@ -306,6 +314,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["geometry"] = get_geo_json(form_config, case_trigger_info, entity_feature_type)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
@@ -374,3 +383,27 @@ def validate_tracked_entity(tracked_entity):
         Schema(get_tracked_entity_schema()).validate(tracked_entity)
     except SchemaError as err:
         raise ConfigurationError from err
+
+
+def get_tracked_entity_type(requests, entity_type_id):
+    endpoint = f"/api/trackedEntityTypes/{entity_type_id}"
+    response = requests.get(endpoint, raise_for_status=True)
+    return response.json()
+
+
+def get_geo_json(form_config, case_trigger_info, entity_feature_type=None):
+    feature_type = DEFAULT_DHIS2_FEATURE_TYPE
+    if entity_feature_type:
+        feature_type = entity_feature_type
+
+    coordinate_dict = _get_coordinate(form_config, case_trigger_info)
+    if coordinate_dict['coordinate']:
+        point = coordinate_dict['coordinate']
+        return {
+            'type': feature_type,
+            'coordinates': [
+                float(point['latitude']),
+                float(point['longitude'])
+            ]
+        }
+    return {}

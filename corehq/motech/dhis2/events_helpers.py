@@ -6,6 +6,7 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
     get_value,
+    get_case_location,
 )
 
 
@@ -32,6 +33,7 @@ def get_event(domain, config, form_json=None, info=None):
         _get_event_status,
         _get_completed_date,
         _get_datavalues,
+        _get_coordinate,
     ]
     for func in event_property_functions:
         event.update(func(config, info))
@@ -97,6 +99,20 @@ def _get_datavalues(config, case_trigger_info):
                 'value': value
             })
     return {'dataValues': values}
+
+
+def _get_coordinate(config, case_trigger_info):
+    location = get_case_location(case_trigger_info)
+
+    if location and location.latitude and location.longitude:
+        return {
+            'coordinate': {
+                'latitude': str(round(location.latitude, 4)),
+                'longitude': str(round(location.longitude, 4))
+            }
+        }
+    else:
+        return {}
 
 
 def validate_event_schema(event):
