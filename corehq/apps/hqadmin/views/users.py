@@ -104,7 +104,7 @@ class SuperuserManagement(UserAdministration):
                 if fields_changed:
                     user.save()
                     couch_user = CouchUser.from_django_user(user)
-                    log_user_change(None, couch_user, self.request.couch_user,
+                    log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
                                     domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
@@ -398,7 +398,7 @@ class DisableUserView(FormView):
         reason = form.cleaned_data['reason']
         log_messages.append(f'User {verb}. Reason: "{reason}"')
         couch_user = CouchUser.from_django_user(self.user)
-        log_user_change(None, couch_user, self.request.couch_user,
+        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
                         fields_changed={'is_active': self.user.is_active},
                         domain_required_for_log=False)
@@ -498,7 +498,7 @@ class DisableTwoFactorView(FormView):
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         log_messages.append(
             f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"')
-        log_user_change(None, couch_user, self.request.couch_user,
+        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
                         domain_required_for_log=False)
         mail_admins(
