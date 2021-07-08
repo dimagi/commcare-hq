@@ -1579,22 +1579,21 @@ class EnterpriseSettingsTab(UITab):
             'url': reverse('enterprise_billing_statements',
                            args=[self.domain])
         })
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
-            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
-                from corehq.apps.sso.views.enterprise_admin import (
-                    ManageSSOEnterpriseView,
-                    EditIdentityProviderEnterpriseView,
-                )
-                enterprise_views.append({
-                    'title': _(ManageSSOEnterpriseView.page_title),
-                    'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
-                    'subpages': [
-                        {
-                            'title': _(EditIdentityProviderEnterpriseView.page_title),
-                            'urlname': EditIdentityProviderEnterpriseView.urlname,
-                        },
-                    ],
-                })
+        if IdentityProvider.domain_has_editable_identity_provider(self.domain):
+            from corehq.apps.sso.views.enterprise_admin import (
+                ManageSSOEnterpriseView,
+                EditIdentityProviderEnterpriseView,
+            )
+            enterprise_views.append({
+                'title': _(ManageSSOEnterpriseView.page_title),
+                'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': _(EditIdentityProviderEnterpriseView.page_title),
+                        'urlname': EditIdentityProviderEnterpriseView.urlname,
+                    },
+                ],
+            })
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
