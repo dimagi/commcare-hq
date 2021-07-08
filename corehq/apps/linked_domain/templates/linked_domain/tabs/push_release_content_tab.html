@@ -1,0 +1,72 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-tabs-push-content" class="ko-template">
+  <div data-bind="if: canPush()">
+    <h3>{% trans "Push Content" %}</h3>
+    <p>
+      {% blocktrans %}
+        Select which data models you would like to push to the specified downstream project spaces.<br/>
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with linked projects.
+      {% endblocktrans %}
+    </p>
+    <div class="spacer"></div>
+    <form class="form-horizontal">
+      <div class="form-group">
+        <label class="col-sm-3 col-md-2 control-label">
+          {% trans "Models" %}
+        </label>
+        <div class="col-sm-9 col-md-10 controls">
+          <select multiple class="form-control"
+                  data-bind="selectedOptions: modelsToPush,
+                             multiselect: {
+                                 selectableHeaderTitle: '{% trans_html_attr "All content" %}',
+                                 selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
+                                 searchItemTitle: '{% trans_html_attr "Search content" %}',
+                            }">
+            {% for model in view_data.master_model_status %}
+              <option value="{% html_attr model %}">{{ model.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 col-md-2 control-label">
+          {% trans "Projects" %}
+        </label>
+        <div class="col-sm-9 col-md-10 controls">
+          <select multiple class="form-control"
+                  data-bind="selectedOptions: domainsToPush,
+                             options: localDomainLinks,
+                             optionsText: 'linked_domain',
+                             optionsValue: 'linked_domain',
+                             multiselect: {
+                                 selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
+                                 selectedHeaderTitle: '{% trans_html_attr "Projects to push to" %}',
+                                 searchItemTitle: '{% trans_html_attr "Search projects" %}',
+                            }">
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 col-md-2 control-label" for="build-apps">
+          {% trans "Rebuild Applications" %}
+        </label>
+        <div class="col-sm-9 col-md-10 controls">
+          <label class="checkbox">
+            <input type="checkbox" data-bind="checked: buildAppsOnPush" />
+            {% trans "Create and release new build for apps" %}
+          </label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+          <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
+            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushInProgress"></i>
+            {% trans "Push Content" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
