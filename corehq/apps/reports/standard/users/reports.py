@@ -34,6 +34,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         'corehq.apps.reports.filters.users.ChangedByUserFilter',
         'corehq.apps.reports.filters.users.ChangeActionFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.users.UserUploadRecordFilter',
     ]
 
     description = ugettext_lazy("History of user updates")
@@ -74,7 +75,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             return UserHistory.objects.none()
 
         actions = self.request.GET.getlist('action')
-        query = self._build_query(user_ids, changed_by_user_ids, actions)
+        user_upload_record_id = self.request.GET.get('user_upload_record')
+        query = self._build_query(user_ids, changed_by_user_ids, actions, user_upload_record_id)
         return query
 
     def _get_user_ids(self, slugs):
@@ -88,7 +90,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.request.couch_user,
         )
 
-    def _build_query(self, user_ids, changed_by_user_ids, actions):
+    def _build_query(self, user_ids, changed_by_user_ids, actions, user_upload_record_id):
         filters = Q(domain=self.domain)
 
         if user_ids:
@@ -99,6 +101,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
+
+        if user_upload_record_id:
+            filters = filters & Q(user_upload_record_id=user_upload_record_id)
 
         if self.datespan:
             filters = filters & Q(changed_at__lt=self.datespan.enddate_adjusted,
