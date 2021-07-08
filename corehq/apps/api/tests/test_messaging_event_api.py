@@ -174,7 +174,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
                 self.domain.name, f"user {i}", "123", None, None, email=f"user{i}@email.com"
             )
             user_ids.append(user.get_id)
-            self.addCleanup(user.delete, deleted_by=None)
+            self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
         make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
         _create_sms_messages(self.domain, 1, False)
@@ -307,7 +307,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_email(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
         event = events[user.get_id]
         email = Email.objects.get(messaging_subevent=event)
@@ -355,7 +355,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_email_null_date_modified(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
         event = events[user.get_id]
         email = Email.objects.get(messaging_subevent=event)
@@ -528,7 +528,7 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
         user_ids = []
         for i in range(5):
             user = CommCareUser.create(self.domain.name, f"bob{i}", "123", None, None, email=f"bob{i}@email.com")
-            self.addCleanup(user.delete, deleted_by=None)
+            self.addCleanup(user.delete, self.domain.name, deleted_by=None)
             user_ids.append(user.get_id)
         events = make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
 
