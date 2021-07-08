@@ -2005,6 +2005,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ENTERPRISE_USER_MANAGEMENT = StaticToggle(
+    'enterprise_user_management',
+    'USH: UI for managing all web users in an enterprise',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+)
+
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     'clean_old_formplayer_syncs',
     'Delete old formplayer syncs during submission processing',

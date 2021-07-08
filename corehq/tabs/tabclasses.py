@@ -1388,11 +1388,20 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,
                 EditWebUserView,
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-            menu.append({
+
+            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+                menu.append({
+                    'title': _(EnterpriseUsersView.page_title),
+                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+
+            menu = menu + [{
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1417,7 +1426,7 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):

@@ -1686,7 +1686,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
         data = self.to_json().get('user_data', {})
         profile_id = data.get(PROFILE_SLUG)
-        profile = self._get_user_data_profile(profile_id)
+        profile = self.get_user_data_profile(profile_id)
         if profile:
             data.update(profile.fields)
         return data
@@ -1696,7 +1696,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         new_data = {**self.user_data, **data}
 
-        profile = self._get_user_data_profile(new_data.get(PROFILE_SLUG))
+        profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
             overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
             if overlap:
@@ -1709,7 +1709,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
 
-    def _get_user_data_profile(self, profile_id):
+    def get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
         if not profile_id:
