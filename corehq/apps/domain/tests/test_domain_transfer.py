@@ -39,9 +39,9 @@ class BaseDomainTest(TestCase):
         self.muggle.save()
 
     def tearDown(self):
-        self.user.delete(self.domain, deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
-        self.muggle.delete(self.domain, deleted_by=None)
+        self.muggle.delete(self.another_domain.name, deleted_by=None)
         self.another_domain.delete()
 
 
@@ -156,7 +156,7 @@ class TestTransferDomainViews(BaseDomainTest):
 
     def tearDown(self):
         self.transfer.delete()
-        self.rando.delete(self.domain, deleted_by=None)
+        self.rando.delete(self.domain.name, deleted_by=None)
         super(TestTransferDomainViews, self).tearDown()
 
     def test_permissions_for_activation(self):

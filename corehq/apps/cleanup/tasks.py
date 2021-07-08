@@ -23,12 +23,6 @@ from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns imp
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.apps.users.models import WebUser
-from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseReindexAccessor,
-    FormReindexAccessor,
-)
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -243,18 +237,6 @@ def check_for_ucr_tables_without_existing_domain():
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
-
-
-@periodic_task(run_every=crontab(minute=0, hour=16), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def delete_web_user():
-    if settings.SERVER_ENVIRONMENT == 'production':
-        for username in [
-            'create_growth' + '@' + 'outlook.com',
-            'growth_analytics' + '@' + 'outlook.com',
-        ]:
-            web_user = WebUser.get_by_username(username)
-            if web_user:
-                web_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__ + '.delete_web_user')
 
 
 def _get_missing_domains():
