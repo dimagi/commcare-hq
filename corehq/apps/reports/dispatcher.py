@@ -9,6 +9,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
 from corehq.apps.domain.utils import get_custom_domain_module
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -311,7 +312,11 @@ class AdminReportDispatcher(ReportDispatcher):
     map_name = 'ADMIN_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
+        return (
+            hasattr(request, 'couch_user')
+            and request.user.has_perm("is_superuser")
+            and not is_request_using_sso(request)
+        )
 
 
 class QuestionTemplateDispatcher(ProjectReportDispatcher):
