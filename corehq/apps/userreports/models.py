@@ -60,6 +60,8 @@ from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
+    get_all_registry_data_source_ids,
+    get_registry_data_sources_by_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -685,11 +687,11 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
 
     @classmethod
     def by_domain(cls, domain):
-        raise NotImplementedError("TODO")
+        return get_registry_data_sources_by_domain(domain)
 
     @classmethod
     def all_ids(cls):
-        raise NotImplementedError("TODO")
+        return get_all_registry_data_source_ids()
 
 
 class ReportMeta(DocumentSchema):

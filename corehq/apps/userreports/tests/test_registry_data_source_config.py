@@ -6,6 +6,8 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import RegistryDataSourceConfiguration, RegistryDataSourceConfiguration
 from corehq.apps.userreports.tests.utils import (
@@ -101,3 +103,44 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         source = self.config.to_json()
         config = RegistryDataSourceConfiguration.wrap(source)
         config.validate()
+
+
+class RegistryDataSourceConfigurationDbTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(RegistryDataSourceConfigurationDbTest, cls).setUpClass()
+
+        registry = create_registry_for_test('foo_bar', invitations=[
+            Invitation('foo'), Invitation('bar'),
+        ], name='foo_bar')
+
+        for domain, table in [('foo', 'foo1'), ('foo', 'foo2'), ('bar', 'bar1')]:
+            RegistryDataSourceConfiguration(
+                domain=domain, table_id=table,
+                referenced_doc_type='CommCareCase', registry_slug=registry.slug
+            ).save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for config in RegistryDataSourceConfiguration.all():
+            config.delete()
+        super(RegistryDataSourceConfigurationDbTest, cls).tearDownClass()
+
+    def test_get_by_domain(self):
+        results = RegistryDataSourceConfiguration.by_domain('foo')
+        self.assertEqual(2, len(results))
+        for item in results:
+            self.assertTrue(item.table_id in ('foo1', 'foo2'))
+
+        results = RegistryDataSourceConfiguration.by_domain('not-foo')
+        self.assertEqual(0, len(results))
+
+    def test_get_all(self):
+        self.assertEqual(3, len(list(RegistryDataSourceConfiguration.all())))
+
+    def test_registry_slug_is_required(self):
+        with self.assertRaises(BadValueError):
+            RegistryDataSourceConfiguration(
+                domain='domain', table_id='table', referenced_doc_type='CommCareCase'
+            ).save()

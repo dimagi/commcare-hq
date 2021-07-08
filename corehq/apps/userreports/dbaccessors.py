@@ -52,6 +52,42 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
     return datasources
 
 
+def get_registry_data_sources_by_domain(domain):
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    return sorted(
+        RegistryDataSourceConfiguration.view(
+            'registry_userreports/data_sources',
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=False,
+            include_docs=True,
+        ),
+        key=lambda config: config.display_name or ''
+    )
+
+
+def get_all_registry_data_source_ids():
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    return [
+        row["id"] for row in RegistryDataSourceConfiguration.view(
+            'registry_userreports/data_sources',
+            reduce=False,
+            include_docs=False,
+        )
+    ]
+
+
+def get_data_sources_modified_since(timestamp):
+    from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    return RegistryDataSourceConfiguration.view(
+        'registry_userreports/data_sources_by_last_modified',
+        startkey=[timestamp.isoformat()],
+        endkey=[{}],
+        reduce=False,
+        include_docs=True
+    ).all()
+
+
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()
