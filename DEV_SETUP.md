@@ -655,20 +655,31 @@ Create a superuser for your local environment
 ./manage.py make_superuser <email>
 ```
 
-## Running Formdesigner in Development mode
+## Running Formdesigner (Vellum) in Development mode
 
-By default, HQ uses vellum minified build files to render form-designer. To use
-files from Vellum directly, do following
+By default, HQ uses Vellum minified build files to render form-designer. To use
+files from Vellum directly, do the following.
 
-```python
-# localsettings.py:
-VELLUM_DEBUG = "dev"
-```
+- Make Django expect the Vellum source code in the `submodules/formdesigner`
+  directory instead of using a minified build by enabling Vellum "dev mode" in
+  `localsettings.py`:
 
-```sh
-# symlink your Vellum code to submodules/formdesigner
-ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
-```
+    ```python
+    VELLUM_DEBUG = "dev"
+    ```
+
+- Clone (or symlink to repo elsewhere on disk) the Vellum repostory into/at the
+   `submodules/formdesigner` directory under the commcare-hq repo root:
+
+    ```sh
+    # clone directly:
+    git clone git@github.com:dimagi/Vellum.git ./submodules/formdesigner
+
+    # -- OR --
+
+    # symlink existing Vellum code at submodules/formdesigner
+    ln -s absolute/path/to/Vellum ./submodules/formdesigner
+    ```
 
 
 ## Airflow
