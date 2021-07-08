@@ -69,6 +69,7 @@ from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -2268,9 +2269,10 @@ class AdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+        return (self.couch_user
+                and (self.couch_user.is_superuser
+                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
+                and not is_request_using_sso(self._request))
 
 
 def _get_repeat_record_report(domain):
