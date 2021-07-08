@@ -6,6 +6,7 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
     get_value,
+    get_case_location,
 )
 
 
@@ -32,7 +33,7 @@ def get_event(domain, config, form_json=None, info=None):
         _get_event_status,
         _get_completed_date,
         _get_datavalues,
-        _get_coordinates
+        _get_coordinate,
     ]
     for func in event_property_functions:
         event.update(func(config, info))
@@ -100,34 +101,18 @@ def _get_datavalues(config, case_trigger_info):
     return {'dataValues': values}
 
 
-def _get_coordinates(config, case_trigger_info):
-    if config.coordinate:
-        coordinate = get_value(config.coordinate, case_trigger_info)
+def _get_coordinate(config, case_trigger_info):
+    location = get_case_location(case_trigger_info)
 
-        if coordinate:
-            return {'coordinate': _to_dhis2_coordinate(coordinate)}
-
-    return {}
-
-
-def _to_dhis2_coordinate(coordinate_string: str):
-    """
-    Example
-    coordinate: "-35.8655497 14.6941185 138.66 5.4"
-    Returns: {"latitude": "-35.8655", "longitude": "14.6941"} conforming to EPSG:4326
-
-    Notes
-    According to the documentation no more than a maximum of 4
-    significant decimal places should ever be necessary:
-    https://docs.dhis2.org/en/use/user-guides/dhis-core-version-234/configuring-the-system/maps.html#gis_creating_setup
-    """
-    coordinate = coordinate_string.split(' ')[:2]
-    (lat, lon) = [round(float(item), 4) for item in coordinate]
-
-    return {
-        'latitude': str(lat),
-        'longitude': str(lon)
-    }
+    if location and location.latitude and location.longitude:
+        return {
+            'coordinate': {
+                'latitude': str(round(location.latitude, 4)),
+                'longitude': str(round(location.longitude, 4))
+            }
+        }
+    else:
+        return {}
 
 
 def validate_event_schema(event):

@@ -9,8 +9,8 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event, _get_coordinates
+from corehq.motech.dhis2.const import XMLNS_DHIS2, DEFAULT_DHIS2_FEATURE_TYPE
+from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -392,11 +392,11 @@ def get_tracked_entity_type(requests, entity_type_id):
 
 
 def get_geo_json(form_config, case_trigger_info, entity_feature_type=None):
-    feature_type = 'NONE'
+    feature_type = DEFAULT_DHIS2_FEATURE_TYPE
     if entity_feature_type:
         feature_type = entity_feature_type
 
-    coordinate_dict = _get_coordinates(form_config, case_trigger_info)
+    coordinate_dict = _get_coordinate(form_config, case_trigger_info)
     if coordinate_dict['coordinate']:
         point = coordinate_dict['coordinate']
         return {

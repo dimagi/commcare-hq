@@ -19,7 +19,6 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.entities_helpers import get_programs_by_id
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 
-
 DOMAIN = "dhis2-test"
 
 
@@ -75,6 +74,8 @@ class TestDhis2EntitiesHelpers(TestCase):
             name='test location',
             location_id='test_location',
             location_type=location_type,
+            latitude='-33.6543',
+            longitude='19.1234',
             metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
         cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest', None, None)
@@ -106,10 +107,7 @@ class TestDhis2EntitiesHelpers(TestCase):
                 "completed_date": "2017-05-25T21:06:27.012000",
                 "name": "test event",
                 "meta": {
-                    "location": {
-                        '#text': '-32.1455497 10.6140145 138.66 5.4',
-                        '@xmlns': 'http://commcarehq.org/xforms'
-                    },
+                    "location": 'test location',
                     "timeEnd": "2017-05-25T21:06:27.012000",
                     "timeStart": "2017-05-25T21:06:17.739000",
                     "userID": self.user.user_id,
@@ -140,10 +138,7 @@ class TestDhis2EntitiesHelpers(TestCase):
                             'form_question': '/data/name'
                         }
                     }
-                ],
-                'coordinate': {
-                    "form_question": "/metadata/location/#text"
-                }
+                ]
             }])
         }
         config_form = Dhis2ConfigForm(data=config)
@@ -156,6 +151,7 @@ class TestDhis2EntitiesHelpers(TestCase):
         info = CaseTriggerInfo(
             domain=DOMAIN,
             case_id=None,
+            owner_id='test_location',
             form_question_values=get_form_question_values(form),
         )
 
@@ -163,7 +159,7 @@ class TestDhis2EntitiesHelpers(TestCase):
 
         self.assertDictEqual(
             programs[program_id]['geometry'],
-            {'type': 'NONE', 'coordinates': [-32.1455, 10.6140]}
+            {'type': 'NONE', 'coordinates': [-33.6543, 19.1234]}
         )
 
 
