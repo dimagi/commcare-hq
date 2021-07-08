@@ -616,7 +616,8 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if ((IS_CONTRACTOR.enabled(user.username) or user.is_superuser)
+                and not is_request_using_sso(request)):
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
