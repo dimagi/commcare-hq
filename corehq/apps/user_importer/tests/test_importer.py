@@ -684,7 +684,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.user_id, created_user.get_id)
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(user_history.details['changes']['username'], created_user.username)
-        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_qualified_id()}]")
 
     def test_tracking_update_to_existing_commcare_user(self):
         CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
@@ -722,7 +722,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(
             user_history.message,
-            f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_id}]"
+            f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_qualified_id()}]"
         )
 
     def test_blank_is_active(self):
@@ -865,7 +865,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.message,
                          f"Added as web user to domain '{self.domain.name}'. "
                          f"Primary location: {self.loc1.name}[{self.loc1.get_id}]. "
-                         f"Role: {self.role.name}[{self.role.get_id}]")
+                         f"Role: {self.role.name}[{self.role.get_qualified_id()}]")
         self.assertEqual(user_history.details['changes'], {})
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
@@ -886,7 +886,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=web_user.get_id,
                                                changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_qualified_id()}]")
         self.assertEqual(user_history.details['changes'], {})
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
 
@@ -1296,7 +1296,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(
             changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         )
-        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_id}]")
+        self.assertEqual(user_history.message, f"Role: {self.role.name}[{self.role.get_qualified_id()}]")
         self.assertDictEqual(
             user_history.details,
             {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
@@ -1456,7 +1456,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             user_history.message,
             f"Assigned locations: loc1[{self.loc1.location_id}], loc2[{self.loc2.location_id}]. "
             f"Primary location: loc1[{self.loc1.location_id}]. "
-            f"Role: {self.role.name}[{self.role.get_id}]"
+            f"Role: {self.role.name}[{self.role.get_qualified_id()}]"
         )
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -1477,7 +1477,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             user_history.message,
             f"Assigned locations: loc1[{self.loc1.location_id}], loc2[{self.loc2.location_id}]. "
             f"Primary location: loc1[{self.loc1.location_id}]. "
-            f"Role: {self.role.name}[{self.role.get_id}]"
+            f"Role: {self.role.name}[{self.role.get_qualified_id()}]"
         )
 
         import_users_and_groups(
