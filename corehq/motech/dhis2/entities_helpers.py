@@ -391,7 +391,7 @@ def get_tracked_entity_type(requests, entity_type_id):
 
 def get_geo_json(form_config, case_trigger_info):
     coordinate_dict = _get_coordinate(form_config, case_trigger_info)
-    if coordinate_dict['coordinate']:
+    if coordinate_dict.get('coordinate'):
         point = coordinate_dict['coordinate']
         return {
             'type': 'Point',
