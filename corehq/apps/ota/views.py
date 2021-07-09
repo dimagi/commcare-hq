@@ -185,6 +185,9 @@ def claim_all(request, domain):
     username = format_username(raw_username(username), domain)
     user_id = username_to_user_id(username)
 
+    if not user_id:
+        return HttpResponse(_('Could not find user "{}"').format(user_id), status=500)
+
     for case_id in request.POST.getlist("case_ids[]"):
         try:
             case = get_case_or_404(domain, case_id)
