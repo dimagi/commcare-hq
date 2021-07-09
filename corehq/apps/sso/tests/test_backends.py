@@ -48,7 +48,7 @@ class TestSsoBackend(TestCase):
     def tearDownClass(cls):
         AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
-        cls.user.delete(None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
 
         # cleanup "new" users
         for username in [
@@ -60,7 +60,7 @@ class TestSsoBackend(TestCase):
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
-                web_user.delete(None)
+                web_user.delete(cls.domain.name, deleted_by=None)
 
         cls.domain.delete()
         cls.account.delete()
