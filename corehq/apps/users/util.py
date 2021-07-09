@@ -321,12 +321,10 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
     :param by_user: couch user that made the update
     :param updated_via: web/bulk_importer
     """
-    changes = {'role': None}
-    message = ''
+    message = 'Role: None'
     if user_role:
-        changes['role'] = user_role.get_qualified_id()
-        message = f"role: {user_role.name}"
-    log_user_change(domain, user, by_user, changed_via=updated_via, message=message, fields_changed=changes)
+        message = f"Role: {user_role.name}[{user_role.get_qualified_id()}]"
+    log_user_change(domain, user, by_user, changed_via=updated_via, message=message)
 
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
