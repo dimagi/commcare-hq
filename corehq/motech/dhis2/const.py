@@ -66,4 +66,3 @@ DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
 DHIS2_MAX_VERSION = "2.35.1"
-DEFAULT_DHIS2_FEATURE_TYPE = 'NONE'

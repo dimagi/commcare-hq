@@ -9,7 +9,7 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import XMLNS_DHIS2, DEFAULT_DHIS2_FEATURE_TYPE
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
