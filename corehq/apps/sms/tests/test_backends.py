@@ -944,8 +944,8 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number_is_verified': '1',
                 },
                 drop_signals=False) as contact:
+            print('Here is goes')
             self.__test_global_backend_map()
-
             self.__test_domain_default()
             self.__test_shared_backend()
             self.__test_verified_number_with_map(contact)
