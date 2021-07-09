@@ -1,8 +1,11 @@
+from django.conf import settings
 from django.contrib import auth, messages
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
     HttpResponseRedirect,
+    JsonResponse,
+    Http404,
 )
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +14,7 @@ from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.registration.utils import request_new_domain
@@ -150,3 +154,21 @@ def sso_saml_login(request, idp_slug):
             # pre-populate username for Azure AD
             login_url = f'{login_url}&login_hint={username}'
     return HttpResponseRedirect(login_url)
+
+
+@use_saml2_auth
+@login_required
+def sso_debug_user_data(request, idp_slug):
+    """
+    Test utility for showing SAML data on the staging environment.
+    """
+    if settings.SERVER_ENVIRONMENT not in ['staging']:
+        raise Http404()
+    return JsonResponse({
+        "samlUserdata": request.session.get('samlUserdata'),
+        "samlNameId": request.session.get('samlNameId'),
+        "samlNameIdFormat": request.session.get('samlNameIdFormat'),
+        "samlNameIdNameQualifier": request.session.get('samlNameIdNameQualifier'),
+        "samlNameIdSPNameQualifier": request.session.get('samlNameIdSPNameQualifier'),
+        "samlSessionIndex": request.session.get('samlSessionIndex'),
+    })
