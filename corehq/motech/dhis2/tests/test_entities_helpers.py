@@ -155,11 +155,11 @@ class TestDhis2EntitiesHelpers(TestCase):
             form_question_values=get_form_question_values(form),
         )
 
-        programs = get_programs_by_id(info, repeater.dhis2_config, None)
+        programs = get_programs_by_id(info, repeater.dhis2_config)
 
         self.assertDictEqual(
             programs[program_id]['geometry'],
-            {'type': 'NONE', 'coordinates': [-33.6543, 19.1234]}
+            {'type': 'Point', 'coordinates': [-33.6543, 19.1234]}
         )
 
 
