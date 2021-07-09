@@ -87,4 +87,5 @@ branches:
     - ap/auditcare-migration # Amit July 8
     - bmb/sso-superusers-fix  # Biyeun July 8 [QA]
     - rc/explain-before-entering # Robert July 8 [QA]
+    - ap/fix-location-restriction-bug # Amit July 9
 submodules: { }
