@@ -69,6 +69,7 @@ branches:
     - rn_disallow_yui_cors # Rohit Negi
     - mk/user-history/base # MK June 21 [QA]
     - mk/user-history/ui-role-update-fix # MK July 8 [QA]
+    - mk/user-history/improvements # MK July 9
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
