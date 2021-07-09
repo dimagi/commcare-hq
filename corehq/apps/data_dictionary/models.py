@@ -91,3 +91,20 @@ class CaseProperty(models.Model):
         from .util import get_data_dict_props_by_case_type
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
         return super(CaseProperty, self).save(*args, **kwargs)
+
+
+class CasePropertyAllowedValue(models.Model):
+    case_property = models.ForeignKey(
+        CaseProperty,
+        on_delete=models.CASCADE,
+        related_name='allowed_values',
+        related_query_name='allowed_value'
+    )
+    allowed_value = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(default='', blank=True)
+
+    class Meta(object):
+        unique_together = ('case_property', 'allowed_value')
+
+    def __str__(self):
+        return f'{self.case_property} allowed value: "{self.allowed_value}"'

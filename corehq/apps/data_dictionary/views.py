@@ -21,6 +21,7 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
     PROPERTY_TYPE_CHOICES,
     CaseProperty,
+    CasePropertyAllowedValue,
     CaseType,
 )
 from corehq.apps.data_dictionary.util import save_case_property
@@ -83,7 +84,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('name')),
+        Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
         fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
@@ -104,6 +106,10 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "data_type": prop.data_type,
                 "group": prop.group,
                 "deprecated": prop.deprecated,
+                "allowed_values": [
+                    {"allowed_value": av.allowed_value, "description": av.description}
+                    for av in prop.allowed_values.all()
+                ],
             })
         props.append(p)
     return JsonResponse({'case_types': props})

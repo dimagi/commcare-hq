@@ -59,6 +59,7 @@
         <th>{% trans "Case Property" %}</th>
         <th>{% trans "Data Type" %}</th>
         <th>{% trans "Description" %}</th>
+        <th></th>
         {% if fhir_integration_enabled %}
           <th>{% trans "FHIR Resource Property Path" %}</th>
         {% endif %}
@@ -70,6 +71,7 @@
           <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
           <td data-bind="text: name ? name : 'No Group'"></td>
           <td>{% trans "Case Property Group" %}</td>
+          <td></td>
           <td></td>
           <td></td>
           {% if fhir_integration_enabled %}
@@ -99,6 +101,16 @@
                               rows: 1,
                               placeholder: '{% trans "Click here to add a description" %}',
                             "></textarea>
+          </td>
+          <td>
+            <div data-bind="visible: canHaveAllowedValues()">
+              <b>{% trans "Allowed Values" %}</b>
+              <div data-bind="html: allowedValuesDisplay"></div>
+              <button class="btn btn-default">
+                <i class="fa fa-pencil"></i>
+                {% trans "Edit" %}
+              </button>
+            </div>
           </td>
           {% if fhir_integration_enabled %}
           <td>

@@ -26,7 +26,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
-                        prop.description, prop.fhir_resource_prop_path, prop.deprecated,
+                        prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -41,7 +41,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description,
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, allowedValues,
         fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
@@ -55,6 +55,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        self.allowedValues = ko.observableArray();
+        _.each(allowedValues, function(item) {
+            var allowedValueObj = allowedValueListItem(item.allowed_value, item.description);
+            self.allowedValues.push(allowedValueObj);
+        });
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -78,8 +83,29 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removeFHIRResourcePropertyPath(false);
         };
 
+        self.canHaveAllowedValues = function () {
+            return self.dataType() == 'select';
+        };
+
+        self.allowedValuesDisplay = ko.computed(function() {
+            return _.map(self.allowedValues(), function(allowedValue) { return allowedValue.displayValue() }).join("<br/>");
+        });
+
         return self;
     };
+
+    var allowedValueListItem = function (allowedValue, description) {
+        var self = {};
+        self.allowedValue = allowedValue;
+        self.description = description;
+
+        self.displayValue = function () {
+            var beginning = self.allowedValue ? self.allowedValue : '(empty)'
+            var remainder = self.description ? ' <i class="fa fa-arrow-right"></i> ' + self.description : '';
+            return beginning + remainder;
+        };
+        return self;
+    }
 
     var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
         var self = {};
