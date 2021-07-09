@@ -167,7 +167,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     }
                     else {
                         return [
-                            {id: 'case_list', text: gettext('Go back tossd case list')}
+                            {id: 'case_list', text: gettext('Go back to case list')}
                         ];
                     }
                 });
