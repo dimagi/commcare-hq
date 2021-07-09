@@ -60,8 +60,16 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
+  - **Linux**:
+
     ```sh
     sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
+    ```
+
+  - **macOS**:
+
+    ```sh
+    brew install libmagic libxmlsec1 libxml2 libxslt
     ```
 
 - Java (JDK 8)
@@ -106,30 +114,60 @@ Save those backups to somewhere you'll be able to access from the new environmen
   [oracle_jdk8]: https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html
 
 
+- PostgreSQL
+
+  Installing the `psycopg2` package on macOS requires postgres binaries.
+
+  Executing postgres commands (e.g. `psql`, `createdb`, `pg_dump`, etc) requires
+  installing postgres. These commands are explicitly necessary, but having the
+  ability to run them may be useful.
+
+  - **Linux** (optional) install the `postgresql-client` package:
+
+    ```sh
+    sudo apt install postgresql-client
+    ```
+
+  - **macOS** (required) the postgres binaries can be installed via Homebrew:
+
+    ```sh
+    brew install postgresql
+    ```
+
+    Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
+    Prior to `pip install` commands (outlined later in this doc):
+
+    ```sh
+    xcode-select --install
+    export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
+    ```
+
+
 ##### macOS Notes
 
-- You may need to use `sudo` to for some of the above setup:
+- [Homebrew](https://brew.sh) (this doc depends heavily on it).
+
+- Install pip:
 
     ```sh
     sudo python get-pip.py
+    ```
+
+- If using `virtualenvwrapper` instead of `pyenv`:
+
+    ```sh
     sudo pip install virtualenvwrapper --ignore-installed six
     ```
 
 - For downloading Python 3.6 consider:
 
   - Using [pyenv](https://github.com/pyenv/pyenv-installer)
-  - Using homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
+  - Using Homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
 
 - For using Java, consider:
   - Using [jenv](https://github.com/jenv/jenv)
   - Trying Homebrew's [openjdk@8 formula](https://formulae.brew.sh/formula/openjdk)
     instead of Oracle's Java via PKG install.
-
-- Additional requirements:
-
-  - [Homebrew](https://brew.sh)
-  - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
-  - libxmlsec1 (install with homebrew)
 
 
 ##### xmlsec
@@ -438,8 +476,6 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
   libxml2.2.dylib on Mac OS X, try running the following commands:
 
     ```sh
-    brew install libxml2
-    brew install libxslt
     brew link libxml2 --force
     brew link libxslt --force
     ```
@@ -575,7 +611,6 @@ The password for the "commcarehq" user is in the localsettings.py file in the
 `DATABASES` dictionary.
 
 ```sh
-sudo apt install postgresql-client
 createdb formplayer -U commcarehq -h localhost
 ```
 
