@@ -2130,6 +2130,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+    additional_case_types = ListProperty(str)
 
     @property
     def case_session_var(self):
