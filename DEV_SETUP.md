@@ -116,11 +116,12 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - PostgreSQL
 
-  Installing the `psycopg2` package on macOS requires postgres binaries.
+  Installing the `psycopg2` package on macOS (might, see `LDFLAGS` possible
+  alternative below) require postgres binaries.
 
   Executing postgres commands (e.g. `psql`, `createdb`, `pg_dump`, etc) requires
-  installing postgres. These commands are explicitly necessary, but having the
-  ability to run them may be useful.
+  installing postgres. These commands are not explicitly necessary, but having
+  the ability to run them may be useful.
 
   - **Linux** (optional) install the `postgresql-client` package:
 
