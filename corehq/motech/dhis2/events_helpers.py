@@ -107,8 +107,8 @@ def _get_coordinate(config, case_trigger_info):
     if location and location.latitude and location.longitude:
         return {
             'coordinate': {
-                'latitude': str(round(location.latitude, 4)),
-                'longitude': str(round(location.longitude, 4))
+                'latitude': float(round(location.latitude, 4)),
+                'longitude': float(round(location.longitude, 4))
             }
         }
     else:

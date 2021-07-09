@@ -127,8 +127,8 @@ class TestDhis2EventsHelpers(TestCase):
                 'eventDate': '2017-05-26',
                 'orgUnit': 'dhis2_location_id',
                 'coordinate': {
-                    'latitude': "-33.8655",
-                    'longitude': "18.6941"
+                    'latitude': -33.8655,
+                    'longitude': 18.6941
                 }
             },
             event
