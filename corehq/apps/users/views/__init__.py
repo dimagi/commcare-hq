@@ -411,19 +411,18 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
-            idp = IdentityProvider.get_active_identity_provider_by_username(
-                self.editable_user.username
-            )
-            ctx.update({
-                'has_untrusted_identity_provider': (
-                    not IdentityProvider.does_domain_trust_user(
-                        self.domain,
-                        self.editable_user.username
-                    )
-                ),
-                'idp_name': idp.name if idp else '',
-            })
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.editable_user.username
+        )
+        ctx.update({
+            'has_untrusted_identity_provider': (
+                not IdentityProvider.does_domain_trust_user(
+                    self.domain,
+                    self.editable_user.username
+                )
+            ),
+            'idp_name': idp.name if idp else '',
+        })
 
         return ctx
 
@@ -439,8 +438,7 @@ class EditWebUserView(BaseEditUserView):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
 
-        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and self.request.POST['form_type'] == 'trust-identity-provider'):
+        if self.request.POST['form_type'] == 'trust-identity-provider':
             idp = IdentityProvider.get_active_identity_provider_by_username(
                 self.editable_user.username
             )
@@ -803,7 +801,6 @@ def _format_enterprise_user(domain, user):
 @require_GET
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
-    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -816,10 +813,8 @@ def paginate_web_users(request, domain):
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
         ),
-        'isUntrustedIdentityProvider': (
-            not IdentityProvider.does_domain_trust_user(
-                domain, u.username
-            ) if is_sso_toggle_enabled else False
+        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+            domain, u.username
         ),
     } for u in web_users]
 
@@ -1103,8 +1098,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
-            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
-                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+            if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
                 idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
                 idp.create_trust_with_domain(self.domain, self.request.user.username)
 
