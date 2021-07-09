@@ -396,8 +396,8 @@ def get_geo_json(form_config, case_trigger_info):
         return {
             'type': 'Point',
             'coordinates': [
-                float(point['latitude']),
-                float(point['longitude'])
+                point['latitude'],
+                point['longitude']
             ]
         }
     return {}

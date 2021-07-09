@@ -6,7 +6,6 @@ from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
     get_value,
-    get_case_location,
 )
 
 
@@ -102,17 +101,27 @@ def _get_datavalues(config, case_trigger_info):
 
 
 def _get_coordinate(config, case_trigger_info):
-    location = get_case_location(case_trigger_info)
+    if config.event_location:
+        location_string = get_value(config.event_location, case_trigger_info)
 
-    if location and location.latitude and location.longitude:
-        return {
-            'coordinate': {
-                'latitude': float(round(location.latitude, 4)),
-                'longitude': float(round(location.longitude, 4))
+        if location_string:
+            (lat, lon) = _dhis2_geolocation(location_string)
+            return {
+                'coordinate': {
+                    'latitude': lat,
+                    'longitude': lon
+                }
             }
-        }
-    else:
-        return {}
+    return {}
+
+
+def _dhis2_geolocation(location_string):
+    """
+    >>> _dhis2_geolocation('-33.6543213 19.12344312 abcdefg')
+    (-33.6543, 19.1234)
+    """
+    (lat, lon) = location_string.split(' ')[:2]
+    return round(float(lat), 4), round(float(lon), 4)
 
 
 def validate_event_schema(event):

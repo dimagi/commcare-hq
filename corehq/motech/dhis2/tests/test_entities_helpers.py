@@ -105,6 +105,7 @@ class TestDhis2EntitiesHelpers(TestCase):
                 "@xmlns": "test_xmlns",
                 "event_date": "2017-05-25T21:06:27.012000",
                 "completed_date": "2017-05-25T21:06:27.012000",
+                "event_location": "-33.6543213 19.12344312 abcdefg",
                 "name": "test event",
                 "meta": {
                     "location": 'test location',
@@ -121,6 +122,9 @@ class TestDhis2EntitiesHelpers(TestCase):
                 'xmlns': 'test_xmlns',
                 'program_id': program_id,
                 'event_status': 'COMPLETED',
+                'event_location': {
+                    'form_question': '/data/event_location'
+                },
                 'completed_date': {
                     'doc_type': 'FormQuestion',
                     'form_question': '/data/completed_date',

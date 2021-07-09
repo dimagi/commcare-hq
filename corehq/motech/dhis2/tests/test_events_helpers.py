@@ -56,6 +56,7 @@ class TestDhis2EventsHelpers(TestCase):
                 "@xmlns": "test_xmlns",
                 "event_date": "2017-05-25T21:06:27.012000",
                 "completed_date": "2017-05-25T21:06:27.012000",
+                "event_location": "-33.6543213 19.12344312 abcdefg",
                 "name": "test event",
                 "meta": {
                     "location": '',
@@ -80,6 +81,9 @@ class TestDhis2EventsHelpers(TestCase):
                 'org_unit_id': {
                     'doc_type': 'FormUserAncestorLocationField',
                     'form_user_ancestor_location_field': LOCATION_DHIS_ID
+                },
+                'event_location': {
+                    'form_question': '/data/event_location'
                 },
                 'datavalue_maps': [
                     {
@@ -127,34 +131,9 @@ class TestDhis2EventsHelpers(TestCase):
                 'eventDate': '2017-05-26',
                 'orgUnit': 'dhis2_location_id',
                 'coordinate': {
-                    'latitude': -33.8655,
-                    'longitude': 18.6941
+                    'latitude': -33.6543,
+                    'longitude': 19.1234
                 }
-            },
-            event
-        )
-
-    def test_form_processing_without_owner(self):
-        info = CaseTriggerInfo(
-            domain=DOMAIN,
-            case_id=None,
-            form_question_values=get_form_question_values(self.form),
-        )
-        event = get_event(DOMAIN, self.repeater.dhis2_config.form_configs[0], form_json=self.form, info=info)
-
-        self.assertDictEqual(
-            {
-                'dataValues': [
-                    {
-                        'dataElement': 'dhis2_element_id',
-                        'value': 'test event'
-                    }
-                ],
-                'status': 'COMPLETED',
-                'completedDate': '2017-05-25',
-                'program': 'test program',
-                'eventDate': '2017-05-26',
-                'orgUnit': 'dhis2_location_id',
             },
             event
         )
