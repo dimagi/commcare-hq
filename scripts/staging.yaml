@@ -78,7 +78,6 @@ branches:
     - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
     - gh/split-toggles-and-previews # Graham July 1 [QA]
     - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
-    - cs/SC-691-add-support-for-geolocation+cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl July 8
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
