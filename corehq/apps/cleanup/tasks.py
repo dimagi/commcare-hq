@@ -24,6 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
@@ -253,7 +254,7 @@ def delete_web_user():
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
-                web_user.delete(deleted_by=None, deleted_via=__name__)
+                web_user.delete(None, deleted_by=SYSTEM_USER_ID, deleted_via=__name__ + '.delete_web_user')
 
 
 def _get_missing_domains():

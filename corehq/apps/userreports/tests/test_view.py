@@ -245,7 +245,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             web_user.set_role(domain.name, user_role.get_qualified_id())
             web_user.current_domain = domain.name
             web_user.save()
-            self.addCleanup(web_user.delete, deleted_by=None)
+            self.addCleanup(web_user.delete, domain.name, deleted_by=None)
 
             request = HttpRequest()
             request.can_access_all_locations = True
