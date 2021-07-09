@@ -1168,7 +1168,8 @@ class FormBase(DocumentSchema):
         return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations',
+                 'include_fixtures'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):

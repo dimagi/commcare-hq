@@ -260,6 +260,7 @@ class FormQuestion(JsonObject):
     required = BooleanProperty()
     comment = StringProperty()
     setvalue = StringProperty()
+    data_source = DictProperty(exclude_if_none=True)
 
     @property
     def icon(self):
