@@ -461,7 +461,7 @@ class EditWebUserView(BaseEditUserView):
                 )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_super_user = 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on'
             current_super_user_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
                                                                         editable_user=self.editable_user, is_super_user=is_super_user):
