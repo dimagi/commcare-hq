@@ -296,11 +296,10 @@ First create your `localsettings.py` file:
 cp localsettings.example.py localsettings.py
 ```
 
-Enter `localsettings.py` and do the following:
+Open `localsettings.py` and do the following:
+
 - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories
   for both exist and are writeable. If they do not exist, create them.
-- You may also want to add the line `from dev_settings import *` at the top of
-  the file, which includes some useful default settings.
 
 Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 run:
@@ -362,18 +361,17 @@ needs of most developers.
 
 1. Bring up the docker containers.
 
+    In either of the following commands, omit the `-d` option to keep the
+    containers attached in the foreground.
+
     ```sh
     ./scripts/docker up -d
-    # Or, omit the '-d' option to keep the containers attached in the foreground
-    ./scripts/docker up
-    # Optionally, bring up only specific containers (add '-d' to detach)
-    # Note that elasticsearch2 is for ES2, whereas elasticsearch is for ES7.
-    # Which container you use should match the version set with ELASTICSEARCH_MAJOR_VERSION
-    ./scripts/docker up postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
+    # Optionally, start only specific containers.
+    ./scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
     ```
 
-1. If you are planning on running Formplayer from source, stop the formplayer
-   container.
+1. If you are planning on running Formplayer from a binary or source, stop the
+   formplayer container to avoid port collisions.
 
     ```sh
     ./scripts/docker stop formplayer
@@ -455,9 +453,9 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 
 - 401 error related to nonexistent database:
 
-    ```
+    ```sh
     curl -X PUT http://localhost:5984/commcarehq  # create the database
-    curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"' . # add admin user
+    curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"' .  # add admin user
     ```
 
 - Error stemming from any Python modules: the issue may be that your virtualenv
@@ -480,7 +478,8 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
     brew link libxslt --force
     ```
 
-- If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
+- If you encounter an authorization error related to CouchDB, try going to your
+  `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
 
 ### ElasticSearch Setup
@@ -544,7 +543,7 @@ easiest way to get onto the current nodejs v12 is
 
 ```sh
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo apt install -y nodejs
 ```
 
 #### Using LESS (2 Options)
@@ -635,14 +634,16 @@ This starts a process in the foreground, so you'll need to keep it open as long
 as you plan on using Formplayer.
 
 To keep Formplayer up to date with the version used in production, you can add
-the `curl` commands above to your `hammer` command, or whatever script you use
-for updating your dev environment.
+the `curl` commands above to your `hammer` command (see [hammer.sh](scripts/hammer.sh)),
+or whatever script you use for updating your dev environment.
 
 
 ### Browser Settings
 
-We recommend disabling the cache. In Chrome, go to Dev Tools > Settings >
-Preferences > Network and check "Disable cache (while DevTools is open)"
+We recommend disabling the cache. In Chrome, go to **Dev Tools > Settings >
+Preferences > Network** and check the following:
+
+- [x] Disable cache (while DevTools is open)
 
 
 ## Running CommCare HQ
@@ -671,13 +672,13 @@ Then run the following separately:
 # Pillow names can be found in settings.py
 ./manage.py run_ptop --pillow-name=CaseSearchToElasticsearchPillow --processor-chunk-size=1
 
-
 # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
 celery -A corehq worker -l info
 ```
 
-For celery, you may need to add a "-Q" argument based on the queue you want to
+For celery, you may need to add a `-Q` argument based on the queue you want to
 listen to.
+
 For example, to use case importer with celery locally you need to run:
 
 ```sh
@@ -689,6 +690,7 @@ Create a superuser for your local environment
 ```sh
 ./manage.py make_superuser <email>
 ```
+
 
 ## Running Formdesigner (Vellum) in Development mode
 
@@ -784,8 +786,8 @@ Or, to drop the current test DB and create a fresh one
 ./manage.py test corehq.apps.app_manager --reusedb=reset
 ```
 
-See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB` and
-`--reusedb`.
+See `corehq.tests.nose.HqdbContext` ([source](corehq/tests/nose.py)) for full
+description of `REUSE_DB` and `--reusedb`.
 
 
 ### Accessing the test shell and database
@@ -857,7 +859,7 @@ grunt test
 To run the JavaScript tests for a particular app run:
 
 ```sh
-grunt test:<app_name> // (e.g. grunt test:app_manager)
+grunt test:<app_name>  # (e.g. grunt test:app_manager)
 ```
 
 To list all the apps available to run:
@@ -880,7 +882,12 @@ The string after `#` specifies that the test uses an alternate configuration. To
 visit this suite in the browser go to:
 
 ```
-http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
+http://localhost:8000/mocha/<app_name>/<config>
+```
+
+For example:
+```
+http://localhost:8000/mocha/app_manager/b3
 ```
 
 ## Sniffer
@@ -929,6 +936,6 @@ sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest
 
 ### Sniffer Installation instructions
 
-https://github.com/jeffh/sniffer/ (recommended to install pywatchman or
-macfsevents for this to actually be worthwhile otherwise it takes a long time to
-see the change).
+<https://github.com/jeffh/sniffer/> (recommended to install `pywatchman` or
+`macfsevents` for this to actually be worthwhile otherwise it takes a long time
+to see the change).
