@@ -158,15 +158,28 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
                 });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
-                self.endOfRegistrationOptions = [
-                    {id: 'case_list', text: gettext('Go back to case list')},
-                    {id: 'default', text: gettext('Proceed with registered case')},
-                ];
+                self.endOfRegistrationOptions = ko.computed(function () {
+                    if (!self.caseListForm() || formOptions[self.caseListForm()].is_registration_form) {
+                        return [
+                            {id: 'case_list', text: gettext('Go back to case list')},
+                            {id: 'default', text: gettext('Proceed with registered case')},
+                        ];
+                    }
+                    else {
+                        return [
+                            {id: 'case_list', text: gettext('Go back tossd case list')}
+                        ];
+                    }
+                });
 
                 self.formMissing = ko.computed(function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
                 });
-
+                self.caseListForm.subscribe(function () {
+                    if (self.caseListForm() && !formOptions[self.caseListForm()].is_registration_form) {
+                        self.postFormWorkflow('case_list');
+                    }
+                });
                 self.formHasEOFNav = ko.computed(function () {
                     if (!self.caseListForm()) {
                         return false;
