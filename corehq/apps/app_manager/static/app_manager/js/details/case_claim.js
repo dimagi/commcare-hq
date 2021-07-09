@@ -376,6 +376,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         });
 
+        self.isCommon = function (prop) {
+            return self.commonProperties().indexOf(prop) !== -1;
+        };
+
         self.serialize = function () {
             return _.extend({
                 properties: self._getProperties(),

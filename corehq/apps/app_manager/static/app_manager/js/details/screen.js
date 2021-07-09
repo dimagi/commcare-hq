@@ -199,9 +199,9 @@ hqDefine("app_manager/js/details/screen", function () {
                 }
             }
             if (self.config.search.commonProperties().length > 0) {
-                var msg = "Search Properties and Default Search Filters can't have common properties. " +
-                    "Please update following properties: ";
-                errors.push(gettext(msg) + self.config.search.commonProperties());
+                var msg = gettext("Search Properties and Default Search Filters can't have common properties. " +
+                    "Please update following properties: ");
+                errors.push(msg + self.config.search.commonProperties());
             }
             if (errors.length) {
                 alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));

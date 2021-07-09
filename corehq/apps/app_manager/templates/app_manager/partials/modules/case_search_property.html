@@ -4,9 +4,9 @@
   <td class="text-center">
     <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
   </td>
-  <td data-bind="css: {'has-error': $parent.commonProperties().indexOf(ko.unwrap(name())) !== -1}">
+  <td data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(name()))}">
     <input class="form-control" type="text" data-bind="value: name"/>
-    <div data-bind="visible: $parent.commonProperties().indexOf(ko.unwrap(name())) !== -1" class="help-block">
+    <div data-bind="visible: $parent.isCommon(ko.unwrap(name()))" class="help-block">
       {% trans "A property is not allowed both here and Default Search Filters. Please remove from one of the lists" %}
     </div>
   </td>
