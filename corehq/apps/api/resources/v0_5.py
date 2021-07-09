@@ -82,7 +82,6 @@ from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
 from phonelog.models import DeviceReportEntry
 from . import (
@@ -255,7 +254,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
-                created_by=bundle.request.user,
+                created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
@@ -264,15 +263,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+                bundle.obj.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
                 django_user.delete()
-                log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
-                                 action=ModelAction.DELETE)
             raise
         return bundle
 
@@ -289,7 +287,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
         if user:
-            user.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+            user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                        deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
 
@@ -356,7 +355,7 @@ class WebUserResource(v0_1.WebUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
-                created_by=bundle.request.user,
+                created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
@@ -369,7 +368,8 @@ class WebUserResource(v0_1.WebUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.delete(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
+                bundle.obj.delete(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
             else:
                 try:
                     django_user = bundle.obj.get_django_user()
@@ -377,8 +377,6 @@ class WebUserResource(v0_1.WebUserResource):
                     pass
                 else:
                     django_user.delete()
-                    log_model_change(bundle.request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
-                                     action=ModelAction.DELETE)
             raise
         return bundle
 
