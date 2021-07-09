@@ -945,6 +945,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
                 },
                 drop_signals=False) as contact:
             self.__test_global_backend_map()
+
             self.__test_domain_default()
             self.__test_shared_backend()
             self.__test_verified_number_with_map(contact)
