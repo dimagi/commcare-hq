@@ -98,6 +98,7 @@ from corehq.apps.app_manager.views.utils import (
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -1148,6 +1149,19 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 ]
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
+            xpath_props = [
+                "search_filter", "blacklisted_owner_ids_expression",
+                "search_button_display_condition", "search_additional_relevant"
+            ]
+            for prop in xpath_props:
+                xpath = search_properties.get(prop, "")
+                if xpath:
+                    is_valid, message = validate_xpath(xpath)
+                    if not is_valid:
+                        return HttpResponseBadRequest(
+                            "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
+                            "The error is {err}".format(xpath=xpath, err=message)
+                        )
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
