@@ -462,8 +462,13 @@ class EditWebUserView(BaseEditUserView):
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            current_super_user_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
                                                                         editable_user=self.editable_user, is_super_user=is_super_user):
+                if current_super_user_status != is_super_user:
+                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB,
+                                    fields_changed={'is_superuser': is_super_user})
                 messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
