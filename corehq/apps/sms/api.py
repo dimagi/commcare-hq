@@ -287,8 +287,9 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     sms_load_counter("outbound", msg.domain)()
     try:
         msg.text = clean_text(msg.text)
-    except Exception:
+    except Exception as e:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
+        raise e
     try:
         # We need to send SMS when msg.domain is None to support sending to
         # people who opt in without being tied to a domain
@@ -309,6 +310,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 pass
             else:
                 msg.set_system_error(SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
+                raise Exception("Phone number opted out")
                 return False
 
         if not backend:
@@ -331,6 +333,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception as e:
+        raise e
         metrics_counter("commcare.sms.outbound_message", tags={
             'domain': msg.domain,
             'status': 'error',
