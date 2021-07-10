@@ -436,6 +436,21 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         );
     });
 
+    FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
+        FormplayerFrontend.LoginAsNextOptions = options;
+        if (Object.freeze) {
+            Object.freeze(FormplayerFrontend.LoginAsNextOptions);
+        }
+    });
+
+    FormplayerFrontend.on('clearLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions = null;
+    });
+
+    FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions || null;
+    });
+
     /**
      * clearRestoreAsUser
      *

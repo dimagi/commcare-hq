@@ -74,7 +74,9 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    waf_allow)
+    waf_allow,
+)
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -604,9 +606,15 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if endpoint_id not in valid_endpoint_ids:
         _fail(_("This link does not exist. Your app may have changed so that the given link is no longer valid."))
 
+    (restore_as_user, set_cookie) = FormplayerMain.get_restore_as_user(request, domain)
+    force_login_as = not restore_as_user.is_commcare_user()
+    if force_login_as and not can_use_restore_as(request):
+        _fail(_("This user cannot access this link."))
+
     cloudcare_state = json.dumps({
         "appId": build._id,
         "endpointId": endpoint_id,
         "endpointArgs": request.GET,
+        "forceLoginAs": force_login_as,
     })
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)

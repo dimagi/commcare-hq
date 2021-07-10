@@ -168,6 +168,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
+        this.forceLoginAs = options.forceLoginAs;
         this.forceManualAction = options.forceManualAction;
 
         this.setSteps = function (steps) {
@@ -229,7 +230,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.replaceEndpoint = function (steps) {
             delete this.endpointId;
             delete this.endpointArgs;
-            this.steps = steps;
+            this.steps = steps || [];
+        };
+
+        this.resetForceLoginAs = function () {
+            this.forceLoginAs = false;
         };
 
         this.clearExceptApp = function () {
@@ -287,6 +292,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
+            forceLoginAs: self.forceLoginAs,
             forceManualAction: self.forceManualAction,
         };
         return JSON.stringify(dict);
@@ -306,6 +312,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'queryData': data.queryData,
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
+            'forceLoginAs': data.forceLoginAs,
             'forceManualAction': data.forceManualAction,
         };
         return new Util.CloudcareUrl(options);
