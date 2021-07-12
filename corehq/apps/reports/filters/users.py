@@ -460,7 +460,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
 class ChangedByUserFilter(ExpandedMobileWorkerFilter):
     slug = "changed_by_user"
-    label = ugettext_lazy("By User(s)")
+    label = ugettext_lazy("Changed By User(s)")
 
     def get_default_selections(self):
         return [('t__6', _("[Web Users]"))]
