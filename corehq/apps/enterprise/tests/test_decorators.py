@@ -57,8 +57,8 @@ class TestRequireEnterpriseAdminDecorator(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.enterprise_admin.delete(None)
-        cls.other_domain_user.delete(None)
+        cls.enterprise_admin.delete(cls.domain.name, deleted_by=None)
+        cls.other_domain_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         cls.account.delete()
         super().tearDownClass()
