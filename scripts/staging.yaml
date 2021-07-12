@@ -90,4 +90,5 @@ branches:
     - ap/fix-location-restriction-bug # Amit July 9
     - revert-30036-revert-30004-sr/default-filters # Sravan July 12
     - rp/enterprize-sms-report # Rynhard July 12
+    - bmb/sso-accept-invite-tests  # Biyeun July 12
 submodules: { }
