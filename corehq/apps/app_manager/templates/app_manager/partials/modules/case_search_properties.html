@@ -41,7 +41,7 @@
     </div>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">{% trans "Default Search Properties" %}</h4>
+        <h4 class="panel-title panel-title-nolink">{% trans "Default Search Filters" %}</h4>
       </div>
       <div class="panel-body">
         <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
@@ -55,8 +55,12 @@
           </thead>
           <tbody data-bind="foreach: defaultProperties">
           <tr>
-            <td class="col-sm-4">
+            <td class="col-sm-4" data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}">
+
               <input class="form-control" type="text" data-bind="value: property"/>
+              <div data-bind="visible: $parent.isCommon(ko.unwrap(property()))" class="help-block">
+                {% trans "A property is not allowed both here and Search Properties. Please remove from one of the lists" %}
+              </div>
             </td>
             <td class="col-sm-6">
               <textarea
