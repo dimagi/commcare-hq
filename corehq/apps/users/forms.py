@@ -196,7 +196,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
     @staticmethod
     def _role_updated(old_role, new_role):
-        if (old_role and not new_role) or (new_role and not old_role):
+        if bool(old_role) ^ bool(new_role):
             return True
         if old_role and new_role and new_role.get_qualified_id() != old_role.get_qualified_id():
             return True
