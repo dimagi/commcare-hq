@@ -6,7 +6,8 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 from pip._internal.exceptions import CommandError
 
-from corehq.apps.es import CaseES, FormES, UserES
+from corehq.apps.app_manager.models import Application
+from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -18,7 +19,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeaters_by_domain,
 )
 from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater, CreateCaseRepeater, \
-    UpdateCaseRepeater, RepeatRecord, LocationRepeater, UserRepeater
+    UpdateCaseRepeater, RepeatRecord, LocationRepeater, UserRepeater, AppStructureRepeater
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -32,6 +33,7 @@ CASES = 'cases'
 FORMS = 'forms'
 LOCATIONS = 'locations'
 USERS = 'users'
+APPS = 'apps'
 COMMAND_CHOICES = [CASES, FORMS, LOCATIONS, USERS]
 EXPECTED_REPEAT_RECOUNT_COUNT = 'expected_repeat_record_count'  # Total count of expected repeat records
 ACTUAL_REPEAT_RECORD_COUNT = 'actual_repeat_record_count'  # Total count of found repeat records
@@ -360,6 +362,43 @@ def find_missing_user_repeat_records(startdate, enddate, domains, should_create)
     return stats_per_domain
 
 
+def find_missing_app_repeat_records(startdate, enddate, domains, should_create):
+    stats_per_domain = {}
+    for index, domain in enumerate(domains):
+        t0 = time.time()
+        total_missing_count = 0
+        app_repeaters_in_domain = get_app_repeaters_in_domain(domain)
+
+        app_dicts = get_apps_updated_between_dates(domain, startdate, enddate)
+        apps = [Application.wrap(app_dict) for app_dict in app_dicts]
+        for app in apps:
+            missing_count = find_missing_repeat_records_in_domain(
+                domain, app_repeaters_in_domain, app, enddate, should_create
+            )
+            total_missing_count += missing_count
+
+        t1 = time.time()
+        time_to_run = t1 - t0
+        if total_missing_count > 0:
+            rounded_time = f'{round(time_to_run, 0)} seconds'
+            stats_per_domain[domain] = {
+                FORMS: {
+                    MISSING_REPEAT_RECORD_COUNT: total_missing_count,
+                    TIME_TO_RUN: rounded_time,
+                }
+            }
+
+            logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
+                        f'{rounded_time}. We only looked for missing repeat records for apps last modified during '
+                        f'the specified date range.'
+                        )
+
+        if index + 1 % 5 == 0:
+            logger.info(f"{(index+1)}/{len(domains)} domains complete.")
+
+    return stats_per_domain
+
+
 def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, should_create):
     """
     Generic method to obtain repeat records (used for Locations, Users)
@@ -418,6 +457,11 @@ def get_users_created_since_startdate(domain, startdate):
         .date_range('created_on', gte=startdate).run().hits
 
 
+def get_apps_updated_between_dates(domain, startdate, enddate):
+    return AppES(es_instance_alias='export').domain(domain)\
+        .date_range('last_modified', gte=startdate, lte=enddate).run().hits
+
+
 def get_transaction_date(transaction):
     return string_to_utc_datetime(transaction.server_date).date()
 
@@ -433,6 +477,10 @@ def get_case_repeaters_in_domain(domain):
 
 def get_location_repeaters_in_domain(domain):
     return get_repeaters_for_type_in_domain(domain, (LocationRepeater, ))
+
+
+def get_app_repeaters_in_domain(domain):
+    return get_repeaters_for_type_in_domain(domain, (AppStructureRepeater, ))
 
 
 def get_user_repeaters_in_domain(domain):
@@ -529,6 +577,8 @@ class Command(BaseCommand):
             stats = find_missing_location_repeat_records(startdate, enddate, domains_to_inspect, create)
         elif command == USERS:
             stats = find_missing_user_repeat_records(startdate, enddate, domains_to_inspect, create)
+        elif command == APPS:
+            stats = find_missing_app_repeat_records(startdate, enddate, domains_to_inspect, create)
         else:
             raise CommandError(f"The '{command}' command is not support at this time.")
         if stats:
