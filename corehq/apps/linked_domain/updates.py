@@ -1,4 +1,5 @@
 from copy import copy
+from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
 from django.utils.translation import ugettext as _
@@ -42,6 +43,8 @@ from corehq.apps.linked_domain.const import (
     MODEL_DIALER_SETTINGS,
     MODEL_OTP_SETTINGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_TABLEAU_VISUALIZATION,
+    MODEL_TABLEAU_SERVER,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
@@ -56,6 +59,10 @@ from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
 from corehq.apps.linked_domain.local_accessors import \
     get_data_dictionary as local_get_data_dictionary
+from corehq.apps.linked_domain.local_accessors import \
+    get_tableau_visualizaton as local_get_tableau_visualizaton
+from corehq.apps.linked_domain.local_accessors import \
+    get_tableau_server as local_get_tableau_server
 from corehq.apps.linked_domain.local_accessors import \
     get_dialer_settings as local_get_dialer_settings
 from corehq.apps.linked_domain.local_accessors import \
@@ -74,6 +81,10 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
 from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
+from corehq.apps.linked_domain.remote_accessors import \
+    get_tableau_visualizaton as remote_get_tableau_visualizaton
+from corehq.apps.linked_domain.remote_accessors import \
+    get_tableau_server as remote_get_tableau_server
 from corehq.apps.linked_domain.remote_accessors import \
     get_dialer_settings as remote_get_dialer_settings
 from corehq.apps.linked_domain.remote_accessors import \
@@ -110,6 +121,8 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_OTP_SETTINGS: update_otp_settings,
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
+        MODEL_TABLEAU_VISUALIZATION: update_tableau_visualization,
+        MODEL_TABLEAU_SERVER: update_tableau_server,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -312,6 +325,38 @@ def update_data_dictionary(domain_link):
             case_property_obj.data_type = case_property_desc['data_type']
             case_property_obj.group = case_property_desc['group']
             case_property_obj.save()
+
+
+def update_tableau_visualization(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_tableau_visualizaton(domain_link)
+    else:
+        master_results = local_get_tableau_visualizaton(domain_link.master_domain)
+
+    model, created = TableauVisualization.objects.get_or_create(domain=domain_link.linked_domain)
+
+    model.domain = domain_link.linked_domain
+    model.server = master_results['server']
+    model.view_url = master_results['view_url']
+    model.save()
+
+
+def update_tableau_server(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_tableau_server(domain_link)
+    else:
+        master_results = local_get_tableau_server(domain_link.master_domain)
+
+    model, created = TableauServer.objects.get_or_create(domain=domain_link.linked_domain)
+
+    model.domain = domain_link.linked_domain
+    model.server_type = master_results['server_type']
+    model.server_name = master_results['server_name']
+    model.validate_hostname = master_results['validate_hostname']
+    model.target_site = master_results['target_site']
+    model.domain_username = master_results['domain_username']
+    model.allow_domain_username_override = master_results['allow_domain_username_override']
+    model.save()
 
 
 def update_dialer_settings(domain_link):

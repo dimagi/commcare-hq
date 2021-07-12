@@ -17,6 +17,8 @@ MODEL_DIALER_SETTINGS = 'dialer_settings'
 MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
+MODEL_TABLEAU_VISUALIZATION = 'tableau_visualization'
+MODEL_TABLEAU_SERVER = 'tableau_server'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -43,6 +45,8 @@ FEATURE_FLAG_DATA_MODELS = [
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
+    (MODEL_TABLEAU_VISUALIZATION, ugettext_lazy('Tableau Visualization')),
+    (MODEL_TABLEAU_SERVER, ugettext_lazy('Tableau Server')),
 ]
 
 ALL_LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \

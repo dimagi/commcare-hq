@@ -63,6 +63,9 @@ from corehq.apps.linked_domain.local_accessors import (
     get_hmac_callout_settings,
     get_otp_settings,
     get_user_roles,
+    get_tableau_visualizaton,
+    get_tableau_server,
+
 )
 from corehq.apps.linked_domain.models import (
     DomainLink,
@@ -99,6 +102,18 @@ from corehq.apps.userreports.models import (
 )
 from corehq.toggles import ERM_DEVELOPMENT
 from corehq.util.timezones.utils import get_timezone_for_request
+
+
+@login_or_api_key
+@require_linked_domain
+def tableau_visualizaton(request, domain):
+    return JsonResponse(get_tableau_visualizaton(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def tableau_server(request, domain):
+    return JsonResponse(get_tableau_server(domain))
 
 
 @login_or_api_key
