@@ -381,10 +381,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def form_user_update_permissions(self):
-        user = self.editable_user
-        is_super_user = user.is_superuser
-
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
+        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
 
     @property
     def main_context(self):
@@ -461,10 +458,17 @@ class EditWebUserView(BaseEditUserView):
                 )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
+            current_superuser_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
-                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+                                                                        editable_user=self.editable_user,
+                                                                        is_superuser=is_superuser):
+                if current_superuser_status != is_superuser:
+                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB,
+                                    fields_changed={'is_superuser': is_superuser})
+                messages.success(self.request,
+                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
