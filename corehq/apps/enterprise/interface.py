@@ -1,12 +1,11 @@
 
-from django.utils.translation import ugettext_noop as _
+from corehq.apps.sms.models import INCOMING, OUTGOING
+from django.utils.translation import ugettext as _
 from django.db.models.aggregates import Count
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.accounting.filters import DateCreatedFilter
-from corehq.apps.sms.models import INCOMING, OUTGOING
-
 
 from corehq.apps.smsbillables.filters import (
     DateSentFilter,
@@ -132,6 +131,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
         return [
             [
                 sms_billable.date_sent,
+                BillingAccount.get_account_by_domain(sms_billable.domain).name,
                 sms_billable.domain,
                 {
                     INCOMING: _("Incoming"),
@@ -152,23 +152,17 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     @property
     def sms_billables(self):
         datespan = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
-        selected_billables = SmsBillable.objects.filter(
-            date_sent__gte=datespan.startdate,
-            date_sent__lt=datespan.enddate_adjusted,
-        )
+        selected_billables = SmsBillable.get_selected_billables(datespan)
         if DateCreatedFilter.use_filter(self.request):
             date_span = DateSpan(
                 DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
             )
-            selected_billables = selected_billables.filter(
-                date_created__gte=date_span.startdate,
-                date_created__lt=date_span.enddate_adjusted,
-            )
+            selected_billables = SmsBillable.filter_selected_billables_date(selected_billables, date_span)
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)
         if show_billables:
-            selected_billables = selected_billables.filter(
-                is_valid=(show_billables == ShowBillablesFilter.VALID),
+            selected_billables = SmsBillable.filter_selected_billables_show_billables(
+                selected_billables, show_billables, ShowBillablesFilter
             )
         domain = EnterpriseDomainFilter.get_value(self.request, self.domain)
         if domain:
