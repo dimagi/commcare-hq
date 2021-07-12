@@ -82,7 +82,13 @@ audit_test_docs = [
         'path_info': '/accounts/login/',
         'session_key': 'sess_key',
         'ip_address': '0.0.0.0',
-        'user': 'login@test.org'
+        'user': 'login@test.org',
+        'headers': {
+            'SERVER_NAME': 'www.commcarehq.org',
+            'HTTP_ACCEPT_LANGUAGE': 'en-US,en;q=0.8',
+            'REQUEST_METHOD': 'GET',
+            'HTTP_ACCEPT_ENCODING': 'gzip,deflate,sdch'
+        },
     },
     {
         'access_type': 'logout',
@@ -98,7 +104,8 @@ audit_test_docs = [
         'user': 'logout@test.org',
         'base_type': 'AuditEvent',
         'event_date': '2021-06-24T00:00:00.15Z',
-        'description': 'Logout test'
+        'description': 'Logout test',
+        'headers': {}
     }
 ]
 
