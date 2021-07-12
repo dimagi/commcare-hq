@@ -102,7 +102,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='retired_user_email@example.com',
         )
-        cls.retired_user.retire(deleted_by=None)
+        cls.retired_user.retire(cls.ccdomain.name, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -230,13 +230,13 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='deleted_email@example.com',
         )
-        deleted_user.retire(deleted_by=None)
+        deleted_user.retire(self.ccdomain.name, deleted_by=None)
         self.assertNotIn(
             deleted_user.username,
             [user.username for user in
              get_all_commcare_users_by_domain(self.ccdomain.name)]
         )
-        deleted_user.delete(deleted_by=None)
+        deleted_user.delete(self.ccdomain.name, deleted_by=None)
 
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
