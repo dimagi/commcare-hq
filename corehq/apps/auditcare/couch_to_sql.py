@@ -91,7 +91,7 @@ def get_events_from_couch(start_key, end_key):
         doc = result["doc"]
         next_start_time = force_to_datetime(doc.get("event_date"))
         kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
-                            "headers", "status_code", "user_agent"])
+                            "status_code", "user_agent"])
         kwargs.update({
             "event_date": next_start_time,
             "couch_id": doc["_id"],
