@@ -48,7 +48,7 @@ class TestCaseAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 

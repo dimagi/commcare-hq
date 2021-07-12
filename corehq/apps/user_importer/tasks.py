@@ -17,9 +17,10 @@ USER_UPLOAD_CHUNK_SIZE = 1000
 
 
 @task(serializer='pickle')
-def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_upload, task=None):
-    from corehq.apps.user_importer.importer import create_or_update_users_and_groups, create_or_update_groups,\
-    create_or_update_web_users
+def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id, is_web_upload,
+                            task=None):
+    from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
+        create_or_update_groups, create_or_update_web_users
     if task is None:
         task = import_users_and_groups
     DownloadBase.set_progress(task, 0, 100)
@@ -39,12 +40,14 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload
             domain,
             user_specs,
             upload_user=upload_user,
+            upload_record_id=upload_record_id,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
     else:
-        user_results = create_or_update_users_and_groups(
+        user_results = create_or_update_commcare_users_and_groups(
             domain,
             user_specs,
+            upload_record_id=upload_record_id,
             upload_user=upload_user,
             group_memoizer=group_memoizer,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
