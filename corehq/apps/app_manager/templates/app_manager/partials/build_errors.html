@@ -160,6 +160,12 @@
                 This form is not a registration form. You need to select a form which opens a case and
                 does not update an existing case. Please select a different form.
               {% endblocktrans %}
+            {% case "invalid case list followup form" %}
+              {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
+                as the case list form for <a href="{{ module_url }}">{{ module_name }}</a>.
+                To select a followup form as case list form, the module must use the Select Parent First workflow and the form must follow up on the parent case type.
+              {% endblocktrans %}
             {% case "case list form missing" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The form you have selected as the case registration form for
