@@ -21,9 +21,9 @@ def spec_value_to_boolean_or_none(user_spec_dict, key):
 class UserChangeLogger(object):
     """
     User change logger to record
-        changes in user fields
-        messages for changes or
-        useful info text for user display like names
+        - changes to user properties
+        - text messages for changes
+        - useful info for changes to associated data models like role/locations
     """
     def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
         self.domain = domain
@@ -44,7 +44,11 @@ class UserChangeLogger(object):
         self._save = False  # flag to check if log needs to be saved for updates
 
     def add_changes(self, changes):
-        # ignore for new user since the whole user doc is logged for a new user
+        """
+        Add changes to user properties.
+        Ignored for new user since the whole user doc is logged for a new user
+        :param changes: dict of property mapped to it's new value
+        """
         if self.is_new_user:
             return
         for name, new_value in changes.items():
@@ -53,14 +57,24 @@ class UserChangeLogger(object):
                 self._save = True
 
     def add_change_message(self, message):
-        # ignore for new user since the whole user doc is logged for a new user
+        """
+        Add text messages for changes that are not exactly user properties.
+        Ignored for new user since the whole user doc is logged for a new user
+        :param message: text message for the change like 'Password Reset' / 'Added as web user to domain foo'
+        """
         if self.is_new_user:
             return
         self.messages.append(message)
         self._save = True
 
     def add_info(self, info):
-        # useful info for display like names
+        """
+        Useful info for display, specifically of associated data models like roles/locations.
+        Info will also include ID if the data model is not linked directly on the user like
+        primary location for CommCareUser is present on the user record but for a WebUser it's
+        stored on Domain Membership. So for WebUser, info should also include the primary location's location id.
+        :param info: text info like "Role: RoleName[role_id]" / "Primary Location: Boston[boston-location-id]"
+        """
         self.messages.append(info)
         self._save = True
 
@@ -86,6 +100,15 @@ class BaseUserImporter(object):
     save_log should be called explicitly to save logs, after user is saved
     """
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, upload_record_id):
+        """
+        :param upload_domain: domain on which the bulk upload is being done
+        :param user_domain: domain user is being updated for
+        :param user: user to update
+        :param upload_user: user doing the upload
+        :param is_new_user: if user is a new user
+        :param via: USER_CHANGE_VIA_BULK_IMPORTER
+        :param upload_record_id: ID of the bulk upload record
+        """
         self.user_domain = user_domain
         self.user = user
         self.upload_user = upload_user
@@ -109,10 +132,10 @@ class BaseUserImporter(object):
             if new_role:
                 self.logger.add_info(_("Role: {new_role_name}[{new_role_id}]").format(
                     new_role_name=new_role.name,
-                    new_role_id=new_role.get_id
+                    new_role_id=new_role.get_qualified_id()
                 ))
             else:
-                self.logger.add_change_message("Role: None")
+                self.logger.add_info("Role: None")
 
         self._include_user_data_changes()
         self.logger.save()
