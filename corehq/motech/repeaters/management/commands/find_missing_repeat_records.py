@@ -533,3 +533,5 @@ class Command(BaseCommand):
             raise CommandError(f"The '{command}' command is not support at this time.")
         if stats:
             logger.info(f"Here's what is missing:\n{stats}")
+        else:
+            logger.info("Did not find any missing repeat records.")
