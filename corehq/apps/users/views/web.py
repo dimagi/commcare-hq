@@ -160,13 +160,8 @@ class UserInvitationView(object):
                                    {"New User Accepted a project invitation": "yes"})
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
-                else:
-                    messages.error(
-                        self.request,
-                        f"issue with form {form.errors}"
-                    )
             else:
-                if CouchUser.get_by_username(invitation.email):
+                if CouchUser.get_by_username(invitation.email.lower()):
                     login_url = reverse("login")
                     accept_invitation_url = reverse(
                         'domain_accept_invitation',
