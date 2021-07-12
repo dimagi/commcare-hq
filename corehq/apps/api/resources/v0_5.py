@@ -7,7 +7,6 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
-
 from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
@@ -18,10 +17,6 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
-from corehq.apps.sms.models import MessagingEvent
-from phonelog.models import DeviceReportEntry
-
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
@@ -39,6 +34,7 @@ from corehq.apps.api.resources.auth import (
     RequirePermissionAuthentication,
     LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
@@ -88,7 +84,7 @@ from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
-
+from phonelog.models import DeviceReportEntry
 from . import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -553,6 +549,7 @@ class GroupResource(v0_4.GroupResource):
         group = self.obj_get(bundle, **kwargs)
         group.soft_delete()
         return bundle
+
 
 class DomainAuthorization(ReadOnlyAuthorization):
 
@@ -1085,31 +1082,4 @@ class ODataFormResource(BaseODataResource):
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
             url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
                 self._meta.resource_name), self.wrap_view('dispatch_list')),
-        ]
-
-
-class MessagingEventResource(HqBaseResource, ModelResource):
-    content_type_display = fields.CharField(attribute='get_content_type_display')
-    recipient_type_display = fields.CharField(attribute='get_recipient_type_display')
-    status_display = fields.CharField(attribute='get_status_display')
-    source_display = fields.CharField(attribute='get_source_display')
-
-    class Meta(object):
-        queryset = MessagingEvent.objects.all()
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'messaging-event'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        authorization = DomainAuthorization()
-        paginator_class = NoCountingPaginator
-        filtering = {
-            # this is needed for the domain filtering but any values passed in via the URL get overridden
-            "domain": ('exact',),
-            "date": ('exact', 'gt', 'gte', 'lt', 'lte', 'range'),
-            "source": ('exact',),
-            "content_type": ('exact',),
-            "status": ('exact',),
-        }
-        ordering = [
-            'date',
         ]

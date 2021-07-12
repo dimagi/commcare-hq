@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
-from couchforms.analytics import get_last_form_submission_received
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
@@ -30,10 +29,11 @@ from ...couchsqlmigration import (
     CASE_DOC_TYPES,
     CleanBreak,
     do_couch_to_sql_migration,
+    get_couch_doc_count,
+    iter_couch_stats,
     setup_logging,
 )
 from ...missingdocs import (
-    MissingIds,
     discard_missing_docs_state,
     find_missing_docs,
     recheck_missing_docs,
@@ -401,12 +401,7 @@ class Command(BaseCommand):
         return has_diffs
 
     def print_couch_stats(self, domain):
-        couchdb = XFormInstance.get_db()
-        for entity in MissingIds.DOC_TYPES:
-            count = get_couch_doc_count(domain, entity, couchdb)
-            print(f"Total {entity}s: {count}")
-        received_on = get_last_form_submission_received(domain)
-        print(f"Last form submission: {received_on}")
+        print("\n".join(iter_couch_stats(domain)))
 
 
 def _confirm(message):
@@ -462,11 +457,3 @@ def get_doc_count(model_class, where, entity, domain):
     couchdb = XFormInstance.get_db()
     couch_count = get_couch_doc_count(domain, entity, couchdb)
     return min(sql_estimate, couch_count)
-
-
-def get_couch_doc_count(domain, entity, couchdb):
-    from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
-    return sum(
-        get_doc_count_in_domain_by_type(domain, doc_type, couchdb)
-        for doc_type in MissingIds.DOC_TYPES[entity]
-    )

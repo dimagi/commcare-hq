@@ -35,6 +35,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         });
         self.nodesetCaseType.subscribe(function () {
             self.fire('change');
+            self.nodeset("");
         });
 
         return self;

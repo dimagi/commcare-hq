@@ -1580,6 +1580,9 @@ column.
        }
    }
 
+**Expression columns cannot be used in aggregations or filters.**
+If you need to group by a derived value, then you must add that directly to your data source.
+
 The "aggregation" column property
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

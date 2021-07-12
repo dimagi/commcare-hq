@@ -1177,12 +1177,14 @@ class MessagingTab(UITab):
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
         from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
+
         whatsapp_urls = []
 
         domain_has_turn_integration = (
             SQLTurnWhatsAppBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+
         domain_has_infobip_integration = (
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
@@ -1385,11 +1387,20 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,
                 EditWebUserView,
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-            menu.append({
+
+            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+                menu.append({
+                    'title': _(EnterpriseUsersView.page_title),
+                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+
+            menu = menu + [{
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1414,7 +1425,7 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1911,6 +1922,19 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(GaenOtpServerSettingsView.page_title),
             'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.EMBEDDED_TABLEAU.enabled(domain):
+        from corehq.apps.reports.views import TableauServerView
+        integration.append({
+            'title': _(TableauServerView.page_title),
+            'url': reverse(TableauServerView.urlname, args=[domain])
+        })
+
+        from corehq.apps.reports.views import TableauVisualizationListView
+        integration.append({
+            'title': _(TableauVisualizationListView.page_title),
+            'url': reverse(TableauVisualizationListView.urlname, args=[domain])
         })
 
     return integration

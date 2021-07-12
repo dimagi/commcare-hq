@@ -507,6 +507,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
+    def get_domains(self):
+        subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
+        return [s.subscriber.domain for s in subscriptions]
+
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
 
@@ -2861,7 +2865,7 @@ class CustomerBillingRecord(BillingRecordBase):
         payment_status = (_("Paid")
                           if self.invoice.is_paid or self.invoice.balance == 0
                           else _("Payment Required"))
-        # Random domain, because all subscriptions on a customer account link to the same Enterprise Dashboard
+        # Random domain, because all subscriptions on a customer account link to the same Enterprise Console
         domain = self.invoice.subscriptions.first().subscriber.domain
         context.update({
             'account_name': self.invoice.account.name,

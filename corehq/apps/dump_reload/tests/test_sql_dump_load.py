@@ -331,6 +331,35 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
+    def test_dump_roles(self):
+        from corehq.apps.users.models import SQLUserRole, Permissions, RoleAssignableBy, RolePermission
+
+        expected_object_counts = Counter({
+            SQLUserRole: 2,
+            RolePermission: 9,
+            RoleAssignableBy: 1
+        })
+
+        role1 = SQLUserRole.create(self.domain_name, 'role1')
+        role2 = SQLUserRole.create(
+            self.domain_name, 'role1',
+            permissions=Permissions(edit_web_users=True),
+            assignable_by=[role1.id]
+        )
+        self.addCleanup(role1.delete)
+        self.addCleanup(role2.delete)
+
+        self._dump_and_load(expected_object_counts)
+
+        role1_loaded = SQLUserRole.objects.get(id=role1.id)
+        role2_loaded = SQLUserRole.objects.get(id=role2.id)
+
+        self.assertEqual(role1_loaded.permissions.to_list(), Permissions().to_list())
+        self.assertEqual(role1_loaded.assignable_by, [])
+        self.assertEqual(role2_loaded.permissions.to_list(), Permissions(edit_web_users=True).to_list())
+        self.assertEqual(role2_loaded.assignable_by, [role1_loaded.get_id])
+
+
     def test_device_logs(self):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry

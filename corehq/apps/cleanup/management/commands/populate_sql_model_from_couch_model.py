@@ -1,16 +1,24 @@
+import datetime
 import logging
+import os
 import sys
 import traceback
 
-from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
+from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
+from corehq.dbaccessors.couchapps.all_docs import (
+    get_all_docs_with_doc_types,
+    get_doc_count_by_type,
+    get_doc_count_by_domain_type
+)
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
-
-logger = logging.getLogger(__name__)
+from corehq.util.log import with_progress_bar
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.migration import disable_sync_to_couch
 
 
 class PopulateSQLCommand(BaseCommand):
@@ -184,56 +192,100 @@ class PopulateSQLCommand(BaseCommand):
                 models that don't support verification.
             """,
         )
+        parser.add_argument(
+            '--domains',
+            nargs='+',
+            help="Only migrate documents in the specified domains",
+        )
+        parser.add_argument(
+            '--log-path',
+            help="File path to write logs to. If not provided a default will be used."
+        )
 
     def handle(self, **options):
+        log_path = options.get("log_path")
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
+
+        if not log_path:
+            date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+            command_name = self.__class__.__module__.split('.')[-1]
+            log_path = f"{command_name}_{date}.log"
+
+        if os.path.exists(log_path):
+            raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
-        self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         self.diff_count = 0
-        self.doc_index = 0
+        doc_index = 0
 
-        logger.info("Found {} {} docs and {} {} models".format(
-            self.doc_count,
+        domains = options["domains"]
+        if domains:
+            doc_count = self._get_couch_doc_count_for_domains(domains)
+            sql_doc_count = self._get_sql_doc_count_for_domains(domains)
+            docs = self._iter_couch_docs_for_domains(domains)
+        else:
+            doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+            sql_doc_count = self.sql_class().objects.count()
+            docs = get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
+
+        print(f"\n\nDetailed log output file: {log_path}")
+        print("Found {} {} docs and {} {} models".format(
+            doc_count,
             self.couch_doc_type(),
-            self.sql_class().objects.count(),
+            sql_doc_count,
             self.sql_class().__name__,
         ))
-        for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            self.doc_index += 1
-            if not verify_only:
-                self._migrate_doc(doc)
-            if not skip_verify:
-                self._verify_doc(doc, exit=not verify_only)
 
-        logger.info(f"Processed {self.doc_index} documents")
+        with open(log_path, 'w') as logfile:
+            for doc in with_progress_bar(docs, length=doc_count, oneline=False):
+                doc_index += 1
+                if not verify_only:
+                    self._migrate_doc(doc, logfile)
+                if not skip_verify:
+                    self._verify_doc(doc, logfile, exit=not verify_only)
+                if doc_index % 1000 == 0:
+                    print(f"Diff count: {self.diff_count}")
+
+        print(f"Processed {doc_index} documents")
         if not skip_verify:
-            logger.info(f"Found {self.diff_count} differences")
+            print(f"Found {self.diff_count} differences")
 
-    def _verify_doc(self, doc, exit=True):
+    def _verify_doc(self, doc, logfile, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
             diff = self.get_diff_as_string(doc, obj)
             if diff:
-                logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
+                logfile.write(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}\n")
                 self.diff_count += 1
                 if exit:
-                    sys.exit(1)
+                    raise CommandError(f"Doc verification failed for '{getattr(obj, couch_id_name)}'. Exiting.")
         except self.sql_class().DoesNotExist:
             pass    # ignore, the difference in total object count has already been displayed
 
-    def _migrate_doc(self, doc):
-        logger.info("Looking at {} doc #{} of {} with id {}".format(
-            self.couch_doc_type(),
-            self.doc_index,
-            self.doc_count,
-            doc["_id"]
-        ))
-        with transaction.atomic():
+    def _migrate_doc(self, doc, logfile):
+        with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
-            logger.info("{} model for doc with id {}".format(action, doc["_id"]))
+            logfile.write(f"{action} model for {self.couch_doc_type()} with id {doc['_id']}\n")
+
+    def _get_couch_doc_count_for_domains(self, domains):
+        return sum(
+            get_doc_count_by_domain_type(self.couch_db(), domain, self.couch_doc_type())
+            for domain in domains
+        )
+
+    def _get_sql_doc_count_for_domains(self, domains):
+        return self.sql_class().objects.filter(domain__in=domains).count()
+
+    def _iter_couch_docs_for_domains(self, domains):
+        for domain in domains:
+            print(f"Processing data for domain: {domain}")
+            doc_id_iter = iterate_doc_ids_in_domain_by_type(
+                domain, self.couch_doc_type(), database=self.couch_db()
+            )
+            for doc in iter_docs(self.couch_db(), doc_id_iter):
+                yield doc

@@ -8,6 +8,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.tasks import update_messaging_for_case
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -48,6 +49,8 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
         return domain_rules.by_case_type.get(case_type, [])
 
     def process_change(self, change):
+        if is_couch_change_for_sql_domain(change):
+            return
         try:
             case = CaseAccessors(change.metadata.domain).get_case(change.id)
         except CaseNotFound:

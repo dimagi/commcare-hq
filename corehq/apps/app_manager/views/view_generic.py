@@ -193,6 +193,22 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 'default_file_name': _make_name('case_list_menu_item'),
                 'qualifier': 'case_list-menu_item_',
             })
+            if (module and hasattr(module, 'search_config') and module.uses_media()
+                    and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)):
+                specific_media.extend([
+                    {
+                        'menu_refs': app.get_case_search_label_media(
+                            module, module.search_config.search_label, to_language=lang),
+                        'default_file_name': _make_name('case_search_label_item'),
+                        'qualifier': 'case_search-search_label_media_'
+                    },
+                    {
+                        'menu_refs': app.get_case_search_label_media(
+                            module, module.search_config.search_again_label, to_language=lang),
+                        'default_file_name': _make_name('case_search_again_label_item'),
+                        'qualifier': 'case_search-search_again_label_media_'
+                    }
+                ])
             if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
                     toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
                     toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):

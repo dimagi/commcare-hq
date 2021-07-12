@@ -1,7 +1,7 @@
 from datetime import timedelta
 from operator import eq
 
-from Levenshtein._levenshtein import distance
+from pyphonetics.distance_metrics import levenshtein_distance
 from couchdbkit.ext.django.schema import (
     DecimalProperty,
     ListProperty,
@@ -51,7 +51,7 @@ def le_levenshtein_percent(percent, string1, string2):
     """
     if not 0 <= percent < 1:
         raise ValueError('percent must be greater that or equal to 0 and less than 1')
-    dist = distance(string1, string2)
+    dist = levenshtein_distance(string1, string2)
     max_len = max(len(string1), len(string2))
     return dist / max_len <= percent
 

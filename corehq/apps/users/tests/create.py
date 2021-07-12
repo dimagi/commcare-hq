@@ -4,7 +4,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, SQLUserRole
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
 class CreateTestCase(TestCase):
@@ -86,6 +87,10 @@ class TestDomainMemberships(TestCase):
         cls.webuser2 = WebUser.create('nodomain', w2_username, password, None, None, email=w2_email)
         cls.ccuser = CommCareUser.create(cls.domain, cc_username, password, None, None)
 
+        initialize_domain_with_default_roles(cls.domain)
+        role = SQLUserRole.objects.get(domain=cls.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        cls.field_implementer_role_id = role.get_qualified_id()
+
     def setUp(self):
         # Reload users before each test
         self.webuser = WebUser.get(self.webuser._id)
@@ -105,8 +110,8 @@ class TestDomainMemberships(TestCase):
         self.assertFalse(self.ccuser.has_permission(self.domain, 'view_reports'))
 
     def testNewRole(self):
-        self.webuser.set_role(self.domain, "field-implementer")
-        self.ccuser.set_role(self.domain, "field-implementer")
+        self.webuser.set_role(self.domain, self.field_implementer_role_id)
+        self.ccuser.set_role(self.domain, self.field_implementer_role_id)
         self.webuser.save()
         self.ccuser.save()
         self.setUp()  # reload users to clear CouchUser.role

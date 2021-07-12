@@ -157,7 +157,7 @@ def edit_enterprise_settings(request, domain):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class BaseEnterpriseAdminView(BaseDomainView):
-    section_name = ugettext_lazy("Enterprise Dashboard")
+    section_name = ugettext_lazy("Enterprise Console")
 
     @property
     def section_url(self):

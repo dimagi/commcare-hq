@@ -1,25 +1,28 @@
 import csv
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import chain
 
-import attr
-from couchdbkit.ext.django.loading import get_db
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey
 
-from corehq.apps.domain.utils import get_domain_from_url
-from corehq.apps.users.models import WebUser
-from corehq.util.models import ForeignValue
+import attr
+from couchdbkit.ext.django.loading import get_db
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_datetime
+
+from corehq.apps.domain.utils import get_domain_from_url
+from corehq.apps.users.models import WebUser, Invitation
+from corehq.util.models import ForeignValue
 
 from ..models import AccessAudit, NavigationEventAudit
 
 
 def navigation_events_by_user(user, start_date=None, end_date=None):
     params = {"user": user, "start_date": start_date, "end_date": end_date}
-    where = get_date_range_where(start_date, end_date)
+    sql_start_date = determine_sql_start_date(start_date)
+    where = get_date_range_where(sql_start_date, end_date)
     query = NavigationEventAudit.objects.filter(user=user, **where)
     return chain(
         iter_couch_audit_events(params),
@@ -28,6 +31,9 @@ def navigation_events_by_user(user, start_date=None, end_date=None):
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
+    start_date = string_to_datetime(start_date).replace(tzinfo=None) if start_date else None
+    end_date = string_to_datetime(end_date).replace(tzinfo=None) if end_date else None
+
     for event in navigation_events_by_user(user, start_date, end_date):
         if not domain or domain == event.domain:
             write_log_event(writer, event, override_user)
@@ -42,17 +48,21 @@ def write_log_event(writer, event, override_user=None):
 def get_users_to_export(username, domain):
     if username:
         users = [username]
+        removed_users = []
         super_users = []
     else:
         users = {u.username for u in WebUser.by_domain(domain)}
         super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
+        users_who_accepted_invitations = set(Invitation.objects.filter(is_accepted=True, domain=domain).values_list('email', flat=True))
+        removed_users = users_who_accepted_invitations - users
         super_users = super_users - users
-    return users, super_users
+    return users, removed_users, super_users
 
 
 def get_all_log_events(start_date=None, end_date=None):
     params = {"start_date": start_date, "end_date": end_date}
-    where = get_date_range_where(start_date, end_date)
+    sql_start_date = determine_sql_start_date(start_date)
+    where = get_date_range_where(sql_start_date, end_date)
     return chain(
         iter_couch_audit_events(params),
         AuditWindowQuery(AccessAudit.objects.filter(**where)),
@@ -154,6 +164,27 @@ def iter_couch_audit_events(params, chunksize=10000):
         yield CouchAuditEvent(doc)
 
 
+def get_fixed_start_date_for_sql():
+    # reemove after auditcare migration is done
+    return FIXED_START_DATES.get(settings.SERVER_ENVIRONMENT)
+
+
+FIXED_START_DATES = {
+    'production': datetime(2021, 3, 24, 6, 17, 21, 988840),
+    'india': datetime(2021, 3, 23, 21, 52, 25, 476894),
+    'staging': datetime(2021, 3, 20, 11, 50, 2, 921916),
+    'swiss': datetime(2021, 3, 25, 8, 22, 53, 179334),
+}
+
+
+def determine_sql_start_date(start_date):
+    fixed_start_date = get_fixed_start_date_for_sql()
+    if fixed_start_date and start_date < fixed_start_date:
+        return fixed_start_date
+    else:
+        return start_date
+
+
 def get_sql_start_date():
     """Get the date of the first SQL auditcare record
 
@@ -164,7 +195,12 @@ def get_sql_start_date():
     all auditcare data in Couch will be obsolete and/or archived before
     SQL data. It should be removed when the data in Couch is no longer
     relevant.
+
+    NOTE the output is being hardcoded for the time historical auditcare events are copied to SQL
     """
+    fixed_sql_start = get_fixed_start_date_for_sql()
+    if fixed_sql_start:
+        return fixed_sql_start
     manager = NavigationEventAudit.objects
     row = manager.order_by("event_date").values("event_date")[:1].first()
     return row["event_date"] if row else None

@@ -542,6 +542,9 @@ class ExpressionColumn(BaseReportColumn):
             )
         ])
 
+    def get_query_column_ids(self):
+        raise InvalidQueryColumn(_("Expression Columns do not support group by, sorting, or querying."))
+
 
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)

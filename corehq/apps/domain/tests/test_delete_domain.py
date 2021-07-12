@@ -74,13 +74,15 @@ from corehq.apps.locations.models import (
     SQLLocation,
     make_location,
 )
-from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
-from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.models import (
+    ReportsSidebarOrdering,
+    TableauServer,
+    TableauVisualization,
+)
 from corehq.apps.sms.models import (
     SMS,
     DailyOutboundSMSLimitReached,
@@ -671,21 +673,6 @@ class TestDeleteDomain(TestCase):
         self._assert_location_counts(self.domain.name, 0)
         self._assert_location_counts(self.domain2.name, 1)
 
-    def _assert_mobile_auth_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            SQLMobileAuthKeyRecord.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_mobile_auth(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            record = new_key_record(domain=domain_name, user_id='123')
-            record.save()
-
-        self.domain.delete()
-
-        self._assert_mobile_auth_counts(self.domain.name, 0)
-        self._assert_mobile_auth_counts(self.domain2.name, 1)
-
     def _assert_ota_counts(self, domain_name, count):
         self._assert_queryset_count([
             MobileRecoveryMeasure.objects.filter(domain=domain_name),
@@ -705,12 +692,27 @@ class TestDeleteDomain(TestCase):
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([
-            ReportsSidebarOrdering.objects.filter(domain=domain_name)
+            ReportsSidebarOrdering.objects.filter(domain=domain_name),
+            TableauServer.objects.filter(domain=domain_name),
+            TableauVisualization.objects.filter(domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             ReportsSidebarOrdering.objects.create(domain=domain_name)
+            server = TableauServer.objects.create(
+                domain=domain_name,
+                server_type='server',
+                server_name='my_server',
+                target_site='my_site',
+                domain_username='my_username',
+                allow_domain_username_override=False,
+            )
+            TableauVisualization.objects.create(
+                domain=domain_name,
+                server=server,
+                view_url='my_url',
+            )
             self._assert_reports_counts(domain_name, 1)
 
         self.domain.delete()

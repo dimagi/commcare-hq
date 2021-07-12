@@ -9,10 +9,14 @@ from corehq.apps.app_manager.models import (
     Application,
     AutoSelectCase,
     CaseIndex,
+    CaseSearch,
+    CaseSearchLabel,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
     ReportAppConfig,
-    ReportModule, CaseSearch, CaseSearchProperty, DefaultCaseSearchProperty,
+    ReportModule,
 )
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.userreports.models import ReportConfiguration
@@ -213,7 +217,11 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         self.app = Application.new_app('domain', "Untitled Application")
         self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
         self.case_search_config = CaseSearch(
-            command_label={'en': 'Search Patients Nationally'},
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search Patients Nationally'
+                }
+            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})

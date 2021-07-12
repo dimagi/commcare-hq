@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -7,6 +8,7 @@ from corehq.apps.users.models import (
     SQLUserRole, SQLPermission
 )
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
+from dimagi.utils.couch.migration import sync_to_couch_enabled
 
 
 class UserRoleCouchToSqlTests(TestCase):
@@ -28,9 +30,9 @@ class UserRoleCouchToSqlTests(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        SQLUserRole.objects.all().delete()
-        for role in get_custom_roles_for_domain(self.domain):
-            role.delete()
+        for role in SQLUserRole.objects.get_by_domain(self.domain, include_archived=True):
+            if role.id != self.app_editor_sql.id:
+                role.delete()
         super().tearDown()
 
     def test_sql_role_couch_to_sql(self):
@@ -51,22 +53,46 @@ class UserRoleCouchToSqlTests(TestCase):
         )
         couch_role.save()
 
-        sql_roles = list(SQLUserRole.objects.filter(domain=self.domain).all())
-        self.assertEqual(2, len(sql_roles))
-        sql_role = [role for role in sql_roles if role.name == couch_role.name][0]
-
+        sql_role = SQLUserRole.objects.by_couch_id(couch_role.get_id)
         for field in UserRole._migration_get_fields():
             self.assertEqual(getattr(couch_role, field), getattr(sql_role, field))
 
         # compare json since it gives a nice diff view on failure
         self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
         self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, [
-            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
-        ])
+        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
 
     def test_sync_role_sql_to_couch(self):
-        self.maxDiff = None
+        sql_role = SQLUserRole(
+            domain=self.domain,
+            name="test_sql_to_couch",
+            default_landing_page=ALL_LANDING_PAGES[0].id,
+            is_non_admin_editable=False,
+            upstream_id=self.app_editor_sql.couch_id
+        )
+        sql_role.save(sync_to_couch=False)
+        sql_role.set_permissions([
+            PermissionInfo(Permissions.edit_data.name),
+            PermissionInfo(Permissions.edit_reports.name),
+            PermissionInfo(Permissions.view_reports.name, allow=['corehq.reports.DynamicReportmaster_report_id']),
+            PermissionInfo(Permissions.view_apps.name),
+        ], sync_to_couch=False)
+
+        sql_role.set_assignable_by(list(
+            SQLUserRole.objects.filter(couch_id=self.app_editor.get_id).values_list("id", flat=True)
+        ), sync_to_couch=False)
+
+        # sync the permissions
+        sql_role._migration_do_sync()
+
+        couch_role = UserRole.get(sql_role.couch_id)
+
+        # compare json since it gives a nice diff view on failure
+        self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
+        self.assertEqual(couch_role.permissions, sql_role.permissions)
+        self.assertEqual(couch_role.assignable_by, sql_role.assignable_by)
+
+    def test_sync_role_sql_to_couch_set_permissions(self):
         sql_role = SQLUserRole(
             domain=self.domain,
             name="test_sql_to_couch",
@@ -75,6 +101,9 @@ class UserRoleCouchToSqlTests(TestCase):
             upstream_id=self.app_editor_sql.couch_id
         )
         sql_role.save()
+        couch_role = UserRole.get(sql_role.couch_id)
+        self.assertEqual(couch_role.permissions.to_list(), [])
+
         sql_role.set_permissions([
             PermissionInfo(Permissions.edit_data.name),
             PermissionInfo(Permissions.edit_reports.name),
@@ -82,23 +111,25 @@ class UserRoleCouchToSqlTests(TestCase):
             PermissionInfo(Permissions.view_apps.name),
         ])
 
-        sql_role.set_assignable_by(list(
-            SQLUserRole.objects.filter(couch_id=self.app_editor.get_id).values_list("id", flat=True)
-        ))
+        couch_role2 = UserRole.get(sql_role.couch_id)
+        self.assertDictEqual(couch_role2.permissions.to_json(), sql_role.permissions.to_json())
 
-        # sync the permissions
-        sql_role._migration_do_sync()
+    def test_sync_role_sql_to_couch_assignable_by(self):
+        sql_role = SQLUserRole(
+            domain=self.domain,
+            name="test_sql_to_couch",
+            default_landing_page=ALL_LANDING_PAGES[0].id,
+            is_non_admin_editable=False,
+            upstream_id=self.app_editor_sql.couch_id
+        )
+        sql_role.save()
+        couch_role = UserRole.get(sql_role.couch_id)
+        self.assertEqual(couch_role.assignable_by, [])
 
-        couch_roles = UserRole.by_domain(self.domain)
-        self.assertEqual(len(couch_roles), 2)
-        couch_role = [r for r in couch_roles if r.name == sql_role.name][0]
+        sql_role.set_assignable_by([self.app_editor_sql.id])
 
-        # compare json since it gives a nice diff view on failure
-        self.assertDictEqual(couch_role.permissions.to_json(), sql_role.permissions.to_json())
-        self.assertEqual(couch_role.permissions, sql_role.permissions)
-        self.assertEqual(couch_role.assignable_by, [
-            assignment.assignable_by_role.couch_id for assignment in sql_role.get_assignable_by()
-        ])
+        couch_role2 = UserRole.get(sql_role.couch_id)
+        self.assertEqual(couch_role2.assignable_by, [self.app_editor.get_id])
 
     def test_diff_identical(self):
         couch, sql = self._create_identical_objects_for_diff()
@@ -132,7 +163,7 @@ class UserRoleCouchToSqlTests(TestCase):
         sql_permissions = sql.get_permission_infos()
         sql.set_permissions(sql_permissions + [
             PermissionInfo(Permissions.login_as_all_users.name, allow=PermissionInfo.ALLOW_ALL)
-        ])
+        ], sync_to_couch=False)
         self.assertListEqual(Command.get_filtered_diffs(couch.to_json(), sql), [
             "permissions.edit_reports.allow: couch value None != sql value '*'",
             "permissions.login_as_all_users.allow: couch value None != sql value '*'",
@@ -149,7 +180,7 @@ class UserRoleCouchToSqlTests(TestCase):
 
     def test_diff_assignable_by_sql_None(self):
         couch, sql = self._create_identical_objects_for_diff()
-        sql.set_assignable_by(None)
+        sql.set_assignable_by(None, sync_to_couch=False)
         self.assertListEqual(Command.get_filtered_diffs(couch.to_json(), sql), [
             'assignable_by: 1 in couch != 0 in sql'
         ])
@@ -203,9 +234,58 @@ class UserRoleCouchToSqlTests(TestCase):
             is_non_admin_editable=False,
             upstream_id=self.app_editor.get_id
         )
-        sql_role.set_permissions(permissions.to_list())
-        sql_role.set_assignable_by([self.app_editor_sql.id])
+        sql_role.set_permissions(permissions.to_list(), sync_to_couch=False)
+        sql_role.set_assignable_by([self.app_editor_sql.id], sync_to_couch=False)
         return couch_role, sql_role
+
+
+class TestPopulateCommand(TestCase):
+    domain = 'test-populate-sql-roles'
+
+    @classmethod
+    def setUpClass(cls):
+        role1 = UserRole.create(
+            cls.domain,
+            UserRolePresets.APP_EDITOR,
+            permissions=UserRolePresets.get_permissions(UserRolePresets.APP_EDITOR),
+        )
+        cls.roles = [
+            role1,
+            UserRole.create(
+                cls.domain,
+                UserRolePresets.FIELD_IMPLEMENTER,
+                permissions=UserRolePresets.get_permissions(UserRolePresets.FIELD_IMPLEMENTER),
+                assignable_by=[role1.get_id]
+            )
+        ]
+        cls.roles_by_id = {role._id: role for role in cls.roles}
+        SQLUserRole.objects.filter(domain=cls.domain).delete()
+
+    @classmethod
+    def tearDownClass(cls):
+        for role in UserRole.by_domain(cls.domain):
+            role.delete()
+
+    def test_command(self):
+        self.assertTrue(sync_to_couch_enabled(SQLUserRole))
+        call_command("populate_user_role")
+        self.assertTrue(sync_to_couch_enabled(SQLUserRole))
+        couch_roles = UserRole.by_domain(self.domain)
+        self.assertEqual(len(couch_roles), len(self.roles))
+        for role in couch_roles:
+            pre_migration_role = self.roles_by_id[role._id]
+            self.assertEqual(role.permissions.to_list(), pre_migration_role.permissions.to_list())
+            self.assertEqual(role.assignable_by, pre_migration_role.assignable_by)
+
+        sql_roles = SQLUserRole.objects.filter(domain=self.domain).all()
+        self.assertEqual(len(sql_roles), len(self.roles))
+        for role in sql_roles:
+            pre_migration_role = self.roles_by_id[role.couch_id]
+            self.assertEqual(role.permissions.to_list(), pre_migration_role.permissions.to_list())
+            assignment = [
+                assignment.assignable_by_role.couch_id for assignment in role.get_assignable_by()
+            ]
+            self.assertEqual(assignment, pre_migration_role.assignable_by)
 
 
 def make_couch_role(domain, name, **kwargs):

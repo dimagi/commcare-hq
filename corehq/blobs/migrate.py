@@ -302,7 +302,7 @@ class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
         self.total_blobs += 1
         if not self.db.new_db.exists(key=meta.key):
             try:
-                content = self.db.old_db.get(key=meta.key)
+                content = self.db.old_db.get(key=meta.key, type_code=CODES.maybe_compressed)
             except NotFound:
                 self.save_backup(doc)
             else:

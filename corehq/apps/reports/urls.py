@@ -120,7 +120,7 @@ urlpatterns = [
     # once off email
     url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", email_report, kwargs=dict(once=True), name='email_report'),
     url(r"^custom/email_onceoff/(?P<report_slug>[\w_]+)/$", email_report,
-        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix, once=True), name='email_onceoff'),
+        kwargs=dict(dispatcher_class=CustomProjectReportDispatcher, once=True), name='email_onceoff'),
 
     # Saved reports
     url(r"^configs$", AddSavedReportConfigView.as_view(), name=AddSavedReportConfigView.name),

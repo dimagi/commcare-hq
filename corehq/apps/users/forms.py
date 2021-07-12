@@ -39,7 +39,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, UserRole
+from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
@@ -1209,9 +1209,9 @@ class UserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
+        roles = SQLUserRole.objects.get_by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles
+            (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
@@ -1272,8 +1272,9 @@ class UserFilterForm(forms.Form):
         if not role_id:
             return None
 
-        role = UserRole.get(role_id)
-        if not role.domain == self.domain:
+        try:
+            SQLUserRole.objects.by_couch_id(role_id, domain=self.domain)
+        except SQLUserRole.DoesNotExist:
             raise forms.ValidationError(_("Invalid Role"))
         return role_id
 

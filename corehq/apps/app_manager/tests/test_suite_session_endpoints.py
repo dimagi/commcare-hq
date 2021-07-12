@@ -45,6 +45,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -64,10 +65,11 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 <endpoint id="my_form">
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m0-f0'"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m0-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -90,11 +92,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m1-f0'"/>
-                        <datum id="parent_id" value="$parent_id"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -117,6 +121,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 <endpoint id="my_form">
                     <stack>
                         <push>
+                            <command value="'m0'"/>
                             <command value="'m0-f0'"/>
                         </push>
                     </stack>
@@ -125,11 +130,13 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
-                    <push>
-                        <command value="'m1-f0'"/>
-                        <datum id="parent_id" value="$parent_id"/>
-                        <datum id="case_id" value="$case_id"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'m1-f0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -138,16 +145,16 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             "./endpoint",
         )
 
-    def test_case_list_session_endpoint_id(self):
+    def test_module_session_endpoint_id(self):
         self.module.session_endpoint_id = 'my_case_list'
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_case_list">
                     <stack>
-                    <push>
-                        <command value="'m0-case-list'"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>
@@ -157,15 +164,16 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_child_module_session_endpoint_id(self):
-        self.child_module.session_endpoint_id = 'my_case_list'
+        self.child_module.session_endpoint_id = 'my_child_module'
         self.assertXmlPartialEqual(
             """
             <partial>
-                <endpoint id="my_case_list">
+                <endpoint id="my_child_module">
                     <stack>
-                    <push>
-                        <command value="'m1-case-list'"/>
-                    </push>
+                        <push>
+                            <command value="'m0'"/>
+                            <command value="'m1'"/>
+                        </push>
                     </stack>
                 </endpoint>
             </partial>

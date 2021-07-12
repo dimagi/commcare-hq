@@ -16,6 +16,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
@@ -152,6 +153,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     kafka_change_feed = KafkaChangeFeed(
         topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
@@ -203,6 +205,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
@@ -225,7 +228,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
-            doc_filter_fn=report_xform_filter
+            doc_filter_fn=report_xform_filter,
+            change_filter_fn=is_couch_change_for_sql_domain
         )
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:

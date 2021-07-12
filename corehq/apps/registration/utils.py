@@ -9,7 +9,7 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
-from corehq.apps.users.role_utils import init_domain_with_presets
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -38,7 +38,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
-from corehq.apps.users.models import CouchUser, UserRole, WebUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
@@ -146,7 +146,7 @@ def request_new_domain(request, project_name, is_new_user=True):
     if not settings.ENTERPRISE_MODE:
         _setup_subscription(new_domain.name, current_user)
 
-    init_domain_with_presets(new_domain.name)
+    initialize_domain_with_default_roles(new_domain.name)
 
     if request.user.is_authenticated:
         if not current_user:

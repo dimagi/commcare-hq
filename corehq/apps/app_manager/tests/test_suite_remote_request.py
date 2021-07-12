@@ -6,14 +6,20 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
+    CaseSearchAgainLabel,
+    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
     Itemset,
     Module,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSION
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSION,
+)
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RESULTS_INSTANCE,
+)
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -75,7 +81,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ))
         )
         self.module.search_config = CaseSearch(
-            command_label={'en': 'Search Patients Nationally'},
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search Patients Nationally'
+                }
+            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
@@ -97,6 +107,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 ),
             ],
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+        # reset to newly wrapped module
+        self.module = self.app.modules[0]
 
     def test_search_config_model(self, *args):
         config = CaseSearch()
@@ -167,8 +182,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
-            command_label={'en': 'Advanced Search'},
-            again_label={'en': 'Search One More Time'},
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Advanced Search'
+                }
+            ),
+            search_again_label=CaseSearchAgainLabel(
+                label={
+                    'en': 'Search One More Time'
+                }
+            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
@@ -181,6 +204,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         advanced_module_custom = self.app.add_module(AdvancedModule.new_module("advanced with custom_xml", None))
         advanced_module_custom.search_config = search_config
         advanced_module_custom.case_details.short.custom_xml = "<detail id='m3_case_short'></detail>"
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
@@ -270,6 +296,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 ),
             ],
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
@@ -282,6 +312,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
             blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()

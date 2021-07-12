@@ -4,21 +4,26 @@ import logging
 from contextlib import contextmanager
 
 from django.conf import settings
+from django.test import SimpleTestCase
 
 import pytz
 from mock import patch
 from nose.tools import assert_raises_regexp
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.auth import AuthManager
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
+    get_openmrs_patients,
     import_patients_with_importer,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.views import ConnectionSettingsListView
 from corehq.util.view_utils import absolute_reverse
 
@@ -226,6 +231,79 @@ def test_get_importer_timezone(get_timezone_for_domain_mock):
         importer.timezone = "Africa/Maputo"
         timezone = importer.get_timezone()
         assert timezone == cat
+
+
+class TestTimeout(SimpleTestCase):
+
+    def setUp(self):
+        self.no_auth = AuthManager()
+
+    def test_timeout(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = ReadTimeout
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            with self.assertRaises(ReadTimeout):
+                get_openmrs_patients(requests, importer)
+            self.assertEqual(request_get.call_count, 4)
+
+    def test_connection(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = ConnectTimeout
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            with self.assertRaises(ConnectTimeout):
+                get_openmrs_patients(requests, importer)
+            self.assertEqual(request_get.call_count, 1)
+
+    def test_success(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = [
+                ReadTimeout,
+                ReadTimeout,
+                ReadTimeout,
+                Response(),
+            ]
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            rows = get_openmrs_patients(requests, importer)
+            self.assertEqual(rows, [
+                {u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
+                {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3},
+            ])
+
+
+class Importer:
+    report_uuid = 'abc123'
+    report_params = {'foo': 'bar'}
+
+
+class Response:
+    data = {'dataSets': [{'rows': [
+        {u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
+        {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3},
+    ]}]}
+
+    def json(self):
+        return self.data
 
 
 class OwnerTests(LocationHierarchyTestCase):

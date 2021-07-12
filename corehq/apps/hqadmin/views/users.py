@@ -92,21 +92,21 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['users']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-
-            changed_fields = []
+            changed_field_logs = []
             for user in users:
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    changed_fields.append('is_superuser')
+                    changed_field_logs.append(_(f"is_superuser to {is_superuser}"))
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    changed_fields.append('is_staff')
+                    changed_field_logs.append(_(f"is_staff to {is_staff}"))
 
-                if changed_fields:
+                if changed_field_logs:
                     user.save()
-                    log_model_change(self.request.user, user, fields_changed=changed_fields)
+                    log_message = _("Changed: ") + _(", ").join(changed_field_logs)
+                    log_model_change(self.request.user, user, message=log_message)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)

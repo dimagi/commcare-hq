@@ -5,7 +5,9 @@ from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser, WebUser, Permissions, UserRole
+from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.util.test_utils import generate_cases
 
@@ -76,3 +78,76 @@ def test_check_usernames_for_invalid_characters(self, username, error):
     })
     content = json.loads(resp.content)
     self.assertIs('error' in content, error)
+
+
+class TestUpdateRoleFromView(TestCase):
+    domain = "test_update_role"
+
+    BASE_JSON = {
+        'domain': domain,
+        'name': None,
+        'default_landing_page': 'webapps',
+        'is_non_admin_editable': False,
+        'is_archived': False,
+        'upstream_id': None,
+        'permissions': Permissions(edit_web_users=True).to_json(),
+        'assignable_by': []
+    }
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.role = SQLUserRole(
+            domain=cls.domain,
+            name="role1",
+        )
+        cls.role.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.role.delete()
+        super().tearDownClass()
+
+    def tearDown(self):
+        for role in SQLUserRole.objects.all():
+            if role.id != self.role.id:
+                role.delete()
+
+    def test_create_role(self):
+        role_data = self.BASE_JSON.copy()
+        role_data["name"] = "role1"
+        role_data["assignable_by"] = [self.role.couch_id]
+        role = _update_role_from_view(self.domain, role_data)
+        self.assertEqual(role.name, "role1")
+        self.assertEqual(role.default_landing_page, "webapps")
+        self.assertFalse(role.is_non_admin_editable)
+        self.assertEqual(role.assignable_by, [self.role.couch_id])
+        self.assertEqual(role.permissions.to_json(), role_data['permissions'])
+
+        couch_role = UserRole.get(role.couch_id)
+        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
+        self.assertEqual(couch_role.assignable_by, [self.role.couch_id])
+
+    def test_update_role(self):
+        self.test_create_role()
+
+        role_data = self.BASE_JSON.copy()
+        role_data["name"] = "role2"
+        role_data["default_landing_page"] = None
+        role_data["is_non_admin_editable"] = True
+        role_data["permissions"] = Permissions(edit_reports=True, view_report_list=["report1"]).to_json()
+        role = _update_role_from_view(self.domain, role_data)
+        self.assertEqual(role.name, "role2")
+        self.assertIsNone(role.default_landing_page)
+        self.assertTrue(role.is_non_admin_editable)
+        self.assertEqual(role.assignable_by, [])
+        self.assertEqual(role.permissions.to_json(), role_data['permissions'])
+
+        couch_role = UserRole.get(role.couch_id)
+        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
+        self.assertEqual(couch_role.assignable_by, [])
+
+    def test_landing_page_validation(self):
+        role_data = self.BASE_JSON.copy()
+        role_data["default_landing_page"] = "bad value"
+        with self.assertRaises(ValueError):
+            _update_role_from_view(self.domain, role_data)

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -341,6 +342,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         # break up changes by domain
         changes_by_domain = defaultdict(list)
         for change in changes:
+            if is_couch_change_for_sql_domain(change):
+                continue
             # skip if no domain or no UCR tables in the domain
             if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
                 changes_by_domain[change.metadata.domain].append(change)

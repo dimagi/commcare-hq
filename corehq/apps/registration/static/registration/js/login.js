@@ -22,11 +22,17 @@ hqDefine('registration/js/login', [
 
         // populate username field if set in the query string
         var urlParams = new URLSearchParams(window.location.search);
+        var isSessionExpiration = initialPageData.get('is_session_expiration');
+
         var username = urlParams.get('username');
-        if (username) {
-            var usernameElt = document.getElementById('id_auth-username');
-            if (usernameElt) {
-                usernameElt.value = username;
+        var usernameElt = document.getElementById('id_auth-username');
+        if (username && usernameElt) {
+            if (isSessionExpiration && username.endsWith("commcarehq.org")) {
+                username = username.split("@")[0];
+            }
+            usernameElt.value = username;
+            if (isSessionExpiration) {
+                usernameElt.readOnly = true;
             }
         }
 
@@ -36,6 +42,7 @@ hqDefine('registration/js/login', [
                 initialUsername: $('#id_auth-username').val(),
                 passwordField: $passwordField,
                 passwordFormGroup: $passwordField.closest('.form-group'),
+                nextUrl: urlParams.get('next'),
             });
             $('#user-login-form').koApplyBindings(loginController);
             loginController.init();

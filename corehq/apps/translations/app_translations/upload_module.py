@@ -30,7 +30,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = None
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
-        self.search_command_label = None
+        self.search_label = None
         self.search_again_label = None
         self.tab_headers = None
 
@@ -88,13 +88,11 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if self.case_list_menu_item_label:
             self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
 
-        if self.search_command_label:
-            self._update_translation(self.search_command_label, self.module.search_config.command_label)
-            self.module.search_config.search_label.label = self.module.search_config.command_label
+        if self.search_label:
+            self._update_translation(self.search_label, self.module.search_config.search_label.label)
 
         if self.search_again_label:
-            self._update_translation(self.search_again_label, self.module.search_config.again_label)
-            self.module.search_config.search_again_label.label = self.module.search_config.again_label
+            self._update_translation(self.search_again_label, self.module.search_config.search_again_label.label)
 
         self._update_case_search_labels(rows)
 
@@ -197,7 +195,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = []
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
-        self.search_command_label = None
+        self.search_label = None
         self.search_again_label = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
@@ -250,8 +248,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self.case_list_menu_item_label = row
 
             # It's a case search label. Don't add it to condensed rows
-            elif row['case_property'] == 'search_command_label':
-                self.search_command_label = row
+            elif row['case_property'] == 'search_label':
+                self.search_label = row
             elif row['case_property'] == 'search_again_label':
                 self.search_again_label = row
 

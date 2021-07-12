@@ -1074,8 +1074,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -1667,8 +1669,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -2356,8 +2360,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []
@@ -2908,8 +2914,10 @@
         "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
         "include_closed": false,
         "default_properties": [],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": []

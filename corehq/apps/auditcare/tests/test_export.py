@@ -73,6 +73,31 @@ class TestNavigationEventsQueries(AuditcareTest):
                 session_key='abc123',
                 user_agent='Mozilla/5.0',
             ),
+            save_couch_doc(
+                "NavigationEventAudit",
+                cls.username,
+                event_date=event_date,
+                description='User Name',
+                extra={},
+                headers={
+                    'REQUEST_METHOD': 'GET',
+                    'QUERY_STRING': 'version=2.0&since=...',
+                    'HTTP_CONNECTION': 'close',
+                    'HTTP_COOKIE': 'sessionid=abc123',
+                    'SERVER_NAME': '0.0.0.0',
+                    'SERVER_PORT': '9010',
+                    'HTTP_ACCEPT': 'application/json, application/*+json, */*',
+                    'REMOTE_ADDR': '10.2.10.60',
+                    'HTTP_ACCEPT_ENCODING': 'gzip'
+                },
+                ip_address='10.1.2.3',
+                request_path='/a/delmar/phone/restore/?version=2.0&since=...',
+                session_key='abc123',
+                status_code=200,
+                user_agent='okhttp/4.4.1',
+                view_kwargs={'domain': 'delmar'},
+                view='corehq.apps.ota.views.restore',
+            )
         ]
 
         def iter_events(model, username, **kw):
@@ -98,8 +123,9 @@ class TestNavigationEventsQueries(AuditcareTest):
     def test_navigation_events_query(self):
         events = list(navigation_events_by_user(self.username))
         self.assertEqual({e.user for e in events}, {self.username})
-        self.assertEqual([e.event_date for e in events], self.event_dates)
-        self.assertEqual(len(events), 28)
+        expected_dates = [datetime(2021, 2, 1, 2, 0)] + self.event_dates
+        self.assertEqual([e.event_date for e in events], expected_dates)
+        self.assertEqual(len(events), 29)
 
     def test_navigation_events_date_range_query(self):
         start = datetime(2021, 2, 5)
@@ -108,6 +134,17 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual({e.user for e in events}, {self.username})
         self.assertEqual({e.event_date for e in events}, set(self.event_dates[4:15]))
         self.assertEqual(len(events), 11)
+
+    @patch('corehq.apps.auditcare.utils.export.get_fixed_start_date_for_sql', return_value=datetime(2021, 2, 3))
+    def test_navigation_events_querying_couch_and_sql(self, mock):
+        couch_event_date = datetime(2021, 2, 1, 2)
+        start = datetime(2021, 1, 31)
+        end = datetime(2021, 2, 5)
+        events = list(navigation_events_by_user(self.username, start, end))
+        self.assertEqual({e.user for e in events}, {self.username})
+        expected_event_dates = set(self.event_dates[2:5] + [couch_event_date])
+        self.assertEqual({e.event_date for e in events}, expected_event_dates)
+        self.assertEqual(len(events), 4)
 
     def test_recent_all_log_events_query(self):
         start = datetime(2021, 2, 4)
@@ -133,7 +170,7 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual({e.user for e in events}, {self.username, "other@test.com", "couch@test.com"})
         self.assertEqual({e.doc_type for e in events}, {"AccessAudit", "NavigationEventAudit"})
         self.assertEqual({e.event_date for e in events}, {datetime(2021, 2, 1, 2), datetime(2021, 2, 1, 3)})
-        self.assertEqual(len(events), 6)
+        self.assertEqual(len(events), 7)
 
     def test_write_export_from_all_log_events(self):
         def unpack(row):
@@ -146,10 +183,10 @@ class TestNavigationEventsQueries(AuditcareTest):
                 write_export_from_all_log_events(csvfile, start=start, end=end)
             with open(filename, encoding="utf-8") as fh:
                 def key(row):
-                    return row["Date"], row["Type"]
+                    return row["Date"], row["Type"], row["User"]
                 rows = DictReader(fh)
                 items = sorted([unpack(r) for r in rows], key=key)
-                self.assertEqual(items, [
+                expected_items = [
                     {
                         'Date': '2021-02-01 02:00:00',
                         'Type': 'AccessAudit',
@@ -161,6 +198,12 @@ class TestNavigationEventsQueries(AuditcareTest):
                         'Type': 'NavigationEventAudit',
                         'User': 'couch@test.com',
                         'Description': 'User Name',
+                    },
+                    {
+                        'Date': '2021-02-01 02:00:00',
+                        'Type': 'NavigationEventAudit',
+                        'User': 'test@test.com',
+                        'Description': 'User Name'
                     },
                     {
                         'Date': '2021-02-01 03:00:00',
@@ -186,7 +229,8 @@ class TestNavigationEventsQueries(AuditcareTest):
                         'User': 'test@test.com',
                         'Description': 'test@test.com',
                     },
-                ])
+                ]
+                self.assertEqual(items, expected_items)
 
     def test_query_window_size(self):
         # NOTE small window size ensures multiple queries per event date
@@ -195,7 +239,7 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual(len(events), 100)
 
     def test_related_query_error(self):
-        event = next(iter(navigation_events_by_user(self.username)))
+        event = next(iter(navigation_events_by_user('other@test.com')))
         keys = get_foreign_names(NavigationEventAudit)
         self.assertIn("user_agent", keys)
         self.assertIn("user_agent_fk", keys)
