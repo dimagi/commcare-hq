@@ -14,11 +14,12 @@ from corehq.apps.reports.models import TableauServer, TableauVisualization
 
 
 def get_tableau_visualizaton(domain):
-    visualizaton, created = TableauVisualization.objects.get_or_create(domain=domain)
+    server, created = TableauServer.objects.get_or_create(domain=domain)
+    visualizaton, created = TableauVisualization.objects.get_or_create(domain=domain, server=server)
     return {
         'domain': domain,
-        'server': visualizaton.server,
-        'view_url': visualizaton.server,
+        'server': server,
+        'view_url': visualizaton.view_url,
     }
 
 

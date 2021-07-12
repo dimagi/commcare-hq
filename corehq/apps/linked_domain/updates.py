@@ -330,7 +330,7 @@ def update_tableau_server(domain_link):
 
     model.domain = domain_link.linked_domain
     model.server_type = master_results['server_type']
-    model.server_name = master_results['serer_name']
+    model.server_name = master_results['server_name']
     model.validate_hostname = master_results['validate_hostname']
     model.target_site = master_results['target_site']
     model.domain_username = master_results['domain_username']
