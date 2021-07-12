@@ -181,12 +181,15 @@ def claim(request, domain):
 @require_POST
 @check_domain_migration
 def claim_all(request, domain):
-    username = request.POST.get("username")     # username may or may not be fully qualified
-    username = format_username(raw_username(username), domain)
-    user_id = username_to_user_id(username)
+    username = request.POST.get("username")     # username may be web user or unqualified mobile username
+    user = CouchUser.get_by_username(username)
+    if not user:
+        username = format_username(username, domain)
+        user = CouchUser.get_by_username(username)
 
-    if not user_id:
-        return HttpResponse(_('Could not find user "{}"').format(user_id), status=500)
+    if not user:
+        return HttpResponse(_('Could not find user "{}".').format(username), status=500)
+    user_id = user._id
 
     for case_id in request.POST.getlist("case_ids[]"):
         try:
