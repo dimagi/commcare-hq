@@ -257,3 +257,29 @@ def get_demo(request):
             'is_demo_visible': True,
         })
     return context
+
+
+def hubspot_js(request):
+    """
+    This provides context as to whether a particular page is allowed to load
+    any Hubspot javascript even when Hubspot analytics is supported by the
+    environment. This is done to ensure that no accidental Hubspot popups and
+    scripts are executed on projects that have explicitly asked to be excluded
+    from Hubspot analytics.
+    """
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return {
+            'is_hubspot_js_allowed': False,
+        }
+
+    is_hubspot_js_allowed = True
+    if hasattr(request, 'subscription'):
+        try:
+            account = request.subscription.account
+            is_hubspot_js_allowed = not account.block_hubspot_data_for_all_users
+        except BillingAccount.DoesNotExist:
+            pass
+
+    return {
+        'is_hubspot_js_allowed': is_hubspot_js_allowed,
+    }

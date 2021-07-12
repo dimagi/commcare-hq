@@ -38,7 +38,7 @@
         <nav class="navbar-menus navbar-signin" role="navigation">
           <div class="nav-settings-bar pull-right">
             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and is_hubspot_js_allowed %}
               <a href="#cta-form-get-demo"
                  data-toggle="modal"
                  id="cta-form-get-demo-button-header"
