@@ -289,10 +289,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
     @property
     def page_context(self):
-        is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-            and is_request_using_sso(self.request)
-        )
+        is_using_sso = is_request_using_sso(self.request)
         idp_name = None
         if is_using_sso:
             idp = IdentityProvider.get_active_identity_provider_by_username(
@@ -326,8 +323,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 
     @property
     def page_context(self):
-        if not (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and is_request_using_sso(self.request)):
+        if not is_request_using_sso(self.request):
             return {}
 
         idp = IdentityProvider.get_active_identity_provider_by_username(
