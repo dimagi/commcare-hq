@@ -155,7 +155,7 @@
               <textarea class="form-control vertical-resize"
                        id="search-display-condition"
                        spellcheck="false"
-                       data-bind="value: searchButtonDisplayCondition"
+                       data-bind="value: searchButtonDisplayCondition, xpathValidator: {text: searchButtonDisplayCondition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
               ></textarea>
             </div>
           </div>
@@ -167,7 +167,7 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchFilter"
+              <textarea data-bind="value: searchFilter, xpathValidator: {text: searchFilter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="search-filter"
                         spellcheck="false"
@@ -190,7 +190,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchAdditionalRelevant"
+              <textarea data-bind="value: searchAdditionalRelevant, xpathValidator: {text: searchAdditionalRelevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -215,7 +215,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: blacklistedOwnerIdsExpression"
+              <textarea data-bind="value: blacklistedOwnerIdsExpression, xpathValidator: {text: blacklistedOwnerIdsExpression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="blacklisted-user-ids"
                         spellcheck="false"
@@ -227,6 +227,11 @@
               </p>
             </div>
           </div>
+          <span class="hide" id="searchFilterXpathErrorHtml">
+            {% blocktrans %}
+              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
+            {% endblocktrans %}
+            </span>
         </div>
       </div>
     </div>
