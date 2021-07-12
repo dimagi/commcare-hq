@@ -59,7 +59,6 @@ branches:
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
@@ -69,23 +68,26 @@ branches:
     - rn_disallow_yui_cors # Rohit Negi
     - mk/user-history/base # MK June 21 [QA]
     - mk/user-history/ui-role-update-fix # MK July 8 [QA]
-    - mk/user-history/improvements # MK July 9
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
-    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
     - sr/fup-form  # Sravan July 1
     - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
     - gh/split-toggles-and-previews # Graham July 1 [QA]
     - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
-    - cs/SC-691-add-support-for-geolocation+cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl July 8
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
-    - smh/tableau-username-override # Steph July 6
     - ce/bulk-case-search # Cal July 6
     - bmb/sso-session-timeout-fix  # Biyeun July 8 [QA]
     - ap/auditcare-migration # Amit July 8
     - bmb/sso-superusers-fix  # Biyeun July 8 [QA]
     - rc/explain-before-entering # Robert July 8 [QA]
+    - ap/fix-location-restriction-bug # Amit July 9
+    - revert-30036-revert-30004-sr/default-filters # Sravan July 12
+    - rp/enterprize-sms-report # Rynhard July 12
+    - bmb/sso-accept-invite-tests  # Biyeun July 12
+    - bmb/hubspot-privacy  # Biyeun July 12
+    - smh/tableau-viz-js-update # Steph July 12
+    - jls/smart-linking-login-as # Jenny July 12
 submodules: { }
