@@ -325,9 +325,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             created_via=None,
             email='webuser@example.com',
         )
-        self.addCleanup(ccuser_1.delete, deleted_by=None)
-        self.addCleanup(ccuser_2.delete, deleted_by=None)
-        self.addCleanup(web_user.delete, deleted_by=None)
+        self.addCleanup(ccuser_1.delete, self.domain_name, deleted_by=None)
+        self.addCleanup(ccuser_2.delete, self.domain_name, deleted_by=None)
+        self.addCleanup(web_user.delete, self.domain_name, deleted_by=None)
 
         self._dump_and_load(expected_object_counts)
 
@@ -383,7 +383,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
 
         with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
@@ -411,7 +411,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid=user_id
         )
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
 
         DemoUserRestore(
             demo_user_id=user_id,
