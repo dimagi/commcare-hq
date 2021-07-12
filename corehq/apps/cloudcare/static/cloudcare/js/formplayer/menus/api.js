@@ -154,11 +154,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     deferred.resolve(menuResponse);
                 }).fail(function () {
                     deferred.reject();
+                    // Just go home. Error message will be displayed by the error handler in queryFormplayer.
                     FormplayerFrontend.trigger('navigateHome');
                 });
             },
-            error: function () {
+            error: function (xhr) {
                 deferred.reject();
+                FormplayerFrontend.trigger('showError', xhr.responseText);
                 FormplayerFrontend.trigger('navigateHome');
             },
         });
