@@ -71,9 +71,9 @@ def find_missing_form_repeat_records(startdate, enddate, domains, should_create=
                 }
 
                 logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
-                             f'{rounded_time}. This accounts for {pct_missing} of all repeat records in the '
-                             f'specified date range.'
-                             )
+                            f'{rounded_time}. This accounts for {pct_missing} of all repeat records in the '
+                            f'specified date range.'
+                            )
 
             if index + 1 % 10 == 0:
                 logger.info(f"{(index + 1)}/{len(domains)} domains complete.")
