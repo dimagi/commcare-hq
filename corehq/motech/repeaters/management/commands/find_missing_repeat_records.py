@@ -153,9 +153,9 @@ def find_missing_case_repeat_records(startdate, enddate, domains, should_create=
                 pct_missing = f'{round((number_of_records_missing / number_of_records_expected) * 100, 2)}%'
                 rounded_time = f'{round(time_to_run, 0)} seconds'
                 logger.info(f'{domain} complete. Found {number_of_records_missing}" missing case repeat records '
-                             f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
-                             f'the specified date range'
-                             )
+                            f'in {rounded_time}. This accounts for {pct_missing} of all case repeat records in '
+                            f'the specified date range'
+                            )
             else:
                 logger.info(f"Found 0 missing case repeat records in {domain}.")
             if index + 1 % 10 == 0:
@@ -313,9 +313,9 @@ def find_missing_location_repeat_records(startdate, enddate, domains, should_cre
             }
 
             logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
-                         f'{rounded_time}. Due to limitations with locations, we only looked for missing repeat '
-                         f'records for newly created locations, not recently modified.'
-                         )
+                        f'{rounded_time}. Due to limitations with locations, we only looked for missing repeat '
+                        f'records for newly created locations, not recently modified.'
+                        )
 
         if index + 1 % 5 == 0:
             logger.info(f"{(index+1)}/{len(domains)} domains complete.")
@@ -350,9 +350,9 @@ def find_missing_user_repeat_records(startdate, enddate, domains, should_create)
             }
 
             logger.info(f'{domain} complete. Found {total_missing_count}" missing repeat records in '
-                         f'{rounded_time}. Due to limitations with users, we only looked for missing repeat '
-                         f'records for newly created users, not recently modified.'
-                         )
+                        f'{rounded_time}. Due to limitations with users, we only looked for missing repeat '
+                        f'records for newly created users, not recently modified.'
+                        )
 
         if index + 1 % 5 == 0:
             logger.info(f"{(index+1)}/{len(domains)} domains complete.")
@@ -423,7 +423,8 @@ def get_transaction_date(transaction):
 
 
 def get_form_repeaters_in_domain(domain):
-    return get_repeaters_for_type_in_domain(domain, (FormRepeater, ShortFormRepeater))
+    form_repeater_classes = (FormRepeater, ShortFormRepeater, OpenmrsRepeater, Dhis2EntityRepeater)
+    return get_repeaters_for_type_in_domain(domain, form_repeater_classes)
 
 
 def get_case_repeaters_in_domain(domain):
