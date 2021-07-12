@@ -12,4 +12,4 @@ class EnterpriseReportDispatcher(ReportDispatcher):
     @method_decorator(login_and_domain_required)
     @method_decorator(require_enterprise_admin)
     def dispatch(self, request, *args, **kwargs):
-        return super(EnterpriseReportDispatcher, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
