@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, JsonResponse
@@ -161,7 +162,8 @@ class UserInvitationView(object):
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
-                if CouchUser.get_by_username(invitation.email):
+                if (CouchUser.get_by_username(invitation.email)
+                        or User.objects.filter(username__iexact=invitation.email).count() > 0):
                     login_url = reverse("login")
                     accept_invitation_url = reverse(
                         'domain_accept_invitation',
