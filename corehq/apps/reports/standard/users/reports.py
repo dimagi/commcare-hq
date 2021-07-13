@@ -1,6 +1,7 @@
 import json
 
 from django.db.models import Q
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -126,9 +127,36 @@ def _user_history_row(record, timezone):
         _get_action_display(record.action),
         record.details['changed_via'],
         record.message,
-        json.dumps(record.details['changes']),
+        _details_cell(record.details['changes']),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
+
+
+def _details_cell(changes):
+    primary_properties = [
+        "email",
+        "domain",
+        "is_active",
+        "language",
+        "username",
+        "phone_numbers",
+        "two_factor_auth_disabled_until",
+    ]
+    primary_changes = {key: value for key, value in changes.items() if key in primary_properties}
+    more_count = len(changes) - len(primary_changes)
+    if more_count == 0:
+        return json.dumps(primary_changes)
+
+    return format_html("""
+            <div>
+              <div>{}</div>
+              <a class="see-all-link">{}</a>
+              <div class="hide">{}</div>
+            </div>
+        """, json.dumps(primary_changes) if primary_changes else "",
+        _("See {} more").format(more_count),
+        json.dumps(changes)
+    )
 
 
 def _get_action_display(logged_action):
