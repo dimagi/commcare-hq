@@ -45,8 +45,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     @property
     def headers(self):
         h = [
-            DataTablesColumn(_("User")),
-            DataTablesColumn(_("By User")),
+            DataTablesColumn(_("Affected User")),
+            DataTablesColumn(_("Modified by User")),
             DataTablesColumn(_("Action")),
             DataTablesColumn(_("Via")),
             DataTablesColumn(_("Change Message")),
