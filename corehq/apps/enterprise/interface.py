@@ -157,7 +157,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
             date_span = DateSpan(
                 DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
             )
-            selected_billables = SmsBillable.filter_selected_billables_date(selected_billables, date_span)
+            selected_billables = SmsBillable.filter_selected_billables_by_date(selected_billables, date_span)
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)
         if show_billables:
