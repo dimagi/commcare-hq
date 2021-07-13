@@ -81,9 +81,9 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     api
-    fhir
+    fhir/index
     openmrs
-    motech
+    value_source
 
 .. toctree::
     :caption: UI and Front End
