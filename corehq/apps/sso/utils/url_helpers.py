@@ -16,8 +16,8 @@ def get_saml_login_url(identity_provider):
 
 
 def get_documentation_url(identity_provider):
-    # todo update documentation URL (will change depending on IdP)
-    return '#'
+    # todo we are only supporting docs for Azure AD here. OneLogin, etc to come later
+    return 'https://confluence.dimagi.com/display/commcarepublic/Set+up+SSO+for+CommCare+HQ'
 
 
 def get_dashboard_link(identity_provider):
