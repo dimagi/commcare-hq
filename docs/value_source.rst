@@ -1,5 +1,5 @@
-Getting Values From CommCare
-============================
+How Data Mapping Works
+======================
 
 DHIS2-, OpenMRS- and FHIR Integration all use the ValueSource class to
 map CommCare data to API resources.

@@ -1,13 +1,6 @@
 CommCare FHIR Integration
 =========================
 
-.. contents::
-   :local:
-   fhir_repeater
-   fhir_import_config
-   fhir_api
-
-
 CommCare HQ offers three ways of sharing data over FHIR:
 
 #. Data forwarding allows CommCare cases to be sent to remote FHIR
@@ -18,6 +11,13 @@ CommCare HQ offers three ways of sharing data over FHIR:
 
 FHIR-related functionality is enabled using the "FHIR integration"
 feature flag.
+
+.. contents:: :local:
+
+.. toctree::
+   fhir_repeater
+   fhir_import_config
+   fhir_api
 
 
 .. _data-dictionary-mapping:
@@ -118,7 +118,7 @@ This can done using the Admin site, and is accessible to superusers.
 
 Mappings are configured using ValueSource definitions. For more
 information about ValueSource, see the
-:doc:`Value Source <../../docs/value_source>` documentation.
+:doc:`Value Source <../value_source>` documentation.
 
 Open the Admin site, and navigate to "FHIR" > "FHIR resource types".
 
