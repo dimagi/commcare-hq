@@ -85,7 +85,6 @@ branches:
     - ap/fix-location-restriction-bug # Amit July 9
     - revert-30036-revert-30004-sr/default-filters # Sravan July 12
     - rp/enterprize-sms-report # Rynhard July 12
-    - bmb/sso-accept-invite-tests  # Biyeun July 12
     - bmb/hubspot-privacy  # Biyeun July 12
     - smh/tableau-viz-js-update # Steph July 12
     - jls/smart-linking-login-as # Jenny July 12
