@@ -71,7 +71,6 @@ branches:
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
     - sr/fup-form  # Sravan July 1
-    - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
     - gh/split-toggles-and-previews # Graham July 1 [QA]
     - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
