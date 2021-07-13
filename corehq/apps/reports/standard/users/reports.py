@@ -2,6 +2,7 @@ import json
 
 from django.db.models import Q
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -133,6 +134,20 @@ def _user_history_row(record, timezone):
 
 
 def _details_cell(changes):
+    def _html_list(changes, unstyled=True):
+        items = []
+        for key, value in changes.items():
+            if isinstance(value, dict):
+                value = _html_list(value, unstyled=unstyled)
+            elif isinstance(value, list):
+                value = format_html(", ".join(value))
+            else:
+                value = format_html(str(value))
+            items.append("<li>{}: {}</li>".format(key, value))
+
+        class_attr = "class='list-unstyled'" if unstyled else ""
+        return f"<ul {class_attr}>{''.join(items)}</ul>"
+
     primary_properties = [
         "email",
         "domain",
@@ -145,18 +160,16 @@ def _details_cell(changes):
     primary_changes = {key: value for key, value in changes.items() if key in primary_properties}
     more_count = len(changes) - len(primary_changes)
     if more_count == 0:
-        return json.dumps(primary_changes)
+        return mark_safe(_html_list(primary_changes))
 
-    return format_html("""
-            <div>
-              <div>{}</div>
-              <a class="see-all-link">{}</a>
-              <div class="hide">{}</div>
-            </div>
-        """, json.dumps(primary_changes) if primary_changes else "",
-        _("See {} more").format(more_count),
-        json.dumps(changes)
-    )
+    see_more = _("See {count} more").format(count=more_count)
+    return mark_safe(f"""
+        <div>
+          <div>{_html_list(primary_changes) if primary_changes else ""}</div>
+          <a class="see-all-link">{see_more}</a>
+          <div class="hide">{_html_list(changes, unstyled=False)}</div>
+        </div>
+    """)
 
 
 def _get_action_display(logged_action):
