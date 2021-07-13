@@ -29,6 +29,8 @@ class AuditCareMigrationUtil():
             start_datetime = self.get_next_batch_start()
             if not start_datetime:
                 # for the first call
+                if AuditcareMigrationMeta.objects.count() != 0:
+                    raise Exception("Unable to get start time. Exiting.")
                 start_datetime = INITIAL_START_DATE
 
             if start_datetime > cutoff_time:

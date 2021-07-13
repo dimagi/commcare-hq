@@ -1,9 +1,11 @@
+from corehq.util import soft_assert
 from django.core.management.base import BaseCommand
 
 import gevent
 
 from corehq.apps.auditcare.couch_to_sql import copy_events_to_sql
 from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
+from dimagi.utils.logging import notify_exception
 
 
 class Command(BaseCommand):
@@ -35,16 +37,23 @@ class Command(BaseCommand):
         batch_by = options['batch_by']
         util = AuditCareMigrationUtil()
         batches = []
-        while True:
-            if options['only_errored']:
-                batches = util.get_errored_keys(5)
+        try:
+            while True:
+                if options['only_errored']:
+                    batches = util.get_errored_keys(5)
+                    if not batches:
+                        print("No errored keys present")
+                        return
+                else:
+                    batches = util.generate_batches(workers, batch_by)
                 if not batches:
-                    print("No errored keys present")
+                    print("No batches to process")
                     return
-            else:
-                batches = util.generate_batches(workers, batch_by)
-            if not batches:
-                print("No batches to process")
-                return
-            batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
-            gevent.joinall([*batched_processes])
+                batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
+                gevent.joinall([*batched_processes])
+        except Exception as e:
+            message = f"Error in copy_events_to_sql while generating batches\n{e}"
+            notify_exception(None, message=message)
+            _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
+            _soft_assert(False, message)
+            return
