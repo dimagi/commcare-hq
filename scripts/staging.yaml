@@ -89,4 +89,5 @@ branches:
     - bmb/hubspot-privacy  # Biyeun July 12
     - smh/tableau-viz-js-update # Steph July 12
     - jls/smart-linking-login-as # Jenny July 12
+    - bmb/sso-invite-fix  # Biyeun July 13
 submodules: { }
