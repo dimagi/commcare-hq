@@ -11,6 +11,7 @@ from corehq.apps.cloudcare.views import (
     default,
     form_context,
     report_formplayer_error,
+    session_endpoint,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 
@@ -25,7 +26,12 @@ app_urls = [
         name=FormplayerPreviewSingleApp.urlname,
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
-    url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error')
+    url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
+    url(
+        r'^session_endpoint/(?P<app_id>[\w-]+)/(?P<endpoint_id>[\w_-]+)/$',
+        session_endpoint,
+        name='session_endpoint'
+    ),
 ]
 
 api_urls = [
