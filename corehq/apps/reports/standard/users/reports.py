@@ -30,7 +30,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     dispatcher = UserManagementReportDispatcher
 
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.AffectedUserFilter',
         'corehq.apps.reports.filters.users.ChangedByUserFilter',
         'corehq.apps.reports.filters.users.ChangeActionFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
