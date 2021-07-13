@@ -1,17 +1,15 @@
+from corehq.apps.accounting.models import BillingAccount
+from django.utils.translation import ugettext as _
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from django.db.models.aggregates import Count
 
 from couchexport.models import Format
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    Subscription
-)
 
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.filters import DateCreatedFilter, NameFilter
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.smsbillables.filters import (
     CountryCodeFilter,
@@ -136,59 +134,24 @@ class SMSBillablesInterface(GenericTabularReport):
         sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
         return self._format_billables(sms_billables)
 
-    def _format_billables(self, sms_billables):
-        return [
-            [
-                sms_billable.date_sent,
-                BillingAccount.get_account_by_domain(sms_billable.domain).name,
-                sms_billable.domain,
-                {
-                    INCOMING: "Incoming",
-                    OUTGOING: "Outgoing",
-                }.get(sms_billable.direction, ""),
-                sms_billable.multipart_count,
-                sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
-                sms_billable.gateway_charge,
-                sms_billable.usage_charge,
-                sms_billable.gateway_charge + sms_billable.usage_charge,
-                sms_billable.log_id,
-                sms_billable.is_valid,
-                sms_billable.date_created,
-            ]
-            for sms_billable in sms_billables
-        ]
-
     @property
     def sms_billables(self):
         datespan = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
-        selected_billables = SmsBillable.objects.filter(
-            date_sent__gte=datespan.startdate,
-            date_sent__lt=datespan.enddate_adjusted,
-        )
+        selected_billables = SmsBillable.get_selected_billables(datespan)
         if DateCreatedFilter.use_filter(self.request):
             date_span = DateSpan(
                 DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
             )
-            selected_billables = selected_billables.filter(
-                date_created__gte=date_span.startdate,
-                date_created__lt=date_span.enddate_adjusted,
-            )
+            selected_billables = SmsBillable.filter_selected_billables_date(selected_billables, date_span)
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)
         if show_billables:
-            selected_billables = selected_billables.filter(
-                is_valid=(show_billables == ShowBillablesFilter.VALID),
+            selected_billables = selected_billables = SmsBillable.filter_selected_billables_show_billables(
+                selected_billables, show_billables, ShowBillablesFilter
             )
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name:
-            account = BillingAccount.objects.filter(name=account_name).first()
-            domains = Subscription.visible_objects.filter(
-                account=account
-            ).values_list('subscriber__domain', flat=True).distinct()
-            domains = set(domains).union([account.created_by_domain])
-            selected_billables = selected_billables.filter(
-                domain__in=domains
-            )
+            selected_billables = SmsBillable.filter_selected_billables_by_account(selected_billables, account_name)
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain:
             selected_billables = selected_billables.filter(
@@ -212,6 +175,28 @@ class SMSBillablesInterface(GenericTabularReport):
                 gateway_fee__criteria__backend_api_id=gateway_type,
             )
         return selected_billables
+
+    def _format_billables(self, sms_billables):
+        return [
+            [
+                sms_billable.date_sent,
+                BillingAccount.get_account_by_domain(sms_billable.domain).name,
+                sms_billable.domain,
+                {
+                    INCOMING: _("Incoming"),
+                    OUTGOING: _("Outgoing"),
+                }.get(sms_billable.direction, ""),
+                sms_billable.multipart_count,
+                sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
+                sms_billable.gateway_charge,
+                sms_billable.usage_charge,
+                sms_billable.gateway_charge + sms_billable.usage_charge,
+                sms_billable.log_id,
+                sms_billable.is_valid,
+                sms_billable.date_created,
+            ]
+            for sms_billable in sms_billables
+        ]
 
 
 class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
