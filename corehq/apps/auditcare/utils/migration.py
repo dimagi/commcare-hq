@@ -8,6 +8,7 @@ from corehq.apps.auditcare.models import AuditcareMigrationMeta
 from corehq.apps.auditcare.utils.export import get_fixed_start_date_for_sql
 
 INITIAL_START_DATE = datetime(2013, 1, 1)
+CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
 
 
 class AuditCareMigrationUtil():
@@ -51,7 +52,7 @@ class AuditCareMigrationUtil():
         return batches
 
     def set_next_batch_start(self, value):
-        cache.set(self.start_key, value)
+        cache.set(self.start_key, value, CACHE_TTL)
 
     def get_errored_keys(self, limit):
         errored_keys = (AuditcareMigrationMeta.objects
