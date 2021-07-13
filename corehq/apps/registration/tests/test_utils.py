@@ -31,7 +31,7 @@ class TestRequestNewDomain(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.new_user.delete(None)
+        cls.new_user.delete(cls.domain_test, deleted_by=None)
         super().tearDownClass()
 
     def test_domain_is_active_for_new_sso_user(self):
