@@ -266,16 +266,14 @@ hqDefine("linked_domain/js/domain_links", [
     var GettingStartedViewModel = function (data) {
         var self = {};
         self.makeUpstream = function () {
-            console.log('Make upstream');
+            console.log('make upstream');
         };
-        self.makeDownstream = function () {
-            console.log('Make downstream');
+        self.goToUpstream = function (data, event) {
+            window.location.href= data.upstreamDomains()[0].url;
         };
-        self.upstreamDomains = data.upstream_domains.sort();
+        self.upstreamDomains = ko.observableArray(data.upstream_domains);
         return self;
     }
-
-
 
     var setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);

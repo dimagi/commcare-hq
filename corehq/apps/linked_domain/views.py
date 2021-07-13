@@ -255,7 +255,9 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         )
 
         available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
-        available_upstream_domains = get_upstream_domains(self.request.domain, self.request.couch_user)
+        upstream_domains = []
+        for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
+            upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         return {
             'domain': self.domain,
@@ -264,7 +266,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'is_master_domain': bool(len(linked_domains)),
             'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
-                'upstream_domains': available_upstream_domains,
+                'upstream_domains': upstream_domains,
                 'available_domains': available_domains_to_link,
                 'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),

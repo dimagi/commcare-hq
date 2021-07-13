@@ -72,6 +72,6 @@ def get_upstream_domains(domain_name, user):
         if candidate_name == domain_name:
             return False
         # make sure domain is not already part of a link
-        return not (is_active_downstream_domain(candidate_name) or is_active_upstream_domain(candidate_name))
+        return is_active_upstream_domain(candidate_name)
 
     return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})

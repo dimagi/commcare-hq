@@ -13,16 +13,34 @@
   <div class="spacer"></div>
   <div class="row">
     <div class="col-sm-6">
-      <h4>Make Downstream Project</h4>
-      <ul data-bind="foreach: upstreamDomains">
-          <li data-bind="text: $data"></li>
-      </ul>
+      <h4>Add as Downstream Project</h4>
+      <p>
+        {% blocktrans %}
+          If you want to pull content from an upstream project, link this project to an upstream project.<br/>
+        {% endblocktrans %}
+      </p>
+      <div data-bind="if: upstreamDomains().length == 0">
+        <p>There are not any upstream domains available.</p>
+      </div>
+      <div data-bind="if: upstreamDomains().length == 1">
+        <button type="button"
+            class="btn btn-primary"
+            id="go-to-upstream-project"
+            data-bind="click: goToUpstream">
+        {% trans "Go to upstream project" %}
+      </button>
+      </div>
+      <div data-bind="if: upstreamDomains().length > 1">
+        <ul data-bind="foreach: upstreamDomains">
+          <li><a data-bind="attr: {'href': $data.url}, text: $data.name"></a></li>
+        </ul>
+      </div>
     </div>
     <div class="col-sm-6">
       <h4>{% trans "Make Upstream Project" %}</h4>
       <p>
         {% blocktrans %}
-          If you want to push content in this project to other projects, make it an upstream project.<br/>
+          If you want to push content in this project to other projects, make this an upstream project.<br/>
         {% endblocktrans %}
       </p>
       <button type="button"
