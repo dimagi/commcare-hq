@@ -1,4 +1,4 @@
-from corehq.util import soft_assert
+from corehq.util.soft_assert import soft_assert
 from django.core.management.base import BaseCommand
 
 import gevent
