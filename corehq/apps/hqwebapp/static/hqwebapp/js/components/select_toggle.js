@@ -44,27 +44,31 @@ hqDefine('hqwebapp/js/components/select_toggle', [
 
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
-            var optionsData = ko.isObservable(params.options) ? params.options() : params.options;
-            self.options = ko.observableArray(_.map(optionsData, function (o) {
-                var id = _.isString(o) ? o : o.id,
-                    text = _.isString(o) ? o : o.text,
-                    icon = _.isString(o) ? '' : o.icon;
+            var optionsData = ko.computed(function () {
+                return ko.isObservable(params.options) ? params.options() : params.options
+            });
+            self.options = ko.computed(function () {
+                return ko.observableArray(_.map(optionsData(), function (o) {
+                    var id = _.isString(o) ? o : o.id,
+                        text = _.isString(o) ? o : o.text,
+                        icon = _.isString(o) ? '' : o.icon;
 
-                return {
-                    id: id,
-                    text: text,
-                    icon: icon,
-                    selected: ko.computed(function () {
-                        return id === self.value();
-                    }),
-                    click: function (model, e) {
-                        if (model.id !== self.value() && !self.disabled) {
-                            self.value(model.id);
-                            $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
-                        }
-                    },
-                };
-            }));
+                    return {
+                        id: id,
+                        text: text,
+                        icon: icon,
+                        selected: ko.computed(function () {
+                            return id === self.value();
+                        }),
+                        click: function (model, e) {
+                            if (model.id !== self.value() && !self.disabled) {
+                                self.value(model.id);
+                                $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
+                            }
+                        },
+                    };
+                }));
+            });
         },
         template: '<div data-bind="template: { name: \'ko-select-toggle\' }"></div>',
     };
