@@ -57,7 +57,6 @@ from corehq.toggles import (
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
-    ENTERPRISE_SSO,
 )
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
@@ -110,8 +109,7 @@ def login_and_domain_required(view_func):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
-            elif (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
-                  and is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj)):
+            elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
                 return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
@@ -124,8 +122,7 @@ def login_and_domain_required(view_func):
                 return no_permissions(req, message=msg)
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
-            if (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
-                    and is_request_using_sso(req)):
+            if is_request_using_sso(req):
                 # We will not support SSO for superusers at this time
                 return HttpResponseForbidden(
                     "SSO support is not currently available for superusers."
@@ -487,8 +484,7 @@ def _two_factor_required(view_func, domain_obj, request):
         return False
     if not request.couch_user:
         return False
-    if (ENTERPRISE_SSO.enabled_for_request(request)
-            and is_request_using_sso(request)):
+    if is_request_using_sso(request):
         # SSO authenticated users manage two-factor auth on the Identity Provider
         # level, so CommCare HQ does not attempt 2FA with them. This is one of
         # the reasons we require that domains establish TrustedIdentityProvider
