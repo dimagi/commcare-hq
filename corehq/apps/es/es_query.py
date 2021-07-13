@@ -123,19 +123,21 @@ from .utils import flatten_field_dict, values_list
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
+
         {
-            "query": {
-                "bool": {
-                    "filter": {
-                        "and": [
-                            <filters>
-                        ]
-                    },
-                    "query": <query>
-                }
-            },
-            <size, sort, other params>
+          "query": {
+            "bool": {
+              "filter": {
+                "and": [
+                  <filters>
+                ]
+              },
+              "query": <query>
+            }
+          },
+          <size, sort, other params>
         }
+
     """
     index = None
     _exclude_source = None
