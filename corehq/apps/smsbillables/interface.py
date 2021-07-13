@@ -179,21 +179,21 @@ class SMSBillablesInterface(GenericTabularReport):
     def _format_billables(self, sms_billables):
         return [
             [
-                self.date_sent,
+                sms_billable.date_sent,
                 BillingAccount.get_account_by_domain(sms_billable.domain).name,
-                self.domain,
+                sms_billable.domain,
                 {
                     INCOMING: _("Incoming"),
                     OUTGOING: _("Outgoing"),
                 }.get(sms_billable.direction, ""),
-                self.multipart_count,
-                self.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
-                self.gateway_charge,
-                self.usage_charge,
-                self.gateway_charge + sms_billable.usage_charge,
-                self.log_id,
-                self.is_valid,
-                self.date_created,
+                sms_billable.multipart_count,
+                sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
+                sms_billable.gateway_charge,
+                sms_billable.usage_charge,
+                sms_billable.gateway_charge + sms_billable.usage_charge,
+                sms_billable.log_id,
+                sms_billable.is_valid,
+                sms_billable.date_created,
             ]
             for sms_billable in sms_billables
         ]
