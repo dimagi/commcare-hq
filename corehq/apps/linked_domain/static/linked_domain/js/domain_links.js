@@ -75,7 +75,7 @@ hqDefine("linked_domain/js/domain_links", [
             return DomainLink(link);
         }));
 
-        self.linkable_ucr = ko.observableArray(_.map(data.linkable_ucr, function (report) {
+        self.linkableUcr = ko.observableArray(_.map(data.linkable_ucr, function (report) {
             return RemoteLinkableReport(report, self.master_link);
         }));
         self.createRemoteReportLink = function (reportId) {
