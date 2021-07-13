@@ -5,6 +5,7 @@ from django.core.cache import cache
 from dimagi.utils.dates import force_to_datetime
 
 from corehq.apps.auditcare.models import AuditcareMigrationMeta
+from corehq.apps.auditcare.utils.export import get_fixed_start_date_for_sql
 
 INITIAL_START_DATE = datetime(2013, 1, 1)
 
@@ -20,13 +21,17 @@ class AuditCareMigrationUtil():
 
     def generate_batches(self, worker_count, batch_by):
         batches = []
+        # todo : Change get_fixed_start_date_for_sql to something generic
+        cutoff_time = get_fixed_start_date_for_sql()
+        if not cutoff_time:
+            cutoff_time = datetime.now()
         with cache.lock(self.start_lock_key, timeout=10):
             start_datetime = self.get_next_batch_start()
             if not start_datetime:
                 # for the first call
                 start_datetime = INITIAL_START_DATE
 
-            if start_datetime > datetime.now():
+            if start_datetime > cutoff_time:
                 print("Migration Successfull")
                 return
 
@@ -36,7 +41,7 @@ class AuditCareMigrationUtil():
             for index in range(worker_count):
                 end_time = _get_end_time(start_time, batch_by)
                 batches.append([start_time, end_time])
-                if end_time > datetime.now():
+                if end_time > cutoff_time:
                     break
                 start_time = end_time
             self.set_next_batch_start(end_time)
