@@ -126,7 +126,7 @@ class UserInvitationView(object):
         else:
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email)
+                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email.lowercase())
 
             if request.method == "POST":
                 form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
@@ -160,6 +160,10 @@ class UserInvitationView(object):
                                    {"New User Accepted a project invitation": "yes"})
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
+                elif idp:
+                    couch_user = CouchUser.get_by_username(invitation.email.lower())
+                    messages.error(self.request, f'invitation email {invitation.email}')
+                    messages.error(self.request, f"user fetched {couch_user}")
             else:
                 if CouchUser.get_by_username(invitation.email.lower()):
                     login_url = reverse("login")
