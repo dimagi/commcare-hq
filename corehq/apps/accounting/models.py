@@ -1772,6 +1772,16 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
+    def get_active_domains_for_account(cls, account_name):
+        try:
+            return cls.visible_objects.filter(
+                is_active=True,
+                account=account_name,
+            ).values_list('subscriber__domain', flat=True).distinct()
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):
         if settings.ENTERPRISE_MODE:
             # Use the default plan, which is Enterprise when in ENTERPRISE_MODE
