@@ -15,7 +15,7 @@ class CaseUtilsTestCase(TestCase):
     def test_get_wrapped_user(self):
         user = CommCareUser.create(self.domain, 'wrapped-user-test', 'password', None, None)
         user.save()
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         wrapped = get_wrapped_owner(user._id)
         self.assertTrue(isinstance(wrapped, CommCareUser))
 
@@ -29,7 +29,7 @@ class CaseUtilsTestCase(TestCase):
     def test_owned_by_user(self):
         user = CommCareUser.create(self.domain, 'owned-user-test', 'password', None, None)
         user.save()
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         owners = get_owning_users(user._id)
         self.assertEqual(1, len(owners))
         self.assertEqual(owners[0]._id, user._id)
@@ -40,7 +40,7 @@ class CaseUtilsTestCase(TestCase):
         for i in range(5):
             user = CommCareUser.create(self.domain, 'owned-group-test-user-%s' % i, 'password', None, None)
             user.save()
-            self.addCleanup(user.delete, deleted_by=None)
+            self.addCleanup(user.delete, self.domain, deleted_by=None)
             ids.append(user._id)
 
         group = Group(domain=self.domain, name='owned-group-test-group', users=ids)

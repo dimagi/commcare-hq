@@ -48,6 +48,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.util.timer import time_method
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
@@ -55,6 +56,7 @@ AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/ca
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
+    @time_method()
     def get_section_elements(self):
         if self.app.use_custom_suite:
             return []

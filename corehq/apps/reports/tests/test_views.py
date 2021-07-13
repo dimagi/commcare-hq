@@ -105,7 +105,7 @@ class TestEmailReport(TestCase):
         self.request = self._create_request()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
 
         super().tearDown()
@@ -167,7 +167,7 @@ class TestDeleteConfig(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -251,7 +251,7 @@ class TestDeleteScheduledReport(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -263,7 +263,7 @@ class TestDeleteScheduledReport(TestCase):
         user = WebUser.create(self.domain, username, 'test_password', None, None, is_admin=is_admin)
         user.is_authenticated = True
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, deleted_by_domain=self.domain, deleted_by=None)
         return user
 
     def _create_request(self):
@@ -327,7 +327,7 @@ class TestSendTestScheduledReport(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -339,7 +339,7 @@ class TestSendTestScheduledReport(TestCase):
         user = WebUser.create(self.domain, username, 'test_password', None, None, is_admin=is_admin)
         user.is_authenticated = True
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, deleted_by_domain=self.domain, deleted_by=None)
         return user
 
     def _create_request(self):
@@ -428,7 +428,7 @@ class TestExportReport(TestCase):
         self.export_id = 'export_id'
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
         super().tearDown()
 
@@ -535,7 +535,7 @@ class TestViewScheduledReport(TestCase):
         self.request = self._create_request()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
         super().tearDown()
 

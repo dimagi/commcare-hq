@@ -38,9 +38,7 @@ def messaging_events(request, domain, event_id=None):
 
 def _get_individual(request, event_id):
     try:
-        event = MessagingSubEvent.objects.select_related("parent").get(
-            parent__domain=request.domain, id=event_id
-        )
+        event = _get_base_query(request.domain).get(id=event_id)
     except MessagingSubEvent.DoesNotExist:
         return HttpResponseNotFound()
 

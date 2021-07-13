@@ -13,7 +13,7 @@ from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -193,13 +193,19 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         dedicated_migration_process=dedicated_migration_process
     )
 
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('XFormInstance'), StaticDataSourceProvider('XFormInstance')],
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('XFormInstance'),
+            StaticDataSourceProvider('XFormInstance')
+        ],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
+    if ucr_configs:
+        table_manager.bootstrap(ucr_configs)
     xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -216,8 +222,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
     processors = [xform_to_es_processor]
     if settings.RUN_UNKNOWN_USER_PILLOW:
         processors.append(unknown_user_form_processor)

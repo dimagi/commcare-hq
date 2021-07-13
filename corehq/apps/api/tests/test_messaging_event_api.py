@@ -19,52 +19,36 @@ from corehq.apps.users.models import CommCareUser
 
 class BaseMessagingEventResourceTest(APIResourceTest):
     @classmethod
+    def _get_detail_endpoint(cls, event_id):
+        return reverse('api_messaging_event_detail', kwargs={"domain": cls.domain.name, "event_id": event_id})
+
+    @classmethod
     def _get_list_endpoint(cls):
-        return reverse('api_messaging_events', kwargs=dict(domain=cls.domain.name))
+        return reverse('api_messaging_event_list', kwargs={"domain": cls.domain.name})
 
     def _auth_get_resource(self, url):
         return self._assert_auth_get_resource(url, allow_session_auth=True)
 
 
-class TestMessagingEventResource(BaseMessagingEventResourceTest):
-    def _serialized_messaging_event(self, sms):
-        return {
-            "content_type": "sms",
-            "date": "2016-01-01T12:00:00",
-            "date_last_activity": sms.date_modified.isoformat() if sms.date_modified else "2016-01-01T12:00:00",
-            "case_id": None,
-            "domain": "qwerty",
-            "error": None,
-            "form": None,
-            'messages': [
-                {
-                    'message_id': sms.id,
-                    'backend': 'fake-backend-id',
-                    'phone_number': '99912345678',
-                    'content': 'test sms text',
-                    'date': '2016-01-01T12:00:00',
-                    'date_modified': sms.date_modified.isoformat() if sms.date_modified else None,
-                    'direction': 'outgoing',
-                    'status': 'sent',
-                    'type': 'sms'
-                }
-            ],
-            # "id": 1,  # ids are explicitly removed from comparison
-            "recipient": {'name': 'unknown', 'recipient_id': None, 'type': 'case'},
-            "source": {'source_id': None, 'name': 'sms', 'type': "other"},
-            "status": "completed",
-        }
+class TestMessagingEventResourceDetail(BaseMessagingEventResourceTest):
+    def test_get_single(self):
+        [sms] = _create_sms_messages(self.domain, 1, randomize=False)
+        response = self._auth_get_resource(self._get_detail_endpoint(sms.messaging_subevent_id))
+        self.assertEqual(response.status_code, 200, response.content)
+        data = json.loads(response.content)
+        self.assertEqual(_serialized_messaging_event(sms), data)
 
+
+class TestMessagingEventResource(BaseMessagingEventResourceTest):
     def test_get_list_simple(self):
         expected = []
         for sms in _create_sms_messages(self.domain, 2, randomize=False):
-            expected.append(self._serialized_messaging_event(sms))
+            expected.append(_serialized_messaging_event(sms))
         response = self._auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200, response.content)
         data = json.loads(response.content)['objects']
         self.assertEqual(2, len(data))
         for result, expected_result in zip(data, expected):
-            del result['id']  # don't bother comparing ids
             self.assertEqual(expected_result, result)
 
     def test_sms_null_date_modified(self):
@@ -79,8 +63,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         data = json.loads(response.content)['objects']
         self.assertEqual(1, len(data))
         result = data[0]
-        del result['id']  # don't bother comparing ids
-        self.assertEqual(self._serialized_messaging_event(sms), result)
+        self.assertEqual(_serialized_messaging_event(sms), result)
 
     def test_date_ordering(self):
         _create_sms_messages(self.domain, 5, randomize=True)
@@ -191,7 +174,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
                 self.domain.name, f"user {i}", "123", None, None, email=f"user{i}@email.com"
             )
             user_ids.append(user.get_id)
-            self.addCleanup(user.delete, deleted_by=None)
+            self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
         make_events_for_test(self.domain.name, datetime.utcnow(), phone_number='+99912345678')
         _create_sms_messages(self.domain, 1, False)
@@ -324,7 +307,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_email(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
         event = events[user.get_id]
         email = Email.objects.get(messaging_subevent=event)
@@ -372,7 +355,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_email_null_date_modified(self):
         user = CommCareUser.create(self.domain.name, "bob", "123", None, None, email="bob@email.com")
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         events = make_email_event_for_test(self.domain.name, "test broadcast", [user.get_id])
         event = events[user.get_id]
         email = Email.objects.get(messaging_subevent=event)
@@ -545,7 +528,7 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
         user_ids = []
         for i in range(5):
             user = CommCareUser.create(self.domain.name, f"bob{i}", "123", None, None, email=f"bob{i}@email.com")
-            self.addCleanup(user.delete, deleted_by=None)
+            self.addCleanup(user.delete, self.domain.name, deleted_by=None)
             user_ids.append(user.get_id)
         events = make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
 
@@ -600,3 +583,32 @@ def _create_sms_messages(domain, count, randomize):
         sms, _ = create_fake_sms(domain, randomize=randomize)
         results.append(sms)
     return results
+
+
+def _serialized_messaging_event(sms):
+    return {
+        "id": sms.messaging_subevent_id,
+        "content_type": "sms",
+        "date": "2016-01-01T12:00:00",
+        "date_last_activity": sms.date_modified.isoformat() if sms.date_modified else "2016-01-01T12:00:00",
+        "case_id": None,
+        "domain": "qwerty",
+        "error": None,
+        "form": None,
+        'messages': [
+            {
+                'message_id': sms.id,
+                'backend': 'fake-backend-id',
+                'phone_number': '99912345678',
+                'content': 'test sms text',
+                'date': '2016-01-01T12:00:00',
+                'date_modified': sms.date_modified.isoformat() if sms.date_modified else None,
+                'direction': 'outgoing',
+                'status': 'sent',
+                'type': 'sms'
+            }
+        ],
+        "recipient": {'name': 'unknown', 'recipient_id': None, 'type': 'case'},
+        "source": {'source_id': None, 'name': 'sms', 'type': "other"},
+        "status": "completed",
+    }
