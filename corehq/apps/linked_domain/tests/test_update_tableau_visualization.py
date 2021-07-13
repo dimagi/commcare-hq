@@ -17,9 +17,9 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
         self.tableau_visualization_setup = TableauVisualization(domain=self.domain,
         server=self.server, view_url='url')
         self.tableau_visualization_setup.save()
+
     def tearDown(self):
         self.server.delete()
-        # self.tableau_visualization_setup.delete()
 
     def test_update_tableau_visualization(self):
         visualization = get_tableau_visualizaton(self.linked_domain)
