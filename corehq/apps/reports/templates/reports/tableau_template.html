@@ -3,14 +3,6 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'reports/js/report_config_models.js' %}"></script>
-    <script src="{% static 'reports/js/base.js' %}"></script>
-    <script src="{% static 'reports/js/base_maps.js' %}"></script>
-    <script src="{% static 'reports/js/filters/main.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
 
 {% block page_content %}
 <script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
