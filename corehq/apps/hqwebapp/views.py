@@ -546,7 +546,7 @@ def login_new_window(request):
 @xframe_options_sameorigin
 @location_safe
 @login_required
-def iframe_domain_login_new_window(request):
+def domain_login_new_window(request):
     template = ('hqwebapp/iframe_sso_login_success.html'
                 if is_request_using_sso(request)
                 else 'hqwebapp/iframe_close_window.html')

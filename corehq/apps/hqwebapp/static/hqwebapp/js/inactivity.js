@@ -123,7 +123,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
-                        src += "?next=" + initialPageData.reverse('iframe_domain_login_new_window');
+                        src += "?next=" + initialPageData.reverse('domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
