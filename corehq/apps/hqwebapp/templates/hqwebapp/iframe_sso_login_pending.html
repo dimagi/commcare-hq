@@ -3,19 +3,23 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block title %}{% trans "Thank you for logging in!" %}{% endblock %}
+{% block title %}{% trans "Please login again with Single Sign-On" %}{% endblock %}
 
 {% block container_class %}container-fluid{% endblock %}
 
 {% block content %}
   <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
   <div class="page-header">
-    <h1>{% trans "Thank you for logging in!" %}</h1>
+    <h1>{% trans "Please login again with Single Sign-On" %}</h1>
   </div>
   <div class="row">
     <div class="col-sm-12">
       <p>
-        {% trans "You may close this window and return to your work." %}
+        {% blocktrans %}
+          We opened a new window for you to log in again with
+          Single Sign-On. If you've finished logging in there, you
+          may close this popup. Thank you!
+        {% endblocktrans %}
       </p>
     </div>
   </div>

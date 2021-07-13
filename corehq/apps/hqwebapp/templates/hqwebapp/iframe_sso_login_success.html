@@ -3,19 +3,23 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block title %}{% trans "Thank you for logging in!" %}{% endblock %}
+{% block title %}{% trans "Thank you for logging in with Single Sign-On!" %}{% endblock %}
+
+{% requirejs_main 'hqwebapp/js/sso_inactivity' %}
 
 {% block container_class %}container-fluid{% endblock %}
 
 {% block content %}
   <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
   <div class="page-header">
-    <h1>{% trans "Thank you for logging in!" %}</h1>
+    <h1>{% trans "Thank you for logging in with Single Sign-On!" %}</h1>
   </div>
   <div class="row">
     <div class="col-sm-12">
       <p>
-        {% trans "You may close this window and return to your work." %}
+        {% blocktrans %}
+          You may close this window and return to your work. Thank you.
+        {% endblocktrans %}
       </p>
     </div>
   </div>
