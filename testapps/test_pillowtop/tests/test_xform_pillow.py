@@ -7,6 +7,8 @@ from django.test.testcases import SimpleTestCase, TestCase
 from couchdbkit import ResourceConflict
 from mock import patch
 
+from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
+    clear_local_domain_sql_backend_override
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
@@ -68,7 +70,7 @@ class XFormPillowTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     @run_with_all_backends
@@ -83,6 +85,18 @@ class XFormPillowTest(TestCase):
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+    def test_xform_pillow_couch_to_sql(self):
+        self.process_form_changes.__enter__()
+        form = self._create_form()
+        self.assertTrue(hasattr(form, "_rev"))  # make sure it's a couch form
+
+        set_local_domain_sql_backend_override(self.domain)
+        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
+
+        self.process_form_changes.__exit__(None, None, None)
+        results = FormES().run()
+        self.assertEqual(0, results.total)
 
     @run_with_all_backends
     def test_form_soft_deletion(self):
@@ -218,11 +232,15 @@ class XFormPillowTest(TestCase):
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:
-            form = get_form_ready_to_save(self.metadata, is_db_test=True)
-            form_processor = FormProcessorInterface(domain=self.domain)
-            form_processor.save_processed_models([form])
+            form = self._create_form()
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         return form, self.metadata
+
+    def _create_form(self):
+        form = get_form_ready_to_save(self.metadata, is_db_test=True)
+        form_processor = FormProcessorInterface(domain=self.domain)
+        form_processor.save_processed_models([form])
+        return form
 
 
 class TransformXformForESTest(SimpleTestCase):

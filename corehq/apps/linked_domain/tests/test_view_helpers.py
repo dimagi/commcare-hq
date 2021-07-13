@@ -35,12 +35,13 @@ from corehq.apps.userreports.models import (
 from corehq.util.test_utils import flag_enabled
 
 
-def _create_report(domain, title="report", upstream_id=None, should_save=True):
+def _create_report(domain, title="report", upstream_id=None, should_save=True, app_id=None):
     data_source = DataSourceConfiguration(
         domain=domain,
         table_id=uuid.uuid4().hex,
         referenced_doc_type='XFormInstance',
     )
+    data_source.meta.build.app_id = app_id
     data_source.save()
     report = ReportConfiguration(
         domain=domain,

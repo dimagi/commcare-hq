@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
@@ -13,6 +14,8 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from corehq.apps.registration.models import AsyncSignupRequest
+from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.accounting.decorators import always_allow_project_access
@@ -121,11 +124,20 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
+            idp = None
+            if settings.ENFORCE_SSO_LOGIN:
+                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email)
+
             if request.method == "POST":
-                form = WebUserInvitationForm(request.POST)
+                form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
+
+                    if idp:
+                        signup_request = AsyncSignupRequest.create_from_invitation(invitation)
+                        return HttpResponseRedirect(idp.get_login_url(signup_request.username))
+
                     user = activate_new_user_via_reg_form(
                         form,
                         created_by=invited_by_user,
@@ -150,11 +162,28 @@ class UserInvitationView(object):
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if CouchUser.get_by_username(invitation.email):
-                    return HttpResponseRedirect(reverse("login") + '?next='
-                        + reverse('domain_accept_invitation', args=[invitation.domain, invitation.uuid]))
-                form = WebUserInvitationForm(initial={
-                    'email': invitation.email,
-                })
+                    login_url = reverse("login")
+                    accept_invitation_url = reverse(
+                        'domain_accept_invitation',
+                        args=[invitation.domain, invitation.uuid]
+                    )
+                    return HttpResponseRedirect(
+                        f"{login_url}"
+                        f"?next={accept_invitation_url}"
+                        f"&username={invitation.email}"
+                    )
+                form = WebUserInvitationForm(
+                    initial={
+                        'email': invitation.email,
+                    },
+                    is_sso=idp is not None,
+                )
+
+            context.update({
+                'is_sso': idp is not None,
+                'idp_name': idp.name if idp else None,
+                'invited_user': invitation.email,
+            })
 
         context.update({"form": form})
         return render(request, self.template, context)

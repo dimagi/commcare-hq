@@ -28,7 +28,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 
-from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -77,10 +76,12 @@ from corehq.apps.users.tasks import (
 )
 from corehq.apps.users.util import (
     filter_by_app,
+    log_user_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -511,9 +512,12 @@ class DomainMembership(Membership):
             return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
-                return UserRole.get(self.role_id)
-            except ResourceNotFound:
-                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+                return SQLUserRole.objects.by_couch_id(self.role_id)
+            except SQLUserRole.DoesNotExist:
+                logging.exception('no role found in domain', extra={
+                    'role_id': self.role_id,
+                    'domain': self.domain
+                })
                 return None
         else:
             return None
@@ -1190,16 +1194,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
-            if deleted_by:
-                log_model_change(deleted_by, user, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
+        if deleted_by:
+            log_user_change(deleted_by_domain, self, deleted_by,
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
@@ -1624,19 +1632,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, created_by, created_via):
+    def log_user_create(self, domain, created_by, created_via, domain_required_for_log=True):
+        from corehq.apps.users.model_log import UserModelAction
+
         if settings.UNIT_TESTING and created_by is None and created_via is None:
             return
         # fallback to self if not created by any user
-        self_django_user = self.get_django_user(use_primary_db=True)
-        created_by = created_by or self_django_user
-        if isinstance(created_by, CouchUser):
-            created_by = created_by.get_django_user()
-        log_model_change(
+        created_by = created_by or self
+        log_user_change(
+            domain,
+            self,
             created_by,
-            self_django_user,
-            message=f"created_via: {created_via}",
-            action=ModelAction.CREATE
+            changed_via=created_via,
+            action=UserModelAction.CREATE,
+            domain_required_for_log=domain_required_for_log,
         )
 
 
@@ -1677,7 +1686,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
         data = self.to_json().get('user_data', {})
         profile_id = data.get(PROFILE_SLUG)
-        profile = self._get_user_data_profile(profile_id)
+        profile = self.get_user_data_profile(profile_id)
         if profile:
             data.update(profile.fields)
         return data
@@ -1687,7 +1696,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         new_data = {**self.user_data, **data}
 
-        profile = self._get_user_data_profile(new_data.get(PROFILE_SLUG))
+        profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
             overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
             if overlap:
@@ -1700,7 +1709,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
 
-    def _get_user_data_profile(self, profile_id):
+    def get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
         if not profile_id:
@@ -1746,12 +1755,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
             sync_usercases_if_applicable(self, spawn_task)
 
-    def delete(self, deleted_by, deleted_via=None):
+    def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
-        super(CommCareUser, self).delete(deleted_by=deleted_by, deleted_via=deleted_via)
+        super(CommCareUser, self).delete(deleted_by_domain, deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
     @memoized
@@ -1810,7 +1819,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-            commcare_user.log_user_create(created_by, created_via)
+            commcare_user.log_user_create(domain, created_by, created_via)
         return commcare_user
 
     @property
@@ -1853,7 +1862,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self, unretired_by, unretired_via=None):
+    def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1861,7 +1870,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
+        if not unretired_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing unretired_by")
+
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             return False, "A user with the same username already exists in the system"
@@ -1877,15 +1891,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
         if unretired_by:
-            log_model_change(
+            log_user_change(
+                unretired_by_domain,
+                self,
                 unretired_by,
-                self.get_django_user(use_primary_db=True),
-                message=f"unretired_via: {unretired_via}",
+                changed_via=unretired_via,
+                action=UserModelAction.CREATE,
             )
         return True, None
 
-    def retire(self, deleted_by, deleted_via=None):
+    def retire(self, retired_by_domain, deleted_by, deleted_via=None):
+        from corehq.apps.users.model_log import UserModelAction
+
         NotAllowed.check(self.domain)
+        if not deleted_by and not settings.UNIT_TESTING:
+            raise ValueError("Missing deleted_by")
+
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
@@ -1918,9 +1939,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
-            if deleted_by:
-                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
-                                 action=ModelAction.DELETE)
+        if deleted_by:
+            log_user_change(retired_by_domain, self, deleted_by,
+                            changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):
@@ -2394,13 +2415,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, **kwargs):
+               metadata=None, domain_required_for_log=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(created_by, created_via)
+        web_user.log_user_create(domain, created_by, created_via, domain_required_for_log=domain_required_for_log)
         return web_user
 
     def is_commcare_user(self):
@@ -3062,3 +3083,32 @@ class HQApiKey(models.Model):
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None
+
+
+class UserHistory(models.Model):
+    """
+    HQ Adaptation of Django's LogEntry model
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255, null=True)
+    user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
+    user_id = models.CharField(max_length=128)
+    changed_by = models.CharField(max_length=128)
+    details = JSONField(default=dict)
+    message = models.TextField(blank=True, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True, editable=False)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain'])
+        ]

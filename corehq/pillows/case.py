@@ -12,6 +12,7 @@ from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
 from corehq.pillows.reportcase import get_case_to_report_es_processor
@@ -62,7 +63,8 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     kafka_change_feed = KafkaChangeFeed(
         topics=CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
@@ -111,7 +113,8 @@ def get_case_pillow(
     case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     case_search_processor = get_case_search_processor()
 

@@ -26,16 +26,6 @@ def base_template(request):
     }
 
 
-def is_commtrack(project, request):
-    if project:
-        return project.commtrack_enabled
-    try:
-        return 'commtrack.org' in request.get_host()
-    except Exception:
-        # get_host might fail for bad requests, e.g. scheduled reports
-        return False
-
-
 def get_per_domain_context(project, request=None):
     custom_logo_url = None
     if (project and project.has_custom_logo
