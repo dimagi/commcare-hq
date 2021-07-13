@@ -580,7 +580,7 @@ sortedcontainers==2.3.0
     # via intervaltree
 soupsieve==2.0.1
     # via beautifulsoup4
-sphinx==4.0.2
+sphinx==4.1.0
     # via
     #   -r dev-requirements.in
     #   recommonmark
