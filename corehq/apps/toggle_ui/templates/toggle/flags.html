@@ -27,6 +27,10 @@
       {% trans "Show usage metrics" %}
     </a>
   {% endif %}
+  <button id="export-button" data-bind="click: downloadFile" class="ko-template btn btn-default btn-xs pull-right">
+    <i class="fa fa-info-circle"></i>
+    {% trans "Export to .xlsx" %}
+  </button>
   <div id="table-filters" class="ko-template">
     <select-toggle data-apply-bindings="false"
                    params="options: [

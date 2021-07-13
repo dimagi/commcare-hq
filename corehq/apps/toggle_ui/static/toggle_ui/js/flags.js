@@ -6,7 +6,7 @@ hqDefine('toggle_ui/js/flags', [
 ], function (
     $,
     ko,
-    datatablesConfig
+    datatablesConfig,
 ) {
     var dataTableElem = '.datatable';
     var viewModel = {
@@ -35,4 +35,26 @@ hqDefine('toggle_ui/js/flags', [
     viewModel.tagFilter.subscribe(function (value) {
         table.datatable.fnDraw();
     });
+
+    var downloadToFile = function() {
+        var appliedFilter = viewModel.tagFilter();
+        var data = {
+            filter: appliedFilter
+        };
+
+        $.ajax({
+            url: 'prepare_download/',
+            data: data,
+            method: 'POST',
+            success: function (response) {
+                console.log(response.status);
+                return response;
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    };
+
+    $('#export-button').koApplyBindings({downloadFile: downloadToFile});
 });
