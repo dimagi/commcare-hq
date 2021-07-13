@@ -4,12 +4,12 @@ from corehq.apps.toggle_ui.views import (
     ToggleEditView,
     ToggleListView,
     set_toggle,
-    prepare_download,
+    export_flags,
 )
 
 urlpatterns = [
     url(r'^$', ToggleListView.as_view(), name=ToggleListView.urlname),
-    url(r'^prepare_download/$', prepare_download, name='prepare_download'),
+    url(r'^export_flags/$', export_flags, name='export_flags'),
     url(r'^edit/(?P<toggle>[\w_-]+)/$', ToggleEditView.as_view(), name=ToggleEditView.urlname),
     url(r'^set_toggle/(?P<toggle_slug>[\w_-]+)/$', set_toggle, name='set_toggle'),
 ]

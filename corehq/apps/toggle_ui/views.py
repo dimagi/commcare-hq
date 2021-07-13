@@ -366,14 +366,13 @@ def set_toggle(request, toggle_slug):
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
 
 
-@require_POST
 @require_superuser_or_contractor
-def prepare_download(request):
-    flags_filter = request.POST['filter']
+def export_flags(request):
+    tag = request.GET['tag']
 
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
-    outfile = parse_excel_attachment_data(flags_filter)
+    outfile = parse_excel_attachment_data(tag)
     response.write(outfile.getvalue())
 
     return response
