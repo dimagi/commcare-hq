@@ -20,8 +20,11 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, TestXmlMixin
+from corehq.util.test_utils import flag_enabled
 
 
+@patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch_get_xform_resource_overrides()
 class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')
@@ -168,6 +171,82 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(update_person_form)
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-advanced'), factory.app.create_suite())
+
+    def test_case_list_form_followup_form(self, *args):
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', advanced)
+        #   * Register person form
+        # * Manager person (case type = person, case list form = 'Register person form', basic)
+        #   * Manage person form
+        factory = AppFactory(build_version='2.9.0')
+        register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
+        factory.form_opens_case(register_house_form)
+
+        register_person_module, register_person_form = factory.new_advanced_module('register_person', 'person')
+        factory.form_requires_case(register_person_form, 'house')
+        factory.form_opens_case(register_person_form, 'person', is_subcase=True)
+
+        house_module, update_house_form = factory.new_advanced_module(
+            'update_house',
+            'house',
+        )
+        factory.form_requires_case(update_house_form)
+
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            case_list_form=update_house_form
+        )
+        factory.form_requires_case(update_person_form)
+
+        def _assert_app_build_error(error):
+            errors = factory.app.validate_app()
+            self.assertIn(
+                (error, person_module.unique_id),
+                [(e["type"], e.get("module", {}).get("unique_id", {})) for e in errors]
+            )
+            self.assertXmlPartialEqual(
+                "<partial></partial>",
+                factory.app.create_suite(),
+                "./detail[@id='m3_case_short']/action"
+            )
+        # should fail since feature flag isn't enabled
+        _assert_app_build_error('case list form not registration')
+        with flag_enabled('FOLLOWUP_FORMS_AS_CASE_LIST_FORM'):
+            # should fail since module doesn't have active parent_select
+            _assert_app_build_error("invalid case list followup form")
+
+            person_module.parent_select.active = True
+            person_module.parent_select.module_id = register_house_module.unique_id
+            person_module.case_list_form.relevancy_expression = "count(instance('casedb')/casedb/case) != 0"
+            errors = factory.app.validate_app()
+            self.assertNotIn(
+                ('case list form not registration', person_module.unique_id),
+                [(e["type"], e.get("module", {}).get("unique_id", {})) for e in errors]
+            )
+            xml = """
+            <partial>
+            <action relevant="count(instance('casedb')/casedb/case) != 0">
+                <display>
+                    <text><locale id="case_list_form.m3"/></text>
+                </display>
+                <stack>
+                <push>
+                    <command value="'m2-f0'"/>
+                    <datum id="case_id_load_house_0" value="instance('commcaresession')/session/data/parent_id"/>
+                    <datum id="return_to" value="'m3'"/>
+                </push>
+                </stack>
+            </action>
+            </partial>
+            """
+            self.assertXmlPartialEqual(
+                xml,
+                factory.app.create_suite(),
+                "./detail[@id='m3_case_short']/action"
+            )
+            person_module.parent_select.active = False
 
     def test_case_list_form_parent_child_basic(self, *args):
         # * Register house (case type = house, basic)
