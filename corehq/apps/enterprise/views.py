@@ -49,9 +49,9 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.const import USER_DATE_FORMAT
 
 
+@login_and_domain_required
 @always_allow_project_access
 @require_enterprise_admin
-@login_and_domain_required
 def enterprise_dashboard(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
@@ -73,15 +73,15 @@ def enterprise_dashboard(request, domain):
     return render(request, "enterprise/enterprise_dashboard.html", context)
 
 
-@require_enterprise_admin
 @login_and_domain_required
+@require_enterprise_admin
 def enterprise_dashboard_total(request, domain, slug):
     report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
     return JsonResponse({'total': report.total})
 
 
-@require_enterprise_admin
 @login_and_domain_required
+@require_enterprise_admin
 def enterprise_dashboard_download(request, domain, slug, export_hash):
     report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
 
@@ -99,8 +99,8 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
                                   "download links expire after 24 hours."))
 
 
-@require_enterprise_admin
 @login_and_domain_required
+@require_enterprise_admin
 def enterprise_dashboard_email(request, domain, slug):
     report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
     email_enterprise_report.delay(domain, slug, request.couch_user)
@@ -111,8 +111,8 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
-@require_enterprise_admin
 @login_and_domain_required
+@require_enterprise_admin
 def enterprise_settings(request, domain):
     export_settings = get_default_export_settings_if_available(domain)
 
@@ -137,8 +137,8 @@ def enterprise_settings(request, domain):
     return render(request, "enterprise/enterprise_settings.html", context)
 
 
-@require_enterprise_admin
 @login_and_domain_required
+@require_enterprise_admin
 @require_POST
 def edit_enterprise_settings(request, domain):
     export_settings = get_default_export_settings_if_available(domain)
