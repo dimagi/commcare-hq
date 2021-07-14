@@ -1,5 +1,5 @@
 function (doc) {
-    if(doc.doc_type === "RegistryDataSourceConfiguration" && doc.is_deactivated == false) {
+    if(doc.doc_type === "RegistryDataSourceConfiguration") {
         emit([
             doc.last_modified,
             doc.domain,

@@ -133,6 +133,7 @@ class RegistryUcrDbAccessorsTest(TestCase):
 
         self.assertEqual([], get_registry_data_sources_modified_since(end))
 
+        ds1.is_deactivated = True  # results should include deactivated data sources
         ds1.save()
         self.assertEqual(
             [ds1.get_id],
