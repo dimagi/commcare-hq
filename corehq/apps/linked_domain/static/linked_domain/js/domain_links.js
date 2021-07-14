@@ -62,7 +62,7 @@ hqDefine("linked_domain/js/domain_links", [
         // setup getting started view model
         var gettingStartedData = {
             parent: self,
-            upstreamDomains: data.upstream_domains
+            upstreamDomains: data.upstream_domains,
         };
         self.gettingStartedViewModel = GettingStartedViewModel(gettingStartedData);
 
@@ -311,11 +311,11 @@ hqDefine("linked_domain/js/domain_links", [
             return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
         });
 
-        self.goToUpstream = function (data, event) {
-            window.location.href= data.upstreamDomains()[0].url;
+        self.goToUpstream = function (data) {
+            window.location.href = data.upstreamDomains()[0].url;
         };
         return self;
-    }
+    };
 
     var setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);
