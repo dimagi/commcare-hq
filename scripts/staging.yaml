@@ -61,7 +61,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
-    - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16 [QA]
