@@ -115,10 +115,11 @@ def _get_indicator_adapter_for_pillow(config):
 class UcrTableManager(ABC):
     """Base class for table managers that encapsulates the bootstrap and refresh
     functionality."""
-    def __init__(self, bootstrap_interval):
+    def __init__(self, bootstrap_interval, run_migrations):
         self.bootstrapped = False
         self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.bootstrap_interval = bootstrap_interval
+        self.run_migrations = run_migrations
 
     def needs_bootstrap(self):
         """Returns True if the manager needs to be bootstrapped"""
@@ -137,6 +138,10 @@ class UcrTableManager(ABC):
     def bootstrap(self, configs=None):
         """Initialize the manager with data sources and adapters"""
         self._do_bootstrap(configs=configs)
+
+        if self.run_migrations:
+            rebuild_sql_tables(self.get_all_adapters())
+
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
@@ -178,9 +183,6 @@ class UcrTableManager(ABC):
         writing to the adapter. The adapter will get re-added on next bootstrap."""
         pass
 
-    def rebuild_tables_if_necessary(self):
-        rebuild_sql_tables(self.get_all_adapters())
-
 
 class ConfigurableReportTableManager(UcrTableManager):
 
@@ -199,12 +201,11 @@ class ConfigurableReportTableManager(UcrTableManager):
         run_migrations -- If True, rebuild tables if the data source changes.
                           Otherwise, do not attempt to change database
         """
-        super().__init__(bootstrap_interval)
+        super().__init__(bootstrap_interval, run_migrations)
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.run_migrations = run_migrations
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -242,9 +243,6 @@ class ConfigurableReportTableManager(UcrTableManager):
             self.table_adapters_by_domain[config.domain].append(
                 _get_indicator_adapter_for_pillow(config)
             )
-
-        if self.run_migrations:
-            self.rebuild_tables_if_necessary()
 
     @property
     def relevant_domains(self):
@@ -299,9 +297,8 @@ class RegistryDataSourceTableManager(UcrTableManager):
         run_migrations -- If True, rebuild tables if the data source changes.
                           Otherwise, do not attempt to change database
         """
-        super().__init__(bootstrap_interval)
+        super().__init__(bootstrap_interval, run_migrations)
         self.data_source_provider = RegistryDataSourceProvider()
-        self.run_migrations = run_migrations
         self.adapters = []
         self.adapters_by_domain = defaultdict(list)
 
@@ -320,9 +317,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
         for config in configs:
             self._add_adapter_for_data_source(config)
-
-        if self.run_migrations:
-            self.rebuild_tables_if_necessary()
 
     def _add_adapter_for_data_source(self, config):
         adapter = _get_indicator_adapter_for_pillow(config)
