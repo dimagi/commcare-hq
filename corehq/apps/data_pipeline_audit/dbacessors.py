@@ -44,7 +44,7 @@ def get_es_case_range(domain):
         if len(result) == 0:
             return None
         else:
-            return dateutil.parser.parse(result[0]['_source']['server_modified_on'])
+            return dateutil.parser.parse(result[0]['_source']['server_modified_on']).date()
     return (
         descending_query(order=False),
         descending_query(order=True)

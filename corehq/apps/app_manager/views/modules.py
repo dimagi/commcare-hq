@@ -98,6 +98,7 @@ from corehq.apps.app_manager.views.utils import (
     set_session_endpoint,
 )
 from corehq.apps.app_manager.xform import CaseError
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -114,7 +115,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.models import (
@@ -198,6 +199,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'case_list_form_options': _case_list_form_options(app, module, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'shadow_parent': _get_shadow_parent(app, module),
+        'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
@@ -559,6 +561,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         'case_list_form_use_default_audio_for_all': None,
         "case_list_post_form_workflow": None,
         "case_type": None,
+        "additional_case_types": [],
         'comment': None,
         "display_separately": None,
         "has_schedule": None,
@@ -715,6 +718,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             track_workflow(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
             track_workflow(request.couch_user.username, "User orphaned a child module")
+
+    if should_edit('additional_case_types'):
+        module.search_config.additional_case_types = list(set(request.POST.getlist('additional_case_types')))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -1180,10 +1186,24 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 ]
             except CaseSearchConfigError as e:
                 return HttpResponseBadRequest(e)
+            xpath_props = [
+                "search_filter", "blacklisted_owner_ids_expression",
+                "search_button_display_condition", "search_additional_relevant"
+            ]
+            for prop in xpath_props:
+                xpath = search_properties.get(prop, "")
+                if xpath:
+                    is_valid, message = validate_xpath(xpath)
+                    if not is_valid:
+                        return HttpResponseBadRequest(
+                            "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
+                            "The error is {err}".format(xpath=xpath, err=message)
+                        )
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
                 properties=properties,
+                additional_case_types=module.search_config.additional_case_types,
                 default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=bool(search_properties.get('auto_launch')),

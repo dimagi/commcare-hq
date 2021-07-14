@@ -101,7 +101,7 @@ class AppFormSummaryView(AppSummaryView):
             messages.warning(
                 self.request,
                 'Hey Dimagi User! Have you tried out '
-                '<a href="https://confluence.dimagi.com/display/ccinternal/Viewing+App+Changes+between+versions" '
+                '<a href="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions" '
                 'target="_blank">Viewing App Changes between Versions</a> yet? It might be just what you are '
                 'looking for!',
                 extra_tags='html'

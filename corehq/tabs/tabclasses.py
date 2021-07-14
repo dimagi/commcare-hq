@@ -65,6 +65,7 @@ from corehq.apps.reports.dispatcher import (
     ProjectReportDispatcher,
 )
 from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
@@ -133,7 +134,8 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
+        sidebar_items = (tools + report_builder_nav
+                         + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
     def _regroup_sidebar_items(self, sidebar_items):
@@ -1386,11 +1388,20 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views import (
+                EnterpriseUsersView,
                 EditWebUserView,
                 ListWebUsersView,
             )
             from corehq.apps.users.views.mobile.users import FilteredWebUserDownload
-            menu.append({
+
+            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+                menu.append({
+                    'title': _(EnterpriseUsersView.page_title),
+                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                })
+
+            menu = menu + [{
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1415,7 +1426,7 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            })
+            }]
 
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1537,6 +1548,17 @@ class ProjectUsersTab(UITab):
         if locations_menu:
             items.append((_('Organization'), locations_menu))
 
+        if (
+                user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS)
+                and toggles.USER_HISTORY_REPORT.enabled(self.couch_user.username)
+        ):
+            user_management_menu = [{
+                'title': UserHistoryReport.name,
+                'url': reverse('user_management_report_dispatcher',
+                               args=[self.domain, UserHistoryReport.slug])
+            }]
+            items.append((_('User Management'), user_management_menu))
         return items
 
 

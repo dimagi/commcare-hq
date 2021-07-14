@@ -1,5 +1,5 @@
-Getting Values From CommCare
-============================
+How Data Mapping Works
+======================
 
 DHIS2-, OpenMRS- and FHIR Integration all use the ValueSource class to
 map CommCare data to API resources.
@@ -221,7 +221,7 @@ The JSONPath for "shortName" is "codedAnswer.shortName".
 
 The JSONPath for "code" is "codedAnswer.mappings[0].code".
 
-For more details, see :ref:`_how_to_inspect-label` in the documentation
+For more details, see :ref:`openmrs-how_to_inspect` in the documentation
 for the MOTECH OpenMRS & Bahmni Module.
 
 

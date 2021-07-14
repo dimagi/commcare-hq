@@ -1,12 +1,12 @@
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
-from corehq.apps.cowin.repeater_generators import (
+from corehq.apps.hqcase.utils import update_case
+from corehq.motech.repeaters.models import CaseRepeater
+from custom.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
     BeneficiaryVaccinationPayloadGenerator,
 )
-from corehq.apps.hqcase.utils import update_case
-from corehq.motech.repeaters.models import CaseRepeater
 
 
 class BaseCOWINRepeater(CaseRepeater):

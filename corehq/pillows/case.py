@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
@@ -91,7 +91,7 @@ def get_case_pillow(
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
-      - :py:function:`corehq.pillows.case_search.get_case_search_processor`
+      - :py:func:`corehq.pillows.case_search.get_case_search_processor`
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
@@ -101,15 +101,19 @@ def get_case_pillow(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process
     )
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('CommCareCase'), StaticDataSourceProvider('CommCareCase')],
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('CommCareCase'),
+            StaticDataSourceProvider('CommCareCase')
+        ],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
+        table_manager.bootstrap(ucr_configs)
     case_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,

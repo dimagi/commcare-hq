@@ -1,23 +1,23 @@
 import datetime
 import json
 import uuid
-import requests
 
 from django.test import SimpleTestCase
 
+import requests
 from mock import PropertyMock, patch
 
-from corehq.apps.cowin.repeater_generators import (
-    BeneficiaryRegistrationPayloadGenerator,
-    BeneficiaryVaccinationPayloadGenerator,
-)
-from corehq.apps.cowin.repeaters import (
-    BeneficiaryRegistrationRepeater,
-    BeneficiaryVaccinationRepeater,
-)
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import RepeatRecord
+from custom.cowin.repeater_generators import (
+    BeneficiaryRegistrationPayloadGenerator,
+    BeneficiaryVaccinationPayloadGenerator,
+)
+from custom.cowin.repeaters import (
+    BeneficiaryRegistrationRepeater,
+    BeneficiaryVaccinationRepeater,
+)
 
 
 class TestRepeaters(SimpleTestCase):
@@ -62,7 +62,7 @@ class TestRepeaters(SimpleTestCase):
         )
 
     @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
-    @patch('corehq.apps.cowin.repeaters.update_case')
+    @patch('custom.cowin.repeaters.update_case')
     @patch('requests.Response.json')
     def test_registration_response(self, json_response_mock, update_case_mock):
         case_id = uuid.uuid4().hex
@@ -83,7 +83,7 @@ class TestRepeaters(SimpleTestCase):
 
         update_case_mock.assert_called_with(
             self.domain, case_id, case_properties={'cowin_id': "1234567890123"},
-            device_id='corehq.apps.cowin.repeaters.BeneficiaryRegistrationRepeater'
+            device_id='custom.cowin.repeaters.BeneficiaryRegistrationRepeater'
         )
 
     @patch('corehq.motech.repeaters.models.Repeater.connection_settings', new_callable=PropertyMock)
