@@ -48,7 +48,8 @@ from corehq.apps.linked_domain.const import (
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
     get_domain_master_link,
-    get_linked_domains, get_upstream_domains,
+    get_linked_domains,
+    get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import (

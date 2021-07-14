@@ -39,11 +39,6 @@ def is_active_upstream_domain(domain):
     return DomainLink.objects.filter(master_domain=domain, deleted=False).exists()
 
 
-@quickcache(['domain'], timeout=60 * 60)
-def is_active_downstream_domain(domain):
-    return DomainLink.objects.filter(linked_domain=domain, deleted=False).exists()
-
-
 def get_actions_in_domain_link_history(link):
     return DomainLinkHistory.objects.filter(link=link).annotate(row_number=RawSQL(
         'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
