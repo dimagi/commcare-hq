@@ -389,6 +389,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
+    'custom.cowin',
 
     'custom.ccqa',
 
@@ -807,6 +808,8 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
+    'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
 ]
 
 # Override this in localsettings to add new repeater types

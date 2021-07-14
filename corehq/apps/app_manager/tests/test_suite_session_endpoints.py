@@ -39,6 +39,7 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
 
     def test_registration_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
+        self.factory.form_opens_case(self.form, case_type=self.parent_case_type)
         self.assertXmlPartialEqual(
             """
             <partial>

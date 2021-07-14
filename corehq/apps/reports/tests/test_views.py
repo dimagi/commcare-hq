@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
 from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.blobs import get_blob_db
 import unittest
@@ -90,7 +90,7 @@ class TestEmailReport(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[REPORT_NAME_LOOKUP['worker_activity']]
         ))
 
@@ -99,13 +99,13 @@ class TestEmailReport(TestCase):
             'test_password',
             None,
             None,
-            role_id=self.reports_role._id)
+            role_id=self.reports_role.get_id)
 
         self.user.is_authenticated = True
         self.request = self._create_request()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
 
         super().tearDown()
@@ -123,8 +123,7 @@ class TestEmailReport(TestCase):
         return request
 
     def _set_user_report_access(self, *report_names):
-        self.reports_role.permissions = Permissions(view_report_list=list(report_names))
-        self.reports_role.save()
+        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
 
 
 class TestDeleteConfig(TestCase):
@@ -168,7 +167,7 @@ class TestDeleteConfig(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -252,7 +251,7 @@ class TestDeleteScheduledReport(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -264,7 +263,7 @@ class TestDeleteScheduledReport(TestCase):
         user = WebUser.create(self.domain, username, 'test_password', None, None, is_admin=is_admin)
         user.is_authenticated = True
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, deleted_by_domain=self.domain, deleted_by=None)
         return user
 
     def _create_request(self):
@@ -328,7 +327,7 @@ class TestSendTestScheduledReport(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -340,7 +339,7 @@ class TestSendTestScheduledReport(TestCase):
         user = WebUser.create(self.domain, username, 'test_password', None, None, is_admin=is_admin)
         user.is_authenticated = True
 
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, deleted_by_domain=self.domain, deleted_by=None)
         return user
 
     def _create_request(self):
@@ -412,7 +411,7 @@ class TestExportReport(TestCase):
         super().setUp()
 
         # Create a basic role for the user
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[]
         ))
 
@@ -421,7 +420,7 @@ class TestExportReport(TestCase):
             'test_password',
             None,
             None,
-            role_id=self.reports_role._id)
+            role_id=self.reports_role.get_id)
 
         self.user.is_authenticated = True
         self.request = self._create_request()
@@ -429,7 +428,7 @@ class TestExportReport(TestCase):
         self.export_id = 'export_id'
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
         super().tearDown()
 
@@ -442,8 +441,7 @@ class TestExportReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.permissions = Permissions(view_report_list=list(report_names))
-        self.reports_role.save()
+        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
 
     def _generate_report(self, export_id=None, report_name='test_report', domain=None, content=b'Some File'):
         export_id = export_id or self.export_id
@@ -524,7 +522,7 @@ class TestViewScheduledReport(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[]
         ))
         self.user = WebUser.create(self.domain,
@@ -532,12 +530,12 @@ class TestViewScheduledReport(TestCase):
             'test_password',
             None,
             None,
-            role_id=self.reports_role._id)
+            role_id=self.reports_role.get_id)
         self.user.is_authenticated = True
         self.request = self._create_request()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.reports_role.delete()
         super().tearDown()
 
@@ -574,5 +572,4 @@ class TestViewScheduledReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.permissions = Permissions(view_report_list=list(report_names))
-        self.reports_role.save()
+        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())

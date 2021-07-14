@@ -2130,6 +2130,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+    additional_case_types = ListProperty(str)
 
     @property
     def case_session_var(self):
@@ -2202,6 +2203,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         default=WORKFLOW_DEFAULT,
         choices=REGISTRATION_FORM_WORFLOWS,
     )
+    relevancy_expression = StringProperty()
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)

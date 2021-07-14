@@ -507,6 +507,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
+    def get_domains(self):
+        subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
+        return [s.subscriber.domain for s in subscriptions]
+
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
 
