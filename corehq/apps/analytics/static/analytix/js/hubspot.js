@@ -27,6 +27,10 @@ hqDefine('analytix/js/hubspot', [
         var apiId = _get('apiId'),
             scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
 
+        if (!_get('isHubspotJsAllowed')) {
+            // ensure that Hubspot javascript never loads on project spaces that have blocked Hubspot data entirely
+            apiId = null;
+        }
         _logger = logging.getLoggerForApi('Hubspot');
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
 
