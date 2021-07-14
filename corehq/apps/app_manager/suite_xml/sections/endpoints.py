@@ -49,7 +49,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
         stack.add_frame(frame)
         arguments = []
         for child in self._get_frame_children(module, form):
-            if isinstance(child, WorkflowDatumMeta):
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
                     StackDatum(id=child.id, value=f"${child.id}")

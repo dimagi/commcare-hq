@@ -2005,6 +2005,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ENTERPRISE_USER_MANAGEMENT = StaticToggle(
+    'enterprise_user_management',
+    'USH: UI for managing all web users in an enterprise',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+)
+
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     'clean_old_formplayer_syncs',
     'Delete old formplayer syncs during submission processing',
@@ -2061,6 +2068,14 @@ DETAILED_TAGGING = StaticToggle(
 )
 
 
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
     'Integrate with COWIN APIs',
@@ -2073,5 +2088,13 @@ TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
+    'followup_forms_as_case_list_form',
+    'Option to configure follow up forms on parent case for Case List Form menu setting of '
+    'child modules that use Parent Child Selection',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )

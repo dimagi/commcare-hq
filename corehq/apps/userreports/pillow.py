@@ -5,9 +5,28 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
+from corehq.apps.userreports.const import KAFKA_TOPICS
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.exceptions import (
+    UserReportsWarning,
+)
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.pillow_utils import rebuild_sql_tables
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
+from corehq.util.timer import TimingContext
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.exceptions import PillowConfigError
@@ -15,37 +34,6 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
 from pillowtop.utils import ensure_document_exists, ensure_matched_revisions, bulk_fetch_changes_docs
-
-from corehq.apps.change_feed.consumer.feed import (
-    KafkaChangeFeed,
-    KafkaCheckpointEventHandler,
-)
-from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
-from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
-from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import (
-    DynamicDataSourceProvider,
-    StaticDataSourceProvider,
-)
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    StaleRebuildError,
-    TableRebuildError,
-    UserReportsWarning,
-)
-from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild import (
-    get_table_diffs,
-    get_tables_rebuild_migrate,
-    migrate_tables,
-)
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import get_metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
@@ -119,7 +107,7 @@ def _filter_invalid_config(configs):
     return valid_configs
 
 
-class ConfigurableReportTableManagerMixin(object):
+class ConfigurableReportTableManager(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
@@ -200,86 +188,25 @@ class ConfigurableReportTableManagerMixin(object):
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
+    @property
+    def relevant_domains(self):
+        return set(self.table_adapters_by_domain)
+
+    def get_adapters(self, domain):
+        return list(self.table_adapters_by_domain.get(domain, []))
+
+    def remove_adapter(self, domain, adapter):
+        self.table_adapters_by_domain[domain].remove(adapter)
+
     def _get_indicator_adapter(self, config):
         return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
     def rebuild_tables_if_necessary(self):
-        self._rebuild_sql_tables([
+        rebuild_sql_tables([
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
         ])
-
-    def _rebuild_sql_tables(self, adapters):
-        tables_by_engine = defaultdict(dict)
-        all_adapters = []
-        for adapter in adapters:
-            if getattr(adapter, 'all_adapters', None):
-                all_adapters.extend(adapter.all_adapters)
-            else:
-                all_adapters.append(adapter)
-        for adapter in all_adapters:
-            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
-
-        _assert = soft_assert(notify_admins=True)
-        _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
-
-        for engine_id, table_map in tables_by_engine.items():
-            table_names = list(table_map)
-            engine = connection_manager.get_engine(engine_id)
-
-            diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
-
-            tables_to_act_on = get_tables_rebuild_migrate(diffs)
-            for table_name in tables_to_act_on.rebuild:
-                sql_adapter = table_map[table_name]
-                pillow_logging.info(
-                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
-                    table_name, sql_adapter.config._id, sql_adapter.config._rev
-                )
-                pillow_logging.info("[rebuild] Using config: %r", sql_adapter.config)
-                pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(engine_id).tables[table_name])
-                pillow_logging.info("[rebuild] sqlalchemy table: %r", sql_adapter.get_table())
-                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
-                if not sql_adapter.config.is_static:
-                    try:
-                        self.rebuild_table(sql_adapter, table_diffs)
-                    except TableRebuildError as e:
-                        _notify_rebuild(str(e), sql_adapter.config.to_json())
-                else:
-                    self.rebuild_table(sql_adapter, table_diffs)
-
-            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
-
-    def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
-        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
-        for table in table_names:
-            adapter = adapters_by_table[table]
-            pillow_logging.info("[rebuild] Using config: %r", adapter.config)
-            pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(adapter.engine_id).tables[table])
-            pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
-        changes = migrate_tables(engine, migration_diffs)
-        for table, diffs in changes.items():
-            adapter = adapters_by_table[table]
-            pillow_logging.info(
-                "[rebuild] Migrating table: %s, from config %s at rev %s",
-                table, adapter.config._id, adapter.config._rev
-            )
-            adapter.log_table_migrate(source='pillowtop', diffs=diffs)
-
-    def rebuild_table(self, adapter, diffs=None):
-        config = adapter.config
-        if not config.is_static:
-            latest_rev = config.get_db().get_rev(config._id)
-            if config._rev != latest_rev:
-                raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-
-        diff_dicts = [diff.to_dict() for diff in diffs]
-        if config.disable_destructive_rebuild and adapter.table_exists:
-            adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
-            return
-
-        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
 
     def _pull_in_new_and_modified_data_sources(self):
         """
@@ -309,7 +236,7 @@ class ConfigurableReportTableManagerMixin(object):
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
 
-class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
+class ConfigurableReportPillowProcessor(BulkPillowProcessor):
     """Generic processor for UCR.
 
     Reads from:
@@ -321,6 +248,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
       - UCR database
     """
 
+    def __init__(self, table_manager):
+        self.table_manager = table_manager
+
     domain_timing_context = Counter()
 
     @time_ucr_process_change
@@ -330,7 +260,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             table.best_effort_save(doc, eval_context)
         except UserReportsWarning:
             # remove it until the next bootstrap call
-            self.table_adapters_by_domain[domain].remove(table)
+            self.table_manager.remove_adapter(domain, table)
 
     def process_changes_chunk(self, changes):
         """
@@ -345,7 +275,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             if is_couch_change_for_sql_domain(change):
                 continue
             # skip if no domain or no UCR tables in the domain
-            if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
+            if change.metadata.domain and change.metadata.domain in self.table_manager.relevant_domains:
                 changes_by_domain[change.metadata.domain].append(change)
 
         retry_changes = set()
@@ -359,7 +289,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         return retry_changes, change_exceptions
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        adapters = list(self.table_adapters_by_domain[domain])
+        adapters = self.table_manager.get_adapters(domain)
         changes_by_id = {change.id: change for change in changes_chunk}
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
@@ -452,12 +382,12 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain
-        if not domain or domain not in self.table_adapters_by_domain:
+        if not domain or domain not in self.table_manager.relevant_domains:
             # if no domain we won't save to any UCR table
             return
 
         if change.deleted:
-            adapters = list(self.table_adapters_by_domain[domain])
+            adapters = self.table_manager.get_adapters(domain)
             for table in adapters:
                 table.delete({'_id': change.metadata.document_id})
 
@@ -472,7 +402,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         with TimingContext() as timer:
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
-            adapters = list(self.table_adapters_by_domain[domain])
+            adapters = self.table_manager.get_adapters(domain)
             doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
@@ -534,17 +464,11 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         assert self.processors is not None
         assert len(self.processors) == 1
         self._processor = self.processors[0]
-        assert self._processor.bootstrapped is not None
+        assert self._processor.table_manager.bootstrapped is not None
 
         # retry errors defaults to False because there is not a solution to
         # distinguish between doc save errors and data source config errors
         self.retry_errors = retry_errors
-
-    def bootstrap(self, configs=None):
-        self._processor.bootstrap(configs)
-
-    def rebuild_table(self, sql_adapter):
-        self._processor.rebuild_table(sql_adapter)
 
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
@@ -559,14 +483,15 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[DynamicDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0)  # only first process runs migrations
+    )
     return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_providers=[DynamicDataSourceProvider()],
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-            run_migrations=(process_num == 0)  # only first process runs migrations
-        ),
+        processor=ConfigurableReportPillowProcessor(table_manager),
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
@@ -590,15 +515,16 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[StaticDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
+        run_migrations=(process_num == 0)  # only first process runs migrations
+    )
     return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_providers=[StaticDataSourceProvider()],
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-            bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
-            run_migrations=(process_num == 0)  # only first process runs migrations
-        ),
+        processor=ConfigurableReportPillowProcessor(table_manager),
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
@@ -621,12 +547,16 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
     change_feed = KafkaChangeFeed(
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('Location'), StaticDataSourceProvider('Location')],
-        include_ucrs=include_ucrs,
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('Location'),
+            StaticDataSourceProvider('Location')
+        ],
+        include_ucrs=include_ucrs
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
+        table_manager.bootstrap(ucr_configs)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
