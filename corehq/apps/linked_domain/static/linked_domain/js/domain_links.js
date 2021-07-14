@@ -294,7 +294,18 @@ hqDefine("linked_domain/js/domain_links", [
     var GettingStartedViewModel = function (data) {
         var self = {};
         self.parent = data.parent;
-        self.upstreamDomains = ko.observableArray(data.upstreamDomains);
+        var sortedUpstreamDomains = data.upstreamDomains.sort(function (first, second) {
+            var firstName = first.name.toUpperCase();
+            var secondName = second.name.toUpperCase();
+            if (firstName > secondName) {
+                return 1;
+            } else if (firstName < secondName) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+        self.upstreamDomains = ko.observableArray(sortedUpstreamDomains);
 
         self.makeUpstreamButtonStatus = ko.computed(function () {
             return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
