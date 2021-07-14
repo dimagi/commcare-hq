@@ -208,9 +208,10 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                fallback_name = ugettext("Continue To ") + trans(app.get_form(module.case_list_form.form_id).name)
+                fallback_name = ugettext("Continue To {form_name}".format(
+                    form_name=trans(app.get_form(module.case_list_form.form_id).name)))
             else:
-                fallback_name = "Create a new Case"
+                fallback_name = ugettext("Create a new Case")
             yield (
                 id_strings.case_list_form_locale(module),
                 trans(module.case_list_form.label) or fallback_name
