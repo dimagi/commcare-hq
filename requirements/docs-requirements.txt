@@ -12,10 +12,11 @@ amqp==2.6.1
     # via kombu
 architect==0.5.6
     # via -r base-requirements.in
-attrs==18.2.0
+attrs==21.2.0
     # via
     #   -r base-requirements.in
     #   jsonschema
+    #   markdown-it-py
 babel==2.8.0
     # via
     #   django-phonenumber-field
@@ -51,8 +52,6 @@ cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-commonmark==0.9.1
-    # via recommonmark
 concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
@@ -171,7 +170,7 @@ dnspython==1.15.0
 docutils==0.16
     # via
     #   -r docs-requirements.in
-    #   recommonmark
+    #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
 dropbox==9.3.0
@@ -229,6 +228,7 @@ jdcal==1.4.1
 jinja2==2.11.3
     # via
     #   -r base-requirements.in
+    #   myst-parser
     #   sphinx
 jmespath==0.10.0
     # via
@@ -270,12 +270,20 @@ markdown==2.2.1
     # via
     #   -r base-requirements.in
     #   pycco
+markdown-it-py==1.1.0
+    # via
+    #   mdit-py-plugins
+    #   myst-parser
 markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+mdit-py-plugins==0.2.8
+    # via myst-parser
 mock==2.0.0
     # via -r base-requirements.in
+myst-parser==0.15.1
+    # via -r docs-requirements.in
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -363,7 +371,9 @@ pytz==2020.1
     #   django
     #   twilio
 pyyaml==5.4.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   myst-parser
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
 qrcode==4.0.4
@@ -374,8 +384,6 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.0.6
     # via django-compressor
-recommonmark==0.7.1
-    # via -r docs-requirements.in
 redis==3.5.3
     # via
     #   -r base-requirements.in
@@ -456,7 +464,7 @@ sortedcontainers==2.3.0
 sphinx==4.0.2
     # via
     #   -r docs-requirements.in
-    #   recommonmark
+    #   myst-parser
     #   sphinx-rtd-theme
 sphinx-rtd-theme==0.5.2
     # via -r docs-requirements.in
@@ -502,7 +510,9 @@ turn-python==0.0.1
 twilio==6.5.1
     # via -r base-requirements.in
 typing-extensions==3.7.4.3
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   markdown-it-py
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
