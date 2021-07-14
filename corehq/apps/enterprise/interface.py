@@ -131,7 +131,6 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
         return [
             [
                 sms_billable.date_sent,
-                BillingAccount.get_account_by_domain(sms_billable.domain).name,
                 sms_billable.domain,
                 {
                     INCOMING: _("Incoming"),
