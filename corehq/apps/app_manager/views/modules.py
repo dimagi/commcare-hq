@@ -444,7 +444,7 @@ def _case_list_form_options(app, module, lang=None):
         'post_form_workflow': f.post_form_workflow,
         'is_registration_form': True,
     } for f in reg_forms})
-    if (not isinstance(module, AdvancedModule) and  # AdvancedModule doesn't have parent_select
+    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
             toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
