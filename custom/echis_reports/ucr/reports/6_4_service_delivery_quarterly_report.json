@@ -153,7 +153,7 @@
           "column_id": "HSEH_ES_ALTR",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "HSEH_ES_ALTR:Proportion of households with access to any type of latrine facilities"
         },
@@ -168,7 +168,7 @@
           "column_id": "ES_ILTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ILTR.1:Number of HHs with improved latrinein the reporting period"
         },
@@ -183,7 +183,7 @@
           "column_id": "ES_ULTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period"
         },
@@ -198,7 +198,7 @@
           "column_id": "ES_ALTR_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "ES_ALTR.1:Number of households with any type of latrine facilities in the reporting period (both unimproved and improved)"
         },
@@ -213,7 +213,7 @@
           "column_id": "COS_HEP_CMHH",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "COS_HEP_CMHH: Proportion of Model households graduated / Households Currently Model/"
         },
@@ -228,7 +228,7 @@
           "column_id": "COS_MHH_New_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "COS_MHH.New.1: Number of Newly graduated model households during the reporting period"
         }
