@@ -76,7 +76,6 @@ branches:
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - ce/bulk-case-search # Cal July 6
-    - bmb/sso-session-timeout-fix  # Biyeun July 8 [QA]
     - ap/auditcare-migration # Amit July 8
     - bmb/sso-superusers-fix  # Biyeun July 8 [QA]
     - rc/explain-before-entering # Robert July 8 [QA]
