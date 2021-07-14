@@ -293,7 +293,7 @@
 </script>
 
 <script type="text/html" id="text-entry-ko-template">
-  <span class="help-block type" data-bind="
+  <span class="help-block type sr-only" data-bind="
         text: helpText()
     "></span>
   <textarea class="textfield form-control" data-bind="
@@ -305,20 +305,24 @@
             'aria-required': $parent.required() ? 'true' : 'false',
         },
     "></textarea>
+  <span class="help-block type" aria-hidden="true" data-bind="
+        text: helpText()
+    "></span>
 </script>
 
 <script type="text/html" id="password-entry-ko-template">
-  <span class="help-block type" data-bind="text: helpText()"></span>
+  <span class="help-block type sr-only" data-bind="text: helpText()"></span>
   <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         id: entryId,
         attr: {'aria-required': $parent.required() ? 'true' : 'false'},
     "/>
+  <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
 
 <script type="text/html" id="str-entry-ko-template">
-  <span class="help-block type" data-bind="
+  <span class="help-block type sr-only" data-bind="
         text: helpText()
     "></span>
   <input autocomplete="off" type="text" class="form-control" data-bind="
@@ -331,6 +335,9 @@
             'aria-required': $parent.required() ? 'true' : 'false',
         }
     "/>
+  <span class="help-block type" aria-hidden="true" data-bind="
+        text: helpText()
+    "></span>
 </script>
 <script type="text/html" id="unsupported-entry-ko-template">
   <div class="unsupported alert alert-warning">
@@ -415,7 +422,7 @@
   </div>
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
-  <span class="help-block type" data-bind="
+  <span class="help-block type sr-only" data-bind="
         text: helpText(),
         visible: helpText(),
     "></span>
@@ -430,9 +437,13 @@
         ">
     <option data-bind="value: id, text: text"></option>
   </select>
+  <span class="help-block type" aria-hidden="true" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
 </script>
 <script type="text/html" id="multidropdown-entry-ko-template">
-  <span class="help-block type" data-bind="
+  <span class="help-block type sr-only" data-bind="
         text: helpText(),
         visible: helpText(),
     "></span>
@@ -447,6 +458,10 @@
         ">
     <option data-bind="value: id, text: text"></option>
   </select>
+  <span class="help-block type" aria-hidden="true" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
 </script>
 <script type="text/html" id="choice-label-entry-ko-template">
   <div class="row">
@@ -492,11 +507,12 @@
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
-  <span class="help-block">{% trans "24-hour clock" %}</span>
+  <span class="help-block sr-only">{% trans "24-hour clock" %}</span>
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
+  <span class="help-block" aria-hidden="true">{% trans "24-hour clock" %}</span>
 </script>
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">
