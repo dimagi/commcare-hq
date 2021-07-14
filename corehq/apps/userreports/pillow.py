@@ -1,5 +1,6 @@
 import hashlib
 import signal
+from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
@@ -107,7 +108,81 @@ def _filter_invalid_config(configs):
     return valid_configs
 
 
-class ConfigurableReportTableManager(object):
+def _get_indicator_adapter_for_pillow(config):
+    return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+
+
+class UcrTableManager(ABC):
+    """Base class for table managers that encapsulates the bootstrap and refresh
+    functionality."""
+    def __init__(self, bootstrap_interval):
+        self.bootstrapped = False
+        self.last_bootstrapped = self.last_imported = datetime.utcnow()
+        self.bootstrap_interval = bootstrap_interval
+
+    def needs_bootstrap(self):
+        """Returns True if the manager needs to be bootstrapped"""
+        return (
+            not self.bootstrapped
+            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+        )
+
+    def bootstrap_if_needed(self):
+        """Bootstrap the manager with data sources or else check for updated data sources"""
+        if self.needs_bootstrap():
+            self.bootstrap()
+        else:
+            self._update_modified_data_sources()
+
+    def bootstrap(self, configs=None):
+        """Initialize the manager with data sources and adapters"""
+        self._do_bootstrap(configs=configs)
+        self.bootstrapped = True
+        self.last_bootstrapped = datetime.utcnow()
+
+    @abstractmethod
+    def _do_bootstrap(self, configs=None):
+        """Override this method to actually perform the bootstrapping"""
+        pass
+
+    def _update_modified_data_sources(self):
+        """Update the manager with any data sources that have been modified since the last call."""
+        new_last_imported = datetime.utcnow()
+        self._update_modified_since(self.last_imported)
+        self.last_imported = new_last_imported
+
+    @abstractmethod
+    def _update_modified_since(self, timestamp):
+        """Override this method to check for updated data sources and update the manager."""
+        pass
+
+    @property
+    @abstractmethod
+    def relevant_domains(self):
+        """Return a list of domains that are relevant to the data sources in this manager."""
+        pass
+
+    @abstractmethod
+    def get_adapters(self, domain):
+        """Get the list of table adapters for the given domain."""
+        pass
+
+    @abstractmethod
+    def get_all_adapters(self):
+        """Get all table adapters managed by this manager."""
+        pass
+
+    @abstractmethod
+    def remove_adapter(self, domain, adapter):
+        """Remove an adapter from the list of managed adapters. This is called if there is an error
+        writing to the adapter. The adapter will get re-added on next bootstrap."""
+        pass
+
+    def rebuild_tables_if_necessary(self):
+        rebuild_sql_tables(self.get_all_adapters())
+
+
+class ConfigurableReportTableManager(UcrTableManager):
 
     def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
@@ -124,13 +199,11 @@ class ConfigurableReportTableManager(object):
         run_migrations -- If True, rebuild tables if the data source changes.
                           Otherwise, do not attempt to change database
         """
-        self.bootstrapped = False
-        self.last_bootstrapped = self.last_imported = datetime.utcnow()
+        super().__init__(bootstrap_interval)
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.bootstrap_interval = bootstrap_interval
         self.run_migrations = run_migrations
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
@@ -158,19 +231,7 @@ class ConfigurableReportTableManager(object):
 
         return configs
 
-    def needs_bootstrap(self):
-        return (
-            not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
-        )
-
-    def bootstrap_if_needed(self):
-        if self.needs_bootstrap():
-            self.bootstrap()
-        else:
-            self._pull_in_new_and_modified_data_sources()
-
-    def bootstrap(self, configs=None):
+    def _do_bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
         if not configs:
             pillow_logging.warning("UCR pillow has no configs to process")
@@ -179,14 +240,11 @@ class ConfigurableReportTableManager(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                self._get_indicator_adapter(config)
+                _get_indicator_adapter_for_pillow(config)
             )
 
         if self.run_migrations:
             self.rebuild_tables_if_necessary()
-
-        self.bootstrapped = True
-        self.last_bootstrapped = datetime.utcnow()
 
     @property
     def relevant_domains(self):
@@ -195,32 +253,27 @@ class ConfigurableReportTableManager(object):
     def get_adapters(self, domain):
         return list(self.table_adapters_by_domain.get(domain, []))
 
-    def remove_adapter(self, domain, adapter):
-        self.table_adapters_by_domain[domain].remove(adapter)
-
-    def _get_indicator_adapter(self, config):
-        return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
-
-    def rebuild_tables_if_necessary(self):
-        rebuild_sql_tables([
+    def get_all_adapters(self):
+        return [
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
-        ])
+        ]
 
-    def _pull_in_new_and_modified_data_sources(self):
+    def remove_adapter(self, domain, adapter):
+        self.table_adapters_by_domain[domain].remove(adapter)
+
+    def _update_modified_since(self, timestamp):
         """
         Find any data sources that have been modified since the last time this was bootstrapped
         and update the in-memory references.
         """
-        new_last_imported = datetime.utcnow()
         new_data_sources = [
             source
             for provider in self.data_source_providers
-            for source in provider.get_data_sources_modified_since(self.last_imported)
+            for source in provider.get_data_sources_modified_since(timestamp)
         ]
         self._add_data_sources_to_table_adapters(new_data_sources)
-        self.last_imported = new_last_imported
 
     def _add_data_sources_to_table_adapters(self, new_data_sources):
         for new_data_source in new_data_sources:
@@ -231,7 +284,7 @@ class ConfigurableReportTableManager(object):
                 adapter for adapter in domain_adapters if adapter.config._id != new_data_source._id
             ]
             # add a new one
-            domain_adapters.append(self._get_indicator_adapter(new_data_source))
+            domain_adapters.append(_get_indicator_adapter_for_pillow(new_data_source))
             # update dictionary
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
