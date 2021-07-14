@@ -2090,3 +2090,11 @@ TURN_IO_BACKEND = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
+    'followup_forms_as_case_list_form',
+    'Option to configure follow up forms on parent case for Case List Form menu setting of '
+    'child modules that use Parent Child Selection',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
