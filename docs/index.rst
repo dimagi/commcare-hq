@@ -81,8 +81,9 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     api
+    fhir/index
     openmrs
-    motech
+    value_source
 
 .. toctree::
     :caption: UI and Front End
@@ -116,6 +117,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
 
     toggles
     migrations
+    couch_to_sql_models
     commtrack
     elasticsearch
     es_query
@@ -129,6 +131,13 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     metrics
     extensions
     custom
+
+.. toctree::
+    :caption: Architecture Decisions
+    :maxdepth: 1
+    :glob:
+
+    decisions/*
 
 .. toctree::
     :caption: Documentation Tips

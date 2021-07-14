@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "file:ReferralRequest.schema.json",
-  "$ref": "#/definitions/ReferralRequest",
+  "id": "file:ServiceRequest.schema.json",
+  "$ref": "#/definitions/ServiceRequest",
   "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
   "definitions": {
-    "ReferralRequest": {
+    "ServiceRequest": {
       "allOf": [
         {
           "$ref": "DomainResource.schema.json#/definitions/DomainResource"
@@ -13,10 +13,10 @@
           "description": "Used to record and send details about a request for referral service or transfer of a patient to the care of another provider or provider organization.",
           "properties": {
             "resourceType": {
-              "description": "This is a ReferralRequest resource",
+              "description": "This is a ServiceRequest resource",
               "type": "string",
               "enum": [
-                "ReferralRequest"
+                "ServiceRequest"
               ]
             },
             "identifier": {
@@ -121,7 +121,7 @@
             },
             "requester": {
               "description": "The individual who initiated the request and has responsibility for its activation.",
-              "$ref": "#/definitions/ReferralRequest_Requester"
+              "$ref": "#/definitions/ServiceRequest_Requester"
             },
             "specialty": {
               "description": "Indication of the clinical domain or discipline to which the referral or transfer of care request is sent.  For example: Cardiology Gastroenterology Diabetology.",
@@ -185,7 +185,7 @@
         }
       ]
     },
-    "ReferralRequest_Requester": {
+    "ServiceRequest_Requester": {
       "allOf": [
         {
           "$ref": "BackboneElement.schema.json#/definitions/BackboneElement"

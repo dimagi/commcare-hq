@@ -68,11 +68,15 @@ from corehq.apps.linked_domain.models import (
     DomainLinkHistory,
     wrap_detail,
 )
+from corehq.apps.linked_domain.remote_accessors import get_remote_linkable_ucr
 from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
     push_models,
 )
-from corehq.apps.linked_domain.ucr import unlink_reports_in_domain
+from corehq.apps.linked_domain.ucr import (
+    create_linked_ucr,
+    unlink_reports_in_domain,
+)
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
@@ -91,10 +95,13 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import Keyword
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -154,8 +161,26 @@ def case_search_config(request, domain):
 
 @login_or_api_key
 @require_linked_domain
+@require_permission(Permissions.view_reports)
+def linkable_ucr(request, domain):
+    """Returns a list of reports to be used by the downstream
+    domain on a remote server to create linked reports by calling the
+    `ucr_config` view below
+
+    """
+    reports = get_report_configs_for_domain(domain)
+    return JsonResponse({
+        "reports": [
+            {"id": report._id, "title": report.title} for report in reports]
+    })
+
+
+@login_or_api_key
+@require_linked_domain
 def ucr_config(request, domain, config_id):
     report_config = ReportConfiguration.get(config_id)
+    if report_config.domain != domain:
+        return Http404
     datasource_id = report_config.config_id
     datasource_config = DataSourceConfiguration.get(datasource_id)
 
@@ -252,6 +277,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
+        if master_link and master_link.is_remote:
+            remote_linkable_ucr = get_remote_linkable_ucr(master_link)
+        else:
+            remote_linkable_ucr = None
+
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
@@ -262,6 +292,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
+                'models': [
+                    {'slug': model[0], 'name': model[1]}
+                    for model in LINKED_MODELS
+                ],
+                'linkable_ucr': remote_linkable_ucr,
             },
         }
 
@@ -335,6 +370,22 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 avoid editing any of the data contained in the release.
             '''),
         }
+
+    @allow_remote_invocation
+    def create_remote_report_link(self, in_data):
+        linked_domain = in_data['linked_domain']
+        master_domain = in_data['master_domain'].strip('/').split('/')[-1]
+        report_id = in_data['report_id']
+        link = DomainLink.objects.filter(
+            remote_base_url__isnull=False,
+            linked_domain=linked_domain,
+            master_domain=master_domain,
+        ).first()
+        if link:
+            create_linked_ucr(link, report_id)
+            return {'success': True}
+        else:
+            return {'success': False}
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
@@ -464,7 +515,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
             keyword_name = ugettext_lazy('Unknown Keyword')
             if detail:
                 try:
-                    keyword_name = Keyword.objects.get(detail.keyword_id)
+                    keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword
                 except Keyword.DoesNotExist:
                     pass
             return f'{name} ({keyword_name})'

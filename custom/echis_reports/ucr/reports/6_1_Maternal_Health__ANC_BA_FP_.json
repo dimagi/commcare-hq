@@ -56,11 +56,19 @@
 				"field": "test_or_real",
 				"type": "choice_list",
 				"slug": "test_or_real"
+			},
+			{
+			  "type": "pre",
+			  "field": "health_post",
+			  "slug": "health_post_pre",
+			  "datatype": "string",
+			  "pre_value": "",
+			  "pre_operator": "!=",
+			  "display": null
 			}
 		],
 		"configured_charts": [],
 		"aggregation_columns": [
-			"health_post_id",
 			"health_post"
 		],
 		"sort_expression": [],

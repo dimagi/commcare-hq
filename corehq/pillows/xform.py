@@ -13,9 +13,10 @@ from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
@@ -152,6 +153,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     kafka_change_feed = KafkaChangeFeed(
         topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
@@ -191,18 +193,25 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         dedicated_migration_process=dedicated_migration_process
     )
 
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('XFormInstance'), StaticDataSourceProvider('XFormInstance')],
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('XFormInstance'),
+            StaticDataSourceProvider('XFormInstance')
+        ],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
+    if ucr_configs:
+        table_manager.bootstrap(ucr_configs)
     xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
@@ -213,8 +222,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    if ucr_configs:
-        ucr_processor.bootstrap(ucr_configs)
     processors = [xform_to_es_processor]
     if settings.RUN_UNKNOWN_USER_PILLOW:
         processors.append(unknown_user_form_processor)
@@ -225,7 +232,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
-            doc_filter_fn=report_xform_filter
+            doc_filter_fn=report_xform_filter,
+            change_filter_fn=is_couch_change_for_sql_domain
         )
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:

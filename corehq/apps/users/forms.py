@@ -39,7 +39,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, UserRole
+from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
@@ -174,6 +174,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
+            user_current_role = self.existing_user.get_role(domain=self.domain)
             try:
                 self.existing_user.set_role(self.domain, role)
                 if self.existing_user.is_commcare_user():
@@ -181,13 +182,25 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                log_user_role_update(self.domain, self.existing_user, self.request.user, USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
+            else:
+                user_new_role = self.existing_user.get_role(self.domain)
+                if self._role_updated(user_current_role, user_new_role):
+                    log_user_role_update(self.domain, user_new_role, user=self.existing_user,
+                                         by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
         elif is_update_successful:
             self.existing_user.save()
 
         return is_update_successful
+
+    @staticmethod
+    def _role_updated(old_role, new_role):
+        if bool(old_role) ^ bool(new_role):
+            return True
+        if old_role and new_role and new_role.get_qualified_id() != old_role.get_qualified_id():
+            return True
+        return False
 
     def load_roles(self, role_choices=None, current_role=None):
         if role_choices is None:
@@ -199,12 +212,12 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class UpdateUserPermissionForm(forms.Form):
-    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
+    superuser = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
 
-    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
+    def update_user_permission(self, couch_user=None, editable_user=None, is_superuser=None):
         is_update_successful = False
         if editable_user and couch_user.is_superuser:
-            editable_user.is_superuser = is_super_user
+            editable_user.is_superuser = is_superuser
             editable_user.save()
             is_update_successful = True
 
@@ -248,10 +261,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        self.is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
-            and is_request_using_sso(kwargs['request'])
-        )
+        self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -1209,9 +1219,9 @@ class UserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
+        roles = SQLUserRole.objects.get_by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles
+            (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
@@ -1272,8 +1282,9 @@ class UserFilterForm(forms.Form):
         if not role_id:
             return None
 
-        role = UserRole.get(role_id)
-        if not role.domain == self.domain:
+        try:
+            SQLUserRole.objects.by_couch_id(role_id, domain=self.domain)
+        except SQLUserRole.DoesNotExist:
             raise forms.ValidationError(_("Invalid Role"))
         return role_id
 

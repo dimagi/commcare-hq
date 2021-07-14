@@ -1,16 +1,17 @@
+from django.conf import settings
+
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.models_sql import (
     migrate_role_assignable_by_to_sql,
     migrate_role_permissions_to_sql,
-    SQLUserRole,
 )
 
 
 class Command(PopulateSQLCommand):
     @classmethod
     def couch_db_slug(cls):
-        return "users"
+        return settings.USERS_GROUPS_DB
 
     @classmethod
     def couch_doc_type(self):
@@ -23,7 +24,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "TODO: add once the PR adding this file is merged"
+        return "4f5a5ef0a9b5ef9873a9b2dce5646d7aa881c416"
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
@@ -33,7 +34,7 @@ class Command(PopulateSQLCommand):
 
         couch_permissions = {
             info.name: info
-            for info in Permissions.wrap(couch["permissions"]).to_list()
+            for info in Permissions.wrap(couch.get("permissions", {})).to_list()
         }
         sql_permissions = {
             info.name: info
@@ -49,7 +50,7 @@ class Command(PopulateSQLCommand):
                 name_prefix=f"permissions.{name}"
             ))
 
-        couch_assignable_by = couch["assignable_by"]
+        couch_assignable_by = couch.get("assignable_by")
         sql_assignable_by = list(sql.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True))
         diffs.extend(cls.diff_lists(
             "assignable_by",

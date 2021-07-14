@@ -6,6 +6,7 @@ import logging
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from couchdbkit.exceptions import ResourceNotFound
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -532,6 +533,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return True
 
     @classmethod
+    def get_report(cls, report_id):
+        try:
+            notification = ReportNotification.get(report_id)
+        except ResourceNotFound:
+            notification = None
+        else:
+            if notification.doc_type != 'ReportNotification':
+                notification = None
+
+        return notification
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -546,10 +559,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def all_recipient_emails(self):
-        # handle old documents
-        if not self.owner_id:
-            return frozenset([self.owner.get_email()])
-
         emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
             emails |= {self.owner_email}
@@ -776,6 +785,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def verify_start_date(self, start_date):
         if start_date != self.start_date and start_date < datetime.today().date():
             raise ValidationError("You can not specify a start date in the past.")
+
+    def can_be_viewed_by(self, user):
+        return ((user._id == self.owner_id)
+                or (user.is_domain_admin(self.domain)
+                or (user.get_email() in self.all_recipient_emails)))
 
 
 class ScheduledReportsCheckpoint(models.Model):

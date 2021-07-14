@@ -263,7 +263,8 @@ class StockTransactionLoader:
             txx[(tx.report.form_id, tx.report.type)] += 1
         return any(
             self.count_ledger_refs(form_id, report_type, ref) < num_tx
-            for (form_id, report_type), num_tx in txx.items() if num_tx > 1
+            for (form_id, report_type), num_tx in txx.items()
+            if num_tx > 1 and self.has_ledger_refs(form_id, report_type, ref)
         )
 
     def diff_missing_ledger(self, ledger, *, sql_miss=False):
@@ -313,24 +314,35 @@ class StockTransactionLoader:
             self.case_locations[case_id] = loc
         return loc
 
+    def has_ledger_refs(self, form_id, report_type, ref):
+        try:
+            # the result of this call is cached, so a second call
+            # with the same arguments will be fast
+            return self.count_ledger_refs(form_id, report_type, ref) > 0
+        except (XFormNotFound, DomainMismatch):
+            return False
+
     def count_ledger_refs(self, form_id, report_type, ref):
         if form_id not in self.ledger_refs:
             ref_counts = defaultdict(lambda: defaultdict(int))
             for tx_report_type, tx in self.iter_stock_transactions(form_id):
                 ref_counts[tx_report_type][tx.ledger_reference] += 1
             self.ledger_refs[form_id] = ref_counts
-        num = self.ledger_refs[form_id][report_type][ref]
-        assert num > 0, (form_id, report_type, ref)
-        return num
+        return self.ledger_refs[form_id][report_type][ref]
 
     def iter_stock_transactions(self, form_id):
         xform = get_couch_form(form_id)
-        assert xform.domain == get_domain(), xform
+        if xform.domain != get_domain():
+            raise DomainMismatch(f"{form_id}: {xform.domain} != {get_domain()}")
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
                 if tx.action == TRANSACTION_TYPE_STOCKONHAND:
                     yield report.report_type, tx
+
+
+class DomainMismatch(Exception):
+    pass
 
 
 def is_case_patched(case_id, diffs):

@@ -100,16 +100,23 @@ def search(request, domain):
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+        Daterange can be specified in the format __range__YYYY-MM-DD__YYYY-MM-DD
+        Multiple values can be specified for a param, which will be searched with OR operator
+
     Returns results as a fixture with the same structure as a casedb instance.
+
+
     """
-    criteria = request.GET.dict()
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
     try:
+        # could be a list or a single string
         case_type = criteria.pop('case_type')
+        case_types = case_type if isinstance(case_type, list) else [case_type]
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
     try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
     except TooManyRelatedCasesError:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
     except CaseFilterError as e:
@@ -131,7 +138,7 @@ def app_aware_search(request, domain, app_id):
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     if app_id:
-        cases.extend(get_related_cases(domain, app_id, case_type, cases))
+        cases.extend(get_related_cases(domain, app_id, case_types, cases))
 
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
