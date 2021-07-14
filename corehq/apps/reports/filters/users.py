@@ -7,6 +7,8 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
@@ -471,6 +473,28 @@ class ChangedByUserFilter(ExpandedMobileWorkerFilter):
 
     def get_default_selections(self):
         return [('t__6', _("[Web Users]"))]
+
+
+class PropertyFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('Modified Property')
+    default_text = ugettext_noop('Select Property')
+    slug = 'property'
+
+    @property
+    def options(self):
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
+            user_data_label = _("Profile or User Data")
+        else:
+            user_data_label = _("User Data")
+        return [
+            ("is_active", _('Active / Deactivated')),
+            ("email", _('Email')),
+            ("language", _('Language')),
+            ("location_id", _('Location')),
+            ("phone_numbers", _('Phone Number')),
+            ("user_data", user_data_label),
+            ("two_factor_auth_disabled_until", _('Two Factor Authentication Disabled')),
+        ]
 
 
 class ChangeActionFilter(BaseMultipleOptionFilter):
