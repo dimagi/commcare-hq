@@ -59,7 +59,6 @@ branches:
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
@@ -68,7 +67,6 @@ branches:
     - mk/user-history/base # MK June 21 [QA]
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
-    - bmb/sso-debug-user-data  # Biyeun June 30
     - sr/fup-form  # Sravan July 1
     - gh/split-toggles-and-previews # Graham July 1 [QA]
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
