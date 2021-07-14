@@ -55,11 +55,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
-        self.allowedValues = ko.observableArray();
-        _.each(allowedValues, function(item) {
-            var allowedValueObj = allowedValueListItem(item.allowed_value, item.description);
-            self.allowedValues.push(allowedValueObj);
-        });
+        self.allowedValues = ko.observableArray(_.map(allowedValues, function(item) {
+            return allowedValueListItem(item.allowed_value, item.description) }));
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -83,12 +80,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removeFHIRResourcePropertyPath(false);
         };
 
-        self.canHaveAllowedValues = function () {
-            return self.dataType() == 'select';
-        };
-
-        self.allowedValuesDisplay = ko.computed(function() {
-            return _.map(self.allowedValues(), function(allowedValue) { return allowedValue.displayValue() }).join("<br/>");
+        self.canHaveAllowedValues = ko.computed(function () {
+            return self.dataType() === 'select';
         });
 
         return self;
@@ -98,12 +91,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         var self = {};
         self.allowedValue = allowedValue;
         self.description = description;
-
-        self.displayValue = function () {
-            var beginning = self.allowedValue ? self.allowedValue : '(empty)'
-            var remainder = self.description ? ' <i class="fa fa-arrow-right"></i> ' + self.description : '';
-            return beginning + remainder;
-        };
         return self;
     }
 
