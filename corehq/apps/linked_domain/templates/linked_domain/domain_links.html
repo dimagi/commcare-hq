@@ -59,6 +59,9 @@
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title">{% trans 'Add Downstream Project' %}</h4>
+          <!-- ko if: parent.showGetStarted -->
+            <p>To make this project an upstream project, you need to add a downstream project.</p>
+          <!-- /ko -->
         </div>
         <div class="modal-body">
           <div class="ko-model">
