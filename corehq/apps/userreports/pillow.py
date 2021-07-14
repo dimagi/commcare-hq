@@ -301,6 +301,7 @@ class RegistryDataSourceTableManager(UcrTableManager):
         self.data_source_provider = RegistryDataSourceProvider()
         self.adapters = []
         self.adapters_by_domain = defaultdict(list)
+        self.domains_to_skip = None
 
     def get_all_configs(self):
         return self.data_source_provider.get_data_sources()
@@ -318,6 +319,8 @@ class RegistryDataSourceTableManager(UcrTableManager):
         for config in configs:
             self._add_adapter_for_data_source(config)
 
+        self.domains_to_skip = all_domains_with_migrations_in_progress()
+
     def _add_adapter_for_data_source(self, config):
         adapter = _get_indicator_adapter_for_pillow(config)
         self.adapters.append(adapter)
@@ -326,7 +329,7 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
     @property
     def relevant_domains(self):
-        return set(self.adapters_by_domain)
+        return set(self.adapters_by_domain) - self.domains_to_skip
 
     def get_adapters(self, domain):
         return list(self.adapters_by_domain.get(domain, []))
@@ -350,7 +353,11 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
         # iterate over all domains in case the list of domains for the data source has changed
         for domain in list(self.adapters_by_domain):
-            self.adapters_by_domain[domain] = _filter_adapters(self.adapters_by_domain[domain])
+            filtered_adapters = _filter_adapters(self.adapters_by_domain[domain])
+            if filtered_adapters:
+                self.adapters_by_domain[domain] = filtered_adapters
+            else:
+                del self.adapters_by_domain[domain]
 
     def _update_modified_since(self, timestamp):
         """
@@ -359,10 +366,12 @@ class RegistryDataSourceTableManager(UcrTableManager):
         """
         for data_source in self.data_source_provider.get_data_sources_modified_since(timestamp):
             pillow_logging.info(f'updating modified registry data source: {data_source.domain}: {data_source._id}')
+            self._add_or_update_data_source(data_source)
 
-            self._remove_adapters_for_data_source(data_source)
-            if not data_source.is_deactivated:
-                self._add_adapter_for_data_source(data_source)
+    def _add_or_update_data_source(self, config):
+        self._remove_adapters_for_data_source(config)
+        if not config.is_deactivated:
+            self._add_adapter_for_data_source(config)
 
 
 class ConfigurableReportPillowProcessor(BulkPillowProcessor):
