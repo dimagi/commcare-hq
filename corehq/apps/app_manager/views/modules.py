@@ -433,7 +433,7 @@ def _get_shadow_parent(app, module):
 
 def _case_list_form_options(app, module, lang=None):
     options = OrderedDict()
-    forms = [
+    reg_forms = [
         form
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(module.case_type)
@@ -442,12 +442,41 @@ def _case_list_form_options(app, module, lang=None):
     options.update({f.unique_id: {
         'name': trans(f.name, langs),
         'post_form_workflow': f.post_form_workflow,
-    } for f in forms})
-
+        'is_registration_form': True,
+    } for f in reg_forms})
+    if (hasattr(module, 'parent_select') and  # AdvancedModule doesn't have parent_select
+            toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM and module.parent_select.active):
+        followup_forms = get_parent_select_followup_forms(app, module)
+        if followup_forms:
+            options.update({f.unique_id: {
+                'name': trans(f.name, langs),
+                'post_form_workflow': f.post_form_workflow,
+                'is_registration_form': False,
+            } for f in followup_forms})
     return {
         'options': options,
         'form': module.case_list_form,
     }
+
+
+def get_parent_select_followup_forms(app, module):
+    if not module.parent_select.active or not module.parent_select.module_id:
+        return []
+    parent_module = app.get_module_by_unique_id(
+        module.parent_select.module_id,
+        error=_("Case list used by Select Parent First in '{}' not found").format(
+            module.default_name()),
+    )
+    parent_case_type = parent_module.case_type
+    rel = module.parent_select.relationship
+    if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
+        return [
+            form
+            for mod in app.get_modules() if mod.case_type == parent_case_type
+            for form in mod.get_forms() if form.requires_case() and not form.is_registration_form()
+        ]
+    else:
+        return []
 
 
 def _get_module_details_context(request, app, module, case_property_builder, messages=messages):
@@ -525,6 +554,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
+        "case_list_form_expression": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
         'case_list_form_use_default_image_for_all': None,
@@ -645,6 +675,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_form_expression'):
+        module.case_list_form.relevancy_expression = request.POST.get('case_list_form_expression')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
 
