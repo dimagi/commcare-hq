@@ -1944,8 +1944,8 @@ RESTRICT_LOGIN_AS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Limited+Login+As",
 )
 
-DISABLE_EMAIL_REPORTS_PERMISSION = StaticToggle(
-    'disable_email_reports',
+DISABLE_DOWNLOAD_REPORTS_PERMISSION = StaticToggle(
+    'disable_download_reports_permission',
     'USH: Disable emailing and downloading of reports',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
