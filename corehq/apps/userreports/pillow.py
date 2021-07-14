@@ -10,7 +10,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC, CASE_TOPICS
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
 from corehq.apps.userreports.const import KAFKA_TOPICS
@@ -710,4 +710,33 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
         processor=[ucr_processor]
+    )
+
+
+def get_kafka_ucr_registry_pillow(
+    pillow_id='kafka-ucr-registry',
+    num_processes=1, process_num=0, dedicated_migration_process=False,
+    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, ucr_configs=None, **kwargs):
+    """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
+
+    Only UCRs backed by Data Registries are processed in this pillow.
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
+    table_manager = RegistryDataSourceTableManager(
+        run_migrations=(process_num == 0)  # only first process runs migrations
+    )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
+    if ucr_configs:
+        table_manager.bootstrap(ucr_configs)
+
+    return ConfigurableReportKafkaPillow(
+        processor=ucr_processor,
+        pillow_name=pillow_id,
+        topics=CASE_TOPICS,
+        num_processes=num_processes,
+        process_num=process_num,
+        is_dedicated_migration_process=dedicated_migration_process and (process_num == 0),
+        processor_chunk_size=processor_chunk_size,
     )
