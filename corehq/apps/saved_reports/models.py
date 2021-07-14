@@ -661,7 +661,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
-            language = user_languages.get(email, fallback_language)
+            language = user_languages.get(email, fallback_language) or fallback_language
             recipients[language].append(email)
         return immutabledict(recipients)
 
