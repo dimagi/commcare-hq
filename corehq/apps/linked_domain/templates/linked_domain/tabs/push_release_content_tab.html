@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="ko-tabs-push-content" class="ko-template">
+<div id="ko-tabs-push-content" data-bind="with: $root.pushContentViewModel">
   <div data-bind="if: canPush()">
     <h3>{% trans "Push Content" %}</h3>
     <p>

@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="ko-tabs-manage-downstream" class="ko-template">
+<div id="ko-tabs-manage-downstream" data-bind="with: $root">
   <div data-bind="if: domain_links().length">
     <h3>{% trans "Manage Downstream Projects" %}</h3>
     <p>

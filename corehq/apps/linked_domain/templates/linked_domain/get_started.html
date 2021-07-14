@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="ko-getting-started" class="ko-template">
+<div id="ko-getting-started" data-bind="with: $root.gettingStartedViewModel">
   <h3>{% trans "Linked Projects" %}</h3>
   <p>
     {% blocktrans %}
@@ -44,9 +44,10 @@
         {% endblocktrans %}
       </p>
       <button type="button"
-            class="btn btn-primary"
-            id="add-downstream-domain"
-            data-bind="click: makeUpstream">
+              class="btn btn-primary"
+              id="add-downstream-domain"
+              data-toggle="modal"
+              data-target="#new-downstream-domain-modal">
         {% trans "Yes, make upstream project" %}
       </button>
     </div>

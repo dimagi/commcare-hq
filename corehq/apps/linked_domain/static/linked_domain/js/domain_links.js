@@ -59,6 +59,13 @@ hqDefine("linked_domain/js/domain_links", [
     var DomainLinksViewModel = function (data) {
         var self = {};
 
+        // setup getting started view model
+        var gettingStartedData = {
+            parent: self,
+            upstreamDomains: data.upstream_domains
+        };
+        self.gettingStartedViewModel = GettingStartedViewModel(gettingStartedData);
+
         // setup add downstream domain modal view model
         var addDownstreamDomainData = {
             parent: self,
@@ -265,13 +272,14 @@ hqDefine("linked_domain/js/domain_links", [
 
     var GettingStartedViewModel = function (data) {
         var self = {};
+        self.parent = data.parent;
+        self.upstreamDomains = ko.observableArray(data.upstreamDomains);
         self.makeUpstream = function () {
             console.log('make upstream');
         };
         self.goToUpstream = function (data, event) {
             window.location.href= data.upstreamDomains()[0].url;
         };
-        self.upstreamDomains = ko.observableArray(data.upstream_domains);
         return self;
     }
 
@@ -288,24 +296,11 @@ hqDefine("linked_domain/js/domain_links", [
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);
 
         var model = DomainLinksViewModel(view_data);
-        if ($("#ko-tabs-pull-content").length) {
-            $("#ko-tabs-pull-content").koApplyBindings(model.pullReleaseContentViewModel);
-        }
-        if ($("#ko-tabs-push-content").length) {
-            $("#ko-tabs-push-content").koApplyBindings(model.pushContentViewModel);
-        }
-        if ($("#ko-tabs-manage-downstream").length) {
-            $("#ko-tabs-manage-downstream").koApplyBindings(model);
-        }
+        $("#ko-linked-projects").koApplyBindings(model);
 
         if ($("#new-downstream-domain-modal").length) {
             $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainViewModel);
         }
-
-        if ($("#ko-getting-started").length) {
-            var gettingStartedViewModel = GettingStartedViewModel(view_data);
-            $("#ko-getting-started").koApplyBindings(gettingStartedViewModel);
-        };
 
     });
 });

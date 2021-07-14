@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="ko-tabs-pull-content" class="ko-template">
+<div id="ko-tabs-pull-content" data-bind="with: $root.pullReleaseContentViewModel">
   <div data-bind="if: domainLink">
     <p>
       {% blocktrans %}
