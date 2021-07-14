@@ -88,6 +88,19 @@ hqDefine("linked_domain/js/domain_links", [
         self.domain = data.domain;
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
 
+        self.isUpstreamDomain = ko.computed(function () {
+            return self.domain_links().length > 0;
+        });
+        // doesn't need to be observable because it is impossible to update the existing page to change this property
+        self.isDownstreamDomain = data.is_downstream_domain;
+
+        self.pullTabActiveStatus = ko.computed(function () {
+            return self.isDownstreamDomain ? "in active" : "";
+        });
+
+        self.manageTabActiveStatus = ko.computed(function () {
+            return self.isDownstreamDomain ? "" : "in active";
+        });
 
         // can only push content if a link with a downstream domain exists
         var pushContentData = {
@@ -274,9 +287,11 @@ hqDefine("linked_domain/js/domain_links", [
         var self = {};
         self.parent = data.parent;
         self.upstreamDomains = ko.observableArray(data.upstreamDomains);
-        self.makeUpstream = function () {
-            console.log('make upstream');
-        };
+
+        self.makeUpstreamButtonStatus = ko.computed(function () {
+            return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
+        });
+
         self.goToUpstream = function (data, event) {
             window.location.href= data.upstreamDomains()[0].url;
         };

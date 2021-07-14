@@ -262,10 +262,9 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'is_linked_domain': bool(master_link),
-            'is_master_domain': bool(len(linked_domains)),
             'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
+                'is_downstream_domain': bool(master_link),
                 'upstream_domains': upstream_domains,
                 'available_domains': available_domains_to_link,
                 'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,

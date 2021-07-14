@@ -10,33 +10,35 @@
   {% registerurl 'app_settings' domain '---' %}
 
   <div id="ko-linked-projects" class="ko-template">
-    {% if not is_linked_domain and not is_master_domain %}
+    <!-- ko ifnot: (isUpstreamDomain() || isDownstreamDomain) -->
       {% include 'linked_domain/get_started.html' %}
-    {% else %}
-      {% if is_master_domain %}
+    <!-- /ko -->
+    <!-- ko if: (isUpstreamDomain() || isDownstreamDomain) -->
+      <!-- ko if: isUpstreamDomain -->
         {% comment %}
           Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
           to race condition problems if the tabs aren't visible when its document ready handler runs.
         {% endcomment %}
         <ul class="nav nav-tabs sticky-tabs">
-          {% if is_linked_domain %}
+          <li class="active"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
+          <!-- ko if: isDownstreamDomain -->
             <li class="active"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project" %}</a></li>
-          {% endif %}
-          <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
+          <!-- /ko -->
           <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
         </ul>
         <div class="spacer"></div>
-      {% elif is_linked_domain %}
+      <!-- /ko -->
+      <!-- ko if: (!isUpstreamDomain() && isDownstreamDomain) -->
         <h2>{% trans "Manage Linked Project" %}</h2>  {# header for the only tab that will be displayed #}
-      {% endif %}
+      <!-- /ko -->
       <div id="domain_links">
         <div class="tab-content">
-          {% if is_linked_domain %}
-            <div class="tab-pane fade in active" id="tabs-pull-content">
+          <!-- ko if: isDownstreamDomain -->
+            <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
               {% include 'linked_domain/tabs/pull_release_content_tab.html' %}
             </div>
-          {% endif %}
-          <div class="tab-pane fade{% if not is_linked_domain %} in active{% endif %}" id="tabs-manage-downstream">
+          <!-- /ko -->
+          <div class="tab-pane fade" id="tabs-manage-downstream" data-bind="class: manageTabActiveStatus">
             {% include 'linked_domain/tabs/manage_downstream_domains_tab.html' %}
           </div>
           <div class="tab-pane fade" id="tabs-push-content">
@@ -44,7 +46,7 @@
           </div>
         </div>
       </div>
-    {% endif %}
+    <!-- /ko -->
   </div>
 
 {% endblock %}
