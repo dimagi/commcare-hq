@@ -16,7 +16,7 @@ from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_i
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
-    StaticDataSourceProvider,
+    StaticDataSourceProvider, RegistryDataSourceProvider,
 )
 from corehq.apps.userreports.exceptions import (
     UserReportsWarning,
@@ -287,6 +287,88 @@ class ConfigurableReportTableManager(UcrTableManager):
             domain_adapters.append(_get_indicator_adapter_for_pillow(new_data_source))
             # update dictionary
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
+
+
+class RegistryDataSourceTableManager(UcrTableManager):
+
+    def __init__(self, bootstrap_interval=REBUILD_CHECK_INTERVAL, run_migrations=True):
+        """Initializes the processor for UCRs backed by a data registry
+
+        Keyword Arguments:
+        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
+        run_migrations -- If True, rebuild tables if the data source changes.
+                          Otherwise, do not attempt to change database
+        """
+        super().__init__(bootstrap_interval)
+        self.data_source_provider = RegistryDataSourceProvider()
+        self.run_migrations = run_migrations
+        self.adapters = []
+        self.adapters_by_domain = defaultdict(list)
+
+    def get_all_configs(self):
+        return self.data_source_provider.get_data_sources()
+
+    def get_filtered_configs(self, configs=None):
+        configs = configs or self.get_all_configs()
+        configs = _filter_invalid_config(configs)
+        return configs
+
+    def _do_bootstrap(self, configs=None):
+        configs = self.get_filtered_configs(configs)
+        if not configs:
+            return
+
+        for config in configs:
+            self._add_adapter_for_data_source(config)
+
+        if self.run_migrations:
+            self.rebuild_tables_if_necessary()
+
+    def _add_adapter_for_data_source(self, config):
+        adapter = _get_indicator_adapter_for_pillow(config)
+        self.adapters.append(adapter)
+        for domain in config.data_domains:
+            self.adapters_by_domain[domain].append(adapter)
+
+    @property
+    def relevant_domains(self):
+        return set(self.adapters_by_domain)
+
+    def get_adapters(self, domain):
+        return list(self.adapters_by_domain.get(domain, []))
+
+    def get_all_adapters(self):
+        return list(self.adapters)
+
+    def remove_adapter(self, domain, adapter):
+        self._remove_adapters_for_data_source(adapter.config)
+
+    def _remove_adapters_for_data_source(self, config):
+        """Remove all adapters for for the given config"""
+
+        def _filter_adapters(adapters):
+            return [
+                adapter for adapter in adapters
+                if adapter.config.get_id != config.get_id
+            ]
+
+        self.adapters = _filter_adapters(self.adapters)
+
+        # iterate over all domains in case the list of domains for the data source has changed
+        for domain in list(self.adapters_by_domain):
+            self.adapters_by_domain[domain] = _filter_adapters(self.adapters_by_domain[domain])
+
+    def _update_modified_since(self, timestamp):
+        """
+        Find any data sources that have been modified since the last time this was bootstrapped
+        and update the in-memory references.
+        """
+        for data_source in self.data_source_provider.get_data_sources_modified_since(timestamp):
+            pillow_logging.info(f'updating modified registry data source: {data_source.domain}: {data_source._id}')
+
+            self._remove_adapters_for_data_source(data_source)
+            if not data_source.is_deactivated:
+                self._add_adapter_for_data_source(data_source)
 
 
 class ConfigurableReportPillowProcessor(BulkPillowProcessor):
