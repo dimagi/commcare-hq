@@ -1946,14 +1946,14 @@ RESTRICT_LOGIN_AS = StaticToggle(
 
 DISABLE_EMAIL_REPORTS_PERMISSION = StaticToggle(
     'disable_email_reports',
-    'USH: Disable emiling and downloading of reports',
+    'USH: Disable emailing and downloading of reports',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Adds a permission that can be disabled to restrict a user's ability to
-    download and email reports. By default, users have the ability to
-    download and email reports so after the flag is enabled the "Download
-    or Email Reports" must be manually unchecked for the desired roles.
+    download and email reports. By default users have the ability to
+    download and email reports so, once the flag is enabled, the "Download
+    or Email Reports" must be manually unchecked for the desired roles to have restrict access.
     """,
 )
 
