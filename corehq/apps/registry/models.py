@@ -95,7 +95,7 @@ class DataRegistry(models.Model):
             .values_list('from_domain', flat=True)
         )
 
-    def get_participating_domains(self, requesting_domain):
+    def get_participating_domains(self):
         return set(self.invitations.filter(
             accepted_on__isnull=False,
             rejected_on__isnull=True

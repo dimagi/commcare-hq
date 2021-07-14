@@ -66,18 +66,21 @@ def get_registry_data_sources_by_domain(domain):
     )
 
 
-def get_all_registry_data_source_ids():
+def get_all_registry_data_source_ids(is_active=None, globally_accessible=None):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
+    rows = RegistryDataSourceConfiguration.view(
+        'registry_userreports/data_sources',
+        reduce=False,
+        include_docs=False,
+    )
     return [
-        row["id"] for row in RegistryDataSourceConfiguration.view(
-            'registry_userreports/data_sources',
-            reduce=False,
-            include_docs=False,
-        )
+        row["id"] for row in rows
+        if (is_active is None or row["value"]["is_deactivated"] != is_active)
+        and (globally_accessible is None or row["value"]["globally_accessible"] == globally_accessible)
     ]
 
 
-def get_data_sources_modified_since(timestamp):
+def get_registry_data_sources_modified_since(timestamp):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
     return RegistryDataSourceConfiguration.view(
         'registry_userreports/data_sources_by_last_modified',
