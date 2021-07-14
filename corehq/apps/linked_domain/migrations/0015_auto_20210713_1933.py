@@ -10,9 +10,24 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='domainlinkhistory',
+        migrations.AlterField(model_name='domainlinkhistory',
             name='model',
-            field=models.CharField(choices=[('app', 'Application'), ('fixture', 'Lookup Table'), ('report', 'Report'), ('keyword', 'Keyword'), ('custom_user_data', 'Custom User Data Fields'), ('custom_product_data', 'Custom Product Data Fields'), ('custom_location_data', 'Custom Location Data Fields'), ('roles', 'User Roles'), ('toggles', 'Feature Flags and Previews'), ('case_search_data', 'Case Search Settings'), ('data_dictionary', 'Data Dictionary'), ('dialer_settings', 'Dialer Settings'), ('otp_settings', 'OTP Pass-through Settings'), ('hmac_callout_settings', 'Signed Callout'), ('tableau_visualization', 'Tableau Visualization'), ('tableau_server', 'Tableau Server')], max_length=128),
+            field=models.CharField(choices=[('app', 'Application'),
+                                            ('fixture', 'Lookup Table'),
+                                            ('report', 'Report'),
+                                            ('keyword', 'Keyword'),
+                                            ('custom_user_data', 'Custom User Data Fields'),
+                                            ('custom_product_data', 'Custom Product Data Fields'),
+                                            ('custom_location_data', 'Custom Location Data Fields'),
+                                            ('roles', 'User Roles'),
+                                            ('toggles', 'Feature Flags and Previews'),
+                                            ('case_search_data', 'Case Search Settings'),
+                                            ('data_dictionary', 'Data Dictionary'),
+                                            ('dialer_settings', 'Dialer Settings'),
+                                            ('otp_settings', 'OTP Pass-through Settings'),
+                                            ('hmac_callout_settings', 'Signed Callout'),
+                                            ('tableau_visualization', 'Tableau Visualization'),
+                                            ('tableau_server', 'Tableau Server')],
+                                   max_length=128),
         ),
     ]
