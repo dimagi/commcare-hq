@@ -112,7 +112,7 @@ class DataRegistry(models.Model):
             raise RegistryAccessDenied()
         return True
 
-    def check_ownership(self,domain):
+    def check_ownership(self, domain):
         if self.domain != domain:
             raise RegistryAccessDenied()
 

@@ -116,6 +116,11 @@ class UcrTableManager(ABC):
     """Base class for table managers that encapsulates the bootstrap and refresh
     functionality."""
     def __init__(self, bootstrap_interval, run_migrations):
+        """
+        :param bootstrap_interval: time in seconds when the pillow checks for any data source changes
+        :param run_migrations: If True, rebuild tables if the data source changes. Otherwise,
+            do not attempt to change database
+        """
         self.bootstrapped = False
         self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.bootstrap_interval = bootstrap_interval
@@ -197,9 +202,6 @@ class ConfigurableReportTableManager(UcrTableManager):
                         first
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
-        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
-        run_migrations -- If True, rebuild tables if the data source changes.
-                          Otherwise, do not attempt to change database
         """
         super().__init__(bootstrap_interval, run_migrations)
         self.data_source_providers = data_source_providers
@@ -291,11 +293,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
     def __init__(self, bootstrap_interval=REBUILD_CHECK_INTERVAL, run_migrations=True):
         """Initializes the processor for UCRs backed by a data registry
-
-        Keyword Arguments:
-        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
-        run_migrations -- If True, rebuild tables if the data source changes.
-                          Otherwise, do not attempt to change database
         """
         super().__init__(bootstrap_interval, run_migrations)
         self.data_source_provider = RegistryDataSourceProvider()

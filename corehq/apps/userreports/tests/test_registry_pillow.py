@@ -182,7 +182,7 @@ class RegistryUcrPillowTest(TestCase):
                         "is_starred": "yes",
                         "estimate": "2.3",
                         "priority": "4",
-                })
+                    })
                 if domain != self.participator_3:
                     # 3 does not grant either of the others access
                     expected[case.case_id] = domain
@@ -222,7 +222,7 @@ class RegistryUcrPillowTest(TestCase):
                         "is_starred": "yes",
                         "estimate": "2.3",
                         "priority": "4",
-                })
+                    })
                 expected[case.case_id] = domain
 
         self.assertEqual(3, adapter.get_query_object().count())
