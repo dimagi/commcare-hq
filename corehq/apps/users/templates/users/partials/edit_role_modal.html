@@ -130,7 +130,7 @@
               </div>
             </div>
             {% if request|toggle_enabled:"DISABLE_EMAIL_REPORTS_PERMISSION" %}
-              <div class="form-group" data-bind="visible: self.permissions.access_all_locations()">
+              <div class="form-group" data-bind="visible: permissions.access_all_locations()">
                 <label class="col-sm-4 control-label">
                   {% trans "Download or Email Reports" %}
                 </label>
@@ -138,7 +138,7 @@
                   <div class="form-check">
                     <input type="checkbox"
                            id="download-and-email-reports-checkbox"
-                           data-bind="checked: self.permissions.email_reports, disable: !$root.allowEdit" />
+                           data-bind="checked: permissions.email_reports, disable: !$root.allowEdit" />
                     <label for="download-and-email-reports-checkbox">
                       {% trans "Allow role to download and email reports in report builder." %}
                     </label>
