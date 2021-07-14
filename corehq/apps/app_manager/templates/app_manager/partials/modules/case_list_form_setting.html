@@ -127,9 +127,9 @@
   </div>
   <div id="case_list_media">
     {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
-      {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Form Icon" AUDIO_LABEL="Form Audio" label_class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label" input_class="col-xs-12 col-sm-8 col-md-8 col-lg-6 commcare-feature"%}
+      {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Form Icon" AUDIO_LABEL="Form Audio" %}
     {% else %}
-      {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" label_class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label" input_class="col-xs-12 col-sm-8 col-md-8 col-lg-6 commcare-feature"%}
+      {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
     {% endif %}
   </div>
 
