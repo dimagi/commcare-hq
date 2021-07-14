@@ -153,7 +153,7 @@
           "column_id": "FP_CYP_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.1:Male Condom (number of condoms distributed)"
         },
@@ -168,7 +168,7 @@
           "column_id": "FP_CYP_3",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)"
         },
@@ -183,7 +183,7 @@
           "column_id": "FP_CYP_5",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.5:Injectable (Depo provera) (number of injections)"
         },
@@ -198,7 +198,7 @@
           "column_id": "FP_CYP_8",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.8:Implanon (number of Implanon insertions)"
         },
@@ -213,7 +213,7 @@
           "column_id": "FP_CYP_9",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.9:Jadelle (number of Jadelle insertions)"
         },
@@ -228,7 +228,7 @@
           "column_id": "FP_CYP_10",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "FP_CYP.10:IUCD (number of IUCDs inserted)"
         },
@@ -243,7 +243,7 @@
           "column_id": "Mal_LLITN_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month"
         },
@@ -258,7 +258,7 @@
           "column_id": "Mal_ELLITN_1",
           "visible": true,
           "transform": {},
-          "calculate_total": true,
+          "calculate_total": false,
           "type": "field",
           "display": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month"
         }
