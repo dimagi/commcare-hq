@@ -1,15 +1,13 @@
 import datetime
-import time
-from unittest.mock import create_autospec, Mock, patch
+from unittest.mock import create_autospec, patch
 
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
+from corehq.apps.registry.exceptions import RegistryAccessDenied
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import RegistryDataSourceConfiguration, RegistryDataSourceConfiguration
+from corehq.apps.userreports.models import RegistryDataSourceConfiguration
 from corehq.apps.userreports.tests.utils import (
     get_sample_doc_and_indicators, get_sample_registry_data_source,
 )
@@ -111,14 +109,15 @@ class RegistryDataSourceConfigurationDbTest(TestCase):
     def setUpClass(cls):
         super(RegistryDataSourceConfigurationDbTest, cls).setUpClass()
 
-        registry = create_registry_for_test('foo_bar', invitations=[
+        cls.owning_domain = 'foo_bar'
+        cls.registry = create_registry_for_test(cls.owning_domain, invitations=[
             Invitation('foo'), Invitation('bar'),
         ], name='foo_bar')
 
         for domain, table in [('foo', 'foo1'), ('foo', 'foo2'), ('bar', 'bar1')]:
             RegistryDataSourceConfiguration(
                 domain=domain, table_id=table,
-                referenced_doc_type='CommCareCase', registry_slug=registry.slug
+                referenced_doc_type='CommCareCase', registry_slug=cls.registry.slug
             ).save()
 
     @classmethod
@@ -143,4 +142,18 @@ class RegistryDataSourceConfigurationDbTest(TestCase):
         with self.assertRaises(BadValueError):
             RegistryDataSourceConfiguration(
                 domain='domain', table_id='table', referenced_doc_type='CommCareCase'
+            ).save()
+
+    def test_registry_global_validation(self):
+        # global config in owning domain
+        RegistryDataSourceConfiguration(
+            domain=self.owning_domain, table_id='table', referenced_doc_type='CommCareCase',
+            globally_accessible=True, registry_slug=self.registry.slug
+        ).save()
+
+        # global config in participating domain (not owner)
+        with self.assertRaises(RegistryAccessDenied):
+            RegistryDataSourceConfiguration(
+                domain='foo', table_id='table', referenced_doc_type='CommCareCase',
+                globally_accessible=True, registry_slug=self.registry.slug
             ).save()
