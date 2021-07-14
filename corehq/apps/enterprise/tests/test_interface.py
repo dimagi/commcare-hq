@@ -1,4 +1,3 @@
-from corehq.apps.domain.shortcuts import create_domain
 from django.test import TestCase
 from django.test.client import RequestFactory
 
