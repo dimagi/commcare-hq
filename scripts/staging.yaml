@@ -76,7 +76,6 @@ branches:
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - ce/bulk-case-search # Cal July 6
     - ap/auditcare-migration # Amit July 8
-    - bmb/sso-superusers-fix  # Biyeun July 8 [QA]
     - rc/explain-before-entering # Robert July 8 [QA]
     - ap/fix-location-restriction-bug # Amit July 9
     - revert-30036-revert-30004-sr/default-filters # Sravan July 12
