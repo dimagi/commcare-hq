@@ -5,7 +5,7 @@ from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
 from corehq.elastic import (
     doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
@@ -157,10 +157,14 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, dedicated_migratio
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = get_user_es_processor()
-    ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=[
+            DynamicDataSourceProvider('CommCareUser'),
+            StaticDataSourceProvider('CommCareUser')
+        ],
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
+    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process

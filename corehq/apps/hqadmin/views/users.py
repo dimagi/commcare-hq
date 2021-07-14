@@ -1,21 +1,19 @@
 import csv
 import itertools
 import uuid
-from io import StringIO
 from collections import Counter
 from datetime import datetime, timedelta
+from io import StringIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
-from django.db.models import Q, Case, When, BooleanField
+from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
@@ -35,7 +33,6 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.util.model_log import log_model_change
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -57,7 +54,8 @@ from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
 
@@ -92,21 +90,23 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['users']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-            changed_field_logs = []
+            fields_changed = {}
             for user in users:
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    changed_field_logs.append(_(f"is_superuser to {is_superuser}"))
+                    fields_changed['is_superuser'] = is_superuser
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    changed_field_logs.append(_(f"is_staff to {is_staff}"))
+                    fields_changed['is_staff'] = is_staff
 
-                if changed_field_logs:
+                if fields_changed:
                     user.save()
-                    log_message = _("Changed: ") + _(", ").join(changed_field_logs)
-                    log_model_change(self.request.user, user, message=log_message)
+                    couch_user = CouchUser.from_django_user(user)
+                    log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
+                                    domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -381,12 +381,14 @@ class DisableUserView(FormView):
         return redirect(self.redirect_url)
 
     def form_valid(self, form):
+        log_messages = []
         if not self.user:
             return self.redirect_response(self.request)
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
+            log_messages.append("Password reset")
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -394,7 +396,12 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_model_change(self.request.user, self.user, f'User {verb}. Reason: "{reason}"')
+        log_messages.append(f'User {verb}. Reason: "{reason}"')
+        couch_user = CouchUser.from_django_user(self.user)
+        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
+                        fields_changed={'is_active': self.user.is_active},
+                        domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -471,25 +478,29 @@ class DisableTwoFactorView(FormView):
 
     def form_valid(self, form):
         from django_otp import devices_for_user
+        log_messages = []
 
         username = form.cleaned_data['username']
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
+        log_messages.append("Registered devices reset")
 
+        couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
         if disable_for_days:
-            couch_user = CouchUser.from_django_user(user)
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
+            log_messages.append(f"Disabled for {disable_for_days} days")
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
-        log_model_change(
-            self.request.user, user,
-            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
-        )
+        log_messages.append(
+            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"')
+        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
+                        domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"

@@ -23,7 +23,7 @@ class XFormManagementTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
     def test_get_xform_ids__sanity_check(self):

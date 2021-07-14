@@ -55,41 +55,36 @@ branches:
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
-    # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
     - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
-    - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
-    #- bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3+jls/enterprise-user-overview
-    - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
-    - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
-    - fr/remote-linked-ucr      # Farid June 4
-    - jls/move-enterprise-permissions-1-of-3  # Jenny June 4
-    - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
-    - sk/messaging-event-api  # Simon June 7
-    - jm/remove-es7  # Joel June 9
     - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
     - sr/mixed-case-types  # Sravan June 15
     - mjr/hidden-report-columns  # Matt June 15
-    - gh/improve-erm-ui # Graham June 16
+    - gh/improve-erm-ui # Graham June 16 [QA]
     - rn_disallow_yui_cors # Rohit Negi
-    - jls/move-enterprise-permissions-2-of-3+mk/user-history/base
     - mk/user-history/base # MK June 21 [QA]
-    - cs/SC-1390-put_turn_behind_ff+mk/user-history/report
-    - mk/user-history/report # MK June 23 [QA]
-    - mk/user-history/bulk-upload # MK June 28 [QA]
-    - mk/user-history/remove-membership+sk/role-to-sql-auth
-    - mk/user-history/remove-membership # MK June 29 [QA]
     - jm/repeater-domain-admins  # Joel June 21
-    - sk/role-to-sql-auth  # Simon June 23
-    #- jls/enterprise-user-overview  # Jenny June 24
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - sp/csrf # Amit + Shivam June 30
     - bmb/sso-debug-user-data  # Biyeun June 30
-    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
+    - sr/fup-form  # Sravan July 1
+    - gh/split-toggles-and-previews # Graham July 1 [QA]
+    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
+    - cs/SC-691-add-support-for-geolocation  # Charl July 5
+    - gh/add-app-id-behind-ff # Graham July 6 [QA]
+    - ce/bulk-case-search # Cal July 6
+    - bmb/sso-session-timeout-fix  # Biyeun July 8 [QA]
+    - ap/auditcare-migration # Amit July 8
+    - bmb/sso-superusers-fix  # Biyeun July 8 [QA]
+    - rc/explain-before-entering # Robert July 8 [QA]
+    - ap/fix-location-restriction-bug # Amit July 9
+    - revert-30036-revert-30004-sr/default-filters # Sravan July 12
+    - rp/enterprize-sms-report # Rynhard July 12
+    - bmb/hubspot-privacy  # Biyeun July 12
+    - smh/tableau-viz-js-update # Steph July 12
+    - jls/smart-linking-login-as # Jenny July 12
+    - bmb/sso-invite-fix  # Biyeun July 13
 submodules: { }
