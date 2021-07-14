@@ -102,6 +102,14 @@ hqDefine("linked_domain/js/domain_links", [
             return self.isDownstreamDomain ? "" : "in active";
         });
 
+        self.showGetStarted = ko.computed(function () {
+            return !self.isUpstreamDomain() && !self.isDownstreamDomain;
+        });
+
+        self.isOnlyDownstreamDomain = ko.computed(function () {
+            return !self.isUpstreamDomain() && self.isDownstreamDomain;
+        });
+
         // can only push content if a link with a downstream domain exists
         var pushContentData = {
             parent: self,

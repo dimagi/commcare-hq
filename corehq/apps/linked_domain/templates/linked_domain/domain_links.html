@@ -10,10 +10,10 @@
   {% registerurl 'app_settings' domain '---' %}
 
   <div id="ko-linked-projects" class="ko-template">
-    <!-- ko ifnot: (isUpstreamDomain() || isDownstreamDomain) -->
+    <!-- ko if: showGetStarted -->
       {% include 'linked_domain/get_started.html' %}
     <!-- /ko -->
-    <!-- ko if: (isUpstreamDomain() || isDownstreamDomain) -->
+    <!-- ko ifnot: showGetStarted -->
       <!-- ko if: isUpstreamDomain -->
         {% comment %}
           Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
@@ -28,7 +28,7 @@
         </ul>
         <div class="spacer"></div>
       <!-- /ko -->
-      <!-- ko if: (!isUpstreamDomain() && isDownstreamDomain) -->
+      <!-- ko if: isOnlyDownstreamDomain -->
         <h2>{% trans "Manage Linked Project" %}</h2>  {# header for the only tab that will be displayed #}
       <!-- /ko -->
       <div id="domain_links">
