@@ -164,11 +164,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
                             {id: 'case_list', text: gettext('Go back to case list')},
                             {id: 'default', text: gettext('Proceed with registered case')},
                         ];
-                    }
-                    else {
-                        return [
-                            {id: 'case_list', text: gettext('Go back to case list')}
-                        ];
+                    } else {
+                        return [{id: 'case_list', text: gettext('Go back to case list')}];
                     }
                 });
 
