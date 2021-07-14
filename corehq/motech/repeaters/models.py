@@ -361,6 +361,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         })
         repeat_record.save()
         repeat_record.attempt_forward_now()
+        repeat_record.fire(force_send=True)
         return repeat_record
 
     def allowed_to_forward(self, payload):
