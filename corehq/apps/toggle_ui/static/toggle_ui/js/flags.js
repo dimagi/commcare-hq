@@ -36,9 +36,9 @@ hqDefine('toggle_ui/js/flags', [
         table.datatable.fnDraw();
     });
 
-    var downloadToFile = function() {
+    var downloadToFile = function () {
         var appliedFilter = viewModel.tagFilter();
-        open('export_flags?tag=' + appliedFilter)
+        open('export_flags?tag=' + appliedFilter);
     };
 
     $('#export-button').koApplyBindings({downloadFile: downloadToFile});
