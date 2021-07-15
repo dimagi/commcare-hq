@@ -1,4 +1,4 @@
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.sso.tests import generator
