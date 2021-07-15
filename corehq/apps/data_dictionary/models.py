@@ -4,6 +4,9 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
+from corehq.apps.case_importer import exceptions
 
 
 PROPERTY_TYPE_CHOICES = (
@@ -95,10 +98,9 @@ class CaseProperty(models.Model):
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
         return super(CaseProperty, self).save(*args, **kwargs)
 
-    def valid_value(self, value):
+    def check_validity(self, value):
         if self.data_type == 'date':
             try:
-                datetime.strptime(value, '%Y-%m-%d')
+                datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
-                return False
-        return True
+                raise exceptions.InvalidDate()

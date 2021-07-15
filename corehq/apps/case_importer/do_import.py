@@ -14,7 +14,7 @@ from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
-from corehq.apps.data_dictionary.util import validated_fields
+from corehq.apps.data_dictionary.util import fields_to_validate
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
@@ -86,9 +86,9 @@ class _Importer(object):
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
         if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
-            self.validated_fields = validated_fields(domain, config.case_type)
+            self.fields_to_validate = fields_to_validate(domain, config.case_type)
         else:
-            self.validated_fields = {}
+            self.fields_to_validate = {}
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
@@ -105,6 +105,8 @@ class _Importer(object):
                         if self.domain != row.get('domain'):
                             continue
                     self.import_row(row_num, row)
+                except exceptions.CaseRowErrorList as errors:
+                    self.results.add_errors(row_num, errors)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 
@@ -231,6 +233,7 @@ class _Importer(object):
         """
         field_map = self.field_map
         fields_to_update = {}
+        errors = []
         for key in field_map:
             try:
                 update_value = row[key]
@@ -259,18 +262,18 @@ class _Importer(object):
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
 
-            if update_field_name in self.validated_fields:
-                case_property = self.validated_fields[update_field_name]
-                if not case_property.valid_value(update_value):
-                    # note: probably want to accumulate full list of invalid
-                    # columns for this row and raise an exception with that
-                    # full set of info rather than bailing out on first one
-                    # as we're currently doing here.
-                    if case_property.data_type == 'date':
-                        raise exceptions.InvalidDate(update_field_name)
-                    # else select type would be handled here, when that's added
+            if update_field_name in self.fields_to_validate:
+                case_property = self.fields_to_validate[update_field_name]
+                try:
+                    case_property.check_validity(update_value)
+                except exceptions.CaseRowError as error:
+                    error.column_name = update_field_name
+                    errors.append(error)
 
             fields_to_update[update_field_name] = update_value
+
+        if errors:
+            raise exceptions.CaseRowErrorList(errors)
 
         return fields_to_update
 
@@ -533,6 +536,10 @@ class _ImportResults(object):
             self._errors[key][column_name]['rows'] = []
 
         self._errors[key][column_name]['rows'].append(row_num)
+
+    def add_errors(self, row_num, errors):
+        for error in errors:
+            self.add_error(row_num, error)
 
     def add_created(self, row_num):
         self._results[row_num] = self.CREATED

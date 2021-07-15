@@ -175,7 +175,7 @@ def get_data_dict_case_types(domain):
     return set(case_types)
 
 
-def validated_fields(domain, case_type_name):
+def fields_to_validate(domain, case_type_name):
     filter_kwargs = {
         'case_type__domain': domain,
         'case_type__name': case_type_name,

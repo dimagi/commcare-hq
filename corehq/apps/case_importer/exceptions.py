@@ -41,6 +41,15 @@ class InvalidCustomFieldNameException(ImporterError):
     pass
 
 
+class CaseRowErrorList(Exception):
+    def __init__(self, errors=None):
+        self.error_list = errors if errors else []
+        super().__init__()
+
+    def __iter__(self):
+        return iter(self.error_list)
+
+
 class CaseRowError(Exception):
     """Base Error class for failures associated with an individual upload row"""
     title = ""
