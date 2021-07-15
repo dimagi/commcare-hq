@@ -8,6 +8,8 @@ from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from corehq.apps.reports.filters.users import (
@@ -22,6 +24,29 @@ from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
+
+
+def get_primary_properties(domain):
+    """
+    Get slugs and human-friendly names for the properties that are available
+    for filtering and/or displayed by default in the report, without
+    needing to click "See More".
+    """
+    if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
+        user_data_label = _("Profile or User Data")
+    else:
+        user_data_label = _("User Data")
+    return {
+        "username": _("Username"),
+        "email": _("Email"),
+        "domain": _("Project"),
+        "is_active": _("Is Active"),
+        "language": _("Language"),
+        "location": _("Location"),
+        "phone_numbers": _("Phone Numbers"),
+        "user_data": user_data_label,
+        "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
+    }
 
 
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
@@ -124,22 +149,22 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield _user_history_row(record, self.timezone)
+            yield _user_history_row(record, self.domain, self.timezone)
 
 
-def _user_history_row(record, timezone):
+def _user_history_row(record, domain, timezone):
     return [
         cached_user_id_to_username(record.user_id),
         cached_user_id_to_username(record.changed_by),
         _get_action_display(record.action),
         record.details['changed_via'],
         record.message,
-        _details_cell(record.details['changes']),
+        _details_cell(record.details['changes'], domain),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
 
 
-def _details_cell(changes):
+def _details_cell(changes, domain):
     def _html_list(changes, unstyled=True):
         items = []
         for key, value in changes.items():
@@ -154,16 +179,12 @@ def _details_cell(changes):
         class_attr = "class='list-unstyled'" if unstyled else ""
         return f"<ul {class_attr}>{''.join(items)}</ul>"
 
-    primary_properties = [
-        "email",
-        "domain",
-        "is_active",
-        "language",
-        "username",
-        "phone_numbers",
-        "two_factor_auth_disabled_until",
-    ]
-    primary_changes = {key: value for key, value in changes.items() if key in primary_properties}
+    properties = get_primary_properties(domain)
+    properties.pop("user_data", None)
+    primary_changes = {
+        properties.get(key, key): value for key, value in changes.items()
+        if key in properties
+    }
     more_count = len(changes) - len(primary_changes)
     if more_count == 0:
         return mark_safe(_html_list(primary_changes))
