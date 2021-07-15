@@ -112,6 +112,16 @@
       <!-- ko template: {name: 'form-question'}--><!-- /ko -->
     </ol>
     <!-- /ko -->
+    <!-- ko if: type == "Select" -->
+    <!-- ko if: data_source.nodeset -->
+    <ul class="fa-ul text-muted" data-bind="visible: $root.showDefaultValues">
+      <li><strong>{% trans "Instance" %}:</strong> <span data-bind="text:data_source.instance_id"></span></li>
+      <li><strong>{% trans "Nodeset" %}:</strong> <span data-bind="text:data_source.nodeset"></span></li>
+      <li><strong>{% trans "Value" %}:</strong> <span data-bind="text:data_source.value_ref"></span></li>
+      <li><strong>{% trans "Label" %}:</strong> <span data-bind="text:data_source.label_ref"></span></li>
+    </ul>
+    <!-- /ko -->
+    <!-- /ko -->
     <!-- ko if:  comment || calculate || relevant || constraint || setvalue || load_properties || save_properties  -->
     <ul class="fa-ul">
       <!-- ko if: comment -->

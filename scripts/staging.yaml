@@ -60,11 +60,8 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
-    - sr/mixed-case-types  # Sravan June 15
-    - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16 [QA]
     - rn_disallow_yui_cors # Rohit Negi
-    - mk/user-history/base # MK June 21 [QA]
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
     - sr/fup-form  # Sravan July 1
@@ -75,11 +72,8 @@ branches:
     - ce/bulk-case-search # Cal July 6
     - ap/auditcare-migration # Amit July 8
     - rc/explain-before-entering # Robert July 8 [QA]
-    - ap/fix-location-restriction-bug # Amit July 9
     - revert-30036-revert-30004-sr/default-filters # Sravan July 12
     - rp/enterprize-sms-report # Rynhard July 12
     - bmb/hubspot-privacy  # Biyeun July 12
-    - smh/tableau-viz-js-update # Steph July 12
     - jls/smart-linking-login-as # Jenny July 12
-    - bmb/enterprise-decorator-no-user  # Biyeun July 14
 submodules: { }

@@ -369,6 +369,11 @@ class ChunkedUCRProcessorTest(TestCase):
         invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
         self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
 
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportTableManager.bootstrap_if_needed')
+    def test_bootstrap_if_needed(self, bootstrap_if_needed):
+        self._create_and_process_changes()
+        bootstrap_if_needed.assert_called_once_with()
+
 
 class IndicatorPillowTest(TestCase):
 
