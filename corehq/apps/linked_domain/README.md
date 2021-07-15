@@ -50,6 +50,8 @@ Linked domains share configuration data. Supported data types are defined in
 - Dialer settings
 - OTP Pass-through Settings
 - Signed Callout
+- Tableau Server
+- Tableau Visualizaion
 
 Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
 overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
