@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from collections import Counter
 
@@ -47,10 +48,7 @@ class DatadogLogger:
 
 
 class Command(BaseCommand):
-    help = (
-        "Display a variety of code-quality metrics, optionally sending them to datadog. "
-        "Other metrics are computed in scripts/static-analysis.sh"
-    )
+    help = "Display a variety of code-quality metrics."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -66,6 +64,7 @@ class Command(BaseCommand):
         self.show_custom_modules()
         self.show_js_dependencies()
         self.show_toggles()
+        self.show_complexity()
         self.logger.send_all()
 
     def show_couch_model_count(self):
@@ -101,3 +100,29 @@ class Command(BaseCommand):
         counts = Counter(t.tag.name for t in all_toggles() + all_previews())
         for tag, count in counts.items():
             self.logger.log("commcare.static_analysis.toggle_count", count, [f"toggle_tag:{tag}"])
+
+    def show_complexity(self):
+        # We can use `--json` for more granularity, but it doesn't provide a summary
+        output = subprocess.run([
+            "radon", "cc", ".",
+            "--min=C",
+            "--total-average",
+            "--exclude=node_modules/*,staticfiles/*",
+        ], capture_output=True).stdout.decode('utf-8').strip()
+        raw_blocks, raw_complexity = output.split('\n')[-2:]
+
+        blocks_pattern = r'^(\d+) blocks \(classes, functions, methods\) analyzed.$'
+        blocks = int(re.match(blocks_pattern, raw_blocks).group(1))
+        self.logger.log("commcare.static_analysis.code_blocks", blocks)
+
+        complexity_pattern = r'^Average complexity: A \(([\d.]+)\)$'
+        complexity = round(float(re.match(complexity_pattern, raw_complexity).group(1)), 3)
+        self.logger.log("commcare.static_analysis.avg_complexity", complexity)
+
+        for grade in ["C", "D", "E", "F"]:
+            count = len(re.findall(f" - {grade}\n", output))
+            self.logger.log(
+                "commcare.static_analysis.complex_block_count",
+                count,
+                tags=[f"complexity_grade:{grade}"],
+            )
