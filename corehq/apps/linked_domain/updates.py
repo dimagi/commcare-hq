@@ -131,8 +131,6 @@ def update_toggles(domain_link):
 
     # enable downstream toggles that are enabled upstream
     _set_toggles(upstream_toggles - downstream_toggles, True)
-    # disable downstream toggles that are disabled upstream
-    _set_toggles(downstream_toggles - upstream_toggles, False)
 
 
 def update_previews(domain_link):
