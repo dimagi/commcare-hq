@@ -2093,6 +2093,7 @@ FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
 DATA_REGISTRY = StaticToggle(
     'data_registry',
     'Enable Data Registries',
