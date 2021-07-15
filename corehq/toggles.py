@@ -2090,3 +2090,12 @@ TURN_IO_BACKEND = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+DATA_REGISTRY = StaticToggle(
+    'data_registry',
+    'Enable Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit"
+)
