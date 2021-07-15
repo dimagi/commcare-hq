@@ -7,7 +7,7 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAuthentication, \
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.apps.users.models import WebUser, HQApiKey, Permissions, SQLUserRole
 from corehq.util.test_utils import softer_assert
 
 
@@ -159,13 +159,13 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.role_with_permission = UserRole.create(
+        cls.role_with_permission = SQLUserRole.create(
             cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
         )
-        cls.role_without_permission = UserRole.create(
+        cls.role_without_permission = SQLUserRole.create(
             cls.domain, 'no-edit-data', permissions=Permissions(edit_data=False)
         )
-        cls.role_with_permission_but_no_api_access = UserRole.create(
+        cls.role_with_permission_but_no_api_access = SQLUserRole.create(
             cls.domain, 'no-api-access', permissions=Permissions(edit_data=True, access_api=False)
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
@@ -339,7 +339,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         user = WebUser.create(self.domain, 'multi_domain_admin', '***', None, None, is_admin=True)
         user.add_domain_membership(project.name, is_admin=True)
         user.save()
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         unscoped_api_key, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(user),
             name='unscoped',

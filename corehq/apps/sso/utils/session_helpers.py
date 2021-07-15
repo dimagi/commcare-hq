@@ -31,16 +31,33 @@ def _get_saml_user_data_property(request, prop_slug):
     return value
 
 
+def _get_display_name_from_session(request):
+    """
+    This gets the display name from SSO user data stored in the session SAML
+    data.
+    :param request: HttpRequest
+    :return: string or None
+    """
+    return _get_saml_user_data_property(
+        request,
+        'http://schemas.microsoft.com/identity/claims/displayname'
+    )
+
+
 def get_sso_user_first_name_from_session(request):
     """
     This gets the first name from sso user data stored in the session SAML data.
     :param request: HttpRequest
     :return: string or None
     """
-    return _get_saml_user_data_property(
+    first_name = _get_saml_user_data_property(
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
     )
+    if not first_name:
+        display_name = _get_display_name_from_session(request)
+        first_name = display_name.split(' ')[0] if display_name else None
+    return first_name
 
 
 def get_sso_user_last_name_from_session(request):
@@ -49,7 +66,13 @@ def get_sso_user_last_name_from_session(request):
     :param request: HttpRequest
     :return: string or None
     """
-    return _get_saml_user_data_property(
+    last_name = _get_saml_user_data_property(
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
     )
+    if not last_name:
+        display_name = _get_display_name_from_session(request)
+        display_name_parts = display_name.split(' ') if display_name else []
+        if len(display_name_parts) > 1:
+            last_name = ' '.join(display_name_parts[1:])
+    return last_name

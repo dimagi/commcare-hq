@@ -14,36 +14,43 @@
       {% include 'linked_domain/get_started.html' %}
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
-      <!-- ko if: isUpstreamDomain -->
+      <!-- ko if: showMultipleTabs -->
         {% comment %}
           Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
           to race condition problems if the tabs aren't visible when its document ready handler runs.
         {% endcomment %}
         <ul class="nav nav-tabs sticky-tabs">
-          <li class="active"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
+          <!-- ko if: isUpstreamDomain -->
+            <li class="active"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
+            <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
+          <!-- /ko -->
           <!-- ko if: isDownstreamDomain -->
             <li class="active"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project" %}</a></li>
+            {% if view_data.linkable_ucr %}
+              <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
+            {% endif %}
           <!-- /ko -->
-          <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
         </ul>
-        <div class="spacer"></div>
       <!-- /ko -->
-      <!-- ko if: isOnlyDownstreamDomain -->
+      <!-- ko ifnot: showMultipleTabs -->
         <h2>{% trans "Manage Linked Project" %}</h2>  {# header for the only tab that will be displayed #}
       <!-- /ko -->
       <div id="domain_links">
         <div class="tab-content">
-          <!-- ko if: isDownstreamDomain -->
-            <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
-              {% include 'linked_domain/tabs/pull_release_content_tab.html' %}
-            </div>
-          <!-- /ko -->
+          <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
+            {% include 'linked_domain/tabs/pull_release_content_tab.html' %}
+          </div>
           <div class="tab-pane fade" id="tabs-manage-downstream" data-bind="class: manageTabActiveStatus">
             {% include 'linked_domain/tabs/manage_downstream_domains_tab.html' %}
           </div>
           <div class="tab-pane fade" id="tabs-push-content">
             {% include 'linked_domain/tabs/push_release_content_tab.html' %}
           </div>
+          {% if view_data.linkable_ucr %}
+            <div class="tab-pane fade" id="tabs-remote-report">
+              {% include 'linked_domain/partials/link_remote_ucr.html' %}
+            </div>
+          {% endif %}
         </div>
       </div>
     <!-- /ko -->

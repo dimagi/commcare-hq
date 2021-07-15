@@ -6,7 +6,7 @@ from dimagi.utils.couch.database import iter_bulk_delete
 
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import Permissions, SQLUserRole
 from corehq.util.test_utils import unit_testing_only
 
 from ..models import LocationType, SQLLocation, make_location
@@ -133,7 +133,7 @@ def setup_locations_and_types(domain, location_types, stock_tracking_types, loca
 
 
 def restrict_user_by_location(domain, user):
-    role = UserRole(
+    role = SQLUserRole.create(
         domain=domain,
         name='Regional Supervisor',
         permissions=Permissions(edit_commcare_users=True,
@@ -144,7 +144,6 @@ def restrict_user_by_location(domain, user):
                                 view_locations=True,
                                 access_all_locations=False),
     )
-    role.save()
     user.set_role(domain, role.get_qualified_id())
     user.save()
 
