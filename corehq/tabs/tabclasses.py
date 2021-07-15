@@ -69,6 +69,7 @@ from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -1592,22 +1593,21 @@ class EnterpriseSettingsTab(UITab):
             'url': reverse('enterprise_billing_statements',
                            args=[self.domain])
         })
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self._request):
-            if IdentityProvider.domain_has_editable_identity_provider(self.domain):
-                from corehq.apps.sso.views.enterprise_admin import (
-                    ManageSSOEnterpriseView,
-                    EditIdentityProviderEnterpriseView,
-                )
-                enterprise_views.append({
-                    'title': _(ManageSSOEnterpriseView.page_title),
-                    'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
-                    'subpages': [
-                        {
-                            'title': _(EditIdentityProviderEnterpriseView.page_title),
-                            'urlname': EditIdentityProviderEnterpriseView.urlname,
-                        },
-                    ],
-                })
+        if IdentityProvider.domain_has_editable_identity_provider(self.domain):
+            from corehq.apps.sso.views.enterprise_admin import (
+                ManageSSOEnterpriseView,
+                EditIdentityProviderEnterpriseView,
+            )
+            enterprise_views.append({
+                'title': _(ManageSSOEnterpriseView.page_title),
+                'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': _(EditIdentityProviderEnterpriseView.page_title),
+                        'urlname': EditIdentityProviderEnterpriseView.urlname,
+                    },
+                ],
+            })
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
@@ -2268,9 +2268,10 @@ class AdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+        return (self.couch_user
+                and (self.couch_user.is_superuser
+                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
+                and not is_request_using_sso(self._request))
 
 
 def _get_repeat_record_report(domain):

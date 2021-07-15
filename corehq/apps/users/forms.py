@@ -261,10 +261,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        self.is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
-            and is_request_using_sso(kwargs['request'])
-        )
+        self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
