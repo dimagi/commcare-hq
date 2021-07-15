@@ -92,7 +92,7 @@ hqDefine("linked_domain/js/domain_links", [
                 return data.linkable_ucr.length > 0;
             }
             return false;
-        }
+        };
 
         self.isUpstreamDomain = ko.computed(function () {
             return self.domain_links().length > 0;
