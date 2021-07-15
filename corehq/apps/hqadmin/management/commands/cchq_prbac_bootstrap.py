@@ -168,7 +168,10 @@ class Command(BaseCommand):
         Role(slug=privileges.GEOCODER, name='Geocoder', description='Address widget in Web Apps.'),
         Role(slug=privileges.DEFAULT_EXPORT_SETTINGS,
              name='Default Export Settings',
-             description='Allows ability to set default values for newly created exports.')
+             description='Allows ability to set default values for newly created exports.'),
+        Role(slug=privileges.LINKED_PROJECTS,
+             name='Linked Projects',
+             description='Allows admin users to push and/or pull content between linked projects.'),
     ]
 
     BOOTSTRAP_PLANS = [
