@@ -9,7 +9,7 @@ hqDefine("reports/js/user_history", [
                 var $link = $(this);
                 $link.prev().addBack().addClass("hide");
                 $link.next().removeClass("hide");
-                $("#report_table_user_history").DataTable().columns.adjust()
+                $("#report_table_user_history").DataTable().columns.adjust();
             });
         }
     });
