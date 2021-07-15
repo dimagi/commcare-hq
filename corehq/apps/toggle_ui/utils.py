@@ -26,7 +26,7 @@ def has_dimagi_user(domain):
 
 
 def parse_flags_to_file_info(toggles):
-    def parse_header(slug):
+    def get_header(slug):
         return (slug, [(
             _("Label"),
             _("Slug"),
@@ -52,9 +52,9 @@ def parse_flags_to_file_info(toggles):
         return rows
 
     file_headers = []
-    toggles_rows_info = {}
+    sheets = {}
 
-    data_header_row = [
+    sheet_data_header_row = [
         _("Domain"),
         _("Service Type"),
         _("Plan"),
@@ -62,9 +62,9 @@ def parse_flags_to_file_info(toggles):
     ]
 
     for toggle in toggles:
-        file_headers.append(parse_header(toggle.slug))
+        file_headers.append(get_header(toggle.slug))
 
-        header_row_info = [
+        sheet_header_row_info = [
             toggle.label or '',
             toggle.slug,
             toggle.tag.name,
@@ -72,15 +72,15 @@ def parse_flags_to_file_info(toggles):
             toggle.description or '',
         ]
 
-        toggle_sheet_rows = [
-            header_row_info,
+        sheet_rows = [
+            sheet_header_row_info,
             [],  # leaves empty row
-            data_header_row,
+            sheet_data_header_row,
         ]
-        toggle_sheet_rows.extend(get_toggle_data_rows(toggle))
-        toggles_rows_info[toggle.slug] = toggle_sheet_rows
+        sheet_rows.extend(get_toggle_data_rows(toggle))
+        sheets[toggle.slug] = sheet_rows
 
-    return file_headers, toggles_rows_info
+    return file_headers, sheets
 
 
 def get_flags_with_tag(tag):
@@ -93,14 +93,14 @@ def get_flags_with_tag(tag):
 
 def get_flags_attachment_file(tag='all'):
     flags = get_flags_with_tag(tag)
-    (headers_table, tabs) = parse_flags_to_file_info(flags)
+    (headers_table, sheets) = parse_flags_to_file_info(flags)
 
     writer = Excel2007ExportWriter()
     outfile = BytesIO()
     writer.open(header_table=headers_table, file=outfile)
 
-    for tab_name, tab_rows in tabs.items():
-        writer.write([(tab_name, tab_rows)])
+    for sheet_name, sheet_rows in sheets.items():
+        writer.write([(sheet_name, sheet_rows)])
 
     writer.close()
     return outfile

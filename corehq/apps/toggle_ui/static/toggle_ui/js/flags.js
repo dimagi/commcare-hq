@@ -6,7 +6,7 @@ hqDefine('toggle_ui/js/flags', [
 ], function (
     $,
     ko,
-    datatablesConfig,
+    datatablesConfig
 ) {
     var dataTableElem = '.datatable';
     var viewModel = {
