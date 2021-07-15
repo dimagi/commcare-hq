@@ -148,8 +148,6 @@ def update_previews(domain_link):
 
     # enable downstream previews that are enabled upstream
     _set_toggles(upstream_previews - downstream_previews, True)
-    # disable downstream toggles that are disabled upstream
-    _set_toggles(downstream_previews - upstream_previews, False)
 
 
 def update_custom_data_models(domain_link, limit_types=None):
