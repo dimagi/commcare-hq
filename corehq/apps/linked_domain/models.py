@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 
 import jsonobject
 
-from corehq.apps.linked_domain.const import LINKED_MODELS
+from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 
 
@@ -88,11 +88,10 @@ class DomainLink(models.Model):
             is_master_linked_domain,
         )
         get_domain_master_link.clear(self.linked_domain)
-        is_active_upstream_domain.clear(self.linked_domain)
-        is_active_downstream_domain.clear(self.linked_domain)
-
         get_linked_domains.clear(self.master_domain)
         is_master_linked_domain.clear(self.master_domain)
+        is_active_upstream_domain.clear(self.linked_domain)
+        is_active_downstream_domain.clear(self.linked_domain)
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
@@ -143,7 +142,7 @@ class VisibleDomainLinkHistoryManager(models.Manager):
 class DomainLinkHistory(models.Model):
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
-    model = models.CharField(max_length=128, choices=LINKED_MODELS, null=False)
+    model = models.CharField(max_length=128, choices=ALL_LINKED_MODELS, null=False)
     model_detail = JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
     hidden = models.BooleanField(default=False)

@@ -64,7 +64,7 @@ def get_available_domains_to_link(upstream_domain_name, user):
             return False
 
         if is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name):
-            # caanot link to an already linked project
+            # cannot link to an already linked project
             return False
 
         upstream_membership = for_user.get_domain_membership(upstream_domain_name)
@@ -85,3 +85,16 @@ def get_available_domains_to_link(upstream_domain_name, user):
         return list({d for d in eligible_domains if _is_domain_available(user, d, should_limit_to_admin=False)})
 
     return []
+
+
+def get_upstream_domains(domain_name, user):
+    """
+    Retrieve a list of domain names that are available to be upstream domains of the given domain_name
+    """
+    def _is_available_upstream_domain(candidate_name):
+        if candidate_name == domain_name:
+            return False
+        # make sure domain is not already part of a link
+        return is_active_upstream_domain(candidate_name)
+
+    return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})
