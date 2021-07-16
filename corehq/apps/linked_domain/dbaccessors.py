@@ -36,7 +36,7 @@ def is_master_linked_domain(domain):
 
 @quickcache(['domain'], timeout=60 * 60)
 def is_active_upstream_domain(domain):
-    return DomainLink.objects.filter(master_domain=domain, deleted=False).exists()
+    return DomainLink.objects.filter(master_domain=domain).exists()
 
 
 def get_actions_in_domain_link_history(link):
