@@ -19,8 +19,7 @@ def get_subscription_info(domain):
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
         return subscription.service_type, subscription.plan_version.plan.name
-    else:
-        return None, None
+    return None, None
 
 
 @quickcache(['domain'], timeout=60 * 10)
