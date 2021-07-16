@@ -181,6 +181,13 @@ def claim(request, domain):
 @require_POST
 @check_domain_migration
 def claim_all(request, domain):
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
+        return HttpResponse(_('Invalid project space "{}".').format(domain), status=500)
+
+    if not request.couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponse(_('{} is not a member of {}.').format(request.couch_user.username, domain), status=500)
+
     username = request.POST.get("username")     # username may be web user or unqualified mobile username
     user = CouchUser.get_by_username(username)
     if not user:
@@ -190,6 +197,9 @@ def claim_all(request, domain):
     if not user:
         return HttpResponse(_('Could not find user "{}".').format(username), status=500)
     user_id = user._id
+
+    if not user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponse(_('{} is not a member of {}.').format(user.username, domain), status=500)
 
     for case_id in request.POST.getlist("case_ids[]"):
         try:
