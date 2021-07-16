@@ -4,6 +4,7 @@ from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
+from django.db.models import Q
 from django.utils.text import slugify
 
 from corehq.apps.domain.utils import domain_name_stop_words
@@ -23,6 +24,17 @@ class RegistryManager(models.Manager):
         if is_active is not None:
             query = query.filter(is_active=is_active)
         return query
+
+    def visible_to_domain(self, domain):
+        """Return list of all registries that are visible to the domain. This includes
+        registries that are owned by the domain as well as those they have been invited
+        to participate in
+        """
+        return (
+            self.filter(is_active=True)
+            .filter(Q(domain=domain) | Q(invitations__domain=domain))
+            .prefetch_related("invitations")
+        )
 
     def accessible_to_domain(self, domain, slug=None, has_grants=False):
         """
@@ -86,6 +98,10 @@ class DataRegistry(models.Model):
 
 
 class RegistryInvitation(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_REJECTED = 'rejected'
+
     registry = models.ForeignKey("DataRegistry", related_name="invitations", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -100,6 +116,14 @@ class RegistryInvitation(models.Model):
 
     class Meta:
         unique_together = ("registry", "domain")
+
+    @property
+    def status(self):
+        if self.rejected_on:
+            return self.STATUS_REJECTED
+        elif self.accepted_on:
+            return self.STATUS_ACCEPTED
+        return self.STATUS_PENDING
 
     def accept(self, accepted_by):
         self.accepted_on = datetime.utcnow()

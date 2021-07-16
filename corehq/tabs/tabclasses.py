@@ -1603,6 +1603,10 @@ class EnterpriseSettingsTab(UITab):
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
                 },
+                {
+                    'title': _('Data Registries'),
+                    'url': reverse('data_registries', args=[self.domain]),
+                },
             ])
         enterprise_views.append({
             'title': _('Billing Statements'),
