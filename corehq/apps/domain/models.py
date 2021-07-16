@@ -994,7 +994,7 @@ class TransferDomainRequest(models.Model):
         if by_user:
             log_user_change(self.domain, couch_user=self.from_user,
                             changed_by_user=by_user, changed_via=transfer_via,
-                            message=_("Removed from domain '{domain_name}'").format(domain_name=self.domain))
+                            message=f"Removed from domain '{self.domain}'")
         self.to_user.save()
         self.active = False
         self.save()
