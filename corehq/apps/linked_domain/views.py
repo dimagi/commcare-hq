@@ -47,6 +47,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
     get_domain_master_link,
     get_linked_domains,
+    get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import (
@@ -282,6 +283,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         )
 
         available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
+        upstream_domains = []
+        for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
+            upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
+
         if master_link and master_link.is_remote:
             remote_linkable_ucr = get_remote_linkable_ucr(master_link)
         else:
@@ -290,10 +295,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'is_linked_domain': bool(master_link),
-            'is_master_domain': bool(len(linked_domains)),
             'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
             'view_data': {
+                'is_downstream_domain': bool(master_link),
+                'upstream_domains': upstream_domains,
                 'available_domains': available_domains_to_link,
                 'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),

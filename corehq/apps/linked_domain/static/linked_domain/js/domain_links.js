@@ -59,6 +59,13 @@ hqDefine("linked_domain/js/domain_links", [
     var DomainLinksViewModel = function (data) {
         var self = {};
 
+        // setup getting started view model
+        var gettingStartedData = {
+            parent: self,
+            upstreamDomains: data.upstream_domains,
+        };
+        self.gettingStartedViewModel = GettingStartedViewModel(gettingStartedData);
+
         // setup add downstream domain modal view model
         var addDownstreamDomainData = {
             parent: self,
@@ -80,7 +87,38 @@ hqDefine("linked_domain/js/domain_links", [
         // General data
         self.domain = data.domain;
         self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
+        self.showRemoteReports = function () {
+            if (data.linkable_ucr) {
+                return data.linkable_ucr.length > 0;
+            }
+            return false;
+        };
 
+        self.isUpstreamDomain = ko.computed(function () {
+            return self.domain_links().length > 0;
+        });
+        // doesn't need to be observable because it is impossible to update the existing page to change this property
+        self.isDownstreamDomain = data.is_downstream_domain;
+
+        self.pullTabActiveStatus = ko.computed(function () {
+            return self.isDownstreamDomain ? "in active" : "";
+        });
+
+        self.manageTabActiveStatus = ko.computed(function () {
+            return self.isDownstreamDomain ? "" : "in active";
+        });
+
+        self.showGetStarted = ko.computed(function () {
+            return !self.isUpstreamDomain() && !self.isDownstreamDomain;
+        });
+
+        self.showMultipleTabs = ko.computed(function () {
+            return self.isUpstreamDomain() || (self.isDownstreamDomain && self.showRemoteReports());
+        });
+
+        self.isOnlyDownstreamDomain = ko.computed(function () {
+            return !self.isUpstreamDomain() && self.isDownstreamDomain && !self.showRemoteReports();
+        });
 
         // can only push content if a link with a downstream domain exists
         var pushContentData = {
@@ -316,6 +354,32 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
+    var GettingStartedViewModel = function (data) {
+        var self = {};
+        self.parent = data.parent;
+        var sortedUpstreamDomains = data.upstreamDomains.sort(function (first, second) {
+            var firstName = first.name.toUpperCase();
+            var secondName = second.name.toUpperCase();
+            if (firstName > secondName) {
+                return 1;
+            } else if (firstName < secondName) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+        self.upstreamDomains = ko.observableArray(sortedUpstreamDomains);
+
+        self.upstreamButtonClass = ko.computed(function () {
+            return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
+        });
+
+        self.goToUpstream = function (data) {
+            window.location.href = data.upstreamDomains()[0].url;
+        };
+        return self;
+    };
+
     var setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);
         _private.RMI = function (remoteMethod, data) {
@@ -329,15 +393,7 @@ hqDefine("linked_domain/js/domain_links", [
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);
 
         var model = DomainLinksViewModel(view_data);
-        if ($("#ko-tabs-pull-content").length) {
-            $("#ko-tabs-pull-content").koApplyBindings(model.pullReleaseContentViewModel);
-        }
-        if ($("#ko-tabs-push-content").length) {
-            $("#ko-tabs-push-content").koApplyBindings(model.pushContentViewModel);
-        }
-        if ($("#ko-tabs-manage-downstream").length) {
-            $("#ko-tabs-manage-downstream").koApplyBindings(model);
-        }
+        $("#ko-linked-projects").koApplyBindings(model);
 
         if ($("#new-downstream-domain-modal").length) {
             $("#new-downstream-domain-modal").koApplyBindings(model.addDownstreamDomainViewModel);
