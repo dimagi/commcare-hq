@@ -45,7 +45,6 @@ dnspython==1.15.0
 dropbox==9.3.0
 elasticsearch==1.9.0
 elasticsearch2>=2.0.0,<3.0.0
-elasticsearch7>=7.9.1,<8.0.0
 email_validator==1.1.2
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
