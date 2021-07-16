@@ -473,10 +473,10 @@ class ChangedByUserFilter(ExpandedMobileWorkerFilter):
         return [('t__6', _("[Web Users]"))]
 
 
-class PropertyFilter(BaseSingleOptionFilter):
+class UserPropertyFilter(BaseSingleOptionFilter):
     label = ugettext_noop('Modified Property')
     default_text = ugettext_noop('Select Property')
-    slug = 'property'
+    slug = 'user_property'
 
     @property
     def options(self):
