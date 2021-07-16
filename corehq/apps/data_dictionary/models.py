@@ -99,7 +99,7 @@ class CaseProperty(models.Model):
         return super(CaseProperty, self).save(*args, **kwargs)
 
     def check_validity(self, value):
-        if self.data_type == 'date':
+        if value and self.data_type == 'date':
             try:
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
