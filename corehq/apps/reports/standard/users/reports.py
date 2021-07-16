@@ -1,6 +1,5 @@
-import json
-
 from django.db.models import Q
+from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -177,7 +176,7 @@ def _user_history_details_cell(changes, domain):
             items.append("<li>{}: {}</li>".format(key, value))
 
         class_attr = "class='list-unstyled'" if unstyled else ""
-        return f"<ul {class_attr}>{''.join(items)}</ul>"
+        return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
 
     properties = UserHistoryReport.get_primary_properties(domain)
     properties.pop("user_data", None)
@@ -186,17 +185,12 @@ def _user_history_details_cell(changes, domain):
         if key in properties
     }
     more_count = len(changes) - len(primary_changes)
-    if more_count == 0:
-        return mark_safe(_html_list(primary_changes))
 
-    see_more = _("See {count} more").format(count=more_count)
-    return mark_safe(f"""
-        <div class="see-all">
-          <div class="see-all-primary">{_html_list(primary_changes) if primary_changes else ""}</div>
-          <a class="see-all-link">{see_more}</a>
-          <div class="see-all-complete hide">{_html_list(changes, unstyled=False)}</div>
-        </div>
-    """)
+    return render_to_string("reports/standard/partials/user_history_changes.html", {
+        "primary_changes": _html_list(primary_changes) if primary_changes else None,
+        "all_changes": _html_list(changes, unstyled=False),
+        "more_count": more_count,
+    })
 
 
 def _get_action_display(logged_action):
