@@ -191,10 +191,10 @@ def _details_cell(changes, domain):
 
     see_more = _("See {count} more").format(count=more_count)
     return mark_safe(f"""
-        <div>
-          <div>{_html_list(primary_changes) if primary_changes else ""}</div>
+        <div class="see-all">
+          <div class="see-all-primary">{_html_list(primary_changes) if primary_changes else ""}</div>
           <a class="see-all-link">{see_more}</a>
-          <div class="hide">{_html_list(changes, unstyled=False)}</div>
+          <div class="see-all-complete hide">{_html_list(changes, unstyled=False)}</div>
         </div>
     """)
 
