@@ -480,8 +480,8 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        from corehq.apps.reports.standard.users.reports import get_primary_properties
-        properties = get_primary_properties(self.domain)
+        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        properties = UserHistoryReport.get_primary_properties(self.domain)
         properties.pop("username", None)
         return list(properties.items())
 

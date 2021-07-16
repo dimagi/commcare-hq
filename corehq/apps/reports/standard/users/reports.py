@@ -26,29 +26,6 @@ from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def get_primary_properties(domain):
-    """
-    Get slugs and human-friendly names for the properties that are available
-    for filtering and/or displayed by default in the report, without
-    needing to click "See More".
-    """
-    if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-        user_data_label = _("Profile or User Data")
-    else:
-        user_data_label = _("User Data")
-    return {
-        "username": _("Username"),
-        "email": _("Email"),
-        "domain": _("Project"),
-        "is_active": _("Is Active"),
-        "language": _("Language"),
-        "location": _("Location"),
-        "phone_numbers": _("Phone Numbers"),
-        "user_data": user_data_label,
-        "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
-    }
-
-
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'user_history'
     name = ugettext_lazy("User History")
@@ -69,6 +46,29 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     ajax_pagination = True
 
     sortable = False
+
+    @classmethod
+    def get_primary_properties(cls, domain):
+        """
+        Get slugs and human-friendly names for the properties that are available
+        for filtering and/or displayed by default in the report, without
+        needing to click "See More".
+        """
+        if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
+            user_data_label = _("Profile or User Data")
+        else:
+            user_data_label = _("User Data")
+        return {
+            "username": _("Username"),
+            "email": _("Email"),
+            "domain": _("Project"),
+            "is_active": _("Is Active"),
+            "language": _("Language"),
+            "location": _("Location"),
+            "phone_numbers": _("Phone Numbers"),
+            "user_data": user_data_label,
+            "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
+        }
 
     @property
     def headers(self):
@@ -159,12 +159,12 @@ def _user_history_row(record, domain, timezone):
         _get_action_display(record.action),
         record.details['changed_via'],
         record.message,
-        _details_cell(record.details['changes'], domain),
+        _user_history_details_cell(record.details['changes'], domain),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
 
 
-def _details_cell(changes, domain):
+def _user_history_details_cell(changes, domain):
     def _html_list(changes, unstyled=True):
         items = []
         for key, value in changes.items():
@@ -179,7 +179,7 @@ def _details_cell(changes, domain):
         class_attr = "class='list-unstyled'" if unstyled else ""
         return f"<ul {class_attr}>{''.join(items)}</ul>"
 
-    properties = get_primary_properties(domain)
+    properties = UserHistoryReport.get_primary_properties(domain)
     properties.pop("user_data", None)
     primary_changes = {
         properties.get(key, key): value for key, value in changes.items()
