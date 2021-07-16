@@ -462,7 +462,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
 
 class AffectedUserFilter(ExpandedMobileWorkerFilter):
-    label = _("Affected User")
+    label = _("Affected User(s)")
 
 
 class ChangedByUserFilter(ExpandedMobileWorkerFilter):
