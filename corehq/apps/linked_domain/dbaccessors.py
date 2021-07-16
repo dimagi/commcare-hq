@@ -20,16 +20,11 @@ def get_domain_master_link(domain):
 
 @quickcache(['domain'], timeout=60 * 60)
 def is_active_upstream_domain(domain):
-    return DomainLink.objects.filter(master_domain=domain, deleted=False).exists()
+    return DomainLink.objects.filter(master_domain=domain).exists()
 
 
 @quickcache(['domain'], timeout=60 * 60)
 def is_active_downstream_domain(domain):
-    return DomainLink.objects.filter(linked_domain=domain, deleted=False).exists()
-
-
-@quickcache(['domain'], timeout=60 * 60)
-def is_linked_domain(domain):
     return DomainLink.objects.filter(linked_domain=domain).exists()
 
 
