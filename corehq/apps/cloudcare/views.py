@@ -587,24 +587,25 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
 
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
-        _fail(_("Linking directly into Web Apps has been disabled."))
+        return _fail(_("Linking directly into Web Apps has been disabled."))
 
     case_ids = request.GET.values()
     for case_id in case_ids:
         try:
             get_case_or_404(domain, case_id)
         except Http404:
-            _fail(_("Case not found."))
+            return _fail(_("Case not found."))
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
-        _fail(_("Could not find application."))
+        return _fail(_("Could not find application."))
     build = wrap_app(build)
 
     valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
     valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
     if endpoint_id not in valid_endpoint_ids:
-        _fail(_("This link does not exist. Your app may have changed so that the given link is no longer valid."))
+        return _fail(_("This link does not exist. "
+                       "Your app may have changed so that the given link is no longer valid."))
 
     (restore_as_user, set_cookie) = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
