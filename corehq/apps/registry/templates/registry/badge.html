@@ -1,0 +1,11 @@
+{% load i18n %}
+{% if invitation_count %}
+<div class="label label-plain">
+  <i class="fa fa-{{ icon }} {{ icon_style }}"></i>
+  {% blocktrans count invitation_count=invitation_count with noun=noun|default:"Invitation" %}
+      {{ invitation_count }} {{ noun }} {{ verb }}
+  {% plural %}
+      {{ invitation_count }} {{ noun }}s {{ verb }}
+  {% endblocktrans %}
+</div>
+{% endif %}

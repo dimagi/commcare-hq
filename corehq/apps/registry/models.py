@@ -1,6 +1,7 @@
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
+from django.db.models import Q
 from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -23,6 +24,17 @@ class RegistryManager(models.Manager):
         if is_active is not None:
             query = query.filter(is_active=is_active)
         return query
+
+    def visible_to_domain(self, domain):
+        """Return list of all registries that are visible to the domain. This includes
+        registries that are owned by the domain as well as those they have been invited
+        to participate in
+        """
+        return (
+            self.filter(is_active=True)
+            .filter(Q(domain=domain) | Q(invitations__domain=domain))
+            .prefetch_related("invitations")
+        )
 
     def accessible_to_domain(self, domain, slug=None, has_grants=False):
         """

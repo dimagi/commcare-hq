@@ -1,0 +1,121 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load compress %}
+{% load static %}
+{% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'registry/less/registry.less' %}" />
+  {% endcompress %}
+{% endblock %}
+
+{% block page_content %}
+  <h3>Data Registries</h3>
+  <div class="row">
+    <div class="col-sm-6 col-md-9">
+  {% for registry in owned_registries %}
+    <div class="panel panel-default show-focus">
+      <div class="panel-heading clickable">
+        {{ registry.name }}
+        <div class="pull-right">
+          <span class="label label-primary">{% trans "Owner" %}</span>
+          <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#delete-registry-modal">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <p>{{registry.description}}</p>
+        {% if not registry.invitation_count %}
+          <div class="label label-plain">
+            {% trans "No project spaces invited to this registry" %}
+          </div>
+        {% endif %}
+        {% include 'registry/badge.html' with verb='Accepted' icon='check-circle-o' invitation_count=registry.accepted_invitation_count icon_style='text-success' %}
+        {% include 'registry/badge.html' with verb='Pending' icon='clock-o' invitation_count=registry.pending_invitation_count icon_style='text-info' %}
+        {% include 'registry/badge.html' with verb='Rejected' icon='ban' invitation_count=registry.rejected_invitation_count icon_style='text-warning' %}
+        <button type="button" class="btn btn-default btn-xs">
+          <i class="fa fa-plus"></i>
+          {% trans "Invite Project" %}
+        </button>
+      </div>
+    </div>
+  {% endfor %}
+
+  {% for registry in invited_registries %}
+    <div class="panel panel-default show-focus">
+      <div class="panel-heading clickable">
+        {{ registry.name }}
+        <div class="pull-right">
+        {% if registry.invitation.rejected_on %}
+          <span class="label label-warning">{% trans "Rejected" %}</span>
+        {% elif registry.invitation.accepted_on %}
+          <span class="label label-success">{% trans "Participating" %}</span>
+        {% else %}
+          <span class="label label-info">{% trans "Pending" %}</span>
+        {% endif %}
+        </div>
+      </div>
+      <div class="panel-body">
+        <p>{{registry.description}}</p>
+        <p><small><b>{% trans "Owner" %}: {{ registry.domain_name }}</b></small></p>
+        {% if registry.invitation.rejected_on %}
+          <p>{% trans "Invitation rejected" %}
+          <small>
+            (
+            {% blocktrans with user=registry.invitation.rejected_by.username date=registry.invitation.rejected_on|date:"d M Y" %}
+              Rejected by {{ user }} on {{ date }}
+            {% endblocktrans %}
+            )
+          </small>
+          </p>
+        {% elif registry.invitation.accepted_on %}
+          {% if not registry.participator_count %}
+          <div class="label label-plain">
+            {% trans "No other project spaces are participating in this registry yet" %}
+          </div>
+          {% endif %}
+          {% include 'registry/badge.html' with noun='Project' verb='Participating' icon='ok-circle' invitation_count=registry.participator_count %}
+        {% else %}
+          <button type="button" class="btn btn-default btn-xs">
+            <i class="fa fa-remove"></i>
+            {% trans "Reject" %}
+          </button>
+          <button type="button" class="btn btn-success btn-xs">
+            <i class="fa fa-check"></i>
+            {% trans "Accept and Participate" %}
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+    </div>
+  </div>
+
+  <div class="modal fade" id="delete-registry-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+          <span class="sr-only">{% trans "Close" %}</span></button>
+        <h4 class="modal-title">{% trans "Delete Registry" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to delete this data registry:" %}</p>
+        <p>TODO</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-danger">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
