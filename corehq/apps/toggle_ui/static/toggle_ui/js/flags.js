@@ -38,7 +38,7 @@ hqDefine('toggle_ui/js/flags', [
 
     var downloadToFile = function () {
         var appliedFilter = viewModel.tagFilter();
-        if (appliedFilter == "all") {
+        if (appliedFilter === "all") {
             appliedFilter = '';
         }
         open('export_flags?tag=' + appliedFilter);
