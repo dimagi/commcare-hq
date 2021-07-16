@@ -368,7 +368,7 @@ def set_toggle(request, toggle_slug):
 
 @require_superuser_or_contractor
 def export_flags(request):
-    tag = request.GET['tag']
+    tag = request.GET['tag'] or None
 
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
