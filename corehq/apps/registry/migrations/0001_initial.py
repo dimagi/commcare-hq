@@ -25,6 +25,7 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(max_length=255)),
                 ('name', models.CharField(max_length=255)),
                 ('slug', autoslug.fields.AutoSlugField(editable=False, populate_from='name', slugify=corehq.apps.registry.models.slugify_remove_stops, unique_with=('domain',))),
+                ('description', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
                 ('schema', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
