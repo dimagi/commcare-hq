@@ -178,7 +178,6 @@ function _run_tests {
             if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
                 echo "----------> Begin Static Analysis <----------"
                 COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis --datadog
-                ./scripts/static-analysis.sh datadog
                 echo "----------> End Static Analysis <----------"
             fi
             ;;
