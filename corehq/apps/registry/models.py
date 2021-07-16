@@ -25,6 +25,11 @@ class RegistryManager(models.Manager):
         return query
 
     def accessible_to_domain(self, domain, slug=None, has_grants=False):
+        """
+        :param domain: Domain to get registries for
+        :param slug: (optional) Filter registries by slug
+        :param has_grants: (optional) Set to 'True' to only include registries for which the domain has grants
+        """
         query = (
             self.filter(is_active=True)
             .filter(
