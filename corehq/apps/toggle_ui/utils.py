@@ -5,6 +5,7 @@ from corehq.toggles import all_toggles
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.es import UserES
+from corehq.util.quickcache import quickcache
 
 
 def find_static_toggle(slug):
@@ -13,6 +14,7 @@ def find_static_toggle(slug):
             return toggle
 
 
+@quickcache(['domain'], timeout=10)
 def get_subscription_info(domain):
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
@@ -21,6 +23,7 @@ def get_subscription_info(domain):
         return None, None
 
 
+@quickcache(['domain'], timeout=10)
 def has_dimagi_user(domain):
     return UserES().web_users().domain(domain).search_string_query('@dimagi.com').count()
 
@@ -95,12 +98,11 @@ def get_flags_attachment_file(tag='all'):
     flags = get_flags_with_tag(tag)
     (headers_table, sheets) = parse_flags_to_file_info(flags)
 
-    writer = Excel2007ExportWriter()
-    outfile = BytesIO()
-    writer.open(header_table=headers_table, file=outfile)
+    with Excel2007ExportWriter() as writer:
+        outfile = BytesIO()
+        writer.open(header_table=headers_table, file=outfile)
 
-    for sheet_name, sheet_rows in sheets.items():
-        writer.write([(sheet_name, sheet_rows)])
+        for sheet_name, sheet_rows in sheets.items():
+            writer.write([(sheet_name, sheet_rows)])
 
-    writer.close()
     return outfile
