@@ -13,26 +13,27 @@ from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 
 
-def get_tableau_visualizaton(domain):
+def get_tableau_server_and_visualizations(domain):
     server, created = TableauServer.objects.get_or_create(domain=domain)
-    visualizaton, created = TableauVisualization.objects.get_or_create(domain=domain, server=server)
+    visualizations, created = TableauVisualization.objects.get_or_create(domain=domain)
+    vis_list = []
+    for vis in visualizations:
+        vis_list.append({
+            'domain': domain,
+            'server': server,
+            'view_url': vis.view_url,
+        })
     return {
-        'domain': domain,
-        'server': server,
-        'view_url': visualizaton.view_url,
-    }
-
-
-def get_tableau_server(domain):
-    server, created = TableauServer.objects.get_or_create(domain=domain)
-    return {
-        'domain': domain,
-        'server_type': server.server_type,
-        'server_name': server.server_name,
-        'validate_hostname': server.validate_hostname,
-        'target_site': server.target_site,
-        'domain_username': server.domain_username,
-        'allow_domain_username_override': server.allow_domain_username_override,
+        'server': {
+            'domain': domain,
+            'server_type': server.server_type,
+            'server_name': server.server_name,
+            'validate_hostname': server.validate_hostname,
+            'target_site': server.target_site,
+            'domain_username': server.domain_username,
+            'allow_domain_username_override': server.allow_domain_username_override,
+        },
+        'visualizations': vis_list,
     }
 
 

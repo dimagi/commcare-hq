@@ -59,9 +59,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_otp_settings,
     get_toggles_previews,
     get_user_roles,
-    get_tableau_visualizaton,
-    get_tableau_server,
-
+    get_tableau_server_and_visualizations,
 )
 from corehq.apps.linked_domain.models import (
     DomainLink,
@@ -100,14 +98,8 @@ from corehq.util.timezones.utils import get_timezone_for_request
 
 @login_or_api_key
 @require_linked_domain
-def tableau_visualizaton(request, domain):
-    return JsonResponse(get_tableau_visualizaton(domain))
-
-
-@login_or_api_key
-@require_linked_domain
-def tableau_server(request, domain):
-    return JsonResponse(get_tableau_server(domain))
+def tableau_server_and_visualizations(request, domain):
+    return JsonResponse(get_tableau_server_and_visualizations(domain))
 
 
 @login_or_api_key
