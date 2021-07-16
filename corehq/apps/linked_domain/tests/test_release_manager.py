@@ -17,15 +17,17 @@ from corehq.apps.linked_domain.const import (
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_OTP_SETTINGS,
     MODEL_REPORT,
-    MODEL_USER_DATA,
+    MODEL_USER_DATA, MODEL_KEYWORD,
 )
-from corehq.apps.linked_domain.models import AppLinkDetail, ReportLinkDetail
+from corehq.apps.linked_domain.keywords import create_linked_keyword, get_downstream_keyword
+from corehq.apps.linked_domain.models import AppLinkDetail, ReportLinkDetail, KeywordLinkDetail
 from corehq.apps.linked_domain.tasks import ReleaseManager, release_domain
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
     get_downstream_report,
 )
+from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_report_config,
@@ -283,3 +285,61 @@ class TestReleaseReport(BaseReleaseManagerTest):
         downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
         self.addCleanup(downstream_report.delete)
         self.assertIsNotNone(downstream_report)
+
+
+class TestReleaseKeyword(BaseReleaseManagerTest):
+
+    def _create_new_keyword(self, keyword_name):
+        keyword = Keyword(
+            domain=self.domain_link.master_domain,
+            keyword=keyword_name,
+            description="The description",
+            override_open_sessions=True,
+        )
+        keyword.save()
+        return keyword
+
+    def test_already_linked_keyword_is_pushed(self):
+        keyword = self._create_new_keyword('keyword')
+        self.addCleanup(keyword.delete)
+        linked_keyword_id = create_linked_keyword(self.domain_link, keyword.id)
+        self.addCleanup(Keyword(id=linked_keyword_id).delete)
+        # after creating the link, update the upstream keyword
+        keyword.keyword = "updated-keyword"
+        keyword.save()
+        model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_keyword(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
+        self.addCleanup(downstream_keyword.delete)
+        self.assertIsNotNone(downstream_keyword)
+        self.assertEqual("updated-keyword", downstream_keyword.keyword)
+
+    def test_keyword_not_pushed_if_not_found_with_toggle_disabled(self):
+        keyword = self._create_new_keyword('keyword')
+        self.addCleanup(keyword.delete)
+        model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
+
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_keyword(self.domain_link, model)
+        self.assertTrue('Could not find linked keyword. Please check the keyword has been linked.' in errors)
+
+    @flag_enabled('ERM_DEVELOPMENT')
+    def test_keyword_pushed_if_not_found_with_toggle_enabled(self):
+        keyword = self._create_new_keyword('keyword')
+        self.addCleanup(keyword.delete)
+        model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
+
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        errors = manager._release_keyword(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
+        self.addCleanup(downstream_keyword.delete)
+        self.assertIsNotNone(downstream_keyword)
+        self.assertEqual("keyword", downstream_keyword.keyword)
