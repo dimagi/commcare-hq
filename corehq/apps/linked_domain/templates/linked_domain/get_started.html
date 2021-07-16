@@ -17,7 +17,7 @@
         <h4>Add as Downstream Project</h4>
         <p>
           {% blocktrans %}
-            If you want to pull content from an upstream project, link this project to an upstream project.<br/>
+            If you want to pull content from an upstream project, link this project to an upstream project.
           {% endblocktrans %}
         </p>
         <!-- ko if: upstreamDomains().length == 1 -->
@@ -39,12 +39,12 @@
       <h4>{% trans "Make Upstream Project" %}</h4>
       <p>
         {% blocktrans %}
-          If you want to push content in this project to other projects, make this an upstream project.<br/>
+          If you want to push content in this project to other projects, make this an upstream project.
         {% endblocktrans %}
       </p>
       <button type="button"
               class="btn"
-              data-bind="class: makeUpstreamButtonStatus"
+              data-bind="class: upstreamButtonClass"
               id="add-downstream-domain"
               data-toggle="modal"
               data-target="#new-downstream-domain-modal">

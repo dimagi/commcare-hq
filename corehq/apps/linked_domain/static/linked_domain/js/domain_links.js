@@ -370,7 +370,7 @@ hqDefine("linked_domain/js/domain_links", [
         });
         self.upstreamDomains = ko.observableArray(sortedUpstreamDomains);
 
-        self.makeUpstreamButtonStatus = ko.computed(function () {
+        self.upstreamButtonClass = ko.computed(function () {
             return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
         });
 
