@@ -45,6 +45,7 @@ class DataRegistry(models.Model):
     name = models.CharField(max_length=255)
     # slug used for referencing the registry in app suite files, APIs etc.
     slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
+    description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     schema = JSONField(null=True, blank=True)
 
