@@ -63,8 +63,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             "domain": _("Project"),
             "is_active": _("Is Active"),
             "language": _("Language"),
-            "location": _("Location"),
             "phone_numbers": _("Phone Numbers"),
+            "location_id": _("Primary Location (mobile users only)"),
             "user_data": user_data_label,
             "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
         }
