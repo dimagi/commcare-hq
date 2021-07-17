@@ -104,9 +104,7 @@ hqDefine("linked_domain/js/domain_links", [
             return self.isDownstreamDomain ? "in active" : "";
         });
 
-        self.manageTabActiveStatus = ko.computed(function () {
-            return self.isDownstreamDomain ? "" : "in active";
-        });
+        self.manageTabActiveStatus = self.isDownstreamDomain ? "" : "in active";
 
         self.showGetStarted = ko.computed(function () {
             return !self.isUpstreamDomain() && !self.isDownstreamDomain;
