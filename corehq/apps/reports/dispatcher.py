@@ -140,6 +140,18 @@ class ReportDispatcher(View):
         cls = to_function(class_name) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
+        report_cls = self.get_report(domain, report_slug)
+        details = {
+            "domain": domain,
+            "report_slug": report_slug,
+            "class_name": class_name,
+            "cls": cls,
+            "permission_check": permissions_check(class_name, request, domain=domain),
+            "toggles_enabled": self.toggles_enabled(cls, request),
+            "__module__": report_cls.__module__ if report_cls else '',
+            "__name__": report_cls.__name__ if report_cls else '',
+            "all_slugs": [r.slug for s, g in self.get_reports(domain) for r in g],
+        }
         if (
             cls
             and permissions_check(class_name, request, domain=domain)
@@ -155,6 +167,11 @@ class ReportDispatcher(View):
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
+            from dimagi.utils.logging import notify_exception
+            notify_exception(
+                None,
+                message="404 from ReportDispatcher.dispatch", details=details,
+            )
             raise Http404()
 
     @classmethod
