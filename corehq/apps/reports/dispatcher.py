@@ -155,6 +155,15 @@ class ReportDispatcher(View):
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
+            from dimagi.utils.logging import notify_exception
+            notify_exception(
+                None,
+                message="404 from ReportDispatcher.dispatch", details={
+                    "cls": cls,
+                    "permission_check": permissions_check(class_name, request, domain=domain),
+                    "toggles_enabled": self.toggles_enabled(cls, request),
+                }
+            )
             raise Http404()
 
     @classmethod
