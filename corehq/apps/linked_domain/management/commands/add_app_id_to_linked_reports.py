@@ -18,6 +18,7 @@ def migrate_linked_reports(upstream_domain=None):
         domain_links = DomainLink.all_objects.all()
 
     num_of_failed_attempts = 0
+    num_of_successful_attempts = 0
     for domain_link in domain_links:
         reports = get_report_configs_for_domain(domain_link.linked_domain)
         for report in reports:
@@ -43,10 +44,19 @@ def migrate_linked_reports(upstream_domain=None):
                                    f" {upstream_datasource.meta.build.app_id} "
                                    f"in downstream domain {domain_link.linked_domain}")
                     num_of_failed_attempts += 1
+                    continue
 
                 report.config.meta.build.app_id = downstream_app_id
                 report.config.save()
-    logger.info(f"Completed linked report migration with {num_of_failed_attempts} failed attempts")
+                fetched_report = ReportConfiguration.get(report._id)
+                if fetched_report.config.meta.build.app_id:
+                    num_of_successful_attempts += 1
+                else:
+                    num_of_failed_attempts += 1
+                    logger.error(f"Failed to update report {report._id} with app_id {downstream_app_id}")
+
+    logger.info(f"Completed linked report migration with {num_of_successful_attempts} successful attempts and "
+                f"{num_of_failed_attempts} failed attempts")
     return num_of_failed_attempts
 
 
