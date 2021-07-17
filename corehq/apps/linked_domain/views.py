@@ -292,10 +292,6 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
-                'models': [
-                    {'slug': model[0], 'name': model[1]}
-                    for model in LINKED_MODELS
-                ],
                 'linkable_ucr': remote_linkable_ucr,
             },
         }
