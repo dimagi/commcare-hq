@@ -1205,6 +1205,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
+                'corehq.util.context_processors.hubspot_js',
             ],
             'debug': DEBUG,
             'loaders': [
