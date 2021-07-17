@@ -3102,13 +3102,20 @@ class UserHistory(models.Model):
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
-    details = JSONField(default=dict)
     message = models.TextField(blank=True, null=True)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
 
+    """
+    dict with keys:
+       changed_via: one of the USER_CHANGE_VIA_* constants
+       changes: a dict of CouchUser attributes that changed and their new values
+    """
+    details = JSONField(default=dict)
+
     class Meta:
         indexes = [
-            models.Index(fields=['domain'])
+            models.Index(fields=['domain']),
+            models.Index(fields=['details']),
         ]
