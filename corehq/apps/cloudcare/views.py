@@ -4,6 +4,7 @@ import string
 
 import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -27,6 +28,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
+from corehq.util.view_utils import get_case_or_404
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
 
@@ -45,6 +47,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app_doc,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    wrap_app,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -71,7 +74,9 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    waf_allow)
+    waf_allow,
+)
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -107,12 +112,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        username = self.request.couch_user.username
-        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-            return get_latest_build_doc(domain, app_id)
-        else:
-            return get_latest_released_app_doc(domain, app_id)
+        return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         app_access = get_application_access_for_domain(domain)
@@ -218,6 +218,13 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
+
+
+def _fetch_build(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
 
 
 class FormplayerMainPreview(FormplayerMain):
@@ -569,3 +576,46 @@ def _message_to_sentry_thread_topic(message):
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
     """
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+def session_endpoint(request, domain, app_id, endpoint_id):
+    def _fail(error):
+        messages.error(request, error)
+        return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
+
+    if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
+        return _fail(_("Linking directly into Web Apps has been disabled."))
+
+    case_ids = request.GET.values()
+    for case_id in case_ids:
+        try:
+            get_case_or_404(domain, case_id)
+        except Http404:
+            return _fail(_("Case not found."))
+
+    build = _fetch_build(domain, request.couch_user.username, app_id)
+    if not build:
+        return _fail(_("Could not find application."))
+    build = wrap_app(build)
+
+    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
+    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
+    if endpoint_id not in valid_endpoint_ids:
+        return _fail(_("This link does not exist. "
+                       "Your app may have changed so that the given link is no longer valid."))
+
+    (restore_as_user, set_cookie) = FormplayerMain.get_restore_as_user(request, domain)
+    force_login_as = not restore_as_user.is_commcare_user()
+    if force_login_as and not can_use_restore_as(request):
+        _fail(_("This user cannot access this link."))
+
+    cloudcare_state = json.dumps({
+        "appId": build._id,
+        "endpointId": endpoint_id,
+        "endpointArgs": request.GET,
+        "forceLoginAs": force_login_as,
+    })
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
