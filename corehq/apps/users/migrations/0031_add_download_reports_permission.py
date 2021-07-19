@@ -1,24 +1,17 @@
 from django.db import migrations
 
-from dimagi.utils.couch.database import iter_docs
-
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models_sql import SQLPermission, SQLUserRole
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
 def migrate_download_reports_permissions(apps, schema_editor):
-    roles = UserRole.view(
-        'users/roles_by_domain',
-        include_docs=False,
-        reduce=False
-    ).all()
-    for role_doc in iter_docs(UserRole.get_db(), [r['id'] for r in roles]):
-        role = UserRole.wrap(role_doc)
-
+    new_permission_name = 'download_reports'
+    permission, created = SQLPermission.objects.get_or_create(value=new_permission_name)
+    for role in SQLUserRole.objects.all().iterator():
         if role.permissions.view_reports or bool(role.permissions.view_report_list):
-            role.permissions.download_reports = True
-            role.save()
+            role.rolepermission_set.get_or_create(permission_fk=permission, defaults={"allow_all": True})
+            role._migration_do_sync()
 
 
 class Migration(migrations.Migration):
