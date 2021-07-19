@@ -36,7 +36,7 @@ supported applications. Remote domain linkages cannot be created via the UI; see
 ## Data models
 
 Linked domains share configuration data. Supported data types are defined in
-corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
+[LINKED_MODELS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/linked_domain/const.py#L13):
 
 - Applications
 - Reports
@@ -44,8 +44,7 @@ corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
 - Keywords
 - User roles
 - Custom data fields for users, products, and locations
-- Feature Flags
-- Feature Previews
+- Feature flags and privileges
 - Case search settings
 - Data dictionary
 - Dialer settings

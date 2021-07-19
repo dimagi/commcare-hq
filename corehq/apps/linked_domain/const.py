@@ -3,7 +3,6 @@ from django.utils.translation import ugettext_lazy
 from corehq import toggles
 
 MODEL_FLAGS = 'toggles'
-MODEL_PREVIEWS = 'previews'
 MODEL_FIXTURE = 'fixture'
 MODEL_ROLES = 'roles'
 MODEL_LOCATION_DATA = 'custom_location_data'
@@ -30,11 +29,7 @@ DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
-    (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
-]
-
-SUPERUSER_DATA_MODELS = [
-    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
+    (MODEL_FLAGS, ugettext_lazy('Feature Flags and Previews')),
 ]
 
 FEATURE_FLAG_DATA_MODELS = [
@@ -45,10 +40,9 @@ FEATURE_FLAG_DATA_MODELS = [
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
 ]
 
-ALL_LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \
-    SUPERUSER_DATA_MODELS
+LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS
 
-LINKED_MODELS_MAP = dict(ALL_LINKED_MODELS)
+LINKED_MODELS_MAP = dict(LINKED_MODELS)
 
 FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
