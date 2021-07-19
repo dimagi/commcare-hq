@@ -6,7 +6,6 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.views.utils import get_blank_form_xml
-from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,

@@ -16,7 +16,6 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.const import (
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
     MODEL_APP,
