@@ -78,8 +78,32 @@ class ReportDispatcher(View):
 
     @classmethod
     def get_reports(cls, domain):
-        lookup = ReportLookup(cls.map_name)
-        return lookup.get_reports(domain)
+        attr_name = cls.map_name
+        from corehq import reports
+        if domain:
+            domain_obj = Domain.get_by_name(domain)
+        else:
+            domain_obj = None
+
+        def process(reports):
+            if callable(reports):
+                reports = reports(domain_obj) if domain_obj else tuple()
+            return tuple(reports)
+
+        corehq_reports = process(getattr(reports, attr_name, ()))
+
+        module_name = get_custom_domain_module(domain)
+        if module_name is None:
+            custom_reports = ()
+        else:
+            module = __import__(module_name, fromlist=['reports'])
+            if hasattr(module, 'reports'):
+                reports = getattr(module, 'reports')
+                custom_reports = process(getattr(reports, attr_name, ()))
+            else:
+                custom_reports = ()
+
+        return corehq_reports + custom_reports
 
     @classmethod
     def get_report(cls, domain, report_slug, config_id=None):
@@ -137,9 +161,25 @@ class ReportDispatcher(View):
         report_kwargs = kwargs.copy()
 
         class_name = self.get_report_class_name(domain, report_slug)
-        cls = to_function(class_name) if class_name else None
+        cls = to_function(class_name, failhard=True) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
+        report_cls = self.get_report(domain, report_slug)
+        from corehq import toggles
+        from corehq.apps.reports.standard import tableau
+        details = {
+            "domain": domain,
+            "report_slug": report_slug,
+            "class_name": class_name,
+            "cls": cls,
+            "permission_check": permissions_check(class_name, request, domain=domain),
+            "toggles_enabled": self.toggles_enabled(cls, request),
+            "__module__": report_cls.__module__ if report_cls else '',
+            "__name__": report_cls.__name__ if report_cls else '',
+            "all_slugs": [r.slug for s, g in self.get_reports(domain) for r in g],
+            "EMBEDDED_TABLEAU enabled": toggles.EMBEDDED_TABLEAU.enabled(domain),
+            "tableau.get_reports": tableau.get_reports(domain),
+        }
         if (
             cls
             and permissions_check(class_name, request, domain=domain)
@@ -155,6 +195,11 @@ class ReportDispatcher(View):
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
+            from dimagi.utils.logging import notify_exception
+            notify_exception(
+                None,
+                message="404 from ReportDispatcher.dispatch", details=details,
+            )
             raise Http404()
 
     @classmethod
