@@ -3,25 +3,23 @@ import sys
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 import requests
 from requests_toolbelt.adapters import host_header_ssl
 
 from corehq import toggles
-from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.views import BaseProjectReportSectionView
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
 
 
-@method_decorator(require_permission(Permissions.edit_data), name='dispatch')   # TODO: is that the right perm?
 @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator(), name='dispatch')
-class TableauView(BaseProjectReportSectionView):    # TODO: breadcrumbs aren't showing
+class TableauView(BaseProjectReportSectionView):
     urlname = 'tableau'
     template_name = 'reports/tableau_template.html'
+
+    # Override BaseProjectReportSectionView, but it'll still link to reports home
+    section_name = ugettext_lazy("Tableau Reports")
 
     @property
     def page_title(self):
