@@ -16,6 +16,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
          a list of entities (cases) and their details
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
+            if (menuResponse.abort) {
+                return;
+            }
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {

@@ -7,6 +7,8 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
 )
 from django.utils.translation import ugettext as _
@@ -181,9 +183,28 @@ def claim(request, domain):
 @require_POST
 @check_domain_migration
 def claim_all(request, domain):
-    username = request.POST.get("username")     # username may or may not be fully qualified
-    username = format_username(raw_username(username), domain)
-    user_id = username_to_user_id(username)
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
+        return HttpResponseNotFound(_('Invalid project space "{}".').format(domain))
+
+    if not request.couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(
+            use=request.couch_user.username, domain=domain
+        ))
+
+    username = request.POST.get("username")     # username may be web user or unqualified mobile username
+    user = CouchUser.get_by_username(username)
+    if not user:
+        username = format_username(username, domain)
+        user = CouchUser.get_by_username(username)
+
+    if not user:
+        return HttpResponseNotFound(_('Could not find user "{}".').format(username))
+    user_id = user._id
+
+    if not user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(user=user.username,
+                                                                                     domain=domain))
 
     for case_id in request.POST.getlist("case_ids[]"):
         try:
