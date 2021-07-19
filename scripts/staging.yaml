@@ -77,4 +77,7 @@ branches:
     - jls/smart-linking-login-as # Jenny July 12
     - jls/wip # Jenny July 16
     - bmb/sso-domain-login-update  # Biyeun July 15
+    - smh/tableau-server-dropdown-modification # Steph July 19
+    - bmb/sso-alternate-login  # Biyeun July 19
+    - revert-30073-revert-29936-gh/split-toggles-and-previews # Graham July 19
 submodules: { }
