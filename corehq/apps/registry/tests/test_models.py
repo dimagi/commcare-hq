@@ -121,3 +121,13 @@ class RegistryModelsTests(TestCase):
         self.assertEqual({"A"}, registry.get_granted_domains("B"))
         self.assertEqual({"B", "C"}, registry.get_granted_domains("A"))
         self.assertEqual({"B"}, registry.get_granted_domains("C"))
+
+    def test_visible_to_domain(self):
+        invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
+        registries = [
+            self.active,
+            create_registry_for_test(self.domain, invitations),
+            create_registry_for_test("other", [Invitation(self.domain, accepted=False)]),
+        ]
+        visible = DataRegistry.objects.visible_to_domain(self.domain)
+        self.assertEqual({r.id for r in registries}, {v.id for v in visible})
