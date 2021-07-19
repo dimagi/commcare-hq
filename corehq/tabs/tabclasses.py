@@ -131,11 +131,23 @@ class ProjectReportsTab(UITab):
     def sidebar_items(self):
         tools = self._get_tools_items()
         report_builder_nav = self._get_report_builder_items()
+
+        # TODO: check flag, extract to function
+        from corehq.apps.reports.models import TableauVisualization
+        from corehq.apps.reports.standard.tableau import TableauView
+        tableau = [(_("Tableau Reports"), [
+            {
+                'title': viz.name,
+                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+                'show_in_dropdown': False,
+            } for viz in TableauVisualization.objects.filter(domain=self.domain)
+        ])]
+
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + report_builder_nav
+        sidebar_items = (tools + tableau + report_builder_nav
                          + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 

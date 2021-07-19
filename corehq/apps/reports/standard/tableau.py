@@ -1,17 +1,52 @@
 import sys
 
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext
+
 import requests
 from requests_toolbelt.adapters import host_header_ssl
 
-from django.shortcuts import render
-from django.utils.translation import ugettext
-
+from corehq import toggles
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard import (
-    ProjectReport,
-)
-
 from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+
+
+@method_decorator(require_permission(Permissions.edit_data), name='dispatch')   # TODO: is that the right perm?
+@method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator(), name='dispatch')
+class TableauView(BaseProjectReportSectionView):    # TODO: breadcrumbs aren't showing
+    urlname = 'tableau'
+    page_title = "TODO"  #ugettext_noop("TODO")
+    template_name = 'reports/tableau_template.html'
+
+    @property
+    def visualization(self):
+        return TableauVisualization.objects.get(domain=self.domain, id=self.kwargs.get("viz_id"))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.visualization.id,))
+
+    def context(self):
+        if self.visualization.server.validate_hostname == '':
+            hostname = self.visualization.server.server_name
+        else:
+            hostname = self.visualization.server.validate_hostname
+        return {
+            "domain": self.visualization.server.domain,
+            "server_type": self.visualization.server.server_type,
+            "server_address": self.visualization.server.server_name,
+            "validate_hostname": hostname,
+            "target_site": self.visualization.server.target_site,
+            "allow_domain_username_override": self.visualization.server.allow_domain_username_override,
+            "domain_username": self.visualization.server.domain_username,
+            "view_url": self.visualization.view_url,
+        }
 
 
 class TableauReport(ProjectReport):
@@ -100,6 +135,8 @@ def get_reports(domain):
         visualization_class = _make_visualization_class(vis_num, v)
         if visualization_class is not None:
             result.append(visualization_class)
+    import importlib
+    importlib.invalidate_caches()
     return tuple(result)
 
 
