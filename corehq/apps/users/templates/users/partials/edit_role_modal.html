@@ -129,23 +129,6 @@
                 </div>
               </div>
             </div>
-            {% if request|toggle_enabled:"DISABLE_DOWNLOAD_REPORTS_PERMISSION" %}
-              <div class="form-group" data-bind="visible: permissions.access_all_locations()">
-                <label class="col-sm-4 control-label">
-                  {% trans "Download or Email Reports" %}
-                </label>
-                <div class="col-sm-8 controls">
-                  <div class="form-check">
-                    <input type="checkbox"
-                           id="download-and-email-reports-checkbox"
-                           data-bind="checked: permissions.download_reports, disable: !$root.allowEdit" />
-                    <label for="download-and-email-reports-checkbox">
-                      {% trans "Allow role to download and email reports." %}
-                    </label>
-                  </div>
-                </div>
-              </div>
-            {% endif %}
             <div class="form-group" data-bind="visible: !reportPermissions.all()">
               <label class="col-sm-4 control-label">
                 {% trans "Access Specific Reports" %}
