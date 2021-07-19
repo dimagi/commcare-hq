@@ -64,7 +64,6 @@ branches:
     - rn_disallow_yui_cors # Rohit Negi
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
-    - sr/fup-form  # Sravan July 1
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
