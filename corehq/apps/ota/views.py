@@ -7,6 +7,8 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
 )
 from django.utils.translation import ugettext as _
@@ -49,12 +51,14 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import get_case_or_404
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -172,6 +176,47 @@ def claim(request, domain):
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
     return HttpResponse(status=200)
+
+
+@location_safe
+@csrf_exempt
+@require_POST
+@check_domain_migration
+def claim_all(request, domain):
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
+        return HttpResponseNotFound(_('Invalid project space "{}".').format(domain))
+
+    if not request.couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(
+            use=request.couch_user.username, domain=domain
+        ))
+
+    username = request.POST.get("username")     # username may be web user or unqualified mobile username
+    user = CouchUser.get_by_username(username)
+    if not user:
+        username = format_username(username, domain)
+        user = CouchUser.get_by_username(username)
+
+    if not user:
+        return HttpResponseNotFound(_('Could not find user "{}".').format(username))
+    user_id = user._id
+
+    if not user.is_member_of(domain_obj, allow_mirroring=True):
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(user=user.username,
+                                                                                     domain=domain))
+
+    for case_id in request.POST.getlist("case_ids[]"):
+        try:
+            case = get_case_or_404(domain, case_id)
+        except Http404:
+            return HttpResponse(_('Could not find case "{}"').format(case_id), status=410)
+        if get_first_claim(domain, user_id, case_id):
+            continue
+        claim_case(domain, user_id, case_id, host_type=case.type, host_name=case.name,
+                   device_id=__name__ + ".claim_all")
+
+    return JsonResponse({"success": 1})
 
 
 def get_restore_params(request, domain):
