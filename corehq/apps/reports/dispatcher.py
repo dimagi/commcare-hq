@@ -78,8 +78,32 @@ class ReportDispatcher(View):
 
     @classmethod
     def get_reports(cls, domain):
-        lookup = ReportLookup(cls.map_name)
-        return lookup.get_reports(domain)
+        attr_name = cls.map_name
+        from corehq import reports
+        if domain:
+            domain_obj = Domain.get_by_name(domain)
+        else:
+            domain_obj = None
+
+        def process(reports):
+            if callable(reports):
+                reports = reports(domain_obj) if domain_obj else tuple()
+            return tuple(reports)
+
+        corehq_reports = process(getattr(reports, attr_name, ()))
+
+        module_name = get_custom_domain_module(domain)
+        if module_name is None:
+            custom_reports = ()
+        else:
+            module = __import__(module_name, fromlist=['reports'])
+            if hasattr(module, 'reports'):
+                reports = getattr(module, 'reports')
+                custom_reports = process(getattr(reports, attr_name, ()))
+            else:
+                custom_reports = ()
+
+        return corehq_reports + custom_reports
 
     @classmethod
     def get_report(cls, domain, report_slug, config_id=None):
