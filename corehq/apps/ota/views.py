@@ -183,7 +183,7 @@ def claim(request, domain):
 def claim_all(request, domain):
     domain_obj = Domain.get_by_name(domain)
     if not domain_obj:
-        return HttpResponse(_('Invalid project space "{}".').format(domain), status=500)
+        return HttpResponseNotFound(_('Invalid project space "{}".').format(domain))
 
     if not request.couch_user.is_member_of(domain_obj, allow_mirroring=True):
         return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(
