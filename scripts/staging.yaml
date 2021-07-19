@@ -77,5 +77,4 @@ branches:
     - jls/smart-linking-login-as # Jenny July 12
     - jls/wip # Jenny July 16
     - bmb/sso-domain-login-update  # Biyeun July 15
-    - gh/fix-reference # Graham July 18
 submodules: { }
