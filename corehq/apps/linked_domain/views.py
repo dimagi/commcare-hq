@@ -12,6 +12,7 @@ from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -106,7 +107,7 @@ from corehq.apps.userreports.models import (
 
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import ERM_DEVELOPMENT
+from corehq.privileges import LINKED_PROJECTS
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -292,7 +293,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
+            'has_release_management_privilege': domain_has_privilege(self.domain, LINKED_PROJECTS),
             'view_data': {
                 'is_downstream_domain': bool(master_link),
                 'upstream_domains': upstream_domains,
