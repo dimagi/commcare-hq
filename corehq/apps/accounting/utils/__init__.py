@@ -303,6 +303,51 @@ def ensure_grants(grants_to_privs, dry_run=False, verbose=False, roles_by_slug=N
         Grant.objects.bulk_create(grants_to_create)
 
 
+def revoke_grants(privs_to_revoke, dry_run=False, verbose=False, roles_by_slug=None):
+    """
+    Removes a parameterless grant between grantee and priv, looked up by slug.
+
+    :param privs_to_revoke: An iterable of two-tuples:
+    `(grantee_slug, priv_slugs)`. Will only be iterated once.
+    """
+    dry_run_tag = "[DRY RUN] " if dry_run else ""
+    if roles_by_slug is None:
+        roles_by_slug = {role.slug: role for role in Role.objects.all()}
+
+    granted = defaultdict(set)
+    for grant in Grant.objects.select_related('from_role', 'to_role').all():
+        granted[grant.from_role.slug].add(grant.to_role.slug)
+
+    grants_to_revoke = []
+    for grantee_slug, priv_slugs in privs_to_revoke:
+        if grantee_slug not in roles_by_slug:
+            logger.info('grantee %s does not exist.', grantee_slug)
+            continue
+
+        for priv_slug in priv_slugs:
+            if priv_slug not in roles_by_slug:
+                logger.info('privilege %s does not exist.', priv_slug)
+                continue
+
+            if priv_slug not in granted[grantee_slug]:
+                if verbose or dry_run:
+                    logger.info('%sPrivilege already revoked: %s => %s',
+                        dry_run_tag, grantee_slug, priv_slug)
+            else:
+                granted[grantee_slug].discard(priv_slug)
+                if verbose or dry_run:
+                    logger.info('%Revoking privilege: %s => %s',
+                        dry_run_tag, grantee_slug, priv_slug)
+                if not dry_run:
+                    grants_to_revoke.append(Grant(
+                        from_role=roles_by_slug[grantee_slug],
+                        to_role=roles_by_slug[priv_slug]
+                    ))
+    if grants_to_revoke:
+        Role.get_cache().clear()
+        Grant.objects.bulk_delete(grants_to_revoke)
+
+
 def log_removed_grants(priv_slugs, dry_run=False):
     grants = Grant.objects.filter(to_role__slug__in=list(priv_slugs))
     if grants:
