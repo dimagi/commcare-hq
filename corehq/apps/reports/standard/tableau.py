@@ -100,6 +100,8 @@ def get_reports(domain):
         visualization_class = _make_visualization_class(vis_num, v)
         if visualization_class is not None:
             result.append(visualization_class)
+    import importlib
+    importlib.invalidate_caches()
     return tuple(result)
 
 
