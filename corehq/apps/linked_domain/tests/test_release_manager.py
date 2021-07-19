@@ -189,7 +189,7 @@ class TestReleaseApp(BaseReleaseManagerTest):
         self.assertTrue("Could not find app" in errors)
 
     @flag_enabled('ERM_DEVELOPMENT')
-    def test_app_pushed_if_not_found_with_toggle_enabled(self):
+    def test_app_not_pushed_if_not_found_with_toggle_enabled(self):
         unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
         unpushed_app.save()
         self.addCleanup(unpushed_app.delete)
@@ -197,31 +197,7 @@ class TestReleaseApp(BaseReleaseManagerTest):
         manager = ReleaseManager(self.domain, self.user.username)
 
         errors = manager._release_app(self.domain_link, model, manager.user)
-        self.assertIsNone(errors)
-
-        downstream_app_id = get_downstream_app_id(self.linked_domain, unpushed_app._id, use_upstream_app_id=False)
-        downstream_app = Application.get(downstream_app_id)
-        self.addCleanup(downstream_app.delete)
-        self.assertEqual(unpushed_app.name, downstream_app.name)
-        self.assertFalse(downstream_app.is_released)
-
-    @flag_enabled('ERM_DEVELOPMENT')
-    def test_app_pushed_and_released_if_not_found_with_toggle_enabled(self):
-        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
-        unpushed_app.save()
-        self.addCleanup(unpushed_app.delete)
-        self._make_build(unpushed_app, True)
-        model = self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        errors = manager._release_app(self.domain_link, model, manager.user, build_and_release=True)
-        self.assertIsNone(errors)
-
-        downstream_app_id = get_downstream_app_id(self.linked_domain, unpushed_app._id, use_upstream_app_id=False)
-        downstream_app = Application.get(downstream_app_id)
-        self.addCleanup(downstream_app.delete)
-        self.assertEqual(unpushed_app.name, downstream_app.name)
-        self.assertTrue(downstream_app.is_released)
+        self.assertTrue("Could not find app" in errors)
 
 
 class TestReleaseReport(BaseReleaseManagerTest):

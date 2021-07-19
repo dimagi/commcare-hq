@@ -145,11 +145,7 @@ The following linked project spaces received content:
                     app = update_linked_app(linked_app, app_id, user.user_id)
 
             if not found:
-                if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
-                    app = create_linked_app(domain_link.master_domain, app_id, domain_link.linked_domain)
-                    app = update_linked_app(app, app_id, user.user_id)
-                else:
-                    return self._error_tuple(_("Could not find app"))
+                return self._error_tuple(_("Could not find app"))
 
             if build_and_release:
                 error_prefix = _("Updated app but did not build or release: ")
