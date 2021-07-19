@@ -36,12 +36,12 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
+    LINKED_MODELS,
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
-    SUPERUSER_DATA_MODELS, ALL_LINKED_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
@@ -59,10 +59,10 @@ from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_data_dictionary,
     get_dialer_settings,
-    get_enabled_toggles_and_previews,
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
+    get_toggles_previews,
     get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
@@ -113,7 +113,7 @@ from corehq.util.timezones.utils import get_timezone_for_request
 @login_or_api_key
 @require_linked_domain
 def toggles_and_previews(request, domain):
-    return JsonResponse(get_enabled_toggles_and_previews(domain))
+    return JsonResponse(get_toggles_previews(domain))
 
 
 @login_or_api_key
@@ -271,15 +271,12 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_reports, linked_reports = get_reports(self.domain)
         master_keywords, linked_keywords = get_keywords(self.domain)
 
-        is_superuser = self.request.couch_user.is_superuser
-        timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords, timezone,
-            is_superuser=is_superuser
+            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
+            self.domain, master_apps, master_fixtures, master_reports, master_keywords
         )
 
         available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
@@ -454,11 +451,6 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _base_query(self):
         query = DomainLinkHistory.objects.filter(link=self.selected_link)
-
-        # filter out superuser data models
-        if not self.request.couch_user.is_superuser:
-            query = query.exclude(model__in=dict(SUPERUSER_DATA_MODELS).keys())
-
         if self.link_model:
             query = query.filter(model=self.link_model)
 

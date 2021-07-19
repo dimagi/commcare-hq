@@ -113,7 +113,7 @@
     </ol>
     <!-- /ko -->
     <!-- ko if: type == "Select" -->
-    <!-- ko if: data_source.nodeset -->
+    <!-- ko if: $data.data_source && $data.data_source.nodeset -->
     <ul class="fa-ul text-muted" data-bind="visible: $root.showDefaultValues">
       <li><strong>{% trans "Instance" %}:</strong> <span data-bind="text:data_source.instance_id"></span></li>
       <li><strong>{% trans "Nodeset" %}:</strong> <span data-bind="text:data_source.nodeset"></span></li>
