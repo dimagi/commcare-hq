@@ -7,6 +7,8 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     JsonResponse,
 )
 from django.utils.translation import ugettext as _
@@ -201,7 +203,8 @@ def claim_all(request, domain):
     user_id = user._id
 
     if not user.is_member_of(domain_obj, allow_mirroring=True):
-        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(user=user.username, domain=domain))
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(user=user.username,
+                                                                                     domain=domain))
 
     for case_id in request.POST.getlist("case_ids[]"):
         try:
