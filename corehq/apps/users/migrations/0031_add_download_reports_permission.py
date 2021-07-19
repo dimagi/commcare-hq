@@ -16,8 +16,9 @@ def migrate_download_reports_permissions(apps, schema_editor):
     for role_doc in iter_docs(UserRole.get_db(), [r['id'] for r in roles]):
         role = UserRole.wrap(role_doc)
 
-        role.permissions.download_reports = True
-        role.save()
+        if role.permissions.view_reports or bool(role.permissions.view_report_list):
+            role.permissions.download_reports = True
+            role.save()
 
 
 class Migration(migrations.Migration):
