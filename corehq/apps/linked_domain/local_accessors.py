@@ -12,19 +12,11 @@ from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 
 
-def get_enabled_toggles_and_previews(domain):
+def get_toggles_previews(domain):
     return {
-        'toggles': get_enabled_toggles(domain),
-        'previews': get_enabled_previews(domain)
+        'toggles': list(toggles.toggles_dict(domain=domain)),
+        'previews': list(feature_previews.previews_dict(domain=domain))
     }
-
-
-def get_enabled_toggles(domain):
-    return list(toggles.toggles_dict(domain=domain))
-
-
-def get_enabled_previews(domain):
-    return list(feature_previews.previews_dict(domain=domain))
 
 
 def get_custom_data_models(domain, limit_types=None):
