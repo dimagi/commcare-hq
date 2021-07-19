@@ -1,5 +1,4 @@
-import sys
-
+from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -27,11 +26,19 @@ class TableauView(BaseProjectReportSectionView):
 
     @property
     def visualization(self):
-        return TableauVisualization.objects.get(domain=self.domain, id=self.kwargs.get("viz_id"))
+        try:
+            return TableauVisualization.objects.get(domain=self.domain, id=self.kwargs.get("viz_id"))
+        except TableauVisualization.DoesNotExist:
+            return None
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.visualization.id,))
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.visualization is None:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
