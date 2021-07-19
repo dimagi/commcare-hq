@@ -197,7 +197,7 @@ def claim_all(request, domain):
         user = CouchUser.get_by_username(username)
 
     if not user:
-        return HttpResponse(_('Could not find user "{}".').format(username), status=500)
+        return HttpResponseNotFound(_('Could not find user "{}".').format(username))
     user_id = user._id
 
     if not user.is_member_of(domain_obj, allow_mirroring=True):
