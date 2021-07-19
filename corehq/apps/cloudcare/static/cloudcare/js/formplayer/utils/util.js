@@ -233,10 +233,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.steps = steps || [];
         };
 
-        this.resetForceLoginAs = function () {
-            this.forceLoginAs = false;
-        };
-
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.steps = null;

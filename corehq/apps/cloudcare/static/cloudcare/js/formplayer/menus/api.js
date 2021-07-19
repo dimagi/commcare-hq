@@ -141,6 +141,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
         var user = FormplayerFrontend.getChannel().request('currentUser');
         if (options.forceLoginAs && !user.restoreAs) {
+            // Workflow requires a mobile user, likely because we're trying to access
+            // a session endpoint as a web user. If user isn't logged in as, send them
+            // to Login As and save the current request options for when that's done.
             FormplayerFrontend.trigger("setLoginAsNextOptions", options);
             FormplayerFrontend.trigger("restore_as:list");
 
