@@ -186,7 +186,9 @@ def claim_all(request, domain):
         return HttpResponse(_('Invalid project space "{}".').format(domain), status=500)
 
     if not request.couch_user.is_member_of(domain_obj, allow_mirroring=True):
-        return HttpResponse(_('{} is not a member of {}.').format(request.couch_user.username, domain), status=500)
+        return HttpResponseForbidden(_('{user} is not a member of {domain}.').format(
+            use=request.couch_user.username, domain=domain
+        ))
 
     username = request.POST.get("username")     # username may be web user or unqualified mobile username
     user = CouchUser.get_by_username(username)
