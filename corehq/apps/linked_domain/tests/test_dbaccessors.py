@@ -1,9 +1,20 @@
+from datetime import date, timedelta
+
 from django.test import TestCase
 
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.dbaccessors import get_available_domains_to_link
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 class TestGetAvailableDomainsToLink(TestCase):
@@ -12,52 +23,157 @@ class TestGetAvailableDomainsToLink(TestCase):
     def setUpClass(cls):
         super(TestGetAvailableDomainsToLink, cls).setUpClass()
 
-        cls.test_domain_obj1 = create_domain('test1')
-        cls.test_domain_obj2 = create_domain('test2')
-        cls.upstream_domain_obj = create_domain('upstream')
-        cls.downstream_domain_obj = create_domain('downstream')
+        # Setup non-enterprise subscription
+        cls.non_enterprise_domain_obj_1 = create_domain('non-enterprise-1')
+        cls.non_enterprise_domain_obj_2 = create_domain('non-enterprise-2')
+        cls.non_enterprise_account, _ = BillingAccount.get_or_create_account_by_domain(
+            cls.non_enterprise_domain_obj_1.name,
+            created_by='user@test.com'
+        )
+        cls.non_enterprise_account.save()
+        cls._add_domain_to_account(cls.non_enterprise_domain_obj_1.name,
+                                   cls.non_enterprise_account,
+                                   SoftwarePlanEdition.COMMUNITY)
+        cls._add_domain_to_account(cls.non_enterprise_domain_obj_2.name,
+                                   cls.non_enterprise_account,
+                                   SoftwarePlanEdition.COMMUNITY)
+
+        # Setup enterprise subscription
+        cls.enterprise_domain_obj_1 = create_domain('enterprise-1')
+        cls.enterprise_domain_obj_2 = create_domain('enterprise-2')
+        cls.enterprise_account, _ = BillingAccount.get_or_create_account_by_domain(
+            cls.enterprise_domain_obj_1.name,
+            created_by='user@test.com'
+        )
+        cls.enterprise_account.save()
+        cls._add_domain_to_account(cls.enterprise_domain_obj_1.name,
+                                   cls.enterprise_account,
+                                   SoftwarePlanEdition.ENTERPRISE)
+
+        cls._add_domain_to_account(cls.enterprise_domain_obj_2.name,
+                                   cls.enterprise_account,
+                                   SoftwarePlanEdition.ENTERPRISE)
 
         cls.user = WebUser.create(
-            domain=cls.test_domain_obj1.name,
-            username='test@test.com',
+            domain=cls.enterprise_domain_obj_1.name,
+            username='user@enterprise.com',
             password='***',
             created_by=None,
             created_via=None,
         )
+        cls.user.delete_domain_membership(cls.enterprise_domain_obj_1.name)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
-        cls.test_domain_obj1.delete()
-        cls.test_domain_obj2.delete()
-        cls.upstream_domain_obj.delete()
-        cls.downstream_domain_obj.delete()
+        delete_all_users()
+        cls.non_enterprise_domain_obj_1.delete()
+        cls.non_enterprise_domain_obj_2.delete()
+        cls.enterprise_domain_obj_1.delete()
+        cls.enterprise_domain_obj_2.delete()
+        SubscriptionAdjustment.objects.all().delete()
+        Subscription.visible_and_suppressed_objects.all().delete()
+        cls.non_enterprise_account.delete()
+        cls.enterprise_account.delete()
         super(TestGetAvailableDomainsToLink, cls).tearDownClass()
 
-    def test_no_available_domains_when_only_member_of_one(self):
-        # already a member of this domain
-        available_domains = get_available_domains_to_link(self.test_domain_obj1.name, self.user)
-        self.assertEqual(0, len(available_domains))
-
-    def test_available_domain_exists_given_member_of_two_fresh_domains(self):
-        self.user.add_domain_membership(self.test_domain_obj2.name)
+    def test_non_enterprise_account_returns_empty_list(self):
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
+        self.user.set_role(self.non_enterprise_domain_obj_1.name, 'admin')
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
+        self.user.set_role(self.non_enterprise_domain_obj_2.name, 'admin')
         self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.test_domain_obj2.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
 
-        available_domains = get_available_domains_to_link(self.test_domain_obj1.name, self.user)
+        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
+        self.assertEqual([], available_domains)
+
+    @flag_enabled("LINKED_DOMAINS")
+    def test_non_enterprise_account_with_feature_flag_returns_some(self):
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
+        self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
+
+        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
         self.assertEqual(1, len(available_domains))
-        self.assertEqual(self.test_domain_obj2.name, available_domains[0])
+        self.assertEqual(self.non_enterprise_domain_obj_2.name, available_domains[0])
 
-    def test_no_available_domain_when_already_linked(self):
-        self.user.add_domain_membership(self.upstream_domain_obj.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.upstream_domain_obj.name)
-
-        self.user.add_domain_membership(self.downstream_domain_obj.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.downstream_domain_obj.name)
+    def test_enterprise_account_with_admin_user_returns_some(self):
+        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
+        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
+        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
+        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
         self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
 
-        link = DomainLink.link_domains('downstream', 'upstream')
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        self.assertEqual(1, len(available_domains))
+        self.assertEqual(self.enterprise_domain_obj_2.name, available_domains[0])
+
+    def test_enterprise_account_without_admin_user_returns_empty_list(self):
+        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
+        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
+        self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
+
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        self.assertEqual([], available_domains)
+
+    def test_enterprise_account_with_admin_user_in_upstream_returns_empty_list(self):
+        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
+        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
+        self.user.add_domain_membership(self.enterprise_domain_obj_2.name, is_admin=False)
+        self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
+
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        self.assertEqual([], available_domains)
+
+    def test_enterprise_account_with_linked_domains_returns_empty_list(self):
+        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
+        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
+        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
+        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
+        self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
+
+        link = DomainLink.link_domains(self.enterprise_domain_obj_2.name, self.enterprise_domain_obj_1.name)
         self.addCleanup(link.delete)
 
-        available_domains = get_available_domains_to_link(self.test_domain_obj1.name, self.user)
-        self.assertEqual(0, len(available_domains))
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_2.name, self.user)
+        self.assertEqual([], available_domains)
+
+    @flag_enabled("LINKED_DOMAINS")
+    def test_non_enterprise_account_with_linked_domains_returns_empty_list(self):
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
+        self.user.set_role(self.non_enterprise_domain_obj_1.name, 'admin')
+        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
+        self.user.set_role(self.non_enterprise_domain_obj_2.name, 'admin')
+        self.user.save()
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
+        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
+
+        link = DomainLink.link_domains(
+            self.non_enterprise_domain_obj_2.name,
+            self.non_enterprise_domain_obj_1.name
+        )
+        self.addCleanup(link.delete)
+
+        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
+        self.assertEqual([], available_domains)
+
+    @classmethod
+    def _add_domain_to_account(cls, domain_name, account, edition):
+        subscription = Subscription.new_domain_subscription(
+            account, domain_name,
+            DefaultProductPlan.get_default_plan_version(edition=edition),
+            date_start=date.today() - timedelta(days=3)
+        )
+        subscription.is_active = True
+        subscription.save()
