@@ -14,6 +14,14 @@ def to_function(function_path, failhard=False):
         module = importlib.import_module(module)
         actual_func = getattr(module, func)
         return actual_func
-    except (AttributeError, ImportError):
+    except AttributeError:
+        from dimagi.utils.logging import notify_exception
+        notify_exception(
+            None,
+            message="AttributeError in to_function", details=module.__dict__,
+        )
+        if failhard:
+            raise
+    except ImportError:
         if failhard:
             raise
