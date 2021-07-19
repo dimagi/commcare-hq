@@ -91,10 +91,3 @@ class TableauView(BaseProjectReportSectionView):    # TODO: breadcrumbs aren't s
             message = _("Request to Tableau failed with status code {}").format(tabserver_response.status_code)
             context.update({"failure_message": message})
             return render(self.request, 'reports/tableau_server_request_failed.html', context)
-
-
-# Making a class per visualization (and on each page load) is overkill, but
-# a class is expected for items in the left nav bar, so we do that for
-# expedience.
-def get_reports(domain):
-    return []
