@@ -607,7 +607,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         return _fail(_("This link does not exist. "
                        "Your app may have changed so that the given link is no longer valid."))
 
-    (restore_as_user, set_cookie) = FormplayerMain.get_restore_as_user(request, domain)
+    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
     if force_login_as and not can_use_restore_as(request):
         _fail(_("This user cannot access this link."))
