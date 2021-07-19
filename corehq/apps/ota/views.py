@@ -51,7 +51,7 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
-from corehq.apps.users.util import format_username, raw_username, username_to_user_id
+from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
