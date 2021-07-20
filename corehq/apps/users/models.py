@@ -242,8 +242,8 @@ class Permissions(DocumentSchema):
         if self.edit_apps:
             self.view_apps = True
 
-        if self.view_reports or bool(self.view_report_list):
-            self.download_reports = True
+        if not self.view_reports and not bool(self.view_report_list):
+            self.download_reports = False
 
     @classmethod
     @memoized
