@@ -211,6 +211,9 @@
         <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+      <!-- ko if: required() -->
+      <span class="sr-only">{% trans "An response is required for this question." %}</span>
+      <!-- /ko -->
     </label>
     <div class="widget-container controls" data-bind="css: controlWidth">
       <div class="loading">
@@ -240,6 +243,7 @@
     <div class="eoq"></div>
   </div>
   <div class="form-group-required-label"
+       aria-hidden="true"
        data-bind="visible: $data.required, css: {
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
