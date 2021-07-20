@@ -253,6 +253,16 @@
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
       </div>
+      <div class="widget-container controls" data-bind="css: controlWidth">
+      <div class="text-danger error-message" data-bind="
+                visible: error,
+                text: error
+            "></div>
+      <div class="text-danger error-message" data-bind="
+                visible: serverError,
+                text: serverError
+            "></div>
+    </div>
     </div>
   </div>
   <!-- /ko -->

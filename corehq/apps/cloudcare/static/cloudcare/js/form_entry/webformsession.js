@@ -435,6 +435,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                         if (o.isValid()) {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
                                 _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                            } else {
+                                _answers[UI.getIx(o)] = "ok"
                             }
                         } else {
                             prevalidated = false;
