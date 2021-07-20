@@ -175,7 +175,7 @@ function _run_tests {
         python-sharded-and-javascript)
             _test_python
             _test_javascript
-            COMMCAREHQ_BOOTSTRAP="yes" ./manage.py static_analysis
+            ./manage.py static_analysis
             ;;
         python|python-sharded)
             _test_python

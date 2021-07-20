@@ -6,12 +6,12 @@ from collections import Counter
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from datadog import api, initialize
+import datadog
 
 from dimagi.ext.couchdbkit import Document
 
-from corehq.toggles import all_toggles
 from corehq.feature_previews import all_previews
+from corehq.toggles import all_toggles
 
 
 class DatadogLogger:
@@ -22,7 +22,7 @@ class DatadogLogger:
             api_key = os.environ.get("DATADOG_API_KEY")
             app_key = os.environ.get("DATADOG_APP_KEY")
             assert api_key and app_key, "DATADOG_API_KEY and DATADOG_APP_KEY must both be set"
-            initialize(api_key=api_key, app_key=app_key)
+            datadog.initialize(api_key=api_key, app_key=app_key)
             self.metrics = []
 
     def log(self, metric, value, tags=None):
@@ -43,7 +43,7 @@ class DatadogLogger:
 
     def send_all(self):
         if self.datadog:
-            api.Metric.send(self.metrics)
+            datadog.api.Metric.send(self.metrics)
             self.metrics = []
 
 
