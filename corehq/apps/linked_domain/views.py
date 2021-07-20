@@ -107,7 +107,7 @@ from corehq.apps.userreports.models import (
 
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.privileges import LINKED_PROJECTS
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -296,7 +296,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'has_release_management_privilege': domain_has_privilege(self.domain, LINKED_PROJECTS),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
             'view_data': {
                 'is_downstream_domain': bool(master_link),
                 'upstream_domains': upstream_domains,
