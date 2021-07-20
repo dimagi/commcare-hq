@@ -107,8 +107,6 @@ CommCare Concepts
 
 The major CommCare/HQ concepts FormplayerFrontend deals with are apps, users, menus, and sessions. "Apps" and "users" are the same concepts they are in the rest of HQ, while a "menu" is a UI concept that covers the main web apps screens, and "sessions" means incomplete forms.
 
-It's also useful to be familiar with the ``CloudcareURL``, which contains the current state of navigation and is the main interface between ``FormplayerFrontend`` and formplayer itself.
-
 Apps
 ----
 
@@ -138,15 +136,6 @@ Sessions
 --------
 
 These are incomplete forms - the same incomplete forms workflow that happens on mobile, but on web apps, incomplete forms are created automatically instead of at the user's request. When a user is in form entry, web apps creates an incomplete form in the background and stores the current answers frequently so they can be accessed if the user closes their browser window, etc. These expire after a few days, maybe a week, exact lifespan might be configurable by a project setting. They're accessible from the web apps home screen.
-
-CloudcareURL
-------------
-
-This contains the current state of navigation. It's basically a js object with getter and setter methods. The serialized object is used as the URL hash for all activity in web apps once you enter an app.
-
-Most data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's `SessionNavigationBean <https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java>`_.
-
-CloudcareURL is defined in `formplayer/utils/util.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js>`_ although it probably justifies its own file.
 
 Architectural Concepts
 ======================
@@ -193,10 +182,32 @@ Although you can namespace channels, web apps uses a single ``formplayer`` chann
 
 Counterintuitively, ``showError`` and ``showSuccess`` are implemented differently: ``showError`` is an event and ``showSuccess`` is a channel request.
 
-Routing and Middleware
-----------------------
+Routing, URLs, and Middleware
+-----------------------------
 
-Being a SPA, all of web apps' navigation is handled by a javascript router, ``Marionette.AppRouter``, which extends Backbone's router. This is defined in `router.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/router.js>`_.
+As in many SPAs, all of web apps' "URLs" are hash fragments appended to HQ's main cloudcare URL, ``/a/<DOMAIN>/cloudcare/apps/v2/``
+
+Navigation is handled by a javascript router, ``Marionette.AppRouter``, which extends Backbone's router.
+
+Web apps routes are defined in `router.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/router.js>`_.
+
+Routes **outside** of an application use human-readable short names. For example:
+
+* ``/a/<DOMAIN>/cloudcare/apps/v2/#apps`` is the web apps home screen, which lists available apps and actions like sync.
+
+* ``/a/<DOMAIN>/cloudcare/apps/v2/#restore_as`` is the Login As screen
+
+Routes **inside** an application serialize the ``CloudcareURL`` object.
+
+``CloudcareURL`` contains the current state of navigation when you're in an application. It's basically a js object with getter and setter methods.
+
+Most app-related data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's `SessionNavigationBean <https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java>`_.
+
+CloudcareURL is defined in `formplayer/utils/util.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js>`_ although it probably justifies its own file.
+
+URLs using ``CloudcareURL`` are not especially human-legible due to JSON serialization, URL encoding, and the obscurity of the attributes. Example URL for form entry:
+
+``/a/<DOMAIN>/cloudcare/apps/v2/#%7B%22appId%22%3A%226<APP_ID>%22%2C%22steps%22%3A%5B%221%22%2C%22<CASE_ID>%22%2C%220%22%5D%2C%22page%22%3Anull%2C%22search%22%3Anull%2C%22queryData%22%3A%7B%7D%2C%22forceManualAction%22%3Afalse%7D``
 
 The router also handles actions that may not sound like traditional navigation in the sense that they don't change which screen the user is on. This includes actions like pagination or searching within a case list.
 
