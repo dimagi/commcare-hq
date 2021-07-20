@@ -12,7 +12,6 @@
 
 import sys, os
 import sphinx_rtd_theme
-from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('..'))
 from manage import init_hq_python_path
@@ -30,11 +29,6 @@ init_hq_python_path()
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 autodoc_mock_imports = ["OpenSSL", "onelogin"]
 
-# Support including markdown files in the documentation
-source_parsers = {
-    '.md': CommonMarkParser,
-}
-
 # The suffix of source filenames.
 source_suffix = ['.rst', '.md']
 
@@ -46,7 +40,12 @@ source_suffix = ['.rst', '.md']
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib_django']
+extensions = [
+    'myst_parser',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinxcontrib_django',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

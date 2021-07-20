@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -45,6 +46,8 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
+from corehq.apps.cloudcare.esaccessors import login_as_user_filter
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -52,7 +55,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES
+from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -101,10 +104,12 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
+from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
@@ -376,10 +381,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def form_user_update_permissions(self):
-        user = self.editable_user
-        is_super_user = user.is_superuser
-
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
+        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
 
     @property
     def main_context(self):
@@ -408,19 +410,18 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
-            idp = IdentityProvider.get_active_identity_provider_by_username(
-                self.editable_user.username
-            )
-            ctx.update({
-                'has_untrusted_identity_provider': (
-                    not IdentityProvider.does_domain_trust_user(
-                        self.domain,
-                        self.editable_user.username
-                    )
-                ),
-                'idp_name': idp.name if idp else '',
-            })
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.editable_user.username
+        )
+        ctx.update({
+            'has_untrusted_identity_provider': (
+                not IdentityProvider.does_domain_trust_user(
+                    self.domain,
+                    self.editable_user.username
+                )
+            ),
+            'idp_name': idp.name if idp else '',
+        })
 
         return ctx
 
@@ -436,8 +437,7 @@ class EditWebUserView(BaseEditUserView):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
 
-        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and self.request.POST['form_type'] == 'trust-identity-provider'):
+        if self.request.POST['form_type'] == 'trust-identity-provider':
             idp = IdentityProvider.get_active_identity_provider_by_username(
                 self.editable_user.username
             )
@@ -456,10 +456,17 @@ class EditWebUserView(BaseEditUserView):
                 )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
+            current_superuser_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
-                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+                                                                        editable_user=self.editable_user,
+                                                                        is_superuser=is_superuser):
+                if current_superuser_status != is_superuser:
+                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB,
+                                    fields_changed={'is_superuser': is_superuser})
+                messages.success(self.request,
+                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -531,6 +538,20 @@ class BaseRoleAccessView(BaseUserSettingsView):
                 ))
             )
         return role_view_data
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+    @property
+    def page_context(self):
+        return {
+            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
+        }
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -723,20 +744,69 @@ def create_domain_permission_mirror(request, domain):
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
-def paginate_web_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
+def paginate_enterprise_users(request, domain):
+    # Get web users
+    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    web_users, pagination = _get_web_users(request, domains)
 
-    result = (
-        UserES().domain(domain).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().domains(domains).mobile_users().sort('username.exact')
+        .filter(
+            queries.nested(
+                'user_data_es',
+                login_as_user_filter(web_user_usernames)
+            )
+        )
+        .run()
     )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
 
-    web_users = [WebUser.wrap(w) for w in result.hits]
-    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
+    users = []
+    allowed_domains = set(domains) - {domain}
+    for web_user in web_users:
+        other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'otherDomains': other_domains,
+            'loginAsUserCount': len(mobile_users[web_user.username]),
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
+            })
+
+    return JsonResponse({
+        'users': users,
+        **pagination,
+    })
+
+
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.raw_username,
+        'name': user.full_name,
+        'id': user.get_id,
+        'role': role.name if role else None,
+    }
+
+
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_web_users(request, domain):
+    web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -749,19 +819,37 @@ def paginate_web_users(request, domain):
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
         ),
-        'isUntrustedIdentityProvider': (
-            not IdentityProvider.does_domain_trust_user(
-                domain, u.username
-            ) if is_sso_toggle_enabled else False
+        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+            domain, u.username
         ),
     } for u in web_users]
 
     return JsonResponse({
         'users': web_users_fmt,
-        'total': result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
+
+
+def _get_web_users(request, domains):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    return (
+        [WebUser.wrap(w) for w in result.hits],
+        {
+            'total': result.total,
+            'page': page,
+            'query': query,
+        },
+    )
 
 
 @always_allow_project_access
@@ -774,6 +862,9 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
+        log_user_change(request.domain, couch_user=user,
+                        changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        message=_("Removed from domain '{domain_name}'").format(domain_name=domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1016,8 +1107,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
-            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
-                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+            if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
                 idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
                 idp.create_trust_with_domain(self.domain, self.request.user.username)
 

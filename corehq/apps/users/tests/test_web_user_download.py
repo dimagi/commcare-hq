@@ -102,10 +102,10 @@ class TestDownloadWebUsers(TestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
-        cls.user1.delete(deleted_by=None)
-        cls.user2.delete(deleted_by=None)
-        cls.user10.delete(deleted_by=None)
-        cls.user11.delete(deleted_by=None)
+        cls.user1.delete(cls.domain_obj.name, deleted_by=None)
+        cls.user2.delete(cls.domain_obj.name, deleted_by=None)
+        cls.user10.delete(cls.other_domain_obj.name, deleted_by=None)
+        cls.user11.delete(cls.other_domain_obj.name, deleted_by=None)
         cls.invited_user.delete()
         cls.other_invited_user.delete()
         cls.domain_obj.delete()

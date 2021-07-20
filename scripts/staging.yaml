@@ -59,30 +59,22 @@ branches:
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
-    - jls/enterprise-user-overview+bmb/sso-remove-toggle+mk/user-history/base+mk/user-history/bulk-upload-ui-changes
-    - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
     - sr/cs-multiselect  # Sravan May 31
-    - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
-    - sr/mixed-case-types  # Sravan June 15
-    - mjr/hidden-report-columns  # Matt June 15
     - gh/improve-erm-ui # Graham June 16 [QA]
     - rn_disallow_yui_cors # Rohit Negi
-    - mk/user-history/base # MK June 21 [QA]
-    - mk/user-history/bulk-upload-ui-changes # MK July 6
     - jm/repeater-domain-admins  # Joel June 21
-    - jls/enterprise-user-overview  # Jenny June 24
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - sp/csrf # Amit + Shivam June 30
-    - bmb/sso-debug-user-data  # Biyeun June 30
-    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
-    - sr/fup-form  # Sravan July 1
-    - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
-    - gh/split-toggles-and-previews # Graham July 1 [QA]
-    - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
-    - bmb/sso-fix-attempt-session-timeout  # Biyeun July 2
+    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
-    - smh/tableau-username-override # Steph July 6
     - ce/bulk-case-search # Cal July 6
+    - ap/auditcare-migration # Amit July 8
+    - rc/explain-before-entering # Robert July 8 [QA]
+    - rp/enterprize-sms-report # Rynhard July 12
+    - bmb/hubspot-privacy  # Biyeun July 12
+    - jls/single-tableau-view # Jenny July 16
+    - bmb/sso-domain-login-update  # Biyeun July 15
+    - smh/tableau-server-dropdown-modification # Steph July 19
+    - bmb/sso-alternate-login  # Biyeun July 19
+    - revert-30073-revert-29936-gh/split-toggles-and-previews # Graham July 19
 submodules: { }

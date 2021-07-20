@@ -102,16 +102,16 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete(deleted_by=None)
+            user.delete(self.domain.name, deleted_by=None)
 
         for user in self.domain2.all_users():
-            user.delete(deleted_by=None)
+            user.delete(self.domain2.name, deleted_by=None)
 
         for user in self.domain3.all_users():
-            user.delete(deleted_by=None)
+            user.delete(self.domain3.name, deleted_by=None)
 
         for user in self.domain_community.all_users():
-            user.delete(deleted_by=None)
+            user.delete(self.domain_community.name, deleted_by=None)
 
         if self.is_using_test_plans:
             utils.clear_plan_version_cache()
