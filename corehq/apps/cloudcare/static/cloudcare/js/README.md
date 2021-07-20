@@ -2,12 +2,18 @@
 
 ## Overview
 
+This document is meant to orient developers to working with Web Apps. Its primary audience is developers who are familiar with CommCare HQ but not especially familiar with CommCare mobile or formplayer.
+
 The web apps front end is effectively a single-page application (SPA), which is unique in HQ.
 It's also the only area of HQ that uses [Backbone](https://backbonejs.org/) and [Marionette](https://marionettejs.com/).
 Most of the code was written, or substantially re-written, around 2016.
 
-Web apps is tightly coupled with formplayer, so check out the [formplayer README](https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst). This also means web apps tends to use formplay/mobile/CommCare vocabulary rather than HQ vocabulary: "entities"
-instead of "cases", etc.
+Web apps is tightly coupled with formplayer, so check out the [formplayer README](https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst). High-level pieces of the system:
+- **Web Apps** is a piece of CommCare HQ that allows users to enter data in a web browser, providing a web equivalent to CommCare mobile. Like the rest of HQ, web apps is built on django, but it is much heavier on javascript and lighter on python than most areas of HQ. While it is hosted on HQ, its major "backend" is formplayer.
+- [Formplayer](https://github.com/dimagi/formplayer/) is a Java-based service for entering data into XForms. Web apps can be thought of as a UI for this service. In this vein, the bulk of web apps javascript implements a javascript application called "FormplayerFrontend". This makes the word "formplayer" sometimes ambiguous in this document: usually it describes the Java-based service, but it also shows up in web apps code references.
+- **CloudCare** is a legacy name for web apps. Web apps code is in the `cloudcare` django app. It should not be used in documentation or anything user-facing. It shouldn't be used in code, either, unless needed for consistency. It mostly shows up in filenames and URLs.
+
+The coupling with formplayer also means web apps tends to use formplay/mobile/CommCare vocabulary rather than HQ vocabulary: "entities" instead of "cases", etc.
 
 The code has three major components: form entry, formplayer, and everything else.
 
@@ -48,7 +54,33 @@ These are HQ apps. Most of the logic around apps has to do with displaying the h
 
 This home screen has access to a subset of data from each app's couch document, similar but not identical to the "brief apps" used in HQ that are backed by the `applications_brief` couch view.
 
-Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the suite.xml or other application files. That config is then added to a formplayer request and passed back to web apps, typically in a navigation request.
+Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the form XML or suite.xml. That config is then used to generate the web apps UI and to formulate requests to formplayer. As an example, consider [registration from the case list](https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List):
+
+* A CommCareHQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
+   * This adds a new attribute to their `Application` document - specifically, it populates `case_list_form` on a `Module`.
+* When the user makes a new build of their app, the app building code reads the `Application` doc and writes out all of the application files, including the `suite.xml`.
+   * The module's case list configuration is transformed into a [detail](https://github.com/dimagi/commcare-core/wiki/Suite20#detail) element, which includes an [action](https://github.com/dimagi/commcare-core/wiki/Suite20#action) element that represents the case list form.
+* When a Web Apps user clicks the menu's name to access the case list, web apps sends a `navigate_menu` request to formplayer that includes a set of `selections` (see [navigation and replaying of sessions](https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions)).
+   * The formplayer response tells web apps what kind of sceen to display:
+      * The `type` is `entities` which tells web apps to display a case list UI
+      * The `entities` list contains the cases and their properties
+      * The `actions` list includes an action for the case list registration form, which tells web apps to display a button at the bottom of the case list with the given label, that when clicked will add the string `action 0` to the `selections` list and then send formplayer another navigation request, which will cause formplayer to send back a form response for the registration form, which web apps will then display for the user.
+
+Note how generic the concepts web apps deals with are: "entities" can be cases, fixture rows, ledger values, etc. Web apps doesn't know what cases are, and it doesn't know the difference between an action that triggers a case list registration form and an action that triggers a case search.
+
+Development for most new web apps features maps to the steps above, requiring some or all of the following:
+Logic | Repository | Language
+----- | ---------- | --------
+App manager UI where the the feature is enabled & configured | commcare-hq | Python / HTML / JavaScript
+Updated logic to make a new app build, typically changes to suite generation | commcare-hq | Python
+New model for the configuration | commcare-core | Java
+Formplayer processing to add the new feature to the appropriate response | formplayer | Java
+Web apps UI for the feature | commcare-hq | JavaScript / HTML
+CommCare Mobile UI for the new feature | commcare-android | Java
+
+Not all features have all of these pieces.
+
+Some features don't require any Java - they just add a new value for the appearance attribute to support a new data entry widget, or they rearrange existing constructs in a new way. CommCare supports a much broader set of functionality than what HQ allows users to configure. Some features don't get implemented on mobile. Some features, like case search, have additional HQ work because they interact with HQ in ways beyond what's described above.
 
 ##### Users
 
@@ -66,11 +98,13 @@ This is where the bulk of new web apps development happens. This contains the ac
 
 ##### Sessions
 
-These are incomplete forms. When a user is in form entry, web apps creates an incomplete form in the background and stores the current answers frequently so they can be accessed if the user closes their browser window, etc. These expire after a few days, maybe a week, exact lifespan might be configurable by a project setting. They're accessible from the web apps home screen.
+These are incomplete forms - the same incomplete forms workflow that happens on mobile, but on web apps, incomplete forms are created automatically instead of at the user's request. When a user is in form entry, web apps creates an incomplete form in the background and stores the current answers frequently so they can be accessed if the user closes their browser window, etc. These expire after a few days, maybe a week, exact lifespan might be configurable by a project setting. They're accessible from the web apps home screen.
 
 ##### CloudcareURL
 
-This contains the current state of navigation. It's basically a js object with getter and setter methods. Most data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's [SessionNavigationBean](https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java).
+This contains the current state of navigation. It's basically a js object with getter and setter methods. The serialized object is used as the URL hash for all activity in web apps once you enter an app.
+
+Most data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's [SessionNavigationBean](https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java).
 
 CloudcareURL is defined in [formplayer/utils/util.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js) although it probably justifies its own file.
 
@@ -122,7 +156,7 @@ The router also handles actions that may not sound like traditional navigation i
 
 Other code generally interacts with the router by triggering an event (see above for more on events). Most of `router.js` consists of event handlers that then call the router's API.
 
-Every function in the router's API applies the function defined in [middleware.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/middleware.js). This is rarely edited. It's where the "User navigated to..." console log messages come from.
+Every call to one of the router's API functions also runs each piece of web apps middleware, defined in [middleware.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/middleware.js). This middleware doesn't do much, but it's a useful place for reset-type logic that should be called on each screen change: scrolling to the top of the page, making sure any form is cleared out, etc. It's also where the "User navigated to..." console log messages come from.
 
 #### Tests
 
