@@ -75,6 +75,6 @@ branches:
     - smh/tableau-server-dropdown-modification # Steph July 19
     - bmb/sso-alternate-login  # Biyeun July 19
     - gh/remove-unlinking # Graham July 20
-    - jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
+    #- jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
     - rc/clarify-explanation # Robert July 20
 submodules: { }
