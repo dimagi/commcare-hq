@@ -27,7 +27,7 @@ class TestGetAvailableDomainsToLink(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.test_domain_obj1.name, deleted_by=None)
         cls.test_domain_obj1.delete()
         cls.test_domain_obj2.delete()
         cls.upstream_domain_obj.delete()
