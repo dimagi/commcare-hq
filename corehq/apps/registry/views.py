@@ -60,6 +60,6 @@ def _registry_list_context(domain, registry):
     else:
         for_this_domain = [invitation for invitation in invitations if invitation.domain == domain]
         context.update({
-            "invitation": for_this_domain[0]
+            "invitation": for_this_domain[0].to_json()
         })
     return context

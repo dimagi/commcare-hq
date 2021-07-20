@@ -136,6 +136,18 @@ class RegistryInvitation(models.Model):
         self.rejected_by = rejected_by
         self.save()
 
+    def to_json(self):
+        return {
+            "registry_id": self.registry_id,
+            "domain": self.domain,
+            "created_on": self.created_on,
+            "status": self.status,
+            "accepted_on": self.accepted_on,
+            "accepted_by": self.accepted_by.username if self.accepted_by else None,
+            "rejected_on": self.rejected_on,
+            "rejected_by": self.rejected_by.username if self.rejected_by else None,
+        }
+
 
 class RegistryGrant(models.Model):
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
