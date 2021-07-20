@@ -11,7 +11,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import InlineField, StrictButton
 
 import langcodes
-from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions, HQFormHelper, LinkButton
+from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.reports.models import TableauServer, TableauVisualization
@@ -255,10 +255,6 @@ class TableauServerForm(forms.Form):
     domain_username = forms.CharField(
         label=_('Domain Username'),
     )
-    allow_domain_username_override = forms.BooleanField(
-        label=_("Allow Domain Username Override"),
-        required=False
-    )
 
     class Meta:
         model = TableauServer
@@ -268,7 +264,6 @@ class TableauServerForm(forms.Form):
             'validate_hostname',
             'target_site',
             'domain_username',
-            'allow_domain_username_override',
         ]
 
     def __init__(self, data, *args, **kwargs):
@@ -294,10 +289,6 @@ class TableauServerForm(forms.Form):
             crispy.Div(
                 crispy.Field('domain_username'),
             ),
-            B3MultiField(
-                _("Allow Domain Username Override"),
-                InlineField('allow_domain_username_override'),
-            ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
             )
@@ -319,7 +310,6 @@ class TableauServerForm(forms.Form):
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
             'domain_username': self._existing_config.domain_username,
-            'allow_domain_username_override': self._existing_config.allow_domain_username_override,
         }
 
     def save(self):
@@ -328,7 +318,6 @@ class TableauServerForm(forms.Form):
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
         self._existing_config.target_site = self.cleaned_data['target_site']
         self._existing_config.domain_username = self.cleaned_data['domain_username']
-        self._existing_config.allow_domain_username_override = self.cleaned_data['allow_domain_username_override']
         self._existing_config.save()
 
 
