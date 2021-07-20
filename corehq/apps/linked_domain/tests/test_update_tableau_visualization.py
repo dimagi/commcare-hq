@@ -1,7 +1,7 @@
 from corehq.apps.reports.models import TableauVisualization, TableauServer
-from corehq.apps.linked_domain.local_accessors import get_tableau_visualizaton
+from corehq.apps.linked_domain.local_accessors import get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
-from corehq.apps.linked_domain.updates import update_tableau_visualization
+from corehq.apps.linked_domain.updates import update_tableau_server_and_visualizations
 
 
 class TestUpdateTableauVisualization(BaseLinkedAppsTest):
@@ -14,32 +14,33 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
         domain_username='username',
         allow_domain_username_override=True)
         self.server.save()
-        self.tableau_visualization_setup = TableauVisualization(domain=self.domain,
-        server=self.server, view_url='url')
-        self.tableau_visualization_setup.save()
+        self.tableau_visualization_setup_1 = TableauVisualization(domain=self.domain,
+        server=self.server, view_url='url_1')
+        self.tableau_visualization_setup_1.save()
 
     def tearDown(self):
         self.server.delete()
 
-    def test_update_tableau_visualization(self):
-        visualization = get_tableau_visualizaton(self.linked_domain)
-        self.assertEqual(visualization['domain'], self.linked_domain)
-        self.assertEqual(visualization['view_url'], '')
+    def test_update_tableau_server_and_visualizations(self):
+        server_and_visualizations = get_tableau_server_and_visualizations(self.linked_domain)
+        visualizations = server_and_visualizations["visualizations"]
+        self.assertEqual(visualizations[0]['domain'], self.linked_domain)
+        self.assertEqual(visualizations[0]['view_url'], '')
 
         # Update linked domain
-        update_tableau_visualization(self.domain_link)
+        update_tableau_server_and_visualizations(self.domain_link)
 
         # Linked domain should now have master domain's tableau visualization
-        model = TableauVisualization.objects.get(domain=self.linked_domain)
+        models = TableauVisualization.objects.all().filter(domain=self.linked_domain).order_by('pk')
 
-        self.assertEqual(model.view_url, 'url')
-        self.assertEqual(model.server.server_name, 'server name')
-        self.assertTrue(model.server.allow_domain_username_override)
+        self.assertEqual(models[0].view_url, 'url_1')
+        self.assertEqual(models[0].server.server_name, 'server name')
+        self.assertTrue(models[0].server.allow_domain_username_override)
 
         # Updating master reflected in linked domain after update
-        self.tableau_visualization_setup.view_url = 'different url'
-        self.tableau_visualization_setup.save()
-        update_tableau_visualization(self.domain_link)
+        self.tableau_visualization_setup_1.view_url = 'different url_1'
+        self.tableau_visualization_setup_1.save()
+        update_tableau_server_and_visualizations(self.domain_link)
 
-        model = TableauVisualization.objects.get(domain=self.linked_domain)
-        self.assertEqual(model.view_url, 'different url')
+        models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
+        self.assertEqual(models[0].view_url, 'different url_1')

@@ -1,7 +1,7 @@
 from corehq.apps.reports.models import TableauServer
-from corehq.apps.linked_domain.local_accessors import get_tableau_server
+from corehq.apps.linked_domain.local_accessors import get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
-from corehq.apps.linked_domain.updates import update_tableau_server
+from corehq.apps.linked_domain.updates import update_tableau_server_and_visualizations
 
 
 class TestUpdateTableauServer(BaseLinkedAppsTest):
@@ -19,6 +19,8 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
         self.tableau_server_setup.delete()
 
     def test_update_tableau_server(self):
+        server_and_visualizations = get_tableau_server_and_visualizations(self.linked_domain)
+        server = server_and_visualizations["server"]
         self.assertEqual({'domain': self.linked_domain,
         'server_name': '',
         'domain_username': '',
@@ -26,10 +28,10 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
         'allow_domain_username_override': False,
         'target_site': 'Default',
         'validate_hostname': '', },
-        get_tableau_server(self.linked_domain))
+        server)
 
         # Update linked domain
-        update_tableau_server(self.domain_link)
+        update_tableau_server_and_visualizations(self.domain_link)
 
         # Linked domain should now have master domain's tableau server
         model = TableauServer.objects.get(domain=self.linked_domain)
@@ -42,7 +44,7 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
         self.tableau_server_setup.target_site = 'different target site'
         self.tableau_server_setup.server_name = 'different server name'
         self.tableau_server_setup.save()
-        update_tableau_server(self.domain_link)
+        update_tableau_server_and_visualizations(self.domain_link)
 
         model = TableauServer.objects.get(domain=self.linked_domain)
         self.assertEqual(model.target_site, 'different target site')

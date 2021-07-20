@@ -309,20 +309,26 @@ def update_tableau_server_and_visualizations(domain_link):
     server_model, created = TableauServer.objects.get_or_create(domain=domain_link.linked_domain)
 
     server_model.domain = domain_link.linked_domain
-    server_model.server_type = master_results.server['server_type']
-    server_model.server_name = master_results.server['server_name']
-    server_model.validate_hostname = master_results.server['validate_hostname']
-    server_model.target_site = master_results.server['target_site']
-    server_model.domain_username = master_results.server['domain_username']
-    server_model.allow_domain_username_override = master_results.server['allow_domain_username_override']
+    server_model.server_type = master_results["server"]['server_type']
+    server_model.server_name = master_results["server"]['server_name']
+    server_model.validate_hostname = master_results["server"]['validate_hostname']
+    server_model.target_site = master_results["server"]['target_site']
+    server_model.domain_username = master_results["server"]['domain_username']
+    server_model.allow_domain_username_override = master_results["server"]['allow_domain_username_override']
     server_model.save()
 
-    visualization_models, created = TableauVisualization.objects.get_or_create(domain=domain_link.linked_domain)
+    visualization_models = TableauVisualization.objects.all().filter(
+        domain=domain_link.linked_domain).order_by('pk')
 
-    for visualization in visualization_models:
-        visualization.domain = domain_link.linked_domain
-        visualization.save()
-
+    if not len(visualization_models):
+        vis = TableauVisualization(domain=domain_link.linked_domain, server=server_model)
+        vis.save()
+    else:
+        for i in range(len(visualization_models)):
+            visualization_models[i].domain = domain_link.linked_domain
+            visualization_models[i].server = master_results['visualizations'][i]['server']
+            visualization_models[i].view_url = master_results['visualizations'][i]['view_url']
+            visualization_models[i].save()
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:
