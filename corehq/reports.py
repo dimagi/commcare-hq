@@ -119,6 +119,10 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
+    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
+        tableau_reports = tableau.get_reports(project.name)
+        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
+
     if project.commtrack_enabled:
         supply_reports = (
             commtrack.SimplifiedInventoryReport,

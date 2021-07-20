@@ -126,7 +126,3 @@ enterprise_v0 = advanced_v0 + [
     privileges.DEFAULT_EXPORT_SETTINGS,
     privileges.LINKED_PROJECTS,
 ]
-
-enterprise_v1 = enterprise_v0 + [
-    privileges.RELEASE_MANAGEMENT,
-]

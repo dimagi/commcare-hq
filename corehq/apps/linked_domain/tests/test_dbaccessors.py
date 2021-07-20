@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -13,6 +12,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.dbaccessors import get_available_domains_to_link
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -65,7 +65,7 @@ class TestGetAvailableDomainsToLink(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(cls.enterprise_domain_obj_1.name, deleted_by=None)
+        delete_all_users()
         cls.non_enterprise_domain_obj_1.delete()
         cls.non_enterprise_domain_obj_2.delete()
         cls.enterprise_domain_obj_1.delete()
@@ -100,22 +100,7 @@ class TestGetAvailableDomainsToLink(TestCase):
         self.assertEqual(1, len(available_domains))
         self.assertEqual(self.non_enterprise_domain_obj_2.name, available_domains[0])
 
-    def test_enterprise_account_with_admin_user_and_release_management_privilege_returns_some(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
-        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual(1, len(available_domains))
-        self.assertEqual(self.enterprise_domain_obj_2.name, available_domains[0])
-
-    def test_enterprise_account_with_admin_user_and_no_privilege_returns_empty_list(self):
+    def test_enterprise_account_with_admin_user_returns_some(self):
         self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
         self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
         self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
@@ -125,21 +110,20 @@ class TestGetAvailableDomainsToLink(TestCase):
         self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
 
         available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
+        self.assertEqual(1, len(available_domains))
+        self.assertEqual(self.enterprise_domain_obj_2.name, available_domains[0])
 
-    def test_enterprise_account_without_admin_user_and_privilege_returns_empty_list(self):
+    def test_enterprise_account_without_admin_user_returns_empty_list(self):
         self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
         self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
         self.user.save()
         self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
         self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
 
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
         self.assertEqual([], available_domains)
 
-    def test_enterprise_account_with_admin_user_in_upstream_and_privilege_returns_empty_list(self):
+    def test_enterprise_account_with_admin_user_in_upstream_returns_empty_list(self):
         self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
         self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
         self.user.add_domain_membership(self.enterprise_domain_obj_2.name, is_admin=False)
@@ -147,12 +131,10 @@ class TestGetAvailableDomainsToLink(TestCase):
         self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
         self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
 
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
         self.assertEqual([], available_domains)
 
-    def test_enterprise_account_with_linked_domains_and_privilege_returns_empty_list(self):
+    def test_enterprise_account_with_linked_domains_returns_empty_list(self):
         self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
         self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
         self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
@@ -164,9 +146,7 @@ class TestGetAvailableDomainsToLink(TestCase):
         link = DomainLink.link_domains(self.enterprise_domain_obj_2.name, self.enterprise_domain_obj_1.name)
         self.addCleanup(link.delete)
 
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
+        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_2.name, self.user)
         self.assertEqual([], available_domains)
 
     @flag_enabled("LINKED_DOMAINS")

@@ -55,8 +55,6 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        if value == '':
-            return self.add_query(case_property_missing(case_property_name), clause)
         if fuzzy:
             positive_clause = clause != queries.MUST_NOT
             return (

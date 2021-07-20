@@ -505,10 +505,6 @@ class TestCaseSearchLookups(TestCase):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
-    def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(self.domain, cases, paths)
-        self.assertEqual(ids, {result['_id'] for result in results})
-
     def test_multiple_case_types(self):
         cases = [
             {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
@@ -526,19 +522,6 @@ class TestCaseSearchLookups(TestCase):
         )
         config.delete()
 
-    def test_blank_property_value(self):
-        # foo = '' should match all cases where foo is empty or absent
-        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': ''},
-                {'_id': 'c4'},
-            ],
-            CaseSearchCriteria(self.domain, [self.case_type], {'foo': ''}).search_es,
-            None,
-            ['c3', 'c4']
-        )
-        config.delete()
+    def _assert_related_case_ids(self, cases, paths, ids):
+        results = get_related_case_results(self.domain, cases, paths)
+        self.assertEqual(ids, {result['_id'] for result in results})

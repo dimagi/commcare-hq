@@ -5,7 +5,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import LINKED_PROJECTS
 from corehq.util.quickcache import quickcache
 
 
@@ -77,7 +77,7 @@ def get_available_domains_to_link(upstream_domain_name, user):
             return True
 
     current_subscription = Subscription.get_active_subscription_by_domain(upstream_domain_name)
-    if current_subscription and domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+    if current_subscription and domain_has_privilege(upstream_domain_name, LINKED_PROJECTS):
         eligible_domains = [d for d in current_subscription.account.get_domains()]
         return list({d for d in eligible_domains if _is_domain_available(user, d)})
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):

@@ -43,7 +43,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/settings
     apps/advanced_app_features
     apps/builds
-    web_apps
+    cloudcare
     formplayer
 
 .. toctree::

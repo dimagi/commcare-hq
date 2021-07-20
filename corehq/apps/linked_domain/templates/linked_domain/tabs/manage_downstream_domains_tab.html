@@ -10,7 +10,7 @@
         <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about Linked Projects.
       {% endblocktrans %}
     </p>
-    {% if has_release_management_privilege %}
+    {% if is_erm_ff_enabled %}
       <button type="button"
               class="btn btn-primary"
               id="add-downstream-domain"

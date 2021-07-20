@@ -4,7 +4,6 @@ from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
-from corehq.apps.reports.standard.tableau import TableauView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -145,8 +144,6 @@ urlpatterns = [
 
     # V2 Reports
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
-
-    url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
