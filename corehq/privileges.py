@@ -83,6 +83,8 @@ DEFAULT_EXPORT_SETTINGS = 'default_export_settings'
 
 LINKED_PROJECTS = 'linked_projects'
 
+RELEASE_MANAGEMENT = 'release_management'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -128,6 +130,7 @@ MAX_PRIVILEGES = [
     GEOCODER,
     DEFAULT_EXPORT_SETTINGS,
     LINKED_PROJECTS,
+    RELEASE_MANAGEMENT,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -185,4 +188,5 @@ class Titles(object):
             GEOCODER: _("Geocoder"),
             DEFAULT_EXPORT_SETTINGS: _("Default Export Settings"),
             LINKED_PROJECTS: _("Linked Projects"),
+            RELEASE_MANAGEMENT: _("Release Management"),
         }.get(privilege, privilege)

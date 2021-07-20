@@ -230,6 +230,10 @@ class TableauVisualization(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
 
+    @property
+    def name(self):
+        return '/'.join(self.view_url.split('?')[0].split('/')[-2:])
+
     def __str__(self):
         return '{domain} {server} {view}'.format(domain=self.domain,
                                                  server=self.server,
