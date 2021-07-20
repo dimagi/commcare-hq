@@ -353,8 +353,8 @@ class NamespaceTests(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.second_domain.delete()
-        cls.user.delete(deleted_by='admin')
-        cls.second_user.delete(deleted_by='admin')
+        cls.user.delete(cls.domain.name, deleted_by=None)
+        cls.second_user.delete(cls.domain.name, deleted_by=None)
 
     def test_email_domain_namespace(self):
         email_domain_toggle = StaticToggle(

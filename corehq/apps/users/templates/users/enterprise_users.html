@@ -1,0 +1,85 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'users/js/enterprise_users' %}
+
+{% block page_content %}
+  {% registerurl "paginate_enterprise_users" domain %}
+
+
+  <div class="panel panel-default ko-template" id="web-users-panel">
+    <div class="panel-heading">
+      <div class="row">
+        <div class="col-sm-6">
+          <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Users' %}</h3>
+        </div>
+        <div class="col-sm-6">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: function() { goToPage(1); },
+                              placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+      <div data-bind="visible: showLoadingSpinner">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading Users..." %}
+      </div>
+      <div data-bind="visible: noUsersMessage">
+        <p class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          <!-- ko text: noUsersMessage --><!-- /ko -->
+        </p>
+      </div>
+      <table class="table table-striped table-responsive table-hover"
+             data-bind="visible: showUsers">
+        <thead>
+          <tr>
+            <th>{% trans "Username" %}</th>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Role" %}</th>
+            {% if show_profile_column %}
+              <th>{% trans "Profile" %}</th>
+            {% endif %}
+            <th class="col-sm-4">{% trans "Other Projects" %}</th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: users">
+          <tr data-bind="visible: visible">
+            <td class="form-check">
+              <i class="clickable fa" data-bind="
+                click: $root.toggleLoginAsUsers,
+                css: {'fa-plus-square': !expanded(), 'fa-minus-square': expanded()},
+                visible: loginAsUserCount > 0,
+              "></i>
+              <i class="fa fa-link" data-bind="visible: loginAsUser" style="margin-left: 15px;"></i>
+              <span data-bind="attr: {style: (loginAsUserCount || loginAsUser ? 'margin-left: 1px' : 'margin-left: 15px;')}, text: username"></span>
+            </td>
+            <td data-bind="text: name"></td>
+            <td data-bind="text: role"></td>
+            {% if show_profile_column %}
+              <td data-bind="text: profile"></td>
+            {% endif %}
+            <td data-bind="foreach: otherDomains">
+              <span class="label label-default" data-bind="text: $data"></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-bind="visible: showUsers" data-apply-bindings="false"
+                  params="goToPage: goToPage,
+                          slug: 'web-users',
+                          perPage: itemsPerPage,
+                          maxPagesShown: 10,
+                          totalItems: totalItems,
+                          onLoad: onPaginationLoad,
+                          showSpinner: showPaginationSpinner"></pagination>
+
+    </div><!-- end .panel-body -->
+  </div><!-- end .panel -->
+
+{% endblock %}

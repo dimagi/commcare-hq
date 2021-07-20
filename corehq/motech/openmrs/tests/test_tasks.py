@@ -16,7 +16,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.auth import AuthManager
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
@@ -350,8 +350,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.mobile_worker.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):

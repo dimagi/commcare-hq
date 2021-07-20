@@ -666,7 +666,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/saas/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1982,13 +1982,6 @@ APP_ANALYTICS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
 )
 
-ENTERPRISE_SSO = StaticToggle(
-    'enterprise_sso',
-    'Enable Enterprise SSO options for the users specified in this list.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2003,6 +1996,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     'messaging feature',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+ENTERPRISE_USER_MANAGEMENT = StaticToggle(
+    'enterprise_user_management',
+    'USH: UI for managing all web users in an enterprise',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
 )
 
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
@@ -2050,6 +2050,7 @@ EMBEDDED_TABLEAU = StaticToggle(
     'COVID: Enable retrieving and embedding tableau visualizations from a Tableau Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Embedded+Tableau+Visualizations",
 )
 
 DETAILED_TAGGING = StaticToggle(
@@ -2057,6 +2058,14 @@ DETAILED_TAGGING = StaticToggle(
     'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+USER_HISTORY_REPORT = StaticToggle(
+    'user_history_report',
+    'View user history report under user management',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )
 
 
@@ -2072,5 +2081,13 @@ TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
+    'followup_forms_as_case_list_form',
+    'Option to configure follow up forms on parent case for Case List Form menu setting of '
+    'child modules that use Parent Child Selection',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )

@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -119,18 +120,17 @@ def compare_cases(domain, doc_type, startdate, enddate):
     # large domain, so break up by month
     startdate, enddate = get_es_case_range(domain)
     primary_count, es_count, primary_ids, es_ids = 0, 0, set(), set()
-    months = (enddate - startdate).days / 30 + 1
-    for month in range(0, months):
-        enddate = (startdate + timedelta(days=(month + 1) * 30)).date()
-        startdate = (startdate + timedelta(days=month * 30)).date()
+    while startdate <= enddate:
+        batch_enddate = (startdate + relativedelta(months=1))
         pc1, esc1, p1, es1 = _get_diffs(
-            get_primary_db_case_ids(domain, doc_type, startdate, enddate),
-            get_es_case_ids(domain, doc_type, startdate, enddate)
+            get_primary_db_case_ids(domain, doc_type, startdate, batch_enddate),
+            get_es_case_ids(domain, doc_type, startdate, batch_enddate)
         )
         primary_count = primary_count + pc1
         es_count = es_count + esc1
         primary_ids = primary_ids.union(p1)
         es_ids = es_ids.union(es1)
+        startdate = batch_enddate
     return primary_count, es_count, primary_ids, es_ids
 
 

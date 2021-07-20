@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, datetime
 
 from django.core.management import BaseCommand
-from django.db import connections, models
+from django.db import ProgrammingError, connections, models
 from django.db.models import Count, F, Func
 from django.db.models.aggregates import Avg, StdDev
 
@@ -342,16 +342,22 @@ class Command(BaseCommand):
             table_name = get_table_name(config.domain, config.table_id)
             db_name = connection_manager.get_django_db_alias(config.engine_id)
             query = ('SELECT * FROM "%s"' % table_name, [])
-            return estimate_row_count(query, db_name)
+            try:
+                return estimate_row_count(query, db_name)
+            except ProgrammingError:
+                return "Table not found"
 
         def _get_table_size(config):
             table_name = get_table_name(config.domain, config.table_id)
             db_name = connection_manager.get_django_db_alias(config.engine_id)
             db_cursor = connections[db_name].cursor()
             with db_cursor as cursor:
-                cursor.execute("SELECT pg_total_relation_size('\"%s\"')" % table_name, [])
-                bytes = cursor.fetchone()[0]
-                return bytes
+                try:
+                    cursor.execute("SELECT pg_total_relation_size('\"%s\"')" % table_name, [])
+                    bytes = cursor.fetchone()[0]
+                    return bytes
+                except ProgrammingError:
+                    return "Table not found"
 
         rows = sorted([
             (
@@ -363,6 +369,6 @@ class Command(BaseCommand):
 
         self.stdout.write('UCR datasource sizes')
         self._print_table(
-            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size', 'Size (bytes)'],
+            ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size (bytes)'],
             rows
         )
