@@ -12,7 +12,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.dbaccessors import get_available_domains_to_link
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -65,7 +64,7 @@ class TestGetAvailableDomainsToLink(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_all_users()
+        cls.user.delete(cls.enterprise_domain_obj_1.name, deleted_by=None)
         cls.non_enterprise_domain_obj_1.delete()
         cls.non_enterprise_domain_obj_2.delete()
         cls.enterprise_domain_obj_1.delete()
