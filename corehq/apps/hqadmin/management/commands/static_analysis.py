@@ -108,7 +108,7 @@ class Command(BaseCommand):
             "--min=C",
             "--total-average",
             "--exclude=node_modules/*,staticfiles/*",
-        ], capture_output=True).stdout.decode('utf-8').strip()
+        ], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
         raw_blocks, raw_complexity = output.split('\n')[-2:]
 
         blocks_pattern = r'^(\d+) blocks \(classes, functions, methods\) analyzed.$'
