@@ -100,11 +100,11 @@ def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
 @quickcache(['couch_user.username'])
 def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
-    from corehq.apps.accounting.models import BillingAccount
+    from corehq.apps.enterprise.models import EnterprisePermissions
     domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
     subdomain_objects_by_name = {}
     for domain_name in domain_links_by_name:
-        for subdomain in BillingAccount.get_enterprise_permissions_domains(domain_name):
+        for subdomain in EnterprisePermissions.get_domains(domain_name):
             if subdomain not in domain_links_by_name:
                 subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 

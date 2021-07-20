@@ -22,13 +22,13 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -1225,7 +1225,7 @@ class UserFilterForm(forms.Form):
             (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
-        subdomains = BillingAccount.get_enterprise_permissions_domains(self.domain)
+        subdomains = EnterprisePermissions.get_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
@@ -1302,6 +1302,6 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            domains = BillingAccount.get_enterprise_permissions_domains(self.domain)
+            domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
         return sorted(domains)

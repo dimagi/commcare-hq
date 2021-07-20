@@ -4,7 +4,6 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 from .views import (
     DefaultProjectUserSettingsView,
-    DomainPermissionsMirrorView,
     EditWebUserView,
     EnterpriseUsersView,
     InviteWebUserView,

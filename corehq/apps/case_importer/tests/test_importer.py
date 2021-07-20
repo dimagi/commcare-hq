@@ -60,7 +60,7 @@ class ImporterTest(TestCase):
         delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain, deleted_by=None)
         self.domain_obj.delete()
         self.subdomain1.delete()
         self.subdomain2.delete()
