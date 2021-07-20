@@ -77,4 +77,5 @@ branches:
     - gh/remove-unlinking # Graham July 20
     #- jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
     - rc/clarify-explanation # Robert July 20
+    - smh/add-download-and-email-reports-permission # Steph July 20
 submodules: { }
