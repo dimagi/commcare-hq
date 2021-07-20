@@ -61,23 +61,21 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - gh/improve-erm-ui # Graham June 16 [QA]
-    - rn_disallow_yui_cors # Rohit Negi
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
-    - sr/fup-form  # Sravan July 1
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - ce/bulk-case-search # Cal July 6
     - ap/auditcare-migration # Amit July 8
     - rc/explain-before-entering # Robert July 8 [QA]
-    - revert-30036-revert-30004-sr/default-filters # Sravan July 12
     - rp/enterprize-sms-report # Rynhard July 12
     - bmb/hubspot-privacy  # Biyeun July 12
-    - jls/smart-linking-login-as # Jenny July 12
-    - jls/wip # Jenny July 16
     - bmb/sso-domain-login-update  # Biyeun July 15
     - smh/tableau-server-dropdown-modification # Steph July 19
     - bmb/sso-alternate-login  # Biyeun July 19
-    - revert-30073-revert-29936-gh/split-toggles-and-previews # Graham July 19
+    - gh/remove-unlinking # Graham July 20
+    #- jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
+    - rc/clarify-explanation # Robert July 20
+    - ml/add-bulk-delete-form-export-report # Minha July 20
 submodules: { }
