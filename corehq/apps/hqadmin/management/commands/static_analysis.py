@@ -15,9 +15,9 @@ from corehq.feature_previews import all_previews
 
 
 class DatadogLogger:
-    def __init__(self, stdout, datadog):
+    def __init__(self, stdout):
         self.stdout = stdout
-        self.datadog = datadog
+        self.datadog = os.environ.get("TRAVIS_EVENT_TYPE") == 'cron'
         if self.datadog:
             api_key = os.environ.get("DATADOG_API_KEY")
             app_key = os.environ.get("DATADOG_APP_KEY")
@@ -48,24 +48,19 @@ class DatadogLogger:
 
 
 class Command(BaseCommand):
-    help = "Display a variety of code-quality metrics."
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--datadog',
-            action='store_true',
-            default=False,
-            help='Record these metrics in datadog',
-        )
+    help = ("Display a variety of code-quality metrics. This is run on every travis "
+            "build, but only submitted to datadog during the daily cron job.")
 
     def handle(self, **options):
-        self.logger = DatadogLogger(self.stdout, options['datadog'])
+        self.stdout.write("----------> Begin Static Analysis <----------")
+        self.logger = DatadogLogger(self.stdout)
         self.show_couch_model_count()
         self.show_custom_modules()
         self.show_js_dependencies()
         self.show_toggles()
         self.show_complexity()
         self.logger.send_all()
+        self.stdout.write("----------> End Static Analysis <----------")
 
     def show_couch_model_count(self):
         def all_subclasses(cls):
