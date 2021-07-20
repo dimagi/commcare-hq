@@ -21,7 +21,10 @@
       <div class="panel-heading clickable">
         {{ registry.name }}
         <div class="pull-right">
-          <span class="label label-primary">{% trans "Owner" %}</span>
+          <span class="label label-primary">
+            <i class="fa fa-user"></i>
+            {% trans "Owner" %}
+          </span>
           <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#delete-registry-modal">
             <i class="fa fa-trash"></i>
           </button>
@@ -34,9 +37,37 @@
             {% trans "No project spaces invited to this registry" %}
           </div>
         {% endif %}
-        {% include 'registry/badge.html' with verb='Accepted' icon='check-circle-o' invitation_count=registry.accepted_invitation_count icon_style='text-success' %}
-        {% include 'registry/badge.html' with verb='Pending' icon='clock-o' invitation_count=registry.pending_invitation_count icon_style='text-info' %}
-        {% include 'registry/badge.html' with verb='Rejected' icon='ban' invitation_count=registry.rejected_invitation_count icon_style='text-warning' %}
+        {% if registry.accepted_invitation_count %}
+        <div class="label label-plain">
+          <i class="fa fa-check-circle-o text-success"></i>
+          {% blocktrans count invitation_count=registry.accepted_invitation_count %}
+              {{ invitation_count }} Invitation Accepted
+          {% plural %}
+              {{ invitation_count }} Invitations Accepted
+          {% endblocktrans %}
+        </div>
+        {% endif %}
+        {% if registry.pending_invitation_count %}
+        <div class="label label-plain">
+          <i class="fa fa-clock-o text-info"></i>
+          {% blocktrans count invitation_count=registry.pending_invitation_count %}
+              {{ invitation_count }} Invitation Pending
+          {% plural %}
+              {{ invitation_count }} Invitations Pending
+          {% endblocktrans %}
+        </div>
+        {% endif %}
+        {% if registry.rejected_invitation_count %}
+        <div class="label label-plain">
+          <i class="fa fa-ban text-warning"></i>
+          {% blocktrans count invitation_count=registry.rejected_invitation_count %}
+              {{ invitation_count }} Invitation Rejected
+          {% plural %}
+              {{ invitation_count }} Invitations Rejected
+          {% endblocktrans %}
+        </div>
+        {% endif %}
+
         <button type="button" class="btn btn-default btn-xs">
           <i class="fa fa-plus"></i>
           {% trans "Invite Project" %}
@@ -51,11 +82,20 @@
         {{ registry.name }}
         <div class="pull-right">
         {% if registry.invitation.rejected_on %}
-          <span class="label label-warning">{% trans "Rejected" %}</span>
+          <span class="label label-warning">
+            <i class="fa fa-user"></i>
+            {% trans "Rejected" %}
+          </span>
         {% elif registry.invitation.accepted_on %}
-          <span class="label label-success">{% trans "Participating" %}</span>
+          <span class="label label-success">
+            <i class="fa fa-user"></i>
+            {% trans "Participant" %}
+          </span>
         {% else %}
-          <span class="label label-info">{% trans "Pending" %}</span>
+          <span class="label label-info">
+            <i class="fa fa-user"></i>
+            {% trans "Pending" %}
+          </span>
         {% endif %}
         </div>
       </div>
@@ -75,10 +115,18 @@
         {% elif registry.invitation.accepted_on %}
           {% if not registry.participator_count %}
           <div class="label label-plain">
-            {% trans "No other project spaces are participating in this registry yet" %}
+            {% trans "No other project spaces are participating in this registry" %}
           </div>
           {% endif %}
-          {% include 'registry/badge.html' with noun='Project' verb='Participating' icon='ok-circle' invitation_count=registry.participator_count %}
+          {% if registry.participator_count %}
+          <div class="label label-plain">
+            {% blocktrans count invitation_count=registry.participator_count %}
+                {{ invitation_count }} Project Participating
+            {% plural %}
+                {{ invitation_count }} Projects Participating
+            {% endblocktrans %}
+          </div>
+          {% endif %}
         {% else %}
           <button type="button" class="btn btn-default btn-xs">
             <i class="fa fa-remove"></i>
