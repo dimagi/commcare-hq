@@ -1,3 +1,13 @@
 # https://docs.codecov.com/docs/codecovyml-reference
+coverage:
+  # https://docs.codecov.com/docs/commit-status
+  status:
+    project:
+      default:
+        informational: true  # don't block PRs
+    patch:
+      default:
+        informational: true  # don't block PRs
+
 # https://docs.codecov.com/docs/pull-request-comments
 comment: false  # Disable the PR comment, show only github check
