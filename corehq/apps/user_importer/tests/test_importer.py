@@ -42,7 +42,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
-        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.STANDARD)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
