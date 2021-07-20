@@ -49,6 +49,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
+from corehq.apps.linked_domain.util import can_access_release_management_feature
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -1982,7 +1983,7 @@ def _get_feature_flag_items(domain):
 def _get_release_management_items(user, domain):
     release_management_items = []
 
-    if user.is_domain_admin(domain) and domain_has_privilege(domain, LINKED_PROJECTS):
+    if can_access_release_management_feature(user, domain):
         release_management_items.append({
             'title': _('Linked Projects'),
             'url': reverse('domain_links', args=[domain])

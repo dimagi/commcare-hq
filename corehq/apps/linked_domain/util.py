@@ -3,12 +3,27 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
+from corehq.privileges import LINKED_PROJECTS
 from corehq.util.timezones.conversions import ServerTime
+
+
+def can_access_linked_domains(user, domain):
+    if not user or not domain:
+        return False
+    if domain_has_privilege(domain, LINKED_PROJECTS):
+        return user.is_domain_admin
+    else:
+        return toggles.LINKED_DOMAINS.enabled(domain)
+
+
+def can_access_release_management_feature(user, domain):
+    return domain_has_privilege(domain, LINKED_PROJECTS) and user.is_domain_admin
 
 
 def _clean_json(doc):
