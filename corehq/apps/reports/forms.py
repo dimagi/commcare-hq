@@ -347,6 +347,7 @@ class TableauVisualizationForm(forms.ModelForm):
     def __init__(self, domain, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
+        self.fields['server'].queryset = TableauServer.objects.filter(domain=domain)
 
     @property
     def helper(self):
