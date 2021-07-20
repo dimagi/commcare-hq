@@ -95,6 +95,16 @@ def get_hmac_callout_settings(domain_link):
     return _do_simple_request('linked_domain:hmac_callout_settings', domain_link)
 
 
+def get_remote_linkable_ucr(domain_link):
+    from corehq.apps.linked_domain.ucr import get_linked_reports_in_domain
+    all_remote_reports = _do_simple_request('linked_domain:linkable_ucr', domain_link).get('reports', [])
+    linked_report_master_ids = [r.report_meta.master_id
+                                for r in get_linked_reports_in_domain(domain_link.linked_domain)]
+    for report in all_remote_reports:
+        report['already_linked'] = report['id'] in linked_report_master_ids
+    return all_remote_reports
+
+
 def _convert_app_from_remote_linking_source(app_json):
     attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
     app = wrap_app(app_json)
