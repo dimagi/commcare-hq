@@ -1,0 +1,30 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div data-bind="attr: {id: 'bulk-delete-export-modal'}" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">
+          {% blocktrans %}
+              Delete selected exports?
+            {% endblocktrans %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>
+            {% blocktrans %}
+              Scrollable list of exports here?
+            {% endblocktrans %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" data-bind="click: BulkExportDelete" data-dismiss="modal">
+          <i class="fa fa-remove"></i>
+          {% trans "Delete" %}
+        </button>
+        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+  </div>
+</div>

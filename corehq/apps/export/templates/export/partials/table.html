@@ -64,6 +64,28 @@
       <th class="col-sm-1">
         {% trans 'Delete' %}
       </th>
+
+
+      <!-- copied from bulk export section -->
+
+      {%  if allow_bulk_export %} {# form exports only #}
+      <th class="col-sm-1">
+        {% blocktrans %}Bulk Delete{% endblocktrans %}
+        <br>
+        <button type="button"
+                class="btn btn-xs btn-default"
+                data-bind="click: $root.selectDeleteAll">
+          {% trans 'All' %}
+        </button>
+        {% trans 'or' %}
+        <button type="button"
+                class="btn btn-xs btn-default"
+                data-bind="click: $root.selectDeleteNone">
+          {% trans 'None' %}
+        </button>
+      </th>
+    {% endif %}
+
     {% endif %}
 
     {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
@@ -697,6 +719,19 @@
           </div>
           <div data-bind="visible: owner_username !== 'unknown',
                           text: owner_username"></div>
+        </div>
+      </td>
+    {% endif %}
+
+    <!-- copied from other checkbox list -->
+    <!-- need isLocationSafeForUser check? -->
+    {% if allow_bulk_export %}
+      <td>
+        <div class="checkbox checkbox-table-cell">
+          <label>
+            <input type="checkbox"
+                   data-bind="checked: addedToBulk2" />
+          </label>
         </div>
       </td>
     {% endif %}
