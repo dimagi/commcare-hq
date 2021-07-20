@@ -27,8 +27,16 @@
       {% endif %}
       <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
       <li><a data-toggle="tab" href="#tabs-release">{% trans "Release Content" %}</a></li>
+      {% if view_data.linkable_ucr %}
+        <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
+      {% endif %}
     </ul>
     <div class="spacer"></div>
+  {% elif is_linked_domain and view_data.linkable_ucr %}
+    <ul class="nav nav-tabs sticky-tabs">
+      <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
+    </ul>
   {% elif is_linked_domain %}
     <h2>{% trans "Project Link" %}</h2>  {# header for the only tab that will be displayed #}
   {% endif %}
@@ -162,6 +170,11 @@
           </div>
         </form>
       </div>
+      {% if view_data.linkable_ucr %}
+        <div class="tab-pane fade" id="tabs-remote-report">
+          {% include 'linked_domain/partials/link_remote_ucr.html' %}
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

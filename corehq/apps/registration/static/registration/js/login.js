@@ -43,6 +43,7 @@ hqDefine('registration/js/login', [
                 passwordField: $passwordField,
                 passwordFormGroup: $passwordField.closest('.form-group'),
                 nextUrl: urlParams.get('next'),
+                isSessionExpiration: isSessionExpiration,
             });
             $('#user-login-form').koApplyBindings(loginController);
             loginController.init();

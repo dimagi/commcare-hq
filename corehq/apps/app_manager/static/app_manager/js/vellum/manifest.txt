@@ -413,7 +413,7 @@
 ├─ getobject@0.1.0
 ├─ getpass@0.1.7
 │  └─ assert-plus@^1.0.0
-├─ glob-parent@5.1.1
+├─ glob-parent@5.1.2
 │  └─ is-glob@^4.0.1
 ├─ glob@7.1.6
 │  ├─ fs.realpath@^1.0.0
@@ -1351,4 +1351,4 @@
 └─ yauzl@2.10.0
    ├─ buffer-crc32@~0.2.3
    └─ fd-slicer@~1.1.0
-Done in 0.43s.
+Done in 0.53s.

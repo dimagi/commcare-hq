@@ -17,7 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.util.timer import time_method
 
 
 class SessionEndpointContributor(SuiteContributorByModule):
@@ -28,6 +28,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
     case IDs) must be provided to get there.
     """
 
+    @time_method()
     def get_module_contributions(self, module) -> List[SessionEndpoint]:
         endpoints = []
         if module.session_endpoint_id:
@@ -48,7 +49,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
         stack.add_frame(frame)
         arguments = []
         for child in self._get_frame_children(module, form):
-            if isinstance(child, WorkflowDatumMeta):
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
                     StackDatum(id=child.id, value=f"${child.id}")

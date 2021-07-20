@@ -124,4 +124,5 @@ advanced_v0 = pro_v1 + [
 enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
+    privileges.LINKED_PROJECTS,
 ]
