@@ -61,7 +61,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - gh/improve-erm-ui # Graham June 16 [QA]
-    - rn_disallow_yui_cors # Rohit Negi
     - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
@@ -75,5 +74,6 @@ branches:
     - bmb/sso-domain-login-update  # Biyeun July 15
     - smh/tableau-server-dropdown-modification # Steph July 19
     - bmb/sso-alternate-login  # Biyeun July 19
-    - gh/remove-unlinking # Graham July 20    
+    - gh/remove-unlinking # Graham July 20
+    - jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
 submodules: { }
