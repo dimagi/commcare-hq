@@ -57,7 +57,7 @@ class UserChangeLogger(object):
 
     def add_change_message(self, message):
         """
-        Add text messages for changes that are not exactly user properties.
+        Add raw/untranslated text messages for changes that are not exactly user properties.
         Ignored for new user since the whole user doc is logged for a new user
         :param message: text message for the change like 'Password Reset' / 'Added as web user to domain foo'
         """
@@ -68,7 +68,7 @@ class UserChangeLogger(object):
 
     def add_info(self, info):
         """
-        Useful info for display, specifically of associated data models like roles/locations.
+        Useful raw/untranslated info for display, specifically of associated data models like roles/locations.
         Info will also include ID if the data model is not linked directly on the user like
         primary location for CommCareUser is present on the user record but for a WebUser it's
         stored on Domain Membership. So for WebUser, info should also include the primary location's location id.
