@@ -22,12 +22,20 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
+from corehq.apps.enterprise.models import EnterprisePermissions
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq import privileges
-from corehq.apps.accounting.models import CustomerInvoice, CustomerBillingRecord
+from corehq.apps.accounting.models import (
+    CustomerInvoice,
+    CustomerBillingRecord,
+)
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
 from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
     BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
@@ -39,13 +47,11 @@ from corehq.apps.enterprise.forms import (
 )
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
-
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.users.decorators import require_can_edit_or_view_web_users
+
 from corehq.const import USER_DATE_FORMAT
 
 
@@ -323,3 +329,110 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+# This view, and related views, require enterprise admin permissions to be consistent
+# with other views in this area. They also require superuser access because these views
+# used to be in another part of HQ, where they were limited to superusers, and we don't
+# want them to be visible to any external users until we're ready to GA this feature.
+@require_can_edit_or_view_web_users
+@require_superuser
+@require_enterprise_admin
+def enterprise_permissions(request, domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+    all_domains = set(config.account.get_domains())
+    ignored_domains = all_domains - set(config.domains) - {config.source_domain}
+
+    context = {
+        'domain': domain,
+        'all_domains': sorted(all_domains),
+        'is_enabled': config.is_enabled,
+        'source_domain': config.source_domain,
+        'ignored_domains': sorted(list(ignored_domains)),
+        'controlled_domains': sorted(config.domains),
+        'current_page': {
+            'page_name': _('Enterprise Permissions'),
+            'title': _('Enterprise Permissions'),
+        }
+    }
+    return render(request, "enterprise/enterprise_permissions.html", context)
+
+
+@require_superuser
+@require_enterprise_admin
+@require_POST
+def disable_enterprise_permissions(request, domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+    config.is_enabled = False
+    config.source_domain = None
+    config.save()
+    config.clear_cache_for_all_users()
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    messages.success(request, _('Enterprise permissions have been disabled.'))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_enterprise_admin
+@require_POST
+def add_enterprise_permissions_domain(request, domain, target_domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    if target_domain not in config.account.get_domains():
+        messages.error(request, _("Could not add {}}.").format(target_domain))
+        return HttpResponseRedirect(redirect)
+
+    if target_domain not in config.domains:
+        config.domains.append(target_domain)
+        config.save()
+        if config.source_domain:
+            config.clear_cache_for_all_users(config.source_domain)
+    messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_enterprise_admin
+@require_POST
+def remove_enterprise_permissions_domain(request, domain, target_domain):
+    config = EnterprisePermissions.get_by_domain(domain)
+
+    redirect = reverse("enterprise_permissions", args=[domain])
+    if target_domain not in config.account.get_domains() or target_domain not in config.domains:
+        messages.error(request, _("Could not remove {}.").format(target_domain))
+        return HttpResponseRedirect(redirect)
+
+    if target_domain in config.domains:
+        config.domains.remove(target_domain)
+        config.save()
+        if config.source_domain:
+            config.clear_cache_for_all_users(config.source_domain)
+    messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
+                                                                                   target_domain))
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_enterprise_admin
+@require_POST
+def update_enterprise_permissions_source_domain(request, domain):
+    source_domain = request.POST.get('source_domain')
+    redirect = reverse("enterprise_permissions", args=[domain])
+
+    config = EnterprisePermissions.get_by_domain(domain)
+    if source_domain not in config.account.get_domains():
+        messages.error(request, _("Please select a project."))
+        return HttpResponseRedirect(redirect)
+
+    config.is_enabled = True
+    old_domain = config.source_domain
+    config.source_domain = source_domain
+    if source_domain in config.domains:
+        config.domains.remove(source_domain)
+    config.save()
+    config.clear_cache_for_all_users(config.source_domain)
+    config.clear_cache_for_all_users(old_domain)
+    messages.success(request, _('Controlling domain set to {}.').format(source_domain))
+    return HttpResponseRedirect(redirect)

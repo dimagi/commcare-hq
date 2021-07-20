@@ -973,7 +973,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1624,6 +1624,18 @@ class EnterpriseSettingsTab(UITab):
                     },
                 ],
             })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
 
         items.extend(EnterpriseReportDispatcher.navigation_sections(
