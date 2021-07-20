@@ -35,6 +35,17 @@ class TestIsDomainUsingSso(TestCase):
         cls.idp.is_active = True
         cls.idp.save()
 
+        cls.account_pending_sso = generator.get_billing_account_for_idp()
+        cls.domain_pending_sso = Domain.get_or_create_with_name(
+            "dimagi-org-001",
+            is_active=True
+        )
+        Subscription.new_domain_subscription(
+            account=cls.account_pending_sso,
+            domain=cls.domain_pending_sso.name,
+            plan_version=enterprise_plan,
+        )
+
         cls.inactive_idp_account = generator.get_billing_account_for_idp()
         cls.domain_with_inactive_sso = Domain.get_or_create_with_name(
             "vaultwax-001",
@@ -116,3 +127,14 @@ class TestIsDomainUsingSso(TestCase):
         either by trusting one or through an account returns false
         """
         self.assertFalse(is_domain_using_sso(self.other_domain.name))
+
+    def test_cache_is_cleared_when_domain_is_added_to_idp(self):
+        """
+        Ensure that the quickcache for is_domain_using_sso properly gets
+        cleared when a domain suddenly gains SSO access.
+        """
+        self.assertFalse(is_domain_using_sso(self.domain_pending_sso.name))
+        new_idp = generator.create_idp('dimagi-org', self.account_pending_sso)
+        new_idp.is_active = True
+        new_idp.save()
+        self.assertTrue(is_domain_using_sso(self.domain_pending_sso.name))
