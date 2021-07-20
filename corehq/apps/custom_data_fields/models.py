@@ -16,8 +16,8 @@ COMMCARE_USER_TYPE_DEMO = 'demo'
 # This stores the id of the user's CustomDataFieldsProfile, if any
 PROFILE_SLUG = "commcare_profile"
 
-# This list is used to grandfather in existing data, any new fields should use
-# the system prefix defined below
+# Any new fields should use the system prefix defined by SYSTEM_PREFIX
+# SYSTEM_FIELDS is a list of fields predating that convention that have been exempted from it
 SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id',
                  COMMCARE_USER_TYPE_KEY)
 SYSTEM_PREFIX = "commcare"
