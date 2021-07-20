@@ -670,7 +670,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
-        if not self.owner.is_member_of(self.domain, allow_enteprise=True):
+        if not self.owner.is_member_of(self.domain, allow_enterprise=True):
             self.delete()
             return
 

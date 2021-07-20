@@ -22,7 +22,8 @@ class EnterprisePermissionsTest(TestCase):
         super().setUpClass()
 
         # Set up domains
-        create_domain('state')
+        cls.domain = 'state'
+        create_domain(cls.domain)
         create_domain('county')
         create_domain('staging')
 
