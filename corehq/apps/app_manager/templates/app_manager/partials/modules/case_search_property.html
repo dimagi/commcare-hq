@@ -56,7 +56,7 @@
                     <p class="help-block" data-bind="visible: appearance() == 'daterange'">
                       {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
                     </p>
-                    <p class="help-block" data-bind="visible: isMultiselect">
+                    <p class="help-block" data-bind="visible: appearanceFinal() == 'fixture' && isMultiselect()">
                       {% trans 'e.g. Use #,# as seperator to select multiple values' %}
                     </p>
                   </div>
