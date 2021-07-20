@@ -82,7 +82,7 @@ class TestRepeaters(SimpleTestCase):
         repeater.handle_response(response, repeat_record)
 
         update_case_mock.assert_called_with(
-            self.domain, case_id, case_properties={'cowin_id': "1234567890123"},
+            self.domain, case_id, case_properties={'cowin_beneficiary_reference_id': "1234567890123"},
             device_id='custom.cowin.repeaters.BeneficiaryRegistrationRepeater'
         )
 

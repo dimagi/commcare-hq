@@ -40,14 +40,14 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
         if response.status_code == 200:
             beneficiary_reference_id = response.json()['beneficiary_reference_id']
             update_case(self.domain, repeat_record.payload_id,
-                        case_properties={'cowin_id': beneficiary_reference_id},
+                        case_properties={'cowin_beneficiary_reference_id': beneficiary_reference_id},
                         device_id=__name__ + '.BeneficiaryRegistrationRepeater')
         return attempt
 
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
         if allowed:
-            return not bool(case.get_case_property('cowin_id'))
+            return not bool(case.get_case_property('cowin_beneficiary_reference_id'))
         return allowed
 
 
