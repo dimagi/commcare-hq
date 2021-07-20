@@ -138,13 +138,13 @@ class TestManagementCommand(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        AuditCareMigrationUtil().set_next_batch_start(datetime(2021, 6, 1))
+        AuditCareMigrationUtil().set_next_batch_start(datetime(2021, 6, 30))
         cls.couch_doc_ids = [save_couch_doc(**doc) for doc in navigation_test_docs + audit_test_docs + failed_docs]
 
         # setup for adding errored batches
         cls.errored_keys = [
-            f'{datetime(2021,5,15)}_{datetime(2021,5,16)}',
-            f'{datetime(2021,5,1)}_{datetime(2021,5,2)}',
+            f'{datetime(2021,5,16)}_{datetime(2021,5,15)}',
+            f'{datetime(2021,5,2)}_{datetime(2021,5,1)}',
         ]
         return super().setUpClass()
 
@@ -154,6 +154,7 @@ class TestManagementCommand(TestCase):
         delete_couch_docs(cls.couch_doc_ids)
         return super().tearDownClass()
 
+    @patch('corehq.apps.auditcare.utils.migration.CUTOFF_TIME', datetime(2021, 6, 1))
     def test_copy_all_events(self):
         call_command("copy_events_to_sql", "--workers=10", "--batch_by=d")
         total_object_count = NavigationEventAudit.objects.all().count() + AccessAudit.objects.all().count()
@@ -208,11 +209,11 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
-        copy_events_to_sql(start_time=datetime(2021, 2, 1, 2), end_time=datetime(2021, 2, 1, 5))
+        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 2))
         _assert()
 
         # Re-copying should have no effect
-        copy_events_to_sql(start_time=datetime(2021, 2, 1, 2), end_time=datetime(2021, 2, 1, 5))
+        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 2))
         _assert()
 
     @patch('corehq.apps.auditcare.couch_to_sql.COUCH_QUERY_LIMIT', 2)
@@ -230,5 +231,5 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.count(), 1)
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
-        copy_events_to_sql(start_time=datetime(2021, 1, 1), end_time=datetime(2021, 2, 2))
+        copy_events_to_sql(start_time=datetime(2021, 2, 2), end_time=datetime(2021, 1, 1))
         _assert()
