@@ -202,6 +202,8 @@ class IdentityProvider(models.Model):
         """
         IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
         IdentityProvider.is_domain_an_active_member.clear(self, domain)
+        from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+        is_domain_using_sso.clear(domain)
 
     @staticmethod
     def clear_email_domain_caches(email_domain):

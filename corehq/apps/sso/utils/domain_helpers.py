@@ -1,7 +1,9 @@
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider
+from corehq.util.quickcache import quickcache
 
 
+@quickcache(['domain'])
 def is_domain_using_sso(domain):
     """
     Determines whether a given project is under an active Identity Provider or
