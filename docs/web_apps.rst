@@ -15,7 +15,58 @@ Web apps is tightly coupled with formplayer, so check out the `formplayer README
 
 The coupling with formplayer also means web apps tends to use formplay/mobile/CommCare vocabulary rather than HQ vocabulary: "entities" instead of "cases", etc.
 
-The code has three major components: form entry, formplayer, and everything else.
+The code has three major components: form entry, formplayer, and everything else, described in more detail below. But first, let's look at how web apps interacts with related systems.
+
+Anatomy of a Web Apps Feature
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
+
+* A CommCareHQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
+
+   * This adds a new attribute to their ``Application`` document - specifically, it populates ``case_list_form`` on a ``Module``.
+
+* When the user makes a new build of their app, the app building code reads the ``Application`` doc and writes out all of the application files, including the ``suite.xml``.
+
+   * The module's case list configuration is transformed into a `detail <https://github.com/dimagi/commcare-core/wiki/Suite20#detail>`_ element, which includes an `action <https://github.com/dimagi/commcare-core/wiki/Suite20#action>`_ element that represents the case list form.
+
+* When a Web Apps user clicks the menu's name to access the case list, web apps sends a ``navigate_menu`` request to formplayer that includes a set of ``selections`` (see `navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_).
+
+   * The formplayer response tells web apps what kind of sceen to display:
+
+      * The ``type`` is ``entities`` which tells web apps to display a case list UI
+      * The ``entities`` list contains the cases and their properties
+      * The ``actions`` list includes an action for the case list registration form, which tells web apps to display a button at the bottom of the case list with the given label, that when clicked will add the string ``action 0`` to the ``selections`` list and then send formplayer another navigation request, which will cause formplayer to send back a form response for the registration form, which web apps will then display for the user.
+
+Note how generic the concepts web apps deals with are: "entities" can be cases, fixture rows, ledger values, etc. Web apps doesn't know what cases are, and it doesn't know the difference between an action that triggers a case list registration form and an action that triggers a case search.
+
+Development for most new web apps features maps to the steps above, requiring some or all of the following:
+
++--------------------------------------------------------------+------------------+----------------------------+
+|                                                              | Repository       | Language                   |
++==============================================================+==================+============================+
+| App manager UI where the the feature is enabled & configured | commcare-hq      | Python / HTML / JavaScript |
++--------------------------------------------------------------+------------------+----------------------------+
+| App build logic, typically changes to suite generation       |  Python          |commcare-hq                 |
++--------------------------------------------------------------+------------------+----------------------------+
+| New model for the configuration                              | commcare-core    | Java                       |
++--------------------------------------------------------------+------------------+----------------------------+
+| Formplayer processing to add the new feature to a response   | formplayer       | Java                       |
++--------------------------------------------------------------+------------------+----------------------------+
+| Web apps UI for the feature                                  | commcare-hq      | JavaScript / HTML          |
++--------------------------------------------------------------+------------------+----------------------------+
+| CommCare Mobile UI for the new feature                       | commcare-android | Java                       |
++--------------------------------------------------------------+------------------+----------------------------+
+
+Not all features have all of these pieces:
+
+* Some features don't require any Java
+
+   * They might use existing flexible configuration, like adding a new appearance attribute value to support a new data entry widget
+   * They might rearrange existing constructs in a new way. CommCare supports a much broader set of functionality than what HQ allows users to configure.
+
+* Some features don't get implemented on mobile.
+* Some features, like case search, have additional HQ work because they interact with HQ in ways beyond what's described above.
 
 Form Entry
 ^^^^^^^^^^
@@ -59,41 +110,7 @@ These are HQ apps. Most of the logic around apps has to do with displaying the h
 
 This home screen has access to a subset of data from each app's couch document, similar but not identical to the "brief apps" used in HQ that are backed by the ``applications_brief`` couch view.
 
-Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the form XML or suite.xml. That config is then used to generate the web apps UI and to formulate requests to formplayer. As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
-
-* A CommCareHQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
-
-   * This adds a new attribute to their ``Application`` document - specifically, it populates ``case_list_form`` on a ``Module``.
-
-* When the user makes a new build of their app, the app building code reads the ``Application`` doc and writes out all of the application files, including the ``suite.xml``.
-
-   * The module's case list configuration is transformed into a `detail <https://github.com/dimagi/commcare-core/wiki/Suite20#detail>`_ element, which includes an `action <https://github.com/dimagi/commcare-core/wiki/Suite20#action>`_ element that represents the case list form.
-
-* When a Web Apps user clicks the menu's name to access the case list, web apps sends a ``navigate_menu`` request to formplayer that includes a set of ``selections`` (see `navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_).
-
-   * The formplayer response tells web apps what kind of sceen to display:
-
-      * The ``type`` is ``entities`` which tells web apps to display a case list UI
-      * The ``entities`` list contains the cases and their properties
-      * The ``actions`` list includes an action for the case list registration form, which tells web apps to display a button at the bottom of the case list with the given label, that when clicked will add the string ``action 0`` to the ``selections`` list and then send formplayer another navigation request, which will cause formplayer to send back a form response for the registration form, which web apps will then display for the user.
-
-Note how generic the concepts web apps deals with are: "entities" can be cases, fixture rows, ledger values, etc. Web apps doesn't know what cases are, and it doesn't know the difference between an action that triggers a case list registration form and an action that triggers a case search.
-
-Development for most new web apps features maps to the steps above, requiring some or all of the following:
-.. csv-table::
-   :header: "Logic", "Repository", "Language"
-   :widths: 50, 20, 30
-
-   "App manager UI where the the feature is enabled & configured", "commcare-hq", "Python / HTML / JavaScript"
-   "Updated logic to make a new app build, typically changes to suite generation", "commcare-hq", "Python"
-   "New model for the configuration", "commcare-core", "Java"
-   "Formplayer processing to add the new feature to the appropriate response", "formplayer", "Java"
-   "Web apps UI for the feature", "commcare-hq", "JavaScript / HTML"
-   "CommCare Mobile UI for the new feature", "commcare-android", "Java"
-
-Not all features have all of these pieces.
-
-Some features don't require any Java - they just add a new value for the appearance attribute to support a new data entry widget, or they rearrange existing constructs in a new way. CommCare supports a much broader set of functionality than what HQ allows users to configure. Some features don't get implemented on mobile. Some features, like case search, have additional HQ work because they interact with HQ in ways beyond what's described above.
+Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the form XML or suite.xml. That config is then used to generate the web apps UI and to formulate requests to formplayer.
 
 Users
 -----
