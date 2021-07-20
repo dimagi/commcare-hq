@@ -47,7 +47,7 @@ Development for most new web apps features maps to the steps above, requiring so
 +==============================================================+==================+============================+
 | App manager UI where the the feature is enabled & configured | commcare-hq      | Python / HTML / JavaScript |
 +--------------------------------------------------------------+------------------+----------------------------+
-| App build logic, typically changes to suite generation       |  Python          |commcare-hq                 |
+| App build logic, typically changes to suite generation       | commcare-hq      | Python                     |
 +--------------------------------------------------------------+------------------+----------------------------+
 | New model for the configuration                              | commcare-core    | Java                       |
 +--------------------------------------------------------------+------------------+----------------------------+
