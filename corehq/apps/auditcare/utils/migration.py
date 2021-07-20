@@ -7,7 +7,7 @@ from dimagi.utils.dates import force_to_datetime
 from corehq.apps.auditcare.models import AuditcareMigrationMeta
 from corehq.apps.auditcare.utils.export import get_sql_start_date
 
-INITIAL_START_DATE = datetime(2013, 1, 1)
+CUTOFF_TIME = datetime(2013, 1, 1)
 CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
 
 
@@ -87,11 +87,8 @@ def get_datetimes_from_key(key):
 
 def _get_end_time(start_time, batch_by):
     delta = timedelta(hours=1) if batch_by == 'h' else timedelta(days=1)
-    return start_time + delta
-
-
-def _get_formatted_start_time(start_time, batch_by):
+    end_time = start_time - delta
     if batch_by == 'h':
-        return start_time.replace(minute=0, second=0, microsecond=0)
+        return end_time.replace(minute=0, second=0, microsecond=0)
     else:
-        return start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        return end_time.replace(hour=0, minute=0, second=0, microsecond=0)
