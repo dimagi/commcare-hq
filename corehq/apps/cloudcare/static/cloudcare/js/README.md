@@ -21,7 +21,7 @@ This is written in knockout, and it's probably the oldest code in this area.
 
 Major files to be aware of:
 * [fullform-ui.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js) defines `Question` and `Container`, the major abstractions used by form definitions. `Container` is the base abstraction for groups and for forms themselves.
-* [entrycontrols_full.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js) defines `Entry` and its many subclasses, the widgets for entering data. The class hierarchy of entries has a few levels. There's generally an entry for each question type: `SingleSelectEntry`, `TimeEntry`, etc. Appearance attributes can also have their own entries, such as `ComboboxEntry` and `GeoPointEntry`.
+* [entrycontrols_full.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js) defines `Entry` and its many subclasses, the widgets for entering data. The class hierarchy of entries has a few levels. There's generally a class for each question type: `SingleSelectEntry`, `TimeEntry`, etc. Appearance attributes can also have their own classes, such as `ComboboxEntry` and `GeoPointEntry`.
 * [webformsession.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js) defines the interaction for filling out a form. Web apps sends a request to formplayer every time a question is answered, so the session manages a lot of asynchronous requests, using a task queue. The session also handles loading forms, loading incomplete forms, and within-form actions like changing the form's language.
 
 Form entry has a fair amount of test coverage. There are entry-specific tests and also tests for webformsession.
@@ -30,7 +30,7 @@ Form entry has a fair amount of test coverage. There are entry-specific tests an
 
 This is the [formplayer directory](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer).
 
-It contains almost all of the non-form-entry logic in web apps.
+It contains logic for selecting an app, navigating through modules, displaying case lists, and almost everything besides filling out a form.
 
 This is written using Backbone and Marionette. Backbone is an MVC framework for writing SPAs, and Marionette is a library to simplify writing Backbone views.
 
@@ -46,7 +46,7 @@ It's also useful to be familiar with the `CloudcareURL`, which contains the curr
 
 These are HQ apps. Most of the logic around apps has to do with displaying the home screen of web apps, where you see a tiled list of apps along with buttons for sync, settings, etc.
 
-This home screen has access to a subset set of data each app's couch document, similar but not identical to the "brief apps" used in HQ that are backed by the `applications_brief` couch view.
+This home screen has access to a subset of data from each app's couch document, similar but not identical to the "brief apps" used in HQ that are backed by the `applications_brief` couch view.
 
 Once you enter an app, web apps no longer has access to this app document. All app functionality in web apps is designed as it is in mobile, with the feature's configuration encoded in the suite.xml or other application files. That config is then added to a formplayer request and passed back to web apps, typically in a navigation request.
 
@@ -116,7 +116,7 @@ Counterintuitively, `showError` and `showSuccess` are implemented differently: `
 
 ##### Routing and Middleware
 
-Being a SPA, all of web apps' navigation is handled by a javascript router, `Marionette.AppRouter`, which extends Backbone's router. [router.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/router.js) defines the web apps router.
+Being a SPA, all of web apps' navigation is handled by a javascript router, `Marionette.AppRouter`, which extends Backbone's router. This is defined in [router.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/router.js).
 
 The router also handles actions that may not sound like traditional navigation in the sense that they don't change which screen the user is on. This includes actions like pagination or searching within a case list.
 
@@ -144,7 +144,7 @@ There isn't much here: some initialization code and a plugin that lets you scrol
 
 The app preview and web apps UIs are largely identical, but a few places do distinguish between them, using the `environment` attribute of the current user. Search for the constants `PREVIEW_APP_ENVIRONMENT` and `WEB_APPS_ENVIRONMENT` for examples.
 
-[hq.events.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/hq.events.js), although not in this directory, is only really relevant to app preview. It controls the ability to communicate with HQ, which is used for the "phone icons" on app preview: back, refresh, and siwtching between the standard "phone" mode and the larger "tablet" mode.
+[hq.events.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/hq.events.js), although not in this directory, is only really relevant to app preview. It controls the ability to communicate with HQ, which is used for the "phone icons" on app preview: back, refresh, and switching between the standard "phone" mode and the larger "tablet" mode.
 
 #### config.js
 
