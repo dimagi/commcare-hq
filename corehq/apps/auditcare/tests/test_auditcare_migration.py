@@ -49,22 +49,45 @@ class TestAuditcareMigrationUtil(TestCase):
 
     @patch(
         'corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start',
-        return_value=start_time
+        return_value=datetime(2020, 6, 1, 12)
     )
     def test_generate_batches(self, _):
         batches = self.util.generate_batches(2, 'h')
         expected_batches = [
-            [datetime(2020, 6, 1), datetime(2020, 6, 1, 1)],
-            [datetime(2020, 6, 1, 1), datetime(2020, 6, 1, 2)]
+            [datetime(2020, 6, 1, 12), datetime(2020, 6, 1, 11)],
+            [datetime(2020, 6, 1, 11), datetime(2020, 6, 1, 10)]
         ]
         self.assertEquals(batches, expected_batches)
 
         batches = self.util.generate_batches(2, 'd')
         expected_batches = [
-            [datetime(2020, 6, 1), datetime(2020, 6, 2)],
-            [datetime(2020, 6, 2), datetime(2020, 6, 3)]
+            [datetime(2020, 6, 1, 12), datetime(2020, 5, 31)],
+            [datetime(2020, 5, 31), datetime(2020, 5, 30)]
         ]
         self.assertEquals(batches, expected_batches)
+
+    @patch(
+        'corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start',
+        return_value=datetime(2013, 1, 3)
+    )
+    def test_generate_batches_after_cutoff_date(self, _):
+        # If the script has crossed cutoff dates then batch
+        # generation should stop
+        batches = self.util.generate_batches(5, 'd')
+        expected_batches = [
+            [datetime(2013, 1, 3), datetime(2013, 1, 2)],
+            [datetime(2013, 1, 2), datetime(2013, 1, 1)],
+        ]
+        self.assertEquals(batches, expected_batches)
+
+    @patch(
+        'corehq.apps.auditcare.utils.migration.AuditCareMigrationUtil.get_next_batch_start',
+        return_value=None
+    )
+    @patch('corehq.apps.auditcare.utils.migration.get_sql_start_date', return_value=None)
+    def test_generate_batches_for_first_call(self, mock, _):
+        self.util.generate_batches(1, 'd')
+        self.assertTrue(mock.called)
 
     def test_log_batch_start(self):
         self.util.log_batch_start(self.key)
