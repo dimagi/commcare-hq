@@ -55,6 +55,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
@@ -699,7 +700,7 @@ class ListRolesView(BaseRoleAccessView):
 @require_GET
 def paginate_enterprise_users(request, domain):
     # Get web users
-    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
     web_users, pagination = _get_web_users(request, domains)
 
     # Get linked mobile users
