@@ -239,6 +239,14 @@ hqDefine('users/js/roles',[
                     },
                     {
                         visibilityRestraint: true,
+                        text: gettext("Download and Email Reports"),
+                        checkboxLabel: "download-and-email-reports-checkbox",
+                        checkboxPermission: self.permissions.download_reports,
+                        checkboxText: gettext("Allow role to download and email reports and " +
+                            "create scheduled reports."),
+                    },
+                    {
+                        visibilityRestraint: true,
                         text: gettext("Access All Reports"),
                         checkboxLabel: "access-all-reports-checkbox",
                         checkboxPermission: self.reportPermissions.all,
