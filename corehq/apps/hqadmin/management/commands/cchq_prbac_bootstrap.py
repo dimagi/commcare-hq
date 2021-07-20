@@ -174,7 +174,8 @@ class Command(BaseCommand):
              description='Allows admin users to push and/or pull content between linked projects.'),
         Role(slug=privileges.RELEASE_MANAGEMENT,
              name='Release Management',
-             description='Allows access to features that help manage releasing content between projects.'),
+             description='Allows access to features that help manage releases between projects, like the linked '
+                         'projects feature.'),
     ]
 
     BOOTSTRAP_PLANS = [
