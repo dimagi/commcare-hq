@@ -99,7 +99,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, LINKED_PROJECTS
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -1984,7 +1984,7 @@ def _get_feature_flag_items(domain):
         })
 
     # show ERM version of linked projects if domain has privilege
-    if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, LINKED_PROJECTS):
+    if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
         feature_flag_items.append({
             'title': _('Linked Projects'),
             'url': reverse('domain_links', args=[domain])
