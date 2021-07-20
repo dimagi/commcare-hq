@@ -10,7 +10,9 @@ Most of the code was written, or substantially re-written, around 2016.
 Web apps is tightly coupled with formplayer, so check out the `formplayer README <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst>`_. High-level pieces of the system:
 
 - **Web Apps** is a piece of CommCare HQ that allows users to enter data in a web browser, providing a web equivalent to CommCare mobile. Like the rest of HQ, web apps is built on django, but it is much heavier on javascript and lighter on python than most areas of HQ. While it is hosted on HQ, its major "backend" is formplayer.
+
 - `Formplayer <https://github.com/dimagi/formplayer/>`_ is a Java-based service for entering data into XForms. Web apps can be thought of as a UI for this service. In this vein, the bulk of web apps javascript implements a javascript application called "FormplayerFrontend". This makes the word "formplayer" sometimes ambiguous in this document: usually it describes the Java-based service, but it also shows up in web apps code references.
+
 - **CloudCare** is a legacy name for web apps. Web apps code is in the ``cloudcare`` django app. It should not be used in documentation or anything user-facing. It shouldn't be used in code, either, unless needed for consistency. It mostly shows up in filenames and URLs.
 
 The coupling with formplayer also means web apps tends to use formplay/mobile/CommCare vocabulary rather than HQ vocabulary: "entities" instead of "cases", etc.
@@ -35,7 +37,9 @@ As an example, consider `registration from the case list <https://confluence.dim
    * The formplayer response tells web apps what kind of sceen to display:
 
       * The ``type`` is ``entities`` which tells web apps to display a case list UI
+
       * The ``entities`` list contains the cases and their properties
+
       * The ``actions`` list includes an action for the case list registration form, which tells web apps to display a button at the bottom of the case list with the given label, that when clicked will add the string ``action 0`` to the ``selections`` list and then send formplayer another navigation request, which will cause formplayer to send back a form response for the registration form, which web apps will then display for the user.
 
 Note how generic the concepts web apps deals with are: "entities" can be cases, fixture rows, ledger values, etc. Web apps doesn't know what cases are, and it doesn't know the difference between an action that triggers a case list registration form and an action that triggers a case search.
@@ -63,9 +67,11 @@ Not all features have all of these pieces:
 * Some features don't require any Java
 
    * They might use existing flexible configuration, like adding a new appearance attribute value to support a new data entry widget
+
    * They might rearrange existing constructs in a new way. CommCare supports a much broader set of functionality than what HQ allows users to configure.
 
 * Some features don't get implemented on mobile.
+
 * Some features, like case search, have additional HQ work because they interact with HQ in ways beyond what's described above.
 
 Form Entry
