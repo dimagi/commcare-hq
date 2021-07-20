@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.apps.hqcase.utils import update_case
 from corehq.motech.repeaters.models import CaseRepeater
+from custom.cowin.const import COWIN_API_DATA_REGISTRATION_IDENTIFIER, COWIN_API_DATA_VACCINATION_IDENTIFIER
 from custom.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
     BeneficiaryVaccinationPayloadGenerator,
@@ -47,7 +48,10 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
         if allowed:
-            return not bool(case.get_case_property('cowin_beneficiary_reference_id'))
+            return (
+                not bool(case.get_case_property('cowin_beneficiary_reference_id'))
+                and case.get_case_property('api') == COWIN_API_DATA_REGISTRATION_IDENTIFIER
+            )
         return allowed
 
 
@@ -58,5 +62,8 @@ class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
         if allowed:
-            return bool(case.get_case_property('cowin_id'))
+            return (
+                bool(case.get_case_property('cowin_beneficiary_reference_id'))
+                and case.get_case_property('api') == COWIN_API_DATA_VACCINATION_IDENTIFIER
+            )
         return allowed

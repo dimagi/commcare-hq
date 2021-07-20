@@ -30,14 +30,15 @@ class TestRepeaters(SimpleTestCase):
 
         case_id = uuid.uuid4().hex
         case_json = {
-            'name': 'Nitish Dube',
+            'beneficiary_name': 'Nitish Dube',
             'birth_year': '2000',
             'gender_id': 1,
             'mobile_number': '9999999999',
             'photo_id_type': 1,
             'photo_id_number': 'XXXXXXXX1234',
+            'consent_version': 1
         }
-        case = CommCareCaseSQL(domain=self.domain, type='beneficiary', case_id=case_id, case_json=case_json,
+        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
                                server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
@@ -47,7 +48,7 @@ class TestRepeaters(SimpleTestCase):
 
         self.assertEqual(repeater.get_headers(repeat_record)['X-Api-Key'], "secure-api-key")
 
-        payload = generator.get_payload(repeat_record=None, beneficiary_case=case)
+        payload = generator.get_payload(repeat_record=None, cowin_api_data_registration_case=case)
         self.assertDictEqual(
             json.loads(payload),
             {
@@ -92,7 +93,7 @@ class TestRepeaters(SimpleTestCase):
         connection_settings_mock.return_value = ConnectionSettings(password="my-secure-api-key")
 
         case_id = uuid.uuid4().hex
-        case = CommCareCaseSQL(domain=self.domain, type='vaccination', case_id=case_id,
+        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id,
                                server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
@@ -104,16 +105,16 @@ class TestRepeaters(SimpleTestCase):
 
         # 1st dose
         case.case_json = {
-            'cowin_id': '1234567890123',
+            'beneficiary_reference_id': '1234567890123',
             'center_id': 1234,
             'vaccine': "COVISHIELD",
             'vaccine_batch': '123456',
             'dose': '1',
-            'dose1_date': "01-01-2020",
+            'dose1_date': "2020-01-01",
             'vaccinator_name': 'Neelima',
         }
 
-        payload = generator.get_payload(repeat_record=None, vaccination_case=case)
+        payload = generator.get_payload(repeat_record=None, cowin_api_data_vaccination_case=case)
         self.assertDictEqual(
             json.loads(payload),
             {
@@ -122,19 +123,23 @@ class TestRepeaters(SimpleTestCase):
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 1,
-                "dose1_date": "01-01-2020",
+                "dose1_date": "2020-01-01",
                 "vaccinator_name": "Neelima"
             }
         )
 
         # 2nd dose
-        case.case_json.update({
+        case.case_json = {
+            'beneficiary_reference_id': '1234567890123',
+            'center_id': 1234,
+            'vaccine': "COVISHIELD",
+            'vaccine_batch': '123456',
             'dose': '2',
-            'dose2_date': "01-02-2020",
+            'dose2_date': "2020-02-01",
             'vaccinator_name': 'Sumanthra',
-        })
+        }
 
-        payload = generator.get_payload(repeat_record=None, vaccination_case=case)
+        payload = generator.get_payload(repeat_record=None, cowin_api_data_vaccination_case=case)
         self.assertDictEqual(
             json.loads(payload),
             {
@@ -143,8 +148,7 @@ class TestRepeaters(SimpleTestCase):
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 2,
-                "dose1_date": "01-01-2020",
-                "dose2_date": "01-02-2020",
+                "dose2_date": "2020-02-01",
                 "vaccinator_name": "Sumanthra"
             }
         )
