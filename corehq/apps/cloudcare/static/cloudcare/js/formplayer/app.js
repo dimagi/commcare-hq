@@ -20,7 +20,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var WebFormSession = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
-    FormplayerFrontend.on("before:start", function () {
+    FormplayerFrontend.on("before:start", function (app, options) {
+        // Make a get call if the csrf token isn't available when the page loads.
+        if ($.cookie('XSRF-TOKEN') === undefined) {
+            $.get({url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }});
+        }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
 
