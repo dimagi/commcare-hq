@@ -31,15 +31,6 @@ hqDefine("registry/js/registry_list", [
             return text.getRejectedBadgeText(self);
         });
 
-        self.inviteProject = function() {
-            console.log("TODO: invite project")
-            ko.mapping.fromJS({...registry, rejected_invitation_count: 3}, self);
-        }
-
-        self.deleteRegistry = function() {
-            console.log("TODO: delete registry", self.name)
-        }
-
         return self;
     };
 
@@ -58,7 +49,6 @@ hqDefine("registry/js/registry_list", [
         });
 
         self.acceptInvitation = function() {
-            // TODO: show modal with more information
             actions.acceptInvitation(self.slug, (data) => {
                 ko.mapping.fromJS(data, self);
             });
