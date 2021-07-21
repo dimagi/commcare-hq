@@ -61,7 +61,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - gh/improve-erm-ui # Graham June 16 [QA]
-    - jm/repeater-domain-admins  # Joel June 21
     - sp/csrf # Amit + Shivam June 30
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
