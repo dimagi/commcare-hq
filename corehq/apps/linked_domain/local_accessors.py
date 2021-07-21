@@ -15,23 +15,15 @@ from corehq.apps.reports.models import TableauServer, TableauVisualization
 
 def get_tableau_server_and_visualizations(domain):
     server, created = TableauServer.objects.get_or_create(domain=domain)
-    visualizations = TableauVisualization.objects.all().filter(domain=domain).order_by('pk')
+    visualizations = TableauVisualization.objects.all().filter(domain=domain)
     vis_list = []
-    if not len(visualizations):
-        vis = TableauVisualization(domain=domain, server=server)
-        vis.save()
+    for vis in visualizations:
         vis_list.append({
             'domain': domain,
             'server': server,
             'view_url': vis.view_url,
+            'id': vis.id,
         })
-    else:
-        for vis in visualizations:
-            vis_list.append({
-                'domain': domain,
-                'server': server,
-                'view_url': vis.view_url,
-            })
     return {
         'server': {
             'domain': domain,

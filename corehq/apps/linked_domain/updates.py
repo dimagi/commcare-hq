@@ -334,18 +334,27 @@ def update_tableau_server_and_visualizations(domain_link):
     server_model.allow_domain_username_override = master_results["server"]['allow_domain_username_override']
     server_model.save()
 
-    visualization_models = TableauVisualization.objects.all().filter(
-        domain=domain_link.linked_domain).order_by('pk')
+    master_results_visualizations = master_results['visualizations']
+    local_visualizations = TableauVisualization.objects.all().filter(
+        domain=domain_link.linked_domain)
+    vis_by_view_url = {}
+    vis_by_upstream_id = {}
+    for vis in local_visualizations:
+        vis_by_view_url[vis.view_url] = vis
+        if vis.upstream_id:
+            vis_by_upstream_id[vis.upstream_id] = vis
 
-    if not len(visualization_models):
-        vis = TableauVisualization(domain=domain_link.linked_domain, server=server_model)
+    for master_vis in master_results_visualizations:
+        # vis = local_visualizations.filter(id=master_vis['id'])
+        vis = vis_by_upstream_id.get(master_vis['id']) or vis_by_view_url.get(master_vis['view_url'])
+        if not vis:
+            vis = TableauVisualization(domain=domain_link.linked_domain, server=server_model)
+        vis_by_upstream_id[master_vis['id']] = vis
+        vis.upstream_id = master_vis['id']
+        vis.domain = domain_link.linked_domain
+        vis.server = master_vis['server']
+        vis.view_url = master_vis['view_url']
         vis.save()
-    else:
-        for i in range(len(visualization_models)):
-            visualization_models[i].domain = domain_link.linked_domain
-            visualization_models[i].server = master_results['visualizations'][i]['server']
-            visualization_models[i].view_url = master_results['visualizations'][i]['view_url']
-            visualization_models[i].save()
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:

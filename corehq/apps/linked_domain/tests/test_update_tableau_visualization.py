@@ -24,23 +24,21 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
     def test_update_tableau_server_and_visualizations(self):
         server_and_visualizations = get_tableau_server_and_visualizations(self.linked_domain)
         visualizations = server_and_visualizations["visualizations"]
-        self.assertEqual(visualizations[0]['domain'], self.linked_domain)
-        self.assertEqual(visualizations[0]['view_url'], '')
+        self.assertEqual(len(visualizations), 0)
 
         # Update linked domain
         update_tableau_server_and_visualizations(self.domain_link)
 
         # Linked domain should now have master domain's tableau visualization
-        models = TableauVisualization.objects.all().filter(domain=self.linked_domain).order_by('pk')
-
+        models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
         self.assertEqual(models[0].view_url, 'url_1')
         self.assertEqual(models[0].server.server_name, 'server name')
         self.assertTrue(models[0].server.allow_domain_username_override)
 
         # Updating master reflected in linked domain after update
-        self.tableau_visualization_setup_1.view_url = 'different url_1'
-        self.tableau_visualization_setup_1.save()
+        TableauVisualization.objects.all().update(view_url='different url_1')
         update_tableau_server_and_visualizations(self.domain_link)
 
         models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
-        self.assertEqual(models[0].view_url, 'different url_1')
+        for model in models:
+            self.assertEqual(model.view_url, 'different url_1')
