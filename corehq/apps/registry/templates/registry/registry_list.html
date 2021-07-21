@@ -88,15 +88,8 @@
           <p data-bind="text: description"></p>
           <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
           <!-- ko if: invitation.status === 'rejected' -->
-            <p>{% trans "Invitation rejected" %}
-            <small>
-              (
-              {% blocktrans with user=registry.invitation.rejected_by.username date=registry.invitation.rejected_on|date:"d M Y" %}
-                Rejected by {{ user }} on {{ date }}
-              {% endblocktrans %}
-              )
-            </small>
-            </p>
+          <p>{% trans "Invitation rejected" %}</p>
+          <p class="help-block" data-bind="text: rejectedText"></p>
           <!-- /ko -->
           <!-- ko if: invitation.status === 'accepted' -->
             <span class="label label-plain" data-bind="ifnot: participator_count">

@@ -2,36 +2,38 @@ hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
     'knockout',
+    'moment',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
     $,
     _,
     ko,
+    moment,
     initialPageData
 ) {
-    let getAcceptedText = function(registry) {
+    let getAcceptedBadgeText = function(registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Accepted",
             "%(count)s Invitations Accepted",
             registry.accepted_invitation_count
         ), {"count": registry.accepted_invitation_count}, true);
     }
-    let getPendingText = function(registry) {
+    let getPendingBadgeText = function(registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Pending",
             "%(count)s Invitations Pending",
             registry.pending_invitation_count
         ), {"count": registry.pending_invitation_count}, true);
     }
-    let getRejectedText = function(registry) {
+    let getRejectedBadgeText = function(registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Rejected",
             "%(count)s Invitations Rejected",
             registry.rejected_invitation_count
         ), {"count": registry.rejected_invitation_count}, true);
     }
-    let getParticipatorCountText = function(registry) {
+    let getParticipatorCountBadgeText = function(registry) {
         return interpolate(ngettext(
             "%(count)s Project Space Participating",
             "%(count)s Project Spaces Participating",
@@ -47,11 +49,20 @@ hqDefine("registry/js/registry_list", [
             return gettext('Pending');
         }
     }
+    let getRejectedText = function(registry) {
+        console.log(registry.invitation);
+        const text = gettext("Rejected by %(user)s on %(date)s"),
+            params = {
+                user: registry.invitation.rejected_by,
+                date: moment(registry.invitation.rejected_on).format("D MMM YYYY")
+            };
+        return interpolate(text, params, true);
+    }
     let OwnedDataRegistry = function (registry) {
         let self = registry;
-        self.acceptedText = getAcceptedText(self);
-        self.pendingText = getPendingText(self);
-        self.rejectedText = getRejectedText(self);
+        self.acceptedText = getAcceptedBadgeText(self);
+        self.pendingText = getPendingBadgeText(self);
+        self.rejectedText = getRejectedBadgeText(self);
 
         self.inviteProject = function() {
             console.log("TODO: invite project")
@@ -66,8 +77,11 @@ hqDefine("registry/js/registry_list", [
 
     let InvitedDataRegistry = function (registry) {
         let self = registry;
-        self.participatorCountText = getParticipatorCountText(self);
+        self.participatorCountText = getParticipatorCountBadgeText(self);
         self.statusText = getStatusText(self);
+        if (self.invitation.status === 'rejected') {
+            self.rejectedText = getRejectedText(self);
+        }
 
         self.acceptInvitation = function() {
             console.log("TODO: accept invitation")
