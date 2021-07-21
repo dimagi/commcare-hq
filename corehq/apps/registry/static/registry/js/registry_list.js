@@ -6,6 +6,7 @@ hqDefine("registry/js/registry_list", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'registry/js/registry_text',
+    'registry/js/registry_actions',
     'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
     $,
@@ -15,6 +16,7 @@ hqDefine("registry/js/registry_list", [
     initialPageData,
     alertUser,
     text,
+    actions,
 ) {
 
     let OwnedDataRegistry = function (registry) {
@@ -57,21 +59,15 @@ hqDefine("registry/js/registry_list", [
 
         self.acceptInvitation = function() {
             // TODO: show modal with more information
-            $.post({
-                url: initialPageData.reverse('accept_registry_invitation'),
-                data: {registry_slug: self.slug},
-                success: function (data) {
-                    ko.mapping.fromJS(data, self);
-                    alertUser.alert_user(gettext("Invitation accepted"), 'success');
-                },
-                error: function (response) {
-                    alertUser.alert_user(response.responseJSON.error, 'danger');
-                },
+            actions.acceptInvitation(self.slug, (data) => {
+                ko.mapping.fromJS(data, self);
             });
         }
 
         self.rejectInvitation = function() {
-            console.log("TODO: reject invitation")
+            actions.rejectInvitation(self.slug, (data) => {
+                ko.mapping.fromJS(data, self);
+            });
         }
         return self;
     };
