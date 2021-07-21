@@ -37,7 +37,7 @@ class TestIsDomainUsingSso(TestCase):
 
         cls.account_pending_sso = generator.get_billing_account_for_idp()
         cls.domain_pending_sso = Domain.get_or_create_with_name(
-            "dimagi-org-001",
+            "dimagi-dot-org-001",
             is_active=True
         )
         Subscription.new_domain_subscription(
@@ -87,6 +87,7 @@ class TestIsDomainUsingSso(TestCase):
         TrustedIdentityProvider.objects.all().delete()
         IdentityProvider.objects.all().delete()
         cls.domain_with_sso.delete()
+        cls.domain_pending_sso.delete()
         cls.domain_with_inactive_sso.delete()
         cls.domain_trusting_idp.delete()
         cls.domain_trusting_inactive_idp.delete()
@@ -137,4 +138,5 @@ class TestIsDomainUsingSso(TestCase):
         new_idp = generator.create_idp('dimagi-org', self.account_pending_sso)
         new_idp.is_active = True
         new_idp.save()
+        new_idp.save()  # this avoids a race condition with tests
         self.assertTrue(is_domain_using_sso(self.domain_pending_sso.name))
