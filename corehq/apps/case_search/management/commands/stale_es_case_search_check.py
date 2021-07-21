@@ -35,12 +35,17 @@ class Command(BaseCommand):
             "(default=%(default)s)")
         parser.add_argument("-s", "--since", metavar="YYYY-MM-DD",
             help="Query cases modified since %(metavar)s (default=NO_LIMIT)")
-        parser.add_argument("domains", metavar="DOMAIN", nargs="+",
+        parser.add_argument("domains", metavar="DOMAIN", nargs="*",
             help="Check timestamps for %(metavar)s")
 
     def handle(self, domains, since, mismatch_seconds, id_limit, **options):
         self.stderr.style_func = lambda x: x
         logger = StubLogger(self.stderr)
+        # domains
+        if not domains:
+            domains = sorted(fetch_all_case_search_domains())
+            logger.info("checking all %s case_search domains", len(domains))
+        # since
         if since is None:
             date_msg = ""
             when = None
@@ -100,6 +105,15 @@ class Command(BaseCommand):
             table.write_csv(options["output"])
         else:
             options["output"].write(table.render())
+
+
+@retry_on_es_timeout
+def fetch_all_case_search_domains():
+    return (CaseSearchES()
+        .terms_aggregation("domain.exact", "domain")
+        .size(0)
+        .run()
+        .aggregations.domain.keys)
 
 
 def fetch_case_searches(case_ids, chunksize):
