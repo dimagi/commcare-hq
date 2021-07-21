@@ -73,7 +73,7 @@ branches:
     - bmb/sso-domain-login-update  # Biyeun July 15
     - smh/tableau-server-dropdown-modification # Steph July 19
     - bmb/sso-alternate-login  # Biyeun July 19
-    #- jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
+    - jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
     - rc/clarify-explanation # Robert July 20
     - ml/add-bulk-delete-form-export-report # Minha July 20
 submodules: { }
