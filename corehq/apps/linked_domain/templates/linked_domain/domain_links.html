@@ -9,16 +9,17 @@
   {% registerurl 'linked_domain:domain_link_rmi' domain %}
   {% registerurl 'app_settings' domain '---' %}
 
+  {% comment %}
+    Ideally would keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
+    to race condition problems if the tabs aren't visible when its document ready handler runs. This page needs to
+    update tabs dynamically, so here we are.
+  {% endcomment %}
   <div id="ko-linked-projects" class="ko-template">
     <!-- ko if: showGetStarted -->
       {% include 'linked_domain/get_started.html' %}
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
       <!-- ko if: showMultipleTabs -->
-        {% comment %}
-          Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
-          to race condition problems if the tabs aren't visible when its document ready handler runs.
-        {% endcomment %}
         <ul class="nav nav-tabs sticky-tabs">
           <!-- ko if: isUpstreamDomain -->
             <li class="active"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Projects" %}</a></li>
