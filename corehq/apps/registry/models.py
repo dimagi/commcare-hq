@@ -126,6 +126,14 @@ class RegistryInvitation(models.Model):
             return self.STATUS_ACCEPTED
         return self.STATUS_PENDING
 
+    @property
+    def is_accepted(self):
+        return self.status == self.STATUS_ACCEPTED
+
+    @property
+    def is_rejected(self):
+        return self.status == self.STATUS_REJECTED
+
     def accept(self, accepted_by):
         self.accepted_on = datetime.utcnow()
         self.accepted_by = accepted_by
