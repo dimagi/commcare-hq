@@ -32,7 +32,6 @@ def get_tableau_server_and_visualizations(domain):
             'validate_hostname': server.validate_hostname,
             'target_site': server.target_site,
             'domain_username': server.domain_username,
-            'allow_domain_username_override': server.allow_domain_username_override,
         },
         'visualizations': vis_list,
     }

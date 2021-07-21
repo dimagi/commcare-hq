@@ -11,8 +11,7 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
         server_name='server name',
         validate_hostname='host name',
         target_site='target site',
-        domain_username='username',
-        allow_domain_username_override=True)
+        domain_username='username')
         self.server.save()
         self.tableau_visualization_setup_1 = TableauVisualization(domain=self.domain,
         server=self.server, view_url='url_1')
@@ -33,7 +32,6 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
         models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
         self.assertEqual(models[0].view_url, 'url_1')
         self.assertEqual(models[0].server.server_name, 'server name')
-        self.assertTrue(models[0].server.allow_domain_username_override)
 
         # Updating master reflected in linked domain after update
         TableauVisualization.objects.all().update(view_url='different url_1')

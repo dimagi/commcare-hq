@@ -11,8 +11,7 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
         server_name='server name',
         validate_hostname='host name',
         target_site='target site',
-        domain_username='username',
-        allow_domain_username_override=True)
+        domain_username='username')
         self.tableau_server_setup.save()
 
     def tearDown(self):
@@ -25,7 +24,6 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
         'server_name': '',
         'domain_username': '',
         'server_type': 'server',
-        'allow_domain_username_override': False,
         'target_site': 'Default',
         'validate_hostname': '', },
         server)
@@ -38,7 +36,6 @@ class TestUpdateTableauServer(BaseLinkedAppsTest):
 
         self.assertEqual(model.target_site, 'target site')
         self.assertEqual(model.server_name, 'server name')
-        self.assertTrue(model.allow_domain_username_override)
 
         # Updating master reflected in linked domain after update
         self.tableau_server_setup.target_site = 'different target site'

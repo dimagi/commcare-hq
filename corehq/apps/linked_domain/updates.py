@@ -331,7 +331,6 @@ def update_tableau_server_and_visualizations(domain_link):
     server_model.validate_hostname = master_results["server"]['validate_hostname']
     server_model.target_site = master_results["server"]['target_site']
     server_model.domain_username = master_results["server"]['domain_username']
-    server_model.allow_domain_username_override = master_results["server"]['allow_domain_username_override']
     server_model.save()
 
     master_results_visualizations = master_results['visualizations']
