@@ -299,12 +299,15 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var ix = UI.getIx(q);
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
+            var form = q.form();
+            var erroredLabels = form.erroredLabels();
 
             this.serverRequest(
                 {
                     'action': Const.ANSWER,
                     'ix': ix,
                     'answer': answer,
+                    'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 },
                 function (resp) {
@@ -312,6 +315,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
                     }
+                    $.each(erroredLabels, function (ix, label) {
+                        self.serverError(UI.getForIx(form, ix), resp.errors.ix ? error : null);
+                    });
                 },
                 Const.BLOCK_SUBMIT,
                 function () {
@@ -497,7 +503,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         };
 
         self.serverError = function (q, resp) {
-            if (resp.type === "required") {
+            if (!resp) {
+               q.serverError(null);
+            } else if (resp.type === "required") {
                 q.serverError("An answer is required");
             } else if (resp.type === "constraint") {
                 q.serverError(resp.reason || 'This answer is outside the allowed range.');
