@@ -135,7 +135,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
                 {
                     INCOMING: _("Incoming"),
                     OUTGOING: _("Outgoing"),
-                }.get(sms_billable.direction, ""),
+                }[sms_billable.direction],
                 sms_billable.multipart_count,
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
