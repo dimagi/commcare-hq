@@ -95,13 +95,26 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
     def _format_date(date):
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
 
-    return {
+    def get_phone_numbers(user_data):
+        phone_numbers_dict = {}
+        if user_data.phone_number:
+            phone_numbers_dict.update({
+                'phone-number-1': user_data.phone_number
+            })
+            user_data.phone_numbers.remove(user_data.phone_number)
+
+            for n, mobile_number in enumerate(user_data.phone_numbers):
+                # Add 2 to n, so number index will start at 2
+                # since phone-number-1 is reserved for primary number
+                phone_numbers_dict.update({f'phone-number-{n + 2}': mobile_number})
+        return phone_numbers_dict
+
+    user_dict = {
         'data': model_data,
         'uncategorized_data': uncategorized_data,
         'group': group_names,
         'name': user.full_name,
         'password': "********",  # dummy display string for passwords
-        'phone-number': user.phone_number,
         'email': user.email,
         'username': user.raw_username,
         'language': user.language,
@@ -116,6 +129,10 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
         'last_sync (read only)': activity.last_sync_for_user.sync_date,
     }
+
+    user_dict.update(get_phone_numbers(user))
+
+    return user_dict
 
 
 def get_user_role_name(domain_membership):
@@ -178,13 +195,36 @@ def get_user_rows(user_dicts, user_headers):
         yield [row.get(header, '') for header in user_headers]
 
 
+def get_user_headers(user_dicts):
+    def get_phone_number_headers(users):
+        mobile_headers = []
+        for user in users:
+            user_keys = user.keys()
+            phone_number_keys = [key for key in user_keys if 'phone-number' in key]
+
+            if len(phone_number_keys) > len(mobile_headers):
+                mobile_headers = phone_number_keys
+
+        return mobile_headers
+
+    user_headers = ['username', 'password', 'name', 'email']
+    mobile_numbers_headers = get_phone_number_headers(user_dicts)
+    user_headers.extend(mobile_numbers_headers)
+
+    user_headers.extend([
+        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
+        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
+    ])
+
+    return user_headers
+
+
 def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
-
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
@@ -199,19 +239,17 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
             ], key=alphanumeric_sort_key)
+
             user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
             user_dicts.append(user_dict)
+
             unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
             current_user_downloaded_count += 1
             DownloadBase.set_progress(task, current_user_downloaded_count, total_count)
 
-    user_headers = [
-        'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
-    ]
+    user_headers = get_user_headers(user_dicts)
 
     if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
