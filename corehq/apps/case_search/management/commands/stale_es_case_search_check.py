@@ -34,18 +34,22 @@ class Command(BaseCommand):
             help="Delta seconds for records to be considered a mismatch for " \
             "(default=%(default)s)")
         parser.add_argument("-s", "--since", metavar="YYYY-MM-DD",
-            default=datetime.utcnow().date().replace(day=1).strftime("%Y-%m-%d"),
-            help="Query cases modified since %(metavar)s (default=%(default)s)")
+            help="Query cases modified since %(metavar)s (default=NO_LIMIT)")
         parser.add_argument("domains", metavar="DOMAIN", nargs="+",
             help="Check timestamps for %(metavar)s")
 
     def handle(self, domains, since, mismatch_seconds, id_limit, **options):
         self.stderr.style_func = lambda x: x
         logger = StubLogger(self.stderr)
-        try:
-            when = datetime.strptime(f"{since}UTC", "%Y-%m-%d%Z")
-        except ValueError:
-            raise CommandError(f"invalid date: {since}")
+        if since is None:
+            date_msg = ""
+            when = None
+        else:
+            date_msg = f" since {since}"
+            try:
+                when = datetime.strptime(f"{since}UTC", "%Y-%m-%d%Z")
+            except ValueError:
+                raise CommandError(f"invalid date: {since}")
         # warning condition if the `cases` document is newer than `case_search`
         warn_case_newer_than = timedelta(seconds=mismatch_seconds)
 
@@ -55,13 +59,14 @@ class Command(BaseCommand):
         )
         for domain in domains:
             # query the cases index
-            logger.info("fetching cases for domain %r since %s ...", domain, since)
             cases = {}
             query = (CaseES()
                 .domain(domain)
-                .filter(filters.date_range('server_modified_on', gte=when))
                 .source(["case_id", "server_modified_on"])
                 .size(CASE_SCROLL_SIZE))
+            if when is not None:
+                query = query.filter(filters.date_range("server_modified_on", gte=when))
+            logger.info("fetching cases for domain %r%s ...", domain, date_msg)
             for case in query.scroll():
                 cases[case["case_id"]] = string_to_datetime(case["server_modified_on"])
             logger.info("fetched %s cases", len(cases))
