@@ -3,45 +3,44 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
         return interpolate(ngettext(
             "%(count)s Invitation Accepted",
             "%(count)s Invitations Accepted",
-            registry.accepted_invitation_count
-        ), {"count": registry.accepted_invitation_count}, true);
+            registry.accepted_invitation_count()
+        ), {"count": registry.accepted_invitation_count()}, true);
     }
     let getPendingBadgeText = function (registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Pending",
             "%(count)s Invitations Pending",
-            registry.pending_invitation_count
-        ), {"count": registry.pending_invitation_count}, true);
+            registry.pending_invitation_count()
+        ), {"count": registry.pending_invitation_count()}, true);
     }
     let getRejectedBadgeText = function (registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Rejected",
             "%(count)s Invitations Rejected",
-            registry.rejected_invitation_count
-        ), {"count": registry.rejected_invitation_count}, true);
+            registry.rejected_invitation_count()
+        ), {"count": registry.rejected_invitation_count()}, true);
     }
     let getParticipatorCountBadgeText = function (registry) {
         return interpolate(ngettext(
             "%(count)s Project Space Participating",
             "%(count)s Project Spaces Participating",
-            registry.participator_count
-        ), {"count": registry.participator_count}, true);
+            registry.participator_count()
+        ), {"count": registry.participator_count()}, true);
     }
-    let getStatusText = function (registry) {
-        if (registry.invitation.status === 'rejected') {
+    let getStatusText = function (status) {
+        if (status === 'rejected') {
             return gettext('Rejected');
-        } else if (registry.invitation.status === 'accepted') {
+        } else if (status === 'accepted') {
             return gettext('Accepted');
         } else {
             return gettext('Pending');
         }
     }
-    let getRejectedText = function (registry) {
-        console.log(registry.invitation);
+    let getRejectedText = function (invitation) {
         const text = gettext("Rejected by %(user)s on %(date)s"),
             params = {
-                user: registry.invitation.rejected_by,
-                date: moment(registry.invitation.rejected_on).format("D MMM YYYY")
+                user: invitation.rejected_by(),
+                date: moment(invitation.rejected_on()).format("D MMM YYYY")
             };
         return interpolate(text, params, true);
     }

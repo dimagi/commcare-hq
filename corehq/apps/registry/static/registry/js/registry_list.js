@@ -16,13 +16,20 @@ hqDefine("registry/js/registry_list", [
 ) {
 
     let OwnedDataRegistry = function (registry) {
-        let self = registry;
-        self.acceptedText = text.getAcceptedBadgeText(self);
-        self.pendingText = text.getPendingBadgeText(self);
-        self.rejectedText = text.getRejectedBadgeText(self);
+        let self = ko.mapping.fromJS(registry);
+        self.acceptedText = ko.computed(function() {
+            return text.getAcceptedBadgeText(self);
+        });
+        self.pendingText = ko.computed(function() {
+            return text.getPendingBadgeText(self);
+        });
+        self.rejectedText = ko.computed(function() {
+            return text.getRejectedBadgeText(self);
+        });
 
         self.inviteProject = function() {
             console.log("TODO: invite project")
+            ko.mapping.fromJS({...registry, rejected_invitation_count: 3}, self);
         }
 
         self.deleteRegistry = function() {
@@ -33,15 +40,22 @@ hqDefine("registry/js/registry_list", [
     };
 
     let InvitedDataRegistry = function (registry) {
-        let self = registry;
-        self.participatorCountText = text.getParticipatorCountBadgeText(self);
-        self.statusText = text.getStatusText(self);
-        if (self.invitation.status === 'rejected') {
-            self.rejectedText = text.getRejectedText(self);
-        }
+        let self = ko.mapping.fromJS(registry);
+        self.participatorCountText = ko.computed(function() {
+            return text.getParticipatorCountBadgeText(self);
+        });
+        self.statusText = ko.computed(function() {
+            return text.getStatusText(self.invitation.status());
+        });
+        self.rejectedText = ko.computed(function() {
+            if (self.invitation.status() === 'rejected') {
+                return text.getRejectedText(self.invitation);
+            }
+        });
 
         self.acceptInvitation = function() {
             console.log("TODO: accept invitation")
+            ko.mapping.fromJS({...registry, invitation: {...self.invitation, status: "accepted"}}, self);
         }
 
         self.rejectInvitation = function() {
