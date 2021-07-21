@@ -50,21 +50,21 @@
         </div>
         <div class="panel-body">
           <p data-bind="text: description"></p>
-          <div class="label label-plain" data-bind="ifnot: invitation_count">
+          <span class="label label-plain" data-bind="ifnot: invitation_count">
             {% trans "No project spaces invited to this registry" %}
-          </div>
-          <div class="label label-plain" data-bind="if: accepted_invitation_count">
+          </span>
+          <span class="label label-plain" data-bind="if: accepted_invitation_count">
             <i class="fa fa-check-circle-o text-success"></i>
             <span data-bind="text: acceptedText"></span>
-          </div>
-          <div class="label label-plain" data-bind="if: pending_invitation_count">
+          </span>
+          <span class="label label-plain" data-bind="if: pending_invitation_count">
             <i class="fa fa-clock-o text-info"></i>
             <span data-bind="text: pendingText"></span>
-          </div>
-          <div class="label label-plain" data-bind="if: rejected_invitation_count">
+          </span>
+          <span class="label label-plain" data-bind="if: rejected_invitation_count">
             <i class="fa fa-ban text-warning"></i>
             <span data-bind="text: rejectedText"></span>
-          </div>
+          </span>
           <button type="button" class="btn btn-default btn-xs" data-bind="click: inviteProject">
             <i class="fa fa-plus"></i>
             {% trans "Invite Project" %}
@@ -107,12 +107,12 @@
             </p>
           <!-- /ko -->
           <!-- ko if: invitation.status === 'accepted' -->
-            <div class="label label-plain" data-bind="ifnot: participator_count">
+            <span class="label label-plain" data-bind="ifnot: participator_count">
               {% trans "No other project spaces are participating in this registry" %}
-            </div>
-            <div class="label label-plain" data-bind="if: participator_count">
+            </span>
+            <span class="label label-plain" data-bind="if: participator_count">
               <span data-bind="text: participatorCountText"></span>
-            </div>
+            </span>
           <!-- /ko -->
           <!-- ko if: invitation.status === 'pending' -->
             <button type="button" class="btn btn-default btn-xs" data-bind="click: rejectInvitation">
