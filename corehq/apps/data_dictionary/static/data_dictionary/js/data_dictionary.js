@@ -5,6 +5,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
     "analytix/js/google",
+    "hqwebapp/js/ui_elements/ui-element-key-val-list",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
@@ -12,7 +13,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     _,
     initialPageData,
     hqMain,
-    googleAnalytics
+    googleAnalytics,
+    uiElementKeyValueList
 ) {
     var caseType = function (name, fhirResourceType) {
         var self = {};
@@ -55,8 +57,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
-        self.allowedValues = ko.observableArray(_.map(allowedValues, function(item) {
-            return allowedValueListItem(item.allowed_value, item.description) }));
+        self.allowedValues = uiElementKeyValueList.new(
+            String(Math.random()).slice(2),
+            gettext("Allowed Values"),
+            {"key": gettext("allowed value"), "value": gettext("description")}
+        );
+        self.allowedValues.val(allowedValues);
+        self.$allowedValues = self.allowedValues.ui;
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -87,13 +94,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var allowedValueListItem = function (allowedValue, description) {
-        var self = {};
-        self.allowedValue = allowedValue;
-        self.description = description;
-        return self;
-    }
-
     var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
         var self = {};
         self.caseTypes = ko.observableArray();
@@ -123,6 +123,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
+                            'allowed_values': element.allowedValues.val(),
                         };
                         postProperties.push(data);
                     } else {

@@ -8,9 +8,14 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
     'use strict';
     var module = {};
 
-    var InputMap = function (show_del_button) {
+    var InputMap = function (show_del_button, placeholders) {
         var that = this;
         hqMain.eventize(this);
+        if (!placeholders) {
+            placeholders = {};
+            placeholders.key = django.gettext('key');
+            placeholders.value = django.gettext('value');
+        }
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",
@@ -26,8 +31,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         });
 
         this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
-            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
+        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + placeholders.key + '" />'),
+            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + placeholders.value  + '" />');
         key_input.change(function () {
             that.fire('change');
         });
@@ -78,7 +83,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
                 }
                 if (map_key) {
                     this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
-                        map_val ? $('<div>').text(map_val).html() : '<i class="fa fa-remove"></i>'
+                        map_val ? $('<div>').text(map_val).html() : django.gettext('(empty)')
                     ));
                 } else {
                     this.$noedit_view.text("");
@@ -99,8 +104,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
         },
     };
 
-    module.new = function (show_del_button) {
-        return new InputMap(show_del_button);
+    module.new = function (show_del_button, placeholders) {
+        return new InputMap(show_del_button, placeholders);
     };
 
     return module;

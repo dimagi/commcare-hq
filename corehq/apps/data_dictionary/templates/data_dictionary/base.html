@@ -105,16 +105,7 @@
           <td>
             <div data-bind="visible: canHaveAllowedValues()">
               <b>{% trans "Allowed Values" %}</b>
-              <ul class="list-unstyled" data-bind="foreach: allowedValues()">
-                <li>
-                  <span data-bind="text: allowedValue"></span><span data-bind="visible: !allowedValue">{% trans "(empty)" %}</span>
-                  <span data-bind="visible: description"> <i class="fa fa-arrow-right"></i> <span data-bind="text: description"></span>
-                </li>
-              </ul>
-              <button class="btn btn-default">
-                <i class="fa fa-pencil"></i>
-                {% trans "Edit" %}
-              </button>
+              <div data-bind="jqueryElement: $allowedValues"></div>
             </div>
           </td>
           {% if fhir_integration_enabled %}
