@@ -20,16 +20,15 @@
   {% initial_page_data "invited_registries" invited_registries %}
   <div id="data-registry-list">
     <div class="row">
-      <div class="col-sm-8 col-md-6">
-        <h3>{% trans "Data Registries" %}</h3>
-      </div>
-      <div class="col-sm-4 col-md-3">
+      <div class="col-sm-12 col-md-9">
+        <h3>{% trans "Data Registries" %}
         <div class="pull-right" style="margin-top: 17px; margin-bottom: 8.5px">
           <button type="button" class="btn btn-primary" data-bind="click: newRegistry">
             <i class="fa fa-plus"></i>
             {% trans "New Registry" %}
           </button>
         </div>
+        </h3>
       </div>
     </div>
     <div class="row">
