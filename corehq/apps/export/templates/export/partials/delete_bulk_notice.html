@@ -1,0 +1,26 @@
+{% load i18n %}
+<div class="alert alert-info"
+   data-bind="visible: bulkDeleteCount()">
+  <div class="row">
+    <div class="col-sm-3 col-lg-2">
+      <input name="delete_list" type="hidden"/>
+      <a class="btn btn-danger btn-lg"
+         data-toggle="modal"
+         data-bind="attr: {
+                      href: '#bulk-delete-export-modal'
+                    }">
+        <i class="fa fa-remove"></i>
+        <span>{% trans 'Bulk Delete' %}
+        (<span data-bind="text: bulkDeleteCount()"></span>)</span>
+      </a>
+      {% include "export/dialogs/bulk_delete_custom_export_dialog.html" %}
+    </div>
+    <div class="col-sm-9 col-lg-10">
+      <p style="margin-top: 13px;">
+        {% blocktrans %}
+          Delete selected exports.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+</div>
