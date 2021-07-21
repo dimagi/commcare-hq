@@ -7,8 +7,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
    "hqwebapp/js/initial_page_data",
    "integration/js/dialer/dialer_utils",
    "detectrtc/DetectRTC",
-   "integration/js/dialer/amazon-connect-min",
-   "integration/js/dialer/connect-streams-min",
+   "amazon-connect-streams/release/connect-streams-min",
 ], function (
    initialPageData,
    dialer_utils
@@ -21,8 +20,8 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
         // This function excutes inline with the HTML <body> to initalize the CCP and set up event handlers
         // for agent and contact events.
             
-            var signInURL = "https://" + instanceName + ".awsapps.com/connect/login";
-            var ccpPath = "https://" + instanceName + ".awsapps.com/connect/ccp-v2#/";
+            var signInURL = "https://" + instanceName + ".my.connect.aws/login";
+            var ccpPath = "https://" + instanceName + ".my.connect.aws/ccp-v2#/";
             
             document.getElementById("ConnectLogin").href = signInURL;            
             
