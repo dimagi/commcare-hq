@@ -20,7 +20,6 @@
   {% initial_page_data "invited_registries" invited_registries %}
   {% registerurl "accept_registry_invitation" domain %}
   {% registerurl "reject_registry_invitation" domain %}
-{#  {% registerurl "add_registry_invitation" domain %}#}
   <div id="data-registry-list">
     <div class="row">
       <div class="col-sm-12 col-md-9">
@@ -66,10 +65,6 @@
             <i class="fa fa-ban text-warning"></i>
             <span data-bind="text: rejectedText"></span>
           </span>
-          <button type="button" class="btn btn-default btn-xs" data-bind="click: inviteProject">
-            <i class="fa fa-plus"></i>
-            {% trans "Invite Project" %}
-          </button>
         </div>
       </div>
       <!-- /ko -->
