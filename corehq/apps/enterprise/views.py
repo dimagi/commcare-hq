@@ -23,6 +23,7 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -366,7 +367,7 @@ def disable_enterprise_permissions(request, domain):
     config.is_enabled = False
     config.source_domain = None
     config.save()
-    config.clear_cache_for_all_users()
+    clear_enterprise_permissions_cache_for_all_users.delay(config.id)
 
     redirect = reverse("enterprise_permissions", args=[domain])
     messages.success(request, _('Enterprise permissions have been disabled.'))
@@ -388,7 +389,7 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
         config.domains.append(target_domain)
         config.save()
         if config.source_domain:
-            config.clear_cache_for_all_users(config.source_domain)
+            clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
     messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
     return HttpResponseRedirect(redirect)
 
@@ -408,7 +409,7 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
         config.domains.remove(target_domain)
         config.save()
         if config.source_domain:
-            config.clear_cache_for_all_users(config.source_domain)
+            clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
     messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
                                                                                    target_domain))
     return HttpResponseRedirect(redirect)
@@ -432,7 +433,7 @@ def update_enterprise_permissions_source_domain(request, domain):
     if source_domain in config.domains:
         config.domains.remove(source_domain)
     config.save()
-    config.clear_cache_for_all_users(config.source_domain)
-    config.clear_cache_for_all_users(old_domain)
+    clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
+    clear_enterprise_permissions_cache_for_all_users.delay(config.id, old_domain)
     messages.success(request, _('Controlling domain set to {}.').format(source_domain))
     return HttpResponseRedirect(redirect)

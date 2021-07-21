@@ -52,12 +52,3 @@ class EnterprisePermissions(models.Model):
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
             self.get_by_domain.clear(self.__class__, domain)
-
-    def clear_cache_for_all_users(self, domain=None):
-        from corehq.apps.domain.views.base import get_enterprise_links_for_dropdown
-        from corehq.apps.users.models import CouchUser
-        domains = [domain] if domain else self.account.get_domains()
-        for domain in domains:
-            for user_id in CouchUser.ids_by_domain(domain):
-                user = CouchUser.get_by_user_id(user_id)
-                get_enterprise_links_for_dropdown.clear(user)
