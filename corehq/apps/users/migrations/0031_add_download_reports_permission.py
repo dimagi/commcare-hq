@@ -9,11 +9,10 @@ def migrate_download_reports_permissions(apps, schema_editor):
     new_permission_name = 'download_reports'
     permission, created = SQLPermission.objects.get_or_create(value=new_permission_name)
     for role in SQLUserRole.objects.all().iterator():
-        if role.permissions.view_reports or bool(role.permissions.view_report_list):
-            rp, created = role.rolepermission_set.get_or_create(permission_fk=permission,
-                                                                defaults={"allow_all": True})
-            if created:
-                role._migration_do_sync()
+        rp, created = role.rolepermission_set.get_or_create(permission_fk=permission,
+                                                            defaults={"allow_all": True})
+        if created:
+            role._migration_do_sync()
 
 
 class Migration(migrations.Migration):
