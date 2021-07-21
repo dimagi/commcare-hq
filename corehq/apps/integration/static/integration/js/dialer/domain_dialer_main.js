@@ -4,13 +4,13 @@ Based on AWS Boilerplate
 
 
 hqDefine("integration/js/dialer/domain_dialer_main", [
-   "hqwebapp/js/initial_page_data",
-   "integration/js/dialer/dialer_utils",
-   "detectrtc/DetectRTC",
-   "amazon-connect-streams/release/connect-streams-min",
+    "hqwebapp/js/initial_page_data",
+    "integration/js/dialer/dialer_utils",
+    "detectrtc/DetectRTC",
+    "amazon-connect-streams/release/connect-streams-min",
 ], function (
-   initialPageData,
-   dialer_utils
+    initialPageData,
+    dialer_utils
 ) {
     $(function () {
         var inCall = false;
