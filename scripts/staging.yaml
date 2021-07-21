@@ -75,4 +75,5 @@ branches:
     - smh/add-download-and-email-reports-permission # Steph July 21
     - gh/base-linked-project-access # Graham July 21
     - gh/show-erm-tab-if-applicable # Graham July 21
+    - gh/fix-tab-issue # Graham July 21
 submodules: { }
