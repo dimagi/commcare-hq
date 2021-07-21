@@ -87,11 +87,11 @@
         <div class="panel-body">
           <p data-bind="text: description"></p>
           <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
-          <!-- ko if: invitation.status === 'rejected' -->
+          <!-- ko if: invitation.status() === 'rejected' -->
           <p>{% trans "Invitation rejected" %}</p>
           <p class="help-block" data-bind="text: rejectedText"></p>
           <!-- /ko -->
-          <!-- ko if: invitation.status === 'accepted' -->
+          <!-- ko if: invitation.status() === 'accepted' -->
             <span class="label label-plain" data-bind="ifnot: participator_count">
               {% trans "No other project spaces are participating in this registry" %}
             </span>
@@ -99,7 +99,7 @@
               <span data-bind="text: participatorCountText"></span>
             </span>
           <!-- /ko -->
-          <!-- ko if: invitation.status === 'pending' -->
+          <!-- ko if: invitation.status() === 'pending' -->
             <button type="button" class="btn btn-default btn-xs" data-bind="click: rejectInvitation">
               <i class="fa fa-remove"></i>
               {% trans "Reject" %}
