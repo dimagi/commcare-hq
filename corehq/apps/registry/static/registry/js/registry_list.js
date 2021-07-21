@@ -10,36 +10,33 @@ hqDefine("registry/js/registry_list", [
     ko,
     initialPageData
 ) {
-    let getBadgeText = function (count, singular, plural) {
-        return interpolate(ngettext(singular, plural, count), {"count": count}, true);
-    }
     let getAcceptedText = function(registry) {
-        return getBadgeText(
-            registry.accepted_invitation_count,
+        return interpolate(ngettext(
             "%(count)s Invitation Accepted",
             "%(count)s Invitations Accepted",
-        )
+            registry.accepted_invitation_count
+        ), {"count": registry.accepted_invitation_count}, true);
     }
     let getPendingText = function(registry) {
-        return getBadgeText(
-            registry.pending_invitation_count,
+        return interpolate(ngettext(
             "%(count)s Invitation Pending",
             "%(count)s Invitations Pending",
-        )
+            registry.pending_invitation_count
+        ), {"count": registry.pending_invitation_count}, true);
     }
     let getRejectedText = function(registry) {
-        return getBadgeText(
-            registry.rejected_invitation_count,
+        return interpolate(ngettext(
             "%(count)s Invitation Rejected",
             "%(count)s Invitations Rejected",
-        )
+            registry.rejected_invitation_count
+        ), {"count": registry.rejected_invitation_count}, true);
     }
     let getParticipatorCountText = function(registry) {
-        return getBadgeText(
-            registry.participator_count,
+        return interpolate(ngettext(
             "%(count)s Project Space Participating",
             "%(count)s Project Spaces Participating",
-        )
+            registry.participator_count
+        ), {"count": registry.participator_count}, true);
     }
     let OwnedDataRegistry = function (registry) {
         let self = registry;
