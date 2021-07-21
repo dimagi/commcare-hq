@@ -316,7 +316,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                         self.answerCallback(self.session_id);
                     }
                     $.each(erroredLabels, function (ix, label) {
-                        self.serverError(UI.getForIx(form, ix), resp.errors.ix ? error : null);
+                        self.serverError(UI.getForIx(form, ix), resp.errors.ix ? resp.errors.ix : null);
                     });
                 },
                 Const.BLOCK_SUBMIT,
@@ -442,7 +442,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
                                 _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             } else {
-                                _answers[UI.getIx(o)] = "ok"
+                                _answers[UI.getIx(o)] = "ok";
                             }
                         } else {
                             prevalidated = false;
@@ -504,7 +504,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.serverError = function (q, resp) {
             if (!resp) {
-               q.serverError(null);
+                q.serverError(null);
             } else if (resp.type === "required") {
                 q.serverError("An answer is required");
             } else if (resp.type === "constraint") {

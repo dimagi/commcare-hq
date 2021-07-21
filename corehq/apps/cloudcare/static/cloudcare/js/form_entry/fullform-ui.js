@@ -584,7 +584,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.form = function () {
             var parent = self.parent;
-            while(parent.type && parent.type() != null){
+            while (parent.type && parent.type() !== null) {
                 parent = parent.parent;
             }
             return parent;
