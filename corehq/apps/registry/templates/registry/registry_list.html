@@ -107,7 +107,7 @@
               <i class="fa fa-remove"></i>
               {% trans "Reject" %}
             </button>
-            <button type="button" class="btn btn-success btn-xs" data-bind="click: acceptInvitation">
+            <button type="button" class="btn btn-success btn-xs" data-bind="openModal: 'accept-invitation-modal'">
               <i class="fa fa-check"></i>
               {% trans "Accept and Participate" %}
             </button>
@@ -118,4 +118,29 @@
       </div>
     </div>
   </div>
+
+  <script type="text/html" id="accept-invitation-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Accept the invitation?" %}</h4>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}
+            Are you sure you want to accept the invitation to participate in the
+            <mark data-bind="text: name"></mark> data registry?
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-success" data-bind="click: acceptInvitation" data-dismiss="modal">{% trans "Accept" %}</a>
+        </div>
+      </div>
+    </div>
+  </script>
 {% endblock %}
