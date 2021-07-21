@@ -93,7 +93,7 @@
         </div>
         <div class="panel-body">
           <p data-bind="text: description"></p>
-          <p><small><b>{% trans "Owner" %}:&nbsp;</b><b data-bind="text: domain_name"></b></small></p>
+          <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
           <!-- ko if: invitation.status === 'rejected' -->
             <p>{% trans "Invitation rejected" %}
             <small>
