@@ -3,6 +3,7 @@ hqDefine("registry/js/registry_list", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
     $,
     _,
@@ -40,34 +41,18 @@ hqDefine("registry/js/registry_list", [
             "%(count)s Project Spaces Participating",
         )
     }
-    let DeleteModal = function (element) {
-        let self = {
-            registryName: ko.observable(),
-            registryId: ko.observable(),
-        };
-        self.show = function(registry) {
-            self.registryName(registry.name);
-            self.registryId(registry.id);
-            element.modal('show');
-        }
-        self.deleteRegistry = function() {
-            console.log("TODO: delete registry", self.registryId)
-            element.modal('hide');
-        }
-        return self;
-    }
-    let OwnedDataRegistry = function (registry, deleteModal) {
+    let OwnedDataRegistry = function (registry) {
         let self = registry;
         self.acceptedText = getAcceptedText(self);
         self.pendingText = getPendingText(self);
         self.rejectedText = getRejectedText(self);
 
-        self.showDeleteModal = function() {
-            deleteModal.show(self);
-        }
-
         self.inviteProject = function() {
             console.log("TODO: invite project")
+        }
+
+        self.deleteRegistry = function() {
+            console.log("TODO: delete registry", self.name)
         }
 
         return self;
@@ -87,9 +72,9 @@ hqDefine("registry/js/registry_list", [
         return self;
     };
 
-    let dataRegistryList = function ({ownedRegistries, invitedRegistries, deleteModal}) {
+    let dataRegistryList = function ({ownedRegistries, invitedRegistries}) {
         return {
-            ownedRegistries: _.map(ownedRegistries, (registry) => OwnedDataRegistry(registry, deleteModal)),
+            ownedRegistries: _.map(ownedRegistries, (registry) => OwnedDataRegistry(registry)),
             invitedRegistries: _.map(invitedRegistries, (registry) => InvitedDataRegistry(registry)),
             newRegistry: function() {
                 console.log("TODO: New Registry");
@@ -97,13 +82,9 @@ hqDefine("registry/js/registry_list", [
         }
     }
     $(function () {
-        let modalElement = $("#delete-registry-modal"),
-            deleteModal = DeleteModal(modalElement);
-        modalElement.koApplyBindings(deleteModal);
         $("#data-registry-list").koApplyBindings(dataRegistryList({
             ownedRegistries: initialPageData.get("owned_registries"),
             invitedRegistries: initialPageData.get("invited_registries"),
-            deleteModal: deleteModal,
         }));
     });
 });
