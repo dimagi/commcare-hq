@@ -38,6 +38,15 @@ hqDefine("registry/js/registry_list", [
             registry.participator_count
         ), {"count": registry.participator_count}, true);
     }
+    let getStatusText = function(registry) {
+        if (registry.invitation.status === 'rejected') {
+            return gettext('Rejected')   ;
+        } else if (registry.invitation.status === 'accepted') {
+            return gettext('Accepted');
+        } else {
+            return gettext('Pending');
+        }
+    }
     let OwnedDataRegistry = function (registry) {
         let self = registry;
         self.acceptedText = getAcceptedText(self);
@@ -58,6 +67,7 @@ hqDefine("registry/js/registry_list", [
     let InvitedDataRegistry = function (registry) {
         let self = registry;
         self.participatorCountText = getParticipatorCountText(self);
+        self.statusText = getStatusText(self);
 
         self.acceptInvitation = function() {
             console.log("TODO: accept invitation")
