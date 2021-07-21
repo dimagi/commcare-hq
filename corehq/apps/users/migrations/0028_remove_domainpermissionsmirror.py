@@ -1,3 +1,5 @@
+import sys
+
 from django.db import migrations
 
 from corehq.apps.accounting.models import BillingAccount
@@ -13,6 +15,13 @@ def migrate_mirrors(apps, schema_editor):
         account = BillingAccount.get_account_by_domain(source)
         account_domains = set(account.get_domains())
         mirror_domains = {o.mirror for o in DomainPermissionsMirror.objects.filter(source=source)}
+        if EnterprisePermissions.objects.filter(account=account).exists():
+            print(f"""
+            Found a pre-existing enterprise permissions configuration for account {account.id}.
+            Enterprise permissions no longer supports multiple configurations in the same account.
+            Please delete one of the DomainPermissionsMirror source domains in this account.
+            """)
+            sys.exit(1)
         EnterprisePermissions(
             account=account,
             is_enabled=True,
