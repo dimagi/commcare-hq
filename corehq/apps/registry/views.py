@@ -1,9 +1,11 @@
 from collections import Counter
 
+from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
@@ -63,3 +65,21 @@ def _registry_list_context(domain, registry):
             "invitation": for_this_domain[0].to_json()
         })
     return context
+
+
+@domain_admin_required
+@require_POST
+def accept_registry_invitation(request, domain):
+    registry_slug = request.POST.get('registry_slug')
+    try:
+        invitation = RegistryInvitation.objects.get(
+            registry__slug=registry_slug,
+            domain=domain
+        )
+    except RegistryInvitation.DoesNotExist:
+        raise Http404
+
+    if not invitation.is_accepted:
+        invitation.accept(request.user)
+
+    return JsonResponse(_registry_list_context(domain, invitation.registry))

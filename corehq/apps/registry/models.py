@@ -141,6 +141,14 @@ class RegistryInvitation(models.Model):
         self.save()
         self.registry.logger.invitation_rejected(user, self)
 
+    @property
+    def is_accepted(self):
+        return self.status == self.STATUS_ACCEPTED
+
+    @property
+    def is_rejected(self):
+        return self.status == self.STATUS_REJECTED
+
     def to_json(self):
         return {
             "registry_id": self.registry_id,

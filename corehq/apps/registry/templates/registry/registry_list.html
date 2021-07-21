@@ -18,6 +18,9 @@
 {% block page_content %}
   {% initial_page_data "owned_registries" owned_registries %}
   {% initial_page_data "invited_registries" invited_registries %}
+  {% registerurl "accept_registry_invitation" domain %}
+{#  {% registerurl "reject_registry_invitation" domain %}#}
+{#  {% registerurl "add_registry_invitation" domain %}#}
   <div id="data-registry-list">
     <div class="row">
       <div class="col-sm-12 col-md-9">
