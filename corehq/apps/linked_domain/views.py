@@ -35,7 +35,6 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
@@ -55,7 +54,6 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     UnsupportedActionError,
 )
-from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_data_dictionary,
@@ -76,10 +74,7 @@ from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
     push_models,
 )
-from corehq.apps.linked_domain.ucr import (
-    create_linked_ucr,
-    unlink_reports_in_domain,
-)
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
@@ -345,11 +340,6 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
         link.deleted = True
         link.save()
-
-        if toggles.ERM_DEVELOPMENT.enabled(self.domain):
-            unlink_apps_in_domain(linked_domain)
-            unlink_reports_in_domain(linked_domain)
-            unlink_keywords_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 
