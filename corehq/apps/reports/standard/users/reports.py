@@ -128,8 +128,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            key = f"details__changes__{user_property}__isnull"
-            filters = filters & Q(**{key: False})
+            filters = filters & Q(**{"details__changes__has_key": user_property})
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
