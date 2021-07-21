@@ -358,8 +358,9 @@ class _CaseImportRow(object):
         self.owner_accessor = owner_accessor
 
         self.case_name = fields_to_update.pop('name', None)
+        self._check_case_name()
         self.external_id = fields_to_update.pop('external_id', None)
-        self.check_valid_external_id()
+        self._check_valid_external_id()
         self.parent_id = fields_to_update.pop('parent_id', None)
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
@@ -370,7 +371,14 @@ class _CaseImportRow(object):
         self.uploaded_owner_id = fields_to_update.pop('owner_id', None)
         self.date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
 
-    def check_valid_external_id(self):
+    def _check_case_name(self):
+        if self.case_name and len(self.case_name) > 255:
+            raise exceptions.CaseNameTooLong('name')
+
+    def _check_valid_external_id(self):
+        if self.external_id and len(self.external_id) > 255:
+            raise exceptions.ExternalIdTooLong('name')
+
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()

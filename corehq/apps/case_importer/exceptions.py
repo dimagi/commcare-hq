@@ -138,3 +138,13 @@ class TooManyMatches(CaseRowError):
         "These rows matched more than one case at the same time - this means "
         "that there are cases in your system with the same external ID."
     )
+
+
+class CaseNameTooLong(CaseRowError):
+    title = ugettext_noop('Name Too Long')
+    message = ugettext_lazy("The case name cannot be longer than 255 characters")
+
+
+class ExternalIdTooLong(CaseRowError):
+    title = ugettext_noop('External ID Too Long')
+    message = ugettext_lazy("The external id cannot be longer than 255 characters")
