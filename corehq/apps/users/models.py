@@ -3117,5 +3117,4 @@ class UserHistory(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['domain']),
-            models.Index(fields=['details']),
         ]
