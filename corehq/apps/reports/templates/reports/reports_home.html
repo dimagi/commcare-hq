@@ -12,13 +12,15 @@
 
   <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
-    <li><a href="#scheduled-reports" data-toggle="tab">
-      {% if others_scheduled_reports %}
-        {% trans "Scheduled Reports" %}
-      {% else %}
-        {% trans "My Scheduled Reports" %}
-      {% endif %}
-    </a></li>
+    {% if request.couch_user.can_download_reports %}
+      <li><a href="#scheduled-reports" data-toggle="tab">
+        {% if others_scheduled_reports %}
+          {% trans "Scheduled Reports" %}
+        {% else %}
+          {% trans "My Scheduled Reports" %}
+        {% endif %}
+      </a></li>
+    {% endif %}
   </ul>
   <div class="tab-content">
     <div class="tab-pane" id="ko-report-config-list">
