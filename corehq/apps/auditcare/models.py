@@ -215,6 +215,22 @@ class AccessAudit(AuditEvent):
         audit.save()
 
 
+class AuditcareMigrationMeta(models.Model):
+    STARTED = "s"
+    FINISHED = "f"
+    ERRORED = "e"
+    MIGRATION_STATES = {
+        STARTED: "Started",
+        FINISHED: "Finished",
+        ERRORED: "Errored",
+    }
+    key = models.CharField(max_length=50, db_index=True)
+    state = models.CharField(max_length=1, choices=MIGRATION_STATES.items())
+    record_count = models.PositiveIntegerField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+
 def audit_login(sender, *, request, user, **kwargs):
     AccessAudit.audit_login(request, user)  # success
 
