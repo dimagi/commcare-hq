@@ -69,11 +69,9 @@ branches:
     - ap/auditcare-migration # Amit July 8
     - rc/explain-before-entering # Robert July 8 [QA]
     - rp/enterprize-sms-report # Rynhard July 12
-    - bmb/hubspot-privacy  # Biyeun July 12
-    - bmb/sso-domain-login-update  # Biyeun July 15
     - smh/tableau-server-dropdown-modification # Steph July 19
-    - bmb/sso-alternate-login  # Biyeun July 19
     - jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
     - rc/clarify-explanation # Robert July 20
     - ml/add-bulk-delete-form-export-report # Minha July 20
+    - bmb/hubspot-js-alt  # Biyeun July 21
 submodules: { }
