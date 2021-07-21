@@ -995,6 +995,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
+        if prop['allow_blank_value']:
+            ret['allow_blank_value'] = prop['allow_blank_value']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
