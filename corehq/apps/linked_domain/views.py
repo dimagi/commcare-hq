@@ -12,6 +12,7 @@ from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -34,7 +35,6 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
@@ -54,7 +54,6 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     UnsupportedActionError,
 )
-from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_data_dictionary,
@@ -75,10 +74,7 @@ from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
     push_models,
 )
-from corehq.apps.linked_domain.ucr import (
-    create_linked_ucr,
-    unlink_reports_in_domain,
-)
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
@@ -106,7 +102,7 @@ from corehq.apps.userreports.models import (
 
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import ERM_DEVELOPMENT
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -295,7 +291,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'is_erm_ff_enabled': ERM_DEVELOPMENT.enabled(self.domain),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
             'view_data': {
                 'is_downstream_domain': bool(master_link),
                 'upstream_domains': upstream_domains,
@@ -344,11 +340,6 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
         link.deleted = True
         link.save()
-
-        if toggles.ERM_DEVELOPMENT.enabled(self.domain):
-            unlink_apps_in_domain(linked_domain)
-            unlink_reports_in_domain(linked_domain)
-            unlink_keywords_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 

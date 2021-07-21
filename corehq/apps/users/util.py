@@ -338,7 +338,8 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param couch_user: user being changed
     :param changed_by_user: user making the change or SYSTEM_USER_ID
     :param changed_via: changed via medium i.e API/Web
-    :param message: Optional Message text
+    :param message: Optional Message text. This message should NEVER be a translated message.
+        Refer https://github.com/dimagi/commcare-hq/pull/30064 for details.
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
     :param domain_required_for_log: set to False to allow domain less log for specific changes
