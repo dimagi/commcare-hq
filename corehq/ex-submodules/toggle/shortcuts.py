@@ -1,9 +1,11 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from memoized import memoized
 
 from .models import Toggle
 
 
+@memoized
 def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
@@ -22,6 +24,7 @@ def set_toggle(slug, item, enabled, namespace=None):
     """
     Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
     """
+    toggle_enabled.reset_cache(slug, item, namespace=namespace)
     if toggle_enabled(slug, item, namespace=namespace) != enabled:
         ns_item = namespaced_item(item, namespace)
         try:
