@@ -1006,6 +1006,58 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(user_history.message, '')
 
+    def test_upload_with_phone_number(self):
+        user_specs = self._get_spec()
+        user_specs['phone-number'] = '8765547824'
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        numbers = user_history.details['changes']['phone_numbers']
+        self.assertEqual(numbers, ['8765547824'])
+
+    def test_upload_with_multiple_phone_numbers(self):
+        initial_default_number = '12345678912'
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+
+        number1 = '8765547824'
+        number2 = '7765547823'
+
+        user_specs['phone-number-1'] = number1
+        user_specs['phone-number-2'] = number2
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+
+        self.assertTrue(f'Added phone number {number1}' in changes)
+        self.assertTrue(f'Added phone number {number2}' in changes)
+        self.assertTrue(f'Removed phone number {initial_default_number}' in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number1)
+        self.assertEqual(user.phone_numbers, [number1, number2])
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     @classmethod

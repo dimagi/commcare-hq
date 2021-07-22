@@ -1,4 +1,6 @@
+import copy
 from dimagi.utils.parsing import string_to_boolean
+from django.utils.translation import ugettext as _
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -147,12 +149,15 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_password(password)
         self.logger.add_change_message("Password Reset")
 
-    def update_phone_number(self, phone_number):
-        fmt_phone_number = _fmt_phone(phone_number)
-        if fmt_phone_number not in self.user.phone_numbers:
-            self.logger.add_change_message(f"Added phone number {fmt_phone_number}")
-        # always call this to set phone number as default if needed
-        self.user.add_phone_number(fmt_phone_number, default=True)
+    def update_phone_numbers(self, phone_numbers):
+        """
+        The first item in 'phone_numbers' will be the default
+        """
+        old_user_phone_numbers = copy.deepcopy(self.user.phone_numbers)
+        fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
+
+        self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        self._log_phone_number_changes(old_user_phone_numbers, fmt_phone_numbers)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))
@@ -229,6 +234,18 @@ class CommCareUserImporter(BaseUserImporter):
                 user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(f"Primary location: {user_updated_primary_location_name}")
 
+    def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
+        (items_added, items_removed) = find_differences_in_list(
+            list_to_compare=new_phone_numbers,
+            reference_list=old_phone_numbers
+        )
+
+        for number in items_added:
+            self.logger.add_change_message(_(f"Added phone number {number}"))
+
+        for number in items_removed:
+            self.logger.add_change_message(_(f"Removed phone number {number}"))
+
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, str):
@@ -304,3 +321,23 @@ def get_user_primary_location_name(user, domain):
     primary_location = user.get_sql_location(domain)
     if primary_location:
         return primary_location.name
+
+
+def find_differences_in_list(list_to_compare: list, reference_list: list):
+    """
+    Find the differences between 'list_to_compare' and 'reference_list' and
+    return (added_items, removed_items)
+
+    'added_items': items that are in 'list_to_compare' but not in 'reference_list'
+    'removed_items': items that are in 'reference_list' but not 'list_to_compare'
+
+    >>> find_differences_in_list(list_to_compare=[3,4,5,6], reference_list=[1,2,3,5])
+    ({4, 6}, {1, 2})
+    """
+
+    shared_items = set(list_to_compare).intersection(reference_list)
+
+    added_items = set(list_to_compare).difference(shared_items)
+    removed_items = set(reference_list).difference(shared_items)
+
+    return added_items, removed_items
