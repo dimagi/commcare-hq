@@ -153,7 +153,7 @@ class CommCareUserImporter(BaseUserImporter):
         """
         The first item in 'phone_numbers' will be the default
         """
-        old_user_phone_numbers = copy.deepcopy(self.user.phone_numbers)
+        old_user_phone_numbers = self.user.phone_numbers
         fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
 
         self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
