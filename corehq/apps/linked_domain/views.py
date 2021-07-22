@@ -11,7 +11,6 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -91,7 +90,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
@@ -398,7 +397,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     base_template = "reports/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'
-    dispatcher = DomainReportDispatcher
+    dispatcher = ReleaseManagementReportDispatcher
     ajax_pagination = True
     asynchronous = False
     sortable = False
