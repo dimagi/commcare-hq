@@ -15,11 +15,7 @@
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
       <!-- ko if: showMultipleTabs -->
-        {% comment %}
-          Keep the tab headers out of the .ko-template div because they use .sticky-tabs, which is subject
-          to race condition problems if the tabs aren't visible when its document ready handler runs.
-        {% endcomment %}
-        <ul class="nav nav-tabs sticky-tabs">
+        <ul class="nav nav-tabs">
           <!-- ko if: isUpstreamDomain -->
             <li class="active"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Project Spaces" %}</a></li>
             <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
