@@ -45,6 +45,7 @@ from corehq.apps.hqmedia.views import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
+    get_domains_eligible_for_linked_apps,
     is_active_downstream_domain,
 )
 from corehq.util.soft_assert import soft_assert
@@ -268,8 +269,10 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 and get_domain_master_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
+    linkable_domains = get_domains_eligible_for_linked_apps(domain, request.couch_user)
     context.update({
         'domain_names': sorted(domain_names),
+        'linkable_domains': sorted(linkable_domains),
     })
     context.update({
         'copy_app_form': copy_app_form,
@@ -279,7 +282,9 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
-        from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
+        from corehq.apps.hqmedia.controller import (
+            MultimediaLogoUploadController,
+        )
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         uploaders = [
             MultimediaLogoUploadController(
