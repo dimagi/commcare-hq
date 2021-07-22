@@ -22,6 +22,7 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.apps.users.util import format_username
+from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
@@ -372,11 +373,11 @@ class _CaseImportRow(object):
         self.date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
 
     def _check_case_name(self):
-        if self.case_name and len(self.case_name) > 255:
+        if self.case_name and len(self.case_name) > STANDARD_CHARFIELD_LENGTH:
             raise exceptions.CaseNameTooLong('name')
 
     def _check_valid_external_id(self):
-        if self.external_id and len(self.external_id) > 255:
+        if self.external_id and len(self.external_id) > STANDARD_CHARFIELD_LENGTH:
             raise exceptions.ExternalIdTooLong('external_id')
 
         if self.config.search_field == 'external_id' and not self.search_id:

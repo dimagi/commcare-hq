@@ -2,6 +2,8 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import xlrd
 
+from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
+
 
 class ImporterError(Exception):
     """
@@ -142,9 +144,9 @@ class TooManyMatches(CaseRowError):
 
 class CaseNameTooLong(CaseRowError):
     title = ugettext_noop('Name Too Long')
-    message = ugettext_lazy("The case name cannot be longer than 255 characters")
+    message = ugettext_lazy(f"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
 
 
 class ExternalIdTooLong(CaseRowError):
     title = ugettext_noop('External ID Too Long')
-    message = ugettext_lazy("The external id cannot be longer than 255 characters")
+    message = ugettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
