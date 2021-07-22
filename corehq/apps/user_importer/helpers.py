@@ -1,6 +1,6 @@
 import copy
-from django.utils.translation import ugettext_lazy as _
 from dimagi.utils.parsing import string_to_boolean
+from django.utils.translation import ugettext as _
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
