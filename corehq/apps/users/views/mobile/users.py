@@ -348,8 +348,17 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
+                is_new_phone_number = phone_number not in self.editable_user.phone_numbers
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
+                if is_new_phone_number:
+                    log_user_change(
+                        self.request.domain,
+                        couch_user=self.editable_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB,
+                        message=f"Added phone number {phone_number}"
+                    )
                 messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
