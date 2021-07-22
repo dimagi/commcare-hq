@@ -198,6 +198,8 @@ def get_user_rows(user_dicts, user_headers):
 def get_user_headers(user_dicts):
     def get_phone_number_headers(users):
         mobile_headers = []
+        # Find the user with the most phone numbers associated and use that user's
+        # phone number keys as the phone number headers
         for user in users:
             user_keys = user.keys()
             phone_number_keys = [key for key in user_keys if 'phone-number' in key]
