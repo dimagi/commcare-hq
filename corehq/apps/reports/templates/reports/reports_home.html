@@ -83,7 +83,7 @@
       {% include "reports/partials/save_reports_modal.html" %}
     </div>
 
-    {% if report.show %}
+    {% if report.show and request.couch_user.can_download_reports %}
       <div class="tab-pane" id="scheduled-reports">
         <p><a class="btn btn-primary track-usage-link"
               href="{% url "edit_scheduled_report" domain %}"
