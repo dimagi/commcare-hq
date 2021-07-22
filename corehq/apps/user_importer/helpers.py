@@ -154,31 +154,13 @@ class CommCareUserImporter(BaseUserImporter):
 
     def update_phone_numbers(self, phone_numbers):
         """
-        The first number will be the default
+        The first item in 'phone_numbers' will be the default
         """
-        current_user_phone_numbers = copy.deepcopy(self.user.phone_numbers)
-        fmt_user_numbers = []
+        old_user_phone_numbers = copy.deepcopy(self.user.phone_numbers)
+        fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
 
-        for index, phone_number in enumerate(phone_numbers):
-            fmt_phone_number = _fmt_phone(phone_number)
-            fmt_user_numbers.append(fmt_phone_number)
-
-            is_default = (index == 0)  # default phone number at index = 0
-
-            if fmt_phone_number not in current_user_phone_numbers:
-                self.logger.add_change_message(_("Added phone number {new_phone_number}").format(
-                    new_phone_number=fmt_phone_number)
-                )
-
-            self.user.add_phone_number(fmt_phone_number, default=is_default)
-
-        redundant_numbers = set(self.user.phone_numbers).difference(set(fmt_user_numbers))
-
-        for number in redundant_numbers:
-            self.logger.add_change_message(_("Removed phone number {new_phone_number}").format(
-                new_phone_number=number)
-            )
-            self.user.delete_phone_number(number)
+        self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        self._log_phone_number_changes(old_user_phone_numbers, fmt_phone_numbers)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))
@@ -259,6 +241,18 @@ class CommCareUserImporter(BaseUserImporter):
                     _("Primary location: {primary_location_name}").format(
                         primary_location_name=user_updated_primary_location_name
                     ))
+
+    def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
+        (items_added, items_removed) = find_differences_in_list(
+            list_to_compare=new_phone_numbers,
+            reference_list=old_phone_numbers
+        )
+
+        for number in items_added:
+            self.logger.add_change_message(_(f"Added phone number {number}"))
+
+        for number in items_removed:
+            self.logger.add_change_message(_(f"Removed phone number {number}"))
 
 
 def _fmt_phone(phone_number):
@@ -343,3 +337,23 @@ def get_user_primary_location_name(user, domain):
     primary_location = user.get_sql_location(domain)
     if primary_location:
         return primary_location.name
+
+
+def find_differences_in_list(list_to_compare: list, reference_list: list):
+    """
+    Find the differences between 'list_to_compare' and 'reference_list' and
+    return (added_items, removed_items)
+
+    'added_items': items that are in 'list_to_compare' but not in 'reference_list'
+    'removed_items': items that are in 'reference_list' but not 'list_to_compare'
+
+    >>> find_differences_in_list(list_to_compare=[3,4,5,6], reference_list=[1,2,3,5])
+    ({4, 6}, {1, 2})
+    """
+
+    shared_items = set(list_to_compare).intersection(reference_list)
+
+    added_items = set(list_to_compare).difference(shared_items)
+    removed_items = set(reference_list).difference(shared_items)
+
+    return added_items, removed_items
