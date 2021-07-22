@@ -12,6 +12,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
@@ -35,9 +36,9 @@ from corehq.apps.linked_domain.util import (
 )
 from corehq.apps.reminders.views import KeywordsListView
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
+from corehq.privileges import RELEASE_MANAGEMENT
 
 
 @task(queue='linked_domain_queue')
@@ -163,7 +164,7 @@ The following linked project spaces received content:
             update_linked_ucr(domain_link, linked_report.get_id)
 
         if not found:
-            if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
+            if domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT):
                 linked_report_info = create_linked_ucr(domain_link, report_id)
                 update_linked_ucr(domain_link, linked_report_info.report.get_id)
             else:
@@ -191,7 +192,7 @@ The following linked project spaces received content:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
                                  .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
-            if toggles.ERM_DEVELOPMENT.enabled(self.master_domain):
+            if domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT):
                 linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
             else:
                 return self._error_tuple(
