@@ -99,3 +99,16 @@ def _get_invitation_or_404(domain, registry_slug):
         )
     except RegistryInvitation.DoesNotExist:
         raise Http404
+
+
+@require_enterprise_admin
+@login_and_domain_required
+def edit_registry(request, domain, registry_slug):
+    context = {}
+    return render(request, "registry/registry_edit.html", context)
+
+
+@domain_admin_required
+def manage_registry_participation(request, domain, registry_slug):
+    context = {}
+    return render(request, "registry/registry_manage_participation.html", context)

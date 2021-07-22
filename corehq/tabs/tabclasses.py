@@ -1606,6 +1606,16 @@ class EnterpriseSettingsTab(UITab):
                 {
                     'title': _('Data Registries'),
                     'url': reverse('data_registries', args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("Edit Registry"),
+                            'urlname': "edit_registry",
+                        },
+                        {
+                            'title': _("Manage Registry"),
+                            'urlname': "manage_registry_participation",
+                        },
+                    ],
                 },
             ])
         enterprise_views.append({

@@ -30,6 +30,7 @@ hqDefine("registry/js/registry_list", [
         self.rejectedText = ko.computed(function() {
             return text.getRejectedBadgeText(self);
         });
+        self.editUrl = initialPageData.reverse('edit_registry', self.slug())
 
         return self;
     };
@@ -47,6 +48,8 @@ hqDefine("registry/js/registry_list", [
                 return text.getRejectedText(self.invitation);
             }
         });
+
+        self.manageUrl = initialPageData.reverse('manage_registry_participation', self.slug())
 
         self.acceptInvitation = function() {
             actions.acceptInvitation(self.slug, (data) => {

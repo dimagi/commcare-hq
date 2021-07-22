@@ -20,6 +20,8 @@
   {% initial_page_data "invited_registries" invited_registries %}
   {% registerurl "accept_registry_invitation" domain %}
   {% registerurl "reject_registry_invitation" domain %}
+  {% registerurl "edit_registry" domain '---' %}
+  {% registerurl "manage_registry_participation" domain '---' %}
   <div id="data-registry-list">
     <div class="row">
       <div class="col-sm-12 col-md-9">
@@ -40,7 +42,7 @@
         <div class="panel-heading clickable">
           <div class="row">
             <div class="col-md-10">
-              <span data-bind="text: name"></span>
+              <a data-bind="text: name, attr: { href: editUrl }"></a>
             </div>
             <div class="col-md-2 text-right text-success">
               <i class="fa fa-user"></i>
@@ -74,7 +76,7 @@
         <div class="panel-heading clickable">
           <div class="row">
             <div class="col-md-10">
-              <span data-bind="text: name"></span>
+              <a data-bind="text: name, attr: { href: manageUrl }"></a>
             </div>
             <div class="col-md-2 text-right text-muted">
               <i class="fa fa-user-o"></i>
