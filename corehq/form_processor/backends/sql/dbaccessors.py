@@ -435,33 +435,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         )
 
     @staticmethod
-    def iter_forms_by_last_modified_in_domain(domain, start_datetime, end_datetime):
-        '''
-        Returns all forms that have been modified within a time range in a specific domain. The start date is
-        exclusive while the end date is inclusive (start_datetime, end_datetime].
-
-        NOTE: This does not include archived forms
-
-        :param domain: domain in which to fetch forms from
-        :param start_datetime: The start date of which modified forms must be greater than
-        :param end_datetime: The end date of which modified forms must be less than or equal to
-
-        :returns: An iterator of XFormInstanceSQL objects
-        '''
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        annotate = {
-            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
-        }
-
-        return paginate_query_across_partitioned_databases(
-            XFormInstanceSQL,
-            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime, domain=domain),
-            annotate=annotate,
-            load_source='forms_by_last_modified'
-        )
-
-    @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
         from corehq.sql_db.util import paginate_query_across_partitioned_databases
 

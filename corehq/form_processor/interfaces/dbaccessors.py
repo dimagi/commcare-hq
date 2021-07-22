@@ -79,11 +79,6 @@ class AbstractFormAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def iter_forms_by_last_modified_in_domain(domain, start_datetime, end_datetime):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
         raise NotImplementedError
 
@@ -173,13 +168,6 @@ class FormAccessors(object):
 
     def iter_forms_by_last_modified(self, start_datetime, end_datetime):
         return self.db_accessor.iter_forms_by_last_modified(
-            start_datetime,
-            end_datetime,
-        )
-
-    def iter_forms_by_last_modified_in_domain(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_forms_by_last_modified_in_domain(
-            self.domain,
             start_datetime,
             end_datetime,
         )
