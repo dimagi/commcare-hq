@@ -21,11 +21,12 @@ from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
-from corehq.apps.users.models import CommCareUser, WebUser, DomainPermissionsMirror
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled, flag_disabled
@@ -45,6 +46,13 @@ class ImporterTest(TestCase):
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
 
+        self.subdomain1 = create_domain('subdomain1')
+        self.subdomain2 = create_domain('subdomain2')
+        self.ignored_domain = create_domain('ignored-domain')
+        create_enterprise_permissions(self.couch_user.username, self.domain,
+                                      [self.subdomain1.name, self.subdomain2.name],
+                                      [self.ignored_domain.name])
+
         self.accessor = CaseAccessors(self.domain)
 
         self.factory = CaseFactory(domain=self.domain, case_defaults={
@@ -55,6 +63,9 @@ class ImporterTest(TestCase):
     def tearDown(self):
         self.couch_user.delete(self.domain, deleted_by=None)
         self.domain_obj.delete()
+        self.subdomain1.delete()
+        self.subdomain2.delete()
+        self.ignored_domain.delete()
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
@@ -431,25 +442,22 @@ class ImporterTest(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import(self):
-        mirror_domain1 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain1')
-        mirror_domain2 = DomainPermissionsMirror(source=self.domain, mirror='mirrordomain2')
-        mirror_domain1.save()
-        mirror_domain2.save()
         headers_with_domain = ['case_id', 'name', 'artist', 'domain']
         config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
         case_with_domain_file = make_worksheet_wrapper(
             ['case_id', 'name', 'artist', 'domain'],
             ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', mirror_domain1.mirror],
-            ['', 'name-2', 'artist-2', mirror_domain2.mirror],
+            ['', 'name-1', 'artist-1', self.subdomain1.name],
+            ['', 'name-2', 'artist-2', self.subdomain2.name],
             ['', 'name-3', 'artist-3', self.domain],
             ['', 'name-4', 'artist-4', self.domain],
-            ['', 'name-5', 'artist-5', 'not-existing-domain']
+            ['', 'name-5', 'artist-5', 'not-existing-domain'],
+            ['', 'name-6', 'artist-6', self.ignored_domain.name],
         )
         res = do_import(case_with_domain_file, config_1, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(1, res['failed_count'])
+        self.assertEqual(2, res['failed_count'])
 
         # Asserting current domain
         cur_case_ids = self.accessor.get_case_ids_in_domain()
@@ -459,21 +467,21 @@ class ImporterTest(TestCase):
         cases = {c.name: c for c in cur_cases}
         self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
 
-        # Asserting mirror domain 1
-        md1_case_ids = CaseAccessors(mirror_domain1.mirror).get_case_ids_in_domain()
-        md1_cases = list(self.accessor.get_cases(md1_case_ids))
-        self.assertEqual(1, len(md1_cases))
-        # Asserting mirror domain 1 case property
-        md1_cases_pro = {c.name: c for c in md1_cases}
-        self.assertEqual(md1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
+        # Asserting subdomain 1
+        s1_case_ids = CaseAccessors(self.subdomain1.name).get_case_ids_in_domain()
+        s1_cases = list(self.accessor.get_cases(s1_case_ids))
+        self.assertEqual(1, len(s1_cases))
+        # Asserting subdomain 1 case property
+        s1_cases_pro = {c.name: c for c in s1_cases}
+        self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
 
-        # Asserting mirror domain 2
-        md2_case_ids = CaseAccessors(mirror_domain2.mirror).get_case_ids_in_domain()
-        md2_cases = list(self.accessor.get_cases(md2_case_ids))
-        self.assertEqual(1, len(md2_cases))
-        # Asserting mirror domain 2 case propperty
-        md2_cases_pro = {c.name: c for c in md2_cases}
-        self.assertEqual(md2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
+        # Asserting subdomain 2
+        s2_case_ids = CaseAccessors(self.subdomain2.name).get_case_ids_in_domain()
+        s2_cases = list(self.accessor.get_cases(s2_case_ids))
+        self.assertEqual(1, len(s2_cases))
+        # Asserting subdomain 2 case property
+        s2_cases_pro = {c.name: c for c in s2_cases}
+        self.assertEqual(s2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
 
     # This test will only run on SQL backend because of a bug in couch backend
     # that overrides current domain with the 'domain' column value from excel
@@ -663,6 +671,19 @@ class ImporterTest(TestCase):
             ['', 'Jeff', '', 'blue', bad_group.name],
         ])
         self.assertIn(exceptions.InvalidOwner.title, res['errors'])
+
+    @run_with_all_backends
+    def test_case_name_too_long(self):
+        res = self.import_mock_file([
+            ['case_id', 'name', 'external_id', 'favorite_color'],
+            ['', 'normal name', '', 'blue'],
+            ['', 'A' * 300, '', 'polka dot'],
+            ['', 'another normal name', 'A' * 300, 'polka dot'],
+        ])
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(2, res['failed_count'])
+        self.assertIn(exceptions.CaseNameTooLong.title, res['errors'])
+        self.assertIn(exceptions.ExternalIdTooLong.title, res['errors'])
 
 
 def make_worksheet_wrapper(*rows):

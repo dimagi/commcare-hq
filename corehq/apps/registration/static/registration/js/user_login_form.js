@@ -32,7 +32,6 @@ hqDefine('registration/js/user_login_form', [
         self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
-        self.passwordFormGroup.hide();
 
         self.authUsername = ko.observable(options.initialUsername);
         self.authUsername.subscribe(function (newValue) {
@@ -47,14 +46,14 @@ hqDefine('registration/js/user_login_form', [
         self.continueTextPromise = null;
         self.defaultContinueText = gettext("Continue");
         self.continueButtonText = ko.observable(self.defaultContinueText);
-        self.showContinueButton = ko.observable(true);
+        self.showContinueButton = ko.observable(false);
         self.showContinueSpinner = ko.observable(false);
 
         self.isContinueDisabled = ko.computed(function () {
             return !emailUtils.validateEmail(self.authUsername());
         });
 
-        self.showSignInButton = ko.observable(false);
+        self.showSignInButton = ko.observable(true);
 
         /**
          * This updates the "Continue" Button text with either "Continue"
