@@ -1,5 +1,5 @@
 /* global DOMPurify, mdAnchorRender */
-hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
+hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();

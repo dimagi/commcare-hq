@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
+        UI = hqImport("cloudcare/js/form_entry/form_ui");
 
     function WebFormSession(params) {
         var self = {};

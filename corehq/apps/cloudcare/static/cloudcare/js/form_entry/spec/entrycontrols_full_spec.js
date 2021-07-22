@@ -3,7 +3,7 @@
 describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Controls = hqImport("cloudcare/js/form_entry/entrycontrols_full"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui"),
+        UI = hqImport("cloudcare/js/form_entry/form_ui"),
         questionJSON,
         spy;
 

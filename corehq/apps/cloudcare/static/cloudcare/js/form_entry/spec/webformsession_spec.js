@@ -2,7 +2,7 @@
 
 describe('WebForm', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
+        UI = hqImport("cloudcare/js/form_entry/form_ui");
 
     describe('TaskQueue', function () {
         var callCount,
