@@ -527,6 +527,7 @@ class QueryPrompt(DisplayNode):
     hidden = SimpleBooleanField('@hidden', 'true', 'false', required=False)
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
+    allow_blank_value = SimpleBooleanField('@allow_blank_value', 'true', 'false', required=False)
 
     itemset = NodeField('itemset', Itemset)
 
