@@ -1,3 +1,4 @@
+import copy
 from dimagi.utils.parsing import string_to_boolean
 from django.utils.translation import ugettext as _
 
@@ -151,14 +152,33 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_password(password)
         self.logger.add_change_message(_("Password Reset"))
 
-    def update_phone_number(self, phone_number):
-        fmt_phone_number = _fmt_phone(phone_number)
-        if fmt_phone_number not in self.user.phone_numbers:
-            self.logger.add_change_message(_("Added phone number {new_phone_number}").format(
-                new_phone_number=fmt_phone_number)
+    def update_phone_numbers(self, phone_numbers):
+        """
+        The first number will be the default
+        """
+        current_user_phone_numbers = copy.deepcopy(self.user.phone_numbers)
+        fmt_user_numbers = []
+
+        for index, phone_number in enumerate(phone_numbers):
+            fmt_phone_number = _fmt_phone(phone_number)
+            fmt_user_numbers.append(fmt_phone_number)
+
+            is_default = (index == 0)  # default phone number at index = 0
+
+            if fmt_phone_number not in current_user_phone_numbers:
+                self.logger.add_change_message(_("Added phone number {new_phone_number}").format(
+                    new_phone_number=fmt_phone_number)
+                )
+
+            self.user.add_phone_number(fmt_phone_number, default=is_default)
+
+        redundant_numbers = set(self.user.phone_numbers).difference(set(fmt_user_numbers))
+
+        for number in redundant_numbers:
+            self.logger.add_change_message(_("Removed phone number {new_phone_number}").format(
+                new_phone_number=number)
             )
-        # always call this to set phone number as default if needed
-        self.user.add_phone_number(fmt_phone_number, default=True)
+            self.user.delete_phone_number(number)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))
