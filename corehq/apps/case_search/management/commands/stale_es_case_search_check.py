@@ -21,7 +21,8 @@ retry_on_es_timeout = retry_on(ESError, delays=[2**x for x in range(10)])
 
 
 class Command(BaseCommand):
-    help = """Checks for `server_modified_on` timestamp mismatches between `hqcases` and `case_search` indices."""
+    help = "Checks for `server_modified_on` timestamp mismatches between " \
+           "`hqcases` and `case_search` indices."
 
     def add_arguments(self, parser):
         parser.add_argument("--csv", action="store_true", default=False,
@@ -46,10 +47,16 @@ class Command(BaseCommand):
         self.stderr.style_func = lambda x: x
         logger = StubLogger(self.stderr)
         # domains
-        if domains and divide_key:
-            raise CommandError("--divide-key option is mutually exclusive with explicit domains")
-        elif not domains:
-            domains = fetch_all_case_search_domains()
+        all_cs_domains = fetch_all_case_search_domains()
+        if domains:
+            if divide_key:
+                raise CommandError("--divide-key option is mutually exclusive "
+                                   "with specified domains")
+            for index in range(len(domains) - 1, -1, -1):
+                if domains[index] not in all_cs_domains:
+                    logger.info("skipping domain %r (not in case_search index)",
+                                domains.pop(index))
+        else:
             total = len(domains)
             if divide_key:
                 try:
