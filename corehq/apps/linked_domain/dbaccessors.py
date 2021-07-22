@@ -10,7 +10,7 @@ from corehq.util.quickcache import quickcache
 
 
 @quickcache(['domain'], timeout=60 * 60)
-def get_domain_master_link(domain):
+def get_upstream_domain_link(domain):
     """
     :returns: ``DomainLink`` object linking this domain to it's master
     or None if no link exists
@@ -100,8 +100,8 @@ def get_upstream_domains(domain_name, user):
     return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})
 
 
-def get_domains_eligible_for_linked_apps(upstream_domain_name, user):
+def get_domains_eligible_for_linked_apps(upstream_domain_name):
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
         return [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
-    elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        return [d.name for d in Domain.active_for_user(user) if d.name != upstream_domain_name]
+
+    return []
