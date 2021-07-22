@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer-inline", function () {
+hqDefine("cloudcare/js/formplayer_inline", function () {
     var alertHtml = function (message, cssClass) {
         return (
             "<div class='alert " + (cssClass || 'alert-info') + "'>" +

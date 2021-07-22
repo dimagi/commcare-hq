@@ -247,7 +247,7 @@ config.js
 This controls the UI for the Web Apps Permissions page, in the Users section of HQ.
 Web apps permissions are not part of the standard roles and permissions framework. They use their own model, which grants/denies permissions to apps based on user groups.
 
-formplayer-inline.js
+formplayer_inline.js
 ====================
 
 Inline formplayer is for the legacy "Edit Forms" behavior, which allowed users to edit submitted forms using the web apps UI.
