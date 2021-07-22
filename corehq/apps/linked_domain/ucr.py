@@ -15,6 +15,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.toggles import ERM_DEVELOPMENT
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
@@ -48,7 +49,10 @@ def _get_or_create_datasource_link(domain_link, datasource, app_id):
 
     # app_id is needed to edit reports which is not possible with a linked project due to master_id
     # this is to ensure if the link is removed, the downstream report will be editable
-    datasource_json["meta"]["build"]["app_id"] = app_id
+    if ERM_DEVELOPMENT.enabled(domain_link.master_domain):
+        datasource_json["meta"]["build"]["app_id"] = app_id
+    else:
+        datasource_json["meta"]["build"]["app_id"] = None
 
     datasource_json["meta"]["master_id"] = datasource.get_id
 
