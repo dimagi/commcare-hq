@@ -8,13 +8,9 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.retry import retry_on
 
-from corehq.apps.es import (
-    CaseES,
-    CaseSearchES,
-    filters,
-)
-from corehq.apps.export.const import CASE_SCROLL_SIZE
+from corehq.apps.es import CaseSearchES
 from corehq.elastic import ESError
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 retry_on_es_timeout = retry_on(ESError, delays=[2**x for x in range(10)])
@@ -29,21 +25,19 @@ class Command(BaseCommand):
             help="Write output as CSV data instead of padded table.")
         parser.add_argument("-o", "--output", metavar="FILE", type=FileType("w"),
             default=self.stdout, help="Write output to %(metavar)s (default=STDOUT).")
-        parser.add_argument("--id-limit", metavar="COUNT", type=int, default=500,
-            help="Limit case_search queries to %(metavar)s IDs per query (default=%(default)s)")
+        parser.add_argument("--query-size", metavar="COUNT", type=int, default=500,
+            help="Limit queries to %(metavar)s case IDs per query (default=%(default)s)")
         parser.add_argument("--mismatch-seconds", metavar="SECONDS", type=float,
             default=(10 * 60),  # 10 minutes
             help="Delta seconds for records to be considered a mismatch for " \
             "(default=%(default)s)")
-        parser.add_argument("-s", "--since", metavar="YYYY-MM-DD",
-            help="Query cases modified since %(metavar)s (default=NO_LIMIT)")
         parser.add_argument("-d", "--divide-key", metavar="a[b]",
             help="When running against all domains, only query domains whose "
                  "first character of 'md5 hexdigest of name' is within range 'a->b'.")
         parser.add_argument("domains", metavar="DOMAIN", nargs="*",
             help="Check timestamps for %(metavar)s")
 
-    def handle(self, domains, divide_key, since, mismatch_seconds, id_limit, **options):
+    def handle(self, domains, divide_key, mismatch_seconds, query_size, **options):
         self.stderr.style_func = lambda x: x
         logger = StubLogger(self.stderr)
         # domains
@@ -67,16 +61,7 @@ class Command(BaseCommand):
                 domains = all_cs_domains
                 which = "all"
             logger.info("checking %s %s case_search domains", which, len(all_cs_domains))
-        # since
-        if since is None:
-            date_msg = ""
-            when = None
-        else:
-            date_msg = f" since {since}"
-            try:
-                when = datetime.strptime(f"{since}UTC", "%Y-%m-%d%Z")
-            except ValueError:
-                raise CommandError(f"invalid date: {since}")
+
         # warning condition if the `cases` document is newer than `case_search`
         warn_case_newer_than = timedelta(seconds=mismatch_seconds)
 
@@ -85,25 +70,16 @@ class Command(BaseCommand):
             max_col_width=36,
         )
         for domain in domains:
-            # query the cases index
-            cases = {}
-            query = (CaseES()
-                .domain(domain)
-                .source(["case_id", "server_modified_on"])
-                .size(CASE_SCROLL_SIZE))
-            if when is not None:
-                query = query.filter(filters.date_range("server_modified_on", gte=when))
-            logger.info("fetching cases for domain %r%s ...", domain, date_msg)
-            for case in query.scroll():
-                cases[case["case_id"]] = string_to_datetime(case["server_modified_on"])
+            logger.info("fetching cases for domain: %s", domain)
+            # query all cases and modified date
+            cases = dict(get_case_ids_and_modified(domain, query_size))
             logger.info("fetched %s cases", len(cases))
-
             # compare results to the case_search index
             case_searches = 0
             mismatches = 0
             logger.info("fetching case_searches ...")
             try:
-                for case_search in fetch_case_searches(cases, id_limit):
+                for case_search in fetch_case_searches(cases, query_size):
                     case_searches += 1
                     case_id = case_search["_id"]
                     server_modified_on = string_to_datetime(case_search["server_modified_on"])
@@ -141,6 +117,12 @@ def domain_subset(domains, key):
         if min <= index and index <= max:
             subset.append(name)
     return subset
+
+
+def get_case_ids_and_modified(domain, chunksize):
+    case_accessor = CaseAccessors(domain)
+    for case_ids in chunked(case_accessor.get_case_ids_in_domain(), chunksize):
+        yield from case_accessor.get_last_modified_dates(case_ids)
 
 
 @retry_on_es_timeout
