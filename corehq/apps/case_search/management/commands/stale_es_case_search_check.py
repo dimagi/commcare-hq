@@ -1,6 +1,7 @@
 import csv
 from argparse import FileType
 from datetime import datetime, timedelta
+from hashlib import md5
 
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.chunked import chunked
@@ -35,16 +36,30 @@ class Command(BaseCommand):
             "(default=%(default)s)")
         parser.add_argument("-s", "--since", metavar="YYYY-MM-DD",
             help="Query cases modified since %(metavar)s (default=NO_LIMIT)")
+        parser.add_argument("-d", "--divide-key", metavar="a[b]",
+            help="When running against all domains, only query domains whose "
+                 "first character of 'md5 hexdigest of name' is within range 'a->b'.")
         parser.add_argument("domains", metavar="DOMAIN", nargs="*",
             help="Check timestamps for %(metavar)s")
 
-    def handle(self, domains, since, mismatch_seconds, id_limit, **options):
+    def handle(self, domains, divide_key, since, mismatch_seconds, id_limit, **options):
         self.stderr.style_func = lambda x: x
         logger = StubLogger(self.stderr)
         # domains
-        if not domains:
+        if domains and divide_key:
+            raise CommandError("--divide-key option is mutually exclusive with explicit domains")
+        elif not domains:
             domains = sorted(fetch_all_case_search_domains())
-            logger.info("checking all %s case_search domains", len(domains))
+            total = len(domains)
+            if divide_key:
+                try:
+                    domains = domain_subset(domains, divide_key)
+                except ValueError as exc:
+                    raise CommandError(f"invalid divide-key: {exc!s}")
+                which = f"{len(domains)} of"
+            else:
+                which = "all"
+            logger.info("checking %s %s case_search domains", which, total)
         # since
         if since is None:
             date_msg = ""
@@ -105,6 +120,20 @@ class Command(BaseCommand):
             table.write_csv(options["output"])
         else:
             options["output"].write(table.render())
+
+
+def domain_subset(domains, key):
+    if len(key) not in (1, 2):
+        raise ValueError(f"invalid length (must be 1 or 2 hex digits): {key}")
+    key = (key * 2) if len(key) == 1 else key
+    min = int(key[0], 16)
+    max = int(key[1], 16)
+    subset = []
+    for name in domains:
+        index = int(md5(name.encode("utf-8")).hexdigest()[0], 16)
+        if min <= index and index <= max:
+            subset.append(name)
+    return subset
 
 
 @retry_on_es_timeout
