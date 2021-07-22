@@ -2,22 +2,27 @@
 {% load i18n %}
 
 <div id="ko-getting-started" data-bind="with: $root.gettingStartedViewModel">
-  <h3>{% trans "Linked Projects" %}</h3>
+  <h3>{% trans "Linked Project Spaces" %}</h3>
+  <p>{% trans "Create links between upstream and downstream project spaces." %}</p>
+  <p>{% trans "Linked project spaces allow you to:" %}</p>
+  <ol>
+    <li>{% trans "Push content to a downstream project space" %}</li>
+    <li>{% trans "Pull content from an upstream project space" %}</li>
+  </ol>
   <p>
     {% blocktrans %}
-      Get started by creating a link between two projects, allowing you to push and pull content.<br/>
-      If you want to pull content from another project into this project, make it a downstream project.<br/>
-      <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about linked projects.
+      <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about Linked Project Spaces.
     {% endblocktrans %}
   </p>
   <div class="spacer"></div>
   <div class="row">
     <!-- ko if: upstreamDomains().length > 0 -->
       <div class="col-sm-6">
-        <h4>Add as Downstream Project</h4>
+        <h4>{% trans "Link to an existing upstream project space" %}</h4>
         <p>
           {% blocktrans %}
-            If you want to pull content from an upstream project, link this project to an upstream project.
+            To pull content from an upstream project space, link this project space to an upstream project space.
+            The link can only be created from the upstream project space.
           {% endblocktrans %}
         </p>
         <!-- ko if: upstreamDomains().length == 1 -->
@@ -25,7 +30,7 @@
                 class="btn btn-primary"
                 id="go-to-upstream-project"
                 data-bind="click: goToUpstream">
-            {% trans "Go to upstream project" %}
+            {% trans "Go To Upstream Project Space" %}
           </button>
         <!-- /ko -->
         <!-- ko if: upstreamDomains().length > 1 -->
@@ -36,10 +41,11 @@
       </div>
     <!-- /ko -->
     <div class="col-sm-6">
-      <h4>{% trans "Make Upstream Project" %}</h4>
+      <h4>{% trans "Make this an upstream project space" %}</h4>
       <p>
         {% blocktrans %}
-          If you want to push content in this project to other projects, make this an upstream project.
+          To push content from this project space to other project spaces, make this project space an upstream project space.
+          This can be done by linking this project space to downstream project spaces.
         {% endblocktrans %}
       </p>
       <button type="button"
@@ -48,7 +54,7 @@
               id="add-downstream-domain"
               data-toggle="modal"
               data-target="#new-downstream-domain-modal">
-        {% trans "Yes, make upstream project" %}
+        {% trans "Link Downstream Project Spaces" %}
       </button>
     </div>
   </div>

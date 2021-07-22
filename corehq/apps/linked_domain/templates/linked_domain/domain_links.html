@@ -25,7 +25,7 @@
             <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
           <!-- /ko -->
           <!-- ko if: isDownstreamDomain -->
-            <li class="active"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project" %}</a></li>
+            <li class="active"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project Space" %}</a></li>
             {% if view_data.linkable_ucr %}
               <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
             {% endif %}
@@ -33,7 +33,7 @@
         </ul>
       <!-- /ko -->
       <!-- ko ifnot: showMultipleTabs -->
-        <h2>{% trans "Manage Linked Project" %}</h2>  {# header for the only tab that will be displayed #}
+        <h2>{% trans "Manage Linked Project Space" %}</h2>  {# header for the only tab that will be displayed #}
       <!-- /ko -->
       <div id="domain_links">
         <div class="tab-content">
@@ -65,9 +65,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">{% trans 'Add Downstream Project' %}</h4>
+          <h4 class="modal-title">{% trans 'Add Downstream Project Space' %}</h4>
           <!-- ko if: parent.showGetStarted -->
-            <p>To make this project an upstream project, you need to add a downstream project.</p>
+            <p>To make this project space an upstream project space, you need to add a downstream project space.</p>
           <!-- /ko -->
         </div>
         <div class="modal-body">
