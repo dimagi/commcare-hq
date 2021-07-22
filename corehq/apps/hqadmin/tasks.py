@@ -162,3 +162,19 @@ def _mass_email_attachment(name, rows):
 def cleanup_stale_es_on_couch_domains_task():
     from corehq.apps.hqadmin.couch_domain_utils import cleanup_stale_es_on_couch_domains
     cleanup_stale_es_on_couch_domains()
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="*/5"))
+def track_es_doc_counts():
+    es = get_es_new()
+    stats = es.indices.stats(level='shards', metric='docs')
+    for name, data in stats['indices'].keys():
+        for number, shard in data['shards'].keys():
+            for i in shard:
+                if shard['routing']['primary']:
+                    tags = {
+                        'index': name,
+                        'shard': f'{name}_{number}',
+                    }
+                    metrics_gauge('elasticsearch.shards.docs.count', i['docs']['count'], tags)
+                    metrics.gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
