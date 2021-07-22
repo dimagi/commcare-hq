@@ -43,7 +43,7 @@ from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
-    log_user_role_update,
+    log_user_change,
 )
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -156,21 +156,35 @@ class BaseUpdateUserForm(forms.Form):
 
     def update_user(self, save=True):
         is_update_successful = False
+        props_updated = {}
 
         for prop in self.direct_properties:
+            if getattr(self.existing_user, prop) != self.cleaned_data[prop]:
+                props_updated[prop] = self.cleaned_data[prop]
             setattr(self.existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
         if is_update_successful and save:
             self.existing_user.save()
-        return is_update_successful
+            if props_updated:
+                log_user_change(
+                    self.domain if self.domain else None,
+                    couch_user=self.existing_user,
+                    changed_by_user=self.request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    fields_changed=props_updated,
+                    domain_required_for_log=bool(self.domain),
+                )
+        return is_update_successful, props_updated
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
     def update_user(self):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(save=False)
+        is_update_successful, props_updated = super(UpdateUserRoleForm, self).update_user(save=False)
+        role_updated = False
+        user_new_role = None
 
         if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
@@ -186,12 +200,24 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 pass
             else:
                 user_new_role = self.existing_user.get_role(self.domain)
-                if self._role_updated(user_current_role, user_new_role):
-                    log_user_role_update(self.domain, user_new_role, user=self.existing_user,
-                                         by_user=self.request.couch_user, updated_via=USER_CHANGE_VIA_WEB)
+                role_updated = self._role_updated(user_current_role, user_new_role)
         elif is_update_successful:
             self.existing_user.save()
 
+        if is_update_successful and (props_updated or role_updated):
+            message = None
+            if role_updated:
+                message = 'Role: None'
+                if user_new_role:
+                    message = f"Role: {user_new_role.name}[{user_new_role.get_qualified_id()}]"
+            log_user_change(
+                self.request.domain,
+                couch_user=self.existing_user,
+                changed_by_user=self.request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                fields_changed=props_updated,
+                message=message
+            )
         return is_update_successful
 
     @staticmethod
