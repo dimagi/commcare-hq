@@ -2001,11 +2001,11 @@ def _get_release_management_items(user, domain):
 
     if can_access_release_management_feature(user, domain):
         release_management_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         release_management_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
 
