@@ -76,6 +76,10 @@ Project data like forms and cases would not be shared.
 
 Run `add_downstream_domain` management command on source HQ.
 
+```
+$ ./manage.py add_downstream_domain --url {https://url.of.linked.hq/a/linked_domain_name/} --domain {upstream_domain_name}
+```
+
 This gets used as a permissions check during remote requests to ensure
 that the remote domain is allowed to sync from this domain.
 
