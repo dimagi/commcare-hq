@@ -9,5 +9,8 @@ coverage:
       default:
         informational: true  # don't block PRs
 
+github_checks:
+  annotations: false
+
 # https://docs.codecov.com/docs/pull-request-comments
 comment: false  # Disable the PR comment, show only github check
