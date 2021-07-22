@@ -1988,11 +1988,11 @@ def _get_feature_flag_items(domain):
     # show ERM version of linked projects if domain has privilege
     if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items
