@@ -170,6 +170,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     self.casePropertyList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
+                    $('div.hq-enum-modal div.modal-footer button.btn-primary').click(changeSaveButton);
                 });
         };
 
