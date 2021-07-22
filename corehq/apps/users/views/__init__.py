@@ -1374,6 +1374,13 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                domain=domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                message="Password reset"
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:
