@@ -14,6 +14,7 @@ from corehq.apps.es import (
 )
 from corehq.apps.export.const import CASE_SCROLL_SIZE
 from corehq.elastic import ESError
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 retry_on_es_timeout = retry_on(ESError, delays=[2**x for x in range(10)])
@@ -37,6 +38,8 @@ class Command(BaseCommand):
         parser.add_argument("-d", "--divide-key", metavar="a[b]",
             help="When running against all domains, only query domains whose "
                  "first character of 'md5 hexdigest of name' is within range 'a->b'.")
+        parser.add_argument("-E", "--es-cases-cmp", action="store_true", default=False,
+            help="Compare case_search documents against ES cases index (instead of Couch/SQL)")
         parser.add_argument("domains", metavar="DOMAIN", nargs="*",
             help="Check timestamps for %(metavar)s")
 
@@ -76,26 +79,33 @@ class Command(BaseCommand):
             logger.info("fetching cases for domain: %s", domain)
             # query all cases and modified date
             now = datetime.now()
-            missing_ids = 0
-            cases = {}
-            for case_id, smo in get_case_ids_and_mod_escases(domain):
-                if case_id is None:
-                    missing_ids += 1
-                    continue
-                cases[case_id] = smo
-            if missing_ids:
-                logger.warning("failed to fetch %s ES cases for domain: %s", missing_ids, domain)
+            if options["es_cases_cmp"]:
+                missing_ids = 0
+                cases = {}
+                for case_id, smo in get_case_ids_and_mod_escases(domain):
+                    if case_id is None:
+                        missing_ids += 1
+                        continue
+                    cases[case_id] = smo
+                if missing_ids:
+                    logger.warning("failed to fetch %s ES cases for domain: %s", missing_ids, domain)
+            else:
+                cases = dict(get_case_ids_and_mod_couchsql(domain, query_size))
             logger.info("fetched %s cases in %s", len(cases), datetime.now() - now)
             # compare results to the case_search index
             case_searches = 0
             mismatches = 0
             logger.info("fetching case_searches ...")
             try:
-                for case_search in fetch_case_searches(cases, query_size):
+                for case_search in fetch_case_searches(list(cases), query_size):
                     case_searches += 1
                     case_id = case_search["_id"]
-                    server_modified_on = string_to_datetime(case_search["server_modified_on"])
-                    delta = cases[case_id] - server_modified_on
+                    smo_cs = string_to_datetime(case_search["server_modified_on"])
+                    smo_case = cases.pop(case_id)
+                    try:
+                        delta = smo_case - smo_cs
+                    except TypeError:
+                        delta = smo_case.replace(tzinfo=smo_cs.tzinfo) - smo_cs
                     # we only care about case_searches whose
                     # `server_modified_on` is *older* (greater than)
                     if delta > warn_case_newer_than:
@@ -103,13 +113,12 @@ class Command(BaseCommand):
                             domain,
                             case_id,
                             human_td(delta),
-                            human_dt(cases[case_id]),
-                            human_dt(server_modified_on),
+                            human_dt(smo_case),
+                            human_dt(smo_cs),
                         ])
                         mismatches += 1
-                if case_searches != len(cases):
-                    logger.warning("found %s cases missing from case_search index",
-                                   len(cases) - case_searches)
+                if cases:
+                    logger.warning("found %s cases missing from case_search index", len(cases))
             finally:
                 logger.info("fetched %s case_searches", case_searches)
                 logger.info("found %s mismatched records for domain: %s", mismatches, domain)
@@ -142,6 +151,12 @@ def get_case_ids_and_mod_escases(domain):
     for case in query.scroll():
         case_id = case.get("case_id", case.get("_id"))
         yield case_id, string_to_datetime(case["server_modified_on"])
+
+
+def get_case_ids_and_mod_couchsql(domain, chunksize):
+    case_accessor = CaseAccessors(domain)
+    for case_ids in chunked(case_accessor.get_case_ids_in_domain(), chunksize):
+        yield from case_accessor.get_last_modified_dates(list(case_ids)).items()
 
 
 @retry_on_es_timeout
