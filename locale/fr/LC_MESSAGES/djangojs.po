@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-14 18:55+0000\n"
+"POT-Creation-Date: 2021-07-21 19:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1698,7 +1698,7 @@ msgid "Are you sure you want to perform this action?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/registration/static/registration/js/user_login_form.js:48
+#: corehq/apps/registration/static/registration/js/user_login_form.js:47
 msgid "Continue"
 msgstr ""
 
@@ -3379,8 +3379,17 @@ msgstr ""
 msgid "Error updating."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:84
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:87
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:149
+msgid "Report successfully linked."
+msgstr ""
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:90
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:95
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:106
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:128
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:153
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:158
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
