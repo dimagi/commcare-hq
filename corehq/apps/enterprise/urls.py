@@ -1,4 +1,5 @@
-from django.conf.urls import url
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
+from django.conf.urls import include, url
 
 from corehq.apps.enterprise.views import (
     add_enterprise_permissions_domain,
@@ -18,6 +19,10 @@ from corehq.apps.sso.views.enterprise_admin import (
     ManageSSOEnterpriseView,
     EditIdentityProviderEnterpriseView,
 )
+
+report_urls = [
+    EnterpriseReportDispatcher.url_pattern(),
+]
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
@@ -43,4 +48,6 @@ domain_specific = [
         name=ManageSSOEnterpriseView.urlname),
     url(r'^sso/(?P<idp_slug>[^/]*)/$', EditIdentityProviderEnterpriseView.as_view(),
         name=EditIdentityProviderEnterpriseView.urlname),
+
+    url(r'^reports/', include(report_urls)),
 ]
