@@ -478,7 +478,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
             phone_numbers = []
             for header, value in row.items():
-                if 'phone-number' in header:
+                if value and 'phone-number' in header:
                     if header == 'phone-number' or header == 'phone-number-1':
                         # Add default phone number at start of list
                         phone_numbers.insert(0, value)
