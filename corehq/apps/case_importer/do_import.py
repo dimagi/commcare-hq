@@ -377,7 +377,7 @@ class _CaseImportRow(object):
 
     def _check_valid_external_id(self):
         if self.external_id and len(self.external_id) > 255:
-            raise exceptions.ExternalIdTooLong('name')
+            raise exceptions.ExternalIdTooLong('external_id')
 
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
