@@ -14,23 +14,23 @@ def find_static_toggle(slug):
             return toggle
 
 
-def get_flags_attachment_file(tag=None):
+def get_toggles_attachment_file(tag=None):
     """
     This function returns an excel file which contains information regarding
-    the feature flags filtered by the 'tag' argument. For 'tag' = None, all
-    flags will be returned.
+    the toggles filtered by the 'tag' argument. For 'tag' = None, all
+    toggles will be returned.
 
     The excel file has the following format:
-    Each feature flag is represented as a different sheet in the file. For each
-    feature flag sheet, the top of the file specifies basic information regarding
-    the feature flag, i.e. Label, Slug, Tag, etc.
+    Each toggle is represented as a different sheet in the file. For each
+    toggle sheet, the top of the file specifies basic information regarding
+    the toggle, i.e. Label, Slug, Tag, etc.
 
-    The rest of the sheet shows all the domains which has the specific feature flag
+    The rest of the sheet shows all the domains which has the specific toggle
     enabled, along with some additional information regarding each domain.
     """
 
-    flags = get_feature_flags(tag)
-    headers_table, sheets = parse_flags_to_file_info(flags)
+    toggles = get_toggles_with_tag(tag)
+    headers_table, sheets = parse_toggles_to_file_info(toggles)
 
     with Excel2007ExportWriter() as writer:
         outfile = BytesIO()
@@ -40,7 +40,7 @@ def get_flags_attachment_file(tag=None):
     return outfile
 
 
-def get_feature_flags(tag=None):
+def get_toggles_with_tag(tag=None):
     flags = []
     for toggle in all_toggles():
         if not tag or tag in toggle.tag.name:
@@ -48,7 +48,7 @@ def get_feature_flags(tag=None):
     return flags
 
 
-def parse_flags_to_file_info(toggles):
+def parse_toggles_to_file_info(toggles):
     file_headers = []
     sheets = {}
 

@@ -41,7 +41,7 @@ hqDefine('toggle_ui/js/flags', [
         if (appliedFilter === "all") {
             appliedFilter = '';
         }
-        open('export_flags?tag=' + appliedFilter);
+        open('export_toggles?tag=' + appliedFilter);
     };
 
     $('#export-button').koApplyBindings({downloadFile: downloadToFile});
