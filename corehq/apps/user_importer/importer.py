@@ -77,6 +77,18 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
+
+    pardoned_headers = []
+    for illegal_header in illegal_headers:
+        if illegal_header.startswith('phone-number-'):
+            try:
+                number = illegal_header.split('phone-number-')[1]
+                if int(number) > 0:
+                    pardoned_headers.append(illegal_header)
+            except ValueError:
+                pass
+    illegal_headers = illegal_headers - set(pardoned_headers)
+
     if is_web_upload:
         missing_headers = web_required_headers - headers
     else:
