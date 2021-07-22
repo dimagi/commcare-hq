@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from jsonfield import JSONField
 
@@ -204,3 +204,36 @@ class ReportsSidebarOrdering(models.Model):
             "will be listed under the given heading in the sidebar nav."
         )
     )
+
+
+class TableauServer(models.Model):
+    SERVER_TYPES = (
+        ('server', ugettext_lazy('Tableau Server')),
+        ('online', ugettext_lazy('Tableau Online')),
+    )
+    domain = models.CharField(max_length=64, default='')
+    server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
+    server_name = models.CharField(max_length=128)
+    validate_hostname = models.CharField(max_length=128, default='', blank=True)
+    target_site = models.CharField(max_length=64, default='Default')
+    domain_username = models.CharField(max_length=64)
+
+    def __str__(self):
+        return '{server} {server_type} {site}'.format(server=self.server_name,
+                                                      server_type=self.server_type,
+                                                      site=self.target_site)
+
+
+class TableauVisualization(models.Model):
+    domain = models.CharField(max_length=64)
+    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
+    view_url = models.CharField(max_length=256)
+
+    @property
+    def name(self):
+        return '/'.join(self.view_url.split('?')[0].split('/')[-2:])
+
+    def __str__(self):
+        return '{domain} {server} {view}'.format(domain=self.domain,
+                                                 server=self.server,
+                                                 view=self.view_url[0:64])

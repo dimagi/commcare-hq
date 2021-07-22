@@ -62,10 +62,7 @@ MAX_TRIAL_SMS = 50
 
 def remove_from_queue(queued_sms):
     with transaction.atomic():
-        sms = SMS()
-        for field in sms._meta.fields:
-            if field.name != 'id':
-                setattr(sms, field.name, getattr(queued_sms, field.name))
+        sms = get_sms_from_queued_sms(queued_sms)
         queued_sms.delete()
         sms.save()
 
@@ -83,6 +80,26 @@ def remove_from_queue(queued_sms):
         metrics_counter('commcare.sms.outbound_failed', tags=tags)
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
+
+
+def get_sms_from_queued_sms(queued_sms):
+    sms = SMS()
+    for field in _get_sms_fields_to_copy():
+        setattr(sms, field, getattr(queued_sms, field))
+    return sms
+
+
+def _get_sms_fields_to_copy():
+    """Returns a set of field attribute names to copy from QueuedSMS to SMS.
+    This should be all fields in QueuedSMS except 'id'
+    """
+    res = set()
+    for field in QueuedSMS._meta.get_fields():
+        try:
+            res.add(field.attname)  # use attname to avoid DB lookups for related models
+        except AttributeError:
+            res.add(field.name)
+    return res - {"id"}
 
 
 def handle_unsuccessful_processing_attempt(msg):

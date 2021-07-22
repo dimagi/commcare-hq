@@ -48,6 +48,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.util.timer import time_method
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
 
@@ -55,6 +56,7 @@ AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/ca
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
+    @time_method()
     def get_section_elements(self):
         if self.app.use_custom_suite:
             return []
@@ -189,9 +191,14 @@ class DetailContributor(SectionContributor):
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:
                 if module.case_list_form.form_id:
-                    target_form = self.app.get_form(module.case_list_form.form_id)
-                    if target_form.is_registration_form(module.case_type):
-                        d.actions.append(self._get_reg_form_action(module))
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    form = self.app.get_form(module.case_list_form.form_id)
+                    if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
+                        valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, module)]
+                    else:
+                        valid_forms = []
+                    if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
+                        d.actions.append(self._get_case_list_form_action(module))
 
                 if module_offers_search(module):
                     d.actions.append(self._get_case_search_action(module, in_search="search" in id))
@@ -257,9 +264,9 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _get_reg_form_action(self, module):
+    def _get_case_list_form_action(self, module):
         """
-        Returns registration form action
+        Returns registration/followup form action
         """
         form = self.app.get_form(module.case_list_form.form_id)
 
@@ -281,8 +288,12 @@ class DetailContributor(SectionContributor):
                     media_image=module.case_list_form.default_media_image,
                     media_audio=module.case_list_form.default_media_audio,
                 ),
-                stack=Stack()
+                stack=Stack(),
             )
+
+        action_relevant = module.case_list_form.relevancy_expression
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain) and action_relevant:
+            action.relevant = action_relevant
 
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.form_command(form)))
@@ -314,21 +325,46 @@ class DetailContributor(SectionContributor):
         action.stack.add_frame(frame)
         return action
 
-    @staticmethod
-    def _get_case_search_action(module, in_search=False):
+    def _get_case_search_action(self, module, in_search=False):
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
-        action = Action(
-            display=Display(
-                text=Text(locale_id=(
+        if in_search:
+            search_label = module.search_config.search_again_label
+        else:
+            search_label = module.search_config.search_label
+
+        if self.app.enable_localized_menu_media:
+            action = LocalizedAction(
+                menu_locale_id=(
                     id_strings.case_search_again_locale(module) if in_search
                     else id_strings.case_search_locale(module)
-                ))
-            ),
-            stack=Stack(),
-            auto_launch=DetailContributor._get_auto_launch_expression(module, in_search),
-            redo_last=in_search,
-            **action_kwargs
-        )
+                ),
+                media_image=search_label.uses_image(build_profile_id=self.build_profile_id),
+                media_audio=search_label.uses_audio(build_profile_id=self.build_profile_id),
+                image_locale_id=(
+                    id_strings.case_search_again_icon_locale(module) if in_search
+                    else id_strings.case_search_icon_locale(module)
+                ),
+                audio_locale_id=(
+                    id_strings.case_search_again_audio_locale(module) if in_search
+                    else id_strings.case_search_audio_locale(module)
+                ),
+                stack=Stack(),
+                for_action_menu=True,
+                **action_kwargs,
+            )
+        else:
+            action = Action(
+                display=Display(
+                    text=Text(locale_id=(
+                        id_strings.case_search_again_locale(module) if in_search
+                        else id_strings.case_search_locale(module)
+                    )),
+                    media_image=search_label.default_media_image,
+                    media_audio=search_label.default_media_audio
+                ),
+                stack=Stack(),
+                **action_kwargs
+            )
         frame = PushFrame()
         frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
@@ -337,7 +373,10 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_action_kwargs(module, in_search):
-        action_kwargs = {}
+        action_kwargs = {
+            'auto_launch': DetailContributor._get_auto_launch_expression(module, in_search),
+            'redo_last': in_search,
+        }
         relevant = DetailContributor._get_relevant_expression(module, in_search)
         if relevant:
             action_kwargs["relevant"] = relevant

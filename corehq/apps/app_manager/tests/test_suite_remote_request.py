@@ -108,6 +108,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
         )
 
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+        # reset to newly wrapped module
+        self.module = self.app.modules[0]
+
     def test_search_config_model(self, *args):
         config = CaseSearch()
 
@@ -200,6 +205,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         advanced_module_custom.search_config = search_config
         advanced_module_custom.case_details.short.custom_xml = "<detail id='m3_case_short'></detail>"
 
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
@@ -218,6 +226,34 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 search_filter
             ),
             suite.xpath(ref_path)[0]
+        )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types(self, *args):
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        suite_xml = self.app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        ref_path = './remote-request[1]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                self.module.search_config.search_filter
+            ),
+            suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
     def test_case_search_action_relevant_condition(self, *args):
@@ -288,6 +324,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 ),
             ],
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
@@ -300,6 +340,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
             blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
         )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()

@@ -1067,7 +1067,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_module_search_command_rows(self):
+    def test_module_search_labels_rows(self):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),

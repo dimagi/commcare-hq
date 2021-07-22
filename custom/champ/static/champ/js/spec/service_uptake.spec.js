@@ -8,6 +8,7 @@ describe('ServiceUptakeModel', function() {
     var ALL_OPTION = {'id': '', 'text': 'All'};
 
     pageData.registerUrl('service_uptake', 'service_uptake');
+    pageData.registerUrl('champ_pva', 'champ_pva');
 
     beforeEach(function() {
         viewModel = hqImport("champ/js/knockout/service_uptake").model();

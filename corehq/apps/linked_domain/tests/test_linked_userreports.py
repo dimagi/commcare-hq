@@ -132,23 +132,11 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
     @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
     def test_remote_link_ucr(self, fake_ucr_getter):
-        create_domain(self.domain)
-        self.addCleanup(delete_all_domains)
 
-        couch_user = WebUser.create(self.domain, "test", "foobar", None, None)
-        django_user = couch_user.get_django_user()
-        self.addCleanup(delete_all_users)
-
-        api_key, _ = HQApiKey.objects.get_or_create(user=django_user)
-        auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % api_key.key}
-        self.domain_link.save()
-
-        url = reverse('linked_domain:ucr_config', args=[self.domain, self.report.get_id])
-        headers = auth_headers.copy()
-        headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
-        resp = self.client.get(url, **headers)
-
-        fake_ucr_getter.return_value = json.loads(resp.content)
+        fake_ucr_getter.return_value = {
+            "report": self.report,
+            "datasource": self.data_source,
+        }
 
         # Create
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)

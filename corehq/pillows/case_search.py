@@ -23,6 +23,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -101,6 +102,9 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
     def process_change(self, change):
         assert isinstance(change, Change)
+        if self.change_filter_fn and self.change_filter_fn(change):
+            return
+
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
             domain = change.metadata.domain
@@ -124,7 +128,8 @@ def get_case_search_processor():
     return CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch,
+        change_filter_fn=is_couch_change_for_sql_domain
     )
 
 
@@ -278,8 +283,6 @@ def delete_case_search_cases(domain):
         "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
     }
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        op_kwargs.pop('_type')
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         **op_kwargs,

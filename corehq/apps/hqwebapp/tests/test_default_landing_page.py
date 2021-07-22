@@ -11,7 +11,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
-    UserRole,
+    SQLUserRole,
     WebUser,
 )
 from corehq.util.test_utils import flag_enabled, generate_cases
@@ -30,21 +30,18 @@ class TestDefaultLandingPages(TestCase):
         cls.domain_object = Domain(name=cls.domain, is_active=True)
         cls.domain_object.save()
 
-        cls.reports_role = UserRole(
+        cls.reports_role = SQLUserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
             permissions=Permissions(view_reports=True),
         )
-        cls.reports_role.save()
-        cls.webapps_role = UserRole(
+        cls.webapps_role = SQLUserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
             permissions=Permissions(access_web_apps=True),
         )
-        cls.webapps_role.save()
-        cls.downloads_role = UserRole(
+        cls.downloads_role = SQLUserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='downloads',
             permissions=Permissions.max(),
         )
-        cls.downloads_role.save()
         cls.global_password = 'secret'
 
         # make an app because not having one changes the default dashboard redirect to the apps page
@@ -75,7 +72,7 @@ class TestDefaultLandingPages(TestCase):
 
     def test_no_role_cant_access(self):
         user = self._make_web_user('elodin@theuniversity.com')
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         user.delete_domain_membership(self.domain)
         user.save()
         self.client.login(username=user.username, password=self.global_password)
@@ -84,9 +81,9 @@ class TestDefaultLandingPages(TestCase):
 
     def test_formplayer_default_override(self):
         web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
-        self.addCleanup(web_user.delete, deleted_by=None)
+        self.addCleanup(web_user.delete, self.domain, deleted_by=None)
         mobile_worker = self._make_commcare_user('kvothe')
-        self.addCleanup(mobile_worker.delete, deleted_by=None)
+        self.addCleanup(mobile_worker.delete, self.domain, deleted_by=None)
         for user in [web_user, mobile_worker]:
             self.client.login(username=user.username, password=self.global_password)
 
@@ -107,7 +104,7 @@ def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None
     if role is not None:
         role = getattr(self, role)
     user = self._make_web_user('elodin@theuniversity.com', role=role)
-    self.addCleanup(user.delete, deleted_by=None)
+    self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
     context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context
@@ -129,7 +126,7 @@ def test_mobile_worker_landing_page(self, role, expected_urlname, enabled_toggle
     if role is not None:
         role = getattr(self, role)
     user = self._make_commcare_user('kvothe', role=role)
-    self.addCleanup(user.delete, deleted_by=None)
+    self.addCleanup(user.delete, self.domain, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
     context = flag_enabled(enabled_toggle) if enabled_toggle else contextlib.suppress()  # noop context

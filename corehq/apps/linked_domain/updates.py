@@ -33,6 +33,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FLAGS,
     MODEL_KEYWORD,
     MODEL_LOCATION_DATA,
+    MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
     MODEL_REPORT,
@@ -44,11 +45,13 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
+    get_enabled_previews as local_enabled_previews
+from corehq.apps.linked_domain.local_accessors import \
+    get_enabled_toggles as local_enabled_toggles
+from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
 from corehq.apps.linked_domain.local_accessors import \
     get_fixture as local_fixture
-from corehq.apps.linked_domain.local_accessors import \
-    get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
 from corehq.apps.linked_domain.local_accessors import \
@@ -86,7 +89,7 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import SQLUserRole, Permissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 
@@ -94,7 +97,8 @@ from corehq.toggles import NAMESPACE_DOMAIN
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
         MODEL_FIXTURE: update_fixture,
-        MODEL_FLAGS: update_toggles_previews,
+        MODEL_FLAGS: update_toggles,
+        MODEL_PREVIEWS: update_previews,
         MODEL_ROLES: update_user_roles,
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
@@ -112,25 +116,38 @@ def update_model_type(domain_link, model_type, model_detail=None):
     update_fn(domain_link, **kwargs)
 
 
-def update_toggles_previews(domain_link):
+def update_toggles(domain_link):
     if domain_link.is_remote:
-        master_results = remote_toggles_previews(domain_link)
+        upstream_results = remote_toggles_previews(domain_link)
+        upstream_toggles = set(upstream_results['toggles'])
     else:
-        master_results = local_toggles_previews(domain_link.master_domain)
+        upstream_toggles = set(local_enabled_toggles(domain_link.master_domain))
 
-    master_toggles = set(master_results['toggles'])
-    master_previews = set(master_results['previews'])
-
-    local_results = local_toggles_previews(domain_link.linked_domain)
-    local_toggles = set(local_results['toggles'])
-    local_previews = set(local_results['previews'])
+    downstream_toggles = set(local_enabled_toggles(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
         for slug in collection:
             set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
-    _set_toggles(master_toggles - local_toggles, True)
-    _set_toggles(master_previews - local_previews, True)
+    # enable downstream toggles that are enabled upstream
+    _set_toggles(upstream_toggles - downstream_toggles, True)
+
+
+def update_previews(domain_link):
+    if domain_link.is_remote:
+        upstream_results = remote_toggles_previews(domain_link)
+        upstream_previews = set(upstream_results['previews'])
+    else:
+        upstream_previews = set(local_enabled_previews(domain_link.master_domain))
+
+    downstream_previews = set(local_enabled_previews(domain_link.linked_domain))
+
+    def _set_toggles(collection, enabled):
+        for slug in collection:
+            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+
+    # enable downstream previews that are enabled upstream
+    _set_toggles(upstream_previews - downstream_previews, True)
 
 
 def update_custom_data_models(domain_link, limit_types=None):
@@ -215,7 +232,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.by_domain(domain_link.linked_domain, include_archived=True)
+    local_roles = SQLUserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:
@@ -226,33 +243,29 @@ def update_user_roles(domain_link):
     # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
-        if role:
-            role_json = role.to_json()
-        else:
-            role_json = {'domain': domain_link.linked_domain}
-        role_json['upstream_id'] = role_def['_id']
+        if not role:
+            role = SQLUserRole(domain=domain_link.linked_domain)
+        local_roles_by_upstream_id[role_def['_id']] = role
+        role.upstream_id = role_def['_id']
 
-        upstream_role = copy(role_def)
-        upstream_role.pop('_id')
-        upstream_role.pop('upstream_id')
-        upstream_role.pop('assignable_by')  # handled below
-        role_json.update(upstream_role)
-        role = UserRole.wrap(role_json)
+        role.name = role_def["name"]
+        role.default_landing_page = role_def["default_landing_page"]
+        role.is_non_admin_editable = role_def["is_non_admin_editable"]
         role.save()
-        local_roles_by_upstream_id[role_json['upstream_id']] = role.to_json()
+
+        permissions = Permissions.wrap(role_def["permissions"])
+        role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
     for role_def in master_results:
-        role_json = local_roles_by_upstream_id[role_def['_id']]
-        if role_def['assignable_by']:
-            role_json['assignable_by'] = [
-                local_roles_by_upstream_id[role_id]['_id']
-                for role_id in role_def['assignable_by']
+        local_role = local_roles_by_upstream_id[role_def['_id']]
+        assignable_by = []
+        if role_def["assignable_by"]:
+            assignable_by = [
+                local_roles_by_upstream_id[role_id].id
+                for role_id in role_def["assignable_by"]
             ]
-            UserRole.wrap(role_json).save()
-        elif role_json['assignable_by']:
-            role_json['assignable_by'] = None
-            UserRole.wrap(role_json).save()
+        local_role.set_assignable_by(assignable_by)
 
 
 def update_case_search_config(domain_link):

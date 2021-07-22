@@ -45,6 +45,13 @@ class ImporterTest(TestCase):
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
 
+        self.subdomain1 = create_domain('subdomain1')
+        self.subdomain2 = create_domain('subdomain2')
+        self.ignored_domain = create_domain('ignored-domain')
+        create_enterprise_permissions(self.couch_user.username, self.domain,
+                                      [self.subdomain1.name, self.subdomain2.name],
+                                      [self.ignored_domain.name])
+
         self.accessor = CaseAccessors(self.domain)
 
         self.factory = CaseFactory(domain=self.domain, case_defaults={
@@ -53,8 +60,11 @@ class ImporterTest(TestCase):
         delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain, deleted_by=None)
         self.domain_obj.delete()
+        self.subdomain1.delete()
+        self.subdomain2.delete()
+        self.ignored_domain.delete()
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
@@ -431,22 +441,22 @@ class ImporterTest(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
     def test_multiple_domain_case_import(self):
-        create_enterprise_permissions(self.couch_user.username, self.domain, ["mirrordomain1", "mirrordomain2"])
         headers_with_domain = ['case_id', 'name', 'artist', 'domain']
         config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
         case_with_domain_file = make_worksheet_wrapper(
             ['case_id', 'name', 'artist', 'domain'],
             ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', "mirrordomain1"],
-            ['', 'name-2', 'artist-2', "mirrordomain2"],
+            ['', 'name-1', 'artist-1', self.subdomain1.name],
+            ['', 'name-2', 'artist-2', self.subdomain2.name],
             ['', 'name-3', 'artist-3', self.domain],
             ['', 'name-4', 'artist-4', self.domain],
-            ['', 'name-5', 'artist-5', 'not-existing-domain']
+            ['', 'name-5', 'artist-5', 'not-existing-domain'],
+            ['', 'name-6', 'artist-6', self.ignored_domain.name],
         )
         res = do_import(case_with_domain_file, config_1, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(1, res['failed_count'])
+        self.assertEqual(2, res['failed_count'])
 
         # Asserting current domain
         cur_case_ids = self.accessor.get_case_ids_in_domain()
@@ -456,21 +466,21 @@ class ImporterTest(TestCase):
         cases = {c.name: c for c in cur_cases}
         self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
 
-        # Asserting mirror domain 1
-        md1_case_ids = CaseAccessors("mirrordomain1").get_case_ids_in_domain()
-        md1_cases = list(self.accessor.get_cases(md1_case_ids))
-        self.assertEqual(1, len(md1_cases))
-        # Asserting mirror domain 1 case property
-        md1_cases_pro = {c.name: c for c in md1_cases}
-        self.assertEqual(md1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
+        # Asserting subdomain 1
+        s1_case_ids = CaseAccessors(self.subdomain1.name).get_case_ids_in_domain()
+        s1_cases = list(self.accessor.get_cases(s1_case_ids))
+        self.assertEqual(1, len(s1_cases))
+        # Asserting subdomain 1 case property
+        s1_cases_pro = {c.name: c for c in s1_cases}
+        self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
 
-        # Asserting mirror domain 2
-        md2_case_ids = CaseAccessors("mirrordomain2").get_case_ids_in_domain()
-        md2_cases = list(self.accessor.get_cases(md2_case_ids))
-        self.assertEqual(1, len(md2_cases))
-        # Asserting mirror domain 2 case propperty
-        md2_cases_pro = {c.name: c for c in md2_cases}
-        self.assertEqual(md2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
+        # Asserting subdomain 2
+        s2_case_ids = CaseAccessors(self.subdomain2.name).get_case_ids_in_domain()
+        s2_cases = list(self.accessor.get_cases(s2_case_ids))
+        self.assertEqual(1, len(s2_cases))
+        # Asserting subdomain 2 case property
+        s2_cases_pro = {c.name: c for c in s2_cases}
+        self.assertEqual(s2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
 
     # This test will only run on SQL backend because of a bug in couch backend
     # that overrides current domain with the 'domain' column value from excel
@@ -575,7 +585,7 @@ class ImporterTest(TestCase):
 
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
-                restrict_user_to_location(self, dsa):
+                restrict_user_to_location(self.domain, self, dsa):
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
                 ['', 'Leonard Nimoy', inc.location_id],
@@ -593,7 +603,7 @@ class ImporterTest(TestCase):
 
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
-                restrict_user_to_location(self, dsa):
+                restrict_user_to_location(self.domain, self, dsa):
             inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', None, None, location=inc)
             dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', None, None, location=dsi)
             dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', None, None, location=dsa)
@@ -634,7 +644,7 @@ def make_worksheet_wrapper(*rows):
 
 
 @contextmanager
-def restrict_user_to_location(test_case, location):
+def restrict_user_to_location(domain, test_case, location):
     orig_user = test_case.couch_user
 
     restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t", None, None)
@@ -645,7 +655,7 @@ def restrict_user_to_location(test_case, location):
         yield
     finally:
         test_case.couch_user = orig_user
-        restricted_user.delete(deleted_by=None)
+        restricted_user.delete(domain, deleted_by=None)
 
 
 @contextmanager
@@ -668,4 +678,4 @@ def get_commcare_user(domain_name):
     try:
         yield user
     finally:
-        user.delete(deleted_by=None)
+        user.delete(domain_name, deleted_by=None)

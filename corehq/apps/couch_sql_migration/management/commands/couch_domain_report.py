@@ -10,7 +10,7 @@ import django.db.models as models
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.es.domains import DomainES
+from corehq.apps.es.domains import DomainES, filters
 
 from ...tinypanda import TinyPanda
 
@@ -146,7 +146,10 @@ def get_couch_domains():
     """
     return (
         DomainES()
-        .term("use_sql_backend", False)
+        .filter(filters.OR(
+            filters.term("use_sql_backend", False),
+            filters.missing("use_sql_backend")
+        ))
         .size(DOMAIN_COUNT_UPPER_BOUND)
         .sort("name")
         .values(
@@ -158,7 +161,7 @@ def get_couch_domains():
     )
 
 
-DOMAIN_COUNT_UPPER_BOUND = 1000
+DOMAIN_COUNT_UPPER_BOUND = 20000
 
 
 def write_domain_csv(output_dir, domain_sets):

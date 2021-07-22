@@ -41,7 +41,7 @@
     </div>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">{% trans "Default Search Properties" %}</h4>
+        <h4 class="panel-title panel-title-nolink">{% trans "Default Search Filters" %}</h4>
       </div>
       <div class="panel-body">
         <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
@@ -55,8 +55,12 @@
           </thead>
           <tbody data-bind="foreach: defaultProperties">
           <tr>
-            <td class="col-sm-4">
+            <td class="col-sm-4" data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}">
+
               <input class="form-control" type="text" data-bind="value: property"/>
+              <div data-bind="visible: $parent.isCommon(ko.unwrap(property()))" class="help-block">
+                {% trans "A property is not allowed both here and Search Properties. Please remove from one of the lists" %}
+              </div>
             </td>
             <td class="col-sm-6">
               <textarea
@@ -119,6 +123,13 @@
               {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
             </div>
           </div>
+          <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
+            <!-- /ko -->
+          </div>
           <div class="form-group">
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching Again" %}
@@ -128,6 +139,13 @@
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
+          </div>
+          <div class="case-search-multimedia-input">
+          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+            <!-- ko stopBinding: true -->
+              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+            <!-- /ko -->
           </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
@@ -141,7 +159,7 @@
               <textarea class="form-control vertical-resize"
                        id="search-display-condition"
                        spellcheck="false"
-                       data-bind="value: searchButtonDisplayCondition"
+                       data-bind="value: searchButtonDisplayCondition, xpathValidator: {text: searchButtonDisplayCondition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
               ></textarea>
             </div>
           </div>
@@ -153,7 +171,7 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchFilter"
+              <textarea data-bind="value: searchFilter, xpathValidator: {text: searchFilter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="search-filter"
                         spellcheck="false"
@@ -176,7 +194,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchAdditionalRelevant"
+              <textarea data-bind="value: searchAdditionalRelevant, xpathValidator: {text: searchAdditionalRelevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -201,7 +219,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: blacklistedOwnerIdsExpression"
+              <textarea data-bind="value: blacklistedOwnerIdsExpression, xpathValidator: {text: blacklistedOwnerIdsExpression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="blacklisted-user-ids"
                         spellcheck="false"
@@ -213,6 +231,11 @@
               </p>
             </div>
           </div>
+          <span class="hide" id="searchFilterXpathErrorHtml">
+            {% blocktrans %}
+              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
+            {% endblocktrans %}
+            </span>
         </div>
       </div>
     </div>

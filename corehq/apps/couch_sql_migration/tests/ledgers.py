@@ -29,8 +29,12 @@ def print_ledger_history(ledger_ref, verbose=False):
         if ptx:
             print_transactions(ccht, sqlt)
 
-    stock = StockState.objects.get(
-        case_id=case_id, section_id=section_id, product_id=entry_id)
+    try:
+        stock = StockState.objects.get(
+            case_id=case_id, section_id=section_id, product_id=entry_id)
+    except StockState.DoesNotExist:
+        class stock:
+            balance = None
     try:
         ledger = LedgerAccessorSQL.get_ledger_value(
             case_id=case_id, section_id=section_id, entry_id=entry_id)

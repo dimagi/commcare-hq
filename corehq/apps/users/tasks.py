@@ -26,7 +26,6 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,

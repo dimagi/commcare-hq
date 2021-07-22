@@ -17,7 +17,8 @@ from corehq.apps.hqwebapp.views import (
     domain_login,
     dropbox_upload,
     iframe_domain_login,
-    iframe_domain_login_new_window,
+    domain_login_new_window,
+    iframe_sso_login_pending,
     jserror,
     log_email_event,
     login,
@@ -34,7 +35,6 @@ from corehq.apps.hqwebapp.views import (
     retrieve_download,
     server_up,
     temporary_google_verify,
-    yui_crossdomain,
     check_sso_login_status,
 )
 from corehq.apps.settings.views import (
@@ -52,7 +52,6 @@ from corehq.apps.settings.views import (
 urlpatterns = [
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
-    url(r'^crossdomain.xml$', yui_crossdomain, name='yui_crossdomain'),
     url(r'^serverup.txt$', server_up),
     url(r'^change_password/$', password_change, name='password_change'),
 
@@ -92,7 +91,8 @@ urlpatterns = [
     url(r'^ping_login/$', ping_response, name='ping_login'),
     url(r'^ping_session/$', ping_response, name='ping_session'),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
-    url(r'^relogin/iframe/$', iframe_domain_login_new_window, name='iframe_domain_login_new_window'),
+    url(r'^relogin/iframe/$', domain_login_new_window, name='domain_login_new_window'),
+    url(r'^relogin/sso/$', iframe_sso_login_pending, name='iframe_sso_login_pending'),
     url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
     url(
         r'^oauth/applications/register/',

@@ -16,6 +16,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -127,6 +132,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -238,6 +248,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <action auto_launch="false()" redo_last="false">
       <display>
@@ -289,6 +304,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <action auto_launch="false()" redo_last="true">
       <display>

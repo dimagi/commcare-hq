@@ -1,55 +1,54 @@
-{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE }}">
-  <head>
-    <title>{% trans "Log In :: CommCare HQ" %}</title>
-    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
-    {% include 'hqwebapp/includes/less.html' %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'registration/less/registration.less' %}" />
-    {% endcompress %}
-    <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <style>
-      /* hide password reset link */
-      .help-block {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="bg-container">
-      <div class="bg-full-cover-fixed bg-registration b-lazy"
-           data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
-      <div class="bg-overlay"></div>
+{% extends "hqwebapp/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}{% trans "Your session has expired" %}{% endblock %}
+
+{% requirejs_main 'registration/js/login' %}
+
+{% block background_content %}
+  <div class="bg-container">
+    <div class="bg-full-cover-fixed bg-registration b-lazy"
+         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+    <div class="bg-overlay"></div>
+  </div>
+{% endblock %}
+
+{% block stylesheets %}
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
+  {% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'registration/less/registration.less' %}" />
+  {% endcompress %}
+  <style>
+    /* hide password reset link */
+    .help-block {
+      display:  none;
+    }
+  </style>
+{% endblock stylesheets %}
+
+{% block container_class %}{% endblock %}
+
+{% block content %}
+  {% initial_page_data "hide_password_feedback" hide_password_feedback %}
+  {% initial_page_data "enforce_sso_login" enforce_sso_login|BOOL %}
+  {% initial_page_data 'is_session_expiration' is_session_expiration %}
+  {% registerurl 'check_sso_login_status' %}
+  {% registerurl 'iframe_sso_login_pending' %}
+  {% block login-content %}
+    <div {% if enforce_sso_login %}
+         id="user-login-form"
+         class="ko-template"
+         {% endif %}>
+      {% include "login_and_password/partials/login_full.html" %}
     </div>
-    <div class="hq-container">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-sm-12">
-            <div class="reg-form-container sign-in-container">
-              <div class="form-bubble form-bubble-lg">
-                {% include "login_and_password/two_factor/core/login.html" %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script src="{% static 'blazy/blazy.js' %}"></script>
-    <script>
-      new Blazy({container: 'body'});
-      var username = (new URLSearchParams(window.location.search)).get("username"),
-          element = document.getElementById('id_auth-username');
-      if (username && element) {
-        if (username.endsWith("commcarehq.org")) {
-          username = username.split("@")[0];
-        }
-        element.value = username;
-        element.readOnly = true;
-      }
-    </script>
-  </body>
-</html>
+  {% endblock %}
+{% endblock content %}

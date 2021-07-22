@@ -54,6 +54,7 @@ class SyncCouchToSQLMixin(object):
     and allow it to be null since it can be initially null. Do not include
     this field in _migration_get_fields().
     You can override '_migration_couch_id_name' if `couch_id` won't work.
+    Note that you cannot set '_migration_couch_id' to the SQL 'id' field.
 
     2. Make the Couch model inherit from SyncCouchToSQLMixin.
 

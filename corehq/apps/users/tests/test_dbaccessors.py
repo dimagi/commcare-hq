@@ -27,13 +27,12 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    Permissions,
-    UserRole,
+    SQLUserRole,
     WebUser,
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
-from corehq.apps.users.role_utils import init_domain_with_presets
+from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
 @es_test
@@ -50,9 +49,9 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain.save()
         bootstrap_location_types(cls.ccdomain.name)
 
-        init_domain_with_presets(cls.ccdomain.name)
-        cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
-        cls.custom_role = UserRole.create(cls.ccdomain.name, "Custom Role")
+        initialize_domain_with_default_roles(cls.ccdomain.name)
+        cls.user_roles = SQLUserRole.objects.get_by_domain(cls.ccdomain.name)
+        cls.custom_role = SQLUserRole.create(cls.ccdomain.name, "Custom Role")
 
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")
@@ -103,7 +102,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='retired_user_email@example.com',
         )
-        cls.retired_user.retire(deleted_by=None)
+        cls.retired_user.retire(cls.ccdomain.name, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -155,7 +154,7 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 0)
 
         # can search by role_id
-        filters = {'role_id': self.custom_role._id}
+        filters = {'role_id': self.custom_role.get_id}
         self.assertItemsEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_2.username]
@@ -189,7 +188,7 @@ class AllCommCareUsersTest(TestCase):
 
         self._assert_invitations({}, ["sergei_p@email.com", "sergei_r@email.com", "wolfgang@email.com"])
         self._assert_invitations({"search_string": "Sergei"}, ["sergei_p@email.com", "sergei_r@email.com"])
-        self._assert_invitations({"role_id": self.custom_role._id}, ["wolfgang@email.com"])
+        self._assert_invitations({"role_id": self.custom_role.get_id}, ["wolfgang@email.com"])
 
         for inv in invitations:
             inv.delete()
@@ -231,13 +230,13 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='deleted_email@example.com',
         )
-        deleted_user.retire(deleted_by=None)
+        deleted_user.retire(self.ccdomain.name, deleted_by=None)
         self.assertNotIn(
             deleted_user.username,
             [user.username for user in
              get_all_commcare_users_by_domain(self.ccdomain.name)]
         )
-        deleted_user.delete(deleted_by=None)
+        deleted_user.delete(self.ccdomain.name, deleted_by=None)
 
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]

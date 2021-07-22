@@ -38,7 +38,7 @@
              data-bind="visible: visible() || showUpgradeText(),
                         css: {error: hasError()}">
           <div class="col-sm-2 control-label">
-            <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
+            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
           </div>
           <div class="col-sm-4">

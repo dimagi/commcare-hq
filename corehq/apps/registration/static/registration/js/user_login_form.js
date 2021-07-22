@@ -1,5 +1,6 @@
 hqDefine('registration/js/user_login_form', [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
@@ -7,6 +8,7 @@ hqDefine('registration/js/user_login_form', [
     'hqwebapp/js/knockout_bindings.ko',
 ], function (
     $,
+    _,
     ko,
     initialPageData,
     assertProperties,
@@ -20,14 +22,16 @@ hqDefine('registration/js/user_login_form', [
             'passwordField',
             'passwordFormGroup',
             'nextUrl',
+            'isSessionExpiration',
         ]);
         var self = {};
 
         self.checkSsoLoginStatusUrl = initialPageData.reverse('check_sso_login_status');
+        self.sessionExpirationSsoIframeUrl = initialPageData.reverse('iframe_sso_login_pending');
         self.nextUrl = options.nextUrl;
+        self.isSessionExpiration = options.isSessionExpiration;
         self.passwordField = options.passwordField;
         self.passwordFormGroup = options.passwordFormGroup;
-        self.passwordFormGroup.hide();
 
         self.authUsername = ko.observable(options.initialUsername);
         self.authUsername.subscribe(function (newValue) {
@@ -42,21 +46,24 @@ hqDefine('registration/js/user_login_form', [
         self.continueTextPromise = null;
         self.defaultContinueText = gettext("Continue");
         self.continueButtonText = ko.observable(self.defaultContinueText);
-        self.showContinueButton = ko.observable(true);
+        self.showContinueButton = ko.observable(false);
         self.showContinueSpinner = ko.observable(false);
 
         self.isContinueDisabled = ko.computed(function () {
             return !emailUtils.validateEmail(self.authUsername());
         });
 
-        self.showSignInButton = ko.observable(false);
+        self.showSignInButton = ko.observable(true);
 
         /**
          * This updates the "Continue" Button text with either "Continue"
          * or "Continue to <IdentityProvider>".
          * @param {boolean} expandPasswordField - (optional) if this is true, auto expand password field
          */
-        self.updateContinueText = function (expandPasswordField = false) {
+        self.updateContinueText = function (expandPasswordField) {
+            if (_.isUndefined(expandPasswordField)) {
+                expandPasswordField = false;
+            }
             self.continueTextPromise = $.post(self.checkSsoLoginStatusUrl, {
                 username: self.authUsername(),
             }, function (data) {
@@ -125,7 +132,14 @@ hqDefine('registration/js/user_login_form', [
                 // note ssoUrl already contains ?username=foo
                 ssoUrl = ssoUrl + "&next=" + self.nextUrl;
             }
-            window.location = ssoUrl;
+            if (self.isSessionExpiration) {
+                // the reason why we do this for the session expiration popup
+                // is that Azure AD does not load in cross origin iframes.
+                window.open(ssoUrl);
+                window.location = self.sessionExpirationSsoIframeUrl;
+            } else {
+                window.location = ssoUrl;
+            }
         };
 
         self.continueToPasswordLogin = function () {

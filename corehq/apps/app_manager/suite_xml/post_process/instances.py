@@ -9,10 +9,13 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.util.timer import time_method
 
 
 class EntryInstances(PostProcessor):
+    """Adds instance declarations to the suite file"""
 
+    @time_method()
     def update_suite(self):
         for entry in self.suite.entries:
             self.add_entry_instances(entry)

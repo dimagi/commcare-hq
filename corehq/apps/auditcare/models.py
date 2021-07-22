@@ -73,6 +73,7 @@ class AuditEvent(models.Model):
     user_agent_fk = models.ForeignKey(
         UserAgent, null=True, db_index=False, on_delete=models.PROTECT)
     user_agent = ForeignValue(user_agent_fk, truncate=True)
+    couch_id = models.CharField(max_length=126, null=True)
 
     @property
     def doc_type(self):
@@ -125,6 +126,12 @@ class NavigationEventAudit(AuditEvent):
     headers = NullJsonField(default=dict)
     status_code = models.SmallIntegerField(default=0)
 
+    class Meta(AuditEvent.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+                                    name="audit_nav_couch_875bc_idx"),
+        ]
+
     @property
     def description(self):
         return self.user or ""
@@ -168,6 +175,12 @@ class AccessAudit(AuditEvent):
         HttpAccept, null=True, db_index=False, on_delete=models.PROTECT)
     http_accept = ForeignValue(http_accept_fk, truncate=True)
     trace_id = models.CharField(max_length=127, null=True, blank=True)
+
+    class Meta(AuditEvent.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=['couch_id'], condition=models.Q(couch_id__isnull=False),
+                                    name="audit_access_couch_10d1b_idx"),
+        ]
 
     # Optional (django-ified) settings.AUDIT_TRACE_ID_HEADER set by AuditcareConfig
     trace_id_header = None

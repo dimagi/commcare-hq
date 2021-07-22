@@ -98,6 +98,8 @@ sync mixins. `Example of tests for sync and migration code <https://github.com/d
 The migration command has a ``--verify`` option that will find any differences in the couch data vs the sql data.
 
 Once this PR is deployed - later, after the whole shebang has been QAed - you'll run the migration command in any environments where it's likely to take more than a trivial amount of time.
+If the model is tied to domains you should initially migrate a few selected domains using ``--domains X Y Z`` and manually
+verify that the migration worked as expected before running it for all the data.
 
 PR 2: Verify migration and read from SQL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

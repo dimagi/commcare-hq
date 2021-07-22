@@ -36,7 +36,7 @@ class CaseClaimTests(TestCase):
         self.create_case()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         super(CaseClaimTests, self).tearDown()
 

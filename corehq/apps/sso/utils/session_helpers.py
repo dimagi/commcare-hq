@@ -31,16 +31,33 @@ def _get_saml_user_data_property(request, prop_slug):
     return value
 
 
+def _get_display_name_from_session(request):
+    """
+    This gets the display name from SSO user data stored in the session SAML
+    data.
+    :param request: HttpRequest
+    :return: string or None
+    """
+    return _get_saml_user_data_property(
+        request,
+        'http://schemas.microsoft.com/identity/claims/displayname'
+    )
+
+
 def get_sso_user_first_name_from_session(request):
     """
     This gets the first name from sso user data stored in the session SAML data.
     :param request: HttpRequest
     :return: string or None
     """
-    return _get_saml_user_data_property(
+    first_name = _get_saml_user_data_property(
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'
     )
+    if not first_name:
+        display_name = _get_display_name_from_session(request)
+        first_name = display_name.split(' ')[0] if display_name else None
+    return first_name
 
 
 def get_sso_user_last_name_from_session(request):
@@ -49,27 +66,13 @@ def get_sso_user_last_name_from_session(request):
     :param request: HttpRequest
     :return: string or None
     """
-    return _get_saml_user_data_property(
+    last_name = _get_saml_user_data_property(
         request,
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
     )
-
-
-def prepare_session_with_sso_username(request, username):
-    """
-    Prepares the request's Session to store username information related to
-    a user that is signing up or a user that is signing in using SSO from
-    a registration, invitation, or sign in form.
-    :param request: HttpRequest
-    :param username: string - username / email
-    """
-    request.session['ssoNewUsername'] = username
-
-
-def get_sso_username_from_session(request):
-    """
-    If present, this gets the ssoUsername stored in the request's session.
-    :param request: HttpRequest
-    :return: string or None - username
-    """
-    return request.session.get('ssoNewUsername')
+    if not last_name:
+        display_name = _get_display_name_from_session(request)
+        display_name_parts = display_name.split(' ') if display_name else []
+        if len(display_name_parts) > 1:
+            last_name = ' '.join(display_name_parts[1:])
+    return last_name

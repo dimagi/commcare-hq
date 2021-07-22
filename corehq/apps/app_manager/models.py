@@ -1168,7 +1168,8 @@ class FormBase(DocumentSchema):
         return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations',
+                 'include_fixtures'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):
@@ -1358,7 +1359,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     # These were originally DictProperty(JRResourceProperty),
     # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
-    # so it was actually wrapping as a StringPropery
+    # so it was actually wrapping as a StringProperty
     # too late to retroactively apply that validation,
     # so now these are DictProperty(StringProperty)
     media_image = DictProperty(StringProperty)
@@ -1461,7 +1462,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return custom_icon.form, custom_icon_text
         return None, None
 
-    def _set_media(self, media_attr, lang, media_path):
+    def set_media(self, media_attr, lang, media_path):
         """
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
@@ -1484,10 +1485,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
+        self.set_media('media_image', lang, icon_path)
 
     def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
+        self.set_media('media_audio', lang, audio_path)
 
     def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
@@ -2100,11 +2101,16 @@ class DefaultCaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
 
 
-class CaseSearchLabel(DocumentSchema):
+class BaseCaseSearchLabel(NavMenuItemMediaMixin):
+    def get_app(self):
+        return self._module.get_app()
+
+
+class CaseSearchLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search All Cases'})
 
 
-class CaseSearchAgainLabel(DocumentSchema):
+class CaseSearchAgainLabel(BaseCaseSearchLabel):
     label = DictProperty(default={'en': 'Search Again'})
 
 
@@ -2125,6 +2131,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
+    additional_case_types = ListProperty(str)
 
     @property
     def case_session_var(self):
@@ -2197,6 +2204,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         default=WORKFLOW_DEFAULT,
         choices=REGISTRATION_FORM_WORFLOWS,
     )
+    relevancy_expression = StringProperty()
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
@@ -2232,6 +2240,9 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.case_list._module = self
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
+        if hasattr(self, 'search_config'):
+            self.search_config.search_label._module = self
+            self.search_config.search_again_label._module = self
 
     @classmethod
     def wrap(cls, data):

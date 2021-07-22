@@ -39,6 +39,7 @@ class TestDiffCases(SimpleTestCase):
                 "corehq.apps.commtrack.models.StockState.objects.filter",
                 self.get_stock_states,
             ),
+            patch("corehq.apps.commtrack.models.StockState.include_archived.filter"),
             patch(
                 "corehq.form_processor.backends.couch.dbaccessors"
                 ".FormAccessorCouch.form_exists",
@@ -222,6 +223,7 @@ class TestDiffCases(SimpleTestCase):
             props=props,
             to_json=lambda: dict(props, case_id=case_id),
             is_deleted=False,
+            xform_ids=[],
         )
         self.couch_cases[case_id] = couch_case = dict(props, case_id=case_id)
         return couch_case

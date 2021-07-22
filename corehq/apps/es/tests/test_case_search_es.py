@@ -442,7 +442,7 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c3', 'dob': date(2020, 3, 3)},
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchCriteria(self.domain, self.case_type, {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
+            CaseSearchCriteria(self.domain, [self.case_type], {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
             None,
             ['c2', 'c3']
         )
@@ -508,3 +508,37 @@ class TestCaseSearchLookups(TestCase):
     def _assert_related_case_ids(self, cases, paths, ids):
         results = get_related_case_results(self.domain, cases, paths)
         self.assertEqual(ids, {result['_id'] for result in results})
+
+    def test_multiple_case_types(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Another Song'},
+            {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
+            {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
+        ]
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['show', 'song'], {'description': 'New York'}).search_es,
+            None,
+            ['c1', 'c3']
+        )
+        config.delete()
+
+    def test_blank_property_value(self):
+        # foo = '' should match all cases where foo is empty or absent
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'foo': 'redbeard'},
+                {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': ''},
+                {'_id': 'c4'},
+            ],
+            CaseSearchCriteria(self.domain, [self.case_type], {'foo': ''}).search_es,
+            None,
+            ['c3', 'c4']
+        )
+        config.delete()

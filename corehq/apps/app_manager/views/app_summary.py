@@ -1,12 +1,13 @@
 import io
 from collections import namedtuple
-
+from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-
+from django.contrib import messages
+from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -95,6 +96,17 @@ class AppFormSummaryView(AppSummaryView):
 
     @property
     def page_context(self):
+
+        if self._show_app_changes_notification():
+            messages.warning(
+                self.request,
+                'Hey Dimagi User! Have you tried out '
+                '<a href="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions" '
+                'target="_blank">Viewing App Changes between Versions</a> yet? It might be just what you are '
+                'looking for!',
+                extra_tags='html'
+            )
+
         context = super(AppFormSummaryView, self).page_context
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
@@ -103,6 +115,15 @@ class AppFormSummaryView(AppSummaryView):
             'errors': errors,
         })
         return context
+
+    def _show_app_changes_notification(self):
+        if settings.ENTERPRISE_MODE:
+            return False
+
+        if self.request.couch_user.is_dimagi and not VIEW_APP_CHANGES.enabled(self.domain):
+            return True
+
+        return False
 
 
 class FormSummaryDiffView(AppSummaryView):

@@ -412,13 +412,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
-    permissions_source_domain = models.CharField(max_length=128, null=True, blank=True)
-    permissions_ignore_domains = ArrayField(
-        models.CharField(max_length=128, null=True),
-        null=True,
-        blank=True,
-        default=list
-    )
 
     # Settings restricting Hubspot data
     block_hubspot_data_for_all_users = models.BooleanField(default=False)
@@ -507,13 +500,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     def get_enterprise_restricted_signup_accounts(cls):
         return BillingAccount.objects.filter(is_customer_billing_account=True, restrict_signup=True)
 
-    @classmethod
-    def get_enterprise_permissions_domains(cls, domain):
-        account = cls.get_account_by_domain(domain)
-        if account and account.permissions_source_domain:
-            return list(set(account.get_domains()) - set(account.permissions_ignore_domains))
-        return []
-
     @property
     def autopay_card(self):
         if not self.auto_pay_enabled:
@@ -522,8 +508,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
     def get_domains(self):
-        subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
-        return [s.subscriber.domain for s in subscriptions]
+        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                    'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
@@ -2869,7 +2855,7 @@ class CustomerBillingRecord(BillingRecordBase):
         payment_status = (_("Paid")
                           if self.invoice.is_paid or self.invoice.balance == 0
                           else _("Payment Required"))
-        # Random domain, because all subscriptions on a customer account link to the same Enterprise Dashboard
+        # Random domain, because all subscriptions on a customer account link to the same Enterprise Console
         domain = self.invoice.subscriptions.first().subscriber.domain
         context.update({
             'account_name': self.invoice.account.name,

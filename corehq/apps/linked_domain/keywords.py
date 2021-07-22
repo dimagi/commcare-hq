@@ -70,7 +70,11 @@ def _update_actions(domain_link, linked_keyword, keyword_actions):
         keyword_action.keyword = linked_keyword
         if keyword_action.app_id is not None:
             try:
-                app_id = get_downstream_app_id(domain_link.linked_domain, keyword_action.app_id)
+                app_id = get_downstream_app_id(
+                    domain_link.linked_domain,
+                    keyword_action.app_id,
+                    use_upstream_app_id=False
+                )
             except MultipleDownstreamAppsError:
                 raise DomainLinkError(_("Keyword {keyword} references an application that has multiple linked "
                                         "applications. It cannot be updated.").format(

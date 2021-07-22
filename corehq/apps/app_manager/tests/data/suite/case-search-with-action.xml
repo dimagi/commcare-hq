@@ -1,0 +1,16 @@
+<partial>
+  <action auto_launch="false()" redo_last="false">
+    <display>
+      <text>
+        <locale id="case_search.m0"/>
+      </text>
+      <media audio="jr://file/commcare/image/2.mp3" image="jr://file/commcare/image/1.png"/>
+    </display>
+    <stack>
+      <push>
+        <mark/>
+        <command value="'search_command.m0'"/>
+      </push>
+    </stack>
+  </action>
+</partial>

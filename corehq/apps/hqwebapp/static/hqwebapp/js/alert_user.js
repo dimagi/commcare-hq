@@ -58,10 +58,13 @@ function (
         });
 
         var message_element = $("#message-alerts").get(0);
-        ko.cleanNode(message_element);
-        $(message_element).koApplyBindings({
-            alerts: message_alerts,
-        });
+        // this element is not available on templates like iframe_domain_login.html
+        if (message_element) {
+            ko.cleanNode(message_element);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
+        }
     });
 
     return {

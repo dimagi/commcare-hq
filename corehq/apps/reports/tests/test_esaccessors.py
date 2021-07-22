@@ -59,6 +59,7 @@ from corehq.apps.reports.standard.cases.utils import query_location_restricted_c
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
@@ -892,6 +893,12 @@ class TestUserESAccessors(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'user-esaccessors-test'
+        cls.domain_obj = create_domain(cls.domain)
+
+        cls.source_domain = cls.domain + "-source"
+        cls.source_domain_obj = create_domain(cls.source_domain)
+        create_enterprise_permissions("a@a.com", cls.source_domain, [cls.domain])
+
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
@@ -927,6 +934,8 @@ class TestUserESAccessors(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.domain_obj.delete()
+        cls.source_domain_obj.delete()
         cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
@@ -977,12 +986,9 @@ class TestUserESAccessors(TestCase):
         })
 
     def test_domain_allow_enterprise(self):
-        source_domain = self.domain + "-source"
-        create_enterprise_permissions(self.user.username, source_domain, self.domain)
         self._send_user_to_es()
-
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
-        self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(self.source_domain).values_list('username', flat=True))
         self.assertEqual(
             ['superman'],
             UserES().domain(self.domain, allow_enterprise=True).values_list('username', flat=True)

@@ -13,10 +13,15 @@ from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
-from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.apps.reports.extension_points import customize_user_query
+from corehq.apps.user_importer.models import UserUploadRecord
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 
 from .. import util
 from ..analytics.esaccessors import get_group_stubs, get_user_stubs
@@ -345,7 +350,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain, allow_enterprise=True)
         q = customize_user_query(request_user, domain, q)
-        if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
+        if (
+            ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs)
+            and request_user.has_permission(domain, 'access_all_locations')
+        ):
             return q.show_inactive()
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
@@ -451,6 +459,51 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return {
             cls.slug: 'g__%s' % group_id
         }
+
+
+class ChangedByUserFilter(ExpandedMobileWorkerFilter):
+    slug = "changed_by_user"
+    label = ugettext_lazy("Changed By User(s)")
+
+    def get_default_selections(self):
+        return [('t__6', _("[Web Users]"))]
+
+
+class ChangeActionFilter(BaseMultipleOptionFilter):
+    ALL = '0'
+
+    label = ugettext_noop('Action')
+    default_text = ugettext_noop('Select Action')
+    slug = 'action'
+
+    options = [
+        (ALL, ugettext_noop('All')),
+        (str(UserHistory.CREATE), ugettext_noop('Create')),
+        (str(UserHistory.UPDATE), ugettext_noop('Update')),
+        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+    ]
+    default_options = ['0']
+
+
+class UserUploadRecordFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('User Bulk Upload')
+    default_text = ugettext_noop('Select upload')
+    slug = 'user_upload_record'
+
+    @property
+    def options(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        records = UserUploadRecord.objects.filter(domain=self.domain).order_by('-date_created')
+        return [
+            (
+                str(record.id),
+                _("Upload by {username} at {time}").format(
+                    username=cached_user_id_to_user_display(record.user_id),
+                    time=ServerTime(record.date_created).user_time(timezone).ui_string(USER_DATETIME_FORMAT)
+                )
+            )
+            for record in records
+        ]
 
 
 def get_user_toggle(request):

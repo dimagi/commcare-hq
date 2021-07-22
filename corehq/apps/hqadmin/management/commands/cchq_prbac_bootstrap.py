@@ -168,7 +168,14 @@ class Command(BaseCommand):
         Role(slug=privileges.GEOCODER, name='Geocoder', description='Address widget in Web Apps.'),
         Role(slug=privileges.DEFAULT_EXPORT_SETTINGS,
              name='Default Export Settings',
-             description='Allows ability to set default values for newly created exports.')
+             description='Allows ability to set default values for newly created exports.'),
+        Role(slug=privileges.LINKED_PROJECTS,
+             name='Linked Projects',
+             description='Allows admin users to push and/or pull content between linked projects.'),
+        Role(slug=privileges.RELEASE_MANAGEMENT,
+             name='Release Management',
+             description='Allows access to features that help manage releases between projects, like the linked '
+                         'projects feature.'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -182,6 +189,7 @@ class Command(BaseCommand):
         Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
+        Role(slug='enterprise_plan_v1', name='Enterprise Plan', description=''),
     ] + [
         Role(slug='standard_plan_report_builder_v0', name='Standard Plan - 5 Reports', description=''),
         Role(slug='pro_plan_report_builder_v0', name='Pro Plan - 5 Reports', description=''),
@@ -204,4 +212,5 @@ class Command(BaseCommand):
         'pro_plan_v1': features.pro_v1,
         'advanced_plan_v0': features.advanced_v0,
         'enterprise_plan_v0': features.enterprise_v0,
+        'enterprise_plan_v1': features.enterprise_v1,
     }

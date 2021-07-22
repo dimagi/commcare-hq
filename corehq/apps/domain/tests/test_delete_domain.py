@@ -74,13 +74,15 @@ from corehq.apps.locations.models import (
     SQLLocation,
     make_location,
 )
-from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
-from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.models import (
+    ReportsSidebarOrdering,
+    TableauServer,
+    TableauVisualization,
+)
 from corehq.apps.sms.models import (
     SMS,
     DailyOutboundSMSLimitReached,
@@ -100,9 +102,17 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import (
-    DomainRequest, Invitation, PermissionInfo, Permissions,
-    SQLUserRole, RolePermission, RoleAssignableBy
+    DomainRequest,
+    Invitation,
+    PermissionInfo,
+    Permissions,
+    RoleAssignableBy,
+    RolePermission,
+    SQLUserRole,
+    UserHistory,
+    WebUser,
 )
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
@@ -671,21 +681,6 @@ class TestDeleteDomain(TestCase):
         self._assert_location_counts(self.domain.name, 0)
         self._assert_location_counts(self.domain2.name, 1)
 
-    def _assert_mobile_auth_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            SQLMobileAuthKeyRecord.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_mobile_auth(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            record = new_key_record(domain=domain_name, user_id='123')
-            record.save()
-
-        self.domain.delete()
-
-        self._assert_mobile_auth_counts(self.domain.name, 0)
-        self._assert_mobile_auth_counts(self.domain2.name, 1)
-
     def _assert_ota_counts(self, domain_name, count):
         self._assert_queryset_count([
             MobileRecoveryMeasure.objects.filter(domain=domain_name),
@@ -705,12 +700,26 @@ class TestDeleteDomain(TestCase):
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([
-            ReportsSidebarOrdering.objects.filter(domain=domain_name)
+            ReportsSidebarOrdering.objects.filter(domain=domain_name),
+            TableauServer.objects.filter(domain=domain_name),
+            TableauVisualization.objects.filter(domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             ReportsSidebarOrdering.objects.create(domain=domain_name)
+            server = TableauServer.objects.create(
+                domain=domain_name,
+                server_type='server',
+                server_name='my_server',
+                target_site='my_site',
+                domain_username='my_username',
+            )
+            TableauVisualization.objects.create(
+                domain=domain_name,
+                server=server,
+                view_url='my_url',
+            )
             self._assert_reports_counts(domain_name, 1)
 
         self.domain.delete()
@@ -876,6 +885,29 @@ class TestDeleteDomain(TestCase):
 
         self._assert_users_counts(self.domain.name, 0)
         self._assert_users_counts(self.domain2.name, 1)
+
+    def test_users_domain_membership(self):
+        web_user = WebUser.create(self.domain.name, f'webuser@{self.domain.name}.{HQ_ACCOUNT_ROOT}', '******',
+                                  created_by=None, created_via=None)
+
+        another_domain = Domain(name="another-test", is_active=True)
+        another_domain.save()
+        self.addCleanup(another_domain.delete)
+
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed in tests
+        web_user.add_domain_membership(another_domain.name)
+        web_user.save()
+
+        self.domain.delete()
+
+        user_history = UserHistory.objects.last()
+        self.assertEqual(user_history.domain, None)
+        self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
+        self.assertEqual(user_history.user_id, web_user.get_id)
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain.name}'")
+        self.assertEqual(user_history.details['changed_via'],
+                         'corehq.apps.domain.deletion._delete_web_user_membership')
+        self.assertEqual(user_history.details['changes'], {})
 
     def _assert_role_counts(self, domain_name, roles, permissions, assignments):
         self.assertEqual(SQLUserRole.objects.filter(domain=domain_name).count(), roles)

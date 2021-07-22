@@ -176,6 +176,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
+        ), mock.patch(
+            "couchforms.analytics.get_last_form_submission_received"
         ), patch_chunk_size, patch_find_missing_docs:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
@@ -1133,21 +1135,21 @@ class MigrationTestCase(BaseMigrationTestCase):
             self.do_migration(live=True, diffs=IGNORE)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            user.retire(deleted_by=None)
+            user.retire(self.domain_name, deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire(unretired_by=None)
+            user.unretire(self.domain_name, unretired_by=None)
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            user.retire(deleted_by=None)
+            user.retire(self.domain_name, deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire(unretired_by=None)
+            user.unretire(self.domain_name, unretired_by=None)
 
         self.do_migration(finish=True)
         self.do_migration(COMMIT)
-        user.retire(deleted_by=None)
-        user.unretire(unretired_by=None)
+        user.retire(self.domain_name, deleted_by=None)
+        user.unretire(self.domain_name, unretired_by=None)
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases

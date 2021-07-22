@@ -24,6 +24,7 @@ class UnlinkApplicationTest(TestCase):
 
     def test_unlink_app_returns_regular_app_if_linked(self):
         linked_app = LinkedApplication.new_app(self.domain, 'Linked Application')
+        linked_app.family_id = 'abc123'
         linked_app.save()
         expected_app_id = linked_app._id
 
@@ -32,6 +33,7 @@ class UnlinkApplicationTest(TestCase):
 
         # ensure new app is not linked, and converted properly
         self.assertEqual('Application', unlinked_app.get_doc_type())
+        self.assertIsNone(unlinked_app.family_id)
         self.assertEqual(expected_app_id, unlinked_app._id)
 
 

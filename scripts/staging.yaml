@@ -52,35 +52,31 @@ deploy_env: staging
 branches:
     # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-    # - jls/sync-mixins-hard-fail # Jenny May 24
-    - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
-    # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
-    - gh/add-app-id-to-downstream-report # Graham May 18
-    - mk/case_search_labels/multimedia # MK May 21
-    - sr/cs-multiselect+sr/hide-geo  # Sravan May 31
-    - sr/hide-geo  # Sravan May 25
-    - bmb/sso-new-user-page  # Biyeun 25th May, pending QA
-    - bmb/sso-remove-toggle  # Biyeun 25th May, pending QA
-    - cs/dhis-readable-response  # Charl 26 May
-    - bmb/sso-fix-iframe-login  # Biyeun 27 May, pending QA
-    - sk/test_role_create_update  # Simon May 28
     - sr/cs-multiselect  # Sravan May 31
-    - sk/test_role_create_update  # Simon May 31
-    - bmb/sso-remove-toggle+rp/enterprize-sms-report+jls/move-enterprise-permissions-2-of-3 # Jenny June 4
-    - bmb/sso-remove-toggle+rp/enterprize-sms-report  # Biyeun June 2, fixes conflicts
-    - rp/enterprize-sms-report #Rynhard June 2
-    - cs/SC-1335-dataset-workflow  # Charl June 3
-    - bmb/sso-remove-debug-views  # Biyeun June 3
-    - fr/remote-linked-ucr      # Farid June 4
-    - bmb/sso-sign-up  # Biyeun June 5
-    - jls/move-enterprise-permissions-2-of-3  # Jenny June 4
+    - gh/improve-erm-ui # Graham June 16 [QA]
+    - sp/csrf # Amit + Shivam June 30
+    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
+    - cs/SC-691-add-support-for-geolocation  # Charl July 5
+    - gh/add-app-id-behind-ff # Graham July 6 [QA]
+    - ce/bulk-case-search # Cal July 6
+    - ap/auditcare-migration # Amit July 8
+    - rc/explain-before-entering # Robert July 8 [QA]
+    - rp/enterprize-sms-report # Rynhard July 12
+    - rc/clarify-explanation # Robert July 20
+    - ml/add-bulk-delete-form-export-report # Minha July 20
+    - bmb/hubspot-js-alt  # Biyeun July 21
+    - smh/add-download-and-email-reports-permission # Steph July 21
+    - gh/base-linked-project-access # Graham July 21
+    - gh/show-erm-tab-if-applicable # Graham July 21
+    - gh/fix-tab-issue # Graham July 21
+    - gh/update-linked-domain-text # Graham July 21
+    - jm/stale-es-case-search  # Joel July 21
+    - cs/SC-1529-multiple-mobile-numbers-upload  # Charl July 22
 submodules: { }
