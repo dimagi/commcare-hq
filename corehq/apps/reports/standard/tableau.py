@@ -52,7 +52,6 @@ class TableauView(BaseProjectReportSectionView):
             "server_address": self.visualization.server.server_name,
             "validate_hostname": hostname,
             "target_site": self.visualization.server.target_site,
-            "allow_domain_username_override": self.visualization.server.allow_domain_username_override,
             "domain_username": self.visualization.server.domain_username,
             "view_url": self.visualization.view_url,
         }
@@ -62,17 +61,10 @@ class TableauView(BaseProjectReportSectionView):
             return self.tableau_server_response()
         return super().get(request, *args, **kwargs)
 
-    def get_post_username(self):
-        if self.visualization.server.allow_domain_username_override:
-            tableau_trusted_auth_username = self.request.user.get('tableau_trusted_auth_username')
-            if tableau_trusted_auth_username:
-                return tableau_trusted_auth_username
-        return self.visualization.server.domain_username
-
     def tableau_server_response(self):
         context = self.page_context
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
-        post_arguments = {'username': self.get_post_username()}
+        post_arguments = {'username': self.visualization.server.domain_username}
         if self.visualization.server.target_site != 'Default':
             post_arguments.update({'target_site': self.visualization.server.target_site})
 
