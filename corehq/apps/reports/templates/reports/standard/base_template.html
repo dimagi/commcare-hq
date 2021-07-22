@@ -106,7 +106,7 @@
     {% include "reports/standard/partials/filter_panel.html" %}
   {% endblock %}
 
-  {% if report.is_emailable %}
+  {% if report.is_emailable and request.couch_user.can_download_reports %}
     <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
       <div class="modal-dialog">
         <div class="modal-content">
