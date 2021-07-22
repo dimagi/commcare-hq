@@ -119,6 +119,14 @@ class Command(BaseCommand):
                         mismatches += 1
                 if cases:
                     logger.warning("found %s cases missing from case_search index", len(cases))
+                    for case_id, smo_case in cases.items():
+                        table.add_row([
+                            domain,
+                            case_id,
+                            "n/a",
+                            human_dt(smo_case),
+                            "n/a",
+                        ])
             finally:
                 logger.info("fetched %s case_searches", case_searches)
                 logger.info("found %s mismatched records for domain: %s", mismatches, domain)
