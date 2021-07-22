@@ -28,7 +28,6 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
-from corehq.util.view_utils import get_case_or_404
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_url_base, json_response
 
@@ -588,13 +587,6 @@ def session_endpoint(request, domain, app_id, endpoint_id):
 
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         return _fail(_("Linking directly into Web Apps has been disabled."))
-
-    case_ids = request.GET.values()
-    for case_id in case_ids:
-        try:
-            get_case_or_404(domain, case_id)
-        except Http404:
-            return _fail(_("Case not found."))
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
