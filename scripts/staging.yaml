@@ -76,4 +76,5 @@ branches:
     - gh/base-linked-project-access # Graham July 21
     - gh/show-erm-tab-if-applicable # Graham July 21
     - gh/fix-tab-issue # Graham July 21
+    - gh/update-linked-domain-text # Graham July 21
 submodules: { }
