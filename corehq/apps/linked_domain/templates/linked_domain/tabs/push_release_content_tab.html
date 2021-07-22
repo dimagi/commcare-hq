@@ -6,15 +6,15 @@
     <h3>{% trans "Push Content" %}</h3>
     <p>
       {% blocktrans %}
-        Select which data models you would like to push to the specified downstream project spaces.<br/>
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with linked projects.
+        Select which content you would like to push to the specified downstream project spaces.<br/>
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with Linked Project Spaces.
       {% endblocktrans %}
     </p>
     <div class="spacer"></div>
     <form class="form-horizontal">
       <div class="form-group">
         <label class="col-sm-3 col-md-2 control-label">
-          {% trans "Models" %}
+          {% trans "Content" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
@@ -32,7 +32,7 @@
       </div>
       <div class="form-group">
         <label class="col-sm-3 col-md-2 control-label">
-          {% trans "Projects" %}
+          {% trans "Project Spaces" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
@@ -41,9 +41,9 @@
                              optionsText: 'linked_domain',
                              optionsValue: 'linked_domain',
                              multiselect: {
-                                 selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
-                                 selectedHeaderTitle: '{% trans_html_attr "Projects to push to" %}',
-                                 searchItemTitle: '{% trans_html_attr "Search projects" %}',
+                                 selectableHeaderTitle: '{% trans_html_attr "All project spaces" %}',
+                                 selectedHeaderTitle: '{% trans_html_attr "Project spaces to push to" %}',
+                                 searchItemTitle: '{% trans_html_attr "Search project spaces" %}',
                             }">
           </select>
         </div>
