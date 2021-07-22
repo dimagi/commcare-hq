@@ -73,7 +73,7 @@ class UserChangeLogger(object):
         Info will also include ID if the data model is not linked directly on the user like
         primary location for CommCareUser is present on the user record but for a WebUser it's
         stored on Domain Membership. So for WebUser, info should also include the primary location's location id.
-        :param info: text info like "Role: RoleName[role_id]" / "Primary Location: Boston[boston-location-id]"
+        :param info: text info like "Role: RoleName[role_id]" / "Primary location: Boston[boston-location-id]"
         """
         self.messages.append(info)
         self._save = True

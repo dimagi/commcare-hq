@@ -247,7 +247,7 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
@@ -256,6 +256,7 @@ class EditCommCareUserView(BaseEditUserView):
         assigned_locations = self.editable_user.assigned_location_ids
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': initial_id,
                 'program_id': program_id,

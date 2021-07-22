@@ -38,6 +38,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
 from corehq.apps.users.util import (
@@ -949,6 +950,7 @@ class CommtrackUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
@@ -983,17 +985,35 @@ class CommtrackUserForm(forms.Form):
 
     def save(self, user):
         # todo: Avoid multiple user.save
+        user_change_logger = UserChangeLogger(
+            self.domain,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.request.couch_user,
+            changed_via=USER_CHANGE_VIA_WEB,
+            upload_record_id=None,
+        )
+        updated_program_id = None
         domain_membership = user.get_domain_membership(self.domain)
         if self.commtrack_enabled:
-            domain_membership.program_id = self.cleaned_data['program_id']
+            program_id = self.cleaned_data['program_id']
+            if domain_membership.program_id != program_id:
+                updated_program_id = program_id
+            domain_membership.program_id = program_id
 
-        self._update_location_data(user)
+        location_updates = self._update_location_data(user)
+        if user.is_commcare_user():
+            self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
+        else:
+            self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
     def _update_location_data(self, user):
         location_id = self.cleaned_data['primary_location']
         location_ids = self.cleaned_data['assigned_locations']
+        updates = {}
 
         if user.is_commcare_user():
+            assigned_location_ids = set(user.assigned_location_ids)
             old_location_id = user.location_id
             if location_id != old_location_id:
                 if location_id:
@@ -1004,8 +1024,11 @@ class CommtrackUserForm(forms.Form):
             old_location_ids = user.assigned_location_ids
             if set(location_ids) != set(old_location_ids):
                 user.reset_locations(location_ids)
+            if assigned_location_ids != set(location_ids):
+                updates['location_ids'] = location_ids
         else:
             domain_membership = user.get_domain_membership(self.domain)
+            assigned_location_ids = set(domain_membership.assigned_location_ids)
             old_location_id = domain_membership.location_id
             if location_id != old_location_id:
                 if location_id:
@@ -1016,6 +1039,65 @@ class CommtrackUserForm(forms.Form):
             old_location_ids = domain_membership.assigned_location_ids
             if set(location_ids) != set(old_location_ids):
                 user.reset_locations(self.domain, location_ids)
+            if assigned_location_ids != set(location_ids):
+                updates['location_ids'] = location_ids
+
+        # check for this post reset_locations which can also update location_id
+        new_primary_location = user.get_sql_location(self.domain)
+        if new_primary_location and old_location_id != new_primary_location.location_id:
+            updates['location_id'] = location_id
+        elif old_location_id and not new_primary_location:
+            updates['location_id'] = None
+        return updates
+
+    def _log_commcare_user_changes(self, user_change_logger, location_updates, program_id):
+        if 'location_ids' in location_updates:
+            location_ids = location_updates['location_ids']
+            user_change_logger.add_changes({'assigned_location_ids': location_ids})
+            if location_ids:
+                location_names = list(SQLLocation.objects.filter(location_id__in=location_ids).values_list(
+                    'name', flat=True))
+                user_change_logger.add_info(f"Assigned locations: {location_names}")
+
+        if 'location_id' in location_updates:
+            location_id = location_updates['location_id']
+            user_change_logger.add_changes({'location_id': location_id})
+            if location_id:
+                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                user_change_logger.add_info(f"Primary location: {primary_location_name}")
+
+        if program_id:
+            program = Program.get(program_id)
+            user_change_logger.add_info(f"Program: {program.name}[{program_id}]")
+
+        user_change_logger.save()
+
+    def _log_web_user_changes(self, user_change_logger, location_updates, program_id):
+        if 'location_ids' in location_updates:
+            location_ids = location_updates['location_ids']
+            if location_ids:
+                locations_info = ", ".join([
+                    f"{location.name}[{location.location_id}]"
+                    for location in SQLLocation.objects.filter(location_id__in=location_ids)
+                ])
+                user_change_logger.add_info(f"Assigned locations: {locations_info}")
+            else:
+                user_change_logger.add_info("Assigned locations: []")
+
+        if 'location_id' in location_updates:
+            location_id = location_updates['location_id']
+            if location_id:
+                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                user_change_logger.add_info(
+                    f"Primary location: {primary_location_name}[{location_id}]")
+            else:
+                user_change_logger.add_info("Primary location: None")
+
+        if program_id:
+            program = Program.get(program_id)
+            user_change_logger.add_info(f"Program: {program.name}[{program_id}]")
+
+        user_change_logger.save()
 
     def clean_assigned_locations(self):
         from corehq.apps.locations.models import SQLLocation
