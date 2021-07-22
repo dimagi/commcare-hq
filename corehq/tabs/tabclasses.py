@@ -974,7 +974,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1461,19 +1461,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
-
         return menu
 
     def _get_locations_menu(self):
@@ -1625,6 +1612,18 @@ class EnterpriseSettingsTab(UITab):
                     },
                 ],
             })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
@@ -1986,11 +1985,11 @@ def _get_feature_flag_items(domain):
     # show ERM version of linked projects if domain has privilege
     if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items
