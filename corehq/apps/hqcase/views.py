@@ -91,8 +91,12 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
-    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
-        return _handle_list_view(request)
+    if request.method == 'GET' and not case_id:
+        if domain_needs_search_index(domain):
+            return _handle_list_view(request)
+        return JsonResponse({
+            'error': "You need the case search index to use this feature"
+        }, status=405)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
     if request.method == 'PUT' and case_id:
