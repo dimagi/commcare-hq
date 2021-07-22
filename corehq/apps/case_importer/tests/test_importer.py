@@ -638,6 +638,19 @@ class ImporterTest(TestCase):
         ])
         self.assertIn(exceptions.InvalidOwner.title, res['errors'])
 
+    @run_with_all_backends
+    def test_case_name_too_long(self):
+        res = self.import_mock_file([
+            ['case_id', 'name', 'external_id', 'favorite_color'],
+            ['', 'normal name', '', 'blue'],
+            ['', 'A' * 300, '', 'polka dot'],
+            ['', 'another normal name', 'A' * 300, 'polka dot'],
+        ])
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(2, res['failed_count'])
+        self.assertIn(exceptions.CaseNameTooLong.title, res['errors'])
+        self.assertIn(exceptions.ExternalIdTooLong.title, res['errors'])
+
 
 def make_worksheet_wrapper(*rows):
     return WorksheetWrapper(make_worksheet(rows))
