@@ -59,6 +59,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         cls.regular_domain.delete()
         super().tearDownClass()
 
+    @override_settings(IS_SAAS_ENVIRONMENT=True)
     def test_returns_false_if_account_disabled_hubspot(self):
         """
         Ensures that if the BillingAccount associated with a subscription
@@ -67,6 +68,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         self.request.subscription = self.subscription_no_hubspot
         self.assertFalse(is_hubspot_js_allowed_for_request(self.request))
 
+    @override_settings(IS_SAAS_ENVIRONMENT=True)
     def test_returns_true_for_normal_subscription(self):
         """
         Ensures that if the BillingAccount associated with a subscription
@@ -75,6 +77,7 @@ class TestIsHubspotJsAllowedForRequest(TestCase):
         self.request.subscription = self.regular_subscription
         self.assertTrue(is_hubspot_js_allowed_for_request(self.request))
 
+    @override_settings(IS_SAAS_ENVIRONMENT=True)
     def test_returns_true_if_no_subscription(self):
         """
         Ensures that if no subscription attribute is set on the HttpRequest
