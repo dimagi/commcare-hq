@@ -330,7 +330,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (options.allowedHost) {
             window.addEventListener(
                 "message",
-                hqImport("cloudcare/js/formplayer/hq.events").Receiver(options.allowedHost),
+                hqImport("cloudcare/js/formplayer/hq_events").Receiver(options.allowedHost),
                 false
             );
         }
