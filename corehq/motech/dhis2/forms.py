@@ -24,6 +24,9 @@ from .const import (
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
     SEND_FREQUENCY_WEEKLY,
+    COMPLETE_DATE_CHOICES,
+    COMPLETE_DATE_EMPTY,
+    COMPLETE_DATE_COLUMN
 )
 from .models import SQLDataSetMap, SQLDataValueMap
 from corehq.apps.userreports.models import ReportConfiguration
@@ -73,8 +76,13 @@ class DataSetMapForm(forms.ModelForm):
         validators=[RegexValidator(DHIS2_UID_RE, DHIS2_UID_MESSAGE)],
         required=False,
     )
-    complete_date = forms.DateField(
+    complete_date_option = forms.ChoiceField(
         label=_('CompleteDate'),
+        choices=COMPLETE_DATE_CHOICES,
+        initial=COMPLETE_DATE_EMPTY,
+    )
+    complete_date_column = forms.CharField(
+        label='CompleteDate Column Name',
         required=False,
     )
 
@@ -92,7 +100,8 @@ class DataSetMapForm(forms.ModelForm):
             'period',
             'period_column',
             'attribute_option_combo_id',
-            'complete_date',
+            'complete_date_column',
+            'complete_date_option',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -105,6 +114,7 @@ class DataSetMapForm(forms.ModelForm):
         self.fields['ucr_id'] = get_ucr_field(domain)
 
         self.helper = hqcrispy.HQFormHelper()
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('DataSet Details'),
@@ -117,7 +127,8 @@ class DataSetMapForm(forms.ModelForm):
                 crispy.Field('org_unit_id'),
                 crispy.Field('period'),
                 crispy.Field('attribute_option_combo_id'),
-                crispy.Field('complete_date', css_class='date-picker'),
+                crispy.Field('complete_date_option'),
+                crispy.Field('complete_date_column'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -224,6 +235,20 @@ class DataSetMapForm(forms.ModelForm):
 
                 except ValidationError:
                     self.add_error('period', validate_period.message)
+
+        selected_complete_date_option = cleaned_data.get('complete_date_option')
+
+        if selected_complete_date_option == COMPLETE_DATE_COLUMN:
+            column_name = cleaned_data.get('complete_date_column')
+
+            if not column_name:
+                self.add_error('complete_date_column', 'Cannot be empty.')
+            elif ucr_has_field(ucr, column_name):
+                cleaned_data['complete_date_column'] = column_name
+            else:
+                self.add_error('complete_date_column', 'Column does not exist in UCR.')
+        else:
+            cleaned_data['complete_date_column'] = None
 
         return self.cleaned_data
 
