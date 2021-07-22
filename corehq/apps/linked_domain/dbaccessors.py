@@ -100,8 +100,17 @@ def get_upstream_domains(domain_name, user):
     return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})
 
 
-def get_domains_eligible_for_linked_apps(upstream_domain_name):
+def get_domains_eligible_for_linked_apps(upstream_domain_name, user):
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        return [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
+        upstream_membership = user.get_domain_membership(upstream_domain_name)
+        is_upstream_admin = upstream_membership.is_admin if upstream_membership else False
+        downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
+        eligible_domains = []
+        for domain in downstream_domains:
+            downstream_membership = user.get_domain_membership(domain)
+            is_downstream_admin = downstream_membership.is_admin if downstream_membership else False
+            if is_upstream_admin and is_downstream_admin:
+                eligible_domains.append(domain)
+        return eligible_domains
 
     return []
