@@ -20,6 +20,11 @@ class XPathField(StringField):
     pass
 
 
+class BooleanField(SimpleBooleanField):
+    def __init__(self, xpath, *args, **kwargs):
+        return super().__init__(xpath, 'true', 'false', *args, **kwargs)
+
+
 class OrderedXmlObject(XmlObject):
     ORDER = ()
 
@@ -204,7 +209,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
-    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
+    lazy = BooleanField('resource/@lazy')
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -373,7 +378,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
     detail_inline = StringField('@detail-inline')
-    autoselect = SimpleBooleanField('@autoselect', true="true", false="false")
+    autoselect = BooleanField('@autoselect')
 
 
 class StackDatum(IdNode):
@@ -524,10 +529,10 @@ class QueryPrompt(DisplayNode):
     key = StringField('@key')
     appearance = StringField('@appearance', required=False)
     receive = StringField('@receive', required=False)
-    hidden = SimpleBooleanField('@hidden', 'true', 'false', required=False)
+    hidden = BooleanField('@hidden', required=False)
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
-    allow_blank_value = SimpleBooleanField('@allow_blank_value', 'true', 'false', required=False)
+    allow_blank_value = BooleanField('@allow_blank_value', required=False)
 
     itemset = NodeField('itemset', Itemset)
 
@@ -549,7 +554,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
-    default_search = SimpleBooleanField("@default_search", "true", "false")
+    default_search = BooleanField("@default_search")
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -731,7 +736,7 @@ class Lookup(OrderedXmlObject):
     ORDER = ('auto_launch', 'extras', 'responses', 'field')
 
     name = StringField("@name")
-    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
+    auto_launch = BooleanField("@auto_launch")
     action = StringField("@action", required=True)
     image = StringField("@image")
     extras = NodeListField('extra', Extra)
@@ -746,7 +751,7 @@ class ActionMixin(OrderedXmlObject):
     stack = NodeField('stack', Stack)
     relevant = XPathField('@relevant')
     auto_launch = StringField("@auto_launch")
-    redo_last = SimpleBooleanField("@redo_last", "true", "false")
+    redo_last = BooleanField("@redo_last")
 
 
 class Action(ActionMixin):
