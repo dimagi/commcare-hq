@@ -9,6 +9,7 @@ from ws4redis.context_processors import default
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.utils import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
@@ -104,6 +105,11 @@ def js_api_keys(request):
     }
     if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
         del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
+
+    if (api_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID')
+            and not is_hubspot_js_allowed_for_request(request)):
+        del api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID']
+
     return api_keys
 
 
