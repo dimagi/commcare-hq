@@ -212,7 +212,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
         self.report.save()
         return self.report
 
-    def test_already_linked_report_is_pushed(self):
+    def test_already_linked_report_is_pushed_without_privilege(self):
         new_report = self._create_new_report()
         new_report.title = "Title"
         new_report.save()
@@ -225,14 +225,38 @@ class TestReleaseReport(BaseReleaseManagerTest):
         model = self._model_status(MODEL_REPORT, detail=ReportLinkDetail(report_id=new_report.get_id).to_json())
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_report(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            errors = manager._release_report(self.domain_link, model)
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
         self.assertIsNotNone(downstream_report)
         self.assertEqual("Updated Title", downstream_report.title)
 
-    def test_report_not_pushed_if_not_found_with_toggle_disabled(self):
+    def test_already_linked_report_is_pushed_with_privilege(self):
+        new_report = self._create_new_report()
+        new_report.title = "Title"
+        new_report.save()
+        self.addCleanup(new_report.delete)
+        linked_report_info = create_linked_ucr(self.domain_link, new_report.get_id)
+        self.addCleanup(linked_report_info.report.delete)
+        # after creating the link, update the upstream report
+        new_report.title = "Updated Title"
+        new_report.save()
+        model = self._model_status(MODEL_REPORT, detail=ReportLinkDetail(report_id=new_report.get_id).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = True
+            errors = manager._release_report(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
+        self.assertIsNotNone(downstream_report)
+        self.assertEqual("Updated Title", downstream_report.title)
+
+    def test_report_not_pushed_if_not_found_without_privilege(self):
         unpushed_report = self._create_new_report()
         self.addCleanup(unpushed_report.delete)
         model = self._model_status(
@@ -241,11 +265,12 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_report(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            errors = manager._release_report(self.domain_link, model)
         self.assertTrue('Could not find report. Please check that the report has been linked.' in errors)
 
-    @flag_enabled('ERM_DEVELOPMENT')
-    def test_report_pushed_if_not_found_with_toggle_enabled(self):
+    def test_report_pushed_if_not_found_with_privilege_enabled(self):
         unpushed_report = self._create_new_report()
         self.addCleanup(unpushed_report.delete)
         model = self._model_status(
@@ -254,7 +279,9 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_report(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = True
+            errors = manager._release_report(self.domain_link, model)
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
@@ -274,7 +301,7 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         keyword.save()
         return keyword
 
-    def test_already_linked_keyword_is_pushed(self):
+    def test_already_linked_keyword_is_pushed_without_privilege(self):
         keyword = self._create_new_keyword('keyword')
         self.addCleanup(keyword.delete)
         linked_keyword_id = create_linked_keyword(self.domain_link, keyword.id)
@@ -285,7 +312,9 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_keyword(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            errors = manager._release_keyword(self.domain_link, model)
         self.assertIsNone(errors)
 
         downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
@@ -293,25 +322,49 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         self.assertIsNotNone(downstream_keyword)
         self.assertEqual("updated-keyword", downstream_keyword.keyword)
 
-    def test_keyword_not_pushed_if_not_found_with_toggle_disabled(self):
+    def test_already_linked_keyword_is_pushed_with_privilege(self):
+        keyword = self._create_new_keyword('keyword')
+        self.addCleanup(keyword.delete)
+        linked_keyword_id = create_linked_keyword(self.domain_link, keyword.id)
+        self.addCleanup(Keyword(id=linked_keyword_id).delete)
+        # after creating the link, update the upstream keyword
+        keyword.keyword = "updated-keyword"
+        keyword.save()
+        model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
+        manager = ReleaseManager(self.domain, self.user.username)
+
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = True
+            errors = manager._release_keyword(self.domain_link, model)
+        self.assertIsNone(errors)
+
+        downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
+        self.addCleanup(downstream_keyword.delete)
+        self.assertIsNotNone(downstream_keyword)
+        self.assertEqual("updated-keyword", downstream_keyword.keyword)
+
+    def test_keyword_not_pushed_if_not_found_without_privilege(self):
         keyword = self._create_new_keyword('keyword')
         self.addCleanup(keyword.delete)
         model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
 
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_keyword(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            errors = manager._release_keyword(self.domain_link, model)
         self.assertTrue('Could not find linked keyword. Please check the keyword has been linked.' in errors)
 
-    @flag_enabled('ERM_DEVELOPMENT')
-    def test_keyword_pushed_if_not_found_with_toggle_enabled(self):
+    def test_keyword_pushed_if_not_found_with_privilege_enabled(self):
         keyword = self._create_new_keyword('keyword')
         self.addCleanup(keyword.delete)
         model = self._model_status(MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json())
 
         manager = ReleaseManager(self.domain, self.user.username)
 
-        errors = manager._release_keyword(self.domain_link, model)
+        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = True
+            errors = manager._release_keyword(self.domain_link, model)
         self.assertIsNone(errors)
 
         downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
