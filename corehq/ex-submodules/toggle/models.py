@@ -45,6 +45,8 @@ class Toggle(Document):
         """
         Adds an item to the toggle. Only saves if necessary.
         """
+        from toggle.shortcuts import toggle_enabled
+        toggle_enabled.reset_cache(self.slug, item)
         if item not in self.enabled_users:
             self.enabled_users.append(item)
             self.save()
@@ -53,11 +55,15 @@ class Toggle(Document):
         """
         Removes an item from the toggle. Only saves if necessary.
         """
+        from toggle.shortcuts import toggle_enabled
+        toggle_enabled.reset_cache(self.slug, item)
         if item in self.enabled_users:
             self.enabled_users.remove(item)
             self.save()
 
     def delete(self):
+        from toggle.shortcuts import toggle_enabled
+        toggle_enabled.reset_cache(self.slug)
         super(Toggle, self).delete()
         self.bust_cache()
 

@@ -24,7 +24,6 @@ def set_toggle(slug, item, enabled, namespace=None):
     """
     Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
     """
-    toggle_enabled.reset_cache(slug, item, namespace=namespace)
     if toggle_enabled(slug, item, namespace=namespace) != enabled:
         ns_item = namespaced_item(item, namespace)
         try:
