@@ -297,12 +297,13 @@ class DomainReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
         from corehq.apps.export.views.incremental import IncrementalExportLogView
+
         from corehq.toggles import INCREMENTAL_EXPORTS
 
         if (report.endswith(DomainForwardingRepeatRecords.__name__)
                 and not domain_has_privilege(domain, privileges.DATA_FORWARDING)):
             return False
-        if (report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain)):
+        if report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain):
             return False
         return super(DomainReportDispatcher, self).permissions_check(report, request, domain, is_navigation_check)
 
@@ -339,3 +340,14 @@ class UserManagementReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.toggles import USER_HISTORY_REPORT
         return USER_HISTORY_REPORT.enabled_for_request(request)
+
+
+class ReleaseManagementReportDispatcher(ReportDispatcher):
+    prefix = 'release_management_report'
+    map_name = 'RELEASE_MANAGEMENT_REPORTS'
+
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        from corehq.apps.linked_domain.util import can_access_linked_domains
+        # will eventually only be accessible via the release_management privilege, but shared with linked domains
+        # feature flag for now
+        return can_access_linked_domains(request.couch_user, domain)
