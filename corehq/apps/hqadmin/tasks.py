@@ -21,7 +21,9 @@ from pillowtop.utils import get_couch_pillow_instances
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
+from corehq.util.metrics import metrics_gauge
 from corehq.util.soft_assert import soft_assert
 
 from .utils import check_for_rewind
