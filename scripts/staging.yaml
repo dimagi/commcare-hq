@@ -54,6 +54,7 @@ branches:
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
+    - gh/limit-domains-in-app-manager # Graham July 23
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
@@ -79,5 +80,4 @@ branches:
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
     - sk/couch-sync-bug  # Simon July 23 -- notify Ben if you remove this
-    - gh/limit-domains-in-app-manager # Graham July 23
 submodules: { }
