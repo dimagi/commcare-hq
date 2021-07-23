@@ -302,3 +302,25 @@ def remove_blocked_domain_contacts_from_hubspot(stdout=None):
                 }
             )
 
+
+def is_hubspot_js_allowed_for_request(request):
+    """
+    This determines whether a particular request is allowed to load any
+    Hubspot javascript, even when Hubspot analytics is supported by the
+    environment. This is done to ensure that no accidental Hubspot popups and
+    scripts are executed on projects that have explicitly asked to be excluded
+    from Hubspot analytics.
+    :param request: HttpRequest
+    :return: boolean (True if Hubspot javascript is allowed)
+    """
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return False
+
+    is_hubspot_js_allowed = True
+    if hasattr(request, 'subscription'):
+        try:
+            account = request.subscription.account
+            is_hubspot_js_allowed = not account.block_hubspot_data_for_all_users
+        except BillingAccount.DoesNotExist:
+            pass
+    return is_hubspot_js_allowed
