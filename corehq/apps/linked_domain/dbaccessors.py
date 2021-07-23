@@ -59,7 +59,7 @@ def get_available_domains_to_link(upstream_domain_name, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    def _is_domain_available(for_user, domain_name, should_limit_to_admin=True):
+    def _is_domain_available(domain_name, should_limit_to_admin=True):
         if domain_name == upstream_domain_name:
             return False
 
@@ -68,21 +68,19 @@ def get_available_domains_to_link(upstream_domain_name, user):
             return False
 
         if should_limit_to_admin:
-            upstream_membership = for_user.get_domain_membership(upstream_domain_name)
-            downstream_membership = for_user.get_domain_membership(domain_name)
-            is_upstream_admin = upstream_membership.is_admin if upstream_membership else False
-            is_downstream_admin = downstream_membership.is_admin if downstream_membership else False
-            return is_upstream_admin and is_downstream_admin
+            has_upstream_access = user.is_superuser or user.is_domain_admin(upstream_domain_name)
+            has_downstream_access = user.is_superuser or user.is_domain_admin(domain_name)
+            return has_upstream_access and has_downstream_access
         else:
             return True
 
     current_subscription = Subscription.get_active_subscription_by_domain(upstream_domain_name)
     if current_subscription and domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
         eligible_domains = [d for d in current_subscription.account.get_domains()]
-        return list({d for d in eligible_domains if _is_domain_available(user, d)})
+        return list({d for d in eligible_domains if _is_domain_available(d)})
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
         eligible_domains = [d.name for d in Domain.active_for_user(user)]
-        return list({d for d in eligible_domains if _is_domain_available(user, d, should_limit_to_admin=False)})
+        return list({d for d in eligible_domains if _is_domain_available(d, should_limit_to_admin=False)})
 
     return []
 
@@ -102,14 +100,13 @@ def get_upstream_domains(domain_name, user):
 
 def get_domains_eligible_for_linked_apps(upstream_domain_name, user):
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        upstream_membership = user.get_domain_membership(upstream_domain_name)
-        is_upstream_admin = upstream_membership.is_admin if upstream_membership else False
+        has_upstream_access = user.is_superuser or user.is_domain_admin(upstream_domain_name)
+
         downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
         eligible_domains = []
         for domain in downstream_domains:
-            downstream_membership = user.get_domain_membership(domain)
-            is_downstream_admin = downstream_membership.is_admin if downstream_membership else False
-            if is_upstream_admin and is_downstream_admin:
+            has_downstream_access = user.is_superuser or user.is_domain_admin(domain)
+            if has_upstream_access and has_downstream_access:
                 eligible_domains.append(domain)
         return eligible_domains
 
