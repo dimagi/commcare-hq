@@ -14,6 +14,7 @@ from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
+from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import (
@@ -24,6 +25,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     SearchableChoice,
     StaticChoiceProvider,
     UserChoiceProvider,
+    DomainChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -506,3 +508,74 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             ['unknown-user'] + [user._id for user in self.users],
             self.web_user,
         )
+
+
+class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+    domain = "domain-choicer-provider"
+
+    @classmethod
+    def setUpClass(cls):
+        super(DomainChoiceProviderTest, cls).setUpClass()
+        report = ReportConfiguration(domain="A")
+
+        invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
+        # A, B, and C are in the registry A has access to B and C, B has access to C
+        grants = [
+            Grant("C", ["B", "A"]),
+            Grant("B", ["A"]),
+            Grant("A", []),
+        ]
+        cls.registry = create_registry_for_test(cls.domain, invitations, grants, name="registry")
+
+        choices = [
+            SearchableChoice("A", "A", ["A"]),
+            SearchableChoice("B", "B", ["B"]),
+            SearchableChoice("C", "C", ["C"]),
+        ]
+        choices.sort(key=lambda choice: choice.display)
+        cls.choice_provider = DomainChoiceProvider(report, None)
+        cls.static_choice_provider = StaticChoiceProvider(choices)
+
+        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        super(DomainChoiceProviderTest, cls).tearDownClass()
+
+    def test_query_search(self):
+        self._test_query(ChoiceQueryContext("A", limit=1, page=0))
+
+    def test_query(self):
+        self.assertEqual(1, len(self.choice_provider.query(ChoiceQueryContext(query='A', offset=0))))
+        self.assertEqual(3, len(self.choice_provider.query(ChoiceQueryContext(query='', offset=0))))
+        self.assertEqual(0, len(self.choice_provider.query(ChoiceQueryContext(query='D', offset=0))))
+
+    def test_query_count(self):
+        self.assertEqual(1, self.choice_provider.query_count("A"))
+        self.assertEqual(3, self.choice_provider.query_count(""))
+        self.assertEqual(0, self.choice_provider.query_count("D"))
+
+    def test_get_choices_for_values(self):
+        self._test_get_choices_for_values(
+            ["fake-domain", "A", "B"],
+            self.web_user,
+        )
+
+    def test_domain_with_some_grants(self):
+        report = ReportConfiguration(domain="B")
+        self.choice_provider = DomainChoiceProvider(report, None)
+        self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+
+    def test_domain_with_no_grants(self):
+        report = ReportConfiguration(domain="C")
+        self.choice_provider = DomainChoiceProvider(report, None)
+        self.assertEqual([Choice(value='C', display='C')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+
+    def test_domain_with_no_access(self):
+        report = ReportConfiguration(domain="D")
+        self.choice_provider = DomainChoiceProvider(report, None)
+        self.assertEqual([Choice(value='D', display='D')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
