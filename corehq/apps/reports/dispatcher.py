@@ -303,7 +303,7 @@ class DomainReportDispatcher(ReportDispatcher):
         if (report.endswith(DomainForwardingRepeatRecords.__name__)
                 and not domain_has_privilege(domain, privileges.DATA_FORWARDING)):
             return False
-        if report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain):
+        if (report.endswith(IncrementalExportLogView.__name__) and not INCREMENTAL_EXPORTS.enabled(domain)):
             return False
         return super(DomainReportDispatcher, self).permissions_check(report, request, domain, is_navigation_check)
 

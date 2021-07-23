@@ -21,7 +21,8 @@ from corehq.apps.userreports.views import (
 from .dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
-    UserManagementReportDispatcher, ReleaseManagementReportDispatcher,
+    ReleaseManagementReportDispatcher,
+    UserManagementReportDispatcher,
 )
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
