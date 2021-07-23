@@ -187,11 +187,11 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         from corehq.apps.users.models import Permissions
         return Permissions.from_permission_list(self.get_permission_infos())
 
-    def set_assignable_by_couch(self, couch_role_ids):
+    def set_assignable_by_couch(self, couch_role_ids, sync_to_couch=False):
         sql_ids = []
         if couch_role_ids:
             sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
-        self.set_assignable_by(sql_ids)
+        self.set_assignable_by(sql_ids, sync_to_couch)
 
     @transaction.atomic
     def set_assignable_by(self, role_ids, sync_to_couch=True):
