@@ -78,8 +78,8 @@ branches:
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
     - sk/couch-sync-bug  # Simon July 23 -- notify Ben if you remove this
-    - gh/show-erm-tab-if-applicable+gh/limit-domains-in-app-manager # July 23
+#     - gh/show-erm-tab-if-applicable+gh/limit-domains-in-app-manager # July 23
     - gh/show-erm-tab-if-applicable # Graham July 21
-    - gh/limit-domains-in-app-manager # Graham July 23
+#     - gh/limit-domains-in-app-manager # Graham July 23
     
 submodules: { }
