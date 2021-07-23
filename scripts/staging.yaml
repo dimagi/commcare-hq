@@ -79,4 +79,5 @@ branches:
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
     - gh/link-content-on-push # Graham July 22
+    - gh/limit-domains-in-app-manager # Graham July 22
 submodules: { }
