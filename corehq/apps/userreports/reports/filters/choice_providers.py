@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import re
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext
@@ -8,6 +9,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, NONE_CHOICE
@@ -392,6 +394,47 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 
     def default_value(self, user):
         return None
+
+
+class DomainChoiceProvider(ChainableChoiceProvider):
+
+    def _query_domains(self, domain, query_text):  # should we account for multiple registries?
+        registries = DataRegistry.objects.accessible_to_domain(domain)
+        domains = {domain}
+        for registry in registries:
+            domains.update(registry.get_granted_domains(domain))
+        if query_text:
+            domains_filtered_by_user = set()
+            for domain in domains:
+                if re.search(query_text, domain):
+                    domains_filtered_by_user.add(domain)
+            domains = domains_filtered_by_user
+        return list(domains)
+
+    def query(self, query_context):
+        domains = self._query_domains(self.domain, query_context.query)
+        domains.sort()
+        return self._domains_to_choices(
+            domains[query_context.offset:query_context.offset + query_context.limit]
+        )
+
+    def query_count(self, query):
+        return len(self._query_domains(self.domain, query))
+
+    def get_choices_for_known_values(self, values, user):
+        domains = self._query_domains(self.domain, None)
+        domains.sort()
+        domain_options = []
+        for domain in domains:
+            if domain in values:
+                domain_options.append(domain)
+        return self._domains_to_choices(domain_options)
+
+    def default_value(self, user):
+        return self._domains_to_choices([self.domain])
+
+    def _domains_to_choices(self, domains):
+        return [Choice(domain, domain) for domain in domains]
 
 
 class AbstractMultiProvider(ChoiceProvider):
