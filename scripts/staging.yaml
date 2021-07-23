@@ -78,4 +78,5 @@ branches:
     - cs/SC-1529-multiple-mobile-numbers-upload  # Charl July 22
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
+    - gh/link-content-on-push # Graham July 22
 submodules: { }
