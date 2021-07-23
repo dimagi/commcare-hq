@@ -17,6 +17,7 @@ from corehq.apps.linked_domain.views import (
     dialer_settings,
     otp_settings,
     hmac_callout_settings,
+    tableau_server_and_visualizations,
 )
 
 app_name = 'linked_domain'
@@ -40,4 +41,6 @@ urlpatterns = [
     url(r'^dialer_settings/$', dialer_settings, name='dialer_settings'),
     url(r'^otp_settings/$', otp_settings, name='otp_settings'),
     url(r'^hmac_callout_settings/$', hmac_callout_settings, name='hmac_callout_settings'),
+    url(r'^tableau_server_and_visualizatons/$', tableau_server_and_visualizations,
+        name='tableau_server_and_visualizations'),
 ]
