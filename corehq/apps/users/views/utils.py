@@ -1,11 +1,14 @@
 from django.utils.translation import ugettext as _
 from collections import defaultdict
 
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import (
     DomainMembershipError,
     StaticRole,
     SQLUserRole,
 )
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role):
@@ -59,3 +62,21 @@ class BulkUploadResponseWrapper(object):
                 errors.append('{username}: {flag}'.format(**row))
         errors.extend(self.response_errors)
         return errors
+
+
+def log_user_groups_change(domain, request, user, group_ids=None):
+    if group_ids is None:
+        group_ids = user.get_group_ids()
+    groups_info = None
+    if group_ids:
+        groups_info = ", ".join(
+            f"{group.name}[{group.get_id}]"
+            for group in Group.by_user_id(user.get_id)
+        )
+    log_user_change(
+        domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        message=f"Groups: {groups_info}"
+    )

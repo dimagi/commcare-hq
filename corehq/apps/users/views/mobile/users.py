@@ -131,6 +131,7 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
+from ..utils import log_user_groups_change
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -618,9 +619,13 @@ def update_user_groups(request, domain, couch_user_id):
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
     if form.is_valid():
         user = CommCareUser.get(couch_user_id)
+        current_group_ids = user.get_group_ids()
+        new_group_ids = form.cleaned_data['selected_ids']
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
-        user.set_groups(form.cleaned_data['selected_ids'])
+        user.set_groups(new_group_ids)
+        if current_group_ids != new_group_ids:
+            log_user_groups_change(domain, request, user, new_group_ids)
         messages.success(request, _("User groups updated!"))
     else:
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
