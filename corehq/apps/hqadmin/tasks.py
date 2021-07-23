@@ -179,4 +179,4 @@ def track_es_doc_counts():
                         'shard': f'{name}_{number}',
                     }
                     metrics_gauge('elasticsearch.shards.docs.count', i['docs']['count'], tags)
-                    metrics.gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
+                    metrics_gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
