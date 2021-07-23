@@ -75,72 +75,74 @@ class Command(BaseCommand):
             header=["domain", "case_id", "delta", "cases_smo", "case_search_smo"],
             max_col_width=36,
         )
-        for domain in domains:
-            logger.info("fetching cases for domain: %s", domain)
-            # query all cases and modified date
-            now = datetime.now()
-            if options["es_cases_cmp"]:
-                missing_ids = 0
-                cases = {}
-                for case_id, smo in get_case_ids_and_mod_escases(domain):
-                    if case_id is None:
-                        missing_ids += 1
-                        continue
-                    cases[case_id] = smo
-                if missing_ids:
-                    logger.warning("failed to fetch %s ES cases for domain: %s", missing_ids, domain)
-            else:
-                cases = dict(get_case_ids_and_mod_couchsql(domain, query_size))
-            logger.info("fetched %s cases in %s", len(cases), datetime.now() - now)
-            # compare results to the case_search index
-            case_searches = 0
-            mismatches = 0
-            logger.info("fetching case_searches ...")
-            try:
-                for case_search in fetch_case_searches(list(cases), query_size):
-                    case_searches += 1
-                    case_id = case_search["_id"]
-                    try:
-                        smo_cs = string_to_datetime(case_search["server_modified_on"])
-                    except KeyError:
-                        smo_cs = None
-                    smo_case = cases.pop(case_id)
-                    try:
-                        delta = smo_case - smo_cs
-                    except TypeError:
+        try:
+            for domain in domains:
+                logger.info("fetching cases for domain: %s", domain)
+                # query all cases and modified date
+                now = datetime.now()
+                if options["es_cases_cmp"]:
+                    missing_ids = 0
+                    cases = {}
+                    for case_id, smo in get_case_ids_and_mod_escases(domain):
+                        if case_id is None:
+                            missing_ids += 1
+                            continue
+                        cases[case_id] = smo
+                    if missing_ids:
+                        logger.warning("failed to fetch %s ES cases for domain: %s", missing_ids, domain)
+                else:
+                    cases = dict(get_case_ids_and_mod_couchsql(domain, query_size))
+                logger.info("fetched %s cases in %s", len(cases), datetime.now() - now)
+                # compare results to the case_search index
+                case_searches = 0
+                mismatches = 0
+                logger.info("fetching case_searches ...")
+                try:
+                    for case_search in fetch_case_searches(list(cases), query_size):
+                        case_searches += 1
+                        case_id = case_search["_id"]
                         try:
-                            delta = smo_case.replace(tzinfo=smo_cs.tzinfo) - smo_cs
+                            smo_cs = string_to_datetime(case_search["server_modified_on"])
+                        except KeyError:
+                            smo_cs = None
+                        smo_case = cases.pop(case_id)
+                        try:
+                            delta = smo_case - smo_cs
                         except TypeError:
-                            delta = None
-                    # we only care about case_searches whose
-                    # `server_modified_on` is *older* (greater than)
-                    if delta is None or delta > warn_case_newer_than:
-                        table.add_row([
-                            domain,
-                            case_id,
-                            human_td(delta),
-                            human_dt(smo_case),
-                            human_dt(smo_cs),
-                        ])
-                        mismatches += 1
-                if cases:
-                    logger.warning("found %s cases missing from case_search index", len(cases))
-                    for case_id, smo_case in cases.items():
-                        table.add_row([
-                            domain,
-                            case_id,
-                            "n/a",
-                            human_dt(smo_case),
-                            "n/a",
-                        ])
-            finally:
-                logger.info("fetched %s case_searches", case_searches)
-                logger.info("found %s mismatched records for domain: %s", mismatches, domain)
-        logger.info("done.")
-        if options["csv"]:
-            table.write_csv(options["output"])
-        else:
-            options["output"].write(table.render())
+                            try:
+                                delta = smo_case.replace(tzinfo=smo_cs.tzinfo) - smo_cs
+                            except TypeError:
+                                delta = None
+                        # we only care about case_searches whose
+                        # `server_modified_on` is *older* (greater than)
+                        if delta is None or delta > warn_case_newer_than:
+                            table.add_row([
+                                domain,
+                                case_id,
+                                human_td(delta),
+                                human_dt(smo_case),
+                                human_dt(smo_cs),
+                            ])
+                            mismatches += 1
+                    if cases:
+                        logger.warning("found %s cases missing from case_search index", len(cases))
+                        for case_id, smo_case in cases.items():
+                            table.add_row([
+                                domain,
+                                case_id,
+                                "n/a",
+                                human_dt(smo_case),
+                                "n/a",
+                            ])
+                finally:
+                    logger.info("fetched %s case_searches", case_searches)
+                    logger.info("found %s mismatched records for domain: %s", mismatches, domain)
+            logger.info("done.")
+        finally:
+            if options["csv"]:
+                table.write_csv(options["output"])
+            else:
+                options["output"].write(table.render())
 
 
 def domain_subset(domains, key):
