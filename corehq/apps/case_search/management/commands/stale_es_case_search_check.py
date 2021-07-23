@@ -100,15 +100,21 @@ class Command(BaseCommand):
                 for case_search in fetch_case_searches(list(cases), query_size):
                     case_searches += 1
                     case_id = case_search["_id"]
-                    smo_cs = string_to_datetime(case_search["server_modified_on"])
+                    try:
+                        smo_cs = string_to_datetime(case_search["server_modified_on"])
+                    except KeyError:
+                        smo_cs = None
                     smo_case = cases.pop(case_id)
                     try:
                         delta = smo_case - smo_cs
                     except TypeError:
-                        delta = smo_case.replace(tzinfo=smo_cs.tzinfo) - smo_cs
+                        try:
+                            delta = smo_case.replace(tzinfo=smo_cs.tzinfo) - smo_cs
+                        except TypeError:
+                            delta = None
                     # we only care about case_searches whose
                     # `server_modified_on` is *older* (greater than)
-                    if delta > warn_case_newer_than:
+                    if delta is None or delta > warn_case_newer_than:
                         table.add_row([
                             domain,
                             case_id,
@@ -158,7 +164,11 @@ def get_case_ids_and_mod_escases(domain):
         .size(CASE_SCROLL_SIZE))
     for case in query.scroll():
         case_id = case.get("case_id", case.get("_id"))
-        yield case_id, string_to_datetime(case["server_modified_on"])
+        try:
+            smo = string_to_datetime(case["server_modified_on"])
+        except KeyError:
+            smo = None
+        yield case_id, smo
 
 
 def get_case_ids_and_mod_couchsql(domain, chunksize):
@@ -190,11 +200,11 @@ def fetch_case_searches(case_ids, chunksize):
 
 
 def human_dt(dt):
-    return dt.strftime("%Y-%m-%d_%H:%M:%S")
+    return "null" if dt is None else dt.strftime("%Y-%m-%d_%H:%M:%S")
 
 
 def human_td(td):
-    return str(td).rpartition(".")[0]
+    return "null" if td is None else str(td).rpartition(".")[0]
 
 
 class StubLogger(object):
