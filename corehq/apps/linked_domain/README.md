@@ -36,7 +36,7 @@ supported applications. Remote domain linkages cannot be created via the UI; see
 ## Data models
 
 Linked domains share configuration data. Supported data types are defined in
-[LINKED_MODELS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/linked_domain/const.py#L13):
+corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
 
 - Applications
 - Reports
@@ -44,7 +44,8 @@ Linked domains share configuration data. Supported data types are defined in
 - Keywords
 - User roles
 - Custom data fields for users, products, and locations
-- Feature flags and privileges
+- Feature Flags
+- Feature Previews
 - Case search settings
 - Data dictionary
 - Dialer settings
@@ -73,8 +74,10 @@ Project data like forms and cases would not be shared.
 
 ### On 'master domain':
 
+Run `add_downstream_domain` management command on source HQ.
+
 ```
-DomainLink.link_domains('https://url.of.linked.hq/a/linked_domain_name/', 'master_domain_name')
+$ ./manage.py add_downstream_domain --url {https://url.of.linked.hq/a/linked_domain_name/} --domain {upstream_domain_name}
 ```
 
 This gets used as a permissions check during remote requests to ensure
@@ -82,18 +85,11 @@ that the remote domain is allowed to sync from this domain.
 
 ### On 'linked domain'
 
-```
-remote_details = RemoteLinkDetails(
-    url_base='https://url.of.master.hq',
-    username='username@email.com',
-    api_key='api key for username'
-)
-DomainLink.link_domains('linked_domain_name', 'master_domain_name', remote_details)
-```
+Run `link_to_upstream_domain` management command on downsream HQ.
 
 ### Pulling changes from master
 
-On remote HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
+On downstream HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
 
 Linked apps can be setup between linked domains by running `link_app_to_remote` command on linked domain.
 

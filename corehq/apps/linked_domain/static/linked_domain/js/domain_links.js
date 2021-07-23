@@ -67,7 +67,6 @@ hqDefine("linked_domain/js/domain_links", [
         }
 
         self.can_update = data.can_update;
-        self.models = data.models;
 
         self.model_status = _.map(data.model_status, ModelStatus);
 

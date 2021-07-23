@@ -1,5 +1,5 @@
 /* global DOMPurify, mdAnchorRender */
-hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
+hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
@@ -596,7 +596,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
         self.isLabel = self.datatype() === 'info';
-        self.entry = hqImport("cloudcare/js/form_entry/entrycontrols_full").getEntry(self);
+        self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };

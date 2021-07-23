@@ -34,14 +34,13 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.applications import unlink_apps_in_domain
 from corehq.apps.linked_domain.const import (
-    LINKED_MODELS,
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
@@ -52,15 +51,14 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     UnsupportedActionError,
 )
-from corehq.apps.linked_domain.keywords import unlink_keywords_in_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_data_dictionary,
     get_dialer_settings,
+    get_enabled_toggles_and_previews,
     get_fixture,
     get_hmac_callout_settings,
     get_otp_settings,
-    get_toggles_previews,
     get_user_roles,
 )
 from corehq.apps.linked_domain.models import (
@@ -73,10 +71,7 @@ from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
     push_models,
 )
-from corehq.apps.linked_domain.ucr import (
-    create_linked_ucr,
-    unlink_reports_in_domain,
-)
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
@@ -108,7 +103,7 @@ from corehq.util.timezones.utils import get_timezone_for_request
 @login_or_api_key
 @require_linked_domain
 def toggles_and_previews(request, domain):
-    return JsonResponse(get_toggles_previews(domain))
+    return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
@@ -266,12 +261,15 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_reports, linked_reports = get_reports(self.domain)
         master_keywords, linked_keywords = get_keywords(self.domain)
 
+        is_superuser = self.request.couch_user.is_superuser
+        timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords
+            self.domain, master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords, timezone,
+            is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, master_apps, master_fixtures, master_reports, master_keywords
+            self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
         if master_link and master_link.is_remote:
@@ -289,10 +287,6 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'master_model_status': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
-                'models': [
-                    {'slug': model[0], 'name': model[1]}
-                    for model in LINKED_MODELS
-                ],
                 'linkable_ucr': remote_linkable_ucr,
             },
         }
@@ -343,11 +337,6 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
         link.deleted = True
         link.save()
-
-        if toggles.ERM_DEVELOPMENT.enabled(self.domain):
-            unlink_apps_in_domain(linked_domain)
-            unlink_reports_in_domain(linked_domain)
-            unlink_keywords_in_domain(linked_domain)
 
         track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
 
@@ -437,6 +426,11 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _base_query(self):
         query = DomainLinkHistory.objects.filter(link=self.selected_link)
+
+        # filter out superuser data models
+        if not self.request.couch_user.is_superuser:
+            query = query.exclude(model__in=dict(SUPERUSER_DATA_MODELS).keys())
+
         if self.link_model:
             query = query.filter(model=self.link_model)
 

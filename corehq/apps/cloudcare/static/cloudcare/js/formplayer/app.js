@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
     var Util = hqImport("cloudcare/js/formplayer/utils/util");
-    var WebFormSession = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession;
+    var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
     FormplayerFrontend.on("before:start", function () {
@@ -330,7 +330,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (options.allowedHost) {
             window.addEventListener(
                 "message",
-                hqImport("cloudcare/js/formplayer/hq.events").Receiver(options.allowedHost),
+                hqImport("cloudcare/js/formplayer/hq_events").Receiver(options.allowedHost),
                 false
             );
         }
