@@ -273,7 +273,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     }
     domain_names.add(request.domain)
     if domain_has_privilege(request.domain, RELEASE_MANAGEMENT):
-        linkable_domains = get_domains_eligible_for_linked_apps(domain, request.user)
+        linkable_domains = get_domains_eligible_for_linked_apps(domain, request.couch_user)
     else:
         # keep behavior the same as before for LINKED_DOMAINS toggle
         linkable_domains = domain_names
