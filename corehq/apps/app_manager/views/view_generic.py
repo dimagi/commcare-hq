@@ -7,6 +7,7 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -44,9 +45,11 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
 )
 from corehq.apps.linked_domain.dbaccessors import (
-    get_domain_master_link,
+    get_upstream_domain_link,
+    get_domains_eligible_for_linked_apps,
     is_active_downstream_domain,
 )
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.soft_assert import soft_assert
 
 
@@ -262,14 +265,21 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     if copy_app_form is None:
         copy_app_form = CopyApplicationForm(domain, app)
+
     domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
         if not (is_active_downstream_domain(request.domain)
-                and get_domain_master_link(request.domain).master_domain == d.name)
+                and get_upstream_domain_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
+    if domain_has_privilege(request.domain, RELEASE_MANAGEMENT):
+        linkable_domains = get_domains_eligible_for_linked_apps(domain)
+    else:
+        # keep behavior the same as before for LINKED_DOMAINS toggle
+        linkable_domains = domain_names
     context.update({
         'domain_names': sorted(domain_names),
+        'linkable_domains': sorted(linkable_domains),
     })
     context.update({
         'copy_app_form': copy_app_form,
@@ -279,7 +289,9 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
-        from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
+        from corehq.apps.hqmedia.controller import (
+            MultimediaLogoUploadController,
+        )
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         uploaders = [
             MultimediaLogoUploadController(

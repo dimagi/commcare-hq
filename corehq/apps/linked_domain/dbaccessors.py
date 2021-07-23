@@ -10,7 +10,7 @@ from corehq.util.quickcache import quickcache
 
 
 @quickcache(['domain'], timeout=60 * 60)
-def get_domain_master_link(domain):
+def get_upstream_domain_link(domain):
     """
     :returns: ``DomainLink`` object linking this domain to it's master
     or None if no link exists
@@ -67,9 +67,9 @@ def get_available_domains_to_link(upstream_domain_name, user):
             # cannot link to an already linked project
             return False
 
-        upstream_membership = for_user.get_domain_membership(upstream_domain_name)
-        downstream_membership = for_user.get_domain_membership(domain_name)
         if should_limit_to_admin:
+            upstream_membership = for_user.get_domain_membership(upstream_domain_name)
+            downstream_membership = for_user.get_domain_membership(domain_name)
             is_upstream_admin = upstream_membership.is_admin if upstream_membership else False
             is_downstream_admin = downstream_membership.is_admin if downstream_membership else False
             return is_upstream_admin and is_downstream_admin
@@ -98,3 +98,19 @@ def get_upstream_domains(domain_name, user):
         return is_active_upstream_domain(candidate_name)
 
     return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})
+
+
+def get_domains_eligible_for_linked_apps(upstream_domain_name, user):
+    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+        upstream_membership = user.get_domain_membership(upstream_domain_name)
+        is_upstream_admin = upstream_membership.is_admin if upstream_membership else False
+        downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
+        eligible_domains = []
+        for domain in downstream_domains:
+            downstream_membership = user.get_domain_membership(domain)
+            is_downstream_admin = downstream_membership.is_admin if downstream_membership else False
+            if is_upstream_admin and is_downstream_admin:
+                eligible_domains.append(domain)
+        return eligible_domains
+
+    return []
