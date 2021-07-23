@@ -44,6 +44,7 @@ hqDefine("export/js/export_list", [
         options.formname = options.formname || '';
         assertProperties.assert(options, [
             'addedToBulk',
+            'addedToBulk2',
             'can_edit',
             'deleteUrl',
             'description',
@@ -432,6 +433,36 @@ hqDefine("export/js/export_list", [
             })));
 
             return true;
+        };
+
+        //Bulk Delete Handling - TESTTTTT Delete2
+        //just copying most of the funcs from above
+
+        self.selectDeleteAll = function () {
+            _.each(self.exports(), function (e) { e.addedToBulk2(true); });
+        };
+        self.selectDeleteNone = function () {
+            _.each(self.exports(), function (e) { e.addedToBulk2(false); });
+        };
+        self.bulkDeleteCount = ko.computed(function () {
+            return _.filter(self.exports(), function (e) { return e.addedToBulk2(); }).length;
+        });
+
+        self.BulkExportDelete = function (observable, event) {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    $(event.currentTarget).closest('form').submit();
+                }, 250);
+            } else {
+                _.each(_.filter(self.exports(), function (e) {return e.addedToBulk2();}),
+                   function (e) { $.ajax({
+                                    method: 'POST',
+                                    url: e.deleteUrl(),
+                                  });
+                   });
+            }
+            location.reload(); //there's probably a better way to do it that I'm not seeing
         };
 
         // HTML elements from filter form - admittedly it's not very knockout-y to manipulate these directly
