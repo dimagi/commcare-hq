@@ -291,7 +291,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             var erroredLabels = {};
             for (var i = 0; i < questions.length; i++) {
                 if (questions[i].isLabel && !questions[i].isValid()) {
-                    erroredLabels[getIx(questions[i])] = "ok";
+                    erroredLabels[getIx(questions[i])] = "OK";
                 }
             }
             return erroredLabels;

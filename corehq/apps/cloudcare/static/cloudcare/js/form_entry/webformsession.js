@@ -300,6 +300,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
+
+            // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
 
             this.serverRequest(
@@ -315,8 +317,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
                     }
-                    $.each(erroredLabels, function (ix, label) {
-                        self.serverError(UI.getForIx(form, ix), resp.errors.ix ? resp.errors.ix : null);
+                    $.each(erroredLabels, function (ix) {
+                        self.serverError(UI.getForIx(form, ix), resp.errors[ix]);
                     });
                 },
                 Const.BLOCK_SUBMIT,
@@ -442,7 +444,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
                                 _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             } else {
-                                _answers[UI.getIx(o)] = "ok";
+                                _answers[UI.getIx(o)] = "OK";
                             }
                         } else {
                             prevalidated = false;
@@ -506,9 +508,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             if (!resp) {
                 q.serverError(null);
             } else if (resp.type === "required") {
-                q.serverError("An answer is required");
+                q.serverError(gettext("An answer is required"));
             } else if (resp.type === "constraint") {
-                q.serverError(resp.reason || 'This answer is outside the allowed range.');
+                q.serverError(resp.reason || gettext('This answer is outside the allowed range.'));
             }
         };
 
