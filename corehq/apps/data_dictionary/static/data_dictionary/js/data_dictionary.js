@@ -35,6 +35,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
                     propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                    propObj.allowedValues.on('change', changeSaveButton);
                     self.properties.push(propObj);
                 });
             });
@@ -170,7 +171,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     self.casePropertyList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
-                    $('div.hq-enum-modal div.modal-footer button.btn-primary').click(changeSaveButton);
                 });
         };
 
@@ -207,12 +207,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                prop.allowedValues.on('change', changeSaveButton);
                 self.newPropertyName(undefined);
                 self.casePropertyList.push(prop);
             }
