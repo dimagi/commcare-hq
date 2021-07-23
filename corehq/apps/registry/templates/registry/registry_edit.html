@@ -16,17 +16,16 @@
 {% requirejs_main 'registry/js/registry_edit' %}
 
 {% block page_content %}
-{% initial_page_data "caseTypes" case_types %}
+{% initial_page_data "registry" registry %}
 {% initial_page_data "availableCaseTypes" available_case_types %}
-{% initial_page_data "invitations" invitations %}
-{% initial_page_data "grants" grants %}
+{% registerurl "edit_registry_attr" registry.domain '---' '---' %}
 <div class="registry-inlines">
   <div class="row">
     <div class="col-sm-6 col-md-4">
       <inline-edit params="
-          value: '{{ name|escapejs }}',
+          value: '{{ registry.name|escapejs }}',
           containerClass: 'h3',
-          url: '{% url "edit_registry_attr" domain slug 'name' %}',
+          url: '{% url "edit_registry_attr" registry.domain registry.slug 'name' %}',
           placeholder: '{% trans "Untitled Data Registry"|escapejs %}',
           rows: 1,
           nodeName: 'input',
@@ -37,8 +36,8 @@
   <div class="row">
     <div class="col-sm-8 col-md-6">
     <inline-edit params="
-          value: '{{ description|escapejs }}',
-          url: '{% url "edit_registry_attr" domain slug 'description' %}',
+          value: '{{ registry.description|escapejs }}',
+          url: '{% url "edit_registry_attr" registry.domain registry.slug 'description' %}',
           placeholder: '{% trans "Enter data registry description here"|escapejs %}',
           cols: 50,
       "></inline-edit>
@@ -53,7 +52,7 @@
   </div>
   <div class="row">
     <div class="col-sm-8 col-md-6 controls">
-      <select multiple class="form-control" data-bind="select2: availableCaseTypes, value: caseTypes"></select>
+      <select multiple class="form-control" data-bind="select2: availableCaseTypes, value: case_types"></select>
     </div>
   </div>
   <div class="row mt-4">
@@ -79,14 +78,14 @@
               </div>
             </div>
           </div>
-          <div data-bind="ifnot: self.invitations().length">
+          <div data-bind="ifnot: invitations().length">
             <p>
               {% blocktrans %}
                 No Project Spaces have been invited.
               {% endblocktrans %}
             </p>
           </div>
-          <table class="table table-striped table-hover mt-3" data-bind="if: self.invitations().length">
+          <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
             <thead>
               <tr>
                 <th class="col-sm-2">{% trans "Project Name" %}</th>
@@ -128,7 +127,7 @@
               </tr>
             </thead>
             <tbody>
-            <!-- ko foreach: grants() -->
+            <!-- ko foreach: grants -->
               <tr>
                 <td data-bind="text: from_domain"></td>
                 <td data-bind="text: to_domains"></td>

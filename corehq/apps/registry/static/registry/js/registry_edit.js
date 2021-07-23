@@ -3,6 +3,7 @@ hqDefine("registry/js/registry_edit", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'registry/js/registry_text',
+    'registry/js/registry_actions',
     'hqwebapp/js/components.ko',  // inline-edit
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/knockout_bindings.ko', // openModal
@@ -11,6 +12,7 @@ hqDefine("registry/js/registry_edit", [
     ko,
     initialPageData,
     text,
+    actions,
 ) {
     let InvitationModel = function(data) {
         let self = data;
@@ -31,28 +33,36 @@ hqDefine("registry/js/registry_edit", [
         let self = data;
         return self;
     }
-    let EditModel = function(caseTypes, availableCaseTypes, invitations, grants) {
-        let self = this;
-        self.caseTypes = ko.observable(caseTypes);
+    let EditModel = function(data, availableCaseTypes) {
+        const mapping = {
+            'copy': ["domain", "slug", "name", "description"],
+            'observe': ["is_active", "case_types", "invitations"],
+            invitations: {
+                create: (options) => InvitationModel(options.data)
+            },
+            grants: {
+                create: (options) => GrantModel(options.data)
+            }
+        };
+        let self = ko.mapping.fromJS(data, mapping);
         self.availableCaseTypes = availableCaseTypes;
-        self.invitations = ko.observable(invitations.map((invite) => InvitationModel(invite)));
-        self.grants = ko.observable(grants.map((grant) => GrantModel(grant)));
 
         self.removeDomain = function (toRemove){
-            console.log(toRemove.domain);
-            self.invitations(self.invitations().filter((invite) => {
-                return invite.id !== toRemove.id;
-            }));
+            actions.editAttr(self.slug, "invitation", {
+                "action": "remove", "id": toRemove.id, "domain": toRemove.domain
+            }, () => {
+                self.invitations(self.invitations().filter((invite) => {
+                    return invite.id !== toRemove.id;
+                }));
+            })
         }
         return self;
     }
 
     $(function () {
         $("#edit-registry").koApplyBindings(EditModel(
-            initialPageData.get("caseTypes"),
+            initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
-            initialPageData.get("invitations"),
-            initialPageData.get("grants"),
         ));
     });
 });

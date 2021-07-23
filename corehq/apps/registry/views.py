@@ -110,19 +110,21 @@ def edit_registry(request, domain, registry_slug):
         return redirect("manage_registry_participation", domain, registry_slug)
 
     context = {
-        "domain": domain,
-        "name": registry.name,
-        "description": registry.description or '',
-        "slug": registry.slug,
-        "is_active": registry.is_active,
-        "case_types": registry.case_types,
+        "registry": {
+            "domain": domain,
+            "name": registry.name,
+            "description": registry.description or '',
+            "slug": registry.slug,
+            "is_active": registry.is_active,
+            "case_types": registry.case_types,
+            "invitations": [
+                invitation.to_json() for invitation in registry.invitations.all()
+            ],
+            "grants": [
+                grant.to_json() for grant in registry.grants.all()
+            ]
+        },
         "available_case_types": ["patient", "household"],  # TODO
-        "invitations": [
-            invitation.to_json() for invitation in registry.invitations.all()
-        ],
-        "grants": [
-            grant.to_json() for grant in registry.grants.all()
-        ]
     }
     return render(request, "registry/registry_edit.html", context)
 
@@ -134,15 +136,33 @@ def edit_registry_attr(request, domain, registry_slug, attr):
     if registry.domain != domain:
         return HttpResponseForbidden()
 
-    if attr not in ["name", "description"]:
+    if attr not in ["name", "description", "invitation"]:
         return HttpResponseBadRequest()
 
-    value = request.POST.get("value")
-    if not value and attr == 'name':
-        return HttpResponseBadRequest()
+    if attr in ["name", "description"]:
+        value = request.POST.get("value")
+        if not value and attr == 'name':
+            return HttpResponseBadRequest()
 
-    setattr(registry, attr, value)
-    registry.save()
+        setattr(registry, attr, value)
+        registry.save()
+    else:
+        action = request.POST.get("action")
+        domain = request.POST.get("domain")
+        invitation_id = request.POST.get("id")
+        if not all([action, domain, invitation_id]):
+            return HttpResponseBadRequest()
+
+        if action == "remove":
+            try:
+                invitation = registry.invitations.get(id=invitation_id)
+            except RegistryInvitation.DoesNotExist:
+                raise Http404(f"Project Space '{domain}' is not a participant.")
+
+            if invitation.domain != domain:
+                return HttpResponseBadRequest()
+
+            invitation.delete()
     return JsonResponse({})
 
 

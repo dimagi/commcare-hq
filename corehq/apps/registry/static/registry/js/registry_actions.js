@@ -37,8 +37,22 @@ hqDefine("registry/js/registry_actions", [
         });
     }
 
+    let editAttr = function(registrySlug, attr, data, onSuccess) {
+        $.post({
+            url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
+            data: data,
+            success: function (data) {
+                onSuccess(data);
+            },
+            error: function (response) {
+                alertUser.alert_user(response.responseJSON.error, 'danger');
+            },
+        });
+    }
+
     return {
         acceptInvitation: accept,
-        rejectInvitation: reject
+        rejectInvitation: reject,
+        editAttr: editAttr
     };
 });
