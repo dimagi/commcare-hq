@@ -200,7 +200,7 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             except KeyError:
                 pass
             else:
-                user_new_role = self.existing_user.get_role(self.domain)
+                user_new_role = self.existing_user.get_role(self.domain, checking_global_admin=False)
                 role_updated = self._role_updated(user_current_role, user_new_role)
         elif is_update_successful:
             self.existing_user.save()
