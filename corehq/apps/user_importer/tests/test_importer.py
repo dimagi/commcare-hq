@@ -1033,8 +1033,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         number1 = '8765547824'
         number2 = '7765547823'
 
-        user_specs['phone-number-1'] = number1
-        user_specs['phone-number-2'] = number2
+        user_specs['phone-number 1'] = number1
+        user_specs['phone-number 2'] = number2
 
         import_users_and_groups(
             self.domain.name,
@@ -1068,8 +1068,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         number1 = ''
         number2 = '7765547823'
 
-        user_specs['phone-number-1'] = number1
-        user_specs['phone-number-2'] = number2
+        user_specs['phone-number 1'] = number1
+        user_specs['phone-number 2'] = number2
 
         import_users_and_groups(
             self.domain.name,

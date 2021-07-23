@@ -78,17 +78,6 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     illegal_headers = headers - allowed_headers
 
-    pardoned_headers = []
-    for illegal_header in illegal_headers:
-        if illegal_header.startswith('phone-number-'):
-            try:
-                number = illegal_header.split('phone-number-')[1]
-                if int(number) > 0:
-                    pardoned_headers.append(illegal_header)
-            except ValueError:
-                pass
-    illegal_headers = illegal_headers - set(pardoned_headers)
-
     if is_web_upload:
         missing_headers = web_required_headers - headers
     else:
@@ -479,7 +468,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             phone_numbers = []
             for header, value in row.items():
                 if value and 'phone-number' in header:
-                    if header == 'phone-number' or header == 'phone-number-1':
+                    if header == 'phone-number' or header == 'phone-number 1':
                         # Add default phone number at start of list
                         phone_numbers.insert(0, value)
                     else:

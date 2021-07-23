@@ -110,8 +110,8 @@ class TestDownloadMobileWorkers(TestCase):
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
-        self.assertTrue('phone-number-1' in headers)
-        self.assertTrue('phone-number-2' in headers)
+        self.assertTrue('phone-number 1' in headers)
+        self.assertTrue('phone-number 2' in headers)
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual('edith', spec['username'])
@@ -122,8 +122,8 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
         self.assertEqual('1', spec['location_code 1'])
-        self.assertEqual(spec['phone-number-1'], '27786541239')
-        self.assertEqual(spec['phone-number-2'], '27786544321')
+        self.assertEqual(spec['phone-number 1'], '27786541239')
+        self.assertEqual(spec['phone-number 2'], '27786544321')
 
     def test_multiple_domain_download(self):
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {'domains': ['bookshelf', 'book']})
