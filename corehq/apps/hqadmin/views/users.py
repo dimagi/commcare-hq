@@ -1,5 +1,6 @@
 import csv
 import itertools
+import os
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
@@ -51,7 +52,7 @@ from corehq.apps.hqadmin.forms import (
     SuperuserManagementForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
@@ -567,19 +568,29 @@ class AppBuildTimingsView(TemplateView):
 
     @staticmethod
     def get_timing_context(app):
+        # Intended to reproduce a live-preview app build
+        # Contents should mirror the work done in the direct_ccz view
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
 
+            app.set_media_versions()
+
             with app.timing_context("build_zip"):
-                build_application_zip(
+                # mirroring the content of build_application_zip
+                # but with the same `app` instance to preserve timing data
+                fpath = create_files_for_ccz(
+                    build=app,
+                    build_profile_id=None,
                     include_multimedia_files=True,
                     include_index_files=True,
-                    domain=app.domain,
-                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',
+                    download_targeted_version=False,
+                    task=None,
+                    expose_link=True,
                 )
 
+        os.remove(fpath)
         return app.timing_context

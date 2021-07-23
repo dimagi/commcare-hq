@@ -221,13 +221,18 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
 
     # Don't rebuild the file if it is already there
     if not (os.path.isfile(fpath) and settings.SHARED_DRIVE_CONF.transfer_enabled):
-        files, errors, file_count = _build_ccz_files(build, build_profile_id, include_multimedia_files,
-                                                     include_index_files, download_id, compress_zip,
-                                                     filename, download_targeted_version)
-        file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression,
-                                        task)
+        with build.timing_context("_build_ccz_files"):
+            files, errors, file_count = _build_ccz_files(
+                build, build_profile_id, include_multimedia_files, include_index_files,
+                download_id, compress_zip, filename, download_targeted_version
+            )
+        with build.timing_context("_zip_files_for_ccz"):
+            file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress,
+                                            file_count, compression, task)
+
         if include_index_files and toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
-            locale_errors = find_missing_locale_ids_in_ccz(file_cache)
+            with build.timing_context("find_missing_locale_ids_in_ccz"):
+                locale_errors = find_missing_locale_ids_in_ccz(file_cache)
             if locale_errors:
                 errors.extend(locale_errors)
                 notify_exception(
@@ -236,7 +241,8 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                     details={'domain': build.domain, 'app_id': build.id, 'errors': locale_errors}
                 )
         if include_index_files and include_multimedia_files:
-            multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            with build.timing_context("check_ccz_multimedia_integrity"):
+                multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
             if multimedia_errors:
                 multimedia_errors.insert(0, _(
                     "Please try syncing multimedia files in multimedia tab under app settings to resolve "
@@ -256,7 +262,8 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
     else:
         DownloadBase.set_progress(task, current_progress + file_progress, 100)
     if expose_link:
-        _expose_download_link(fpath, filename, compress_zip, download_id)
+        with build.timing_context("_expose_download_link"):
+            _expose_download_link(fpath, filename, compress_zip, download_id)
     DownloadBase.set_progress(task, 100, 100)
     return fpath
 
