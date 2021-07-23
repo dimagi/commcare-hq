@@ -108,7 +108,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'name': 'Another One',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }
@@ -1008,7 +1008,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_upload_with_phone_number(self):
         user_specs = self._get_spec()
-        user_specs['phone-number'] = '8765547824'
+        user_specs['phone-number'] = ['8765547824']
 
         import_users_and_groups(
             self.domain.name,
@@ -1028,13 +1028,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
 
-        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
-
         number1 = '8765547824'
         number2 = '7765547823'
 
-        user_specs['phone-number 1'] = number1
-        user_specs['phone-number 2'] = number2
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
 
         import_users_and_groups(
             self.domain.name,
@@ -1062,14 +1060,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         initial_default_number = '12345678912'
         user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
-
-        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
-
         number1 = ''
         number2 = '7765547823'
 
-        user_specs['phone-number 1'] = number1
-        user_specs['phone-number 2'] = number2
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
 
         import_users_and_groups(
             self.domain.name,

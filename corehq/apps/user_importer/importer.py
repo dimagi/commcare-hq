@@ -465,14 +465,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
 
-            phone_numbers = []
-            for header, value in row.items():
-                if value and 'phone-number' in header:
-                    if header == 'phone-number' or header == 'phone-number 1':
-                        # Add default phone number at start of list
-                        phone_numbers.insert(0, value)
-                    else:
-                        phone_numbers.append(value)
+            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+            if phone_numbers:
+                phone_numbers = [n for n in phone_numbers if n]
+
             try:
                 password = str(password) if password else None
 
