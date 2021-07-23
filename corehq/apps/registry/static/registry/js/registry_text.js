@@ -36,6 +36,24 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
             return gettext('Pending');
         }
     }
+    let getStatusIcon = function (status) {
+        if (status === 'rejected') {
+            return gettext('fa-ban');
+        } else if (status === 'accepted') {
+            return gettext('fa-clock-o');
+        } else {
+            return gettext('fa-check-circle-o');
+        }
+    }
+    let getStatusCssClass = function (status) {
+        if (status === 'rejected') {
+            return gettext('label-warning');
+        } else if (status === 'accepted') {
+            return gettext('label-success');
+        } else {
+            return gettext('label-info');
+        }
+    }
     let getRejectedText = function (invitation) {
         const text = gettext("Rejected by %(user)s on %(date)s"),
             params = {
@@ -51,6 +69,8 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
         getRejectedBadgeText: getRejectedBadgeText,
         getParticipatorCountBadgeText: getParticipatorCountBadgeText,
         getStatusText: getStatusText,
+        getStatusIcon: getStatusIcon,
+        getStatusCssClass: getStatusCssClass,
         getRejectedText: getRejectedText,
     };
 });

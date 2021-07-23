@@ -2,17 +2,14 @@ hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
     'knockout',
-    'moment',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
-    'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
     $,
     _,
     ko,
-    moment,
     initialPageData,
     alertUser,
     text,

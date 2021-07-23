@@ -8,7 +8,12 @@
   margin-right: 0.5em;
   background-color: #eeeeee;
   color: @cc-text;
-  border: 1px solid #bdbdbd;
+  font-weight: normal;
+}
+
+.label-muted {
+  filter: grayscale(75%) brightness(160%);
+  color: @cc-text;
   font-weight: normal;
 }
 
@@ -17,3 +22,29 @@
     box-shadow: 0px 0px 5px rgba(.5, .5, .5, .5);
   }
 }
+
+.registry-inlines {
+  .read-write {
+    .form-group {
+        margin-left: 8px;
+    }
+  }
+}
+
+.registry-form-container {
+  margin-top: 8px;
+  margin-left: 8px;
+}
+
+// HELPERS
+// These helpers are configured to match the defaults in Bootstrap 4
+
+@spacer: 1rem;
+@spacers: 0, (@spacer * .25), (@spacer * .5), @spacer, (@spacer * 1.5), (@spacer * 3);
+
+each(@spacers, {
+  @zero-index: (@index - 1);
+  .mt-@{zero-index} {
+    margin-top: @value !important;
+  }
+});

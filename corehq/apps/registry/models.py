@@ -64,6 +64,8 @@ class DataRegistry(models.Model):
     slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+
+    # [{"case_type": "X"}, {"case_type": "Y"}]
     schema = JSONField(null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
@@ -105,6 +107,12 @@ class DataRegistry(models.Model):
         if invite.status != RegistryInvitation.STATUS_ACCEPTED:
             raise RegistryAccessDenied()
         return True
+
+    @property
+    def case_types(self):
+        return [
+            item["case_type"] for item in self.schema
+        ] if self.schema else []
 
     @cached_property
     def logger(self):
@@ -151,6 +159,7 @@ class RegistryInvitation(models.Model):
 
     def to_json(self):
         return {
+            "id": self.id,
             "registry_id": self.registry_id,
             "domain": self.domain,
             "created_on": self.created_on,
@@ -166,6 +175,14 @@ class RegistryGrant(models.Model):
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "registry_id": self.registry_id,
+            "from_domain": self.from_domain,
+            "to_domains": list(self.to_domains)
+        }
 
 
 class RegistryPermission(models.Model):

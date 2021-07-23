@@ -13,8 +13,159 @@
   {% endcompress %}
 {% endblock %}
 
-{#{% requirejs_main 'registry/js/registry_edit' %}#}
+{% requirejs_main 'registry/js/registry_edit' %}
 
 {% block page_content %}
-  Hello
+{% initial_page_data "caseTypes" case_types %}
+{% initial_page_data "availableCaseTypes" available_case_types %}
+{% initial_page_data "invitations" invitations %}
+{% initial_page_data "grants" grants %}
+<div class="registry-inlines">
+  <div class="row">
+    <div class="col-sm-6 col-md-4">
+      <inline-edit params="
+          value: '{{ name|escapejs }}',
+          containerClass: 'h3',
+          url: '{% url "edit_registry_attr" domain slug 'name' %}',
+          placeholder: '{% trans "Untitled Data Registry"|escapejs %}',
+          rows: 1,
+          nodeName: 'input',
+          errorMessage: '{% trans "Name must not be blank" %}',
+      "></inline-edit>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-8 col-md-6">
+    <inline-edit params="
+          value: '{{ description|escapejs }}',
+          url: '{% url "edit_registry_attr" domain slug 'description' %}',
+          placeholder: '{% trans "Enter data registry description here"|escapejs %}',
+          cols: 50,
+      "></inline-edit>
+    </div>
+  </div>
+</div>
+<div id="edit-registry" class="registry-form-container">
+  <div class="row">
+    <div class="col-sm-2 control-label">
+      {% trans "Case Types" %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-8 col-md-6 controls">
+      <select multiple class="form-control" data-bind="select2: availableCaseTypes, value: caseTypes"></select>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col-sm-12 col-md-8">
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
+          {% trans "Project Spaces" %}
+        </a></li>
+        <li role="presentation"><a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
+          {% trans "Grants" %}
+        </a></li>
+      </ul>
+
+      <div class="tab-content mt-4">
+        <div role="tabpanel" class="tab-pane active" id="domains">
+          <div class="row">
+            <div class="col-md-2 col-md-offset-10">
+              <div class="pull-right">
+                <button type="button" class="btn btn-primary">
+                  <i class="fa fa-plus"></i>
+                  {% trans "Invite Project Space" %}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div data-bind="ifnot: self.invitations().length">
+            <p>
+              {% blocktrans %}
+                No Project Spaces have been invited.
+              {% endblocktrans %}
+            </p>
+          </div>
+          <table class="table table-striped table-hover mt-3" data-bind="if: self.invitations().length">
+            <thead>
+              <tr>
+                <th class="col-sm-2">{% trans "Project Name" %}</th>
+                <th class="col-sm-2">{% trans "Status" %}</th>
+                <th class="col-sm-2">{% trans "Invitation Date" %}</th>
+                <th class="col-sm-2">{% trans "Response Date" %}</th>
+                <th class="col-sm-4">{% trans "Action" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+            <!-- ko foreach: invitations() -->
+              <tr>
+                <td data-bind="text: domain"></td>
+                <td>
+                  <span class="label label-muted" data-bind="css: cssClass">
+                    <i class="fa" data-bind="css: cssIcon"></i>
+                    <span data-bind="text: statusText"></span>
+                  </span>
+                </td>
+                <td data-bind="text: invitationDate"></td>
+                <td data-bind="text: responseDate"></td>
+                <td>
+                  <button type="button" class="btn btn-default" data-bind="openModal: 'remove-project-space-modal'">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Remove" %}
+                  </button>
+                </td>
+              </tr>
+            <!-- /ko -->
+            </tbody>
+          </table>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="grants">
+          <table class="table table-striped table-hover mt-3">
+            <thead>
+              <tr>
+                <th class="col-sm-2">{% trans "From" %}</th>
+                <th class="col-sm-2">{% trans "To" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+            <!-- ko foreach: grants() -->
+              <tr>
+                <td data-bind="text: from_domain"></td>
+                <td data-bind="text: to_domains"></td>
+              </tr>
+            <!-- /ko -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script type="text/html" id="remove-project-space-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Remove Project Space" %}</h4>
+        </div>
+        <div class="modal-body">
+          <div class='alert alert-danger'>
+            {% blocktrans %}
+              Removing a Project Space will completely remove their access to this registry.
+            {% endblocktrans %}
+          </div>
+          <p>{% blocktrans %}
+            Are you sure you want to remove <span data-bind="text: domain"></span>?</p>
+          {% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain" data-dismiss="modal">{% trans "Remove" %}</a>
+        </div>
+      </div>
+    </div>
+  </script>
 {% endblock %}

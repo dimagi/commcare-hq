@@ -26,7 +26,7 @@
     <div class="row">
       <div class="col-sm-12 col-md-9">
         <h3>{% trans "Data Registries" %}
-        <div class="pull-right" style="margin-top: 17px; margin-bottom: 8.5px">
+        <div class="pull-right">
           <button type="button" class="btn btn-primary" data-bind="click: newRegistry">
             <i class="fa fa-plus"></i>
             {% trans "New Registry" %}
@@ -55,16 +55,16 @@
           <span class="label label-plain" data-bind="ifnot: invitation_count">
             {% trans "No project spaces invited to this registry" %}
           </span>
-          <span class="label label-plain" data-bind="if: accepted_invitation_count">
-            <i class="fa fa-check-circle-o text-success"></i>
+          <span class="label label-success label-muted" data-bind="if: accepted_invitation_count">
+            <i class="fa fa-check-circle-o"></i>
             <span data-bind="text: acceptedText"></span>
           </span>
-          <span class="label label-plain" data-bind="if: pending_invitation_count">
-            <i class="fa fa-clock-o text-info"></i>
+          <span class="label label-info label-muted" data-bind="if: pending_invitation_count">
+            <i class="fa fa-clock-o"></i>
             <span data-bind="text: pendingText"></span>
           </span>
-          <span class="label label-plain" data-bind="if: rejected_invitation_count">
-            <i class="fa fa-ban text-warning"></i>
+          <span class="label label-warning label-muted" data-bind="if: rejected_invitation_count">
+            <i class="fa fa-ban"></i>
             <span data-bind="text: rejectedText"></span>
           </span>
         </div>

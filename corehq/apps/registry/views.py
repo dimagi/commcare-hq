@@ -1,7 +1,8 @@
+import json
 from collections import Counter
 
-from django.http import Http404, JsonResponse
-from django.shortcuts import render
+from django.http import Http404, JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.shortcuts import render, redirect
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
@@ -104,11 +105,58 @@ def _get_invitation_or_404(domain, registry_slug):
 @require_enterprise_admin
 @login_and_domain_required
 def edit_registry(request, domain, registry_slug):
-    context = {}
+    registry = _get_registry_or_404(domain, registry_slug)
+    if registry.domain != domain:
+        return redirect("manage_registry_participation", domain, registry_slug)
+
+    context = {
+        "domain": domain,
+        "name": registry.name,
+        "description": registry.description or '',
+        "slug": registry.slug,
+        "is_active": registry.is_active,
+        "case_types": registry.case_types,
+        "available_case_types": ["patient", "household"],  # TODO
+        "invitations": [
+            invitation.to_json() for invitation in registry.invitations.all()
+        ],
+        "grants": [
+            grant.to_json() for grant in registry.grants.all()
+        ]
+    }
     return render(request, "registry/registry_edit.html", context)
 
 
 @domain_admin_required
+@require_POST
+def edit_registry_attr(request, domain, registry_slug, attr):
+    registry = _get_registry_or_404(domain, registry_slug)
+    if registry.domain != domain:
+        return HttpResponseForbidden()
+
+    if attr not in ["name", "description"]:
+        return HttpResponseBadRequest()
+
+    value = request.POST.get("value")
+    if not value and attr == 'name':
+        return HttpResponseBadRequest()
+
+    setattr(registry, attr, value)
+    registry.save()
+    return JsonResponse({})
+
+
+@domain_admin_required
 def manage_registry_participation(request, domain, registry_slug):
+    registry = _get_registry_or_404(domain, registry_slug)
+    if registry.domain == domain:
+        return redirect("edit_registry", domain, registry_slug)
     context = {}
     return render(request, "registry/registry_manage_participation.html", context)
+
+
+def _get_registry_or_404(domain, registry_slug):
+    try:
+        return DataRegistry.objects.visible_to_domain(domain).get(slug=registry_slug)
+    except DataRegistry.DoesNotExist:
+        raise Http404
