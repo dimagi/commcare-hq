@@ -1,7 +1,9 @@
 hqDefine("registry/js/registry_edit", [
     'moment',
     'knockout',
+    'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'hqwebapp/js/components.ko',  // inline-edit
@@ -10,7 +12,9 @@ hqDefine("registry/js/registry_edit", [
 ], function (
     moment,
     ko,
+    _,
     initialPageData,
+    alertUser,
     text,
     actions,
 ) {
@@ -33,7 +37,7 @@ hqDefine("registry/js/registry_edit", [
         let self = data;
         return self;
     }
-    let EditModel = function(data, availableCaseTypes) {
+    let EditModel = function(data, availableCaseTypes, availableDomains) {
         const mapping = {
             'copy': ["domain", "slug", "name", "description"],
             'observe': ["is_active", "case_types", "invitations"],
@@ -46,6 +50,11 @@ hqDefine("registry/js/registry_edit", [
         };
         let self = ko.mapping.fromJS(data, mapping);
         self.availableCaseTypes = availableCaseTypes;
+        self.availableDomains = ko.computed(() => {
+            const invited = self.invitations().map((invite) => invite.domain);
+            return availableDomains.filter((domain) => !invited.includes(domain));
+        });
+        self.inviteDomains = ko.observable([]);
 
         self.removeDomain = function (toRemove){
             actions.editAttr(self.slug, "invitation", {
@@ -54,6 +63,16 @@ hqDefine("registry/js/registry_edit", [
                 self.invitations(self.invitations().filter((invite) => {
                     return invite.id !== toRemove.id;
                 }));
+            });
+        }
+
+        self.addDomain = function () {
+            actions.editAttr(self.slug, "invitation", {
+                "action": "add", "domains": self.inviteDomains()
+            }, (data) => {
+                _.each(data.invitations, (invite) => {
+                   self.invitations.push(InvitationModel(invite));
+                });
             })
         }
         return self;
@@ -63,6 +82,7 @@ hqDefine("registry/js/registry_edit", [
         $("#edit-registry").koApplyBindings(EditModel(
             initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
+            initialPageData.get("availableDomains"),
         ));
     });
 });

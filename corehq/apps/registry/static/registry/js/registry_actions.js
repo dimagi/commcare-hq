@@ -43,6 +43,9 @@ hqDefine("registry/js/registry_actions", [
             data: data,
             success: function (data) {
                 onSuccess(data);
+                if (data.message) {
+                    alertUser.alert_user(data.message, 'success');
+                }
             },
             error: function (response) {
                 alertUser.alert_user(response.responseJSON.error, 'danger');

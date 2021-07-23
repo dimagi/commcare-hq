@@ -18,6 +18,7 @@
 {% block page_content %}
 {% initial_page_data "registry" registry %}
 {% initial_page_data "availableCaseTypes" available_case_types %}
+{% initial_page_data "availableDomains" available_domains %}
 {% registerurl "edit_registry_attr" registry.domain '---' '---' %}
 <div class="registry-inlines">
   <div class="row">
@@ -71,7 +72,7 @@
           <div class="row">
             <div class="col-md-2 col-md-offset-10">
               <div class="pull-right">
-                <button type="button" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" data-bind="openModal: 'add-project-space-modal'">
                   <i class="fa fa-plus"></i>
                   {% trans "Invite Project Space" %}
                 </button>
@@ -166,5 +167,24 @@
         </div>
       </div>
     </div>
-  </script>
+</script>
+<script type="text/html" id="add-project-space-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
+        </div>
+        <div class="modal-body">
+          <select multiple class="form-control" data-bind="select2: availableDomains, value: inviteDomains"></select>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: addDomain, enabled: invitedDomains().length" data-dismiss="modal">{% trans "Invite" %}</a>
+        </div>
+      </div>
+    </div>
+</script>
 {% endblock %}

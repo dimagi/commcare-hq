@@ -125,6 +125,7 @@ def edit_registry(request, domain, registry_slug):
             ]
         },
         "available_case_types": ["patient", "household"],  # TODO
+        "available_domains": ["skelly", "d1"],  # TODO
     }
     return render(request, "registry/registry_edit.html", context)
 
@@ -134,35 +135,64 @@ def edit_registry(request, domain, registry_slug):
 def edit_registry_attr(request, domain, registry_slug, attr):
     registry = _get_registry_or_404(domain, registry_slug)
     if registry.domain != domain:
-        return HttpResponseForbidden()
+        return JsonResponse({"error": _("Action not permitted")}, status=403)
 
     if attr not in ["name", "description", "invitation"]:
-        return HttpResponseBadRequest()
+        return JsonResponse({"error": _("Unknown attribute")}, status=400)
 
     if attr in ["name", "description"]:
         value = request.POST.get("value")
         if not value and attr == 'name':
-            return HttpResponseBadRequest()
+            return JsonResponse({"error": _("'name' must not be blank")}, status=400)
 
         setattr(registry, attr, value)
         registry.save()
     else:
         action = request.POST.get("action")
-        domain = request.POST.get("domain")
-        invitation_id = request.POST.get("id")
-        if not all([action, domain, invitation_id]):
-            return HttpResponseBadRequest()
+        if action not in ("add", "remove"):
+            return JsonResponse({"error": _("Unable to process your request")}, status=400)
 
         if action == "remove":
+            domain = request.POST.get("domain")
+            invitation_id = request.POST.get("id")
+            if not all([domain, invitation_id]):
+                return JsonResponse({"error": _("Unable to process your request")}, status=400)
+
             try:
                 invitation = registry.invitations.get(id=invitation_id)
             except RegistryInvitation.DoesNotExist:
-                raise Http404(f"Project Space '{domain}' is not a participant.")
+                return JsonResponse({
+                    "error": _("Project Space '{domain}' is not a participant.").format(domain=domain)},
+                    status=404
+                )
 
             if invitation.domain != domain:
-                return HttpResponseBadRequest()
+                return JsonResponse({"error": _("Incorrect Project Space")}, status=400)
 
             invitation.delete()
+            return JsonResponse({
+                "message": _("Project Space '{domain}' removed").format(domain=domain)
+            })
+
+        if action == "add":
+            domains = request.POST.getlist("domains")
+            if not domains:
+                return JsonResponse({"error": _("No Project Spaces specified")}, status=400)
+
+            invitations = []
+            for domain in domains:
+                domain_obj = Domain.get_by_name(domain)
+                if domain_obj:
+                    invitation, created = registry.invitations.get_or_create(domain=domain)
+                    invitations.append(invitation)
+
+            return JsonResponse({
+                "invitations": [
+                    invitation.to_json() for invitation in invitations
+                ],
+                "message": _("{count} invitations sent").format(count=len(invitations))
+            })
+
     return JsonResponse({})
 
 
