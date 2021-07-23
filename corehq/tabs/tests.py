@@ -51,9 +51,9 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none(self, mock_user, mock_domain):
-        mock_user.is_domain_admin.return_value = False
+        mock_user.is_domain_admin = False
 
-        with patch('corehq.tabs.tabclasses.domain_has_privilege') as mock_domain_has_privilege:
+        with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = False
             items = _get_release_management_items(mock_user, mock_domain)
 
@@ -62,9 +62,9 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none_with_admin(self, mock_user, mock_domain):
-        mock_user.is_domain_admin.return_value = True
+        mock_user.is_domain_admin = True
 
-        with patch('corehq.tabs.tabclasses.domain_has_privilege') as mock_domain_has_privilege:
+        with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = False
             items = _get_release_management_items(mock_user, mock_domain)
 
@@ -73,9 +73,9 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none_with_domain_privilege(self, mock_user, mock_domain):
-        mock_user.is_domain_admin.return_value = False
+        mock_user.is_domain_admin = False
 
-        with patch('corehq.tabs.tabclasses.domain_has_privilege') as mock_domain_has_privilege:
+        with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
             items = _get_release_management_items(mock_user, mock_domain)
 
@@ -84,9 +84,9 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_some(self, mock_user, mock_domain):
-        mock_user.is_domain_admin.return_value = True
+        mock_user.is_domain_admin = True
 
-        with patch('corehq.tabs.tabclasses.domain_has_privilege') as mock_domain_has_privilege, \
+        with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege, \
              patch('corehq.tabs.tabclasses.reverse') as mock_reverse:
             mock_domain_has_privilege.return_value = True
             mock_reverse.return_value = 'dummy_url'
