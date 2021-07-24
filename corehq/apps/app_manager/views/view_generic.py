@@ -45,8 +45,8 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
 )
 from corehq.apps.linked_domain.dbaccessors import (
+    get_accessible_downstream_domains,
     get_upstream_domain_link,
-    get_domains_eligible_for_linked_apps,
     is_active_downstream_domain,
 )
 from corehq.privileges import RELEASE_MANAGEMENT
@@ -273,7 +273,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     }
     domain_names.add(request.domain)
     if domain_has_privilege(request.domain, RELEASE_MANAGEMENT):
-        linkable_domains = get_domains_eligible_for_linked_apps(domain, request.couch_user)
+        linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
     else:
         # keep behavior the same as before for LINKED_DOMAINS toggle
         linkable_domains = domain_names

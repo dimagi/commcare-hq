@@ -11,6 +11,7 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -44,8 +45,8 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
-    get_upstream_domain_link,
     get_linked_domains,
+    get_upstream_domain_link,
     get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain, require_access_to_linked_domains
@@ -98,7 +99,6 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.privileges import RELEASE_MANAGEMENT
@@ -277,7 +277,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
-        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
+        current_subscription = Subscription.get_active_subscription_by_domain(self.request.domain)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain,
+                                                                  self.request.couch_user,
+                                                                  billing_account=current_subscription.account)
         upstream_domains = []
         for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})

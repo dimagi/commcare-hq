@@ -111,3 +111,34 @@ def _add_domain_access(domain, media):
 
 def is_linked_report(report):
     return report.report_meta.master_id
+
+
+def is_domain_available_to_link(upstream_domain_name, candidate_name, user, should_enforce_admin=True):
+    if not upstream_domain_name or not candidate_name:
+        return False
+
+    if candidate_name == upstream_domain_name:
+        return False
+
+    if is_domain_in_active_link(candidate_name):
+        # cannot link to an already linked project
+        return False
+
+    if should_enforce_admin:
+        return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    else:
+        return True
+
+
+def is_domain_in_active_link(domain_name):
+    from corehq.apps.linked_domain.dbaccessors import (
+        is_active_downstream_domain,
+        is_active_upstream_domain,
+    )
+    return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
+
+
+def user_has_admin_access_in_all_domains(user, domains):
+    if user.is_superuser:
+        return True
+    return all([user.is_domain_admin(domain) for domain in domains])
