@@ -37,7 +37,7 @@ class CopyApplicationForm(forms.Form):
         widget=BootstrapCheckboxInput(
             inline_label=mark_safe(_(
                 "<!-- ko ifnot: shouldEnableLinkedAppOption -->"
-                "Cannot link this application with the selected project space."
+                "The selected project space must first be linked to the current project space."
                 "<!-- /ko -->"
             )),  # nosec: no user input
             attrs={"data-bind": "enable: shouldEnableLinkedAppOption, checked: isChecked"},
