@@ -44,7 +44,7 @@ class TestIsDomainAvailableToLink(SimpleTestCase):
     @patch('corehq.apps.users.models.CouchUser')
     def test_user_without_admin_access_returns_false(self, mock_user):
         with patch('corehq.apps.linked_domain.util.is_domain_in_active_link') as mock_active_link,\
-             patch('corehq.apps.linked_domain.util.does_user_have_admin_access_in_all_domains') as mock_admin:
+             patch('corehq.apps.linked_domain.util.user_has_admin_access_in_all_domains') as mock_admin:
             mock_active_link.return_value = False
             mock_admin.return_value = False
             result = is_domain_available_to_link('upstream', 'downstream', mock_user, should_enforce_admin=True)
@@ -54,7 +54,7 @@ class TestIsDomainAvailableToLink(SimpleTestCase):
     def test_user_with_admin_access_returns_true(self, mock_user):
         with patch('corehq.apps.linked_domain.util.is_domain_in_active_link') as mock_active_link, \
             patch(
-                'corehq.apps.linked_domain.util.does_user_have_admin_access_in_all_domains') as mock_admin:
+                'corehq.apps.linked_domain.util.user_has_admin_access_in_all_domains') as mock_admin:
             mock_active_link.return_value = False
             mock_admin.return_value = True
             result = is_domain_available_to_link('upstream', 'downstream', mock_user, should_enforce_admin=True)
