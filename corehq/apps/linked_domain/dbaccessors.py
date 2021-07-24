@@ -1,10 +1,13 @@
 from django.db.models.expressions import RawSQL
 
 from corehq import toggles
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
+from corehq.apps.linked_domain.util import (
+    is_domain_available_to_link,
+    user_has_admin_access_in_all_domains,
+)
 from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.quickcache import quickcache
 
@@ -50,39 +53,40 @@ def get_actions_in_domain_link_history(link):
     ))
 
 
-def get_available_domains_to_link(upstream_domain_name, user):
+def get_available_domains_to_link(upstream_domain_name, user, billing_account=None):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
     The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
     version is available to anyone who can obtain access (the wild west)
     :param upstream_domain_name: potential upstream domain candidate
     :param user: user object
+    :param billing_account: optional parameter used
     :return: list of domain names available to link as downstream projects
     """
-    def _is_domain_available(domain_name, should_limit_to_admin=True):
-        if domain_name == upstream_domain_name:
-            return False
-
-        if is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name):
-            # cannot link to an already linked project
-            return False
-
-        if should_limit_to_admin:
-            has_upstream_access = user.is_superuser or user.is_domain_admin(upstream_domain_name)
-            has_downstream_access = user.is_superuser or user.is_domain_admin(domain_name)
-            return has_upstream_access and has_downstream_access
-        else:
-            return True
-
-    current_subscription = Subscription.get_active_subscription_by_domain(upstream_domain_name)
-    if current_subscription and domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        eligible_domains = [d for d in current_subscription.account.get_domains()]
-        return list({d for d in eligible_domains if _is_domain_available(d)})
+    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+        return get_available_domains_to_link_for_account(upstream_domain_name, user, billing_account)
     elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        eligible_domains = [d.name for d in Domain.active_for_user(user)]
-        return list({d for d in eligible_domains if _is_domain_available(d, should_limit_to_admin=False)})
+        return get_available_domains_to_link_for_user(upstream_domain_name, user)
 
     return []
+
+
+def get_available_domains_to_link_for_account(upstream_domain_name, user, account):
+    """
+    Finds available domains to link based on domains associated with the provided account
+    """
+    eligible_domains = account.get_domains() if account else []
+    return list({domain for domain in eligible_domains
+                 if is_domain_available_to_link(upstream_domain_name, domain, user)})
+
+
+def get_available_domains_to_link_for_user(upstream_domain_name, user):
+    """
+    Finds available domains to link based on domains that the provided user is active in
+    """
+    potential_domains = [d.name for d in Domain.active_for_user(user)]
+    return list({potential_domain for potential_domain in potential_domains if is_domain_available_to_link(
+        upstream_domain_name, potential_domain, user, should_enforce_admin=False)})
 
 
 def get_upstream_domains(domain_name, user):
@@ -98,16 +102,13 @@ def get_upstream_domains(domain_name, user):
     return list({d.name for d in Domain.active_for_user(user) if _is_available_upstream_domain(d.name)})
 
 
-def get_domains_eligible_for_linked_apps(upstream_domain_name, user):
+def get_accessible_downstream_domains(upstream_domain_name, user):
+    """
+    Returns a list of domain names that actively linked downstream of the provided upstream domain
+    NOTE: if the RELEASE_MANAGEMENT privilege is enabled, ensure user has admin access
+    """
+    downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        has_upstream_access = user.is_superuser or user.is_domain_admin(upstream_domain_name)
-
-        downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
-        eligible_domains = []
-        for domain in downstream_domains:
-            has_downstream_access = user.is_superuser or user.is_domain_admin(domain)
-            if has_upstream_access and has_downstream_access:
-                eligible_domains.append(domain)
-        return eligible_domains
-
-    return []
+        return [domain for domain in downstream_domains
+                if user_has_admin_access_in_all_domains(user, [upstream_domain_name, domain])]
+    return downstream_domains
