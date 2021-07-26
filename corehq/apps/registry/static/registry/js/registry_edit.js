@@ -67,7 +67,7 @@ hqDefine("registry/js/registry_edit", [
         self.addDomain = function () {
             actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
-                   self.invitations.push(InvitationModel(invite));
+                   self.invitations.unshift(InvitationModel(invite));
                 });
             })
         }
