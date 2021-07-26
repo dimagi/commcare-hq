@@ -64,6 +64,21 @@ class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryVaccinationPayloadGenerator,)
     friendly_name = _("Update vaccination for beneficiaries on COWIN")
 
+    def handle_response(self, response, repeat_record):
+        attempt = super().handle_response(response, repeat_record)
+        # successful response is always 204
+        if response.status_code == 204:
+            cowin_api_data_vaccination_case = repeat_record.repeater.payload_doc(repeat_record)
+            person_case_id = cowin_api_data_vaccination_case.get_case_property("person_case_id")
+            dose_number = cowin_api_data_vaccination_case.get_case_property("dose")
+            # Ideally person case id should always be present
+            # Simply ignore cases that don't have that and don't try again
+            if person_case_id:
+                update_case(self.domain, person_case_id,
+                            case_properties={f'dose_{dose_number}_notified': True},
+                            device_id=__name__ + '.BeneficiaryVaccinationRepeater')
+        return attempt
+
     def allowed_to_forward(self, case):
         allowed = super().allowed_to_forward(case)
         if allowed:

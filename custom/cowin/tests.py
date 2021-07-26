@@ -12,6 +12,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import RepeatRecord
 from custom.cowin.const import (
     COWIN_API_DATA_REGISTRATION_IDENTIFIER,
+    COWIN_API_DATA_VACCINATION_IDENTIFIER,
 )
 from custom.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
@@ -166,4 +167,34 @@ class TestRepeaters(SimpleTestCase):
                 "dose2_date": "2020-02-01",
                 "vaccinator_name": "Sumanthra"
             }
+        )
+
+    @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
+    @patch('corehq.motech.repeaters.models.RepeatRecord.repeater', new_callable=PropertyMock)
+    @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
+    @patch('custom.cowin.repeaters.update_case')
+    def test_vaccination_response(self, update_case_mock, payload_doc_mock, repeat_record_repeater_mock):
+        case_id = uuid.uuid4().hex
+        person_case_id = uuid.uuid4().hex
+        case_json = {
+            'person_case_id': person_case_id,
+            'api': COWIN_API_DATA_VACCINATION_IDENTIFIER,
+            'dose': "1"
+        }
+        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
+                               server_modified_on=datetime.datetime.utcnow())
+        payload_doc_mock.return_value = case
+
+        response = requests.Response()
+        response.status_code = 204
+
+        repeat_record = RepeatRecord(payload_id=case_id)
+        repeater = BeneficiaryVaccinationRepeater(domain=self.domain)
+
+        repeat_record_repeater_mock.return_value = repeater
+        repeater.handle_response(response, repeat_record)
+
+        update_case_mock.assert_called_with(
+            self.domain, person_case_id, case_properties={'dose_1_notified': True},
+            device_id='custom.cowin.repeaters.BeneficiaryVaccinationRepeater'
         )
