@@ -404,11 +404,7 @@ class DomainChoiceProvider(ChainableChoiceProvider):
         for registry in registries:
             domains.update(registry.get_granted_domains(domain))
         if query_text:
-            domains_filtered_by_user = set()
-            for domain in domains:
-                if re.search(query_text, domain):
-                    domains_filtered_by_user.add(domain)
-            domains = domains_filtered_by_user
+            domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)
 
     def query(self, query_context):
@@ -423,11 +419,7 @@ class DomainChoiceProvider(ChainableChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         domains = self._query_domains(self.domain, None)
-        domains.sort()
-        domain_options = []
-        for domain in domains:
-            if domain in values:
-                domain_options.append(domain)
+        domain_options = [domain for domain in domains if domain in values]
         return self._domains_to_choices(domain_options)
 
     def default_value(self, user):
