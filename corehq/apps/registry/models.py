@@ -34,8 +34,7 @@ class RegistryManager(models.Manager):
             self.filter(is_active=True)
             .filter(
                 invitations__domain=domain,
-                invitations__accepted_on__isnull=False,
-                invitations__rejected_on__isnull=True
+                invitations__status=RegistryInvitation.STATUS_ACCEPTED,
             )
         )
         if slug:
@@ -80,35 +79,35 @@ class DataRegistry(models.Model):
         if not invites:
             raise RegistryAccessDenied()
         invite = invites[0]
-        if not invite.accepted_on or invite.rejected_on:
+        if invite.status != RegistryInvitation.STATUS_ACCEPTED:
             raise RegistryAccessDenied()
         return True
 
 
 class RegistryInvitation(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_ACCEPTED, _("Accepted")),
+        (STATUS_REJECTED, _("Rejected")),
+    )
     registry = models.ForeignKey("DataRegistry", related_name="invitations", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
-    accepted_on = models.DateTimeField(null=True, blank=True)
-    accepted_by = models.ForeignKey(
-        User, related_name="registry_accepted_invitations", on_delete=models.CASCADE, null=True, blank=True
-    )
-    rejected_on = models.DateTimeField(null=True, blank=True)
-    rejected_by = models.ForeignKey(
-        User, related_name="registry_rejected_invitations", on_delete=models.CASCADE, null=True, blank=True
-    )
+    modified_on = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_PENDING)
 
     class Meta:
         unique_together = ("registry", "domain")
 
-    def accept(self, accepted_by):
-        self.accepted_on = datetime.utcnow()
-        self.accepted_by = accepted_by
+    def accept(self, user):
+        self.status = self.STATUS_ACCEPTED
         self.save()
 
-    def reject(self, rejected_by):
-        self.rejected_on = datetime.utcnow()
-        self.rejected_by = rejected_by
+    def reject(self, user):
+        self.status = self.STATUS_REJECTED
         self.save()
 
 

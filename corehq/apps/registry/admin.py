@@ -5,7 +5,6 @@ from .models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryPer
 
 class RegistryInvitationInline(admin.TabularInline):
     model = RegistryInvitation
-    autocomplete_fields = ['accepted_by', 'rejected_by']
     extra = 1
 
 
