@@ -18,7 +18,7 @@ def migrate_download_reports_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0030_userhistory_user_upload_record'),
+        ('users', '0031_delete_domainpermissionsmirror'),
     ]
 
     operations = [
