@@ -898,14 +898,14 @@ def _update_role_from_view(domain, role_data):
     role.name = role_data["name"]
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
-    role.save()
+    role.save(sync_to_couch=False)
 
     permissions = Permissions.wrap(role_data["permissions"])
     permissions.normalize()
-    role.set_permissions(permissions.to_list())
+    role.set_permissions(permissions.to_list(), sync_to_couch=False)
 
     assignable_by = role_data["assignable_by"]
-    role.set_assignable_by_couch(assignable_by)
+    role.set_assignable_by_couch(assignable_by, sync_to_couch=False)
     return role
 
 
