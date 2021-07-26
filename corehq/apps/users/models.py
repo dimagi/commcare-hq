@@ -449,26 +449,6 @@ class DomainMembershipError(Exception):
     pass
 
 
-class DomainPermissionsMirror(models.Model):
-    # These are both domain names
-    source = models.CharField(max_length=126, db_index=True)
-    mirror = models.CharField(max_length=126, db_index=True, unique=True)
-
-    @classmethod
-    def mirror_domains(cls, source_domain):
-        try:
-            return [o.mirror for o in cls.objects.filter(source=source_domain)]
-        except DomainPermissionsMirror.DoesNotExist:
-            return []
-
-    @classmethod
-    def source_domain(cls, mirror_domain):
-        try:
-            return cls.objects.get(mirror=mirror_domain).source
-        except DomainPermissionsMirror.DoesNotExist:
-            return None
-
-
 class Membership(DocumentSchema):
     # If we find a need for making UserRoles more general and decoupling it from a domain
     # then most of the role stuff from Domain membership can be put in here
