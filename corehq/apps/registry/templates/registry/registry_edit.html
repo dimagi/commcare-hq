@@ -131,15 +131,17 @@
           <table class="table table-striped table-hover mt-3">
             <thead>
               <tr>
-                <th class="col-sm-2">{% trans "From" %}</th>
-                <th class="col-sm-2">{% trans "To" %}</th>
+                <th class="col-sm-2">{% trans "From Project Space" %}</th>
+                <th class="col-sm-2">{% trans "To Project Spaces" %}</th>
               </tr>
             </thead>
             <tbody>
             <!-- ko foreach: grants -->
               <tr>
                 <td data-bind="text: from_domain"></td>
-                <td data-bind="text: to_domains"></td>
+                <td data-bind="foreach: to_domains">
+                  <span class="label label-default" data-bind="text: $data"></span>
+                </td>
               </tr>
             <!-- /ko -->
             </tbody>
