@@ -26,7 +26,7 @@ class BeneficiaryVaccinationPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         data = {
             "beneficiary_reference_id": cowin_api_data_vaccination_case.get_case_property(
                 'beneficiary_reference_id'),
-            "center_id": cowin_api_data_vaccination_case.get_case_property('centre_id'),
+            "center_id": cowin_api_data_vaccination_case.get_case_property('center_id'),
             "vaccine": cowin_api_data_vaccination_case.get_case_property('vaccine'),
             "vaccine_batch": cowin_api_data_vaccination_case.get_case_property('vaccine_batch'),
             "vaccinator_name": cowin_api_data_vaccination_case.get_case_property('vaccinator_name'),
