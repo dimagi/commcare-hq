@@ -1,4 +1,3 @@
-import copy
 from dimagi.utils.parsing import string_to_boolean
 from django.utils.translation import ugettext as _
 
@@ -26,6 +25,7 @@ class UserChangeLogger(object):
         - text messages for changes
         - useful info for changes to associated data models like role/locations
     """
+
     def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
         self.domain = domain
         self.user = user
@@ -100,6 +100,7 @@ class BaseUserImporter(object):
     Imports a Web/CommCareUser via bulk importer and also handles the logging
     save_log should be called explicitly to save logs, after user is saved
     """
+
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, upload_record_id):
         """
         :param upload_domain: domain on which the bulk upload is being done
