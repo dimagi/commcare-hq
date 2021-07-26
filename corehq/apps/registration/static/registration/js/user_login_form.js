@@ -37,7 +37,7 @@ hqDefine('registration/js/user_login_form', [
 
         self.authUsername = ko.observable(options.initialUsername);
         self.authUsername.subscribe(function (newValue) {
-            if (emailUtils.validateEmail(newValue)) {
+            if (self.isUsernameValid(newValue)) {
                 if (self.continueTextPromise) {
                     self.continueTextPromise.abort();
                 }
@@ -51,8 +51,15 @@ hqDefine('registration/js/user_login_form', [
         self.showContinueButton = ko.observable(true);
         self.showContinueSpinner = ko.observable(false);
 
+        self.isUsernameValid = function (username) {
+            if (!self.loginDomain || username.indexOf('@') !== -1) {
+                return emailUtils.validateEmail(username);
+            }
+            return self.loginDomain && username.length > 1;
+        };
+
         self.isContinueDisabled = ko.computed(function () {
-            return !emailUtils.validateEmail(self.authUsername());
+            return !self.isUsernameValid(self.authUsername());
         });
 
         self.showSignInButton = ko.observable(false);
