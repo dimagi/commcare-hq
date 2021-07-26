@@ -51,6 +51,7 @@ corehq.apps.linked_domain.const.ALL_LINKED_MODELS:
 - Dialer settings
 - OTP Pass-through Settings
 - Signed Callout
+- Tableau Server and Visualizaions
 
 Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
 overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
