@@ -164,10 +164,6 @@ class RegistryInvitation(models.Model):
             "domain": self.domain,
             "created_on": self.created_on,
             "status": self.status,
-            "accepted_on": self.accepted_on,
-            "accepted_by": self.accepted_by.username if self.accepted_by else None,
-            "rejected_on": self.rejected_on,
-            "rejected_by": self.rejected_by.username if self.rejected_by else None,
         }
 
 

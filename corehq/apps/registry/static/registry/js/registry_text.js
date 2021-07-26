@@ -54,14 +54,6 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
             return gettext('label-info');
         }
     }
-    let getRejectedText = function (invitation) {
-        const text = gettext("Rejected by %(user)s on %(date)s"),
-            params = {
-                user: invitation.rejected_by(),
-                date: moment(invitation.rejected_on()).format("D MMM YYYY")
-            };
-        return interpolate(text, params, true);
-    }
 
     return {
         getAcceptedBadgeText: getAcceptedBadgeText,
@@ -71,6 +63,5 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
         getStatusText: getStatusText,
         getStatusIcon: getStatusIcon,
         getStatusCssClass: getStatusCssClass,
-        getRejectedText: getRejectedText,
     };
 });

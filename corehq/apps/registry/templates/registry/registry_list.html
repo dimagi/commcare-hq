@@ -89,7 +89,6 @@
           <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
           <!-- ko if: invitation.status() === 'rejected' -->
           <p>{% trans "Invitation rejected" %}</p>
-          <p class="help-block" data-bind="text: rejectedText"></p>
           <!-- /ko -->
           <!-- ko if: invitation.status() === 'accepted' -->
             <span class="label label-plain" data-bind="ifnot: participator_count">

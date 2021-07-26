@@ -40,11 +40,6 @@ hqDefine("registry/js/registry_list", [
         self.statusText = ko.computed(function() {
             return text.getStatusText(self.invitation.status());
         });
-        self.rejectedText = ko.computed(function() {
-            if (self.invitation.status() === 'rejected') {
-                return text.getRejectedText(self.invitation);
-            }
-        });
 
         self.manageUrl = initialPageData.reverse('manage_registry_participation', self.slug())
 
