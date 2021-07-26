@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0028_remove_domainpermissionsmirror'),
+        ('users', '0030_userhistory_user_upload_record'),
     ]
 
     operations = [
