@@ -67,13 +67,35 @@ hqDefine("linked_domain/js/domain_links", [
         }
 
         self.can_update = data.can_update;
-        self.models = data.models;
 
         self.model_status = _.map(data.model_status, ModelStatus);
 
         self.linked_domains = ko.observableArray(_.map(data.linked_domains, function (link) {
             return DomainLink(link);
         }));
+
+        self.linkableUcr = ko.observableArray(_.map(data.linkable_ucr, function (report) {
+            return RemoteLinkableReport(report, self.master_link);
+        }));
+        self.createRemoteReportLink = function (reportId) {
+            _private.RMI("create_remote_report_link", {
+                "master_domain": self.master_link.master_domain,
+                "linked_domain": self.master_link.linked_domain,
+                "report_id": reportId,
+            }).done(function (data) {
+                if (data.success) {
+                    alertUser.alert_user(gettext('Report successfully linked.'), 'success');
+                } else {
+                    alertUser.alert_user(gettext(
+                        'Something unexpected happened.\n' +
+                        'Please try again, or report an issue if the problem persists.'), 'danger');
+                }
+            }).fail(function () {
+                alertUser.alert_user(gettext(
+                    'Something unexpected happened.\n' +
+                    'Please try again, or report an issue if the problem persists.'), 'danger');
+            });
+        };
 
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
@@ -105,6 +127,36 @@ hqDefine("linked_domain/js/domain_links", [
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
                 self.releaseInProgress(false);
+            });
+        };
+
+        return self;
+    };
+
+    var RemoteLinkableReport = function (report, masterLink) {
+        var self = {};
+        self.id = report.id;
+        self.title = report.title;
+        self.alreadyLinked = ko.observable(report.already_linked);
+
+        self.createLink = function () {
+            _private.RMI("create_remote_report_link", {
+                "master_domain": masterLink.master_domain,
+                "linked_domain": masterLink.linked_domain,
+                "report_id": self.id,
+            }).done(function (data) {
+                if (data.success) {
+                    alertUser.alert_user(gettext('Report successfully linked.'), 'success');
+                    self.alreadyLinked(true);
+                } else {
+                    alertUser.alert_user(gettext(
+                        'Something unexpected happened.\n' +
+                            'Please try again, or report an issue if the problem persists.'), 'danger');
+                }
+            }).fail(function () {
+                alertUser.alert_user(gettext(
+                    'Something unexpected happened.\n' +
+                        'Please try again, or report an issue if the problem persists.'), 'danger');
             });
         };
 

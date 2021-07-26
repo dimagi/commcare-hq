@@ -215,10 +215,6 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    @property
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
-
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)

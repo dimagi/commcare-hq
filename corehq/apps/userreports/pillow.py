@@ -438,6 +438,10 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
             })
         self.domain_timing_context.clear()
 
+    def bootstrap_if_needed(self):
+        self.table_manager.bootstrap_if_needed()
+
+
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/

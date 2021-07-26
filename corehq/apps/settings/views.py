@@ -268,8 +268,7 @@ class MyProjectsList(BaseMyAccountView):
                 self.request.couch_user.save()
                 log_user_change(None, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                                message=_("Removed from domain '{domain_name}'").format(
-                                    domain_name=self.domain_to_remove),
+                                message=f"Removed from domain '{self.domain_to_remove}'",
                                 domain_required_for_log=False,
                                 )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
@@ -297,10 +296,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
     @property
     def page_context(self):
-        is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-            and is_request_using_sso(self.request)
-        )
+        is_using_sso = is_request_using_sso(self.request)
         idp_name = None
         if is_using_sso:
             idp = IdentityProvider.get_active_identity_provider_by_username(
@@ -334,8 +330,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 
     @property
     def page_context(self):
-        if not (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and is_request_using_sso(self.request)):
+        if not is_request_using_sso(self.request):
             return {}
 
         idp = IdentityProvider.get_active_identity_provider_by_username(

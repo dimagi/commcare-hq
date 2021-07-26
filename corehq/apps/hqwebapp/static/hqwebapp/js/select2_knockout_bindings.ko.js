@@ -32,7 +32,6 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
         self.init = function (element) {
             var $el = $(element);
             $el.select2({
-                multiple: false,
                 width: "element",
             });
         };

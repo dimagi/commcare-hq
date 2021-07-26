@@ -55,6 +55,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
@@ -88,14 +89,12 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
-    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -106,7 +105,7 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -410,19 +409,18 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
-            idp = IdentityProvider.get_active_identity_provider_by_username(
-                self.editable_user.username
-            )
-            ctx.update({
-                'has_untrusted_identity_provider': (
-                    not IdentityProvider.does_domain_trust_user(
-                        self.domain,
-                        self.editable_user.username
-                    )
-                ),
-                'idp_name': idp.name if idp else '',
-            })
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.editable_user.username
+        )
+        ctx.update({
+            'has_untrusted_identity_provider': (
+                not IdentityProvider.does_domain_trust_user(
+                    self.domain,
+                    self.editable_user.username
+                )
+            ),
+            'idp_name': idp.name if idp else '',
+        })
 
         return ctx
 
@@ -438,8 +436,7 @@ class EditWebUserView(BaseEditUserView):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
 
-        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and self.request.POST['form_type'] == 'trust-identity-provider'):
+        if self.request.POST['form_type'] == 'trust-identity-provider':
             idp = IdentityProvider.get_active_identity_provider_by_username(
                 self.editable_user.username
             )
@@ -698,57 +695,12 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
-@method_decorator(require_superuser, name='dispatch')
-class DomainPermissionsMirrorView(BaseUserSettingsView):
-    template_name = 'users/domain_permissions_mirror.html'
-    page_title = ugettext_lazy("Enterprise Permissions")
-    urlname = 'domain_permissions_mirror'
-
-    @property
-    def page_context(self):
-        return {
-            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
-        }
-
-
-@require_superuser
-@require_POST
-def delete_domain_permission_mirror(request, domain, mirror):
-    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
-    if mirror_obj:
-        mirror_obj.delete()
-        message = _('You have successfully deleted the project space "{mirror}".')
-        messages.success(request, message.format(mirror=mirror))
-    else:
-        message = _('The project space you are trying to delete was not found.')
-        messages.error(request, message)
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
-@require_superuser
-@require_POST
-def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if not form.is_valid():
-        for field, message in form.errors.items():
-            messages.error(request, message)
-    else:
-        form.save_mirror_domain()
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        message = _('You have successfully added the project space "{mirror_domain_name}".')
-        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_enterprise_users(request, domain):
     # Get web users
-    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
     web_users, pagination = _get_web_users(request, domains)
 
     # Get linked mobile users
@@ -809,7 +761,6 @@ def _format_enterprise_user(domain, user):
 @require_GET
 def paginate_web_users(request, domain):
     web_users, pagination = _get_web_users(request, [domain])
-    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -822,10 +773,8 @@ def paginate_web_users(request, domain):
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
         ),
-        'isUntrustedIdentityProvider': (
-            not IdentityProvider.does_domain_trust_user(
-                domain, u.username
-            ) if is_sso_toggle_enabled else False
+        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+            domain, u.username
         ),
     } for u in web_users]
 
@@ -869,7 +818,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=_("Removed from domain '{domain_name}'").format(domain_name=domain))
+                        message=f"Removed from domain '{domain}'")
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1112,8 +1061,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
-            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
-                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+            if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
                 idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
                 idp.create_trust_with_domain(self.domain, self.request.user.username)
 
@@ -1146,6 +1094,7 @@ class BaseUploadUser(BaseUserSettingsView):
         except WorksheetNotFound:
             self.group_specs = []
         try:
+            from corehq.apps.user_importer.importer import check_headers
             check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
         except UserUploadError as e:
             messages.error(request, _(str(e)))

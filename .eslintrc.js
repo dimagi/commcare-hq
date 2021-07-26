@@ -2,9 +2,15 @@
 module.exports = {
     "extends": "eslint:recommended",
 
+    // https://eslint.org/docs/4.0.0/user-guide/configuring#specifying-parser-options
+    "parserOptions": {
+        "ecmaVersion": 6,
+    },
+
     // http://eslint.org/docs/user-guide/configuring#specifying-environments
     "env": {
         "browser": true,
+        "es6": true,
     },
 
     // http://eslint.org/docs/user-guide/configuring#specifying-globals

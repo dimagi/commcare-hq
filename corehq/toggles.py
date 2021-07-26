@@ -1982,13 +1982,6 @@ APP_ANALYTICS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/App+Analytics",
 )
 
-ENTERPRISE_SSO = StaticToggle(
-    'enterprise_sso',
-    'Enable Enterprise SSO options for the users specified in this list.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-)
-
 BLOCKED_EMAIL_DOMAIN_RECIPIENTS = StaticToggle(
     'blocked_email_domain_recipients',
     'Block any outgoing email addresses that have an email domain which '
@@ -2088,5 +2081,13 @@ TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
+    'followup_forms_as_case_list_form',
+    'Option to configure follow up forms on parent case for Case List Form menu setting of '
+    'child modules that use Parent Child Selection',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )

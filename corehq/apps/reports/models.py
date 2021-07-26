@@ -217,7 +217,6 @@ class TableauServer(models.Model):
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
     domain_username = models.CharField(max_length=64)
-    allow_domain_username_override = models.BooleanField(default=False)
 
     def __str__(self):
         return '{server} {server_type} {site}'.format(server=self.server_name,
@@ -229,6 +228,10 @@ class TableauVisualization(models.Model):
     domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
+
+    @property
+    def name(self):
+        return '/'.join(self.view_url.split('?')[0].split('/')[-2:])
 
     def __str__(self):
         return '{domain} {server} {view}'.format(domain=self.domain,

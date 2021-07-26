@@ -1162,7 +1162,7 @@ _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
-IS_INDIA_ENVIRONMENT = SERVER_ENVIRONMENT == 'india'
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings

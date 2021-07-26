@@ -28,6 +28,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -39,7 +40,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
@@ -261,10 +262,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        self.is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
-            and is_request_using_sso(kwargs['request'])
-        )
+        self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -1227,10 +1225,10 @@ class UserFilterForm(forms.Form):
             (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
+        subdomains = EnterprisePermissions.get_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
-                                         [(domain, domain) for domain in
-                                          DomainPermissionsMirror.mirror_domains(self.domain)]
+                                         [(domain, domain) for domain in subdomains]
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1243,7 +1241,7 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = []
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+        if subdomains:
             fields += [crispy.Field("domains", data_bind="value: domains")]
         fields += [
             crispy.Div(
@@ -1304,34 +1302,6 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
-        return domains
-
-
-class CreateDomainPermissionsMirrorForm(forms.Form):
-    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        self.mirror_domain = None
-        super().__init__(*args, **kwargs)
-
-    def clean_mirror_domain(self):
-        mirror_domain_name = self.data.get('mirror_domain')
-        if self.domain == mirror_domain_name:
-            raise forms.ValidationError(_("""
-                Enterprise permissions cannot be granted from a project space to itself.
-            """))
-        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if not self.mirror_domain:
-            raise forms.ValidationError(_('Please enter valid project space.'))
-        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
-            message = _('"{mirror_domain_name}" has already been added.')
-            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
-        return mirror_domain_name
-
-    def save_mirror_domain(self):
-        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
-        mirror.save()
+        return sorted(domains)
