@@ -693,7 +693,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                 else:
                     if status == "Invited":
                         try:
-                            invitation = Invitation.objects.get(domain=domain, email=username)
+                            invitation = Invitation.objects.get(domain=domain, email=username, is_accepted=False)
                         except Invitation.DoesNotExist:
                             raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
                                                     " {web_user} is not yet invited.").format(web_user=username))
