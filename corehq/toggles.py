@@ -2003,6 +2003,7 @@ ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'USH: UI for managing all web users in an enterprise',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
 
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
