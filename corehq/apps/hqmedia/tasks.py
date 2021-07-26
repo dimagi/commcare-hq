@@ -136,7 +136,6 @@ def build_application_zip(include_multimedia_files, include_index_files, domain,
         filename,
         download_targeted_version,
         task=build_application_zip,
-        expose_link=True,
     )
     DownloadBase.set_progress(build_application_zip, 100, 100)
 
@@ -204,10 +203,9 @@ def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count
 
 def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
                          download_id=None, compress_zip=False, filename="commcare.zip",
-                         download_targeted_version=False, task=None, expose_link=False):
+                         download_targeted_version=False, task=None):
     """
     :param task: celery task whose progress needs to be set when being run asynchronously by celery
-    :param expose_link: expose downloadable link for the file created
     :return: path to the ccz file
     """
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
@@ -261,9 +259,8 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
             raise Exception('\t' + '\t'.join(errors))
     else:
         DownloadBase.set_progress(task, current_progress + file_progress, 100)
-    if expose_link:
-        with build.timing_context("_expose_download_link"):
-            _expose_download_link(fpath, filename, compress_zip, download_id)
+    with build.timing_context("_expose_download_link"):
+        _expose_download_link(fpath, filename, compress_zip, download_id)
     DownloadBase.set_progress(task, 100, 100)
     return fpath
 

@@ -589,7 +589,6 @@ class AppBuildTimingsView(TemplateView):
                     filename='app-profile-test.ccz',
                     download_targeted_version=False,
                     task=None,
-                    expose_link=True,
                 )
 
         os.remove(fpath)
