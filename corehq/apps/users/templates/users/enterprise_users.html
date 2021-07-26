@@ -58,8 +58,10 @@
               "></i>
               <i class="fa fa-link" data-bind="visible: loginAsUser" style="margin-left: 15px;"></i>
               <span data-bind="attr: {style: (loginAsUserCount || loginAsUser ? 'margin-left: 1px' : 'margin-left: 15px;')}, text: username"></span>
+              <span class="label label-success" data-bind="text: loginAsUserCount"></span>
             </td>
-            <td data-bind="text: name"></td>
+            <td data-bind="text: name">
+            </td>
             <td data-bind="text: role"></td>
             {% if show_profile_column %}
               <td data-bind="text: profile"></td>

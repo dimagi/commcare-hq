@@ -103,15 +103,6 @@ def domain_lite(name):
     return DomainLite(name, None, None, True)
 
 
-def post_run_with_sql_backend(fn, *args, **kwargs):
-    fn.doCleanups()
-    fn.tearDown()
-
-
-def pre_run_with_es_backend(fn, *args, **kwargs):
-    fn.setUp()
-
-
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
                  return_value=(get_sample_data_source(), None))
