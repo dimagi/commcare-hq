@@ -3,6 +3,7 @@ from collections import Counter
 
 from django.http import Http404, JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
@@ -110,6 +111,7 @@ def edit_registry(request, domain, registry_slug):
         return redirect("manage_registry_participation", domain, registry_slug)
 
     context = {
+        "domain": domain,
         "registry": {
             "domain": domain,
             "name": registry.name,
@@ -125,7 +127,18 @@ def edit_registry(request, domain, registry_slug):
             ]
         },
         "available_case_types": ["patient", "household"],  # TODO
-        "available_domains": ["skelly", "d1"],  # TODO
+        "available_domains": ["skelly", "d1"],  # TODO,
+        "current_page": {
+            "title": "Edit Registry",
+            "page_name": "Edit Registry",
+            "parents": [
+                {
+                    "title": "Data Registries",
+                    "page_name": "Data Registries",
+                    "url": reverse("data_registries", args=[domain]),
+                },
+            ],
+        },
     }
     return render(request, "registry/registry_edit.html", context)
 
