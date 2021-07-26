@@ -246,7 +246,10 @@ def manage_grants(request, domain, registry_slug):
 
         grant.delete()
         return JsonResponse({
-            "message": _("Grant for '{domains}' removed").format(domains="', '".join(grant.to_domains))
+            "message": _("Access removed from '{domain}' to '{domains}'").format(
+                domain=domain,
+                domains="', '".join(grant.to_domains)
+            )
         })
 
     if action == "add":
@@ -262,7 +265,10 @@ def manage_grants(request, domain, registry_slug):
         grant, created = registry.grants.get_or_create(from_domain=domain, to_domains=list(domains))
         return JsonResponse({
             "grants": [grant.to_json()],
-            "message": _("Access to '{domains}' granted").format(domains="', '".join(domains))
+            "message": _("Access granted from '{domain}' to '{domains}'").format(
+                domain=domain,
+                domains="', '".join(grant.to_domains)
+            )
         })
 
 

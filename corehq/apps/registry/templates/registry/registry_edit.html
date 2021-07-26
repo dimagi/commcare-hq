@@ -151,6 +151,7 @@
               <tr>
                 <th class="col-sm-2">{% trans "From Project Space" %}</th>
                 <th class="col-sm-2">{% trans "To Project Spaces" %}</th>
+                <th class="col-sm-2">{% trans "Actions" %}</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +160,11 @@
                 <td data-bind="text: from_domain"></td>
                 <td data-bind="foreach: to_domains">
                   <span class="label label-default" data-bind="text: $data"></span>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans "Remove Grant" %}">
+                    <i class="fa fa-trash"></i>
+                  </button>
                 </td>
               </tr>
             <!-- /ko -->
@@ -260,6 +266,28 @@
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: createGrant" data-dismiss="modal">{% trans "Grant Access" %}</a>
+        </div>
+      </div>
+    </div>
+</script>
+<script type="text/html" id="remove-grant-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Remove Grant" %}</h4>
+        </div>
+        <div class="modal-body">
+          {% blocktrans %}
+            Are you sure you want to remove the grant from  {{ domain }} to
+          {% endblocktrans %}
+          <b data-bind="text: to_domains.join(', ')"></b>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: $root.removeGrant" data-dismiss="modal">{% trans "Remove Grant" %}</a>
         </div>
       </div>
     </div>

@@ -33,8 +33,9 @@ hqDefine("registry/js/registry_edit", [
 
         return self;
     }
-    let GrantModel = function(data) {
+    let GrantModel = function(currentDomain, data) {
         let self = data;
+        self.canDelete = self.from_domain === currentDomain;
         return self;
     }
     let EditModel = function(data, availableCaseTypes, availableDomains) {
@@ -45,7 +46,7 @@ hqDefine("registry/js/registry_edit", [
                 create: (options) => InvitationModel(options.data)
             },
             grants: {
-                create: (options) => GrantModel(options.data)
+                create: (options) => GrantModel(data.domain, options.data)
             }
         };
         let self = ko.mapping.fromJS(data, mapping);
@@ -85,13 +86,20 @@ hqDefine("registry/js/registry_edit", [
 
         self.grantDomains = ko.observable([]);
         self.createGrant = function() {
-            console.log(self.grantDomains());
             actions.createGrant(self.slug, self.grantDomains(), (data) => {
                 _.each(data.grants, (grant) => {
-                   self.grants.push(GrantModel(grant));
+                   self.grants.push(GrantModel(self.domain, grant));
                 });
                 self.grantDomains([]);
             })
+        }
+
+        self.removeGrant = function(toRemove) {
+            actions.removeGrant(self.slug, toRemove.id, () => {
+                self.grants(self.grants().filter((grant) => {
+                    return grant.id !== toRemove.id;
+                }));
+            });
         }
         return self;
     }
