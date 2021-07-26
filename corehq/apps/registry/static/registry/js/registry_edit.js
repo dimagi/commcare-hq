@@ -40,7 +40,7 @@ hqDefine("registry/js/registry_edit", [
     let EditModel = function(data, availableCaseTypes, availableDomains) {
         const mapping = {
             'copy': ["domain", "slug", "name", "description"],
-            'observe': ["is_active", "schema", "invitations"],
+            'observe': ["is_active", "schema", "invitations", "grants"],
             invitations: {
                 create: (options) => InvitationModel(options.data)
             },
@@ -50,9 +50,12 @@ hqDefine("registry/js/registry_edit", [
         };
         let self = ko.mapping.fromJS(data, mapping);
         self.availableCaseTypes = availableCaseTypes;
-        self.availableDomains = ko.computed(() => {
+        self.availableInviteDomains = ko.computed(() => {
             const invited = self.invitations().map((invite) => invite.domain);
             return availableDomains.filter((domain) => !invited.includes(domain));
+        });
+        self.availableGrantDomains = ko.computed(() => {
+             return self.invitations().map((invite) => invite.domain);
         });
         self.inviteDomains = ko.observable([]);
 
@@ -69,6 +72,7 @@ hqDefine("registry/js/registry_edit", [
                 _.each(data.invitations, (invite) => {
                    self.invitations.unshift(InvitationModel(invite));
                 });
+                self.inviteDomains([]);
             })
         }
 
@@ -76,6 +80,17 @@ hqDefine("registry/js/registry_edit", [
         self.saveSchema = function () {
             actions.editAttr(self.slug, 'schema', {"value": self.editedSchema()}, (data) => {
                 self.schema(self.editedSchema());
+            })
+        }
+
+        self.grantDomains = ko.observable([]);
+        self.createGrant = function() {
+            console.log(self.grantDomains());
+            actions.createGrant(self.slug, self.grantDomains(), (data) => {
+                _.each(data.grants, (grant) => {
+                   self.grants.push(GrantModel(grant));
+                });
+                self.grantDomains([]);
             })
         }
         return self;

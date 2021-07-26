@@ -21,6 +21,7 @@
 {% initial_page_data "availableDomains" available_domains %}
 {% registerurl "edit_registry_attr" registry.domain '---' '---' %}
 {% registerurl "manage_invitations" registry.domain '---' %}
+{% registerurl "manage_grants" registry.domain '---' %}
 <div class="registry-inlines">
   <div class="row">
     <div class="col-sm-6 col-md-4">
@@ -128,7 +129,24 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="grants">
-          <table class="table table-striped table-hover mt-3">
+          <div class="row">
+            <div class="col-md-2 col-md-offset-10">
+              <div class="pull-right">
+                <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
+                  <i class="fa fa-plus"></i>
+                  {% trans "Grant Access" %}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div data-bind="ifnot: grants().length">
+            <p>
+              {% blocktrans %}
+                No grants have been created.
+              {% endblocktrans %}
+            </p>
+          </div>
+          <table class="table table-striped table-hover mt-3" data-bind="visible: grants().length">
             <thead>
               <tr>
                 <th class="col-sm-2">{% trans "From Project Space" %}</th>
@@ -136,7 +154,7 @@
               </tr>
             </thead>
             <tbody>
-            <!-- ko foreach: grants -->
+            <!-- ko foreach: grants() -->
               <tr>
                 <td data-bind="text: from_domain"></td>
                 <td data-bind="foreach: to_domains">
@@ -188,7 +206,7 @@
           <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
         </div>
         <div class="modal-body">
-          <select multiple class="form-control" data-bind="select2: availableDomains, value: inviteDomains"></select>
+          <select multiple class="form-control" data-bind="select2: availableInviteDomains, selectedOptions: inviteDomains"></select>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
@@ -218,6 +236,30 @@
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: saveSchema" data-dismiss="modal">{% trans "Save" %}</a>
+        </div>
+      </div>
+    </div>
+</script>
+<script type="text/html" id="create-grant-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Grant access" %}</h4>
+        </div>
+        <div class="modal-body">
+          <div class='alert alert-warning'>
+            {% blocktrans %}
+            Granting access to data from {{ domain }}
+            {% endblocktrans %}
+          </div>
+          <select multiple class="form-control" data-bind="select2: availableGrantDomains, selectedOptions: grantDomains"></select>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: createGrant" data-dismiss="modal">{% trans "Grant Access" %}</a>
         </div>
       </div>
     </div>

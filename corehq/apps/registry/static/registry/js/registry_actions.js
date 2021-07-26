@@ -37,10 +37,11 @@ hqDefine("registry/js/registry_actions", [
         });
     }
 
-    let manageInvitations = function(registrySlug, data, onSuccess) {
+    let manageRelatedModels = function(url, registrySlug, data, onSuccess) {
         $.post({
-            url: initialPageData.reverse('manage_invitations', registrySlug),
+            url: initialPageData.reverse(url, registrySlug),
             data: data,
+            traditional: true,
             success: function (data) {
                 onSuccess(data);
                 if (data.message) {
@@ -54,12 +55,13 @@ hqDefine("registry/js/registry_actions", [
     }
 
     let addInvitations = function (registrySlug, domains, onSuccess) {
-        manageInvitations(registrySlug, {"action": "add", "domains": domains}, onSuccess)
+        const data = {"action": "add", "domains": domains};
+        manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
     let removeInvitation = function (registrySlug, invitationId, domain, onSuccess) {
         const data = {"action": "remove", "id": invitationId, "domain": domain};
-        manageInvitations(registrySlug, data, onSuccess)
+        manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
     let editAttr = function(registrySlug, attr, data, onSuccess) {
@@ -79,11 +81,23 @@ hqDefine("registry/js/registry_actions", [
         });
     }
 
+    let createGrant = function (registrySlug, domains, onSuccess) {
+        const data = {"action": "add", "domains": domains};
+        manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
+    }
+
+    let removeGrant = function (registrySlug, grantId, onSuccess) {
+        const data = {"action": "remove", "id": grantId};
+        manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
+    }
+
     return {
         acceptInvitation: accept,
         rejectInvitation: reject,
         addInvitations: addInvitations,
         removeInvitation: removeInvitation,
         editAttr: editAttr,
+        createGrant: createGrant,
+        removeGrant: removeGrant,
     };
 });

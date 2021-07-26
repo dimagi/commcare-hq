@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.decorators import require_enterprise_admin
-from corehq.apps.registry.models import DataRegistry, RegistryInvitation
+from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
 
 
 @require_enterprise_admin
@@ -210,6 +210,7 @@ def manage_invitations(request, domain, registry_slug):
 
         invitations = []
         for domain in domains:
+            # TODO: check that domain is part of the same account
             domain_obj = Domain.get_by_name(domain)
             if domain_obj:
                 invitation, created = registry.invitations.get_or_create(domain=domain)
@@ -221,6 +222,49 @@ def manage_invitations(request, domain, registry_slug):
             ],
             "message": _("{count} invitations sent").format(count=len(invitations))
         })
+
+
+@require_enterprise_admin
+@require_POST
+def manage_grants(request, domain, registry_slug):
+    registry = _get_registry_or_404(domain, registry_slug)
+
+    action = request.POST.get("action")
+    if action not in ("add", "remove"):
+        return JsonResponse({"error": _("Unable to process your request")}, status=400)
+
+    if action == "remove":
+        grant_id = request.POST.get("id")
+
+        try:
+            grant = registry.grants.get(from_domain=domain, id=grant_id)
+        except RegistryGrant.DoesNotExist:
+            return JsonResponse({
+                "error": _("Grant not found")},
+                status=404
+            )
+
+        grant.delete()
+        return JsonResponse({
+            "message": _("Grant for '{domains}' removed").format(domains="', '".join(grant.to_domains))
+        })
+
+    if action == "add":
+        domains = set(request.POST.getlist("domains"))
+        if not domains:
+            return JsonResponse({"error": _("No Project Spaces specified")}, status=400)
+
+        available_domains = set(registry.invitations.values_list("domain", flat=True))
+        domains = domains & available_domains
+        if not domains:
+            return JsonResponse({"grants": []})
+
+        grant, created = registry.grants.get_or_create(from_domain=domain, to_domains=list(domains))
+        return JsonResponse({
+            "grants": [grant.to_json()],
+            "message": _("Access to '{domains}' granted").format(domains="', '".join(domains))
+        })
+
 
 
 @domain_admin_required
