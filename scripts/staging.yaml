@@ -82,5 +82,6 @@ branches:
     - gh/limit-domains-in-app-manager # Graham July 23 [QA]
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
+    - bmb/noramilize-url  # Biyeun July 26
     
 submodules: { }
