@@ -83,5 +83,6 @@ branches:
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - bmb/noramilize-url  # Biyeun July 26
+    - smh/web-user-upload-invites-fix # Steph July 26
     
 submodules: { }
