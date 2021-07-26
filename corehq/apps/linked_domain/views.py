@@ -246,7 +246,7 @@ def pull_missing_multimedia(request, domain, app_id):
 @method_decorator(toggles.LINKED_DOMAINS.required_decorator(), name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Linked Projects")
+    page_title = ugettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
 
     @use_multiselect
@@ -394,7 +394,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
-    name = 'Linked Project History'
+    name = 'Linked Project Space History'
     base_template = "reports/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'
