@@ -40,7 +40,7 @@ hqDefine("registry/js/registry_edit", [
     let EditModel = function(data, availableCaseTypes, availableDomains) {
         const mapping = {
             'copy': ["domain", "slug", "name", "description"],
-            'observe': ["is_active", "case_types", "invitations"],
+            'observe': ["is_active", "schema", "invitations"],
             invitations: {
                 create: (options) => InvitationModel(options.data)
             },
@@ -69,6 +69,13 @@ hqDefine("registry/js/registry_edit", [
                 _.each(data.invitations, (invite) => {
                    self.invitations.unshift(InvitationModel(invite));
                 });
+            })
+        }
+
+        self.editedSchema = ko.observable(self.schema());
+        self.saveSchema = function () {
+            actions.editAttr(self.slug, 'schema', {"value": self.editedSchema()}, (data) => {
+                self.schema(self.editedSchema());
             })
         }
         return self;

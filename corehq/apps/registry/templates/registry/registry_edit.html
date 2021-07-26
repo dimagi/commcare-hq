@@ -47,14 +47,19 @@
   </div>
 </div>
 <div id="edit-registry" class="registry-form-container">
-  <div class="row">
-    <div class="col-sm-2 control-label">
-      {% trans "Case Types" %}
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-8 col-md-6 controls">
-      <select multiple class="form-control" data-bind="select2: availableCaseTypes, value: case_types"></select>
+  <div class="row ko-inline-edit" data-bind="openModal: 'edit-schema-modal'">
+    <div class="col-md-5 read-only">
+      <div class="row">
+        <div class="col-md-12">
+          <strong>{% trans "Case Types" %}:</strong>
+          <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 controls">
+          <textarea data-bind="value: schema().join(', ')" cols="50" disabled></textarea>
+        </div>
+      </div>
     </div>
   </div>
   <div class="row mt-4">
@@ -155,7 +160,7 @@
           <h4 class="modal-title">{% trans "Remove Project Space" %}</h4>
         </div>
         <div class="modal-body">
-          <div class='alert alert-danger'>
+          <div class='alert alert-warning'>
             {% blocktrans %}
               Removing a Project Space will completely remove their access to this registry.
             {% endblocktrans %}
@@ -186,6 +191,31 @@
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: addDomain, enabled: invitedDomains().length" data-dismiss="modal">{% trans "Invite" %}</a>
+        </div>
+      </div>
+    </div>
+</script>
+<script type="text/html" id="edit-schema-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">{% trans "Edit Registry Case Types" %}</h4>
+        </div>
+        <div class="modal-body">
+          <div class='alert alert-warning'>
+            {% blocktrans %}
+            Adding or removing case types may impact usages of the
+              registry such as Configurable Reports and Case Search
+            {% endblocktrans %}
+          </div>
+          <select multiple class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: editedSchema"></select>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: saveSchema" data-dismiss="modal">{% trans "Save" %}</a>
         </div>
       </div>
     </div>

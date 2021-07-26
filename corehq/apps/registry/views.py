@@ -118,7 +118,7 @@ def edit_registry(request, domain, registry_slug):
             "description": registry.description or '',
             "slug": registry.slug,
             "is_active": registry.is_active,
-            "case_types": registry.case_types,
+            "schema": registry.case_types,
             "invitations": [
                 invitation.to_json() for invitation in registry.invitations.all()
             ],
@@ -150,12 +150,19 @@ def edit_registry_attr(request, domain, registry_slug, attr):
     if registry.domain != domain:
         return JsonResponse({"error": _("Action not permitted")}, status=403)
 
-    if attr not in ["name", "description"]:
+    if attr not in ["name", "description", "schema"]:
         return JsonResponse({"error": _("Unknown attribute")}, status=400)
 
-    value = request.POST.get("value")
-    if not value and attr == 'name':
-        return JsonResponse({"error": _("'name' must not be blank")}, status=400)
+    if attr == "name":
+        value = request.POST.get("value")
+        if not value:
+            return JsonResponse({"error": _("'name' must not be blank")}, status=400)
+    elif attr == "description":
+        value = request.POST.get("value")
+    elif attr == "schema":
+        # TODO: fire signals to update UCRs
+        case_types = request.POST.getlist("value")
+        value = [{"case_type": case_type} for case_type in case_types]
 
     setattr(registry, attr, value)
     registry.save()

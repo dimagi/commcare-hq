@@ -62,10 +62,28 @@ hqDefine("registry/js/registry_actions", [
         manageInvitations(registrySlug, data, onSuccess)
     }
 
+    let editAttr = function(registrySlug, attr, data, onSuccess) {
+        $.post({
+            url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
+            data: data,
+            traditional: true,
+            success: function (data) {
+                onSuccess(data);
+                if (data.message) {
+                    alertUser.alert_user(data.message, 'success');
+                }
+            },
+            error: function (response) {
+                alertUser.alert_user(response.responseJSON.error, 'danger');
+            },
+        });
+    }
+
     return {
         acceptInvitation: accept,
         rejectInvitation: reject,
         addInvitations: addInvitations,
         removeInvitation: removeInvitation,
+        editAttr: editAttr,
     };
 });
