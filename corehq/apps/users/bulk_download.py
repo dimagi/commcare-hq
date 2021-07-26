@@ -50,6 +50,7 @@ def build_data_headers(keys, header_prefix='data'):
         {header_prefix: {key: None for key in keys}}
     )
 
+
 def get_devices(user):
     """
     Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
@@ -75,6 +76,21 @@ def get_location_codes(location_cache, loc_id, assigned_loc_ids):
     return location_codes
 
 
+def get_phone_numbers(user_data):
+    phone_numbers_dict = {}
+    if user_data.phone_number:
+        phone_numbers_dict.update({
+            'phone-number 1': user_data.phone_number
+        })
+        user_data.phone_numbers.remove(user_data.phone_number)
+
+        for n, mobile_number in enumerate(user_data.phone_numbers):
+            # Add 2 to n, so number index will start at 2
+            # since phone-number-1 is reserved for primary number
+            phone_numbers_dict.update({f'phone-number {n + 2}': mobile_number})
+    return phone_numbers_dict
+
+
 def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
     model_data = {}
     uncategorized_data = {}
@@ -89,19 +105,17 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         except CustomDataFieldsProfile.DoesNotExist:
             profile = None
     activity = user.reporting_metadata
-
     location_codes = get_location_codes(location_cache, user.location_id, user.assigned_location_ids)
 
     def _format_date(date):
         return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
 
-    return {
+    user_dict = {
         'data': model_data,
         'uncategorized_data': uncategorized_data,
         'group': group_names,
         'name': user.full_name,
         'password': "********",  # dummy display string for passwords
-        'phone-number': user.phone_number,
         'email': user.email,
         'username': user.raw_username,
         'language': user.language,
@@ -116,6 +130,10 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
         'last_sync (read only)': activity.last_sync_for_user.sync_date,
     }
+
+    user_dict.update(get_phone_numbers(user))
+
+    return user_dict
 
 
 def get_user_role_name(domain_membership):
@@ -184,10 +202,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         domain,
         UserFieldsView.field_type
     )
-
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
+    phone_numbers_length = 0
     user_dicts = []
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
 
@@ -199,19 +217,27 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
             ], key=alphanumeric_sort_key)
+
             user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
             user_dicts.append(user_dict)
             unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
             max_location_length = max(max_location_length, len(user_dict["location_code"]))
+
+            user_phone_numbers = [k for k in user_dict.keys() if 'phone-number' in k]
+            phone_numbers_length = max(phone_numbers_length, len(user_phone_numbers))
             current_user_downloaded_count += 1
             DownloadBase.set_progress(task, current_user_downloaded_count, total_count)
 
     user_headers = [
-        'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
+        'username', 'password', 'name', 'email', 'language', 'role',
+        'user_id', 'is_active', 'User IMEIs (read only)', 'registered_on (read only)',
+        'last_submission (read only)', 'last_sync (read only)',
     ]
+
+    user_headers.extend(json_to_headers(
+        {'phone-number': list(range(1, phone_numbers_length + 1))}
+    ))
 
     if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
@@ -302,6 +328,7 @@ def parse_groups(groups):
         for group_dict in group_dicts:
             row = dict(flatten_json(group_dict))
             yield [row.get(header, '') for header in group_headers]
+
     return group_headers, _get_group_rows()
 
 
