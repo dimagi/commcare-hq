@@ -157,7 +157,11 @@ class CommCareUserImporter(BaseUserImporter):
         old_user_phone_numbers = self.user.phone_numbers
         fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
 
-        self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        if any(fmt_phone_numbers):
+            self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        else:
+            self.user.set_phone_numbers([])
+
         self._log_phone_number_changes(old_user_phone_numbers, fmt_phone_numbers)
 
     def update_name(self, name):
