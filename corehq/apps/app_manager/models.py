@@ -5686,8 +5686,8 @@ class LinkedApplication(Application):
     @property
     @memoized
     def domain_link(self):
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        return get_domain_master_link(self.domain)
+        from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+        return get_upstream_domain_link(self.domain)
 
     @memoized
     def get_master_app_briefs(self):
