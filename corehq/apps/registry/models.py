@@ -69,7 +69,7 @@ class DataRegistry(models.Model):
         registry = DataRegistry.objects.create(domain=domain, name=name)
         # creating domain is automatically added to the registry
         invitation = registry.invitations.create(
-            domain=domain, accepted_on=datetime.utcnow()
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
         )
         registry.logger.invitation_added(user, invitation)
         return registry
@@ -97,8 +97,7 @@ class DataRegistry(models.Model):
 
     def get_participating_domains(self):
         return set(self.invitations.filter(
-            accepted_on__isnull=False,
-            rejected_on__isnull=True
+            status=RegistryInvitation.STATUS_ACCEPTED,
         ).values_list('domain', flat=True))
 
     def check_access(self, domain):

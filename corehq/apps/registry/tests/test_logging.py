@@ -32,7 +32,7 @@ class RegistryLoggingTests(TestCase):
         self._assertLogs([
             (self.domain, RegistryAuditLog.ACTION_DEACTIVATED),
             (self.domain, RegistryAuditLog.ACTION_ACTIVATED),
-        ])
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
     def test_log_invitation_accept_reject(self):
         invitation = self.registry.invitations.filter(domain="A").get()
@@ -41,7 +41,7 @@ class RegistryLoggingTests(TestCase):
 
         self._assertLogs([
             ("A", RegistryAuditLog.ACTION_INVITATION_ACCEPTED),
-        ])
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
         invitation.reject(self.user)
         self.assertEqual(invitation.status, RegistryInvitation.STATUS_REJECTED)
@@ -49,7 +49,7 @@ class RegistryLoggingTests(TestCase):
         self._assertLogs([
             ("A", RegistryAuditLog.ACTION_INVITATION_ACCEPTED),
             ("A", RegistryAuditLog.ACTION_INVITATION_REJECTED),
-        ])
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
         invitation.accept(self.user)
         self.assertEqual(invitation.status, RegistryInvitation.STATUS_ACCEPTED)
@@ -58,13 +58,14 @@ class RegistryLoggingTests(TestCase):
             ("A", RegistryAuditLog.ACTION_INVITATION_ACCEPTED),
             ("A", RegistryAuditLog.ACTION_INVITATION_REJECTED),
             ("A", RegistryAuditLog.ACTION_INVITATION_ACCEPTED),
-        ])
+        ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
-    def _assertLogs(self, expected_actions):
+    def _assertLogs(self, expected_actions, ignore_actions=()):
         actions = list(
             RegistryAuditLog.objects
-            .filter(registry=self.registry)
+            .filter(registry=self.registry, )
             .order_by('date')
             .values_list("domain", "action")
         )
+        actions = [action for action in actions if action[1] not in ignore_actions]
         self.assertEqual(expected_actions, actions)
