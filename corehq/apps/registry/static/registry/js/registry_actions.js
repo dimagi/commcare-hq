@@ -37,9 +37,9 @@ hqDefine("registry/js/registry_actions", [
         });
     }
 
-    let editAttr = function(registrySlug, attr, data, onSuccess) {
+    let manageInvitations = function(registrySlug, data, onSuccess) {
         $.post({
-            url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
+            url: initialPageData.reverse('manage_invitations', registrySlug),
             data: data,
             success: function (data) {
                 onSuccess(data);
@@ -53,9 +53,19 @@ hqDefine("registry/js/registry_actions", [
         });
     }
 
+    let addInvitations = function (registrySlug, domains, onSuccess) {
+        manageInvitations(registrySlug, {"action": "add", "domains": domains}, onSuccess)
+    }
+
+    let removeInvitation = function (registrySlug, invitationId, domain, onSuccess) {
+        const data = {"action": "remove", "id": invitationId, "domain": domain};
+        manageInvitations(registrySlug, data, onSuccess)
+    }
+
     return {
         acceptInvitation: accept,
         rejectInvitation: reject,
-        editAttr: editAttr
+        addInvitations: addInvitations,
+        removeInvitation: removeInvitation,
     };
 });

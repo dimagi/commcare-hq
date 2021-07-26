@@ -57,9 +57,7 @@ hqDefine("registry/js/registry_edit", [
         self.inviteDomains = ko.observable([]);
 
         self.removeDomain = function (toRemove){
-            actions.editAttr(self.slug, "invitation", {
-                "action": "remove", "id": toRemove.id, "domain": toRemove.domain
-            }, () => {
+            actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
                     return invite.id !== toRemove.id;
                 }));
@@ -67,9 +65,7 @@ hqDefine("registry/js/registry_edit", [
         }
 
         self.addDomain = function () {
-            actions.editAttr(self.slug, "invitation", {
-                "action": "add", "domains": self.inviteDomains()
-            }, (data) => {
+            actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
                    self.invitations.push(InvitationModel(invite));
                 });
