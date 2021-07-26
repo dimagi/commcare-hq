@@ -461,12 +461,29 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class AffectedUserFilter(ExpandedMobileWorkerFilter):
+    label = _("Affected User(s)")
+
+
 class ChangedByUserFilter(ExpandedMobileWorkerFilter):
     slug = "changed_by_user"
-    label = ugettext_lazy("Changed By User(s)")
+    label = ugettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
         return [('t__6', _("[Web Users]"))]
+
+
+class UserPropertyFilter(BaseSingleOptionFilter):
+    label = ugettext_noop('Modified Property')
+    default_text = ugettext_noop('Select Property')
+    slug = 'user_property'
+
+    @property
+    def options(self):
+        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        properties = UserHistoryReport.get_primary_properties(self.domain)
+        properties.pop("username", None)
+        return list(properties.items())
 
 
 class ChangeActionFilter(BaseMultipleOptionFilter):
