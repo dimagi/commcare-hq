@@ -70,7 +70,6 @@ branches:
     - rp/enterprize-sms-report # Rynhard July 12
     - rc/clarify-explanation # Robert July 20
     - ml/add-bulk-delete-form-export-report # Minha July 20
-    - bmb/hubspot-js-alt  # Biyeun July 21
     - smh/add-download-and-email-reports-permission # Steph July 21
     - gh/base-linked-project-access # Graham July 21 [QA]
     - jm/stale-es-case-search  # Joel July 21
@@ -82,5 +81,6 @@ branches:
     - gh/show-erm-tab-if-applicable # Graham July 21 [QA]
     - gh/limit-domains-in-app-manager # Graham July 23 [QA]
     - sr/memoized-toggle # Sravan July 26
+    - bmb/sso-login-v2  # Biyeun July 26
     
 submodules: { }
