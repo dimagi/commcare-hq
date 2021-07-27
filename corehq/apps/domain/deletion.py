@@ -388,7 +388,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
-    ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'SQLUserRole', 'domain', [
         'RolePermission', 'RoleAssignableBy', 'SQLPermission'
