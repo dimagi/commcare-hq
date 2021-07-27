@@ -149,7 +149,7 @@
       </div>
       <div data-bind="visible: erroredQuestions().length > 0">
         {% if environment == "web-apps" %}
-          {% if True or request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+          {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
             <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
                  style="position: fixed; width: 300px; bottom: 65px;"
                  data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
