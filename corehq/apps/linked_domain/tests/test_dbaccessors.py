@@ -1,199 +1,110 @@
-from datetime import date, timedelta
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase
 
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
+from corehq.apps.linked_domain.dbaccessors import (
+    get_available_domains_to_link,
+    get_available_upstream_domains,
 )
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.linked_domain.dbaccessors import get_available_domains_to_link
-from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-class TestGetAvailableDomainsToLink(TestCase):
+class TestGetAvailableUpstreamDomainsForDownstreamDomain(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestGetAvailableDomainsToLink, cls).setUpClass()
-
-        # Setup non-enterprise subscription
-        cls.non_enterprise_domain_obj_1 = create_domain('non-enterprise-1')
-        cls.non_enterprise_domain_obj_2 = create_domain('non-enterprise-2')
-        cls.non_enterprise_account, _ = BillingAccount.get_or_create_account_by_domain(
-            cls.non_enterprise_domain_obj_1.name,
-            created_by='user@test.com'
-        )
-        cls.non_enterprise_account.save()
-        cls._add_domain_to_account(cls.non_enterprise_domain_obj_1.name,
-                                   cls.non_enterprise_account,
-                                   SoftwarePlanEdition.COMMUNITY)
-        cls._add_domain_to_account(cls.non_enterprise_domain_obj_2.name,
-                                   cls.non_enterprise_account,
-                                   SoftwarePlanEdition.COMMUNITY)
-
-        # Setup enterprise subscription
-        cls.enterprise_domain_obj_1 = create_domain('enterprise-1')
-        cls.enterprise_domain_obj_2 = create_domain('enterprise-2')
-        cls.enterprise_account, _ = BillingAccount.get_or_create_account_by_domain(
-            cls.enterprise_domain_obj_1.name,
-            created_by='user@test.com'
-        )
-        cls.enterprise_account.save()
-        cls._add_domain_to_account(cls.enterprise_domain_obj_1.name,
-                                   cls.enterprise_account,
-                                   SoftwarePlanEdition.ENTERPRISE)
-
-        cls._add_domain_to_account(cls.enterprise_domain_obj_2.name,
-                                   cls.enterprise_account,
-                                   SoftwarePlanEdition.ENTERPRISE)
-
-        cls.user = WebUser.create(
-            domain=cls.enterprise_domain_obj_1.name,
-            username='user@enterprise.com',
-            password='***',
-            created_by=None,
-            created_via=None,
-        )
-        cls.user.delete_domain_membership(cls.enterprise_domain_obj_1.name)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.enterprise_domain_obj_1.name, deleted_by=None)
-        cls.non_enterprise_domain_obj_1.delete()
-        cls.non_enterprise_domain_obj_2.delete()
-        cls.enterprise_domain_obj_1.delete()
-        cls.enterprise_domain_obj_2.delete()
-        SubscriptionAdjustment.objects.all().delete()
-        Subscription.visible_and_suppressed_objects.all().delete()
-        cls.non_enterprise_account.delete()
-        cls.enterprise_account.delete()
-        super(TestGetAvailableDomainsToLink, cls).tearDownClass()
-
-    def test_non_enterprise_account_returns_empty_list(self):
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
-        self.user.set_role(self.non_enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
-        self.user.set_role(self.non_enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
-
-        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_no_privilege_or_feature_flag_returns_none(self, mock_user, mock_account):
+        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            upstream_domains = get_available_upstream_domains(
+                'downstream-1', mock_user, mock_account
+            )
+        self.assertFalse(upstream_domains)
 
     @flag_enabled("LINKED_DOMAINS")
-    def test_non_enterprise_account_with_feature_flag_returns_some(self):
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
-
-        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
-        self.assertEqual(1, len(available_domains))
-        self.assertEqual(self.non_enterprise_domain_obj_2.name, available_domains[0])
-
-    def test_enterprise_account_with_admin_user_and_release_management_privilege_returns_some(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
-        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_release_management_privilege_returns_domains_for_account(self, mock_user, mock_account):
+        """NOTE: this also tests that the release_management privilege overrides the linked domains flag"""
+        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
+        expected_upstream_domains = ['upstream']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_account') \
+             as mock_account_domains,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_user') \
+             as mock_user_domains:
             mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual(1, len(available_domains))
-        self.assertEqual(self.enterprise_domain_obj_2.name, available_domains[0])
-
-    def test_enterprise_account_with_admin_user_and_no_privilege_returns_empty_list(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
-        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
-
-    def test_enterprise_account_without_admin_user_and_privilege_returns_empty_list(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
-
-    def test_enterprise_account_with_admin_user_in_upstream_and_privilege_returns_empty_list(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name, is_admin=False)
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
-
-    def test_enterprise_account_with_linked_domains_and_privilege_returns_empty_list(self):
-        self.user.add_domain_membership(self.enterprise_domain_obj_1.name)
-        self.user.set_role(self.enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.enterprise_domain_obj_2.name)
-        self.user.set_role(self.enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.enterprise_domain_obj_2.name)
-
-        link = DomainLink.link_domains(self.enterprise_domain_obj_2.name, self.enterprise_domain_obj_1.name)
-        self.addCleanup(link.delete)
-
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
-            available_domains = get_available_domains_to_link(self.enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
+            mock_account_domains.return_value = expected_upstream_domains
+            mock_user_domains.return_value = ['wrong']
+            upstream_domains = get_available_upstream_domains(
+                'downstream-1', mock_user, mock_account
+            )
+        self.assertEqual(expected_upstream_domains, upstream_domains)
 
     @flag_enabled("LINKED_DOMAINS")
-    def test_non_enterprise_account_with_linked_domains_returns_empty_list(self):
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_1.name)
-        self.user.set_role(self.non_enterprise_domain_obj_1.name, 'admin')
-        self.user.add_domain_membership(self.non_enterprise_domain_obj_2.name)
-        self.user.set_role(self.non_enterprise_domain_obj_2.name, 'admin')
-        self.user.save()
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_1.name)
-        self.addCleanup(self.user.delete_domain_membership, domain=self.non_enterprise_domain_obj_2.name)
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_linked_domains_flag_returns_domains_for_user(self, mock_user, mock_account):
+        expected_upstream_domains = ['upstream']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_account') \
+             as mock_account_domains,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_user') \
+             as mock_user_domains:
+            mock_domain_has_privilege.return_value = False
+            mock_account_domains.return_value = ['wrong']
+            mock_user_domains.return_value = expected_upstream_domains
+            upstream_domains = get_available_upstream_domains(
+                'downstream-1', mock_user, mock_account
+            )
 
-        link = DomainLink.link_domains(
-            self.non_enterprise_domain_obj_2.name,
-            self.non_enterprise_domain_obj_1.name
-        )
-        self.addCleanup(link.delete)
+        self.assertEqual(expected_upstream_domains, upstream_domains)
 
-        available_domains = get_available_domains_to_link(self.non_enterprise_domain_obj_1.name, self.user)
-        self.assertEqual([], available_domains)
 
-    @classmethod
-    def _add_domain_to_account(cls, domain_name, account, edition):
-        subscription = Subscription.new_domain_subscription(
-            account, domain_name,
-            DefaultProductPlan.get_default_plan_version(edition=edition),
-            date_start=date.today() - timedelta(days=3)
-        )
-        subscription.is_active = True
-        subscription.save()
+class TestGetAvailableDomainsToLink(SimpleTestCase):
+
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_no_privilege_or_feature_flag_returns_none(self, mock_user, mock_account):
+        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
+            mock_domain_has_privilege.return_value = False
+            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
+
+        self.assertEqual([], domains)
+
+    @flag_enabled("LINKED_DOMAINS")
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_release_management_privilege_returns_domains_for_account(self, mock_user, mock_account):
+        """NOTE: this also tests that the release_management privilege overrides the linked domains flag"""
+        expected_domains = ['downstream-1', 'downstream-2']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_account') \
+             as mock_account_domains,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_user') \
+             as mock_user_domains:
+            mock_domain_has_privilege.return_value = True
+            mock_account_domains.return_value = expected_domains
+            mock_user_domains.return_value = ['wrong']
+            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
+
+        self.assertEqual(expected_domains, domains)
+
+    @flag_enabled("LINKED_DOMAINS")
+    @patch('corehq.apps.users.models.CouchUser')
+    @patch('corehq.apps.accounting.models.BillingAccount')
+    def test_linked_domains_flag_returns_domains_for_user(self, mock_user, mock_account):
+        expected_domains = ['downstream-1', 'downstream-2']
+        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_account') \
+             as mock_account_domains,\
+             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_user') \
+             as mock_user_domains:
+            mock_domain_has_privilege.return_value = False
+            mock_account_domains.return_value = ['wrong']
+            mock_user_domains.return_value = expected_domains
+            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
+
+        self.assertEqual(expected_domains, domains)
