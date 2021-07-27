@@ -189,12 +189,16 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             if delete:
                 es_interface.delete_doc(alias, doc_type, doc_id)
             else:
-                params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
+                    # The `retry_on_conflict` param is only valid on `update`
+                    # requests. ES <5.x was lenient of its presence on `index`
+                    # requests, ES >=5.x is not.
+                    params = {'retry_on_conflict': 2}
+                    es_interface.update_doc_fields(alias, doc_type, doc_id,
+                                                   fields=data, params=params)
                 else:
                     # use the same index API to create or update doc
-                    es_interface.index_doc(alias, doc_type, doc_id, doc=data, params=params)
+                    es_interface.index_doc(alias, doc_type, doc_id, doc=data)
             break
         except ConnectionError:
             current_tries += 1
