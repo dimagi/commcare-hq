@@ -183,13 +183,23 @@ class RegistryAuditLog(models.Model):
     )
 
     registry = models.ForeignKey("DataRegistry", related_name="audit_logs", on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
     action = models.CharField(max_length=32, choices=ACTION_CHOICES)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, db_index=True)
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
     related_object_id = models.CharField(max_length=36)
-    related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES)
+    related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES, db_index=True)
     detail = JSONField(null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("domain",), name="registryauditlog_domain_idx"),
+            models.Index(fields=("action",), name="registryauditlog_action_idx"),
+            models.Index(
+                fields=("related_object_type",),
+                name="registryauditlog_rel_obj_idx"
+            ),
+        ]
 
 
 class RegistryAuditHelper:
