@@ -24,8 +24,7 @@
   {% initial_page_data "invited_registries" invited_registries %}
   {% registerurl "accept_registry_invitation" domain %}
   {% registerurl "reject_registry_invitation" domain %}
-  {% registerurl "edit_registry" domain '---' %}
-  {% registerurl "manage_registry_participation" domain '---' %}
+  {% registerurl "manage_registry" domain '---' %}
   <div id="data-registry-list">
     <div class="row">
       <div class="col-sm-12 col-md-9">
@@ -39,14 +38,14 @@
         </h3>
       </div>
     </div>
-    <div class="row">
+    <div class="row mt-3">
       <div class="col-sm-12 col-md-9">
       <!-- ko foreach: ownedRegistries -->
       <div class="panel panel-default show-focus">
         <div class="panel-heading">
           <div class="row">
-            <div class="col-md-10 clickable" data-bind="click: () => document.location.href = editUrl;">
-              <a data-bind="text: name, attr: { href: editUrl }"></a>
+            <div class="col-md-10 clickable" data-bind="click: () => document.location.href = manageUrl;">
+              <a data-bind="text: name, attr: { href: manageUrl }"></a>
             </div>
             <div class="col-md-2 text-right text-success">
               <i class="fa fa-user"></i>

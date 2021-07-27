@@ -35,25 +35,52 @@ hqDefine("registry/js/registry_edit", [
         self.canDelete = self.from_domain === currentDomain;
         return self;
     }
-    let EditModel = function(data, availableCaseTypes, availableDomains) {
+    let EditModel = function(data, availableCaseTypes, availableDomains, invitedDomains) {
         const mapping = {
-            'copy': ["domain", "slug", "name", "description"],
-            'observe': ["is_active", "schema", "invitations", "grants"],
+            'copy': ["domain", "current_domain", "is_owner", "slug", "name", "description"],
+            'observe': ["is_active", "schema", "invitations", "grants", "domain_invitation"],
             invitations: {
                 create: (options) => InvitationModel(options.data)
             },
             grants: {
-                create: (options) => GrantModel(data.domain, options.data)
+                create: (options) => GrantModel(data.current_domain, options.data)
             }
         };
+        const grantSort = (a, b) => {
+            // show grants for current domain at the top
+            if (a.from_domain === b.from_domain) {
+                return 0;
+            } else if (a.from_domain === data.current_domain) {
+                return -1;
+            }
+            return 1;
+        };
+
         let self = ko.mapping.fromJS(data, mapping);
+        self.sortedGrants = ko.computed(() => {
+            return self.grants().sort(grantSort);
+        });
+        self.invitationStatusText = ko.computed(() => {
+            return text.getStatusText(self.domain_invitation.status());
+        });
+        self.invitationStatusClass = ko.computed(() => {
+            return text.getStatusCssClass(self.domain_invitation.status());
+        });
+        self.showAccept = ko.computed(() => {
+            return ['pending', 'rejected'].includes(self.domain_invitation.status());
+        })
+        self.showReject = ko.computed(() => {
+            return ['pending', 'accepted'].includes(self.domain_invitation.status());
+        })
         self.availableCaseTypes = availableCaseTypes;
         self.availableInviteDomains = ko.computed(() => {
-            const invited = self.invitations().map((invite) => invite.domain);
-            return availableDomains.filter((domain) => !invited.includes(domain));
+            const existingInvites = self.invitations().map((invite) => invite.domain);
+            return availableDomains.filter((domain) => !existingInvites.includes(domain));
         });
         self.availableGrantDomains = ko.computed(() => {
-             return self.invitations().map((invite) => invite.domain);
+            let availableDomains = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain)));
+            availableDomains.delete(self.current_domain);
+            return Array.from(availableDomains);
         });
 
         self.toggleActiveState = function() {
@@ -91,7 +118,7 @@ hqDefine("registry/js/registry_edit", [
         self.createGrant = function() {
             actions.createGrant(self.slug, self.grantDomains(), (data) => {
                 _.each(data.grants, (grant) => {
-                   self.grants.push(GrantModel(self.domain, grant));
+                   self.grants.unshift(GrantModel(self.current_domain, grant));
                 });
                 self.grantDomains([]);
             })
@@ -104,6 +131,19 @@ hqDefine("registry/js/registry_edit", [
                 }));
             });
         }
+
+        self.acceptInvitation = function() {
+            actions.acceptInvitation(self.slug, (data) => {
+                ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
+            });
+        }
+
+        self.rejectInvitation = function() {
+            actions.rejectInvitation(self.slug, (data) => {
+                ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
+            });
+        }
+
         return self;
     }
 
@@ -112,6 +152,7 @@ hqDefine("registry/js/registry_edit", [
             initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
             initialPageData.get("availableDomains"),
+            initialPageData.get("invitedDomains"),
         ));
     });
 });

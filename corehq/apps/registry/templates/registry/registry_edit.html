@@ -23,9 +23,12 @@
 {% initial_page_data "registry" registry %}
 {% initial_page_data "availableCaseTypes" available_case_types %}
 {% initial_page_data "availableDomains" available_domains %}
-{% registerurl "edit_registry_attr" registry.domain '---' '---' %}
-{% registerurl "manage_invitations" registry.domain '---' %}
-{% registerurl "manage_grants" registry.domain '---' %}
+{% initial_page_data "invitedDomains" invited_domains %}
+{% registerurl "edit_registry_attr" domain '---' '---' %}
+{% registerurl "manage_invitations" domain '---' %}
+{% registerurl "manage_grants" domain '---' %}
+{% registerurl "accept_registry_invitation" domain %}
+{% registerurl "reject_registry_invitation" domain %}
 <div id="edit-registry" class="registry-inlines">
   <div class="row">
     <div class="col-sm-6 col-md-4">
@@ -37,10 +40,12 @@
           rows: 1,
           nodeName: 'input',
           errorMessage: '{% trans "Name must not be blank" %}',
+          disallow_edit: {{ is_owner|yesno:"false,true" }}
       "></inline-edit>
     </div>
     <div class="col-md-2 col-md-offset-2">
       <div class="pull-right">
+        {% if is_owner %}
         <button type="button" class="btn" data-bind="
           click: toggleActiveState,
           class: is_active() ? 'btn-warning-light' : 'btn-success-light'
@@ -54,6 +59,21 @@
           {% trans "Activate" %}
           <!-- /ko -->
         </button>
+        {% endif %}
+        {% if not is_owner %}
+        <span class="label" data-bind="
+          class: is_active() ? 'btn-success-light' : 'btn-warning-light'
+        ">
+          <!-- ko if: is_active() -->
+          <i class="fa fa-play"></i>
+          {% trans "Active" %}
+          <!-- /ko -->
+          <!-- ko ifnot: is_active() -->
+          <i class="fa fa-pause"></i>
+          {% trans "Inactive" %}
+          <!-- /ko -->
+        </span>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -64,16 +84,35 @@
           url: '{% url "edit_registry_attr" registry.domain registry.slug 'description' %}',
           placeholder: '{% trans "Enter data registry description here"|escapejs %}',
           cols: 50,
+          disallow_edit: {{ is_owner|yesno:"false,true" }}
       "></inline-edit>
+    </div>
+    <div class="col-md-2">
+      <div class="btn-group pull-right">
+        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+          data-bind="class: invitationStatusClass"
+        >
+          {% trans "Invitation" %} <span data-bind="text: invitationStatusText"></span> <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="#" data-bind="visible: showAccept, click: acceptInvitation"><i class="fa fa-check"></i> {% trans "Accept" %}</a></li>
+          <li><a href="#" data-bind="visible: showReject, click: rejectInvitation"><i class="fa fa-remove"></i> {% trans "Reject" %}</a></li>
+        </ul>
+      </div>
     </div>
   </div>
   <div class="registry-form-container">
     <div class="row ko-inline-edit">
-      <div class="col-md-5 read-only" data-bind="openModal: 'edit-schema-modal'">
+      <div class="col-md-5 read-only" data-bind="
+        style: {cursor: is_owner ? 'pointer' : 'default'},
+        openModal: 'edit-schema-modal', openModalIf: is_owner
+      ">
         <div class="row">
           <div class="col-md-12">
             <strong>{% trans "Case Types" %}:</strong>
+            {% if is_owner %}
             <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
+            {% endif %}
           </div>
         </div>
         <div class="row">
@@ -86,15 +125,22 @@
     <div class="row mt-4">
       <div class="col-sm-12 col-md-8">
         <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
+          {% if is_owner %}
+          <li role="presentation" class="active">
+            <a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
             {% trans "Project Spaces" %}
-          </a></li>
-          <li role="presentation"><a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
+            </a>
+          </li>
+          {% endif %}
+          <li role="presentation" class="{% if not is_owner %}active{% endif %}">
+            <a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
             {% trans "Grants" %}
-          </a></li>
+            </a>
+          </li>
         </ul>
 
         <div class="tab-content mt-4">
+          {% if is_owner %}
           <div role="tabpanel" class="tab-pane active" id="domains">
             <div class="row">
               <div class="col-md-2 col-md-offset-10">
@@ -148,7 +194,8 @@
               </tbody>
             </table>
           </div>
-          <div role="tabpanel" class="tab-pane" id="grants">
+          {% endif %}
+          <div role="tabpanel" class="tab-pane {% if not is_owner %}active{% endif %}" id="grants">
             <div class="row">
               <div class="col-md-2 col-md-offset-10">
                 <div class="pull-right">
@@ -175,7 +222,7 @@
                 </tr>
               </thead>
               <tbody>
-              <!-- ko foreach: grants() -->
+              <!-- ko foreach: sortedGrants() -->
                 <tr>
                   <td data-bind="text: from_domain"></td>
                   <td data-bind="foreach: to_domains">

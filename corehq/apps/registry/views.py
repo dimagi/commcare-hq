@@ -1,7 +1,8 @@
 import json
 from collections import Counter
 
-from django.http import Http404, JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.db.models import Q
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -78,7 +79,7 @@ def accept_registry_invitation(request, domain):
     if not invitation.is_accepted:
         invitation.accept(request.user)
 
-    return JsonResponse(_registry_list_context(domain, invitation.registry))
+    return JsonResponse({"invitation": invitation.to_json()})
 
 
 @domain_admin_required
@@ -90,7 +91,7 @@ def reject_registry_invitation(request, domain):
     if not invitation.is_rejected:
         invitation.reject(request.user)
 
-    return JsonResponse(_registry_list_context(domain, invitation.registry))
+    return JsonResponse({"invitation": invitation.to_json()})
 
 
 def _get_invitation_or_404(domain, registry_slug):
@@ -103,34 +104,41 @@ def _get_invitation_or_404(domain, registry_slug):
         raise Http404
 
 
-@require_enterprise_admin
-@login_and_domain_required
-def edit_registry(request, domain, registry_slug):
+@domain_admin_required
+def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
-    if registry.domain != domain:
-        return redirect("manage_registry_participation", domain, registry_slug)
 
+    is_owner = registry.domain == domain
+    all_invitations = list(registry.invitations.all())
+    domain_invitation = [invitation for invitation in all_invitations if invitation.domain == domain][0]
+    if is_owner:
+        invitations = all_invitations
+        grants = registry.grants.all()
+    else:
+        invitations = []
+        grants = registry.grants.filter(Q(from_domain=domain) | Q(to_domains__contains=[domain]))
     context = {
         "domain": domain,
+        "is_owner": is_owner,
         "registry": {
-            "domain": domain,
+            "domain": registry.domain,
+            "current_domain": domain,
+            "is_owner": is_owner,
             "name": registry.name,
             "description": registry.description or '',
             "slug": registry.slug,
             "is_active": registry.is_active,
             "schema": registry.case_types,
-            "invitations": [
-                invitation.to_json() for invitation in registry.invitations.all()
-            ],
-            "grants": [
-                grant.to_json() for grant in registry.grants.all()
-            ]
+            "invitations": [invitation.to_json() for invitation in invitations if invitation.domain != domain],
+            "domain_invitation": domain_invitation,
+            "grants": [grant.to_json() for grant in grants]
         },
         "available_case_types": ["patient", "household"],  # TODO
         "available_domains": ["skelly", "d1"],  # TODO,
+        "invited_domains": [invitation.domain for invitation in all_invitations],
         "current_page": {
-            "title": "Edit Registry",
-            "page_name": "Edit Registry",
+            "title": "Manage Registry",
+            "page_name": "Manage Registry",
             "parents": [
                 {
                     "title": "Data Registries",
@@ -216,7 +224,8 @@ def manage_invitations(request, domain, registry_slug):
             domain_obj = Domain.get_by_name(domain)
             if domain_obj:
                 invitation, created = registry.invitations.get_or_create(domain=domain)
-                invitations.append(invitation)
+                if created:
+                    invitations.append(invitation)
 
         return JsonResponse({
             "invitations": [
@@ -265,22 +274,17 @@ def manage_grants(request, domain, registry_slug):
             return JsonResponse({"grants": []})
 
         grant, created = registry.grants.get_or_create(from_domain=domain, to_domains=list(domains))
+        if created:
+            return JsonResponse({
+                "grants": [grant.to_json()],
+                "message": _("Access granted from '{domain}' to '{domains}'").format(
+                    domain=domain,
+                    domains="', '".join(domains)
+                )
+            })
         return JsonResponse({
-            "grants": [grant.to_json()],
-            "message": _("Access granted from '{domain}' to '{domains}'").format(
-                domain=domain,
-                domains="', '".join(grant.to_domains)
-            )
+            "grants": [], "message": _("'{domains}' already have access.").format(domains="', '".join(domains))
         })
-
-
-@domain_admin_required
-def manage_registry_participation(request, domain, registry_slug):
-    registry = _get_registry_or_404(domain, registry_slug)
-    if registry.domain == domain:
-        return redirect("edit_registry", domain, registry_slug)
-    context = {}
-    return render(request, "registry/registry_manage_participation.html", context)
 
 
 def _get_registry_or_404(domain, registry_slug):

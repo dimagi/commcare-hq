@@ -363,10 +363,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
 
     ko.bindingHandlers.openModal = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var ifValue = allBindingsAccessor.get('openModalIf');
+            if (typeof ifValue === 'undefined') {
+                ifValue = true;
+            }
             var templateID = valueAccessor(),
                 modal = $('<div></div>').addClass('modal fade').appendTo('body'),
                 newValueAccessor = function () {
                     var clickAction = function () {
+                        if (!ifValue) {
+                            return;
+                        }
                         ko.bindingHandlers.template.init(modal.get(0), function () {
                             return templateID;
                         }, allBindingsAccessor, viewModel, bindingContext);

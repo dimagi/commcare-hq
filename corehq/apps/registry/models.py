@@ -162,6 +162,7 @@ class RegistryInvitation(models.Model):
             "registry_id": self.registry_id,
             "domain": self.domain,
             "created_on": self.created_on,
+            "modified_on": self.modified_on,
             "status": self.status,
         }
 
