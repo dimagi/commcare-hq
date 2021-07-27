@@ -173,9 +173,9 @@ dnspython==1.15.0
     #   email-validator
 dropbox==9.3.0
     # via -r base-requirements.in
-elasticsearch==1.9.0
-    # via -r base-requirements.in
 elasticsearch2==2.5.1
+    # via -r base-requirements.in
+elasticsearch5==5.5.6
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -518,8 +518,8 @@ unidecode==1.2.0
 urllib3==1.26.5
     # via
     #   botocore
-    #   elasticsearch
     #   elasticsearch2
+    #   elasticsearch5
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

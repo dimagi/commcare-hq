@@ -43,8 +43,8 @@ django~=2.2.21
 djangorestframework~=3.12.2
 dnspython==1.15.0
 dropbox==9.3.0
-elasticsearch==1.9.0
 elasticsearch2>=2.0.0,<3.0.0
+elasticsearch5>=5.0.0,<6.0.0
 email_validator==1.1.2
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
