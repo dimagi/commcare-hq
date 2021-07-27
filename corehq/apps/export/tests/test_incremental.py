@@ -36,6 +36,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.test_utils import trap_extra_setup
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 @es_test
@@ -166,11 +167,16 @@ class TestIncrementalExport(TestCase):
     def test_sending_fail(self):
         self._test_sending(401, IncrementalExportStatus.FAILURE)
 
-    def _test_sending(self, status_code, expected_status):
+    def _test_sending(self, status_code, expected_status, retry=True):
         checkpoint = self.test_initial()
         with requests_mock.Mocker() as m:
             m.post('http://commcarehq.org/', status_code=status_code)
-            _send_incremental_export(self.incremental_export, checkpoint)
+            try:
+                _send_incremental_export(self.incremental_export, checkpoint)
+            except CannotResolveHost as e:
+                if retry:
+                    return self._test_sending(status_code, expected_status, retry=False)
+                raise e
 
             checkpoint.refresh_from_db()
             self.assertEqual(checkpoint.status, expected_status)
