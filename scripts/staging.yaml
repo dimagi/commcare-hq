@@ -80,5 +80,6 @@ branches:
     - bmb/sso-login-v2  # Biyeun July 26
     - bmb/noramilize-url  # Biyeun July 26
     - smh/web-user-upload-invites-fix # Steph July 26
+    - jls/delay-web-apps-form-errors # Jenny July 27
     
 submodules: { }
