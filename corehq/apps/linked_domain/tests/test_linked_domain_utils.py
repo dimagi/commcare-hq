@@ -1,8 +1,8 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.linked_domain.util import is_domain_available_to_link, user_has_admin_access_in_all_domains
+from corehq.apps.linked_domain.util import is_domain_available_to_link
 
 
 class TestIsDomainAvailableToLink(SimpleTestCase):

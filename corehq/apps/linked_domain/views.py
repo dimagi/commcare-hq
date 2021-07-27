@@ -12,7 +12,7 @@ from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -278,10 +278,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
-        current_subscription = Subscription.get_active_subscription_by_domain(self.request.domain)
+        account = BillingAccount.get_account_by_domain(self.request.domain)
         available_domains_to_link = get_available_domains_to_link(self.request.domain,
                                                                   self.request.couch_user,
-                                                                  billing_account=current_subscription.account)
+                                                                  billing_account=account)
         upstream_domains = []
         for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
