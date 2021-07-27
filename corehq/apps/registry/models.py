@@ -31,8 +31,7 @@ class RegistryManager(models.Manager):
         to participate in
         """
         return (
-            self.filter(is_active=True)
-            .filter(Q(domain=domain) | Q(invitations__domain=domain))
+            self.filter(Q(domain=domain) | Q(invitations__domain=domain))
             .distinct()  # avoid getting duplicate registries
             .prefetch_related("invitations")
         )

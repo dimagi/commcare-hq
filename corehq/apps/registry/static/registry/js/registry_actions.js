@@ -76,7 +76,11 @@ hqDefine("registry/js/registry_actions", [
                 }
             },
             error: function (response) {
-                alertUser.alert_user(response.responseJSON.error, 'danger');
+                let error = gettext("An unknown error occurred. Please try again or report an issue.");
+                if (response.responseJSON.error) {
+                    error = response.responseJSON.error;
+                }
+                alertUser.alert_user(error, 'danger');
             },
         });
     }

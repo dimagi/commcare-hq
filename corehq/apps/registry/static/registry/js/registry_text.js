@@ -47,11 +47,11 @@ hqDefine("registry/js/registry_text", ['moment'], function (moment) {
     }
     let getStatusCssClass = function (status) {
         if (status === 'rejected') {
-            return gettext('label-warning');
+            return gettext('label-warning-light');
         } else if (status === 'accepted') {
-            return gettext('label-success');
+            return gettext('label-success-light');
         } else {
-            return gettext('label-info');
+            return gettext('label-info-light');
         }
     }
 

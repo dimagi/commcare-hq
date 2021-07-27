@@ -10,6 +10,10 @@
         rel="stylesheet"
         media="all"
         href="{% static 'registry/less/registry.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'registry/less/light_color_scheme.less' %}" />
   {% endcompress %}
 {% endblock %}
 
@@ -22,7 +26,7 @@
 {% registerurl "edit_registry_attr" registry.domain '---' '---' %}
 {% registerurl "manage_invitations" registry.domain '---' %}
 {% registerurl "manage_grants" registry.domain '---' %}
-<div class="registry-inlines">
+<div id="edit-registry" class="registry-inlines">
   <div class="row">
     <div class="col-sm-6 col-md-4">
       <inline-edit params="
@@ -35,6 +39,23 @@
           errorMessage: '{% trans "Name must not be blank" %}',
       "></inline-edit>
     </div>
+    <div class="col-md-2 col-md-offset-2">
+      <div class="pull-right">
+        <button type="button" class="btn" data-bind="
+          click: toggleActiveState,
+          class: is_active() ? 'btn-warning-light' : 'btn-success-light'
+        ">
+          <!-- ko if: is_active() -->
+          <i class="fa fa-stop"></i>
+          {% trans "Deactivate" %}
+          <!-- /ko -->
+          <!-- ko ifnot: is_active() -->
+          <i class="fa fa-play"></i>
+          {% trans "Activate" %}
+          <!-- /ko -->
+        </button>
+      </div>
+    </div>
   </div>
   <div class="row">
     <div class="col-sm-8 col-md-6">
@@ -46,133 +67,133 @@
       "></inline-edit>
     </div>
   </div>
-</div>
-<div id="edit-registry" class="registry-form-container">
-  <div class="row ko-inline-edit" data-bind="openModal: 'edit-schema-modal'">
-    <div class="col-md-5 read-only">
-      <div class="row">
-        <div class="col-md-12">
-          <strong>{% trans "Case Types" %}:</strong>
-          <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
+  <div class="registry-form-container">
+    <div class="row ko-inline-edit" data-bind="openModal: 'edit-schema-modal'">
+      <div class="col-md-5 read-only">
+        <div class="row">
+          <div class="col-md-12">
+            <strong>{% trans "Case Types" %}:</strong>
+            <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
+          </div>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12 controls">
-          <textarea data-bind="value: schema().join(', ')" cols="50" disabled></textarea>
+        <div class="row">
+          <div class="col-md-12 controls">
+            <textarea data-bind="value: schema().join(', ')" cols="50" disabled></textarea>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row mt-4">
-    <div class="col-sm-12 col-md-8">
-      <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
-          {% trans "Project Spaces" %}
-        </a></li>
-        <li role="presentation"><a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
-          {% trans "Grants" %}
-        </a></li>
-      </ul>
+    <div class="row mt-4">
+      <div class="col-sm-12 col-md-8">
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
+            {% trans "Project Spaces" %}
+          </a></li>
+          <li role="presentation"><a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
+            {% trans "Grants" %}
+          </a></li>
+        </ul>
 
-      <div class="tab-content mt-4">
-        <div role="tabpanel" class="tab-pane active" id="domains">
-          <div class="row">
-            <div class="col-md-2 col-md-offset-10">
-              <div class="pull-right">
-                <button type="button" class="btn btn-primary" data-bind="openModal: 'add-project-space-modal'">
-                  <i class="fa fa-plus"></i>
-                  {% trans "Invite Project Space" %}
-                </button>
+        <div class="tab-content mt-4">
+          <div role="tabpanel" class="tab-pane active" id="domains">
+            <div class="row">
+              <div class="col-md-2 col-md-offset-10">
+                <div class="pull-right">
+                  <button type="button" class="btn btn-primary" data-bind="openModal: 'add-project-space-modal'">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Invite Project Space" %}
+                  </button>
+                </div>
               </div>
             </div>
+            <div data-bind="ifnot: invitations().length">
+              <p>
+                {% blocktrans %}
+                  No Project Spaces have been invited.
+                {% endblocktrans %}
+              </p>
+            </div>
+            <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
+              <thead>
+                <tr>
+                  <th class="col-sm-2">{% trans "Project Name" %}</th>
+                  <th class="col-sm-2">{% trans "Status" %}</th>
+                  <th class="col-sm-2">
+                    <i class="fa fa-sort-amount-desc"></i>
+                    {% trans "Invitation Date" %}
+                  </th>
+                  <th class="col-sm-2">{% trans "Response Date" %}</th>
+                  <th class="col-sm-4">{% trans "Action" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+              <!-- ko foreach: invitations() -->
+                <tr>
+                  <td data-bind="text: domain"></td>
+                  <td>
+                    <span class="label" data-bind="class: cssClass">
+                      <i class="fa" data-bind="css: cssIcon"></i>
+                      <span data-bind="text: statusText"></span>
+                    </span>
+                  </td>
+                  <td data-bind="text: invitationDate"></td>
+                  <td data-bind="text: responseDate"></td>
+                  <td>
+                    <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans "Remove Project" %}">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              <!-- /ko -->
+              </tbody>
+            </table>
           </div>
-          <div data-bind="ifnot: invitations().length">
-            <p>
-              {% blocktrans %}
-                No Project Spaces have been invited.
-              {% endblocktrans %}
-            </p>
-          </div>
-          <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
-            <thead>
-              <tr>
-                <th class="col-sm-2">{% trans "Project Name" %}</th>
-                <th class="col-sm-2">{% trans "Status" %}</th>
-                <th class="col-sm-2">
-                  <i class="fa fa-sort-amount-desc"></i>
-                  {% trans "Invitation Date" %}
-                </th>
-                <th class="col-sm-2">{% trans "Response Date" %}</th>
-                <th class="col-sm-4">{% trans "Action" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-            <!-- ko foreach: invitations() -->
-              <tr>
-                <td data-bind="text: domain"></td>
-                <td>
-                  <span class="label label-muted" data-bind="css: cssClass">
-                    <i class="fa" data-bind="css: cssIcon"></i>
-                    <span data-bind="text: statusText"></span>
-                  </span>
-                </td>
-                <td data-bind="text: invitationDate"></td>
-                <td data-bind="text: responseDate"></td>
-                <td>
-                  <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans "Remove Project" %}">
-                    <i class="fa fa-trash"></i>
+          <div role="tabpanel" class="tab-pane" id="grants">
+            <div class="row">
+              <div class="col-md-2 col-md-offset-10">
+                <div class="pull-right">
+                  <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Grant Access" %}
                   </button>
-                </td>
-              </tr>
-            <!-- /ko -->
-            </tbody>
-          </table>
-        </div>
-        <div role="tabpanel" class="tab-pane" id="grants">
-          <div class="row">
-            <div class="col-md-2 col-md-offset-10">
-              <div class="pull-right">
-                <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
-                  <i class="fa fa-plus"></i>
-                  {% trans "Grant Access" %}
-                </button>
+                </div>
               </div>
             </div>
+            <div data-bind="ifnot: grants().length">
+              <p>
+                {% blocktrans %}
+                  No grants have been created.
+                {% endblocktrans %}
+              </p>
+            </div>
+            <table class="table table-striped table-hover mt-3" data-bind="visible: grants().length">
+              <thead>
+                <tr>
+                  <th class="col-sm-2">{% trans "From Project Space" %}</th>
+                  <th class="col-sm-2">{% trans "To Project Spaces" %}</th>
+                  <th class="col-sm-2">{% trans "Actions" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+              <!-- ko foreach: grants() -->
+                <tr>
+                  <td data-bind="text: from_domain"></td>
+                  <td data-bind="foreach: to_domains">
+                    <span class="label label-default" data-bind="text: $data"></span>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans "Remove Grant" %}">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              <!-- /ko -->
+              </tbody>
+            </table>
           </div>
-          <div data-bind="ifnot: grants().length">
-            <p>
-              {% blocktrans %}
-                No grants have been created.
-              {% endblocktrans %}
-            </p>
-          </div>
-          <table class="table table-striped table-hover mt-3" data-bind="visible: grants().length">
-            <thead>
-              <tr>
-                <th class="col-sm-2">{% trans "From Project Space" %}</th>
-                <th class="col-sm-2">{% trans "To Project Spaces" %}</th>
-                <th class="col-sm-2">{% trans "Actions" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-            <!-- ko foreach: grants() -->
-              <tr>
-                <td data-bind="text: from_domain"></td>
-                <td data-bind="foreach: to_domains">
-                  <span class="label label-default" data-bind="text: $data"></span>
-                </td>
-                <td>
-                  <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans "Remove Grant" %}">
-                    <i class="fa fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            <!-- /ko -->
-            </tbody>
-          </table>
         </div>
+
       </div>
-
     </div>
   </div>
 </div>

@@ -150,7 +150,7 @@ def edit_registry_attr(request, domain, registry_slug, attr):
     if registry.domain != domain:
         return JsonResponse({"error": _("Action not permitted")}, status=403)
 
-    if attr not in ["name", "description", "schema"]:
+    if attr not in ["name", "description", "schema", "is_active"]:
         return JsonResponse({"error": _("Unknown attribute")}, status=400)
 
     if attr == "name":
@@ -163,11 +163,13 @@ def edit_registry_attr(request, domain, registry_slug, attr):
         # TODO: fire signals to update UCRs
         case_types = request.POST.getlist("value")
         value = [{"case_type": case_type} for case_type in case_types]
+    elif attr == "is_active":
+        value = json.loads(request.POST.get("value"))
 
     setattr(registry, attr, value)
     registry.save()
 
-    return JsonResponse({})
+    return JsonResponse({attr: value})
 
 
 @require_enterprise_admin
@@ -270,7 +272,6 @@ def manage_grants(request, domain, registry_slug):
                 domains="', '".join(grant.to_domains)
             )
         })
-
 
 
 @domain_admin_required

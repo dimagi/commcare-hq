@@ -10,6 +10,10 @@
         rel="stylesheet"
         media="all"
         href="{% static 'registry/less/registry.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'registry/less/light_color_scheme.less' %}" />
   {% endcompress %}
 {% endblock %}
 
@@ -52,18 +56,18 @@
         </div>
         <div class="panel-body">
           <p data-bind="text: description"></p>
-          <span class="label label-plain" data-bind="ifnot: invitation_count">
+          <span class="label label-default-light" data-bind="ifnot: invitation_count">
             {% trans "No project spaces invited to this registry" %}
           </span>
-          <span class="label label-success label-muted" data-bind="if: accepted_invitation_count">
+          <span class="label label-success-light" data-bind="if: accepted_invitation_count">
             <i class="fa fa-check-circle-o"></i>
             <span data-bind="text: acceptedText"></span>
           </span>
-          <span class="label label-info label-muted" data-bind="if: pending_invitation_count">
+          <span class="label label-info-light" data-bind="if: pending_invitation_count">
             <i class="fa fa-clock-o"></i>
             <span data-bind="text: pendingText"></span>
           </span>
-          <span class="label label-warning label-muted" data-bind="if: rejected_invitation_count">
+          <span class="label label-warning-light" data-bind="if: rejected_invitation_count">
             <i class="fa fa-ban"></i>
             <span data-bind="text: rejectedText"></span>
           </span>
@@ -88,13 +92,15 @@
           <p data-bind="text: description"></p>
           <p class="help-block">{% trans "Owner" %}:&nbsp;<span data-bind="text: domain_name"></span></p>
           <!-- ko if: invitation.status() === 'rejected' -->
-          <p>{% trans "Invitation rejected" %}</p>
+          <span class="label label-default-light">
+              {% trans "Invitation rejected" %}
+          </span>
           <!-- /ko -->
           <!-- ko if: invitation.status() === 'accepted' -->
-            <span class="label label-plain" data-bind="ifnot: participator_count">
+            <span class="label label-default-light" data-bind="ifnot: participator_count">
               {% trans "No other project spaces are participating in this registry" %}
             </span>
-            <span class="label label-plain" data-bind="if: participator_count">
+            <span class="label label-default-light" data-bind="if: participator_count">
               <span data-bind="text: participatorCountText"></span>
             </span>
           <!-- /ko -->

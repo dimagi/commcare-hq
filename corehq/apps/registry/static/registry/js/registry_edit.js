@@ -6,7 +6,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
-    'hqwebapp/js/components.ko',  // inline-edit
+    'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
@@ -17,20 +17,17 @@ hqDefine("registry/js/registry_edit", [
     alertUser,
     text,
     actions,
+    inlineEdit,
 ) {
+    ko.components.register('inline-edit', inlineEdit);
+
     let InvitationModel = function(data) {
         let self = data;
         self.statusText = text.getStatusText(self.status);
         self.cssIcon = text.getStatusIcon(self.status);
         self.cssClass = text.getStatusCssClass(self.status);
         self.invitationDate = moment(self.created_on).format("D MMM YYYY");
-        self.responseDate = "";
-        if (self.rejected_on) {
-            self.responseDate = moment(self.rejected_on).format("D MMM YYYY");
-        } else if (self.accepted_on) {
-            self.responseDate = moment(self.accepted_on).format("D MMM YYYY");
-        }
-
+        self.responseDate = moment(self.modified_on).format("D MMM YYYY");
         return self;
     }
     let GrantModel = function(currentDomain, data) {
@@ -58,8 +55,14 @@ hqDefine("registry/js/registry_edit", [
         self.availableGrantDomains = ko.computed(() => {
              return self.invitations().map((invite) => invite.domain);
         });
-        self.inviteDomains = ko.observable([]);
 
+        self.toggleActiveState = function() {
+            actions.editAttr(self.slug, "is_active", {"value": !self.is_active()}, (data) => {
+                self.is_active(data.is_active);
+            });
+        }
+
+        self.inviteDomains = ko.observable([]);
         self.removeDomain = function (toRemove){
             actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
