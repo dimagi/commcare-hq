@@ -79,7 +79,6 @@ branches:
     - caktus:case-upload-validate-dates # Jenny July 22
     - gh/show-erm-tab-if-applicable+gh/limit-domains-in-app-manager # July 23 [QA]
     - gh/show-erm-tab-if-applicable # Graham July 21 [QA]
-    - gh/limit-domains-in-app-manager # Graham July 23 [QA]
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - bmb/noramilize-url  # Biyeun July 26
