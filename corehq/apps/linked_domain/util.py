@@ -139,6 +139,4 @@ def is_domain_in_active_link(domain_name):
 
 
 def user_has_admin_access_in_all_domains(user, domains):
-    if user.is_superuser:
-        return True
     return all([user.is_domain_admin(domain) for domain in domains])

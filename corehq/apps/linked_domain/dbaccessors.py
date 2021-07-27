@@ -60,7 +60,7 @@ def get_available_domains_to_link(upstream_domain_name, user, billing_account=No
     version is available to anyone who can obtain access (the wild west)
     :param upstream_domain_name: potential upstream domain candidate
     :param user: user object
-    :param billing_account: optional parameter used
+    :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
     if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
