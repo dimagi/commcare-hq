@@ -22,7 +22,6 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.pillows.case_search import domain_needs_search_index
 from corehq.toggles import CASE_API_V0_6
 from corehq.util.view_utils import reverse
 
@@ -91,7 +90,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
-    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
+    if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
