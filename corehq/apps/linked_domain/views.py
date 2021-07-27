@@ -12,6 +12,7 @@ from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -45,8 +46,8 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
-    get_domain_master_link,
     get_linked_domains,
+    get_upstream_domain_link,
     get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
@@ -99,7 +100,6 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.privileges import RELEASE_MANAGEMENT
@@ -260,7 +260,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         (and legacy domains that are both).
         """
         timezone = get_timezone_for_request()
-        master_link = get_domain_master_link(self.domain)
+        master_link = get_upstream_domain_link(self.domain)
         linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
         master_apps, linked_apps = get_apps(self.domain)
         master_fixtures, linked_fixtures = get_fixtures(self.domain, master_link)
@@ -278,7 +278,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             self.domain, master_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
         )
 
-        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
+        account = BillingAccount.get_account_by_domain(self.request.domain)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain,
+                                                                  self.request.couch_user,
+                                                                  billing_account=account)
         upstream_domains = []
         for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
@@ -316,7 +319,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         detail = model['detail']
         detail_obj = wrap_detail(type_, detail) if detail else None
 
-        master_link = get_domain_master_link(self.domain)
+        master_link = get_upstream_domain_link(self.domain)
         error = ""
         try:
             update_model_type(master_link, type_, detail_obj)
@@ -431,7 +434,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     @property
     @memoized
     def master_link(self):
-        return get_domain_master_link(self.domain)
+        return get_upstream_domain_link(self.domain)
 
     @property
     @memoized
