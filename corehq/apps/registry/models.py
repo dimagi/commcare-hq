@@ -226,28 +226,28 @@ class RegistryAuditHelper:
         self.registry = registry
 
     def registry_activated(self, user):
-        self.log_registry_activated_deactivated(user, is_activated=True)
+        self._log_registry_activated_deactivated(user, is_activated=True)
 
     def registry_deactivated(self, user):
-        self.log_registry_activated_deactivated(user, is_activated=False)
+        self._log_registry_activated_deactivated(user, is_activated=False)
 
     def invitation_accepted(self, user, invitation):
-        return self.log_invitation_accepted_rejected(user, invitation, is_accepted=True)
+        return self._log_invitation_accepted_rejected(user, invitation, is_accepted=True)
 
     def invitation_rejected(self, user, invitation):
-        return self.log_invitation_accepted_rejected(user, invitation, is_accepted=False)
+        return self._log_invitation_accepted_rejected(user, invitation, is_accepted=False)
 
     def invitation_added(self, user, invitation):
-        return self.log_invitation_added_removed(user, invitation, is_added=True)
+        return self._log_invitation_added_removed(user, invitation, is_added=True)
 
     def invitation_removed(self, user, invitation):
-        return self.log_invitation_added_removed(user, invitation, is_added=False)
+        return self._log_invitation_added_removed(user, invitation, is_added=False)
 
     def grant_added(self, user, grant):
-        return self.log_grant_added_removed(user, grant, is_added=True)
+        return self._log_grant_added_removed(user, grant, is_added=True)
 
     def grant_removed(self, user, grant):
-        return self.log_grant_added_removed(user, grant, is_added=False)
+        return self._log_grant_added_removed(user, grant, is_added=False)
 
     def schema_changed(self, user, new, old):
         return RegistryAuditLog.objects.create(
@@ -286,7 +286,7 @@ class RegistryAuditHelper:
             detail=filters
         )
 
-    def log_registry_activated_deactivated(self, user, is_activated):
+    def _log_registry_activated_deactivated(self, user, is_activated):
         return RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
@@ -296,7 +296,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_REGISTRY,
         )
 
-    def log_invitation_added_removed(self, user, invitation, is_added):
+    def _log_invitation_added_removed(self, user, invitation, is_added):
         if is_added:
             action = RegistryAuditLog.ACTION_INVITATION_ADDED
         else:
@@ -311,7 +311,7 @@ class RegistryAuditHelper:
             detail={} if is_added else {"invitation_status": invitation.status}
         )
 
-    def log_invitation_accepted_rejected(self, user, invitation, is_accepted):
+    def _log_invitation_accepted_rejected(self, user, invitation, is_accepted):
         if is_accepted:
             action = RegistryAuditLog.ACTION_INVITATION_ACCEPTED
         else:
@@ -325,7 +325,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
         )
 
-    def log_grant_added_removed(self, user, grant, is_added):
+    def _log_grant_added_removed(self, user, grant, is_added):
         RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
