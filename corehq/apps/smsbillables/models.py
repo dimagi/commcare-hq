@@ -1,5 +1,4 @@
 from collections import namedtuple
-from corehq.apps.hqwebapp.views import not_found
 from decimal import Decimal
 
 from django.db import models

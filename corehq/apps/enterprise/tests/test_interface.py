@@ -1,5 +1,4 @@
 from corehq.apps.accounting.tests import generator
-from corehq.apps.accounting.filters import DateCreatedFilter
 from datetime import datetime
 from decimal import Decimal
 import math
@@ -15,8 +14,6 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.sms.models import OUTGOING, SMS
 
 from ..interface import EnterpriseSMSBillablesReport
-
-from dimagi.utils.dates import DateSpan
 
 
 class TestEnterpriseSMSBillablesReport(TestCase):
