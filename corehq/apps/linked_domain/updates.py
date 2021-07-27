@@ -344,7 +344,6 @@ def update_tableau_server_and_visualizations(domain_link):
             vis_by_upstream_id[vis.upstream_id] = vis
 
     for master_vis in master_results_visualizations:
-        # vis = local_visualizations.filter(id=master_vis['id'])
         vis = vis_by_upstream_id.get(master_vis['id']) or vis_by_view_url.get(master_vis['view_url'])
         if not vis:
             vis = TableauVisualization(domain=domain_link.linked_domain, server=server_model)
