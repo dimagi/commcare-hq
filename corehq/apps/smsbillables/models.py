@@ -1,4 +1,5 @@
 from collections import namedtuple
+from corehq.apps.hqwebapp.views import not_found
 from decimal import Decimal
 
 from django.db import models
@@ -428,28 +429,32 @@ class SmsBillable(models.Model):
         return usage_fee
 
     @classmethod
-    def get_selected_billables(self, datespan):
-        return self.objects.filter(
+    def get_billables_sent_between(cls, datespan):
+        return cls.objects.filter(
             date_sent__gte=datespan.startdate,
             date_sent__lt=datespan.enddate_adjusted,
         )
 
     @classmethod
-    def filter_selected_billables_by_date(self, selected_billables, date_span):
+    def filter_selected_billables_by_date(cls, selected_billables, date_span):
         return selected_billables.filter(
             date_created__gte=date_span.startdate,
             date_created__lt=date_span.enddate_adjusted,
         )
 
     @classmethod
-    def filter_selected_billables_show_billables(self, selected_billables, show_billables, ShowBillablesFilter):
+    def filter_selected_billables_show_billables(cls, selected_billables, show_billables):
+        from corehq.apps.smsbillables.filters import ShowBillablesFilter
         return selected_billables.filter(
             is_valid=(show_billables == ShowBillablesFilter.VALID),
         )
 
     @classmethod
-    def filter_selected_billables_by_account(self, selected_billables, account_name):
-        account = BillingAccount.objects.filter(name=account_name).first()
+    def filter_selected_billables_by_account(cls, selected_billables, account_name):
+        try:
+            account = BillingAccount.objects.get(name=account_name)
+        except BillingAccount.DoesNotExist:
+            return selected_billables.none()
         domains = Subscription.visible_objects.filter(
             account=account
         ).values_list('subscriber__domain', flat=True).distinct()

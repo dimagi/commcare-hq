@@ -26,11 +26,11 @@ from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
 
 
-class EnterpriseSMSBillablesInterface(GenericTabularReport):
+class EnterpriseSMSBillablesReport(GenericTabularReport):
     base_template = "accounting/report_filter_actions.html"
-    section_name = "Enterprise"
+    section_name = _("Enterprise")
     dispatcher = EnterpriseReportDispatcher
-    name = "SMS Detailed Report"
+    name = _("SMS Detailed Report")
     description = _("This is a report of SMS details that can be altered by using the filter options \
     above. Once you are happy with your filters, simply click Apply.")
     slug = "Enterprise"
@@ -39,12 +39,12 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     exportable_all = True
     export_format_override = Format.UNZIPPED_CSV
     fields = [
-        'corehq.apps.smsbillables.interface.DateSentFilter',
-        'corehq.apps.accounting.interface.DateCreatedFilter',
-        'corehq.apps.smsbillables.interface.ShowBillablesFilter',
-        'corehq.apps.enterprise.interface.EnterpriseDomainFilter',
-        'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
-        'corehq.apps.smsbillables.interface.GatewayTypeFilter',
+        DateSentFilter,
+        DateCreatedFilter,
+        ShowBillablesFilter,
+        EnterpriseDomainFilter,
+        HasGatewayFeeFilter,
+        GatewayTypeFilter,
     ]
 
     @property
@@ -75,9 +75,10 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
             None,
             None,
             None,
+            None,
             'date_created',
         ]
-        sort_index = int(self.request.GET.get('iSortCol_0', 1))
+        sort_index = int(self.request.GET.get('iSortCol_0', 0))
         field = sort_fields[sort_index]
         sort_descending = self.request.GET.get('sSortDir_0', 'asc') == 'desc'
         return field if not sort_descending else '-{0}'.format(field)
@@ -117,7 +118,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     @property
     def total_records(self):
         query = self.sms_billables
-        return query.aggregate(Count('id'))['id__count']
+        return query.count()
 
     @property
     def rows(self):
@@ -135,7 +136,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
                 {
                     INCOMING: _("Incoming"),
                     OUTGOING: _("Outgoing"),
-                }.get(sms_billable.direction, ""),
+                }[sms_billable.direction],
                 sms_billable.multipart_count,
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
@@ -151,7 +152,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
     @property
     def sms_billables(self):
         datespan = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
-        selected_billables = SmsBillable.get_selected_billables(datespan)
+        selected_billables = SmsBillable.get_billables_sent_between(datespan)
         if DateCreatedFilter.use_filter(self.request):
             date_span = DateSpan(
                 DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
@@ -161,7 +162,7 @@ class EnterpriseSMSBillablesInterface(GenericTabularReport):
             self.request, self.domain)
         if show_billables:
             selected_billables = SmsBillable.filter_selected_billables_show_billables(
-                selected_billables, show_billables, ShowBillablesFilter
+                selected_billables, show_billables
             )
         domain = EnterpriseDomainFilter.get_value(self.request, self.domain)
         if domain:

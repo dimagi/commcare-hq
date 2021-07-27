@@ -6,7 +6,7 @@ from corehq.apps.accounting.models import BillingAccount, Subscription
 
 
 class EnterpriseDomainFilter(BaseSingleOptionFilter):
-    slug = "account"
+    slug = "domain"
     label = ugettext_lazy("Project Space")
 
     @property

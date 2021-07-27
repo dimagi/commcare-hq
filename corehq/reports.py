@@ -54,7 +54,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
-from corehq.apps.enterprise.interface import EnterpriseSMSBillablesInterface
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -354,7 +354,7 @@ SMS_ADMIN_INTERFACES = (
 
 ENTERPRISE_INTERFACES = (
     (_("Manage Billing Details"), (
-        EnterpriseSMSBillablesInterface,
+        EnterpriseSMSBillablesReport,
     )),
 )
 
