@@ -45,6 +45,11 @@ class RegistryManager(models.Manager):
 
 
 class DataRegistry(models.Model):
+    """Top level model that represents a Data Registry.
+
+    A registry is owned by a domain but is used across domains
+    based on invitations that are sent from the owning domain.
+    """
     domain = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     # slug used for referencing the registry in app suite files, APIs etc.
@@ -99,6 +104,12 @@ class DataRegistry(models.Model):
 
 
 class RegistryInvitation(models.Model):
+    """Invitations are the mechanism used to determine access to the registry.
+    The owning domain creates invitations which can be accepted or rejected by
+    the invitees.
+
+    Without an accepted invitation a domain can not access any features of the
+    registry."""
     STATUS_PENDING = "pending"
     STATUS_ACCEPTED = "accepted"
     STATUS_REJECTED = "rejected"
@@ -130,12 +141,17 @@ class RegistryInvitation(models.Model):
 
 
 class RegistryGrant(models.Model):
+    """Grants provide the model for giving access to data. The ownership of the grant
+    lies with the granting domain which can grant / revoke access to it's data to
+    any other domains that are participating in the registry (have been invited).
+    """
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
 
 
 class RegistryPermission(models.Model):
+    """This model controls which users in a domain can access the data registry."""
     registry = models.ForeignKey("DataRegistry", related_name="permissions", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255)
     read_only_group_id = models.CharField(max_length=255, null=True)
@@ -145,6 +161,9 @@ class RegistryPermission(models.Model):
 
 
 class RegistryAuditLog(models.Model):
+    """Audit log model used to store logs of user level interactions
+    (not system level).
+    """
     ACTION_ACTIVATED = "activated"
     ACTION_DEACTIVATED = "deactivated"
     ACTION_INVITATION_ADDED = "invitation_added"
