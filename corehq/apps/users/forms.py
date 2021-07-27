@@ -25,6 +25,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
@@ -182,7 +183,7 @@ class BaseUpdateUserForm(forms.Form):
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
-    def update_user(self):
+    def update_user(self, metadata_updated=False, profile_updated=False):
         is_update_successful, props_updated = super(UpdateUserRoleForm, self).update_user(save=False)
         role_updated = False
         user_new_role = None
@@ -205,19 +206,26 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
         elif is_update_successful:
             self.existing_user.save()
 
-        if is_update_successful and (props_updated or role_updated):
-            message = None
+        if is_update_successful and (props_updated or role_updated or metadata_updated):
+            messages = []
+            profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                message = 'Role: None'
                 if user_new_role:
-                    message = f"Role: {user_new_role.name}[{user_new_role.get_qualified_id()}]"
+                    messages.append(f"Role: {user_new_role.name}[{user_new_role.get_qualified_id()}]")
+                else:
+                    messages.append('Role: None')
+            if metadata_updated:
+                props_updated['user_data'] = self.existing_user.user_data
+            if profile_updated and profile_id:
+                profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
+                messages.append(f"CommCare Profile: {profile_name}")
             log_user_change(
                 self.request.domain,
                 couch_user=self.existing_user,
                 changed_by_user=self.request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
                 fields_changed=props_updated,
-                message=message
+                message=". ".join(messages)
             )
         return is_update_successful
 
@@ -1284,8 +1292,9 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
-        return self.user_form.update_user()
+        metadata_updated, profile_updated = self.user_form.existing_user.update_metadata(
+            self.custom_data.get_data_to_save())
+        return self.user_form.update_user(metadata_updated=metadata_updated, profile_updated=profile_updated)
 
 
 class UserFilterForm(forms.Form):
