@@ -115,6 +115,32 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user, shou
         return True
 
 
+def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user, should_enforce_admin=True):
+    """
+    :param potential_upstream_domain: potential upstream domain
+    :param downstream_domain: domain that would be downstream in this link if able
+    :param user: couch user
+    :param should_enforce_admin: enforce user is admin in both domains
+    :return: True if the potential upstream domain is eligible to link to the specified downstream domain
+    """
+    from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
+
+    if not potential_upstream_domain or not downstream_domain:
+        return False
+
+    if potential_upstream_domain == downstream_domain:
+        return False
+
+    if not is_active_upstream_domain(potential_upstream_domain):
+        # needs to be an active upstream domain
+        return False
+
+    if should_enforce_admin:
+        return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
+    else:
+        return True
+
+
 def is_domain_in_active_link(domain_name):
     from corehq.apps.linked_domain.dbaccessors import (
         is_active_downstream_domain,

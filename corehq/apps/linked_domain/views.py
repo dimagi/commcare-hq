@@ -46,9 +46,9 @@ from corehq.apps.linked_domain.const import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
+    get_available_upstream_domains,
     get_linked_domains,
     get_upstream_domain_link,
-    get_upstream_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import (
@@ -282,9 +282,13 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         available_domains_to_link = get_available_domains_to_link(self.request.domain,
                                                                   self.request.couch_user,
                                                                   billing_account=account)
-        upstream_domains = []
-        for domain in get_upstream_domains(self.request.domain, self.request.couch_user):
-            upstream_domains.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
+
+        upstream_domain_urls = []
+        upstream_domains = get_available_upstream_domains(self.request.domain,
+                                                          self.request.couch_user,
+                                                          billing_account=account)
+        for domain in upstream_domains:
+            upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         if master_link and master_link.is_remote:
             remote_linkable_ucr = get_remote_linkable_ucr(master_link)
@@ -297,7 +301,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
             'view_data': {
                 'is_downstream_domain': bool(master_link),
-                'upstream_domains': upstream_domains,
+                'upstream_domains': upstream_domain_urls,
                 'available_domains': available_domains_to_link,
                 'master_link': build_domain_link_view_model(master_link, timezone) if master_link else None,
                 'model_status': sorted(view_models_to_pull, key=lambda m: m['name']),
