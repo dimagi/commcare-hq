@@ -373,7 +373,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('registry', 'DataRegistry', 'domain', [
-        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission'
+        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission', 'RegistryAuditLog'
     ]),
     ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
