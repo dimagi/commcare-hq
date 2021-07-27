@@ -45,7 +45,6 @@ from corehq.apps.linked_domain.const import (
     SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
-    get_accessible_upstream_domains,
     get_available_domains_to_link,
     get_available_upstream_domains_for_downstream_domain,
     get_linked_domains,
