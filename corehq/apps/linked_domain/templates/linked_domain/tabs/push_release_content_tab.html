@@ -37,14 +37,8 @@
         <div class="col-sm-9 col-md-10 controls">
           <select multiple class="form-control"
                   data-bind="selectedOptions: domainsToPush,
-                             options: localDomainLinks,
-                             optionsText: 'linked_domain',
-                             optionsValue: 'linked_domain',
-                             multiselect: {
-                                 selectableHeaderTitle: '{% trans_html_attr "All project spaces" %}',
-                                 selectedHeaderTitle: '{% trans_html_attr "Project spaces to push to" %}',
-                                 searchItemTitle: '{% trans_html_attr "Search project spaces" %}',
-                            }">
+                             multiselect: multiselectProperties,
+                             multiselectOptions: localDownstreamDomains">
           </select>
         </div>
       </div>
