@@ -5,7 +5,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 import requests
-from requests_toolbelt.adapters import host_header_ssl
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
@@ -62,6 +61,7 @@ class TableauView(BaseProjectReportSectionView):
         return super().get(request, *args, **kwargs)
 
     def tableau_server_response(self):
+        from requests_toolbelt.adapters import host_header_ssl  # avoid top-level import that breaks docs build
         context = self.page_context
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
         post_arguments = {'username': self.visualization.server.domain_username}
