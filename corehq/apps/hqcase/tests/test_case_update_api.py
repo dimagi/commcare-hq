@@ -97,21 +97,10 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.json()['case_id'], case_id)
 
     def test_basic_get_list(self):
-        with patch('corehq.apps.hqcase.views.domain_needs_search_index',
-                   lambda domain: True):
-            with patch('corehq.apps.hqcase.views.get_list',
-                       lambda *args: {'example': 'result'}):
-                res = self.client.get(reverse('case_api', args=(self.domain,)))
+        with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
+            res = self.client.get(reverse('case_api', args=(self.domain,)))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json(), {'example': 'result'})
-
-    def test_missing_case_search_index(self):
-        res = self.client.get(reverse('case_api', args=(self.domain,)))
-        self.assertEqual(res.status_code, 405)
-        self.assertEqual(
-            res.json()['error'],
-            "You need the case search index to use this feature"
-        )
 
     def test_case_not_found(self):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
