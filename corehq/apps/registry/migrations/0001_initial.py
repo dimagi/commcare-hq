@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('date', models.DateTimeField(auto_now_add=True)),
                 ('action', models.CharField(choices=[('activated', 'Registry Activated'), ('deactivated', 'Registry De-activated'), ('invitation_added', 'Invitation Added'), ('invitation_removed', 'Invitation Revoked'), ('invitation_accepted', 'Invitation Accepted'), ('invitation_rejected', 'Invitation Rejected'), ('grant_added', 'Grant created'), ('grant_removed', 'Grant removed'), ('data_accessed', 'Data Accessed')], max_length=32)),
                 ('domain', models.CharField(max_length=255)),
-                ('related_object_id', models.CharField(max_length=32)),
+                ('related_object_id', models.CharField(max_length=36)),
                 ('related_object_type', models.CharField(choices=[('registry', 'Data Registry'), ('invitation', 'Invitation'), ('grant', 'Grant'), ('ucr', 'Report'), ('application', 'Case Search')], max_length=32)),
                 ('detail', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
                 ('registry', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='audit_logs', to='registry.DataRegistry')),

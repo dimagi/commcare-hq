@@ -187,7 +187,7 @@ class RegistryAuditLog(models.Model):
     action = models.CharField(max_length=32, choices=ACTION_CHOICES)
     domain = models.CharField(max_length=255)
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
-    related_object_id = models.CharField(max_length=32)
+    related_object_id = models.CharField(max_length=36)
     related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES)
     detail = JSONField(null=True)
 
