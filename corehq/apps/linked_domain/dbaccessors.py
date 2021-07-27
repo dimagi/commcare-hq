@@ -76,8 +76,8 @@ def get_available_domains_to_link_for_account(upstream_domain_name, user, accoun
     """
     Finds available domains to link based on domains associated with the provided account
     """
-    domains_in_account = account.get_domains() if account else []
-    return list({domain for domain in domains_in_account
+    domains = account.get_domains() if account else []
+    return list({domain for domain in domains
                  if is_domain_available_to_link(upstream_domain_name, domain, user)})
 
 
@@ -85,44 +85,38 @@ def get_available_domains_to_link_for_user(upstream_domain_name, user):
     """
     Finds available domains to link based on domains that the provided user is active in
     """
-    domains_for_user = [d.name for d in Domain.active_for_user(user)]
-    return list({potential_domain for potential_domain in domains_for_user if is_domain_available_to_link(
-        upstream_domain_name, potential_domain, user, should_enforce_admin=False)})
+    domains = [d.name for d in Domain.active_for_user(user)]
+    return list({domain for domain in domains if is_domain_available_to_link(
+        upstream_domain_name, domain, user, should_enforce_admin=False)})
 
 
-def get_available_upstream_domains_for_downstream_domain(domain_name, user, billing_account=None):
+def get_available_upstream_domains(downstream_domain, user, billing_account=None):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
     The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
-    version is available to anyone who can obtain access (the wild west)
-    :param domain_name: potential upstream domain candidate
+    version is available to anyone who can obtain access
+    :param downstream_domain: potential upstream domain candidate
     :param user: user object
     :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(domain_name, RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_account(domain_name, user, billing_account)
-    elif toggles.LINKED_DOMAINS.enabled(domain_name):
-        return get_available_upstream_domains_for_user(domain_name, user)
+    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
+        return get_available_upstream_domains_for_account(downstream_domain, user, billing_account)
+    elif toggles.LINKED_DOMAINS.enabled(downstream_domain):
+        return get_available_upstream_domains_for_user(downstream_domain, user)
 
     return []
 
 
-def get_available_upstream_domains_for_account(domain_name, user, account):
-    """
-    :param domain_name: desired downstream domain
-    :param user: couch user object
-    :param account: billing account to grab domains from
-    :return: list of domain names that are active upstream domains within the account
-    """
-    domains_in_account = account.get_domains() if account else []
-    return list({d for d in domains_in_account if is_available_upstream_domain(d, domain_name, user)})
+def get_available_upstream_domains_for_account(downstream_domain, user, account):
+    domains = account.get_domains() if account else []
+    return list({d for d in domains if is_available_upstream_domain(d, downstream_domain, user)})
 
 
 def get_available_upstream_domains_for_user(domain_name, user):
-    domains_for_user = [d.name for d in Domain.active_for_user(user)]
-    return list({d for d in domains_for_user
-                 if is_available_upstream_domain(d, domain_name, user, should_enforce_admin=False)})
+    domains = [d.name for d in Domain.active_for_user(user)]
+    return list({domain for domain in domains
+                 if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=False)})
 
 
 def get_accessible_downstream_domains(upstream_domain_name, user):
