@@ -225,7 +225,7 @@ hqDefine("linked_domain/js/domain_links", [
         });
 
         self.localDownstreamDomains = ko.computed(function () {
-            return self.parent.domain_links().reduce(function(result, link) {
+            return self.parent.domain_links().reduce(function (result, link) {
                 if (!link.is_remote) {
                     return result.concat(link.linked_domain());
                 }
@@ -237,7 +237,7 @@ hqDefine("linked_domain/js/domain_links", [
             selectableHeaderTitle: gettext("All project spaces"),
             selectedHeaderTitle: gettext("Project spaces to push to"),
             searchItemTitle: gettext("Search project spaces"),
-        }
+        };
 
         self.canPush = ko.computed(function () {
             return self.localDownstreamDomains().length > 0;
