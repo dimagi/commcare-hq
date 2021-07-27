@@ -45,7 +45,7 @@ services:
       ES_CLUSTER_NAME: ES_CLUSTER_NAME
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9200:9200"
+      - "9202:9200"
 
   elasticsearch5:
     extends:
@@ -56,7 +56,7 @@ services:
       ES_CLUSTER_NAME: ${ES_CLUSTER_NAME}
       ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9205:9200"
+      - "9200:9200"
 
   kafka:
     extends:
