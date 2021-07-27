@@ -7,6 +7,7 @@ from django.utils.translation import ugettext
 from sqlalchemy import or_
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registry.models import DataRegistry
@@ -426,7 +427,7 @@ class DomainChoiceProvider(ChainableChoiceProvider):
         return self._domains_to_choices([self.domain])
 
     def _domains_to_choices(self, domains):
-        return [Choice(domain, domain) for domain in domains]
+        return [Choice(domain, Domain.get_by_name(domain).display_name()) for domain in domains]
 
 
 class AbstractMultiProvider(ChoiceProvider):

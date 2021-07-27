@@ -9,6 +9,7 @@ import mock
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain, create_user
+from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
@@ -516,6 +517,12 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     @classmethod
     def setUpClass(cls):
         super(DomainChoiceProviderTest, cls).setUpClass()
+        cls.domain_a = create_domain(name="A")
+        cls.domain_b = create_domain(name="B")
+        cls.domain_c = create_domain(name="C")
+        cls.domain_d = create_domain(name="D")
+        for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
+            domain.save()
         report = ReportConfiguration(domain="A")
         cls.user = create_user("admin", "123")
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
@@ -541,6 +548,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        delete_all_domains()
         super(DomainChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
