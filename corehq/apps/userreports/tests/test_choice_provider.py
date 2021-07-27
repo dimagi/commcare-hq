@@ -8,7 +8,7 @@ import mock
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.shortcuts import create_domain, create_user
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
@@ -517,6 +517,8 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     def setUpClass(cls):
         super(DomainChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain="A")
+        cls.user = create_user("admin", "123")
+        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
 
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         # A, B, and C are in the registry A has access to B and C, B has access to C
@@ -525,7 +527,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             Grant("B", ["A"]),
             Grant("A", []),
         ]
-        cls.registry = create_registry_for_test(cls.domain, invitations, grants, name="registry")
+        cls.registry = create_registry_for_test(cls.user, cls.domain, invitations, grants=grants, name="registry")
 
         choices = [
             SearchableChoice("A", "A", ["A"]),
@@ -536,8 +538,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         cls.choice_provider = DomainChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
-        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
-
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
@@ -547,9 +547,13 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         self._test_query(ChoiceQueryContext("A", limit=1, page=0))
 
     def test_query(self):
-        self.assertEqual(1, len(self.choice_provider.query(ChoiceQueryContext(query='A', offset=0))))
-        self.assertEqual(3, len(self.choice_provider.query(ChoiceQueryContext(query='', offset=0))))
-        self.assertEqual(0, len(self.choice_provider.query(ChoiceQueryContext(query='D', offset=0))))
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='A', offset=0)))
+        self.assertEqual([Choice(value='A', display='A'),
+                          Choice(value='B', display='B'),
+                          Choice(value='C', display='C')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0)))
 
     def test_query_count(self):
         self.assertEqual(1, self.choice_provider.query_count("A"))
