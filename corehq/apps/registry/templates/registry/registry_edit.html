@@ -338,18 +338,34 @@
           <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
         </div>
         <div class="modal-body">
-          <div class="alert alert-info">
+          <div class="alert alert-info" data-bind="visible: availableInviteDomains().length">
             {% blocktrans %}
             Inviting project spaces to participate in the registry allows them to opt in or out.
               Until an invitation has been accepted the project space will not be able to use the
               registry.
             {% endblocktrans %}
           </div>
-          <select multiple class="form-control" data-bind="select2: availableInviteDomains, selectedOptions: inviteDomains"></select>
+          <div class="alert alert-info" data-bind="visible: !availableInviteDomains().length">
+            {% blocktrans %}
+              There are no more project spaces that can be invited to this registry.
+              All the project spaces associated with this account have already been invited.
+            {% endblocktrans %}
+          </div>
+          <div data-bind="visible: availableInviteDomains().length">
+            <select multiple class="form-control" data-bind="
+              select2: availableInviteDomains,
+              selectedOptions: inviteDomains,
+            "></select>
+          </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <button href="#" class="btn btn-primary" data-bind="click: addDomain, enable: inviteDomains().length">
+          <a href="#" class="btn btn-default" data-dismiss="modal">
+            <span data-bind="visible: availableInviteDomains().length">{% trans "Cancel" %}</span>
+            <span data-bind="visible: !availableInviteDomains().length">{% trans "Close" %}</span>
+          </a>
+          <button href="#" class="btn btn-primary" data-bind="
+            click: addDomain, enable: inviteDomains().length, visible: availableInviteDomains().length
+          ">
             <i class="fa" data-bind="css: {
               'fa-spin': modalSaving,
               'fa-refresh': modalSaving

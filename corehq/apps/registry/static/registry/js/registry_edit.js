@@ -69,9 +69,12 @@ hqDefine("registry/js/registry_edit", [
         self.availableCaseTypes = availableCaseTypes;
         self.availableInviteDomains = ko.computed(() => {
             const existingInvites = self.invitations().map((invite) => invite.domain);
-            return availableDomains.filter((domain) => !existingInvites.includes(domain));
+            return availableDomains.filter((domain) => {
+                return domain !== self.current_domain && !existingInvites.includes(domain)
+            });
         });
         self.availableGrantDomains = ko.computed(() => {
+            // use invitedDomains since invitations() will be empty if the current domain is not the owner
             let availableDomains = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain)));
             availableDomains.delete(self.current_domain);
             return Array.from(availableDomains);
@@ -89,26 +92,26 @@ hqDefine("registry/js/registry_edit", [
 
         self.inviteDomains = ko.observable([]);
         self.removeDomain = function (toRemove){
-            self.saving(true);
+            self.modalSaving(true);
             actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
                     return invite.id !== toRemove.id;
                 }));
             }).done(() => {
-                self.saving(false);
+                self.modalSaving(false);
                 $(".modal").modal('hide');
             });
         }
 
         self.addDomain = function () {
-            self.saving(true);
+            self.modalSaving(true);
             actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
                    self.invitations.unshift(InvitationModel(invite));
                 });
                 self.inviteDomains([]);
             }).always(() => {
-                self.saving(false);
+                self.modalSaving(false);
                 $(".modal").modal('hide');
             });
         }

@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
@@ -116,8 +117,9 @@ def manage_registry(request, domain, registry_slug):
     if is_owner:
         invitations = all_invitations
         grants = registry.grants.all()
+        available_domains = BillingAccount.get_account_by_domain(domain).get_domains()
     else:
-        invitations = []
+        invitations, available_domains = [], []
         grants = registry.grants.filter(Q(from_domain=domain) | Q(to_domains__contains=[domain]))
     context = {
         "domain": domain,
@@ -136,7 +138,7 @@ def manage_registry(request, domain, registry_slug):
             "grants": [grant.to_json() for grant in grants]
         },
         "available_case_types": list(get_data_dict_case_types(registry.domain)),
-        "available_domains": ["skelly", "d1"],  # TODO,
+        "available_domains": available_domains,
         "invited_domains": [invitation.domain for invitation in all_invitations],
         "current_page": {
             "title": "Manage Registry",
