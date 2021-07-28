@@ -771,8 +771,8 @@ class RestoreConfig(object):
         tags = {
             'status_code': status,
             'device_type': 'webapps' if is_webapps else 'other',
+            'domain': self.domain,
         }
-        tags['domain'] = self.domain
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
             segment = None
