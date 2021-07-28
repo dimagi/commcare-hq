@@ -2,7 +2,7 @@
 
 describe('WebForm', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
+        UI = hqImport("cloudcare/js/form_entry/form_ui");
 
     describe('TaskQueue', function () {
         var callCount,
@@ -62,7 +62,7 @@ describe('WebForm', function () {
         var server,
             params,
             Utils = hqImport("cloudcare/js/form_entry/utils"),
-            WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
+            WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession;
 
         hqImport("hqwebapp/js/initial_page_data").registerUrl(
             "report_formplayer_error",
