@@ -1075,11 +1075,17 @@ class CommtrackUserForm(forms.Form):
                 primary_location_name = SQLLocation.objects.get(location_id=location_id).name
                 user_change_logger.add_info(f"Primary location: {primary_location_name}")
 
+        if program_id is not None:
+            self._log_program_changes(user_change_logger, program_id)
+        user_change_logger.save()
+
+    @staticmethod
+    def _log_program_changes(user_change_logger, program_id):
         if program_id:
             program = Program.get(program_id)
             user_change_logger.add_info(f"Program: {program.name}[{program_id}]")
-
-        user_change_logger.save()
+        else:
+            user_change_logger.add_info("Program: None")
 
     def _log_web_user_changes(self, user_change_logger, location_updates, program_id):
         if 'location_ids' in location_updates:
@@ -1102,9 +1108,8 @@ class CommtrackUserForm(forms.Form):
             else:
                 user_change_logger.add_info("Primary location: None")
 
-        if program_id:
-            program = Program.get(program_id)
-            user_change_logger.add_info(f"Program: {program.name}[{program_id}]")
+        if program_id is not None:
+            self._log_program_changes(user_change_logger, program_id)
 
         user_change_logger.save()
 
