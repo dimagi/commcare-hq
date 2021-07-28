@@ -77,17 +77,15 @@ class DataRegistry(models.Model):
 
     @transaction.atomic
     def activate(self, user):
-        if not self.is_active:
-            self.is_active = True
-            self.save()
-            self.logger.registry_activated(user)
+        self.is_active = True
+        self.save()
+        self.logger.registry_activated(user)
 
     @transaction.atomic
     def deactivate(self, user):
-        if self.is_active:
-            self.is_active = False
-            self.save()
-            self.logger.registry_deactivated(user)
+        self.is_active = False
+        self.save()
+        self.logger.registry_deactivated(user)
 
     def get_granted_domains(self, domain):
         self.check_access(domain)
@@ -255,16 +253,16 @@ class RegistryAuditHelper:
         return self.log_invitation_accepted_rejected(user, invitation, is_accepted=False)
 
     def invitation_added(self, user, invitation):
-        return self.log_invitation_added_removed(user, invitation, is_added=True)
+        return self.log_invitation_added_removed(user, invitation.id, invitation, is_added=True)
 
-    def invitation_removed(self, user, invitation):
-        return self.log_invitation_added_removed(user, invitation, is_added=False)
+    def invitation_removed(self, user, invitation_id, invitation):
+        return self.log_invitation_added_removed(user, invitation_id, invitation, is_added=False)
 
     def grant_added(self, user, grant):
-        return self.log_grant_added_removed(user, grant, is_added=True)
+        return self.log_grant_added_removed(user, grant.id, grant, is_added=True)
 
-    def grant_removed(self, user, grant):
-        return self.log_grant_added_removed(user, grant, is_added=False)
+    def grant_removed(self, user, grant_id, grant):
+        return self.log_grant_added_removed(user, grant_id, grant, is_added=False)
 
     def schema_changed(self, user, new, old):
         return RegistryAuditLog.objects.create(
@@ -313,7 +311,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_REGISTRY,
         )
 
-    def log_invitation_added_removed(self, user, invitation, is_added):
+    def log_invitation_added_removed(self, user, invitation_id, invitation, is_added):
         if is_added:
             action = RegistryAuditLog.ACTION_INVITATION_ADDED
         else:
@@ -323,7 +321,7 @@ class RegistryAuditHelper:
             user=user,
             action=action,
             domain=invitation.domain,
-            related_object_id=invitation.id,
+            related_object_id=invitation_id,
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
             detail={} if is_added else {"invitation_status": invitation.status}
         )
@@ -342,13 +340,13 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
         )
 
-    def log_grant_added_removed(self, user, grant, is_added):
+    def log_grant_added_removed(self, user, grant_id, grant, is_added):
         RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
             action=RegistryAuditLog.ACTION_GRANT_ADDED if is_added else RegistryAuditLog.ACTION_GRANT_REMOVED,
-            domain=grant.domain,
-            related_object_id=grant.id,
+            domain=grant.from_domain,
+            related_object_id=grant_id,
             related_object_type=RegistryAuditLog.RELATED_OBJECT_GRANT,
             detail={"to_domains": grant.to_domains}
         )

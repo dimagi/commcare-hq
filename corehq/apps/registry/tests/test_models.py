@@ -126,8 +126,9 @@ class RegistryModelsTests(TestCase):
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         registries = [
             self.active,
+            self.inactive,
             create_registry_for_test(self.user, self.domain, invitations),
             create_registry_for_test(self.user, "other", [Invitation(self.domain, accepted=False)]),
         ]
         visible = DataRegistry.objects.visible_to_domain(self.domain)
-        self.assertEqual({r.id for r in registries}, {v.id for v in visible})
+        self.assertEqual({r.name for r in registries}, {v.name for v in visible})
