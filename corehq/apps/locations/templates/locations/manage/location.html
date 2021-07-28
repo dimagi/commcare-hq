@@ -3,6 +3,10 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% block stylesheets %}{{ block.super }}
+  <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
+{% endblock %}
+
 {% block title %}
   {% if not creates_new_location %}{{ location.name }} :{% endif %}
   {{ block.super }}
@@ -238,6 +242,7 @@
                 </div>
               </div>
             </script>
+
           </div>
         </div>
       </div>

@@ -140,7 +140,7 @@ hqDefine("locations/js/location", [
         var treeModel = locationTreeModel.locationTreeViewModel(hierarchy, options);
         treeModel.load(locs);
 
-        pseudoRootLocation = locationTreeModel.locationModel(data, treeModel);
+        pseudoRootLocation = locationTreeModel.locationModel(data, treeModel, 1);
         rootLocation = {pseudoRoot: pseudoRootLocation}
 
         $('#location_descendants_tree').koApplyBindings(rootLocation);
