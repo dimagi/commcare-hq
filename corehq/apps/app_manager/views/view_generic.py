@@ -45,9 +45,8 @@ from corehq.apps.hqmedia.views import (
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
-    is_linked_domain,
+    is_active_downstream_domain,
 )
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.soft_assert import soft_assert
 
 
@@ -265,7 +264,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
         copy_app_form = CopyApplicationForm(domain, app)
     domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
-        if not (is_linked_domain(request.domain)
+        if not (is_active_downstream_domain(request.domain)
                 and get_domain_master_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
