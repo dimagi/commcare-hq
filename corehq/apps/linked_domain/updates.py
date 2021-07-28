@@ -350,7 +350,7 @@ def update_tableau_server_and_visualizations(domain_link):
         vis_by_upstream_id[master_vis['id']] = vis
         vis.upstream_id = master_vis['id']
         vis.domain = domain_link.linked_domain
-        vis.server = master_vis['server']
+        vis.server = server_model
         vis.view_url = master_vis['view_url']
         vis.save()
 

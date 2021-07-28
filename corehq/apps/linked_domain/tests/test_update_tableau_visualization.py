@@ -32,6 +32,7 @@ class TestUpdateTableauVisualization(BaseLinkedAppsTest):
         models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
         self.assertEqual(models[0].view_url, 'url_1')
         self.assertEqual(models[0].server.server_name, 'server name')
+        self.assertEqual(models[0].server.domain, self.linked_domain)
 
         # Updating master reflected in linked domain after update
         TableauVisualization.objects.all().update(view_url='different url_1')
