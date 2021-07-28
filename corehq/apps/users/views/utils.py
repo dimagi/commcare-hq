@@ -68,7 +68,7 @@ class BulkUploadResponseWrapper(object):
 def log_user_groups_change(domain, request, user, group_ids=None):
     if group_ids is None:
         group_ids = user.get_group_ids()
-    groups_info = None
+    groups_info = []
     if group_ids:
         groups_info = ", ".join(
             f"{group.name}[{group.get_id}]"
