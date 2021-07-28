@@ -124,9 +124,9 @@
     </div>
     <div class="row mt-4" data-bind="ifnot: domain_invitation.status() === 'accepted'">
       <div class="col-sm-12 col-md-8">
-        <strong>
+        <div class="alert alert-info">
         {% trans "You must opt-in to the registry before you are able to manage grants." %}
-        </strong>
+        </div>
       </div>
     </div>
     <div class="row mt-4" data-bind="if: domain_invitation.status() === 'accepted'">
