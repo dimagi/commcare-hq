@@ -280,6 +280,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     context.update({
         'domain_names': sorted(domain_names),
         'linkable_domains': sorted(linkable_domains),
+        'limit_to_linked_domains': domain_has_privilege(request.domain, RELEASE_MANAGEMENT)
     })
     context.update({
         'copy_app_form': copy_app_form,
