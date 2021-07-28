@@ -95,8 +95,8 @@
           {% trans "Invitation" %} <span data-bind="text: invitationStatusText"></span> <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-          <li><a href="#" data-bind="visible: showAccept, click: acceptInvitation"><i class="fa fa-check"></i> {% trans "Accept" %}</a></li>
-          <li><a href="#" data-bind="visible: showReject, click: rejectInvitation"><i class="fa fa-remove"></i> {% trans "Reject" %}</a></li>
+          <li><a href="#" data-bind="visible: showAccept, click: acceptInvitation"><i class="fa fa-check"></i> {% trans "Opt in" %}</a></li>
+          <li><a href="#" data-bind="visible: showReject, click: rejectInvitation"><i class="fa fa-remove"></i> {% trans "Opt out" %}</a></li>
         </ul>
       </div>
     </div>
@@ -122,7 +122,14 @@
         </div>
       </div>
     </div>
-    <div class="row mt-4">
+    <div class="row mt-4" data-bind="ifnot: domain_invitation.status() === 'accepted'">
+      <div class="col-sm-12 col-md-8">
+        <strong>
+        {% trans "You must opt-in to the registry before you are able to manage grants." %}
+        </strong>
+      </div>
+    </div>
+    <div class="row mt-4" data-bind="if: domain_invitation.status() === 'accepted'">
       <div class="col-sm-12 col-md-8">
         <ul class="nav nav-tabs" role="tablist">
           {% if is_owner %}
@@ -221,8 +228,7 @@
                   <th class="col-sm-2">{% trans "Actions" %}</th>
                 </tr>
               </thead>
-              <tbody>
-              <!-- ko foreach: sortedGrants() -->
+              <tbody data-bind="foreach: sortedGrants">
                 <tr>
                   <td data-bind="text: from_domain"></td>
                   <td data-bind="foreach: to_domains">
@@ -234,7 +240,6 @@
                     </button>
                   </td>
                 </tr>
-              <!-- /ko -->
               </tbody>
             </table>
           </div>
@@ -260,7 +265,7 @@
             {% endblocktrans %}
           </div>
           <p>{% blocktrans %}
-            Are you sure you want to remove <span data-bind="text: domain"></span>?</p>
+            Are you sure you want to remove <mark data-bind="text: domain"></mark>?</p>
           {% endblocktrans %}
         </div>
         <div class="modal-footer">
@@ -349,9 +354,9 @@
         </div>
         <div class="modal-body">
           {% blocktrans %}
-            Are you sure you want to remove the grant from  {{ domain }} to
+            Are you sure you want to remove the grant from {{ domain }} to
           {% endblocktrans %}
-          <b data-bind="text: to_domains.join(', ')"></b>
+          <mark data-bind="text: to_domains.join(', ')"></mark>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>

@@ -117,11 +117,11 @@
           <!-- ko if: invitation.status() === 'pending' -->
             <button type="button" class="btn btn-default btn-xs" data-bind="click: rejectInvitation">
               <i class="fa fa-remove"></i>
-              {% trans "Reject" %}
+              {% trans "Opt out" %}
             </button>
             <button type="button" class="btn btn-success btn-xs" data-bind="openModal: 'accept-invitation-modal'">
               <i class="fa fa-check"></i>
-              {% trans "Accept and Participate" %}
+              {% trans "Opt in" %}
             </button>
           <!-- /ko -->
         </div>
