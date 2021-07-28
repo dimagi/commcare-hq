@@ -21,6 +21,10 @@ services:
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
       TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+      TRAVIS_COMMIT: "${TRAVIS_COMMIT}"
+      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
+      TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
     privileged: true  # allows mount inside container
