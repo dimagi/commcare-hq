@@ -224,14 +224,23 @@ hqDefine("linked_domain/js/domain_links", [
             return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
         });
 
-        self.localDomainLinks = ko.computed(function () {
-            return _.filter(self.parent.domain_links(), function (link) {
-                return !link.is_remote;
-            });
+        self.localDownstreamDomains = ko.computed(function () {
+            return self.parent.domain_links().reduce(function (result, link) {
+                if (!link.is_remote) {
+                    return result.concat(link.linked_domain());
+                }
+                return result;
+            }, []);
         });
 
+        self.multiselectProperties = {
+            selectableHeaderTitle: gettext("All project spaces"),
+            selectedHeaderTitle: gettext("Project spaces to push to"),
+            searchItemTitle: gettext("Search project spaces"),
+        };
+
         self.canPush = ko.computed(function () {
-            return self.localDomainLinks().length > 0;
+            return self.localDownstreamDomains().length > 0;
         });
 
         self.pushContent = function () {
