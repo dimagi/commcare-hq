@@ -116,20 +116,22 @@ hqDefine("locations/js/location", [
         };
 
         var location = initialPageData.get('location');
-        var locData = {
-            name: location.name,
-            location_type: location.location_type,
-            uuid: loc_id,
-            is_archived: location.is_archived,
-            can_edit: options.can_edit_root,
-        };
+        if (location) {
+            var locData = {
+                name: location.name,
+                location_type: location.location_type,
+                uuid: loc_id,
+                is_archived: location.is_archived,
+                can_edit: options.can_edit_root,
+            };
 
-        var treeModel = locationTreeModel.locationTreeViewModel(hierarchy, options);
-        treeModel.load(locs);
+            var treeModel = locationTreeModel.locationTreeViewModel(hierarchy, options);
+            treeModel.load(locs);
 
-        var pseudoRootLocation = locationTreeModel.locationModel(locData, treeModel, 1);
-        var rootLocation = {pseudoRoot: pseudoRootLocation};
+            var pseudoRootLocation = locationTreeModel.locationModel(locData, treeModel, 1);
+            var rootLocation = {pseudoRoot: pseudoRootLocation};
 
-        $('#location_descendants_tree').koApplyBindings(rootLocation);
+            $('#location_descendants_tree').koApplyBindings(rootLocation);
+        }
     });
 });
