@@ -79,13 +79,24 @@
   </div>
   <div class="row">
     <div class="col-sm-8 col-md-6">
-    <inline-edit params="
-          value: '{{ registry.description|escapejs }}',
-          url: '{% url "edit_registry_attr" registry.domain registry.slug 'description' %}',
-          placeholder: '{% trans "Enter data registry description here"|escapejs %}',
-          cols: 50,
-          disallow_edit: {{ is_owner|yesno:"false,true" }}
-      "></inline-edit>
+      {% if is_owner %}
+      <inline-edit params="
+            value: '{{ registry.description|escapejs }}',
+            url: '{% url "edit_registry_attr" registry.domain registry.slug 'description' %}',
+            placeholder: '{% trans "Enter data registry description here"|escapejs %}',
+            cols: 50,
+        "></inline-edit>
+      {% endif %}
+      {% if not is_owner %}
+        <div class="registry-form-container text-muted">
+          {% if registry.description %}<p>{{ registry.description }}</p>{% endif %}
+          <p>
+            {% blocktrans %}
+            This registry is managed by the '{{ domain }}' project space.
+            {% endblocktrans %}
+          </p>
+        </div>
+      {% endif %}
     </div>
     <div class="col-md-2">
       <div class="btn-group pull-right">
