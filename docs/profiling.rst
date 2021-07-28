@@ -108,8 +108,11 @@ Creating a more useful output from the dump file
 The raw profile files are not human readable, and you need to use something
 like `cProfile <https://docs.python.org/2/library/profile.html#module-cProfile>`_ to make them
 useful.
-A script that will generate what is typically sufficient information to analyze
-these can be found in the `commcarehq-scripts`_ repository.
+
+[SnakeVis](https://jiffyclub.github.io/snakeviz/) is a great option for viewing .prof files.
+
+Alternately you can use a script that will output a readable version of the profile data to the console.
+You can find such a script in the `commcarehq-scripts`_ repository.
 You can read the source of that script to generate your own analysis, or just
 use it directly as follows::
 
