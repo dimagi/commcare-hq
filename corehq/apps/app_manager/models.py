@@ -4829,9 +4829,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
-        if not form:
-            form = self.get_module(module_id).get_form(form_id)
+    def fetch_xform(self, form, build_profile_id=None):
         return form.validate_form().render_xform(build_profile_id)
 
     @time_method()
@@ -4865,7 +4863,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                     # so that that's not treated as the diff
                     previous_form_version = previous_form.get_version()
                     form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form=form))
+                    my_hash = _hash(self.fetch_xform(form))
                     if previous_hash != my_hash:
                         form.version = None
             else:
@@ -5112,7 +5110,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
                 except XFormValidationFailed:
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
