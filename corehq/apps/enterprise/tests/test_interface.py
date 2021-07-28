@@ -87,7 +87,7 @@ class TestEnterpriseSMSBillablesReport(TestCase):
         self.assertEqual(len(results), 1)
 
     def test_sms_billables_has_gateway_fee(self):
-        gateway_fee = Decimal('6.9')
+        gateway_fee = Decimal('8.9')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), False, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
@@ -103,7 +103,7 @@ class TestEnterpriseSMSBillablesReport(TestCase):
         self.assertEqual(len(results), 2)
 
     def test_sms_billables_not_has_gateway_fee(self):
-        gateway_fee = Decimal('4.20')
+        gateway_fee = Decimal('4.2')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), False, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
@@ -119,7 +119,7 @@ class TestEnterpriseSMSBillablesReport(TestCase):
         self.assertEqual(len(results), 1)
 
     def test_sms_billables_random_filters(self):
-        gateway_fee = Decimal('4.20')
+        gateway_fee = Decimal('4.2')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), True, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
@@ -228,9 +228,7 @@ class TestEnterpriseSMSBillablesReport(TestCase):
     def create_smsbillable(self, date, show_billable=True, gateway_fee=None):
         text = (
             "This is text that will be displayed in a test text message in the "
-            "test interface class in Enterprise. I like games and also food. KFC "
-            "is actually amazing. I especially like hot food that burns my mouth "
-            "I don't know why..."
+            "test interface class in Enterprise."
         )
         self.msg = self.create_fake_sms(self.backend.hq_api_id, self.backend.couch_id, text, date)
 
