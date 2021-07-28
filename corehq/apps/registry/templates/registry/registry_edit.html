@@ -50,12 +50,16 @@
           click: toggleActiveState,
           class: is_active() ? 'btn-warning-light' : 'btn-success-light'
         ">
+          <i class="fa" data-bind="css: {
+              'fa-pause': !savingActiveState() && is_active(),
+              'fa-play': !savingActiveState() && !is_active(),
+              'fa-spin': savingActiveState,
+              'fa-refresh': savingActiveState
+            }"></i>
           <!-- ko if: is_active() -->
-          <i class="fa fa-pause"></i>
           {% trans "Deactivate" %}
           <!-- /ko -->
           <!-- ko ifnot: is_active() -->
-          <i class="fa fa-play"></i>
           {% trans "Activate" %}
           <!-- /ko -->
         </button>
@@ -103,6 +107,10 @@
         <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
           data-bind="class: invitationStatusClass"
         >
+          <i class="fa" data-bind="css: {
+              'fa-spin': savingInvitation,
+              'fa-refresh': savingInvitation
+            }"></i>
           {% trans "Invitation" %} <span data-bind="text: invitationStatusText"></span> <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
@@ -309,7 +317,11 @@
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain" data-dismiss="modal">
+          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain">
+            <i class="fa" data-bind="css: {
+              'fa-spin': $root.modalSaving,
+              'fa-refresh': $root.modalSaving
+            }"></i>
             {% trans "Remove" %} "<span data-bind="text: domain"></span>"
           </a>
         </div>
@@ -337,7 +349,13 @@
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-primary" data-bind="click: addDomain, enabled: invitedDomains().length" data-dismiss="modal">{% trans "Invite" %}</a>
+          <button href="#" class="btn btn-primary" data-bind="click: addDomain, enable: inviteDomains().length">
+            <i class="fa" data-bind="css: {
+              'fa-spin': modalSaving,
+              'fa-refresh': modalSaving
+            }"></i>
+            {% trans "Invite" %}
+          </button>
         </div>
       </div>
     </div>
@@ -376,7 +394,13 @@
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-primary" data-bind="click: saveSchema" data-dismiss="modal">{% trans "Save" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: saveSchema">
+            <i class="fa" data-bind="css: {
+              'fa-spin': modalSaving,
+              'fa-refresh': modalSaving
+            }"></i>
+            {% trans "Save" %}
+          </a>
         </div>
       </div>
     </div>
@@ -408,7 +432,13 @@
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-primary" data-bind="click: createGrant" data-dismiss="modal">{% trans "Grant Access" %}</a>
+          <button href="#" class="btn btn-primary" data-bind="click: createGrant, enable: grantDomains().length">
+            <i class="fa" data-bind="css: {
+              'fa-spin': modalSaving,
+              'fa-refresh': modalSaving
+            }"></i>
+            {% trans "Grant Access" %}
+          </button>
         </div>
       </div>
     </div>
@@ -430,7 +460,13 @@
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-primary" data-bind="click: $root.removeGrant" data-dismiss="modal">{% trans "Remove Grant" %}</a>
+          <a href="#" class="btn btn-primary" data-bind="click: $root.removeGrant">
+            <i class="fa" data-bind="css: {
+              'fa-spin': $root.modalSaving,
+              'fa-refresh': $root.modalSaving
+            }"></i>
+            {% trans "Remove Grant" %}
+          </a>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ hqDefine("registry/js/registry_actions", [
     alertUser,
 ) {
     let accept = function(registrySlug, onSuccess) {
-        acceptOrReject(
+        return acceptOrReject(
             initialPageData.reverse('accept_registry_invitation'),
             registrySlug,
             onSuccess
@@ -16,7 +16,7 @@ hqDefine("registry/js/registry_actions", [
     }
 
     let reject = function(registrySlug, onSuccess) {
-        acceptOrReject(
+        return acceptOrReject(
             initialPageData.reverse('reject_registry_invitation'),
             registrySlug,
             onSuccess
@@ -24,7 +24,7 @@ hqDefine("registry/js/registry_actions", [
     }
 
     let acceptOrReject = function(url, registrySlug, onSuccess) {
-        $.post({
+        return $.post({
             url: url,
             data: {registry_slug: registrySlug},
             success: function (data) {
@@ -38,7 +38,7 @@ hqDefine("registry/js/registry_actions", [
     }
 
     let manageRelatedModels = function(url, registrySlug, data, onSuccess) {
-        $.post({
+        return $.post({
             url: initialPageData.reverse(url, registrySlug),
             data: data,
             traditional: true,
@@ -56,16 +56,16 @@ hqDefine("registry/js/registry_actions", [
 
     let addInvitations = function (registrySlug, domains, onSuccess) {
         const data = {"action": "add", "domains": domains};
-        manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
+        return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
     let removeInvitation = function (registrySlug, invitationId, domain, onSuccess) {
         const data = {"action": "remove", "id": invitationId, "domain": domain};
-        manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
+        return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
     let editAttr = function(registrySlug, attr, data, onSuccess) {
-        $.post({
+        return $.post({
             url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
             data: data,
             traditional: true,
@@ -87,12 +87,12 @@ hqDefine("registry/js/registry_actions", [
 
     let createGrant = function (registrySlug, domains, onSuccess) {
         const data = {"action": "add", "domains": domains};
-        manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
+        return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     }
 
     let removeGrant = function (registrySlug, grantId, onSuccess) {
         const data = {"action": "remove", "id": grantId};
-        manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
+        return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     }
 
     return {

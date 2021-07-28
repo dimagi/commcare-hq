@@ -9,7 +9,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/knockout_bindings.ko', // openModal
-    'hqwebapp/js/main.ko', // makeHqHelp
+    'hqwebapp/js/main', // makeHqHelp
 ], function (
     moment,
     ko,
@@ -84,64 +84,96 @@ hqDefine("registry/js/registry_edit", [
             return Array.from(availableDomains);
         });
 
+        self.savingActiveState = ko.observable(false);
         self.toggleActiveState = function() {
+            self.savingActiveState(true);
             actions.editAttr(self.slug, "is_active", {"value": !self.is_active()}, (data) => {
                 self.is_active(data.is_active);
+            }).done(() => {
+                self.savingActiveState(false);
             });
         }
 
         self.inviteDomains = ko.observable([]);
         self.removeDomain = function (toRemove){
+            self.saving(true);
             actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
                     return invite.id !== toRemove.id;
                 }));
+            }).done(() => {
+                self.saving(false);
+                $(".modal").modal('hide');
             });
         }
 
         self.addDomain = function () {
+            self.saving(true);
             actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
                    self.invitations.unshift(InvitationModel(invite));
                 });
                 self.inviteDomains([]);
-            })
+            }).always(() => {
+                self.saving(false);
+                $(".modal").modal('hide');
+            });
         }
 
         self.editedSchema = ko.observable(self.schema());
-        self.saveSchema = function () {
+        self.modalSaving = ko.observable(false);
+        self.saveSchema = function (data, event) {
+            self.modalSaving(true);
             actions.editAttr(self.slug, 'schema', {"value": self.editedSchema()}, (data) => {
                 self.schema(self.editedSchema());
-            })
+            }).always(() => {
+                self.modalSaving(false);
+                $(".modal").modal('hide');
+            });
         }
 
         self.grantDomains = ko.observable([]);
         self.createGrant = function() {
+            self.modalSaving(true);
             actions.createGrant(self.slug, self.grantDomains(), (data) => {
                 _.each(data.grants, (grant) => {
                    self.grants.unshift(GrantModel(self.current_domain, grant));
                 });
                 self.grantDomains([]);
-            })
+            }).always(() => {
+                self.modalSaving(false);
+                $(".modal").modal('hide');
+            });
         }
 
         self.removeGrant = function(toRemove) {
+            self.modalSaving(true);
             actions.removeGrant(self.slug, toRemove.id, () => {
                 self.grants(self.grants().filter((grant) => {
                     return grant.id !== toRemove.id;
                 }));
+            }).always(() => {
+                self.modalSaving(false);
+                $(".modal").modal('hide');
             });
         }
 
+        self.savingInvitation = ko.observable(false);
         self.acceptInvitation = function() {
+            self.savingInvitation(true);
             actions.acceptInvitation(self.slug, (data) => {
                 ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
+            }).always(() => {
+                self.savingInvitation(false);
             });
         }
 
         self.rejectInvitation = function() {
+            self.savingInvitation(true);
             actions.rejectInvitation(self.slug, (data) => {
                 ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
+            }).always(() => {
+                self.savingInvitation(false);
             });
         }
 
