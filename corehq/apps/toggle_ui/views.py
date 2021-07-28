@@ -21,7 +21,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_toggles_attachment_file
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -39,6 +39,7 @@ from corehq.toggles import (
     toggles_enabled_for_user,
 )
 from corehq.util.soft_assert import soft_assert
+from couchexport.models import Format
 
 NOT_FOUND = "Not Found"
 
@@ -363,3 +364,15 @@ def set_toggle(request, toggle_slug):
     _clear_cache_for_toggle(namespace, item)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+
+
+@require_superuser_or_contractor
+def export_toggles(request):
+    tag = request.GET['tag'] or None
+
+    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
+    outfile = get_toggles_attachment_file(tag)
+    response.write(outfile.getvalue())
+
+    return response

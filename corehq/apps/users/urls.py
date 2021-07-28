@@ -1,6 +1,7 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
+from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 
 from .views import (
     DefaultProjectUserSettingsView,
@@ -75,6 +76,12 @@ from .views.mobile.users import (
     send_confirmation_email,
     CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
+
+
+user_management_urls = [
+    UserManagementReportDispatcher.url_pattern(),
+]
+
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -177,4 +184,7 @@ urlpatterns = [
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),
+] + [
+    url(r'^reports/', include(user_management_urls)),
+
 ]
