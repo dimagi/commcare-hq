@@ -159,7 +159,7 @@ function _run_tests {
 
     function _test_python {
         ./manage.py create_kafka_topics
-        if [ "$TRAVIS_EVENT_TYPE" ]; then
+        if [ -n "$TRAVIS_EVENT_TYPE" ]; then
             logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
             coverage run --parallel-mode manage.py test "${py_test_args[@]}"
