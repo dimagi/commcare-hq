@@ -48,7 +48,7 @@ class TestSsoBackend(TestCase):
     def tearDownClass(cls):
         AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
-        cls.user.delete(None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
 
         # cleanup "new" users
         for username in [
@@ -60,7 +60,7 @@ class TestSsoBackend(TestCase):
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
-                web_user.delete(None)
+                web_user.delete(cls.domain.name, deleted_by=None)
 
         cls.domain.delete()
         cls.account.delete()
@@ -472,6 +472,37 @@ class TestSsoBackend(TestCase):
             self.request.sso_new_user_messages['success'],
             [
                 f'User account for {username} created.',
+            ]
+        )
+
+    def test_new_user_with_capitals_in_username(self):
+        """
+        It is possible for the Identity Provider to supply a username with
+        uppercase characters in it, which we do not support. If the username
+        is not made lowercase, a BadValueError and a User.DoesNotExist error
+        will be thrown during the user creation process. This test ensures
+        that we process the username correctly.
+        """
+        username = 'Hello.World.313@vaultwax.com'
+        generator.store_full_name_in_saml_user_data(
+            self.request,
+            'Hello',
+            'World'
+        )
+        user = auth.authenticate(
+            request=self.request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username.lower())
+        self.assertEqual(user.first_name, 'Hello')
+        self.assertEqual(user.last_name, 'World')
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {username.lower()} created.',
             ]
         )
 

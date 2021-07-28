@@ -2,12 +2,17 @@ from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf.urls import include, url
 
 from corehq.apps.enterprise.views import (
+    add_enterprise_permissions_domain,
+    disable_enterprise_permissions,
     edit_enterprise_settings,
     enterprise_dashboard,
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
+    enterprise_permissions,
     enterprise_settings,
+    remove_enterprise_permissions_domain,
+    update_enterprise_permissions_source_domain,
 )
 from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 from corehq.apps.sso.views.enterprise_admin import (
@@ -27,6 +32,14 @@ domain_specific = [
         name='enterprise_dashboard_email'),
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
+    url(r'^permissions/$', enterprise_permissions, name="enterprise_permissions"),
+    url(r'^permissions/disable/$', disable_enterprise_permissions, name="disable_enterprise_permissions"),
+    url(r'^permissions/add/(?P<target_domain>[ \w-]+)/$', add_enterprise_permissions_domain,
+        name='add_enterprise_permissions_domain'),
+    url(r'^permissions/remove/(?P<target_domain>[ \w-]+)/$', remove_enterprise_permissions_domain,
+        name='remove_enterprise_permissions_domain'),
+    url(r'^permissions/source/$', update_enterprise_permissions_source_domain,
+        name='update_enterprise_permissions_source_domain'),
     url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
     url(r'^settings/edit/$', edit_enterprise_settings, name='edit_enterprise_settings'),
     url(r'^billing_statements/$', EnterpriseBillingStatementsView.as_view(),

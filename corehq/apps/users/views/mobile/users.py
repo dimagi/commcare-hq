@@ -99,6 +99,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    log_user_change,
     raw_username,
 )
 from corehq.apps.users.views import (
@@ -119,7 +120,6 @@ from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
-from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -428,7 +428,7 @@ def delete_commcare_user(request, domain, user_id):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    user.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_WEB)
+    user.retire(request.domain, deleted_by=request.couch_user, deleted_via=USER_CHANGE_VIA_WEB)
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
@@ -457,7 +457,8 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
+    success, message = user.unretire(request.domain, unretired_by=request.couch_user,
+                                     unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -770,7 +771,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.domain,
             username,
             password,
-            created_by=self.request.user,
+            created_by=self.request.couch_user,
             created_via=USER_CHANGE_VIA_WEB,
             email=email,
             device_id="Generated from HQ",
@@ -839,9 +840,8 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    change_message = "Activated User" if is_active else "Deactivated User"
-    log_model_change(request.user, user.get_django_user(), message=change_message,
-                     action=ModelAction.UPDATE)
+    log_user_change(request.domain, user, request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
     return JsonResponse({
         'success': True,
     })
@@ -979,7 +979,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 self.domain,
                 username,
                 password,
-                created_by=request.user,
+                created_by=request.couch_user,
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
@@ -1264,7 +1264,8 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
+                CommCareUser.wrap(doc).delete(request.domain, deleted_by=request.couch_user,
+                                              deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")

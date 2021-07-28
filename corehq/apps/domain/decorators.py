@@ -104,7 +104,7 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
@@ -263,7 +263,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                         if (
                             couch_user
                             and (allow_cc_users or couch_user.is_web_user())
-                            and couch_user.is_member_of(domain, allow_mirroring=True)
+                            and couch_user.is_member_of(domain, allow_enterprise=True)
                         ):
                             clear_login_attempts(couch_user)
                             return fn(request, domain, *args, **kwargs)
@@ -612,7 +612,20 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if ((IS_CONTRACTOR.enabled(user.username) or user.is_superuser)
+                and not is_request_using_sso(request)):
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
+
+def require_superuser(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if user.is_superuser and not is_request_using_sso(request):
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -625,10 +638,7 @@ domain_admin_required = domain_admin_required_ex()
 cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 ########################################################################################################
-# couldn't figure how to call reverse, so login_url is the actual url
-require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
-
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 

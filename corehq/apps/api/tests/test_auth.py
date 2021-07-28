@@ -339,7 +339,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         user = WebUser.create(self.domain, 'multi_domain_admin', '***', None, None, is_admin=True)
         user.add_domain_membership(project.name, is_admin=True)
         user.save()
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         unscoped_api_key, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(user),
             name='unscoped',

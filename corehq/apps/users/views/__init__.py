@@ -55,6 +55,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
@@ -88,14 +89,12 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
-    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -104,10 +103,12 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
+from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
@@ -379,10 +380,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def form_user_update_permissions(self):
-        user = self.editable_user
-        is_super_user = user.is_superuser
-
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
+        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
 
     @property
     def main_context(self):
@@ -457,10 +455,17 @@ class EditWebUserView(BaseEditUserView):
                 )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
+            current_superuser_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
-                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+                                                                        editable_user=self.editable_user,
+                                                                        is_superuser=is_superuser):
+                if current_superuser_status != is_superuser:
+                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB,
+                                    fields_changed={'is_superuser': is_superuser})
+                messages.success(self.request,
+                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -690,57 +695,12 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
-@method_decorator(require_superuser, name='dispatch')
-class DomainPermissionsMirrorView(BaseUserSettingsView):
-    template_name = 'users/domain_permissions_mirror.html'
-    page_title = ugettext_lazy("Enterprise Permissions")
-    urlname = 'domain_permissions_mirror'
-
-    @property
-    def page_context(self):
-        return {
-            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
-        }
-
-
-@require_superuser
-@require_POST
-def delete_domain_permission_mirror(request, domain, mirror):
-    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
-    if mirror_obj:
-        mirror_obj.delete()
-        message = _('You have successfully deleted the project space "{mirror}".')
-        messages.success(request, message.format(mirror=mirror))
-    else:
-        message = _('The project space you are trying to delete was not found.')
-        messages.error(request, message)
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
-@require_superuser
-@require_POST
-def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if not form.is_valid():
-        for field, message in form.errors.items():
-            messages.error(request, message)
-    else:
-        form.save_mirror_domain()
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        message = _('You have successfully added the project space "{mirror_domain_name}".')
-        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_enterprise_users(request, domain):
     # Get web users
-    domains = [domain] + DomainPermissionsMirror.mirror_domains(domain)
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
     web_users, pagination = _get_web_users(request, domains)
 
     # Get linked mobile users
@@ -856,6 +816,9 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
+        log_user_change(request.domain, couch_user=user,
+                        changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        message=f"Removed from domain '{domain}'")
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1131,6 +1094,7 @@ class BaseUploadUser(BaseUserSettingsView):
         except WorksheetNotFound:
             self.group_specs = []
         try:
+            from corehq.apps.user_importer.importer import check_headers
             check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
         except UserUploadError as e:
             messages.error(request, _(str(e)))

@@ -144,6 +144,8 @@ def delete_exploded_case_task(domain, explosion_id):
 
 
 def delete_exploded_cases(domain, explosion_id, task=None):
+    if not explosion_id:
+        raise Exception("explosion_id is falsy, aborting rather than deleting all cases")
     NotAllowed.check(domain)
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, 0)

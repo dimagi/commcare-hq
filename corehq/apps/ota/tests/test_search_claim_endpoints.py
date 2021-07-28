@@ -63,7 +63,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                 "bool": {
                     "filter": [
                         {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
                             "bool": {
@@ -107,7 +107,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         }
 
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected
         )
 
@@ -159,7 +159,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                 "bool": {
                     "filter": [
                         {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
                     ],
@@ -298,7 +298,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected,
             validate_query=False
         )
@@ -330,7 +330,7 @@ class CaseClaimEndpointTests(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         cache = get_redis_default_cache()
         cache.clear()

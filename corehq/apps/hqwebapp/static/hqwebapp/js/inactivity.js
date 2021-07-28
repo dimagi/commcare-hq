@@ -123,7 +123,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
-                        src += "?next=" + initialPageData.reverse('iframe_domain_login_new_window');
+                        src += "?next=" + initialPageData.reverse('domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
@@ -237,6 +237,33 @@ hqDefine('hqwebapp/js/inactivity', [
 
         // Start polling
         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(sessionExpiry));
+
+        /**
+         * This function is for subscribing to changes in localStorage in order
+         * to check if a value for the 'ssoMessage' was updated. We use this
+         * to keep track of the SSO login status in an external window, as
+         * we cannot load external websites for Identity Providers in an
+         * iframe in order to complete a full SSO sign in.
+         */
+        var checkIfSsoMessageReceivedFromExternalTab = function (event) {
+            if (event.originalEvent.key !== 'ssoInactivityMessage') {
+                // ignore other messages
+                return;
+            }
+            var message = JSON.parse(event.originalEvent.newValue);
+            if (!message) {
+                return;
+            }
+
+            if (message.isLoggedIn) {
+                log("session successfully extended via Single Sign On in external tab");
+                hideWarningModal();
+                $modal.modal('hide');
+                localStorage.removeItem('ssoInactivityMessage');
+            }
+        };
+
+        window.addEventListener('storage', checkIfSsoMessageReceivedFromExternalTab);
     });
 
     return {

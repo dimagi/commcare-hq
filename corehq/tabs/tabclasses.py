@@ -65,9 +65,11 @@ from corehq.apps.reports.dispatcher import (
     ProjectReportDispatcher,
 )
 from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -128,12 +130,15 @@ class ProjectReportsTab(UITab):
     @property
     def sidebar_items(self):
         tools = self._get_tools_items()
+        tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
+        sidebar_items = (tools + tableau + report_builder_nav
+                         + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
     def _regroup_sidebar_items(self, sidebar_items):
@@ -164,6 +169,20 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         return [(_("Tools"), tools)]
+
+    def _get_tableau_items(self):
+        if not toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            return []
+
+        from corehq.apps.reports.models import TableauVisualization
+        from corehq.apps.reports.standard.tableau import TableauView
+        items = [{
+            'title': viz.name,
+            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+            'show_in_dropdown': False,
+        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
+        return [(_("Tableau Reports"), items)] if items else []
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -954,7 +973,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1441,19 +1460,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
-
         return menu
 
     def _get_locations_menu(self):
@@ -1546,6 +1552,17 @@ class ProjectUsersTab(UITab):
         if locations_menu:
             items.append((_('Organization'), locations_menu))
 
+        if (
+                user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS)
+                and toggles.USER_HISTORY_REPORT.enabled(self.couch_user.username)
+        ):
+            user_management_menu = [{
+                'title': UserHistoryReport.name,
+                'url': reverse('user_management_report_dispatcher',
+                               args=[self.domain, UserHistoryReport.slug])
+            }]
+            items.append((_('User Management'), user_management_menu))
         return items
 
 
@@ -1594,6 +1611,18 @@ class EnterpriseSettingsTab(UITab):
                     },
                 ],
             })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
 
         items.extend(EnterpriseReportDispatcher.navigation_sections(
@@ -2257,9 +2286,10 @@ class AdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
+        return (self.couch_user
+                and (self.couch_user.is_superuser
+                     or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
+                and not is_request_using_sso(self._request))
 
 
 def _get_repeat_record_report(domain):

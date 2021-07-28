@@ -13,11 +13,12 @@ def _mock_case(owner, user):
 
 
 class CaseExportTest(TestCase):
+    domain = 'case-export-test'
 
     def setUp(self):
         super(CaseExportTest, self).setUp()
         for user in CommCareUser.all():
-            user.delete(deleted_by=None)
+            user.delete(self.domain, deleted_by=None)
 
     def testUserFilters(self):
         self.assertTrue(case_users_filter(_mock_case('owner', 'user'), ['owner']))
@@ -31,15 +32,14 @@ class CaseExportTest(TestCase):
         self.assertFalse(case_users_filter(_mock_case('owner', 'user'), ['rando', 'stranger', 'ghost']))
 
     def testGroupFilters(self):
-        domain = 'case-export-test'
-        active_user = CommCareUser.create(domain=domain, username='activeguy', password='secret',
+        active_user = CommCareUser.create(domain=self.domain, username='activeguy', password='secret',
                                           created_by=None, created_via=None)
-        inactive_user = CommCareUser.create(domain=domain, username='inactivegal', password='secret',
+        inactive_user = CommCareUser.create(domain=self.domain, username='inactivegal', password='secret',
                                             created_by=None, created_via=None)
         inactive_user.is_active = False
         inactive_user.save()
 
-        group = Group(domain=domain, name='group', users=[active_user._id, inactive_user._id])
+        group = Group(domain=self.domain, name='group', users=[active_user._id, inactive_user._id])
         group.save()
 
         # no matter what the group should match on ownerid (but not user id)

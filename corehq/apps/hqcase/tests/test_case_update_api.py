@@ -3,6 +3,8 @@ import uuid
 from django.test import TestCase
 from django.urls import reverse
 
+from mock import patch
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
@@ -48,7 +50,7 @@ class TestCaseAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -92,7 +94,13 @@ class TestCaseAPI(TestCase):
         case_id = self._make_case().case_id
         res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['@case_id'], case_id)
+        self.assertEqual(res.json()['case_id'], case_id)
+
+    def test_basic_get_list(self):
+        with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
+            res = self.client.get(reverse('case_api', args=(self.domain,)))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {'example': 'result'})
 
     def test_case_not_found(self):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
@@ -115,17 +123,17 @@ class TestCaseAPI(TestCase):
     def test_create_case(self):
         res = self._create_case({
             # notable exclusions: case_id, date_opened, date_modified
-            '@case_type': 'player',
+            'case_type': 'player',
             'case_name': 'Elizabeth Harmon',
             'external_id': '1',
-            '@owner_id': 'methuen_home',
+            'owner_id': 'methuen_home',
             'properties': {
                 'sport': 'chess',
                 'dob': '1948-11-02',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
-        case = self.case_accessor.get_case(res['case']['@case_id'])
+        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+        case = self.case_accessor.get_case(res['case']['case_id'])
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
         self.assertEqual(case.name, 'Elizabeth Harmon')
@@ -137,17 +145,17 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
-        xform = self.form_accessor.get_form(res['@form_id'])
+        xform = self.form_accessor.get_form(res['form_id'])
         self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
 
     def test_non_schema_updates(self):
         res = self._create_case({
-            '@case_type': 'player',
+            'case_type': 'player',
             'case_name': 'Elizabeth Harmon',
             'external_id': '1',
-            '@owner_id': 'methuen_home',
+            'owner_id': 'methuen_home',
             'bad_property': "this doesn't fit the schema!",
             'properties': {'sport': 'chess'},
         })
@@ -178,13 +186,13 @@ class TestCaseAPI(TestCase):
         res = self._update_case(case.case_id, {
             # notable exclusions: case_id, date_opened, date_modified, case_type
             'case_name': 'Beth Harmon',
-            '@owner_id': 'us_chess_federation',
+            'owner_id': 'us_chess_federation',
             'properties': {
                 'rank': '2100',
                 'champion': 'true',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
 
         case = self.case_accessor.get_case(case.case_id)
         self.assertEqual(case.name, 'Beth Harmon')
@@ -200,7 +208,7 @@ class TestCaseAPI(TestCase):
         case = self._make_case()
         res = self._update_case(case.case_id, {
             'case_name': 'Beth Harmon',
-            '@case_type': 'legend',
+            'case_type': 'legend',
         })
         self.assertEqual(res.status_code, 200)
         case = self.case_accessor.get_case(case.case_id)
@@ -209,7 +217,7 @@ class TestCaseAPI(TestCase):
     def test_update_case_bad_id(self):
         res = self._update_case('notarealcaseid', {
             'case_name': 'Beth Harmon',
-            '@owner_id': 'us_chess_federation',
+            'owner_id': 'us_chess_federation',
             'properties': {
                 'rank': '2100',
                 'champion': 'true',
@@ -229,7 +237,7 @@ class TestCaseAPI(TestCase):
         ).as_text()], domain='other_domain')
 
         res = self._update_case(case_id, {
-            '@owner_id': 'stealing_this_case',
+            'owner_id': 'stealing_this_case',
         })
         self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
         self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
@@ -237,24 +245,24 @@ class TestCaseAPI(TestCase):
     def test_create_child_case(self):
         parent_case = self._make_case()
         res = self._create_case({
-            '@case_type': 'match',
+            'case_type': 'match',
             'case_name': 'Harmon/Luchenko',
             'external_id': '23',
-            '@owner_id': 'harmon',
+            'owner_id': 'harmon',
             'properties': {
                 'winner': 'Harmon',
             },
             'indices': {
                 'parent': {
                     'case_id': parent_case.case_id,
-                    '@case_type': 'player',
-                    '@relationship': 'child',
+                    'case_type': 'player',
+                    'relationship': 'child',
                 },
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
 
-        case = self.case_accessor.get_case(res['case']['@case_id'])
+        case = self.case_accessor.get_case(res['case']['case_id'])
         self.assertEqual(case.name, 'Harmon/Luchenko')
         self.assertEqual(case.external_id, '23')
         self.assertEqual(case.owner_id, 'harmon')
@@ -270,9 +278,9 @@ class TestCaseAPI(TestCase):
         res = self._bulk_update_cases([
             {
                 # update existing case
-                '@case_id': existing_case.case_id,
+                'case_id': existing_case.case_id,
                 'case_name': 'Beth Harmon',
-                '@owner_id': 'us_chess_federation',
+                'owner_id': 'us_chess_federation',
                 'properties': {
                     'rank': '2100',
                     'champion': 'true',
@@ -280,10 +288,10 @@ class TestCaseAPI(TestCase):
             },
             {
                 # No case_id means this is a new case
-                '@case_type': 'player',
+                'case_type': 'player',
                 'case_name': 'Jolene',
                 'external_id': 'jolene',
-                '@owner_id': 'methuen_home',
+                'owner_id': 'methuen_home',
                 'properties': {
                     'sport': 'squash',
                     'dob': '1947-03-09',
@@ -291,7 +299,7 @@ class TestCaseAPI(TestCase):
             },
         ]).json()
         #  only returns a single form ID - chunking should happen in the client
-        self.assertItemsEqual(res.keys(), ['cases', '@form_id'])
+        self.assertItemsEqual(res.keys(), ['cases', 'form_id'])
 
         updated_case = self.case_accessor.get_case(existing_case.case_id)
         self.assertEqual(updated_case.name, 'Beth Harmon')
@@ -314,15 +322,15 @@ class TestCaseAPI(TestCase):
         res = self._bulk_update_cases([
             {
                 # attempt to update existing case, but it doesn't exist
-                '@case_id': 'notarealcaseid',
+                'case_id': 'notarealcaseid',
                 'case_name': 'Beth Harmon',
-                '@owner_id': 'us_chess_federation',
+                'owner_id': 'us_chess_federation',
             },
             {
                 # Also have a (valid) case creation, though it shouldn't go through
-                '@case_type': 'player',
+                'case_type': 'player',
                 'case_name': 'Jolene',
-                '@owner_id': 'methuen_home',
+                'owner_id': 'methuen_home',
             },
         ])
         self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
@@ -331,16 +339,16 @@ class TestCaseAPI(TestCase):
     def test_create_parent_and_child_together(self):
         res = self._bulk_update_cases([
             {
-                '@case_type': 'player',
+                'case_type': 'player',
                 'case_name': 'Elizabeth Harmon',
-                '@owner_id': 'us_chess_federation',
+                'owner_id': 'us_chess_federation',
                 'external_id': 'beth',
                 'temporary_id': 'beth_harmon',
             },
             {
-                '@case_type': 'match',
+                'case_type': 'match',
                 'case_name': 'Harmon/Luchenko',
-                '@owner_id': 'harmon',
+                'owner_id': 'harmon',
                 'external_id': 'harmon-luchenko',
                 'properties': {
                     'winner': 'Harmon',
@@ -349,8 +357,8 @@ class TestCaseAPI(TestCase):
                     'parent': {
                         # case_id is unknown at this point
                         'temporary_id': 'beth_harmon',
-                        '@case_type': 'player',
-                        '@relationship': 'child',
+                        'case_type': 'player',
+                        'relationship': 'child',
                     },
                 },
             },
@@ -363,9 +371,9 @@ class TestCaseAPI(TestCase):
     def test_create_child_with_no_parent(self):
         res = self._bulk_update_cases([
             {
-                '@case_type': 'match',
+                'case_type': 'match',
                 'case_name': 'Harmon/Luchenko',
-                '@owner_id': 'harmon',
+                'owner_id': 'harmon',
                 'external_id': 'harmon-luchenko',
                 'properties': {
                     'winner': 'Harmon',
@@ -373,8 +381,8 @@ class TestCaseAPI(TestCase):
                 'indices': {
                     'parent': {
                         'temporary_id': 'MISSING',
-                        '@case_type': 'player',
-                        '@relationship': 'child',
+                        'case_type': 'player',
+                        'relationship': 'child',
                     },
                 },
             },
@@ -390,8 +398,8 @@ class TestCaseAPI(TestCase):
     def test_missing_required_field(self):
         res = self._create_case({
             # case_name is not provided!
-            '@case_type': 'player',
-            '@owner_id': 'methuen_home',
+            'case_type': 'player',
+            'owner_id': 'methuen_home',
             'properties': {'dob': '1948-11-02'},
         })
         self.assertEqual(res.status_code, 400)
@@ -400,8 +408,8 @@ class TestCaseAPI(TestCase):
     def test_invalid_properties(self):
         res = self._create_case({
             'case_name': 'Beth Harmon',
-            '@case_type': 'player',
-            '@owner_id': 'methuen_home',
+            'case_type': 'player',
+            'owner_id': 'methuen_home',
             'properties': {
                 'dob': '1948-11-02',
                 'age': 72,  # Can't pass integers
@@ -412,24 +420,24 @@ class TestCaseAPI(TestCase):
 
     def test_bad_index_reference(self):
         res = self._create_case({
-            '@case_type': 'match',
+            'case_type': 'match',
             'case_name': 'Harmon/Luchenko',
             'external_id': '23',
-            '@owner_id': 'harmon',
+            'owner_id': 'harmon',
             'properties': {
                 'dob': '1948-11-02',
             },
             'indices': {
                 'parent': {
                     'case_id': 'bad404bad',  # This doesn't exist
-                    '@case_type': 'player',
-                    '@relationship': 'child',
+                    'case_type': 'player',
+                    'relationship': 'child',
                 },
             },
         })
         self.assertEqual(res.status_code, 400)
         self.assertIn("InvalidCaseIndex", res.json()['error'])
-        form = self.form_accessor.get_form(res.json()['@form_id'])
+        form = self.form_accessor.get_form(res.json()['form_id'])
         self.assertEqual(form.is_error, True)
 
     def test_unset_external_id(self):

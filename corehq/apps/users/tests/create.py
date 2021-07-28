@@ -24,7 +24,7 @@ class CreateTestCase(TestCase):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, None, None, email=email)
-        self.addCleanup(couch_user.delete, deleted_by=None)
+        self.addCleanup(couch_user.delete, domain, deleted_by=None)
 
         self.assertEqual(couch_user.domains, [domain])
         self.assertEqual(couch_user.email, email)
@@ -48,7 +48,7 @@ class CreateTestCase(TestCase):
         self.addCleanup(domain2.delete)
         self.addCleanup(domain1.delete)
         couch_user = WebUser.create(None, username, password, None, None, email=email)
-        self.addCleanup(couch_user.delete, deleted_by=None)
+        self.addCleanup(couch_user.delete, domain1, deleted_by=None)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
         couch_user.add_domain_membership('domain1')
@@ -64,8 +64,8 @@ class TestDomainMemberships(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.webuser.delete(deleted_by=None)
-        cls.webuser2.delete(deleted_by=None)
+        cls.webuser.delete(cls.domain, deleted_by=None)
+        cls.webuser2.delete(cls.domain, deleted_by=None)
         cls.project.delete()
         super(TestDomainMemberships, cls).tearDownClass()
 

@@ -65,7 +65,7 @@ class TestFHIRImportConfig(TestCaseWithConnectionSettings):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=__name__)
+        cls.user.delete(DOMAIN, deleted_by=None)
         super().tearDownClass()
 
     def test_connection_settings_null(self):

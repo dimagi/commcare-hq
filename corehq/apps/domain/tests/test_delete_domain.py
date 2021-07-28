@@ -102,9 +102,17 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import (
-    DomainRequest, Invitation, PermissionInfo, Permissions,
-    SQLUserRole, RolePermission, RoleAssignableBy
+    DomainRequest,
+    Invitation,
+    PermissionInfo,
+    Permissions,
+    RoleAssignableBy,
+    RolePermission,
+    SQLUserRole,
+    UserHistory,
+    WebUser,
 )
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
@@ -706,7 +714,6 @@ class TestDeleteDomain(TestCase):
                 server_name='my_server',
                 target_site='my_site',
                 domain_username='my_username',
-                allow_domain_username_override=False,
             )
             TableauVisualization.objects.create(
                 domain=domain_name,
@@ -878,6 +885,29 @@ class TestDeleteDomain(TestCase):
 
         self._assert_users_counts(self.domain.name, 0)
         self._assert_users_counts(self.domain2.name, 1)
+
+    def test_users_domain_membership(self):
+        web_user = WebUser.create(self.domain.name, f'webuser@{self.domain.name}.{HQ_ACCOUNT_ROOT}', '******',
+                                  created_by=None, created_via=None)
+
+        another_domain = Domain(name="another-test", is_active=True)
+        another_domain.save()
+        self.addCleanup(another_domain.delete)
+
+        # add more than 1 domain membership to trigger _log_web_user_membership_removed in tests
+        web_user.add_domain_membership(another_domain.name)
+        web_user.save()
+
+        self.domain.delete()
+
+        user_history = UserHistory.objects.last()
+        self.assertEqual(user_history.domain, None)
+        self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
+        self.assertEqual(user_history.user_id, web_user.get_id)
+        self.assertEqual(user_history.message, f"Removed from domain '{self.domain.name}'")
+        self.assertEqual(user_history.details['changed_via'],
+                         'corehq.apps.domain.deletion._delete_web_user_membership')
+        self.assertEqual(user_history.details['changes'], {})
 
     def _assert_role_counts(self, domain_name, roles, permissions, assignments):
         self.assertEqual(SQLUserRole.objects.filter(domain=domain_name).count(), roles)
