@@ -61,18 +61,11 @@ hqDefine("registry/js/registry_edit", [
         self.sortedGrants = ko.computed(() => {
             return self.grants().sort(grantSort);
         });
-        self.invitationStatusText = ko.computed(() => {
-            return text.getStatusText(self.domain_invitation.status());
-        });
-        self.invitationStatusClass = ko.computed(() => {
-            return text.getStatusCssClass(self.domain_invitation.status());
-        });
-        self.showAccept = ko.computed(() => {
-            return ['pending', 'rejected'].includes(self.domain_invitation.status());
-        })
-        self.showReject = ko.computed(() => {
-            return ['pending', 'accepted'].includes(self.domain_invitation.status());
-        })
+        self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
+        self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
+        self.showAccept = ko.computed(() => ['pending', 'rejected'].includes(self.domain_invitation.status()));
+        self.showReject = ko.computed(() => ['pending', 'accepted'].includes(self.domain_invitation.status()));
+
         self.availableCaseTypes = availableCaseTypes;
         self.availableInviteDomains = ko.computed(() => {
             const existingInvites = self.invitations().map((invite) => invite.domain);
@@ -122,9 +115,9 @@ hqDefine("registry/js/registry_edit", [
 
         self.editedSchema = ko.observable(self.schema());
         self.modalSaving = ko.observable(false);
-        self.saveSchema = function (data, event) {
+        self.saveSchema = function () {
             self.modalSaving(true);
-            actions.editAttr(self.slug, 'schema', {"value": self.editedSchema()}, (data) => {
+            actions.editAttr(self.slug, 'schema', {"value": self.editedSchema()}, () => {
                 self.schema(self.editedSchema());
             }).always(() => {
                 self.modalSaving(false);

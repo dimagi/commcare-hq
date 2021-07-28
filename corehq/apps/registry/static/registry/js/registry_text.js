@@ -1,4 +1,4 @@
-hqDefine("registry/js/registry_text", ['moment'], function (moment) {
+hqDefine("registry/js/registry_text", [], function () {
     let getAcceptedBadgeText = function (registry) {
         return interpolate(ngettext(
             "%(count)s Invitation Accepted",
