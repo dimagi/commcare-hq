@@ -35,6 +35,10 @@ class UserChangeMessage(object):
         return f"Added phone number {phone_number}"
 
     @staticmethod
+    def phone_number_removed_message(phone_number):
+        return f"Removed phone number {phone_number}"
+
+    @staticmethod
     def profile_info_message(profile_name):
         return f"CommCare Profile: {profile_name}"
 

@@ -1,5 +1,4 @@
 from dimagi.utils.parsing import string_to_boolean
-from django.utils.translation import ugettext as _
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -248,10 +247,10 @@ class CommCareUserImporter(BaseUserImporter):
         )
 
         for number in items_added:
-            self.logger.add_change_message(_(f"Added phone number {number}"))
+            self.logger.add_change_message(UserChangeMessage.phone_number_added_message(number))
 
         for number in items_removed:
-            self.logger.add_change_message(_(f"Removed phone number {number}"))
+            self.logger.add_change_message(UserChangeMessage.phone_number_removed_message(number))
 
 
 def _fmt_phone(phone_number):
