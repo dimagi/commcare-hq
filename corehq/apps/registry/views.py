@@ -2,12 +2,13 @@ import json
 from collections import Counter
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
@@ -15,10 +16,12 @@ from corehq.apps.domain.decorators import login_and_domain_required, domain_admi
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
+from corehq.apps.registry.utils import _get_registry_or_404, _get_invitation_or_404
 
 
 @require_enterprise_admin
 @login_and_domain_required
+@require_GET
 def data_registries(request, domain):
     owned, invited = [], []
     for registry in DataRegistry.objects.visible_to_domain(domain):
@@ -97,17 +100,8 @@ def reject_registry_invitation(request, domain):
     return JsonResponse({"invitation": invitation.to_json()})
 
 
-def _get_invitation_or_404(domain, registry_slug):
-    try:
-        return RegistryInvitation.objects.get(
-            registry__slug=registry_slug,
-            domain=domain
-        )
-    except RegistryInvitation.DoesNotExist:
-        raise Http404
-
-
 @domain_admin_required
+@require_GET
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
 
@@ -157,6 +151,7 @@ def manage_registry(request, domain, registry_slug):
 
 @require_enterprise_admin
 @require_POST
+@transaction.atomic
 def edit_registry_attr(request, domain, registry_slug, attr):
     registry = _get_registry_or_404(domain, registry_slug)
     if registry.domain != domain:
@@ -175,8 +170,13 @@ def edit_registry_attr(request, domain, registry_slug, attr):
         # TODO: fire signals to update UCRs
         case_types = request.POST.getlist("value")
         value = [{"case_type": case_type} for case_type in case_types]
+        registry.logger.schema_changed(request.user, value, registry.schema)
     elif attr == "is_active":
         value = json.loads(request.POST.get("value"))
+        if registry.is_active == value:
+            return JsonResponse({attr: value})
+
+        registry.logger.log_registry_activated_deactivated(request.user, value)
 
     setattr(registry, attr, value)
     registry.save()
@@ -186,6 +186,7 @@ def edit_registry_attr(request, domain, registry_slug, attr):
 
 @require_enterprise_admin
 @require_POST
+@transaction.atomic
 def manage_invitations(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
     if registry.domain != domain:
@@ -213,6 +214,7 @@ def manage_invitations(request, domain, registry_slug):
             return JsonResponse({"error": _("Incorrect Project Space")}, status=400)
 
         invitation.delete()
+        registry.logger.invitation_removed(request.user, invitation)
         return JsonResponse({
             "message": _("Project Space '{domain}' removed").format(domain=domain)
         })
@@ -229,6 +231,7 @@ def manage_invitations(request, domain, registry_slug):
             if domain_obj:
                 invitation, created = registry.invitations.get_or_create(domain=domain)
                 if created:
+                    registry.logger.invitation_added(request.user, invitation)
                     invitations.append(invitation)
 
         return JsonResponse({
@@ -241,6 +244,7 @@ def manage_invitations(request, domain, registry_slug):
 
 @require_enterprise_admin
 @require_POST
+@transaction.atomic
 def manage_grants(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
 
@@ -260,6 +264,7 @@ def manage_grants(request, domain, registry_slug):
             )
 
         grant.delete()
+        registry.logger.grant_removed(request.user, grant)
         return JsonResponse({
             "message": _("Access removed from '{domain}' to '{domains}'").format(
                 domain=domain,
@@ -279,6 +284,7 @@ def manage_grants(request, domain, registry_slug):
 
         grant, created = registry.grants.get_or_create(from_domain=domain, to_domains=list(domains))
         if created:
+            registry.logger.grant_added(request.user, grant)
             return JsonResponse({
                 "grants": [grant.to_json()],
                 "message": _("Access granted from '{domain}' to '{domains}'").format(
@@ -304,10 +310,3 @@ def delete_registry(request, domain, registry_slug):
         messages.success(request, _("Data Registry '{name}' deleted successfully").format(name=registry.name))
 
     return redirect("data_registries", domain=domain)
-
-
-def _get_registry_or_404(domain, registry_slug):
-    try:
-        return DataRegistry.objects.visible_to_domain(domain).get(slug=registry_slug)
-    except DataRegistry.DoesNotExist:
-        raise Http404
