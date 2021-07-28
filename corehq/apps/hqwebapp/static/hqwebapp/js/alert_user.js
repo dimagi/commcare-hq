@@ -2,15 +2,16 @@
     This is the knockout-based, javascript analog of messages in Django.
 
     Use the function `alert_user` to make a message appear on the page.
-    This accepts three args, message, emphasis and append.
-    Emphasis corresponds to bootstrap styling, and can be
-    "success", "danger", "info", or "warning".
-    If specified, "append" will cause the message to be appended to the existing notification
-    bubble (as opposed to making a new bubble).
-    NOTE: append will change the class of the alert if it is more severe
-    (success < info < warning < danger)
 
-    alert_user("Awesome job!", "success", true);
+    alert_user("Awesome job!", "success");
+
+    Parameters:
+    message: The message to display
+    emphasis: one of "success", "info", "warning", "danger"
+    append: Set to 'true' to have the message appended to an existing message instead
+       of creating a new one. NOTE: append will change the class of the alert if it is more severe
+       (success < info < warning < danger).
+    fadeOut: Set to 'true' to have the message automatically removed from the UI after 5s.
 */
 hqDefine("hqwebapp/js/alert_user", [
     "jquery",
@@ -21,7 +22,7 @@ function (
     $,
     ko
 ) {
-    var MessageAlert = function (message, tags) {
+    var MessageAlert = function (message, tags, fadeOut) {
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
@@ -30,6 +31,15 @@ function (
         };
         if (tags) {
             self.alert_class(self.alert_class() + " " + tags);
+        }
+        if (fadeOut) {
+            self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
+        }
+        self.restartTimer = () => {
+            if (self.timer) {
+                clearTimeout(self.timer);
+                self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
+            }
         }
         return self;
     };
@@ -41,16 +51,21 @@ function (
             self.alerts.remove(alertObj);
         };
 
-        self.alert_user = function (message, emphasis, append) {
+        self.fadeOut = function(element) {
+            $(element).fadeOut('slow');
+        }
+
+        self.alert_user = function (message, emphasis, append, fadeOut) {
             var tags = "alert-" + emphasis;
             if (!append || self.alerts().length === 0) {
-                self.alerts.push(MessageAlert(message, tags));
+                self.alerts.push(MessageAlert(message, tags, fadeOut));
             } else {
                 var alert = self.alerts()[0];
                 alert.message(alert.message() + "<br>" + message);
                 if (!alert.alert_class().includes(tags)) {
                     alert.alert_class(alert.alert_class() + ' ' + tags);
                 }
+                alert.restartTimer();
             }
 
             // Scroll to top of page to see alert
@@ -58,6 +73,12 @@ function (
         };
         return self;
     };
+
+    const removeAlertTimerFunc = (alertObj) => {
+        return () => {
+            viewModel.removeAlert(alertObj);
+        }
+    }
 
     const viewModel = ViewModel();
 
