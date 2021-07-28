@@ -92,13 +92,18 @@
         "></inline-edit>
       {% endif %}
       {% if not is_owner %}
-        <div class="registry-form-container text-muted">
-          {% if registry.description %}<p>{{ registry.description }}</p>{% endif %}
+        <div class="registry-form-container">
+          {% if registry.description %}<p class="text-muted">{{ registry.description }}</p>{% endif %}
           <p>
             {% blocktrans %}
             This registry is managed by the '{{ domain }}' project space.
             {% endblocktrans %}
           </p>
+          {% if not is_owner %}
+          <p data-bind="visible: domain_invitation.status() === 'accepted'">
+            {% trans "Participating project spaces" %}: <span data-bind="text: availableGrantDomains().join(', ')"></span>
+          </p>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -141,7 +146,7 @@
         </div>
       </div>
     </div>
-    <div class="row mt-4" data-bind="ifnot: domain_invitation.status() === 'accepted'">
+    <div class="row mt-4" data-bind="visible: domain_invitation.status() !== 'accepted'">
       <div class="col-sm-12 col-md-8">
         <div class="alert alert-info">
         {% trans "You must opt-in to the registry before you are able to manage grants." %}
