@@ -2,7 +2,6 @@ import json
 from collections import Counter
 
 from django.contrib import messages
-from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
@@ -10,6 +9,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST, require_GET
 
+from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
@@ -22,6 +22,7 @@ from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHel
 @require_enterprise_admin
 @login_and_domain_required
 @require_GET
+@toggles.DATA_REGISTRY.required_decorator()
 def data_registries(request, domain):
     owned, invited = [], []
     for registry in DataRegistry.objects.visible_to_domain(domain):
@@ -77,25 +78,8 @@ def _registry_list_context(domain, registry):
 
 
 @domain_admin_required
-@require_POST
-def accept_registry_invitation(request, domain):
-    registry_slug = request.POST.get('registry_slug')
-    helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
-    invitation = helper.accept_invitation(domain)
-    return JsonResponse({"invitation": invitation.to_json()})
-
-
-@domain_admin_required
-@require_POST
-def reject_registry_invitation(request, domain):
-    registry_slug = request.POST.get('registry_slug')
-    helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
-    invitation = helper.reject_invitation(domain)
-    return JsonResponse({"invitation": invitation.to_json()})
-
-
-@domain_admin_required
 @require_GET
+@toggles.DATA_REGISTRY.required_decorator()
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
 
@@ -143,9 +127,26 @@ def manage_registry(request, domain, registry_slug):
     return render(request, "registry/registry_edit.html", context)
 
 
+@domain_admin_required
+@require_POST
+def accept_registry_invitation(request, domain):
+    registry_slug = request.POST.get('registry_slug')
+    helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    invitation = helper.accept_invitation(domain)
+    return JsonResponse({"invitation": invitation.to_json()})
+
+
+@domain_admin_required
+@require_POST
+def reject_registry_invitation(request, domain):
+    registry_slug = request.POST.get('registry_slug')
+    helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    invitation = helper.reject_invitation(domain)
+    return JsonResponse({"invitation": invitation.to_json()})
+
+
 @require_enterprise_admin
 @require_POST
-@transaction.atomic
 def edit_registry_attr(request, domain, registry_slug, attr):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
 
@@ -177,7 +178,6 @@ def edit_registry_attr(request, domain, registry_slug, attr):
 
 @require_enterprise_admin
 @require_POST
-@transaction.atomic
 def manage_invitations(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
     if helper.registry.domain != domain:
@@ -230,7 +230,6 @@ def manage_invitations(request, domain, registry_slug):
 
 @require_enterprise_admin
 @require_POST
-@transaction.atomic
 def manage_grants(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
 
