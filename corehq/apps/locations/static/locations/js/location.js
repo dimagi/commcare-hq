@@ -113,15 +113,8 @@ hqDefine("locations/js/location", [
 
         $('#loc_form').koApplyBindings(model);
 
-    });
-
-    $(function () {
-        var locs = initialPageData.get('locations'),
-            can_edit_root = initialPageData.get('can_edit_root'),
-            hierarchy = initialPageData.get('hierarchy'),
+        var can_edit_root = initialPageData.get('can_edit_root'),
             show_inactive = initialPageData.get('show_inactive');
-            loc_id = initialPageData.get('location_id');
-            location_url = initialPageData.get('api_root');
 
         var options = {
             show_inactive: show_inactive,
