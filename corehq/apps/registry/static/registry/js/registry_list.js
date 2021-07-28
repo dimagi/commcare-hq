@@ -6,6 +6,7 @@ hqDefine("registry/js/registry_list", [
     'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
+    'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
     $,
     _,
