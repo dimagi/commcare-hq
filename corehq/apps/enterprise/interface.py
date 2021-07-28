@@ -1,7 +1,6 @@
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from django.utils.translation import ugettext as _
-from django.db.models.aggregates import Count
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader

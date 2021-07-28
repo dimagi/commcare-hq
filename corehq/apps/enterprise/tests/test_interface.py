@@ -29,166 +29,109 @@ class TestEnterpriseSMSBillablesReport(TestCase):
         self.create_smsbillable(datetime(2021, 7, 12))
         self.create_smsbillable(datetime(2021, 7, 1))
         self.create_smsbillable(datetime(2021, 5, 5))
-        request = RequestFactory().get(
-            '/test',
-            data={'date_sent_startdate': '2021-06-30',
-            'date_sent_enddate': '2021-07-30',
-            'date_created_startdate': '2021-06-30',
-            'date_created_enddate': '2021-07-30',
-            'show_billables': '',
-            'domain': 'test-domain',
-            'has_gateway_fee': '',
-            'gateway_type': ''}
-        )
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 2)
 
     def test_sms_billables_date_created(self):
-        request = RequestFactory().get(
-            '/test',
-            data={'report_filter_date_created_use_filter': 'on',
-            'date_sent_startdate': '2021-06-30',
-            'date_sent_enddate': '2021-07-30',
-            'date_created_startdate': '2021-06-30',
-            'date_created_enddate': '2021-07-30',
-            'show_billables': '',
-            'domain': 'test-domain',
-            'has_gateway_fee': '',
-            'gateway_type': ''}
-        )
         self.create_smsbillable(datetime(2021, 7, 12))
         self.create_smsbillable(datetime(2021, 7, 1))
         self.create_smsbillable(datetime(2021, 5, 5))
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            report_filter_date_created_use_filter='on',
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            date_created_startdate='2021-06-30',
+            date_created_enddate='2021-07-30'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 2)
 
     def test_sms_billables_show_billables_true(self):
-        request = RequestFactory().get(
-            '/test',
-            data={
-                'date_sent_startdate': '2021-06-30',
-                'date_sent_enddate': '2021-07-30',
-                'date_created_startdate': '2021-06-30',
-                'date_created_enddate': '2021-07-30',
-                'show_billables': 'valid',
-                'domain': 'test-domain',
-                'has_gateway_fee': '',
-                'gateway_type': ''
-            }
-        )
         self.create_smsbillable(datetime(2021, 7, 12), True)
         self.create_smsbillable(datetime(2021, 7, 1), True)
         self.create_smsbillable(datetime(2021, 7, 5), False)
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            show_billables='valid'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 2)
 
     def test_sms_billables_show_billables_false(self):
-        request = RequestFactory().get(
-            '/test',
-            data={
-                'date_sent_startdate': '2021-06-30',
-                'date_sent_enddate': '2021-07-30',
-                'date_created_startdate': '2021-06-30',
-                'date_created_enddate': '2021-07-30',
-                'show_billables': 'invalid',
-                'domain': 'test-domain',
-                'has_gateway_fee': '',
-                'gateway_type': ''
-            }
-        )
         self.create_smsbillable(datetime(2021, 7, 12), True)
         self.create_smsbillable(datetime(2021, 7, 1), True)
         self.create_smsbillable(datetime(2021, 7, 5), False)
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            show_billables='invalid'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 1)
 
     def test_sms_billables_has_gateway_fee(self):
-        request = RequestFactory().get(
-            '/test',
-            data={
-                'date_sent_startdate': '2021-06-30',
-                'date_sent_enddate': '2021-07-30',
-                'date_created_startdate': '2021-06-30',
-                'date_created_enddate': '2021-07-30',
-                'show_billables': '',
-                'domain': 'test-domain',
-                'has_gateway_fee': 'yes',
-                'gateway_type': ''
-            }
-        )
         gateway_fee = Decimal('6.9')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), False, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            has_gateway_fee='yes'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 2)
 
     def test_sms_billables_not_has_gateway_fee(self):
-        request = RequestFactory().get(
-            '/test',
-            data={
-                'date_sent_startdate': '2021-06-30',
-                'date_sent_enddate': '2021-07-30',
-                'date_created_startdate': '2021-06-30',
-                'date_created_enddate': '2021-07-30',
-                'show_billables': '',
-                'domain': 'test-domain',
-                'has_gateway_fee': 'no',
-                'gateway_type': ''
-            }
-        )
         gateway_fee = Decimal('4.20')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), False, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            has_gateway_fee='no'
+        )
 
         results = report.get_all_rows
 
         self.assertEqual(len(results), 1)
 
     def test_sms_billables_random_filters(self):
-        request = RequestFactory().get(
-            '/test',
-            data={
-                'report_filter_date_created_use_filter': 'on',
-                'date_sent_startdate': '2021-06-30',
-                'date_sent_enddate': '2021-07-30',
-                'date_created_startdate': '2021-06-30',
-                'date_created_enddate': '2021-07-30',
-                'show_billables': '',
-                'domain': 'test-domain',
-                'has_gateway_fee': 'no',
-                'gateway_type': ''
-            }
-        )
         gateway_fee = Decimal('4.20')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)
         self.create_smsbillable(datetime(2021, 7, 1), True, gateway_fee)
         self.create_smsbillable(datetime(2021, 7, 5), False, gateway_fee)
 
-        report = self.create_interface(request)
+        report = self.create_interface(
+            date_sent_startdate='2021-06-30',
+            date_sent_enddate='2021-07-30',
+            report_filter_date_created_use_filter='on',
+            date_created_startdate='2021-06-30',
+            date_created_enddate='2021-07-30',
+            has_gateway_fee='no'
+        )
 
         results = report.get_all_rows
 
@@ -252,7 +195,32 @@ class TestEnterpriseSMSBillablesReport(TestCase):
     #End Set Up
 
     #Util Methods
-    def create_interface(self, request):
+    def create_interface(
+        self,
+        report_filter_date_created_use_filter='off',
+        date_sent_startdate='2021-06-30',
+        date_sent_enddate='2021-07-30',
+        date_created_startdate='2021-06-30',
+        date_created_enddate='2021-07-30',
+        show_billables='',
+        domain='test-domain',
+        has_gateway_fee='',
+        gateway_type=''
+    ):
+        request = RequestFactory().get(
+            '/test',
+            data={
+                'report_filter_date_created_use_filter': report_filter_date_created_use_filter,
+                'date_sent_startdate': date_sent_startdate,
+                'date_sent_enddate': date_sent_enddate,
+                'date_created_startdate': date_created_startdate,
+                'date_created_enddate': date_created_enddate,
+                'show_billables': show_billables,
+                'domain': domain,
+                'has_gateway_fee': has_gateway_fee,
+                'gateway_type': gateway_type
+            }
+        )
         request.couch_user = self.user
         request.domain = self.domain
         return EnterpriseSMSBillablesReport(request)
