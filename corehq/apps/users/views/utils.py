@@ -107,5 +107,5 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
             changed_by_user=request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
             fields_changed=fields_changed,
-            message=", ".join(messages)
+            message=". ".join(messages)
         )
