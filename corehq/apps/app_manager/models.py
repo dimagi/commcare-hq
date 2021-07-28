@@ -1154,6 +1154,7 @@ class FormBase(DocumentSchema):
         xform.set_version(self.get_version())
         xform.add_missing_instances(app)
 
+    @memoized
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
