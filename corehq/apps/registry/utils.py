@@ -12,16 +12,6 @@ def _get_registry_or_404(domain, registry_slug):
         raise Http404
 
 
-def _get_invitation_or_404(domain, registry_slug):
-    try:
-        return RegistryInvitation.objects.get(
-            registry__slug=registry_slug,
-            domain=domain
-        )
-    except RegistryInvitation.DoesNotExist:
-        raise Http404
-
-
 class DataRegistryCrudHelper:
     def __init__(self, domain, registry_slug, request_user):
         self.registry = _get_registry_or_404(domain, registry_slug)
