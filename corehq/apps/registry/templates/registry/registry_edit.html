@@ -33,7 +33,7 @@
   <div class="row">
     <div class="col-sm-6 col-md-4">
       <inline-edit params="
-          value: '{{ registry.name|escapejs }}',
+          value: name,
           containerClass: 'h3',
           url: '{% url "edit_registry_attr" registry.domain registry.slug 'name' %}',
           placeholder: '{% trans "Untitled Data Registry"|escapejs %}',
@@ -155,6 +155,13 @@
             {% trans "Grants" %}
             </a>
           </li>
+          {% if is_owner %}
+          <li role="presentation">
+            <a href="#actions" aria-controls="actions" role="tab" data-toggle="tab">
+            {% trans "Actions" %}
+            </a>
+          </li>
+          {% endif %}
         </ul>
 
         <div class="tab-content mt-4">
@@ -253,11 +260,31 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
+          </div>  <!-- end grants tab -->
 
-      </div>
-    </div>
+          {% if is_owner %}
+          <div class="tab-pane" role="tabpanel" id="actions">
+            <div class="panel-body">
+              <div class="form form-horizontal">
+                <fieldset>
+                  <legend>{% trans 'Delete Data Registry' %}</legend>
+                  <div class="alert alert-danger">
+                    <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
+                    <p>
+                      <button type="button" class="btn btn-danger btn-xs" data-bind="openModal: 'delete-registry-modal'">
+                        <i class="fa fa-trash"></i> {% trans "Delete Data Registry" %}
+                      </button>
+                    </p>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+          </div> <!-- end actions tab -->
+          {% endif %}
+
+        </div> <!-- end tab content -->
+      </div> <!-- end col -->
+    </div> <!-- end row -->
   </div>
 </div>
 <script type="text/html" id="remove-project-space-modal">
@@ -405,6 +432,84 @@
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: $root.removeGrant" data-dismiss="modal">{% trans "Remove Grant" %}</a>
         </div>
+      </div>
+    </div>
+</script>
+
+<script type="text/html" id="delete-registry-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">
+            {% blocktrans %}Delete Data Registry Worker{% endblocktrans %}
+            <strong data-bind="text: name"></strong>?
+            <small>{% trans "Permanent Action" %}</small>
+          </h4>
+        </div>
+        <form class="form-horizontal"
+                style="margin: 0; padding: 0"
+                action="{% url "delete_registry" domain registry.slug %}"
+                method="post"
+                data-bind="submit: submitDelete">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p class="alert alert-warning">
+                <i class="fa fa-exclamation-triangle"></i>
+                {% blocktrans %}
+                  It is important you read the entire message below thoroughly before completing this action.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  Are you sure you want to permanently delete
+                {% endblocktrans %}
+                <strong data-bind="text: name"></strong>?
+              </p>
+              <p>{% trans "This action:" %}</p>
+              <ul>
+                <li>
+                  {% blocktrans %}Will delete the registry.{% endblocktrans %}
+                </li>
+                <li>{% blocktrans %}
+                  Will delete <strong>all</strong> of the associated configuration including Reports.
+                {% endblocktrans %}</li>
+                <li>{% trans "Is permanent." %}</li>
+              </ul>
+              <p>
+                {% blocktrans %}
+                If you ever want to use the registry configuration again in the future,
+                  we suggest that you use the <strong>Deactivate</strong> option instead.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  If even after reading this you decide that you really want
+                  to delete this registry, type <strong data-bind="text:name"></strong> into the box below.
+                {% endblocktrans %}
+              </p>
+
+              <input class="form-control" data-bind="value: signOffDelete, valueUpdate: 'textchange'" />
+            </div>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+              <button type="submit" class="btn btn-danger" data-bind="
+                             css: {disabled: deleteDisabled()},
+                             attr: {disabled: deleteDisabled()}
+                         ">
+                <i class="fa fa-trash" data-bind="
+                                 css: {
+                                     'fa-trash': !formDeleteRegistrySent(),
+                                     'fa-refresh': formDeleteRegistrySent,
+                                     'fa-spin': formDeleteRegistrySent
+                                 }
+                             "></i>
+                {% trans "Delete Mobile Worker" %}
+              </button>
+            </div>
+          </form>
       </div>
     </div>
 </script>

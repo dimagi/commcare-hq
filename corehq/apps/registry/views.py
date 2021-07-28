@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 
+from django.contrib import messages
 from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect
@@ -286,6 +287,21 @@ def manage_grants(request, domain, registry_slug):
         return JsonResponse({
             "grants": [], "message": _("'{domains}' already have access.").format(domains="', '".join(domains))
         })
+
+
+@require_enterprise_admin
+@require_POST
+def delete_registry(request, domain, registry_slug):
+    registry = _get_registry_or_404(domain, registry_slug)
+    if registry.domain != domain:
+        messages.success(
+            request,
+            _("You do not have permission to delete the '{name}' registry").format(name=registry.name)
+        )
+    else:
+        messages.success(request, _("Data Registry '{name}' deleted successfully").format(name=registry.name))
+
+    return redirect("data_registries", domain=domain)
 
 
 def _get_registry_or_404(domain, registry_slug):

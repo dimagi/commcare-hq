@@ -38,8 +38,8 @@ hqDefine("registry/js/registry_edit", [
     }
     let EditModel = function(data, availableCaseTypes, availableDomains, invitedDomains) {
         const mapping = {
-            'copy': ["domain", "current_domain", "is_owner", "slug", "name", "description"],
-            'observe': ["is_active", "schema", "invitations", "grants", "domain_invitation"],
+            'copy': ["domain", "current_domain", "is_owner", "slug", "description"],
+            'observe': ["name", "is_active", "schema", "invitations", "grants", "domain_invitation"],
             invitations: {
                 create: (options) => InvitationModel(options.data)
             },
@@ -144,6 +144,19 @@ hqDefine("registry/js/registry_edit", [
                 ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
             });
         }
+
+        // DELETE workflow
+        self.formDeleteRegistrySent = ko.observable(false);
+        self.signOffDelete = ko.observable('');
+        self.deleteDisabled = ko.computed(() => {
+            return self.formDeleteRegistrySent() || self.signOffDelete().toLowerCase() !== self.name().toLowerCase();
+        });
+        self.submitDelete = function () {
+            if (!self.deleteDisabled()) {
+                self.formDeleteRegistrySent(true);
+                return true;
+            }
+        };
 
         return self;
     }
