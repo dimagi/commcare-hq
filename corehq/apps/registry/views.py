@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.decorators import require_enterprise_admin
@@ -133,7 +134,7 @@ def manage_registry(request, domain, registry_slug):
             "domain_invitation": domain_invitation,
             "grants": [grant.to_json() for grant in grants]
         },
-        "available_case_types": ["patient", "household"],  # TODO
+        "available_case_types": list(get_data_dict_case_types(registry.domain)),
         "available_domains": ["skelly", "d1"],  # TODO,
         "invited_domains": [invitation.domain for invitation in all_invitations],
         "current_page": {
