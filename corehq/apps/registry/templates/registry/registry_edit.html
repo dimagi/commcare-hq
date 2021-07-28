@@ -276,12 +276,15 @@
             {% endblocktrans %}
           </div>
           <p>{% blocktrans %}
-            Are you sure you want to remove <mark data-bind="text: domain"></mark>?</p>
+            Are you sure you want to remove this project space
           {% endblocktrans %}
+          :<mark data-bind="text: domain"></mark>?</p>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain" data-dismiss="modal">{% trans "Remove" %}</a>
+          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain" data-dismiss="modal">
+            {% trans "Remove" %} "<span data-bind="text: domain"></span>"
+          </a>
         </div>
       </div>
     </div>
@@ -296,6 +299,13 @@
           <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
         </div>
         <div class="modal-body">
+          <div class="alert alert-info">
+            {% blocktrans %}
+            Inviting project spaces to participate in the registry allows them to opt in or out.
+              Until an invitation has been accepted the project space will not be able to use the
+              registry.
+            {% endblocktrans %}
+          </div>
           <select multiple class="form-control" data-bind="select2: availableInviteDomains, selectedOptions: inviteDomains"></select>
         </div>
         <div class="modal-footer">
@@ -315,13 +325,27 @@
           <h4 class="modal-title">{% trans "Edit Registry Case Types" %}</h4>
         </div>
         <div class="modal-body">
+          <div class='alert alert-info'>
+            {% blocktrans %}
+            Only cases with these case types will be accessible through the registry.
+            {% endblocktrans %}
+          </div>
           <div class='alert alert-warning'>
             {% blocktrans %}
             Adding or removing case types may impact usages of the
               registry such as Configurable Reports and Case Search
             {% endblocktrans %}
           </div>
-          <select multiple class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: editedSchema"></select>
+          <div class="row">
+            <div class="col-sm-3 control-label">
+              <label class="inner-control-label">{% trans "Case Types" %}</label>
+              <span data-bind="makeHqHelp: { description: '{% trans "Use the Data Dictionary to manage case types." %}'}"></span>
+            </div>
+            <div class="col-md-9">
+              <select multiple class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: editedSchema"></select>
+            </div>
+          </div>
+
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
@@ -340,10 +364,18 @@
           <h4 class="modal-title">{% trans "Grant access" %}</h4>
         </div>
         <div class="modal-body">
-          <div class='alert alert-warning'>
-            {% blocktrans %}
-            Granting access to data from {{ domain }}
-            {% endblocktrans %}
+          <div class='alert alert-info'>
+            <p>
+              {% blocktrans %}
+              You are granting access to data from this project space ({{ domain }}).
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans %}
+              Granting a project spaces access allows them to view this projects data via this data registry.
+                They will be able to view case data for all the case types configured in the registry.
+              {% endblocktrans %}
+            </p>
           </div>
           <select multiple class="form-control" data-bind="select2: availableGrantDomains, selectedOptions: grantDomains"></select>
         </div>
