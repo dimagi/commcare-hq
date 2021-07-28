@@ -146,8 +146,8 @@ class SMSBillablesInterface(GenericTabularReport):
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)
         if show_billables:
-            selected_billables = selected_billables = SmsBillable.filter_selected_billables_show_billables(
-                selected_billables, show_billables, ShowBillablesFilter
+            selected_billables = SmsBillable.filter_selected_billables_show_billables(
+                selected_billables, show_billables,
             )
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name:
