@@ -81,5 +81,6 @@ branches:
     - bmb/noramilize-url  # Biyeun July 26
     - smh/web-user-upload-invites-fix # Steph July 26
     - jls/delay-web-apps-form-errors # Jenny July 27
+    - cs/SC-1530-location-hierarchy-links  # Charl July 28
     
 submodules: { }
