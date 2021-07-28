@@ -7,6 +7,7 @@ hqDefine("locations/js/location", [
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'locations/js/location_drilldown',
+    'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
     'hqwebapp/js/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
@@ -17,7 +18,8 @@ hqDefine("locations/js/location", [
     initialPageData,
     alertUser,
     googleAnalytics,
-    locationModels
+    locationModels,
+    locationTreeModel
 ) {
     var insert_new_user = function (user) {
         var $select = $('#id_users-selected_ids');
@@ -108,5 +110,26 @@ hqDefine("locations/js/location", [
 
         $('#loc_form').koApplyBindings(model);
 
+        var options = {
+            show_inactive: initialPageData.get('show_inactive'),
+            can_edit_root: true,
+        };
+
+        var location = initialPageData.get('location');
+        var locData = {
+            name: location.name,
+            location_type: location.location_type,
+            uuid: loc_id,
+            is_archived: location.is_archived,
+            can_edit: options.can_edit_root,
+        };
+
+        var treeModel = locationTreeModel.locationTreeViewModel(hierarchy, options);
+        treeModel.load(locs);
+
+        var pseudoRootLocation = locationTreeModel.locationModel(locData, treeModel, 1);
+        var rootLocation = {pseudoRoot: pseudoRootLocation};
+
+        $('#location_descendants_tree').koApplyBindings(rootLocation);
     });
 });
