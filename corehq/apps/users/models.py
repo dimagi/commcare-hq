@@ -1217,6 +1217,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.add_phone_number(phone_number, True)
         self.save()
 
+    def set_phone_numbers(self, new_phone_numbers, default_number=''):
+        self.phone_numbers = list(set(new_phone_numbers))  # ensure uniqueness
+        if default_number:
+            self.add_phone_number(default_number, True)
+
     @property
     def default_phone_number(self):
         return _get_default(self.phone_numbers)
