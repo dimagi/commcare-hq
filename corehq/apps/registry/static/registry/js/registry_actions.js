@@ -5,7 +5,7 @@ hqDefine("registry/js/registry_actions", [
 ], function (
     moment,
     initialPageData,
-    alertUser,
+    alertUser
 ) {
     let accept = function(registrySlug, onSuccess) {
         return acceptOrReject(

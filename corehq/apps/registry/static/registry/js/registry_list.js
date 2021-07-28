@@ -14,7 +14,7 @@ hqDefine("registry/js/registry_list", [
     initialPageData,
     alertUser,
     text,
-    actions,
+    actions
 ) {
 
     let OwnedDataRegistry = function (registry) {

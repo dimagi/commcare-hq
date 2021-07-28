@@ -289,6 +289,8 @@ def delete_registry(request, domain, registry_slug):
         )
     else:
         helper.delete_registry()
-        messages.success(request, _("Data Registry '{name}' deleted successfully").format(name=helper.registry.name))
+        messages.success(request, _("Data Registry '{name}' deleted successfully").format(
+            name=helper.registry.name
+        ))
 
     return redirect("data_registries", domain=domain)

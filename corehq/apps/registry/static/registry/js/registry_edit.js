@@ -18,7 +18,7 @@ hqDefine("registry/js/registry_edit", [
     alertUser,
     text,
     actions,
-    inlineEdit,
+    inlineEdit
 ) {
     ko.components.register('inline-edit', inlineEdit);
 
