@@ -81,5 +81,6 @@ branches:
     - jls/delay-web-apps-form-errors # Jenny July 27
     - cs/SC-1530-location-hierarchy-links  # Charl July 28
     - gh/fix-3tab-issue # Graham July 28
+    - gh/only-disable-linked-apps-for-erm # Graham July 28
     
 submodules: { }
