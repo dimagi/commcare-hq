@@ -1,0 +1,90 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="ko-tabs-pull-content" data-bind="with: $root.pullReleaseContentViewModel">
+  <div data-bind="if: domainLink">
+    <p>
+      {% blocktrans %}
+        This project space is linked to the upstream project space <a data-bind="attr: {'href': domainLink.upstreamUrl}, text: domainLink.master_domain"></a>.<br/>
+        The content below can be synced with the existing content in the upstream project space.<br/>
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content with Linked Project Spaces.
+      {% endblocktrans %}
+    </p>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{% trans 'Linked Content' %}</h3>
+      </div>
+      <div class="panel-body">
+        <search-box data-apply-bindings="false"
+          params="value: query,
+                  action: filter,
+                  immediate: true,
+                  placeholder: '{% trans_html_attr "Search Content..." %}'"></search-box>
+        <table class="table table-striped table-hover">
+          <thead>
+          <tr>
+            <th class="col-sm-5">{% trans "Linked Content" %}</th>
+            <th class="col-sm-2">{% trans "Last Updated" %} ({{ timezone }})</th>
+            <th class="col-sm-5"></th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: paginatedLinkedDataViewModels">
+          <tr>
+            <td data-bind="text: name"></td>
+            <td data-bind="text: lastUpdate"></td>
+            <td data-bind="css: {'has-error': error}">
+              <button class="btn btn-danger" data-toggle="modal" data-bind="visible: showUpdate() && !update_url, attr: {'data-target': '#overwrite-content-modal-' + $index()}">
+                <i class="fa fa-refresh"></i> {% trans "Sync & Overwrite" %}
+              </button>
+              <div class="modal fade" tabindex="-1" role="dialog" data-bind="attr: {'id': 'overwrite-content-modal-' + $index()}">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+                      <h4 class="modal-title">{% trans 'Sync & Overwrite' %}</h4>
+                    </div>
+                    <div class="modal-body">
+                      <h4>
+                        {% blocktrans %}
+                          Are you sure you want to overwrite <b data-bind="text: name"></b>?
+                        {% endblocktrans %}
+                      </h4>
+                      <p>
+                        {% blocktrans %}
+                          This will pull <!-- ko text: name --><!-- /ko --> from the upstream project space <b data-bind="text: domainLink.master_domain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/>
+                          <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content from an upstream project space into a downstream project space.
+                        {% endblocktrans %}
+                      </p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                      <button type="button" class="btn btn-primary" data-bind="click: update" data-dismiss="modal">{% trans 'Sync & Overwrite' %}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-default disabled" data-bind="visible: showSpinner">
+                <i class="fa fa-spinner"></i>
+              </button>
+              <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
+                <i class="fa fa-check"></i> {% trans "Success" %}
+              </button>
+              <button class="btn btn-danger disabled" data-bind="visible: error">
+                <i class="fa fa-times"></i> {% trans "Error" %}
+              </button>
+              <span class="help-block" data-bind="visible: error, text: error"></span>
+              <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <pagination data-apply-bindings="false"
+          params="goToPage: goToPage,
+                  perPage: itemsPerPage,
+                  totalItems: totalItems,
+                  onLoad: onPaginationLoad"></pagination>
+      </div>
+    </div>
+  </div>
+</div>
