@@ -7,21 +7,18 @@ hqDefine("locations/js/location", [
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'locations/js/location_drilldown',
+    'locations/js/location_tree',
     'hqwebapp/js/select_2_ajax_widget',
     'hqwebapp/js/widgets',       // custom data fields use a .hqwebapp-select2
     'locations/js/widgets',
-    'locations/js/location_tree',
 ], function (
     $,
     ko,
-    _underscore_,
+    _,
     initialPageData,
     alertUser,
     googleAnalytics,
     locationModels,
-    _,
-    _,
-    _,
     locationTreeModel
 ) {
     var insert_new_user = function (user) {
@@ -33,7 +30,7 @@ hqDefine("locations/js/location", [
         $select.select2("data", currentUsers);
     };
     var TEMPLATE_STRINGS = {
-        new_user_success: _underscore_.template(gettext("User <%- name %> added successfully. " +
+        new_user_success: _.template(gettext("User <%- name %> added successfully. " +
                                              "A validation message has been sent to the phone number provided.")),
     };
 
@@ -113,16 +110,13 @@ hqDefine("locations/js/location", [
 
         $('#loc_form').koApplyBindings(model);
 
-        var can_edit_root = initialPageData.get('can_edit_root'),
-            show_inactive = initialPageData.get('show_inactive');
-
         var options = {
-            show_inactive: show_inactive,
+            show_inactive: initialPageData.get('show_inactive'),
             can_edit_root: true,
         };
 
         var location = initialPageData.get('location');
-        var data = {
+        var locData = {
             name: location.name,
             location_type: location.location_type,
             uuid: loc_id,
@@ -133,8 +127,8 @@ hqDefine("locations/js/location", [
         var treeModel = locationTreeModel.locationTreeViewModel(hierarchy, options);
         treeModel.load(locs);
 
-        pseudoRootLocation = locationTreeModel.locationModel(data, treeModel, 1);
-        rootLocation = {pseudoRoot: pseudoRootLocation}
+        var pseudoRootLocation = locationTreeModel.locationModel(locData, treeModel, 1);
+        var rootLocation = {pseudoRoot: pseudoRootLocation};
 
         $('#location_descendants_tree').koApplyBindings(rootLocation);
     });
