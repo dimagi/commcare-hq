@@ -76,8 +76,12 @@ hqDefine("registry/js/registry_edit", [
         });
         self.availableGrantDomains = ko.computed(() => {
             // use invitedDomains since invitations() will be empty if the current domain is not the owner
-            let availableDomains = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain)));
+            let availableDomains = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain))),
+                granted = self.grants().filter((grant) => grant.from_domain === self.current_domain).flatMap((grant) => {
+                    return grant.to_domains
+                });
             availableDomains.delete(self.current_domain);
+            granted.forEach((domain) => availableDomains.delete(domain));
             return Array.from(availableDomains);
         });
 
