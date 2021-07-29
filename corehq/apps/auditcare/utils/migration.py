@@ -27,9 +27,7 @@ class AuditCareMigrationUtil():
             print(start_datetime)
             if not start_datetime:
                 if AuditcareMigrationMeta.objects.count() != 0:
-                    raise Exception("""The migration process has been started before
-                    We are unable to determine where to start.
-                    You can manually set key using AuditCareMigraionUtil.set_next_batch_start()""")
+                    raise MissingStartTimeError()
                 # For first run set the start_datetime to the event_time of the first record
                 # in the SQL. If there are no records in SQL, start_time would be set as
                 # current time
@@ -95,3 +93,12 @@ def _get_end_time(start_time, batch_by):
         return end_time.replace(minute=0, second=0, microsecond=0)
     else:
         return end_time.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+class MissingStartTimeError(Exception):
+    def __str__(self):
+        return """The migration process has already been started before
+                But we are unable to determine start key.
+                You can manually set the start key using
+                start_key = "2021-06-02_2021-06-01"
+                AuditCareMigraionUtil.set_next_batch_start(start_key)"""

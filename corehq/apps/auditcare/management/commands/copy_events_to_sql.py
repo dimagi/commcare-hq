@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 import gevent
 
 from corehq.apps.auditcare.couch_to_sql import copy_events_to_sql
-from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
+from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil, MissingStartTimeError
 from dimagi.utils.logging import notify_exception
 
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                     return
                 batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
                 gevent.joinall([*batched_processes])
-        except Exception as e:
+        except MissingStartTimeError as e:
             message = f"Error in copy_events_to_sql while generating batches\n{e}"
             notify_exception(None, message=message)
             _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
