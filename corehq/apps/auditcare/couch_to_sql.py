@@ -153,11 +153,13 @@ def copy_events_to_sql(start_time, end_time):
             count += events_info['count']
             break_query = events_info['break_query']
     except Exception as e:
-        message = f"Error in copy_events_to_sql in key {key}\n{e}"
+        message = f"""Error in copy_events_to_sql in key {key}
+            Next start key is {next_start_key}
+            {e}"""
+        util.set_batch_as_errored(key)
         notify_exception(None, message=message)
         _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
         _soft_assert(False, message)
-        util.set_batch_as_errored(key)
         return
     logger.info(f"Batch finished: {start_time} - {end_time}")
     util.set_batch_as_finished(key, count)
