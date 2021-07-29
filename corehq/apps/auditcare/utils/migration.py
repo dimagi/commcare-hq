@@ -69,7 +69,7 @@ class AuditCareMigrationUtil():
     def log_batch_start(self, key):
         if AuditcareMigrationMeta.objects.filter(key=key):
             return
-        AuditcareMigrationMeta.objects.create(key=key, state=AuditcareMigrationMeta.STARTED)
+        AuditcareMigrationMeta.objects.create(key=key, state=AuditcareMigrationMeta.STARTED, record_count=0)
 
     def set_batch_as_finished(self, key, count):
         AuditcareMigrationMeta.objects.filter(key=key).update(
@@ -79,6 +79,12 @@ class AuditCareMigrationUtil():
 
     def set_batch_as_errored(self, key):
         AuditcareMigrationMeta.objects.filter(key=key).update(state=AuditcareMigrationMeta.ERRORED)
+
+    def get_existing_count(self, key):
+        obj = AuditcareMigrationMeta.objects.filter(key=key).values_list('record_count', flat=True)
+        if len(obj) and obj[0]:
+            return obj[0]
+        return 0
 
 
 def get_formatted_datetime_string(datetime_obj):

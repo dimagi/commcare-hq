@@ -143,7 +143,7 @@ def copy_events_to_sql(start_time, end_time):
     next_start_key = start_key
     util.log_batch_start(key)
     break_query = False
-    count = 0
+    count = util.get_existing_count(key)
     try:
         while not break_query:
             events_info = get_events_from_couch(next_start_key, end_key)
