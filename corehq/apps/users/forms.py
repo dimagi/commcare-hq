@@ -41,6 +41,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.util import (
@@ -211,17 +212,14 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             messages = []
             profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                if user_new_role:
-                    messages.append(f"Role: {user_new_role.name}[{user_new_role.get_qualified_id()}]")
-                else:
-                    messages.append('Role: None')
+                messages.append(UserChangeMessage.role_change_message(user_new_role))
             if metadata_updated:
                 props_updated['user_data'] = self.existing_user.user_data
             if profile_updated:
                 profile_name = None
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
-                messages.append(f"CommCare Profile: {profile_name}")
+                messages.append(UserChangeMessage.profile_info_message(profile_name))
             log_user_change(
                 self.request.domain,
                 couch_user=self.existing_user,
