@@ -244,6 +244,44 @@ class SQLRepeater(models.Model):
             self.save()
 
 
+class SQLCaseRepeater(SQLRepeater):
+    version = models.CharField(
+        max_length=10,
+        choices=list(zip(LEGAL_VERSIONS, LEGAL_VERSIONS)),
+        default=V2,
+    )
+
+    # An empty value means all case types are accepted
+    white_listed_case_types_str = models.TextField(default='')
+
+    # Users whose caseblock submissions should be ignored
+    black_listed_users_str = models.TextField(default='')
+
+    payload_generator_classes = (
+        CaseRepeaterXMLPayloadGenerator,
+        CaseRepeaterJsonPayloadGenerator,
+    )
+
+    class Meta:
+        db_table = 'repeaters_caserepeater'
+
+    @property
+    def white_listed_case_types(self):
+        return self.white_listed_case_types_str.split(' ')
+
+    @white_listed_case_types.setter
+    def white_listed_case_types(self, value: list):
+        self.white_listed_case_types_str = ' '.join(value)
+
+    @property
+    def black_listed_users(self):
+        return self.black_listed_users_str.split(' ')
+
+    @black_listed_users.setter
+    def black_listed_users(self, value: list):
+        self.black_listed_users_str = ' '.join(value)
+
+
 class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and

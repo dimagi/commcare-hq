@@ -1,5 +1,7 @@
 import doctest
 from contextlib import contextmanager
+from datetime import datetime
+from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -14,6 +16,7 @@ from corehq.motech.const import IMPORT_FREQUENCY_DAILY
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.fhir import models
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.motech.value_source import CaseProperty as CasePropertyValueSource
 from corehq.motech.value_source import ValueSource
 
@@ -30,6 +33,7 @@ from ..models import (
     FHIRResourceProperty,
     FHIRResourceType,
     ResourceTypeRelationship,
+    SQLFHIRRepeater,
 )
 
 DOMAIN = 'test-domain'
@@ -634,6 +638,34 @@ class TestResourceValidation(TestCase):
         with self.assertRaisesRegex(ConfigurationError,
                                     r"\['Palin'\] is not of type 'string'"):
             self.resource_type.validate_resource(patient)
+
+
+class TestRepeaterRepeatRecordRelationship(TestCase):
+
+    def test_case_repeater_repeat_records(self):
+        repeater_id = str(uuid4())
+        fhir_repeater = SQLFHIRRepeater.objects.create(
+            domain=DOMAIN,
+            repeater_id=repeater_id,
+            fhir_version=FHIR_VERSION_4_0_1,
+        )
+        self.addCleanup(fhir_repeater.delete)
+
+        payload_id = str(uuid4())
+        repeat_record = SQLRepeatRecord.objects.create(
+            domain=DOMAIN,
+            payload_id=payload_id,
+            repeater=fhir_repeater,
+            registered_at=datetime.now(),
+        )
+        self.addCleanup(repeat_record.delete)
+
+        repeat_records = list(fhir_repeater.repeat_records.all())
+        self.assertEqual(repeat_records, [repeat_record])
+        self.assertEqual(
+            repeat_records[0].repeater.fhir_version,
+            FHIR_VERSION_4_0_1,
+        )
 
 
 def test_names():

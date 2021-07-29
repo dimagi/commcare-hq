@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from django.conf import settings
@@ -7,6 +7,8 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from nose.tools import assert_in
+
+from casexml.apps.case.xml import V3
 
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
@@ -23,7 +25,9 @@ from ..const import (
 )
 from ..models import (
     FormRepeater,
+    SQLCaseRepeater,
     SQLRepeater,
+    SQLRepeatRecord,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
@@ -433,3 +437,28 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE):
             is_migrated = are_repeat_records_migrated(DOMAIN)
         self.assertTrue(is_migrated)
+
+
+class TestRepeaterRepeatRecordRelationship(TestCase):
+
+    def test_case_repeater_repeat_records(self):
+        repeater_id = str(uuid4())
+        case_repeater = SQLCaseRepeater.objects.create(
+            domain=DOMAIN,
+            repeater_id=repeater_id,
+            version=V3,
+        )
+        self.addCleanup(case_repeater.delete)
+
+        payload_id = str(uuid4())
+        repeat_record = SQLRepeatRecord.objects.create(
+            domain=DOMAIN,
+            payload_id=payload_id,
+            repeater=case_repeater,
+            registered_at=datetime.now(),
+        )
+        self.addCleanup(repeat_record.delete)
+
+        repeat_records = list(case_repeater.repeat_records.all())
+        self.assertEqual(repeat_records, [repeat_record])
+        self.assertEqual(repeat_records[0].repeater.version, V3)
