@@ -56,7 +56,7 @@ def get_registry_data_sources_by_domain(domain):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
     return sorted(
         RegistryDataSourceConfiguration.view(
-            'registry_userreports/data_sources',
+            'registry_data_sources/view',
             startkey=[domain],
             endkey=[domain, {}],
             reduce=False,
@@ -69,7 +69,7 @@ def get_registry_data_sources_by_domain(domain):
 def get_all_registry_data_source_ids(is_active=None, globally_accessible=None):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
     rows = RegistryDataSourceConfiguration.view(
-        'registry_userreports/data_sources',
+        'registry_data_sources/view',
         reduce=False,
         include_docs=False,
     )
@@ -83,7 +83,7 @@ def get_all_registry_data_source_ids(is_active=None, globally_accessible=None):
 def get_registry_data_sources_modified_since(timestamp):
     from corehq.apps.userreports.models import RegistryDataSourceConfiguration
     return RegistryDataSourceConfiguration.view(
-        'registry_userreports/data_sources_by_last_modified',
+        'registry_data_sources_by_last_modified/view',
         startkey=[timestamp.isoformat()],
         endkey=[{}],
         reduce=False,
