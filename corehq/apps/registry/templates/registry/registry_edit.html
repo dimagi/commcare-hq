@@ -129,7 +129,7 @@
     <div class="row ko-inline-edit">
       <div class="col-md-5 read-only" data-bind="
         style: {cursor: is_owner ? 'pointer' : 'default'},
-        openModal: 'edit-schema-modal', openModalIf: is_owner
+        openModal: {templateId: 'edit-schema-modal', if: is_owner}
       ">
         <div class="row">
           <div class="col-md-12">
