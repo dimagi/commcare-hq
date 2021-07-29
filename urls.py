@@ -54,7 +54,6 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
-    url(r'^enterprise/registries/', include('corehq.apps.registry.urls')),
     url(r'^enterprise/', include(enterprise_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
@@ -91,6 +90,7 @@ domain_specific = [
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^registries/', include('corehq.apps.registry.urls')),
 ]
 
 for url_module in extension_points.domain_specific_urls():

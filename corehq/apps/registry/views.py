@@ -12,15 +12,13 @@ from django.views.decorators.http import require_POST, require_GET
 from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
-from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
 from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper
 
 
-@require_enterprise_admin
-@login_and_domain_required
+@domain_admin_required
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
 def data_registries(request, domain):
@@ -38,6 +36,10 @@ def data_registries(request, domain):
         'current_page': {
             'title': _('Data Registries'),
             'page_name': _('Data Registries'),
+        },
+        'section': {
+            'page_name': 'Project Settings',
+            'url': reverse("domain_settings_default", args=[domain]),
         },
     }
     return render(request, "registry/registry_list.html", context)
@@ -123,6 +125,10 @@ def manage_registry(request, domain, registry_slug):
                 },
             ],
         },
+        'section': {
+            'page_name': 'Project Settings',
+            'url': reverse("domain_settings_default", args=[domain]),
+        },
     }
     return render(request, "registry/registry_edit.html", context)
 
@@ -145,7 +151,7 @@ def reject_registry_invitation(request, domain):
     return JsonResponse({"invitation": invitation.to_json()})
 
 
-@require_enterprise_admin
+@domain_admin_required
 @require_POST
 def edit_registry_attr(request, domain, registry_slug, attr):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -176,7 +182,7 @@ def edit_registry_attr(request, domain, registry_slug, attr):
     return JsonResponse({attr: value})
 
 
-@require_enterprise_admin
+@domain_admin_required
 @require_POST
 def manage_invitations(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -228,7 +234,7 @@ def manage_invitations(request, domain, registry_slug):
         })
 
 
-@require_enterprise_admin
+@domain_admin_required
 @require_POST
 def manage_grants(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -278,7 +284,7 @@ def manage_grants(request, domain, registry_slug):
         })
 
 
-@require_enterprise_admin
+@domain_admin_required
 @require_POST
 def delete_registry(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
