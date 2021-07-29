@@ -181,8 +181,18 @@ class MyAccountSettingsView(BaseMyAccountView):
     def process_add_phone_number(self):
         if self.phone_number_is_valid():
             user = self.request.couch_user
+            is_new_phone_number = self.phone_number not in user.phone_numbers
             user.add_phone_number(self.phone_number)
             user.save()
+            if is_new_phone_number:
+                log_user_change(
+                    domain=None,
+                    couch_user=user,
+                    changed_by_user=user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    message=f"Added phone number {self.phone_number}",
+                    domain_required_for_log=False,
+                )
             messages.success(self.request, _("Phone number added."))
         else:
             messages.error(self.request, _("Invalid phone number format entered. "
