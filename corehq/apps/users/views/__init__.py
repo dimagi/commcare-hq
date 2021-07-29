@@ -307,11 +307,12 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -1328,6 +1329,13 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                domain=domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                message="Password reset"
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:
