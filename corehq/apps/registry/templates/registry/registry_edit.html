@@ -357,9 +357,13 @@
           </div>
           <div data-bind="visible: availableInviteDomains().length">
             <select multiple class="form-control" data-bind="
-              select2: availableInviteDomains,
               selectedOptions: inviteDomains,
-            "></select>
+              multiselect: {
+                selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
+                selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
+                searchItemTitle: '{% trans_html_attr "Search" %}',
+                values: availableInviteDomains
+              }"></select>
           </div>
         </div>
         <div class="modal-footer">
@@ -448,7 +452,14 @@
               {% endblocktrans %}
             </p>
           </div>
-          <select multiple class="form-control" data-bind="select2: availableGrantDomains, selectedOptions: grantDomains"></select>
+          <select multiple class="form-control" data-bind="
+              selectedOptions: grantDomains,
+              multiselect: {
+                selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
+                selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
+                searchItemTitle: '{% trans_html_attr "Search" %}',
+                values: availableGrantDomains
+              }"></select>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>

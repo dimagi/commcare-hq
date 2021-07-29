@@ -10,6 +10,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/knockout_bindings.ko', // openModal
     'hqwebapp/js/main', // makeHqHelp
+    'hqwebapp/js/multiselect_utils',
 ], function (
     moment,
     ko,
