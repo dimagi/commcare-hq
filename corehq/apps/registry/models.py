@@ -84,11 +84,11 @@ class DataRegistry(models.Model):
 
     @classmethod
     @transaction.atomic
-    def create(cls, user, domain, name):
-        registry = DataRegistry.objects.create(domain=domain, name=name)
+    def create(cls, user, domain, name, **kwargs):
+        registry = DataRegistry.objects.create(domain=domain, name=name, **kwargs)
         # creating domain is automatically added to the registry
         invitation = registry.invitations.create(
-            domain=domain, accepted_on=datetime.utcnow()
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
         )
         registry.logger.invitation_added(user, invitation)
         return registry

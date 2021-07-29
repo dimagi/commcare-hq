@@ -7,6 +7,7 @@ hqDefine("registry/js/registry_list", [
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'hqwebapp/js/knockout_bindings.ko', // openModal
+    'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     _,
@@ -59,13 +60,20 @@ hqDefine("registry/js/registry_list", [
     };
 
     let dataRegistryList = function ({ownedRegistries, invitedRegistries}) {
-        return {
+        let self = {
             ownedRegistries: _.map(ownedRegistries, (registry) => OwnedDataRegistry(registry)),
             invitedRegistries: _.map(invitedRegistries, (registry) => InvitedDataRegistry(registry)),
-            newRegistry: function() {
-                console.log("TODO: New Registry");
-            }
-        }
+            availableCaseTypes: initialPageData.get("availableCaseTypes"),
+        };
+
+        // CREATE workflow
+        self.caseTypes = ko.observable([]);
+        self.formCreateRegistrySent = ko.observable(false);
+        self.submitCreate = function () {
+            self.formCreateRegistrySent(true);
+            return true;
+        };
+        return self;
     }
     $(function () {
         $("#data-registry-list").koApplyBindings(dataRegistryList({

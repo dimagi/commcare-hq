@@ -34,6 +34,7 @@ def data_registries(request, domain):
         'domain': domain,
         'owned_registries': owned,
         'invited_registries': invited,
+        'available_case_types': list(get_data_dict_case_types(domain)),
         'current_page': {
             'title': _('Data Registries'),
             'page_name': _('Data Registries'),
@@ -302,3 +303,17 @@ def delete_registry(request, domain, registry_slug):
         ))
 
     return redirect("data_registries", domain=domain)
+
+
+@domain_admin_required
+@require_POST
+def create_registry(request, domain):
+    name = request.POST.get("name")
+    description = request.POST.get("description")
+    case_types = request.POST.getlist("case_types")
+    schema = [{"case_type": case_type} for case_type in case_types]
+    registry = DataRegistry.create(
+        request.user, domain, name,
+        description=description, schema=schema
+    )
+    return redirect("manage_registry", domain=domain, registry_slug=registry.slug)
