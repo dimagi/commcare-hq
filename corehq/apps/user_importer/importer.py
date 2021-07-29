@@ -30,6 +30,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -77,6 +78,7 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
+
     if is_web_upload:
         missing_headers = web_required_headers - headers
     else:
@@ -306,7 +308,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
-        user_change_logger.add_change_message(f"Invited to domain '{domain}'")
+        user_change_logger.add_change_message(UserChangeMessage.invited_to_domain(domain))
 
 
 def find_location_id(location_codes, location_cache):
@@ -425,7 +427,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     ret = {"errors": [], "rows": []}
 
     current = 0
-
     try:
         for row in user_specs:
             if update_progress:
@@ -457,7 +458,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
-            phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
             location_codes = row.get('location_code', []) if 'location_code' in row else None
@@ -465,6 +465,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
+            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
             try:
                 password = str(password) if password else None
@@ -489,8 +490,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if phone_number:
-                    commcare_user_importer.update_phone_number(phone_number)
+                if phone_numbers:
+                    phone_numbers = [n for n in phone_numbers if n]  # remove empty items
+                    commcare_user_importer.update_phone_numbers(phone_numbers)
+
                 if name:
                     commcare_user_importer.update_name(name)
 
@@ -721,7 +724,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
 def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
                                    role_qualified_id, upload_user, current_user, web_user_importer,
                                    max_tries=3):
-
     if domain_info.can_assign_locations and location_codes is not None:
         web_user_importer.update_locations(location_codes, membership, domain_info)
     web_user_importer.update_role(role_qualified_id)
@@ -775,7 +777,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         if is_web_upload:
             remove_invited_web_user(domain, username)
             if user_change_logger:
-                user_change_logger.add_change_message(f"Invitation revoked for domain '{domain}'")
+                user_change_logger.add_change_message(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -785,4 +787,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(f"Removed from domain '{domain}'")
+            user_change_logger.add_change_message(UserChangeMessage.domain_removal_message(domain))
