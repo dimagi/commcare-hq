@@ -1,7 +1,7 @@
 import traceback
 from django.db import migrations
 
-from corehq.apps.couch_sql_migration.tests.test_migration import call_command
+from django.core.management import call_command
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
