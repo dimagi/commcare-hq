@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/formplayer-inline", function () {
+hqDefine("cloudcare/js/formplayer_inline", function () {
     var alertHtml = function (message, cssClass) {
         return (
             "<div class='alert " + (cssClass || 'alert-info') + "'>" +
@@ -51,7 +51,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession(data);
+                var sess = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });

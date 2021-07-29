@@ -1163,7 +1163,7 @@ _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
-IS_INDIA_ENVIRONMENT = SERVER_ENVIRONMENT == 'india'
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -2027,19 +2027,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'ews-ghana$',
     'mvp-',
 )
-
-# Domains that we want to tag in metrics provider
-METRICS_TAGGED_DOMAINS = {
-    # ("env", "domain"),
-    ("production", "born-on-time-2"),
-    ("production", "hki-nepal-suaahara-2"),
-    ("production", "malawi-fp-study"),
-    ("production", "no-lean-season"),
-    ("production", "rec"),
-    ("production", "isth-production"),
-    ("production", "sauti-1"),
-    ("production", "ndoh-wbot"),
-}
 
 #### Django Compressor Stuff after localsettings overrides ####
 

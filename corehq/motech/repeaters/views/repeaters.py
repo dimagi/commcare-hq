@@ -171,7 +171,7 @@ class AddRepeaterView(BaseRepeaterView):
         return self.repeater_class()
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Forwarding set up to %s" % repeater.url))
+        messages.success(request, _("Forwarding set up to {}").format(repeater.name))
         return HttpResponseRedirect(
             reverse(DomainForwardingOptionsView.urlname, args=[self.domain])
         )

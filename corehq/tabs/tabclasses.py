@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -31,7 +32,6 @@ from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
@@ -973,7 +973,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1460,19 +1460,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
-
         return menu
 
     def _get_locations_menu(self):
@@ -1617,7 +1604,7 @@ class EnterpriseSettingsTab(UITab):
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
-                           args=[self.domain])
+                        args=[self.domain])
         })
         if IdentityProvider.domain_has_editable_identity_provider(self.domain):
             from corehq.apps.sso.views.enterprise_admin import (
@@ -1634,7 +1621,22 @@ class EnterpriseSettingsTab(UITab):
                     },
                 ],
             })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
+
+        items.extend(EnterpriseReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain))
         return items
 
 

@@ -17,10 +17,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
     var Util = hqImport("cloudcare/js/formplayer/utils/util");
-    var WebFormSession = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession;
+    var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
-    FormplayerFrontend.on("before:start", function () {
+    FormplayerFrontend.on("before:start", function (app, options) {
+        // Make a get call if the csrf token isn't available when the page loads.
+        if ($.cookie('XSRF-TOKEN') === undefined) {
+            $.get({url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }});
+        }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
 
@@ -330,7 +334,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (options.allowedHost) {
             window.addEventListener(
                 "message",
-                hqImport("cloudcare/js/formplayer/hq.events").Receiver(options.allowedHost),
+                hqImport("cloudcare/js/formplayer/hq_events").Receiver(options.allowedHost),
                 false
             );
         }

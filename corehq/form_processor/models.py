@@ -43,6 +43,8 @@ from memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 
+STANDARD_CHARFIELD_LENGTH = 255
+
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
 

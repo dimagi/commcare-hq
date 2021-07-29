@@ -57,6 +57,11 @@ class RegistryManager(models.Manager):
 
 
 class DataRegistry(models.Model):
+    """Top level model that represents a Data Registry.
+
+    A registry is owned by a domain but is used across domains
+    based on invitations that are sent from the owning domain.
+    """
     domain = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     # slug used for referencing the registry in app suite files, APIs etc.
@@ -117,6 +122,12 @@ class DataRegistry(models.Model):
 
 
 class RegistryInvitation(models.Model):
+    """Invitations are the mechanism used to determine access to the registry.
+    The owning domain creates invitations which can be accepted or rejected by
+    the invitees.
+
+    Without an accepted invitation a domain can not access any features of the
+    registry."""
     STATUS_PENDING = "pending"
     STATUS_ACCEPTED = "accepted"
     STATUS_REJECTED = "rejected"
@@ -166,6 +177,10 @@ class RegistryInvitation(models.Model):
 
 
 class RegistryGrant(models.Model):
+    """Grants provide the model for giving access to data. The ownership of the grant
+    lies with the granting domain which can grant / revoke access to it's data to
+    any other domains that are participating in the registry (have been invited).
+    """
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
@@ -180,6 +195,7 @@ class RegistryGrant(models.Model):
 
 
 class RegistryPermission(models.Model):
+    """This model controls which users in a domain can access the data registry."""
     registry = models.ForeignKey("DataRegistry", related_name="permissions", on_delete=models.CASCADE)
     domain = models.CharField(max_length=255)
     read_only_group_id = models.CharField(max_length=255, null=True)
@@ -189,6 +205,9 @@ class RegistryPermission(models.Model):
 
 
 class RegistryAuditLog(models.Model):
+    """Audit log model used to store logs of user level interactions
+    (not system level).
+    """
     ACTION_ACTIVATED = "activated"
     ACTION_DEACTIVATED = "deactivated"
     ACTION_INVITATION_ADDED = "invitation_added"
@@ -227,13 +246,23 @@ class RegistryAuditLog(models.Model):
     )
 
     registry = models.ForeignKey("DataRegistry", related_name="audit_logs", on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
     action = models.CharField(max_length=32, choices=ACTION_CHOICES)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, db_index=True)
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
-    related_object_id = models.CharField(max_length=32)
-    related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES)
+    related_object_id = models.CharField(max_length=36)
+    related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES, db_index=True)
     detail = JSONField(null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("domain",), name="registryauditlog_domain_idx"),
+            models.Index(fields=("action",), name="registryauditlog_action_idx"),
+            models.Index(
+                fields=("related_object_type",),
+                name="registryauditlog_rel_obj_idx"
+            ),
+        ]
 
 
 class RegistryAuditHelper:
@@ -241,28 +270,28 @@ class RegistryAuditHelper:
         self.registry = registry
 
     def registry_activated(self, user):
-        self.log_registry_activated_deactivated(user, is_activated=True)
+        self._log_registry_activated_deactivated(user, is_activated=True)
 
     def registry_deactivated(self, user):
-        self.log_registry_activated_deactivated(user, is_activated=False)
+        self._log_registry_activated_deactivated(user, is_activated=False)
 
     def invitation_accepted(self, user, invitation):
-        return self.log_invitation_accepted_rejected(user, invitation, is_accepted=True)
+        return self._log_invitation_accepted_rejected(user, invitation, is_accepted=True)
 
     def invitation_rejected(self, user, invitation):
-        return self.log_invitation_accepted_rejected(user, invitation, is_accepted=False)
+        return self._log_invitation_accepted_rejected(user, invitation, is_accepted=False)
 
     def invitation_added(self, user, invitation):
-        return self.log_invitation_added_removed(user, invitation.id, invitation, is_added=True)
+        return self._log_invitation_added_removed(user, invitation.id, invitation, is_added=True)
 
     def invitation_removed(self, user, invitation_id, invitation):
-        return self.log_invitation_added_removed(user, invitation_id, invitation, is_added=False)
+        return self._log_invitation_added_removed(user, invitation_id, invitation, is_added=False)
 
     def grant_added(self, user, grant):
-        return self.log_grant_added_removed(user, grant.id, grant, is_added=True)
+        return self._log_grant_added_removed(user, grant.id, grant, is_added=True)
 
     def grant_removed(self, user, grant_id, grant):
-        return self.log_grant_added_removed(user, grant_id, grant, is_added=False)
+        return self._log_grant_added_removed(user, grant_id, grant, is_added=False)
 
     def schema_changed(self, user, new, old):
         return RegistryAuditLog.objects.create(
@@ -301,7 +330,7 @@ class RegistryAuditHelper:
             detail=filters
         )
 
-    def log_registry_activated_deactivated(self, user, is_activated):
+    def _log_registry_activated_deactivated(self, user, is_activated):
         return RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
@@ -311,7 +340,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_REGISTRY,
         )
 
-    def log_invitation_added_removed(self, user, invitation_id, invitation, is_added):
+    def _log_invitation_added_removed(self, user, invitation_id, invitation, is_added):
         if is_added:
             action = RegistryAuditLog.ACTION_INVITATION_ADDED
         else:
@@ -326,7 +355,7 @@ class RegistryAuditHelper:
             detail={} if is_added else {"invitation_status": invitation.status}
         )
 
-    def log_invitation_accepted_rejected(self, user, invitation, is_accepted):
+    def _log_invitation_accepted_rejected(self, user, invitation, is_accepted):
         if is_accepted:
             action = RegistryAuditLog.ACTION_INVITATION_ACCEPTED
         else:
@@ -340,7 +369,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
         )
 
-    def log_grant_added_removed(self, user, grant_id, grant, is_added):
+    def _log_grant_added_removed(self, user, grant_id, grant, is_added):
         RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
