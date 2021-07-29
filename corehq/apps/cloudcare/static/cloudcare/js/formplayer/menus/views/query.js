@@ -251,12 +251,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $fields = $(".query-field"),
+            var $inputGroups = $(".query-input-group"),
                 answers = {},
                 model = this.parentModel;
-            $fields.each(function (index) {
-                if (this.value !== '') {
-                    answers[model[index].get('id')] = encodeValue(model[index], $(this).val());
+            $inputGroups.each(function (index) {
+                var queryValue = $(this).find('.query-field').val(),
+                    searchForBlank = $(this).find('.search-for-blank').prop('checked');
+                if (queryValue !== '' || searchForBlank) {
+                    answers[model[index].get('id')] = encodeValue(model[index], queryValue);
                 }
             });
             return answers;
