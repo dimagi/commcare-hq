@@ -52,7 +52,12 @@
       </div>
       <span class="ix"></span>
     </fieldset>
-    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
+      <div data-bind="if: showChildren()">
+        <fieldset>
+        <legend aria-hidden="true" class="sr-only">Question Group</legend>
+          <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
+        </fieldset>
+      </div>
   </div>
 </script>
 
