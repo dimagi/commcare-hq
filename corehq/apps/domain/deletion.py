@@ -402,7 +402,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'FHIRImportResourceType', 'ResourceTypeRelationship',
         'FHIRImportResourceProperty',
     ]),
-    ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
+    ModelDeletion('repeaters', 'SQLRepeater', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),

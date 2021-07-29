@@ -175,11 +175,11 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
-class RepeaterStubManager(models.Manager):
+class RepeaterManager(models.Manager):
 
     def all_ready(self):
         """
-        Return all RepeaterStubs ready to be forwarded.
+        Return all SQLRepeaters ready to be forwarded.
         """
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
@@ -196,17 +196,14 @@ class RepeaterStubManager(models.Manager):
                 .filter(repeat_records_ready_to_send))
 
 
-class RepeaterStub(models.Model):
-    """
-    This model links the SQLRepeatRecords of a Repeater.
-    """
+class SQLRepeater(models.Model):
     domain = models.CharField(max_length=126)
     repeater_id = models.CharField(max_length=36)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RepeaterStubManager()
+    objects = RepeaterManager()
 
     class Meta:
         indexes = [
@@ -1107,9 +1104,9 @@ class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=36)
-    repeater_stub = models.ForeignKey(RepeaterStub,
-                                      on_delete=models.CASCADE,
-                                      related_name='repeat_records')
+    repeater = models.ForeignKey(SQLRepeater,
+                                 on_delete=models.CASCADE,
+                                 related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
                              default=RECORD_PENDING_STATE)
     registered_at = models.DateTimeField()
@@ -1139,7 +1136,7 @@ class SQLRepeatRecord(models.Model):
         ``response`` can be a Requests response instance, or True if the
         payload did not result in an API call.
         """
-        self.repeater_stub.reset_next_attempt()
+        self.repeater.reset_next_attempt()
         self.sqlrepeatrecordattempt_set.create(
             state=RECORD_SUCCESS_STATE,
             message=format_response(response) or '',
@@ -1153,7 +1150,7 @@ class SQLRepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater_stub.reset_next_attempt()
+        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1167,7 +1164,7 @@ class SQLRepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater_stub.set_next_attempt()
+        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1267,14 +1264,14 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def attempt_forward_now(repeater_stub: RepeaterStub):
-    from corehq.motech.repeaters.tasks import process_repeater_stub
+def attempt_forward_now(repeater: SQLRepeater):
+    from corehq.motech.repeaters.tasks import process_repeater
 
-    if not domain_can_forward(repeater_stub.domain):
+    if not domain_can_forward(repeater.domain):
         return
-    if not repeater_stub.is_ready:
+    if not repeater.is_ready:
         return
-    process_repeater_stub.delay(repeater_stub)
+    process_repeater.delay(repeater)
 
 
 def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:

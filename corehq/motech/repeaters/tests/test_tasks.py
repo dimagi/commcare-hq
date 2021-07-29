@@ -19,8 +19,8 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import FormRepeater, RepeaterStub
-from ..tasks import process_repeater_stub, delete_old_request_logs
+from ..models import FormRepeater, SQLRepeater
+from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
@@ -72,7 +72,7 @@ class TestDeleteOldRequestLogs(TestCase):
         self.assertEqual(count, 0)
 
 
-class TestProcessRepeaterStub(TestCase):
+class TestProcessRepeater(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -90,21 +90,21 @@ class TestProcessRepeaterStub(TestCase):
         cls.repeater.save()
 
     def setUp(self):
-        self.repeater_stub = RepeaterStub.objects.create(
+        self.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
         )
         just_now = timezone.now() - timedelta(seconds=10)
         for payload_id in PAYLOAD_IDS:
-            self.repeater_stub.repeat_records.create(
-                domain=self.repeater_stub.domain,
+            self.sql_repeater.repeat_records.create(
+                domain=self.sql_repeater.domain,
                 payload_id=payload_id,
                 registered_at=just_now,
             )
             just_now += timedelta(seconds=1)
 
     def tearDown(self):
-        self.repeater_stub.delete()
+        self.sql_repeater.delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -119,10 +119,10 @@ class TestProcessRepeaterStub(TestCase):
         # payload
         with patch('corehq.motech.repeaters.models.log_repeater_error_in_datadog'), \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'):
-            process_repeater_stub(self.repeater_stub)
+            process_repeater(self.sql_repeater)
 
         # All records were tried and cancelled
-        records = list(self.repeater_stub.repeat_records.all())
+        records = list(self.sql_repeater.repeat_records.all())
         self.assertEqual(len(records), 10)
         self.assertTrue(all(r.state == RECORD_CANCELLED_STATE for r in records))
         # All records have a cancelled Attempt
@@ -137,10 +137,10 @@ class TestProcessRepeaterStub(TestCase):
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
             post_mock.return_value = Mock(status_code=400, reason='Bad request')
-            process_repeater_stub(self.repeater_stub)
+            process_repeater(self.sql_repeater)
 
         # Only the first record was attempted, the rest are still pending
-        states = [r.state for r in self.repeater_stub.repeat_records.all()]
+        states = [r.state for r in self.sql_repeater.repeat_records.all()]
         self.assertListEqual(states, ([RECORD_FAILURE_STATE]
                                       + [RECORD_PENDING_STATE] * 9))
 
