@@ -610,6 +610,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
     def test_feature_flag_view_models_are_built(self):
         view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
@@ -620,6 +621,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
     def test_feature_flag_view_models_are_ignored(self):
         view_models = build_view_models_from_data_models(
             self.downstream_domain, {}, {}, {}, {}, ignore_models=dict(FEATURE_FLAG_DATA_MODELS).keys()
