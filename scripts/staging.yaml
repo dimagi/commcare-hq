@@ -66,7 +66,6 @@ branches:
     - ap/auditcare-migration # Amit July 8
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
-    - smh/add-download-and-email-reports-permission # Steph July 21
     - jm/stale-es-case-search  # Joel July 21
     - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
     - gh/improve-erm-ui # Graham June 16 [QA]
