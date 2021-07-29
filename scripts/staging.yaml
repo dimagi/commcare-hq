@@ -82,8 +82,8 @@ branches:
     - gh/fix-3tab-issue # Graham July 28
     - gh/only-disable-linked-apps-for-erm # Graham July 28
     - mk/user-history/track-ui-edits # MK July 28
-    - cs/SC-1529-multiple-mobile-numbers-upload+mk/user-history/add-message-helper # MK July 28
     - cs/SC-1529-multiple-mobile-numbers-upload  # Charl July 22
+    - cs/SC-1529-multiple-mobile-numbers-upload+mk/user-history/add-message-helper # MK July 28
     - mk/user-history/add-message-helper # MK July 28
     - gh/custom-product-data-fields-behind-ff # Graham July 28
 submodules: { }
