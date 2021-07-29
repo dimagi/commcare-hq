@@ -4,6 +4,7 @@ from django.test import TestCase
 from mock import patch
 
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
 from corehq.apps.userreports.models import (
     RegistryDataSourceConfiguration
@@ -26,11 +27,13 @@ class RegistryDataSourceTableManagerTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.registry_1 = create_registry_for_test('foo_bar', invitations=[
+        cls.user = create_user("admin", "123")
+
+        cls.registry_1 = create_registry_for_test(cls.user, 'foo_bar', invitations=[
             Invitation(cls.domain), Invitation("granted-domain"),
         ], grants=[Grant("granted-domain", to_domains=[cls.domain])], name='test')
 
-        cls.registry_2 = create_registry_for_test('bazz', invitations=[
+        cls.registry_2 = create_registry_for_test(cls.user, 'bazz', invitations=[
             Invitation(cls.domain), Invitation("other-domain"),
         ], grants=[Grant("other-domain", to_domains=[cls.domain])], name='bazz')
 
@@ -134,6 +137,8 @@ class RegistryUcrPillowTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
+        cls.user = create_user("admin", "123")
+
         cls.registry_owner_domain = "registry-owner"
         cls.participator_1 = "domain1"
         cls.participator_2 = "domain2"
@@ -145,6 +150,7 @@ class RegistryUcrPillowTest(TestCase):
             Grant(from_domain=cls.participator_2, to_domains=[cls.participator_1]),
         ]
         cls.registry_1 = create_registry_for_test(
+            cls.user,
             cls.registry_owner_domain,
             invitations=invitations,
             grants=grants,

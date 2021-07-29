@@ -4,6 +4,7 @@ from unittest.mock import create_autospec, patch
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
+from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.exceptions import RegistryAccessDenied
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
@@ -107,9 +108,10 @@ class RegistryDataSourceConfigurationDbTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(RegistryDataSourceConfigurationDbTest, cls).setUpClass()
+        cls.user = create_user("admin", "123")
 
         cls.owning_domain = 'foo_bar'
-        cls.registry = create_registry_for_test(cls.owning_domain, invitations=[
+        cls.registry = create_registry_for_test(cls.user, cls.owning_domain, invitations=[
             Invitation('foo'), Invitation('bar'),
         ], name='foo_bar')
 

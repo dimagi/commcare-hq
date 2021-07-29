@@ -4,6 +4,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.userreports.dbaccessors import (
     get_all_report_configs,
@@ -73,8 +74,9 @@ class RegistryUcrDbAccessorsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(RegistryUcrDbAccessorsTest, cls).setUpClass()
+        cls.user = create_user("admin", "123")
 
-        cls.registry = create_registry_for_test(cls.domain, invitations=[
+        cls.registry = create_registry_for_test(cls.user, cls.domain, invitations=[
             Invitation('foo'), Invitation('bar'),
         ], name='foo_bar')
 
