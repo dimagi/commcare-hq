@@ -34,6 +34,7 @@
   </td>
   </td>
   <td class="col-sm-2">
+    <div class="query-input-group">
     <% if (input == "select1") { %>
       <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
         <option value=""></option>
@@ -59,5 +60,12 @@
     <% } else { %>
       <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
     <% } %>
+    <% if (typeof allow_blank_value !== "undefined" && allow_blank_value) { %>
+    <label>
+        <input type="checkbox" class="search-for-blank">
+        {% trans "Search for blank values" %}
+    </label>
+    <% } %>
+    </div>
   </td>
 </script>
