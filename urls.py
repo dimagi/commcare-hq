@@ -54,6 +54,7 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
+    url(r'^enterprise/registries/', include('corehq.apps.registry.urls')),
     url(r'^enterprise/', include(enterprise_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),

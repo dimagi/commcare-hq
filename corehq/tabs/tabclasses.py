@@ -1591,6 +1591,16 @@ class EnterpriseSettingsTab(UITab):
                     'title': _('Enterprise Settings'),
                     'url': reverse('enterprise_settings', args=[self.domain]),
                 },
+                {
+                    'title': _('Data Registries'),
+                    'url': reverse('data_registries', args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("Manage Registry"),
+                            'urlname': "manage_registry",
+                        },
+                    ],
+                },
             ])
         enterprise_views.append({
             'title': _('Billing Statements'),
