@@ -35,7 +35,7 @@ function (
         if (fadeOut) {
             self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
         }
-        self.restartTimer = () => {
+        self.restartTimer = function () {
             if (self.timer) {
                 clearTimeout(self.timer);
                 self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
@@ -44,16 +44,16 @@ function (
         return self;
     };
 
-    const ViewModel = function() {
-        let self = this;
+    const ViewModel = function () {
+        let self = {};
         self.alerts = ko.observableArray();
-        self.removeAlert = (alertObj) => {
+        self.removeAlert = function (alertObj) {
             self.alerts.remove(alertObj);
         };
 
-        self.fadeOut = function(element) {
+        self.fadeOut = function (element) {
             $(element).fadeOut('slow');
-        }
+        };
 
         self.alert_user = function (message, emphasis, append, fadeOut) {
             var tags = "alert-" + emphasis;
@@ -74,11 +74,11 @@ function (
         return self;
     };
 
-    const removeAlertTimerFunc = (alertObj) => {
+    const removeAlertTimerFunc = function (alertObj) {
         return () => {
             viewModel.removeAlert(alertObj);
-        }
-    }
+        };
+    };
 
     const viewModel = ViewModel();
 
