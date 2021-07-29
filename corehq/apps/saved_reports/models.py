@@ -1,4 +1,5 @@
 import calendar
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 import functools
 import hashlib
 import json
@@ -172,6 +173,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
+            EnterpriseReportDispatcher
         ]
 
         for dispatcher in dispatchers:

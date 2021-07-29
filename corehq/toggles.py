@@ -808,11 +808,13 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
+    from corehq.apps.es import CaseSearchES
     from corehq.pillows.case_search import domains_needing_search_index
     domains_needing_search_index.clear()
-    if enabled:
-        # action is no longer reversible due to roll out of EXPLORE_CASE_DATA
-        # and upcoming migration of CaseES to CaseSearchES
+
+    has_case_search_cases = CaseSearchES().domain(domain).count() > 0
+    if enabled and not has_case_search_cases:
+        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -858,6 +860,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -2003,6 +2006,7 @@ ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'USH: UI for managing all web users in an enterprise',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
 
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(

@@ -23,10 +23,6 @@
           <i class="fa fa-plus"></i>
           {% trans "Add Action" %}
         </button>
-        <button class="btn btn-default" type="button" data-toggle="dropdown">
-          <i class="fa fa-plus"></i>
-          {% trans "Select an action" %}
-        </button>
         <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           <span class="caret"></span>
         </button>
@@ -98,7 +94,7 @@
       <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
     </div>
     <label class="col-xs-1 control-label">
-      <span class="label label-primary">Requires System Admin</span>
+      <span class="label label-primary">{% trans "Requires System Admin" %}</span>
     </label>
   </div>
 </script>

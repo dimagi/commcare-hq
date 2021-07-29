@@ -85,11 +85,13 @@ This is written in knockout, and it's probably the oldest code in this area.
 
 Major files to be aware of:
 
-* `fullform-ui.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js>`_ defines ``Question`` and ``Container``, the major abstractions used by form definitions. ``Container`` is the base abstraction for groups and for forms themselves.
-* `entrycontrols_full.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js>`_ defines ``Entry`` and its many subclasses, the widgets for entering data. The class hierarchy of entries has a few levels. There's generally a class for each question type: ``SingleSelectEntry``, ``TimeEntry``, etc. Appearance attributes can also have their own classes, such as ``ComboboxEntry`` and ``GeoPointEntry``.
-* `webformsession.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js>`_ defines the interaction for filling out a form. Web apps sends a request to formplayer every time a question is answered, so the session manages a lot of asynchronous requests, using a task queue. The session also handles loading forms, loading incomplete forms, and within-form actions like changing the form's language.
+* `form_ui.js
+* <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js>`_ defines ``Question`` and ``Container``, the major abstractions used by form definitions. ``Container`` is the base abstraction for groups and for forms themselves.
+* `entries.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js>`_ defines ``Entry`` and its many subclasses, the widgets for entering data. The class hierarchy of entries has a few levels. There's generally a class for each question type: ``SingleSelectEntry``, ``TimeEntry``, etc. Appearance attributes can also have their own classes, such as ``ComboboxEntry`` and ``GeoPointEntry``.
+* `web_form_session.js
+* <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js>`_ defines the interaction for filling out a form. Web apps sends a request to formplayer every time a question is answered, so the session manages a lot of asynchronous requests, using a task queue. The session also handles loading forms, loading incomplete forms, and within-form actions like changing the form's language.
 
-Form entry has a fair amount of test coverage. There are entry-specific tests and also tests for webformsession.
+Form entry has a fair amount of test coverage. There are entry-specific tests and also tests for web_form_session.
 
 FormplayerFrontend
 ^^^^^^^^^^^^^^^^^^
@@ -239,7 +241,7 @@ There isn't much here: some initialization code and a plugin that lets you scrol
 
 The app preview and web apps UIs are largely identical, but a few places do distinguish between them, using the ``environment`` attribute of the current user. Search for the constants ``PREVIEW_APP_ENVIRONMENT`` and ``WEB_APPS_ENVIRONMENT`` for examples.
 
-`hq.events.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/hq.events.js>`_, although not in this directory, is only really relevant to app preview. It controls the ability to communicate with HQ, which is used for the "phone icons" on app preview: back, refresh, and switching between the standard "phone" mode and the larger "tablet" mode.
+`hq_events.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/hq_events.js>`_, although not in this directory, is only really relevant to app preview. It controls the ability to communicate with HQ, which is used for the "phone icons" on app preview: back, refresh, and switching between the standard "phone" mode and the larger "tablet" mode.
 
 config.js
 =========
@@ -247,7 +249,7 @@ config.js
 This controls the UI for the Web Apps Permissions page, in the Users section of HQ.
 Web apps permissions are not part of the standard roles and permissions framework. They use their own model, which grants/denies permissions to apps based on user groups.
 
-formplayer-inline.js
+formplayer_inline.js
 ====================
 
 Inline formplayer is for the legacy "Edit Forms" behavior, which allowed users to edit submitted forms using the web apps UI.
