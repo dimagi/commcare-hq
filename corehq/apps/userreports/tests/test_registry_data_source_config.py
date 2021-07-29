@@ -82,9 +82,8 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         ]
         cols = self.config.get_columns()
         self.assertEqual(len(expected_columns), len(cols))
-        for i, col in enumerate(expected_columns):
-            col_back = cols[i]
-            self.assertEqual(col, col_back.id)
+        for expected, actual in zip(expected_columns, cols):
+            self.assertEqual(expected, actual.id)
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_indicators(self, datetime_mock):
