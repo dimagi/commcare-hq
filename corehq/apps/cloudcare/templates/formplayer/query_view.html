@@ -35,37 +35,37 @@
   </td>
   <td class="col-sm-2">
     <div class="query-input-group">
-    <% if (input == "select1") { %>
-      <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
-        <option value=""></option>
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-          <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
-          </option>
-        <% } %>
-      <select>
-    <% } else if (input == "select") { %>
-      <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
-        <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-          <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
-            <%- itemsetChoices[i] %>
-          </option>
-        <% } %>
-      <select>
-    <% } else if (input == "daterange") { %>
-      <input type="text" class="daterange query-field form-control" value="<%- value %>">
-    <% } else if (input == "address") { %>
-      <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
-      </div>
-    <% } else { %>
-      <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
-    <% } %>
-    <% if (typeof allow_blank_value !== "undefined" && allow_blank_value) { %>
-    <label>
-        <input type="checkbox" class="search-for-blank">
-        {% trans "Search for blank values" %}
-    </label>
-    <% } %>
+      <% if (input == "select1") { %>
+        <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
+          <option value=""></option>
+          <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+            <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
+              <%- itemsetChoices[i] %>
+            </option>
+          <% } %>
+        <select>
+      <% } else if (input == "select") { %>
+        <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
+          <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+            <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
+              <%- itemsetChoices[i] %>
+            </option>
+          <% } %>
+        <select>
+      <% } else if (input == "daterange") { %>
+        <input type="text" class="daterange query-field form-control" value="<%- value %>">
+      <% } else if (input == "address") { %>
+        <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
+        </div>
+      <% } else { %>
+        <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
+      <% } %>
+      <% if (typeof allow_blank_value !== "undefined" && allow_blank_value) { %>
+      <label>
+          <input type="checkbox" class="search-for-blank">
+          {% trans "Search for blank values" %}
+      </label>
+      <% } %>
     </div>
   </td>
 </script>
