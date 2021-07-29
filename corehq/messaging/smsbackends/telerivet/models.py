@@ -1,5 +1,5 @@
 import requests
-from corehq.apps.sms.util import clean_phone_number
+from django.urls import reverse
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.messaging.smsbackends.telerivet.exceptions import TelerivetException
 from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
@@ -76,6 +76,16 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'content': msg.text,
             'message_type': MESSAGE_TYPE_SMS,
         }
+        if kwargs.get('custom_metadata'):
+            msg.add_custom_metadata(kwargs.get('custom_metadata'))
+
+        if kwargs.get('status_callback', False):
+            status_callback_url = '{url}?cc_message_id={cc_message_id}'.format(
+                url=reverse('telerivet_message_status'),
+                cc_message_id=msg.couch_id
+            )
+            payload.update({'status_url': status_callback_url})
+
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
 
         # Sending with the json param automatically sets the Content-Type header to application/json

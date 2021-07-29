@@ -105,6 +105,8 @@ def get_sms_status_display_raw(sms):
     if sms.direction == OUTGOING:
         if sms.workflow == WORKFLOW_FORWARD:
             return SMS.STATUS_FORWARDED, detail
+        if sms.custom_metadata.get('gateway_delivered'):
+            return SMS.STATUS_DELIVERED, detail
         return SMS.STATUS_SENT, detail
     return SMS.STATUS_UNKNOWN, detail
 
