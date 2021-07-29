@@ -49,6 +49,7 @@ def _get_couch_docs(start_key, end_key):
         endkey=end_key,
         reduce=False,
         include_docs=True,
+        descending=True,
         limit=COUCH_QUERY_LIMIT
     )
     return list(result)
