@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.models import RegistryAuditLog, RegistryInvitation
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test
+from corehq.apps.registry.utils import DataRegistryCrudHelper
 
 
 class RegistryLoggingTests(TestCase):
@@ -18,14 +19,17 @@ class RegistryLoggingTests(TestCase):
                 Invitation("A", accepted=False, rejected=False),
             ]
         )
+        self.helper = DataRegistryCrudHelper(self.domain, self.registry.slug, self.user)
 
     def test_log_activate_deactivate(self):
         self.assertTrue(self.registry.is_active)
 
-        self.registry.deactivate(self.user)
+        self.helper.deactivate()
+        self.registry.refresh_from_db()
         self.assertFalse(self.registry.is_active)
 
-        self.registry.activate(self.user)
+        self.helper.activate()
+        self.registry.refresh_from_db()
         self.assertTrue(self.registry.is_active)
 
         self._assertLogs([
@@ -34,15 +38,17 @@ class RegistryLoggingTests(TestCase):
         ])
 
     def test_log_invitation_accept_reject(self):
+        self.helper.accept_invitation("A")
+
         invitation = self.registry.invitations.filter(domain="A").get()
-        invitation.accept(self.user)
         self.assertEqual(invitation.status, RegistryInvitation.STATUS_ACCEPTED)
 
         self._assertLogs([
             ("A", RegistryAuditLog.ACTION_INVITATION_ACCEPTED),
         ])
 
-        invitation.reject(self.user)
+        self.helper.reject_invitation("A")
+        invitation.refresh_from_db()
         self.assertEqual(invitation.status, RegistryInvitation.STATUS_REJECTED)
 
         self._assertLogs([
@@ -50,7 +56,8 @@ class RegistryLoggingTests(TestCase):
             ("A", RegistryAuditLog.ACTION_INVITATION_REJECTED),
         ])
 
-        invitation.accept(self.user)
+        self.helper.accept_invitation("A")
+        invitation.refresh_from_db()
         self.assertEqual(invitation.status, RegistryInvitation.STATUS_ACCEPTED)
 
         self._assertLogs([

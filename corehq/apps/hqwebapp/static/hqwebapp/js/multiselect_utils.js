@@ -55,7 +55,8 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         elementOrId,
         selectableHeaderTitle,
         selectedHeaderTitle,
-        searchItemTitle
+        searchItemTitle,
+        values
     ) {
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
@@ -76,6 +77,13 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 _renderSearch(searchSelectedId, searchItemTitle)
             ),
             afterInit: function () {
+                _.each(values, (item) => {
+                    if (typeof item !== 'object') {
+                        item = { value: item, text: item}
+                    }
+                    $element.multiSelect('addOption', item)
+                });
+
                 var that = this,
                     $selectableSearch = $('#' + searchSelectableId),
                     $selectionSearch = $('#' + searchSelectedId),
@@ -152,7 +160,8 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 element,
                 options.selectableHeaderTitle || gettext("Items"),
                 options.selectedHeaderTitle || gettext("Selected items"),
-                options.searchItemTitle || gettext("Search items")
+                options.searchItemTitle || gettext("Search items"),
+                ko.unwrap(options.values) || []
             );
         },
     };
