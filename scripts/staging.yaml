@@ -69,7 +69,6 @@ branches:
     - ml/add-bulk-delete-form-export-report # Minha July 20
     - smh/add-download-and-email-reports-permission # Steph July 21
     - jm/stale-es-case-search  # Joel July 21
-    - cs/SC-1529-multiple-mobile-numbers-upload  # Charl July 22
     - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
     - gh/improve-erm-ui # Graham June 16 [QA]
     - rc/tableau-models-linked-spaces # Robert July 22
@@ -84,6 +83,7 @@ branches:
     - gh/only-disable-linked-apps-for-erm # Graham July 28
     - mk/user-history/track-ui-edits # MK July 28
     - cs/SC-1529-multiple-mobile-numbers-upload+mk/user-history/add-message-helper # MK July 28
+    - cs/SC-1529-multiple-mobile-numbers-upload  # Charl July 22
     - mk/user-history/add-message-helper # MK July 28
     - gh/custom-product-data-fields-behind-ff # Graham July 28
 submodules: { }
