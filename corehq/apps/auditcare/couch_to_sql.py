@@ -19,7 +19,8 @@ from corehq.apps.auditcare.utils.migration import (
 )
 from corehq.util.soft_assert import soft_assert
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+logger.setLevel('INFO')
 
 ACCESS_LOOKUP = {
     "login": ACCESS_LOGIN,
@@ -135,7 +136,7 @@ def get_events_from_couch(start_key, end_key):
 
 def copy_events_to_sql(start_time, end_time):
     util = AuditCareMigrationUtil()
-    print(f"Starting batch: {start_time} - {end_time}")
+    logger.info(f"Starting batch: {start_time} - {end_time}")
     key = get_migration_key(start_time, end_time)
     end_key = get_couch_key(end_time)
     start_key = get_couch_key(start_time)
@@ -158,6 +159,7 @@ def copy_events_to_sql(start_time, end_time):
         _soft_assert(False, message)
         util.set_batch_as_errored(key)
         return
+    logger.info(f"Batch finished: {start_time} - {end_time}")
     util.set_batch_as_finished(key, count)
 
 

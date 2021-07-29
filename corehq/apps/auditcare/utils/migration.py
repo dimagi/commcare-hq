@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime, timedelta
 
 from django.core.cache import cache
@@ -9,6 +11,9 @@ from corehq.apps.auditcare.utils.export import get_sql_start_date
 
 CUTOFF_TIME = datetime(2013, 1, 1)
 CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
+
+logger = logging.getLogger(__name__)
+logger.setLevel('INFO')
 
 
 class AuditCareMigrationUtil():
@@ -24,7 +29,6 @@ class AuditCareMigrationUtil():
         batches = []
         with cache.lock(self.start_lock_key, timeout=10):
             start_datetime = self.get_next_batch_start()
-            print(start_datetime)
             if not start_datetime:
                 if AuditcareMigrationMeta.objects.count() != 0:
                     raise MissingStartTimeError()
@@ -36,7 +40,7 @@ class AuditCareMigrationUtil():
                     start_datetime = datetime.now()
 
             if start_datetime < CUTOFF_TIME:
-                print("Migration Successfull")
+                logger.info("Migration Successfull")
                 return
 
             start_time = start_datetime
