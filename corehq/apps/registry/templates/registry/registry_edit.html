@@ -414,7 +414,6 @@
               <select multiple class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: editedSchema"></select>
             </div>
           </div>
-
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
@@ -439,27 +438,34 @@
           <h4 class="modal-title">{% trans "Grant access" %}</h4>
         </div>
         <div class="modal-body">
-          <div class='alert alert-info'>
+          <div class="alert alert-info">
             <p>
               {% blocktrans %}
               You are granting access to data from this project space ({{ domain }}).
               {% endblocktrans %}
             </p>
-            <p>
+            <p data-bind="visible: availableGrantDomains().length">
               {% blocktrans %}
               Granting a project spaces access allows them to view this projects data via this data registry.
                 They will be able to view case data for all the case types configured in the registry.
               {% endblocktrans %}
             </p>
           </div>
-          <select multiple class="form-control" data-bind="
-              selectedOptions: grantDomains,
-              multiselect: {
-                selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
-                selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
-                searchItemTitle: '{% trans_html_attr "Search" %}',
-                values: availableGrantDomains
-              }"></select>
+          <div class="alert alert-info" data-bind="visible: !availableGrantDomains().length">
+            {% blocktrans %}
+              All the project spaces associated with this registry have already been granted access.
+            {% endblocktrans %}
+          </div>
+          <div data-bind="visible: availableGrantDomains().length">
+            <select multiple class="form-control" data-bind="
+                selectedOptions: grantDomains,
+                multiselect: {
+                  selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
+                  selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
+                  searchItemTitle: '{% trans_html_attr "Search" %}',
+                  values: availableGrantDomains
+                }"></select>
+          </div>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
