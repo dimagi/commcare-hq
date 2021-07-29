@@ -21,7 +21,7 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.motech.repeaters.models import (
     FormRepeater,
-    RepeaterStub,
+    SQLRepeater,
     send_request,
 )
 
@@ -47,7 +47,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             include_app_id_param=False,
         )
         cls.repeater.save()
-        cls.repeater_stub = RepeaterStub.objects.create(
+        cls.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
         )
@@ -56,7 +56,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.repeater_stub.delete()
+        cls.sql_repeater.delete()
         cls.repeater.delete()
         cls.teardown_subscriptions()
         cls.domain_obj.delete()
@@ -65,7 +65,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
-        self.repeat_record = self.repeater_stub.repeat_records.create(
+        self.repeat_record = self.sql_repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
@@ -75,8 +75,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         self.repeat_record.delete()
         super().tearDown()
 
-    def reget_repeater_stub(self):
-        return RepeaterStub.objects.get(pk=self.repeater_stub.pk)
+    def reget_sql_repeater(self):
+        return SQLRepeater.objects.get(pk=self.sql_repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
@@ -88,8 +88,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_SUCCESS_STATE)
-            repeater_stub = self.reget_repeater_stub()
-            self.assertIsNone(repeater_stub.next_attempt_at)
+            sql_repeater = self.reget_sql_repeater()
+            self.assertIsNone(sql_repeater.next_attempt_at)
 
     def test_no_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
@@ -101,9 +101,9 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            repeater_stub = self.reget_repeater_stub()
+            sql_repeater = self.reget_sql_repeater()
             # Trying tomorrow is just as likely to work as in 5 minutes
-            self.assertIsNone(repeater_stub.next_attempt_at)
+            self.assertIsNone(sql_repeater.next_attempt_at)
 
     def test_no_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
@@ -115,8 +115,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            repeater_stub = self.reget_repeater_stub()
-            self.assertIsNone(repeater_stub.next_attempt_at)
+            sql_repeater = self.reget_sql_repeater()
+            self.assertIsNone(sql_repeater.next_attempt_at)
 
     def test_backoff_on_503(self):
         resp = ResponseMock(status_code=503, reason='Service Unavailable')
@@ -128,8 +128,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            repeater_stub = self.reget_repeater_stub()
-            self.assertIsNotNone(repeater_stub.next_attempt_at)
+            sql_repeater = self.reget_sql_repeater()
+            self.assertIsNotNone(sql_repeater.next_attempt_at)
 
     def test_backoff_on_connection_error(self):
         with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
@@ -140,8 +140,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
             self.assertEqual(self.repeat_record.attempts.last().state,
                              RECORD_FAILURE_STATE)
-            repeater_stub = self.reget_repeater_stub()
-            self.assertIsNotNone(repeater_stub.next_attempt_at)
+            sql_repeater = self.reget_sql_repeater()
+            self.assertIsNotNone(sql_repeater.next_attempt_at)
 
 
 def post_xform(instance_id):
