@@ -242,8 +242,8 @@ class CommCareUserImporter(BaseUserImporter):
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(
-            list_to_compare=new_phone_numbers,
-            reference_list=old_phone_numbers
+            target=new_phone_numbers,
+            source=old_phone_numbers
         )
 
         for number in items_added:
@@ -329,21 +329,21 @@ def get_user_primary_location_name(user, domain):
         return primary_location.name
 
 
-def find_differences_in_list(list_to_compare: list, reference_list: list):
+def find_differences_in_list(target: list, source: list):
     """
-    Find the differences between 'list_to_compare' and 'reference_list' and
+    Find the differences between 'source' and 'target' and
     return (added_items, removed_items)
 
-    'added_items': items that are in 'list_to_compare' but not in 'reference_list'
-    'removed_items': items that are in 'reference_list' but not 'list_to_compare'
+    'added_items': items that are in 'target' but not in 'source'
+    'removed_items': items that are in 'source' but not 'target'
 
     >>> find_differences_in_list(list_to_compare=[3,4,5,6], reference_list=[1,2,3,5])
     ({4, 6}, {1, 2})
     """
 
-    shared_items = set(list_to_compare).intersection(reference_list)
+    shared_items = set(target).intersection(source)
 
-    added_items = set(list_to_compare).difference(shared_items)
-    removed_items = set(reference_list).difference(shared_items)
+    added_items = set(target).difference(shared_items)
+    removed_items = set(source).difference(shared_items)
 
     return added_items, removed_items
