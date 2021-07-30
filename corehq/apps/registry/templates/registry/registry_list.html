@@ -52,7 +52,7 @@
               {% trans "Owner" %}
               <span class="label" data-bind="
                 class: is_active() ? 'label-success-light' : 'label-warning-light',
-                attr: {'title': is_active() ? '{% trans "Active" %}' : '{% trans "Inactive" %}'}
+                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
               ">
                 <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
               </span>
@@ -91,7 +91,7 @@
               <i class="fa fa-user-o"></i>
               <span data-bind="text: statusText"></span>
               <span class="label label-default-light" data-bind="
-                attr: {'title': is_active() ? '{% trans "Active" %}' : '{% trans "Inactive" %}'}
+                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
               ">
                 <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
               </span>

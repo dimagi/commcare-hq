@@ -145,14 +145,14 @@
         </div>
       </div>
     </div>
-    <div class="row mt-4" data-bind="visible: domain_invitation.status() !== 'accepted'">
+    <div class="row mt-4" data-bind="visible: !is_owner && domain_invitation.status() !== 'accepted'">
       <div class="col-sm-12 col-md-8">
         <div class="alert alert-info">
         {% trans "You must opt-in to the registry before you are able to manage grants." %}
         </div>
       </div>
     </div>
-    <div class="row mt-4" data-bind="if: domain_invitation.status() === 'accepted'">
+    <div class="row mt-4" data-bind="if: is_owner || domain_invitation.status() === 'accepted'">
       <div class="col-sm-12 col-md-8">
         <ul class="nav nav-tabs" role="tablist">
           {% if is_owner %}
@@ -222,7 +222,7 @@
                   <td data-bind="text: invitationDate"></td>
                   <td data-bind="text: responseDate"></td>
                   <td>
-                    <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans "Remove Project" %}">
+                    <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans_html_attr "Remove Project" %}">
                       <i class="fa fa-trash"></i>
                     </button>
                   </td>
@@ -233,7 +233,7 @@
           </div>
           {% endif %}
           <div role="tabpanel" class="tab-pane {% if not is_owner %}active{% endif %}" id="grants">
-            <div class="row">
+            <div class="row" data-bind="visible: domain_invitation.status() === 'accepted'">
               <div class="col-md-2 col-md-offset-10">
                 <div class="pull-right">
                   <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
@@ -265,7 +265,7 @@
                     <span class="label label-default" data-bind="text: $data"></span>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans "Remove Grant" %}">
+                    <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
                       <i class="fa fa-trash"></i>
                     </button>
                   </td>
