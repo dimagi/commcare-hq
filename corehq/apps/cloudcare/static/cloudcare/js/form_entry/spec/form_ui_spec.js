@@ -2,7 +2,7 @@
 
 describe('Fullform UI', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui"),
+        UI = hqImport("cloudcare/js/form_entry/form_ui"),
         questionJSON,
         formJSON,
         groupJSON,

@@ -1,5 +1,5 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
-hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
+hqDefine("cloudcare/js/form_entry/entries", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");

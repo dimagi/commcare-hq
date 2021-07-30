@@ -55,19 +55,16 @@ class RepeaterTestCase(TestCase):
         )
 
     def tearDown(self):
+        if self.repeater.connection_settings_id:
+            ConnectionSettings.objects.filter(
+                pk=self.repeater.connection_settings_id
+            ).delete()
         self.repeater_stub.delete()
         self.repeater.delete()
         super().tearDown()
 
 
 class RepeaterConnectionSettingsTests(RepeaterTestCase):
-
-    def tearDown(self):
-        if self.repeater.connection_settings_id:
-            ConnectionSettings.objects.filter(
-                pk=self.repeater.connection_settings_id
-            ).delete()
-        super().tearDown()
 
     def test_create_connection_settings(self):
         self.assertIsNone(self.repeater.connection_settings_id)
@@ -106,6 +103,29 @@ class RepeaterConnectionSettingsTests(RepeaterTestCase):
         conn = self.repeater.connection_settings
 
         self.assertEqual(conn.plaintext_password, self.repeater.plaintext_password)
+
+
+class TestRepeaterName(RepeaterTestCase):
+
+    def test_migrated_name(self):
+        """
+        When ConnectionSettings are migrated from an old Repeater,
+        ConnectionSettings.name is set to Repeater.url
+        """
+        connection_settings = self.repeater.connection_settings
+        self.assertEqual(connection_settings.name, self.repeater.url)
+        self.assertEqual(self.repeater.name, connection_settings.name)
+
+    def test_repeater_name(self):
+        connection_settings = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Example Server',
+            url='https://example.com/api/',
+        )
+        self.repeater.connection_settings_id = connection_settings.id
+        self.repeater.save()
+
+        self.assertEqual(self.repeater.name, connection_settings.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):

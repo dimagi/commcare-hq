@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
     @signalcommand
     def handle(self, username, **options):
-        if settings.IS_SAAS_ENVIRONMENT or settings.IS_INDIA_ENVIRONMENT:
+        if not settings.ALLOW_MAKE_SUPERUSER_COMMAND:
             from dimagi.utils.web import get_site_domain
             raise CommandError(f"""You cannot run this command in SaaS Enviornments.
             Use https://{get_site_domain()}/hq/admin/superuser_management/ for granting superuser permissions""")

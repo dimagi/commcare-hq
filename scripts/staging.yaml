@@ -60,21 +60,30 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
-    - gh/improve-erm-ui # Graham June 16 [QA]
-    - jm/repeater-domain-admins  # Joel June 21
-    - sp/csrf # Amit + Shivam June 30
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
-    - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - ce/bulk-case-search # Cal July 6
     - ap/auditcare-migration # Amit July 8
-    - rc/explain-before-entering # Robert July 8 [QA]
     - rp/enterprize-sms-report # Rynhard July 12
-    - bmb/hubspot-privacy  # Biyeun July 12
-    - bmb/sso-domain-login-update  # Biyeun July 15
-    - smh/tableau-server-dropdown-modification # Steph July 19
-    - bmb/sso-alternate-login  # Biyeun July 19
-    #- jls/move-enterprise-permissions-2-of-3-redo  # Jenny July 20
-    - rc/clarify-explanation # Robert July 20
     - ml/add-bulk-delete-form-export-report # Minha July 20
+    - jm/stale-es-case-search  # Joel July 21
+    - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
+    - gh/improve-erm-ui # Graham June 16 [QA]
+    - gh/custom-product-data-fields-behind-ff+rc/tableau-models-linked-spaces
+    - rc/tableau-models-linked-spaces # Robert July 22
+    - gh/custom-product-data-fields-behind-ff # Graham July 28
+    - caktus:case-upload-validate-dates # Jenny July 22
+    - sr/memoized-toggle # Sravan July 26
+    - bmb/sso-login-v2  # Biyeun July 26
+    - bmb/noramilize-url  # Biyeun July 26
+    - smh/web-user-upload-invites-fix # Steph July 26
+    - jls/delay-web-apps-form-errors # Jenny July 27
+    - cs/SC-1530-location-hierarchy-links  # Charl July 28
+    - gh/fix-3tab-issue # Graham July 28
+    - gh/only-disable-linked-apps-for-erm # Graham July 28
+    - mk/user-history/track-ui-edits # MK July 28
+    - cs/SC-1529-multiple-mobile-numbers-upload+mk/user-history/add-message-helper # MK July 28
+    - mk/user-history/add-message-helper # MK July 28
+    - sk/data-registry-view  # Simon July 29
+    - rc/show-hierarchy # Robert July 29
 submodules: { }

@@ -1,9 +1,8 @@
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.registry.exceptions import RegistryAccessDenied
-from corehq.apps.registry.models import DataRegistry, RegistryAuditLog, RegistryInvitation
-from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
+from corehq.apps.registry.models import RegistryAuditLog, RegistryInvitation
+from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test
 
 
 class RegistryLoggingTests(TestCase):
