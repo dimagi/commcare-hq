@@ -188,18 +188,16 @@ def track_pg_limits():
     for db in settings.DATABASES:
         with connections[db].cursor() as cursor:
             query = """
-            select tab.relname, seq.relname, attlen
+            select tab.relname, seq.relname
               from pg_class seq
               join pg_depend dep on seq.oid=dep.objid
-              join pg_class as tab on (dep.refobjid = tab.oid)
-              join pg_attribute on attrelid=tab.oid and attnum=refobjsubid
-              where seq.relkind='S'
+              join pg_class as tab on dep.refobjid = tab.oid
+              join pg_attribute on att.attrelid=tab.oid and att.attnum=dep.refobjsubid
+              where seq.relkind='S' and att.attlen=4
             """
             cursor.execute(query)
             results = cursor.fetchall()
-            for table, sequence, length in results:
-                # Only track integer columns, ignoring ones that are already bigint
-                if length == 4:
-                    cursor.execute(f'select last_value from {sequence}')
-                    current_value = cursor.fetchone()[0]
-                    metrics_gauge('postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+            for table, sequence in results:
+                cursor.execute(f'select last_value from {sequence}')
+                current_value = cursor.fetchone()[0]
+                metrics_gauge('postgres.sequence.current_value', current_value, {'table': table, 'database': db})
