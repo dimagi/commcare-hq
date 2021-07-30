@@ -3,6 +3,7 @@ from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
+from corehq.apps.registry.notifications import send_invitation_email
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -54,6 +55,7 @@ class DataRegistryCrudHelper:
 
         invitation, created = self.registry.invitations.get_or_create(domain=domain)
         if created:
+            send_invitation_email(self.registry, invitation)
             self.registry.logger.invitation_added(self.user, invitation)
         return invitation, created
 
