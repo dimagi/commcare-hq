@@ -108,7 +108,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'name': 'Another One',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }
@@ -548,7 +548,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(
             user_history.message,
-            "Password Reset"
+            "Password reset"
         )
 
         import_users_and_groups(
@@ -722,7 +722,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(
             user_history.message,
-            f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_qualified_id()}]"
+            f"Password reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_qualified_id()}]"
         )
 
     def test_blank_is_active(self):
@@ -1005,6 +1005,134 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(user_history.message, '')
+
+    def test_upload_with_phone_number(self):
+        user_specs = self._get_spec()
+        user_specs['phone-number'] = ['8765547824']
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+
+        numbers = user_history.details['changes']['phone_numbers']
+        self.assertEqual(numbers, ['8765547824'])
+
+    def test_upload_with_multiple_phone_numbers(self):
+        initial_default_number = '12345678912'
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        number1 = '8765547824'
+        number2 = '7765547823'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+
+        self.assertTrue(f'Added phone number {number1}' in changes)
+        self.assertTrue(f'Added phone number {number2}' in changes)
+        self.assertTrue(f'Removed phone number {initial_default_number}' in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number1)
+        self.assertEqual(user.phone_numbers, [number1, number2])
+
+    def test_upload_with_multiple_phone_numbers_and_some_blank(self):
+        initial_default_number = '12345678912'
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+        number1 = ''
+        number2 = '7765547823'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, number2]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+
+        self.assertTrue(f'Added phone number {number2}' in changes)
+        self.assertTrue(f'Removed phone number {initial_default_number}' in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number2)
+        self.assertEqual(user.phone_numbers, [number2])
+
+    def test_upload_with_multiple_phone_numbers_with_duplicates(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+        number1 = '7765547823'
+        duplicate_number = number1
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = [number1, duplicate_number]
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+
+        self.assertTrue(f'Added phone number {number1}' in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, number1)
+        self.assertEqual(user.phone_numbers, [number1])
+
+    def test_upload_with_badly_formatted_phone_numbers(self):
+        number1 = '+27893224921'
+        bad_number = '2o34532445665'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'])
+        user_specs['phone-number'] = [number1, bad_number]
+
+        res = import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        self.assertEqual(res['messages']['errors'][0], 'Invalid phone number detected')
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
