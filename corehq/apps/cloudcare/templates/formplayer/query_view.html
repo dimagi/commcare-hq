@@ -20,7 +20,7 @@
 
 
 <script type="text/template" id="query-view-item-template">
-  <td class="col-sm-2">
+  <td class="col-sm-6">
     <div>
       <%- text ? text : "" %>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
@@ -33,7 +33,7 @@
     </div>
   </td>
   </td>
-  <td class="col-sm-2">
+  <td class="col-sm-6">
     <div class="query-input-group">
       <% if (input == "select1") { %>
         <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
