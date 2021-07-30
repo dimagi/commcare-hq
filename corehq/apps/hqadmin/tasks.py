@@ -187,7 +187,6 @@ def track_es_doc_counts():
 def track_pg_limits():
     for db in settings.DATABASES:
         with connections[db].cursor() as cursor:
-            cursor.execute("select table_name, data_type from information_schema.columns where column_name = 'id'")
             query = """
             select tab.relname, seq.relname, attlen
               from pg_class seq
