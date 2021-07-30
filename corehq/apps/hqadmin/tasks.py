@@ -182,6 +182,7 @@ def track_es_doc_counts():
                     metrics_gauge('elasticsearch.shards.docs.count', i['docs']['count'], tags)
                     metrics_gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
 
+
 @periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="0"))
 def track_pg_limits():
     for db in settings.DATABASES:
@@ -189,9 +190,9 @@ def track_pg_limits():
             cursor.execute("select table_name, data_type from information_schema.columns where column_name = 'id'")
             query = """
             select tab.relname, seq.relname, attlen
-              from pg_class seq 
-              join pg_depend dep on seq.oid=dep.objid 
-              join pg_class as tab on (dep.refobjid = tab.oid) 
+              from pg_class seq
+              join pg_depend dep on seq.oid=dep.objid
+              join pg_class as tab on (dep.refobjid = tab.oid)
               join pg_attribute on attrelid=tab.oid and attnum=refobjsubid
               where seq.relkind='S'
             """
@@ -202,4 +203,4 @@ def track_pg_limits():
                 if length == 4:
                     cursor.execute(f'select last_value from {sequence}')
                     current_value = cursor.fetchone()[0]
-                    metrics_gauge('postgres.sequence.current_value', current_value, {'table': table, 'database': db} 
+                    metrics_gauge('postgres.sequence.current_value', current_value, {'table': table, 'database': db})
