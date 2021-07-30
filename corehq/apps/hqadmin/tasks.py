@@ -190,9 +190,9 @@ def track_pg_limits():
             query = """
             select tab.relname, seq.relname
               from pg_class seq
-              join pg_depend dep on seq.oid=dep.objid
+              join pg_depend as dep on seq.oid=dep.objid
               join pg_class as tab on dep.refobjid = tab.oid
-              join pg_attribute on att.attrelid=tab.oid and att.attnum=dep.refobjsubid
+              join pg_attribute as att on att.attrelid=tab.oid and att.attnum=dep.refobjsubid
               where seq.relkind='S' and att.attlen=4
             """
             cursor.execute(query)
