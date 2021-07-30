@@ -40,7 +40,7 @@ def data_registries(request, domain):
             'page_name': _('Data Registries'),
         },
         'section': {
-            'page_name': 'Project Settings',
+            'page_name': _('Project Settings'),
             'url': reverse("domain_settings_default", args=[domain]),
         },
     }
@@ -118,18 +118,18 @@ def manage_registry(request, domain, registry_slug):
         "available_domains": available_domains,
         "invited_domains": [invitation.domain for invitation in all_invitations],
         "current_page": {
-            "title": "Manage Registry",
-            "page_name": "Manage Registry",
+            "title": _("Manage Registry"),
+            "page_name": _("Manage Registry"),
             "parents": [
                 {
-                    "title": "Data Registries",
-                    "page_name": "Data Registries",
+                    "title": _("Data Registries"),
+                    "page_name": _("Data Registries"),
                     "url": reverse("data_registries", args=[domain]),
                 },
             ],
         },
         'section': {
-            'page_name': 'Project Settings',
+            'page_name': _('Project Settings'),
             'url': reverse("domain_settings_default", args=[domain]),
         },
     }
