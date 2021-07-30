@@ -14,6 +14,8 @@ quickcache_soft_assert = soft_assert(
     skip_frames=5,
 )
 
+import threading
+_thread_local = threading.local()
 
 def get_session_key():
     """
@@ -28,6 +30,7 @@ def get_session_key():
     # quickcache catches this and skips the cache
     # this happens during tests (outside a fake task/request context)
     # and during management commands
+    return _quickcache_id(_thread_local)
     raise ForceSkipCache("Not part of a session")
 
 
