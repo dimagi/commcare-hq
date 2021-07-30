@@ -283,10 +283,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = response.models[i].get('value');
+                            value = $field.val();
+
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
-                        if ($field.attr('multiple')) {
-                            value = value.split(selectDelimiter);
+                        if (!$field.attr('multiple')) {
+                            value = String(value);
                         }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
