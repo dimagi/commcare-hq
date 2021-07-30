@@ -1087,7 +1087,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user.default_phone_number, number2)
         self.assertEqual(user.phone_numbers, [number2])
 
-    def test_upload_with_multiple_phone_numbers_with_duplciates(self):
+    def test_upload_with_multiple_phone_numbers_with_duplicates(self):
         user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
         number1 = '7765547823'
@@ -1115,6 +1115,24 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(user.default_phone_number, number1)
         self.assertEqual(user.phone_numbers, [number1])
+
+    def test_upload_with_badly_formatted_phone_numbers(self):
+        number1 = '+27893224921'
+        bad_number = '2o34532445665'
+
+        user_specs = self._get_spec(delete_keys=['phone-number'])
+        user_specs['phone-number'] = [number1, bad_number]
+
+        res = import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+
+        self.assertEqual(res['messages']['errors'][0], 'Invalid phone number detected')
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):

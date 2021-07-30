@@ -13,6 +13,7 @@ from couchdbkit.exceptions import (
     ResourceConflict
 )
 
+from django.core.exceptions import ValidationError
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
@@ -43,6 +44,8 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.apps.sms.util import validate_phone_number
+
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -404,6 +407,15 @@ def format_location_codes(location_codes):
     return location_codes
 
 
+def clean_phone_numbers(phone_numbers, error_message=None):
+    cleaned_numbers = []
+    for number in phone_numbers:
+        if number:
+            validate_phone_number(number, error_message)
+            cleaned_numbers.append(number)
+    return cleaned_numbers
+
+
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, upload_record_id,
                                                group_memoizer=None,
                                                update_progress=None):
@@ -490,7 +502,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     status_row['flag'] = 'created'
 
                 if phone_numbers:
-                    phone_numbers = [n for n in phone_numbers if n]  # remove empty items
+                    phone_numbers = clean_phone_numbers(phone_numbers, 'Invalid phone number detected')
                     commcare_user_importer.update_phone_numbers(phone_numbers)
 
                 if name:
@@ -576,6 +588,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 for group_name in group_names:
                     domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
 
+            except ValidationError as e:
+                ret['errors'].append(e.message)
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
 
