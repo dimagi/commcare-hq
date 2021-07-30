@@ -1684,6 +1684,7 @@ class ProjectSettingsTab(UITab):
         '/a/{domain}/motech/',
         '/a/{domain}/dhis2/',
         '/a/{domain}/openmrs/',
+        '/a/{domain}/registries/',
     )
 
     _is_viewable = False
@@ -1994,6 +1995,17 @@ def _get_feature_flag_items(domain):
         feature_flag_items.append({
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
+    if toggles.DATA_REGISTRY.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Data Registries'),
+            'url': reverse('data_registries', args=[domain]),
+            'subpages': [
+                {
+                    'title': _("Manage Registry"),
+                    'urlname': "manage_registry",
+                },
+            ],
         })
     return feature_flag_items
 
