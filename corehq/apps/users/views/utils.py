@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     DomainMembershipError,
     StaticRole,
@@ -79,7 +80,7 @@ def log_user_groups_change(domain, request, user, group_ids=None):
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=f"Groups: {groups_info}"
+        message=UserChangeMessage.groups_info_message(groups_info)
     )
 
 
@@ -91,14 +92,14 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
         fields_changed['location_id'] = user.location_id
         if user.location_id:
             location_name = SQLLocation.objects.get(location_id=user.location_id).name
-        messages.append(f"Primary location: {location_name}")
+        messages.append(UserChangeMessage.commcare_user_primary_location_info_message(location_name))
     if old_assigned_location_ids != user.assigned_location_ids:
         location_names = []
         fields_changed['assigned_location_ids'] = user.assigned_location_ids
         if user.assigned_location_ids:
             location_names = [loc.name
                               for loc in SQLLocation.objects.filter(location_id__in=user.assigned_location_ids)]
-        messages.append(f"Assigned locations: {location_names}")
+        messages.append(UserChangeMessage.commcare_user_assigned_locations_info_message(location_names))
 
     if messages:
         log_user_change(

@@ -19,6 +19,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
@@ -321,9 +322,7 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
     :param by_user: couch user that made the update
     :param updated_via: web/bulk_importer
     """
-    message = 'Role: None'
-    if user_role:
-        message = f"Role: {user_role.name}[{user_role.get_qualified_id()}]"
+    message = UserChangeMessage.role_change_message(user_role)
     log_user_change(domain, user, by_user, changed_via=updated_via, message=message)
 
 

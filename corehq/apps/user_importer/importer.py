@@ -13,6 +13,7 @@ from couchdbkit.exceptions import (
     ResourceConflict
 )
 
+from django.core.exceptions import ValidationError
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
@@ -30,6 +31,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -43,6 +45,8 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.apps.sms.util import validate_phone_number
+
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -77,6 +81,7 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
+
     if is_web_upload:
         missing_headers = web_required_headers - headers
     else:
@@ -306,7 +311,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
-        user_change_logger.add_change_message(f"Invited to domain '{domain}'")
+        user_change_logger.add_change_message(UserChangeMessage.invited_to_domain(domain))
 
 
 def find_location_id(location_codes, location_cache):
@@ -403,6 +408,15 @@ def format_location_codes(location_codes):
     return location_codes
 
 
+def clean_phone_numbers(phone_numbers, error_message=None):
+    cleaned_numbers = []
+    for number in phone_numbers:
+        if number:
+            validate_phone_number(number, error_message)
+            cleaned_numbers.append(number)
+    return cleaned_numbers
+
+
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, upload_record_id,
                                                group_memoizer=None,
                                                update_progress=None):
@@ -425,7 +439,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     ret = {"errors": [], "rows": []}
 
     current = 0
-
     try:
         for row in user_specs:
             if update_progress:
@@ -457,7 +470,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
-            phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
             location_codes = row.get('location_code', []) if 'location_code' in row else None
@@ -465,6 +477,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
+            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
             try:
                 password = str(password) if password else None
@@ -489,8 +502,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if phone_number:
-                    commcare_user_importer.update_phone_number(phone_number)
+                if phone_numbers:
+                    phone_numbers = clean_phone_numbers(phone_numbers, 'Invalid phone number detected')
+                    commcare_user_importer.update_phone_numbers(phone_numbers)
+
                 if name:
                     commcare_user_importer.update_name(name)
 
@@ -574,7 +589,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 for group_name in group_names:
                     domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
 
-            except (UserUploadError, CouchUser.Inconsistent) as e:
+            except ValidationError as e:
+                status_row['flag'] = e.message
+            except (UserUploadError, CouchUser.Inconsistent, ValidationError) as e:
                 status_row['flag'] = str(e)
 
             ret["rows"].append(status_row)
@@ -721,7 +738,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
 def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
                                    role_qualified_id, upload_user, current_user, web_user_importer,
                                    max_tries=3):
-
     if domain_info.can_assign_locations and location_codes is not None:
         web_user_importer.update_locations(location_codes, membership, domain_info)
     web_user_importer.update_role(role_qualified_id)
@@ -775,7 +791,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         if is_web_upload:
             remove_invited_web_user(domain, username)
             if user_change_logger:
-                user_change_logger.add_change_message(f"Invitation revoked for domain '{domain}'")
+                user_change_logger.add_change_message(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -785,4 +801,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(f"Removed from domain '{domain}'")
+            user_change_logger.add_change_message(UserChangeMessage.domain_removal_message(domain))
