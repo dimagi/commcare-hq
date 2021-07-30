@@ -79,9 +79,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             afterInit: function () {
                 _.each(values, (item) => {
                     if (typeof item !== 'object') {
-                        item = { value: item, text: item}
+                        item = { value: item, text: item};
                     }
-                    $element.multiSelect('addOption', item)
+                    $element.multiSelect('addOption', item);
                 });
 
                 var that = this,

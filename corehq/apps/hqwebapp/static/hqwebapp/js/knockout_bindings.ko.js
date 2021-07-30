@@ -379,7 +379,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             let value = valueAccessor(),
                 templateID = value,
                 ifValue = true;
-            if (typeof value === 'object' ) {
+            if (typeof value === 'object') {
                 templateID = value.templateId;
                 ifValue = _.has(value, 'if') ? value.if : true;
             }
