@@ -2052,7 +2052,7 @@ COMPRESS_CSS_HASHING_METHOD = 'content'
 
 
 if 'locmem' not in CACHES:
-    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+    CACHES['locmem'] = {'BACKEND': 'corehq.util.locmem.NonPickledLocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
