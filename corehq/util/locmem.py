@@ -1,4 +1,4 @@
-"Thread-safe in-memory cache backend that doesn't pickle."
+"This is same as Django's LocMemCache without the pickling part"
 import copy
 import time
 from collections import OrderedDict
