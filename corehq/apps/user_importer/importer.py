@@ -590,8 +590,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except ValidationError as e:
-                ret['errors'].append(e.message)
-            except (UserUploadError, CouchUser.Inconsistent) as e:
+                status_row['flag'] = e.message
+            except (UserUploadError, CouchUser.Inconsistent, ValidationError) as e:
                 status_row['flag'] = str(e)
 
             ret["rows"].append(status_row)

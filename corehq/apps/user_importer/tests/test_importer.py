@@ -1131,8 +1131,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )
-
-        self.assertEqual(res['messages']['errors'][0], 'Invalid phone number detected')
+        self.assertEqual(res['messages']['rows'][0]['flag'], 'Invalid phone number detected')
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
