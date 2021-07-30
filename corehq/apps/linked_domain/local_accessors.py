@@ -10,6 +10,31 @@ from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
+from corehq.apps.reports.models import TableauServer, TableauVisualization
+
+
+def get_tableau_server_and_visualizations(domain):
+    server, created = TableauServer.objects.get_or_create(domain=domain)
+    visualizations = TableauVisualization.objects.all().filter(domain=domain)
+    vis_list = []
+    for vis in visualizations:
+        vis_list.append({
+            'domain': domain,
+            'server': server,
+            'view_url': vis.view_url,
+            'id': vis.id,
+        })
+    return {
+        'server': {
+            'domain': domain,
+            'server_type': server.server_type,
+            'server_name': server.server_name,
+            'validate_hostname': server.validate_hostname,
+            'target_site': server.target_site,
+            'domain_username': server.domain_username,
+        },
+        'visualizations': vis_list,
+    }
 
 
 def get_enabled_toggles_and_previews(domain):
