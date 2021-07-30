@@ -11,10 +11,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='enterprisepermissions',
-            name='account',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
-                                       to='accounting.BillingAccount'),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name='enterprisepermissions',
+                    name='account',
+                    field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
+                                               to='accounting.BillingAccount'),
+                ),
+            ],
         ),
     ]
