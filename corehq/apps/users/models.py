@@ -171,7 +171,6 @@ class Permissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
-    download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
@@ -2811,9 +2810,6 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_reports(self):
-        return False
-
-    def can_download_reports(self):
         return False
 
     def is_eula_signed(self, version=None):

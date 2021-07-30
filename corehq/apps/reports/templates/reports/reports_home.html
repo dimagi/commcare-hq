@@ -12,15 +12,13 @@
 
   <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
-    {% if request.couch_user.can_download_reports %}
-      <li><a href="#scheduled-reports" data-toggle="tab">
-        {% if others_scheduled_reports %}
-          {% trans "Scheduled Reports" %}
-        {% else %}
-          {% trans "My Scheduled Reports" %}
-        {% endif %}
-      </a></li>
-    {% endif %}
+    <li><a href="#scheduled-reports" data-toggle="tab">
+      {% if others_scheduled_reports %}
+        {% trans "Scheduled Reports" %}
+      {% else %}
+        {% trans "My Scheduled Reports" %}
+      {% endif %}
+    </a></li>
   </ul>
   <div class="tab-content">
     <div class="tab-pane" id="ko-report-config-list">
@@ -83,7 +81,7 @@
       {% include "reports/partials/save_reports_modal.html" %}
     </div>
 
-    {% if report.show and request.couch_user.can_download_reports %}
+    {% if report.show %}
       <div class="tab-pane" id="scheduled-reports">
         <p><a class="btn btn-primary track-usage-link"
               href="{% url "edit_scheduled_report" domain %}"

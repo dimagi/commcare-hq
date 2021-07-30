@@ -35,7 +35,7 @@
         </a>
       {% endif %}
 
-      {% if report.is_emailable and request.couch_user.can_download_reports %}
+      {% if report.is_emailable %}
         <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
           <i class="fa fa-envelope"></i> {% trans "Email report" %}
         </a>
