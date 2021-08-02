@@ -92,18 +92,16 @@ class SQLUserRole(models.Model):
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import Permissions
-        with transaction.atomic(), disable_sync_to_couch(cls):
-            # disable sync to couch to avoid partially syncing the role. Sync happens
-            # after the transaction succeeds
+        with transaction.atomic():
             role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
             if permissions is None:
                 # match couch functionality and set default permissions
                 permissions = Permissions()
-            role.set_permissions(permissions.to_list(), sync_to_couch=False)
+            role.set_permissions(permissions.to_list())
             if assignable_by:
                 if not isinstance(assignable_by, list):
                     assignable_by = [assignable_by]
-                role.set_assignable_by(assignable_by, sync_to_couch=False)
+                role.set_assignable_by(assignable_by)
 
         return role
 
@@ -123,7 +121,7 @@ class SQLUserRole(models.Model):
         return role_to_dict(self)
 
     @transaction.atomic
-    def set_permissions(self, permission_infos, sync_to_couch=True):
+    def set_permissions(self, permission_infos):
         def _clear_cache_sync_with_couch():
             try:
                 self.refresh_from_db(fields=["rolepermission_set"])
@@ -170,7 +168,7 @@ class SQLUserRole(models.Model):
         self.set_assignable_by(sql_ids)
 
     @transaction.atomic
-    def set_assignable_by(self, role_ids, sync_to_couch=True):
+    def set_assignable_by(self, role_ids):
         def _clear_cache_sync_with_couch():
             try:
                 self.refresh_from_db(fields=["roleassignableby_set"])
@@ -280,7 +278,7 @@ class RoleAssignableBy(models.Model):
 
 
 def migrate_role_permissions_to_sql(user_role, sql_role):
-    sql_role.set_permissions(user_role.permissions.to_list(), sync_to_couch=False)
+    sql_role.set_permissions(user_role.permissions.to_list())
 
 
 def migrate_role_assignable_by_to_sql(couch_role, sql_role):
@@ -297,7 +295,7 @@ def migrate_role_assignable_by_to_sql(couch_role, sql_role):
                 assert assignable_by_sql_role is not None
                 assignable_by_mapping[couch_id] = assignable_by_sql_role.id
 
-    sql_role.set_assignable_by(list(assignable_by_mapping.values()), sync_to_couch=False)
+    sql_role.set_assignable_by(list(assignable_by_mapping.values()))
 
 
 def role_to_dict(role):
