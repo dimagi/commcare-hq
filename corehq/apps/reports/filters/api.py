@@ -70,7 +70,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     """
     Paginated Options for the Mobile Workers selection tool
     """
-    urlname = 'users_select2_options'
+    urlname = 'mobile_workers_select2_options'
 
     @property
     @memoized

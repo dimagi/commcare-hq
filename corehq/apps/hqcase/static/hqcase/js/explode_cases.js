@@ -15,7 +15,7 @@ hqDefine('hqcase/js/explode_cases', [
         });
         $('#explode-user_id').select2({
             ajax: {
-                url: initialPageData.reverse('users_select2_options'),
+                url: initialPageData.reverse('mobile_workers_select2_options'),
                 type: 'POST',
                 dataType: 'json',
                 quietMills: 250,
