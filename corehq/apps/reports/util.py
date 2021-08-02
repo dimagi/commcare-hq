@@ -260,15 +260,6 @@ def format_datatables_data(text, sort_key, raw=None):
     return data
 
 
-def app_export_filter(doc, app_id):
-    if app_id:
-        return (doc['app_id'] == app_id) if 'app_id' in doc else False
-    elif app_id == '':
-        return (not doc['app_id']) if 'app_id' in doc else True
-    else:
-        return True
-
-
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
