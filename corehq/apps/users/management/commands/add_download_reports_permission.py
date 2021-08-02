@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from dimagi.utils.chunked import chunked
-from corehq.apps.users.models_sql import SQLPermission, SQLUserRole
+from corehq.apps.users.models import SQLPermission, SQLUserRole
 
 
 class Command(BaseCommand):

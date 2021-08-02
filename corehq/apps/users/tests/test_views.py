@@ -6,7 +6,7 @@ from django.urls import reverse
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser, Permissions
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.util.test_utils import generate_cases
