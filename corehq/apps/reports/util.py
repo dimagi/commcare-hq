@@ -58,14 +58,6 @@ def user_list(domain):
     return users
 
 
-def get_group(group='', **kwargs):
-    # refrenced in reports/views and create_export_filter below
-    if group:
-        if not isinstance(group, Group):
-            group = Group.get(group)
-    return group
-
-
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                             user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
