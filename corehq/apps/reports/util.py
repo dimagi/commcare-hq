@@ -295,14 +295,6 @@ def case_users_filter(doc, users, groups=None):
         return False
 
 
-def case_group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
-    else:
-        return False
-
-
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
