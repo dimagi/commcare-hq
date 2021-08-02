@@ -122,7 +122,7 @@ class SQLUserRole(models.Model):
 
     @transaction.atomic
     def set_permissions(self, permission_infos):
-        def _clear_cache_sync_with_couch():
+        def _clear_query_cache():
             try:
                 self.refresh_from_db(fields=["rolepermission_set"])
             except FieldDoesNotExist:
@@ -130,7 +130,7 @@ class SQLUserRole(models.Model):
 
         if not permission_infos:
             RolePermission.objects.filter(role=self).delete()
-            _clear_cache_sync_with_couch()
+            _clear_query_cache()
             return
 
         permissions_by_name = {
@@ -151,7 +151,7 @@ class SQLUserRole(models.Model):
             old_ids = [old.id for old in permissions_by_name.values()]
             RolePermission.objects.filter(id__in=old_ids).delete()
 
-        _clear_cache_sync_with_couch()
+        _clear_query_cache()
 
     def get_permission_infos(self):
         return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
@@ -169,7 +169,7 @@ class SQLUserRole(models.Model):
 
     @transaction.atomic
     def set_assignable_by(self, role_ids):
-        def _clear_cache_sync_with_couch():
+        def _clear_query_cache():
             try:
                 self.refresh_from_db(fields=["roleassignableby_set"])
             except FieldDoesNotExist:
@@ -177,7 +177,7 @@ class SQLUserRole(models.Model):
 
         if not role_ids:
             self.roleassignableby_set.all().delete()
-            _clear_cache_sync_with_couch()
+            _clear_query_cache()
             return
 
         assignments_by_role_id = {
@@ -195,7 +195,7 @@ class SQLUserRole(models.Model):
             old_ids = list(assignments_by_role_id.values())
             RoleAssignableBy.objects.filter(id__in=old_ids).delete()
 
-        _clear_cache_sync_with_couch()
+        _clear_query_cache()
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
