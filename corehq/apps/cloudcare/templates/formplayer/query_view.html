@@ -67,6 +67,12 @@
 
       <% } else if (input == "daterange") { %>
         <input type="text" class="daterange query-field form-control" value="<%- value %>">
+        <% if (allow_blank_value) { %>
+        <label>
+            <input type="checkbox" class="search-for-blank">
+            {% trans "Search for blank values" %}
+        </label>
+        <% } %>
 
       <% } else if (input == "address") { %>
         <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
