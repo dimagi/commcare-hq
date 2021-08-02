@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, Permissions, UserRole
+from corehq.apps.users.models import CouchUser, WebUser, Permissions
 from corehq.apps.users.models_sql import SQLUserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
@@ -123,10 +123,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertEqual(role.assignable_by, [self.role.couch_id])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
 
-        couch_role = UserRole.get(role.couch_id)
-        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
-        self.assertEqual(couch_role.assignable_by, [self.role.couch_id])
-
     def test_update_role(self):
         self.test_create_role()
 
@@ -141,10 +137,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertTrue(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
-
-        couch_role = UserRole.get(role.couch_id)
-        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
-        self.assertEqual(couch_role.assignable_by, [])
 
     def test_landing_page_validation(self):
         role_data = self.BASE_JSON.copy()

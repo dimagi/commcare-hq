@@ -7,7 +7,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.users.models import (
     Permissions,
     SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
-    StaticRole, UserRole
+    StaticRole
 )
 
 
@@ -39,13 +39,6 @@ class RolesTests(TestCase):
         cls.roles[0].set_permissions([
             PermissionInfo(Permissions.edit_data.name),
         ])
-
-    @classmethod
-    def tearDownClass(cls):
-        # user couch role since SQL roles get rolled back with the transaction
-        for role in UserRole.by_domain(cls.domain, include_archived=True):
-            role.delete()
-        super().tearDownClass()
 
     def test_set_assignable_by(self):
         role = SQLUserRole(
@@ -187,8 +180,6 @@ class RolesTests(TestCase):
 
     def test_create_atomic(self):
         sql_roles_in_domain = {role.get_id for role in self.roles[0:2]}
-        couch_roles = UserRole.by_domain(self.domain)
-        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
         permissions_raises_exception = Mock(side_effect=Exception)
         with self.assertRaises(Exception):
@@ -197,10 +188,6 @@ class RolesTests(TestCase):
         # check sql role not created
         sql_roles = SQLUserRole.objects.get_by_domain(self.domain)
         self.assertEqual({role.get_id for role in sql_roles}, sql_roles_in_domain)
-
-        # check couch role not created
-        couch_roles = UserRole.by_domain(self.domain)
-        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
 
 class TestRolePermissionsModel(TestCase):
