@@ -284,17 +284,6 @@ def datespan_export_filter(doc, datespan):
     return False
 
 
-def case_users_filter(doc, users, groups=None):
-    for id_ in (doc.get('owner_id'), doc.get('user_id')):
-        if id_:
-            if id_ in users:
-                return True
-            if groups and id_ in groups:
-                return True
-    else:
-        return False
-
-
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
