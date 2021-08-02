@@ -25,7 +25,7 @@ PIH_DOMAINS = [
 
 
 class Command(BaseCommand):
-    help = "Gets the DomainUserHistory statistics for World Vision's domains"
+    help = "Gets the DomainUserHistory statistics for PIH's domains"
 
     def add_arguments(self, parser):
         parser.add_argument('start_date')
