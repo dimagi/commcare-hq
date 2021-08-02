@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole, SQLUserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, SQLUserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
