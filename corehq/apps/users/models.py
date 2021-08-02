@@ -94,8 +94,6 @@ from corehq.util.view_utils import absolute_reverse
 
 from .models_sql import (  # noqa
     SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
-    migrate_role_permissions_to_sql,
-    migrate_role_assignable_by_to_sql,
 )
 
 MAX_LOGIN_ATTEMPTS = 5

@@ -277,27 +277,6 @@ class RoleAssignableBy(models.Model):
     )
 
 
-def migrate_role_permissions_to_sql(user_role, sql_role):
-    sql_role.set_permissions(user_role.permissions.to_list())
-
-
-def migrate_role_assignable_by_to_sql(couch_role, sql_role):
-    from corehq.apps.users.models import UserRole
-
-    assignable_by_mapping = {
-        ids[0]: ids[1] for ids in
-        SQLUserRole.objects.filter(couch_id__in=couch_role.assignable_by).values_list('couch_id', 'id')
-    }
-    if len(assignable_by_mapping) != len(couch_role.assignable_by):
-        for couch_id in couch_role.assignable_by:
-            if couch_id not in assignable_by_mapping:
-                assignable_by_sql_role = UserRole.get(couch_id)._migration_do_sync()  # noqa
-                assert assignable_by_sql_role is not None
-                assignable_by_mapping[couch_id] = assignable_by_sql_role.id
-
-    sql_role.set_assignable_by(list(assignable_by_mapping.values()))
-
-
 def role_to_dict(role):
     data = {}
     for field in SQLUserRole._migration_get_fields():
