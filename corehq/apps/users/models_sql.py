@@ -278,8 +278,16 @@ class RoleAssignableBy(models.Model):
 
 
 def role_to_dict(role):
+    simple_fields = [
+        "domain",
+        "name",
+        "default_landing_page",
+        "is_non_admin_editable",
+        "is_archived",
+        "upstream_id",
+    ]
     data = {}
-    for field in SQLUserRole._migration_get_fields():
+    for field in simple_fields:
         data[field] = getattr(role, field)
     data["permissions"] = role.permissions.to_json()
     data["assignable_by"] = role.assignable_by
