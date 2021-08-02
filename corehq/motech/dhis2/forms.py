@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -31,6 +32,7 @@ from .const import (
 from .models import SQLDataSetMap, SQLDataValueMap
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.couch import get_document_or_not_found
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 
 
 class DataSetMapForm(forms.ModelForm):
@@ -244,7 +246,13 @@ class DataSetMapForm(forms.ModelForm):
             if not column_name:
                 self.add_error('complete_date_column', 'Cannot be empty.')
             elif ucr_has_field(ucr, column_name):
-                cleaned_data['complete_date_column'] = column_name
+                if valid_ucr_date_column(ucr, column_name):
+                    cleaned_data['complete_date_column'] = column_name
+                else:
+                    self.add_error(
+                        'complete_date_column',
+                        'Please make sure the column values are formatted as yyyy-mm-dd'
+                    )
             else:
                 self.add_error('complete_date_column', 'Column does not exist in UCR.')
         else:
@@ -266,6 +274,22 @@ def add_initial_properties(instance, kwargs_initial):
 
 def ucr_has_field(ucr: ReportConfiguration, field):
     return any(c.column_id == field for c in ucr.report_columns)
+
+
+def valid_ucr_date_column(ucr, column_name):
+    data_source = ConfigurableReportDataSource.from_spec(ucr, include_prefilters=True)
+
+    for datum in data_source.get_data():
+        value = datum.get(column_name)
+
+        try:
+            if type(value) is not str:
+                return False
+            else:
+                datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return False
+    return True
 
 
 def get_connection_settings_field(domain):
