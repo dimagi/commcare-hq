@@ -236,7 +236,6 @@ class ExportListHelper(object):
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
             'additionalODataUrls': self._get_additional_odata_urls(export),
-            'addedToBulk2': False,
         }
 
     def _get_additional_odata_urls(self, export):
