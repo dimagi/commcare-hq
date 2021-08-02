@@ -5,7 +5,6 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin, disable_sync_to_couch
 
 
 @attr.s(frozen=True)
@@ -199,12 +198,6 @@ class SQLUserRole(models.Model):
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
-
-    @property
-    def assignable_by_sql(self):
-        return list(
-            self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
-        )
 
     @property
     def assignable_by_couch(self):
