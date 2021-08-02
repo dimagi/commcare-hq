@@ -269,21 +269,6 @@ def app_export_filter(doc, app_id):
         return True
 
 
-def datespan_export_filter(doc, datespan):
-    if isinstance(datespan, dict):
-        datespan = DateSpan(**datespan)
-    try:
-        received_on = iso_string_to_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
-    except Exception:
-        if settings.DEBUG:
-            raise
-        return False
-
-    if datespan.startdate <= received_on < (datespan.enddate + timedelta(days=1)):
-        return True
-    return False
-
-
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
