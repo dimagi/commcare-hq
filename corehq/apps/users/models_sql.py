@@ -65,7 +65,7 @@ class UserRoleManager(models.Manager):
         return query.get(couch_id=couch_id)
 
 
-class SQLUserRole(SyncSQLToCouchMixin, models.Model):
+class SQLUserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
     default_landing_page = models.CharField(
@@ -105,28 +105,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
                     assignable_by = [assignable_by]
                 role.set_assignable_by(assignable_by, sync_to_couch=False)
 
-        role._migration_do_sync()  # sync role to couch
         return role
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "name",
-            "default_landing_page",
-            "is_non_admin_editable",
-            "is_archived",
-            "upstream_id",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        from corehq.apps.users.models import UserRole
-        return UserRole
-
-    def _migration_sync_submodels_to_couch(self, couch_object):
-        couch_object.permissions = self.permissions
-        couch_object.assignable_by = self.assignable_by
 
     @property
     def get_id(self):
@@ -150,9 +129,6 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
                 self.refresh_from_db(fields=["rolepermission_set"])
             except FieldDoesNotExist:
                 pass
-
-            if sync_to_couch:
-                self._migration_do_sync()  # sync role to couch
 
         if not permission_infos:
             RolePermission.objects.filter(role=self).delete()
@@ -200,9 +176,6 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
                 self.refresh_from_db(fields=["roleassignableby_set"])
             except FieldDoesNotExist:
                 pass
-
-            if sync_to_couch:
-                self._migration_do_sync()
 
         if not role_ids:
             self.roleassignableby_set.all().delete()
