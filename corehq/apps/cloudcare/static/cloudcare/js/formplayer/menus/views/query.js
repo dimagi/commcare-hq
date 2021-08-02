@@ -73,6 +73,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
+            blankSearchCheckbox: 'input.search-for-blank',
+        },
+
+        events: {
+            'change @ui.blankSearchCheckbox': 'toggleInputField',
         },
 
         modelEvents: {
@@ -218,6 +223,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.$el.hide();
             }
         },
+
+        toggleInputField: function () {
+            this.ui.queryField.prop('disabled', this.ui.blankSearchCheckbox.prop('checked'));
+        },
+
     });
 
     var QueryListView = Marionette.CollectionView.extend({
@@ -257,7 +267,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $inputGroups.each(function (index) {
                 var queryValue = $(this).find('.query-field').val(),
                     searchForBlank = $(this).find('.search-for-blank').prop('checked');
-                if (queryValue !== '' || searchForBlank) {
+
+                if (searchForBlank) {
+                    answers[model[index].get('id')] = '';
+                } else if (queryValue !== '') {
                     answers[model[index].get('id')] = encodeValue(model[index], queryValue);
                 }
             });
