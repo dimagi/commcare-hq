@@ -99,7 +99,7 @@ def prune_synclogs():
     db = router.db_for_write(SyncLogSQL)
     oldest_date = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
     while oldest_date and (datetime.today() - oldest_date).days > SYNCLOG_RETENTION_DAYS:
-        year, week, _ = oldest_synclog.isocalendar()
+        year, week, _ = oldest_date.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,
             year=year,
