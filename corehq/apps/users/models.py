@@ -93,7 +93,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_sql import (  # noqa
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
+    UserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
 )
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -420,8 +420,8 @@ class DomainMembership(Membership):
             return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
-                return SQLUserRole.objects.by_couch_id(self.role_id)
-            except SQLUserRole.DoesNotExist:
+                return UserRole.objects.by_couch_id(self.role_id)
+            except UserRole.DoesNotExist:
                 logging.exception('no role found in domain', extra={
                     'role_id': self.role_id,
                     'domain': self.domain
@@ -2634,8 +2634,8 @@ class Invitation(models.Model):
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
-                    return SQLUserRole.objects.by_couch_id(role_id).name
-                except SQLUserRole.DoesNotExist:
+                    return UserRole.objects.by_couch_id(role_id).name
+                except UserRole.DoesNotExist:
                     return _('Unknown Role')
         else:
             return None
@@ -2995,8 +2995,8 @@ class HQApiKey(models.Model):
     def role(self):
         if self.role_id:
             try:
-                return SQLUserRole.objects.by_couch_id(self.role_id)
-            except SQLUserRole.DoesNotExist:
+                return UserRole.objects.by_couch_id(self.role_id)
+            except UserRole.DoesNotExist:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role

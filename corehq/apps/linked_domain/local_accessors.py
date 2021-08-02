@@ -7,7 +7,7 @@ from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_f
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.users.models import SQLUserRole
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 
@@ -64,7 +64,7 @@ def get_user_roles(domain):
     def _to_json(role):
         return _clean_json(role.to_json())
 
-    return [_to_json(role) for role in SQLUserRole.objects.get_by_domain(domain)]
+    return [_to_json(role) for role in UserRole.objects.get_by_domain(domain)]
 
 
 def get_data_dictionary(domain):

@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, SQLUserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
@@ -158,7 +158,7 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
         filters["email__icontains"] = search_string
     role_id = user_filters.get("role_id", None)
     if role_id:
-        role = SQLUserRole.objects.by_couch_id(role_id)
+        role = UserRole.objects.by_couch_id(role_id)
         filters["role"] = role.get_qualified_id()
 
     invitations = Invitation.by_domain(domain, **filters)

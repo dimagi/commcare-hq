@@ -38,7 +38,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    SQLUserRole,
+    UserRole,
     InvitationStatus
 )
 from corehq.apps.users.util import normalize_username
@@ -363,7 +363,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
             upload_domain=upload_domain,
         )
     else:
-        roles_by_name = {role.name: role.get_qualified_id() for role in SQLUserRole.objects.get_by_domain(domain)}
+        roles_by_name = {role.name: role.get_qualified_id() for role in UserRole.objects.get_by_domain(domain)}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
             profiles = definition.get_profiles()

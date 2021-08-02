@@ -6,7 +6,7 @@ from django.urls import reverse
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser, Permissions
-from corehq.apps.users.models import SQLUserRole
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.util.test_utils import generate_cases
@@ -96,7 +96,7 @@ class TestUpdateRoleFromView(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.role = SQLUserRole(
+        cls.role = UserRole(
             domain=cls.domain,
             name="role1",
         )
@@ -108,7 +108,7 @@ class TestUpdateRoleFromView(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        for role in SQLUserRole.objects.all():
+        for role in UserRole.objects.all():
             if role.id != self.role.id:
                 role.delete()
 

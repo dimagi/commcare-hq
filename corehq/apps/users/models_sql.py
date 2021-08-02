@@ -1,3 +1,5 @@
+import uuid
+
 import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
@@ -58,13 +60,13 @@ class UserRoleManager(models.Manager):
 
     def by_couch_id(self, couch_id, domain=None):
         if domain:
-            query = SQLUserRole.objects.filter(domain=domain)
+            query = UserRole.objects.filter(domain=domain)
         else:
-            query = SQLUserRole.objects
+            query = UserRole.objects
         return query.get(couch_id=couch_id)
 
 
-class SQLUserRole(models.Model):
+class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
     default_landing_page = models.CharField(
@@ -92,7 +94,7 @@ class SQLUserRole(models.Model):
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import Permissions
         with transaction.atomic():
-            role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
+            role = UserRole.objects.create(domain=domain, name=name, **kwargs)
             if permissions is None:
                 # match couch functionality and set default permissions
                 permissions = Permissions()
@@ -163,7 +165,7 @@ class SQLUserRole(models.Model):
     def set_assignable_by_couch(self, couch_role_ids):
         sql_ids = []
         if couch_role_ids:
-            sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
+            sql_ids = UserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
         self.set_assignable_by(sql_ids)
 
     @transaction.atomic
@@ -216,7 +218,7 @@ class SQLUserRole(models.Model):
 
 @foreign_value_init
 class RolePermission(models.Model):
-    role = models.ForeignKey("SQLUserRole", on_delete=models.CASCADE)
+    role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     permission_fk = models.ForeignKey("SQLPermission", on_delete=models.CASCADE)
     permission = ForeignValue(permission_fk)
 
@@ -264,9 +266,9 @@ class SQLPermission(models.Model):
 
 
 class RoleAssignableBy(models.Model):
-    role = models.ForeignKey("SQLUserRole", on_delete=models.CASCADE)
+    role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     assignable_by_role = models.ForeignKey(
-        "SQLUserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
+        "UserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
     )
 
 

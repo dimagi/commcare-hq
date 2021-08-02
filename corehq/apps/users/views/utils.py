@@ -4,7 +4,7 @@ from collections import defaultdict
 from corehq.apps.users.models import (
     DomainMembershipError,
     StaticRole,
-    SQLUserRole,
+    UserRole,
 )
 
 
@@ -14,7 +14,7 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role):
     :param couch_user: user accessing the roles
     :param allow_admin_role: to include admin role, in case user is admin
     """
-    roles = SQLUserRole.objects.get_by_domain(domain)
+    roles = UserRole.objects.get_by_domain(domain)
     if not couch_user.is_domain_admin(domain):
         try:
             user_role = couch_user.get_role(domain)

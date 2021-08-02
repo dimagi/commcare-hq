@@ -395,7 +395,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
-    ModelDeletion('users', 'SQLUserRole', 'domain', [
+    ModelDeletion('users', 'UserRole', 'domain', [
         'RolePermission', 'RoleAssignableBy', 'SQLPermission'
     ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
