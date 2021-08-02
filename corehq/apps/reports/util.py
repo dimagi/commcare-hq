@@ -310,14 +310,6 @@ def users_filter(doc, users):
         return False
 
 
-def group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return users_filter(doc, user_ids)
-    else:
-        return True
-
-
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
