@@ -59,8 +59,13 @@ hqDefine("registry/js/registry_edit", [
         };
 
         let self = ko.mapping.fromJS(data, mapping);
+        self.showAllGrants = ko.observable(false);
         self.sortedGrants = ko.computed(() => {
-            return self.grants().sort(grantSort);
+            let grants = self.grants();
+            if (!self.showAllGrants()) {
+                grants = grants.filter((grant) => grant.from_domain === self.current_domain);
+            }
+            return grants.sort(grantSort);
         });
         self.currentDomainGrants = self.grants().filter(
             (grant) => grant.to_domains.includes(self.current_domain)

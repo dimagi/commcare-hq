@@ -247,7 +247,16 @@
           {% endif %}
           <div role="tabpanel" class="tab-pane {% if not is_owner %}active{% endif %}" id="grants">
             <div class="row" data-bind="visible: domain_invitation.status() === 'accepted'">
-              <div class="col-md-2 col-md-offset-10">
+              <div class="col-md-10">
+                {% if is_owner %}
+                <div class="checkbox ps-3">
+                  <label>
+                    <input type="checkbox" data-bind="checked: showAllGrants"> {% trans "Show all grants" %}
+                  </label>
+                </div>
+                {% endif %}
+              </div>
+              <div class="col-md-2">
                 <div class="pull-right">
                   <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
                     <i class="fa fa-plus"></i>
