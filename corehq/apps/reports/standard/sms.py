@@ -285,6 +285,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         table = list(table)
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
+
         for row in table[1:]:
             contact_info = row[self.contact_index_in_result].split("|||")
             row[self.contact_index_in_result] = contact_info[0]
@@ -498,6 +499,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
+                message.custom_metadata.get('case_id') if self.include_metadata else Ellipsis,
             ] if val != Ellipsis]
 
     @property
@@ -527,9 +529,10 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
-        if self.include_metadata:
+        if True or self.include_metadata:
             table = list(result[0][1])
             table[0].append(_("Message Log ID"))
+            table[0].append(_("Case ID"))
             result[0][1] = table
         return result
 

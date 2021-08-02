@@ -60,9 +60,6 @@ def process_message_status(**kwargs):
             status=message_status,
             **kwargs
         )
-    else:
-        # Log that this message could not be handled
-        pass
 
 
 def handle_message_status_update(message: SMS, status: str, **kwargs):
