@@ -154,6 +154,19 @@
     </div>
     <div class="row mt-4" data-bind="if: is_owner || domain_invitation.status() === 'accepted'">
       <div class="col-sm-12 col-md-8">
+        <p data-bind="visible: currentDomainGrants.length == 0">
+          {% trans "Your project space has not been granted access to data from any other project spaces." %}
+        </p>
+        <p data-bind="visible: currentDomainGrants.length > 0">
+          {% trans "Data from the following project spaces is available to your project space:" %}
+        </p>
+        <p data-bind="foreach: currentDomainGrants">
+          <span class="label label-default-light" data-bind="text: $data"></span>
+        </p>
+      </div>
+    </div>
+    <div class="row mt-4" data-bind="if: is_owner || domain_invitation.status() === 'accepted'">
+      <div class="col-sm-12 col-md-8">
         <ul class="nav nav-tabs" role="tablist">
           {% if is_owner %}
           <li role="presentation" class="active">

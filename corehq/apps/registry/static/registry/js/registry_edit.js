@@ -62,6 +62,9 @@ hqDefine("registry/js/registry_edit", [
         self.sortedGrants = ko.computed(() => {
             return self.grants().sort(grantSort);
         });
+        self.currentDomainGrants = self.grants().filter(
+            (grant) => grant.to_domains.includes(self.current_domain)
+        ).map((grant) => grant.from_domain).sort();
         self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
         self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
         self.showAccept = ko.computed(() => ['pending', 'rejected'].includes(self.domain_invitation.status()));
