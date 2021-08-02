@@ -200,7 +200,7 @@ class EmwfOptionsController(object):
         return count, results
 
 
-class MobileWorkersOptionsController(EmwfOptionsController):
+class UserOptionsController(EmwfOptionsController):
 
     @property
     @memoized
@@ -225,6 +225,8 @@ class MobileWorkersOptionsController(EmwfOptionsController):
             (self.get_active_users_size, self.get_active_users),
         ]
 
+
+class MobileWorkersOptionsController(UserOptionsController):
     def active_user_es_query(self, query):
         query = super(MobileWorkersOptionsController, self).active_user_es_query(query)
         return query.mobile_users()

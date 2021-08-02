@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
+from corehq import toggles
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -164,13 +165,13 @@ def _update_group_membership(request, domain, group_id):
         return HttpResponseForbidden()
 
     selected_users = request.POST.getlist('selected_ids')
-
-    # check to make sure no users were deleted at time of making group
-    users = iter_docs(CouchUser.get_db(), selected_users)
-    safe_users = [
-        CouchUser.wrap_correctly(user) for user in users
-        if user['doc_type'] == 'CommCareUser' and user.get('domain') == domain
+    users = [
+        CouchUser.wrap_correctly(user) for user in iter_docs(CouchUser.get_db(), selected_users)
     ]
+    safe_users = [user for user in users if user.is_member_of(domain)]
+    if not toggles.WEB_USERS_IN_GROUPS.enabled(domain):
+        safe_users = [user for user in safe_users if user['doc_type'] == 'CommCareUser']
+
     safe_ids = [user.user_id for user in safe_users]
     group.set_user_ids(safe_ids)
 

@@ -19,6 +19,7 @@ from corehq.apps.reports.filters.controllers import (
     EmwfOptionsController,
     MobileWorkersOptionsController,
     ReassignCaseOptionsController,
+    UserOptionsController,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
@@ -106,6 +107,19 @@ class MobileWorkersOptionsView(EmwfOptionsView):
             'results': [],
             'total': 0,
         })
+
+
+class UserOptionsView(EmwfOptionsView):
+    """
+    Paginated Options for the Users selection tool
+    """
+    urlname = 'users_select2_options'
+
+    @property
+    @memoized
+    def options_controller(self):
+        return UserOptionsController(self.request, self.domain, self.search)
+
 
 
 @location_safe

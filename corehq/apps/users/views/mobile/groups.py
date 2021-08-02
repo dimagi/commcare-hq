@@ -9,7 +9,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
@@ -18,7 +18,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+from corehq.apps.reports.filters.api import MobileWorkersOptionsView, UserOptionsView
 from corehq.apps.reports.util import get_simplified_users
 from corehq.apps.sms.models import Keyword
 from corehq.apps.sms.verify import (
@@ -196,15 +196,20 @@ class EditGroupMembersView(BaseGroupsView):
     def members(self):
         # FYI use '_id' instead of '__group_ids' in query below in case of
         # ES not updating immediately
-        return get_simplified_users(
-            UserES().mobile_users().domain(self.domain).term("_id", self.group.get_user_ids())
-        )
+        query = UserES()
+        if not toggles.WEB_USERS_IN_GROUPS.enabled(self.domain):
+            query = query.mobile_users()
+        return get_simplified_users(query.domain(self.domain).term("_id", self.group.get_user_ids()))
 
     @property
     @memoized
     def group_membership_form(self):
+        if toggles.WEB_USERS_IN_GROUPS.enabled(self.domain):
+            user_options_url = reverse(UserOptionsView.urlname, args=(self.domain,))
+        else:
+            user_options_url = reverse(MobileWorkersOptionsView.urlname, args=(self.domain,))
         form = GroupMembershipForm(
-            reverse(MobileWorkersOptionsView.urlname, args=(self.domain,)),
+            user_options_url,
             initial={'selected_ids': list(self.formatted_member_ids)}
         )
         form.fields['selected_ids'].widget.set_initial(self.formatted_member_ids)

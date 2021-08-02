@@ -2,10 +2,11 @@ from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import BadValueError
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.dbaccessors import group_by_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 DOMAIN = 'test-domain'
 
@@ -15,6 +16,7 @@ class GroupTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(GroupTest, cls).setUpClass()
+        cls.domain = create_domain(DOMAIN)
         cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret',
                                               created_by=None, created_via=None)
         cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret',
@@ -25,6 +27,8 @@ class GroupTest(TestCase):
                                                created_by=None, created_via=None)
         cls.deleted_user.retire(DOMAIN, deleted_by=None)
 
+        cls.web_user = WebUser.create(DOMAIN, 'web-user', '123', created_by=None, created_via=None)
+
     def tearDown(self):
         for group in Group.by_domain(DOMAIN):
             group.delete()
@@ -33,6 +37,7 @@ class GroupTest(TestCase):
     def tearDownClass(cls):
         for user in CommCareUser.all():
             user.delete(DOMAIN, deleted_by=None)
+        cls.domain.delete()
         super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):
@@ -114,6 +119,14 @@ class GroupTest(TestCase):
 
         self.assertEqual(set(group.users), {self.inactive_user._id, self.deleted_user._id})
         self.assertEqual(set(group.removed_users), {self.active_user._id})
+
+    def test_web_user(self):
+        all_user_ids = [self.active_user._id, self.web_user._id]
+        group = Group(domain=DOMAIN, name='group', users=all_user_ids)
+        group.save()
+
+        self.assertEqual(all_user_ids, [u._id for u in group.get_users()])
+        self.assertEqual([self.active_user._id], [u._id for u in group.get_users(only_commcare=True)])
 
 
 class TestDeleteAllGroups(TestCase):
