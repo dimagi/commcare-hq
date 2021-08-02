@@ -6,6 +6,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from decorator import contextmanager
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
+from corehq.apps.domain.tests.test_utils import test_domain
 from dimagi.utils.couch.database import get_db
 from pillowtop.dao.couch import CouchDocumentStore
 
@@ -116,16 +117,6 @@ def case_form_data():
                 case.delete()
             for form in forms:
                 form.delete()
-
-
-@contextmanager
-def test_domain():
-    from corehq.apps.domain.shortcuts import create_domain
-    domain = create_domain('domain')
-    try:
-        yield domain
-    finally:
-        domain.delete()
 
 
 @contextmanager
