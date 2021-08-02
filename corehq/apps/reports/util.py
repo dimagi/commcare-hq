@@ -284,13 +284,6 @@ def datespan_export_filter(doc, datespan):
     return False
 
 
-def users_filter(doc, users):
-    try:
-        return doc['form']['meta']['userID'] in users
-    except KeyError:
-        return False
-
-
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
 
