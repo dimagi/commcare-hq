@@ -1085,8 +1085,13 @@ class FormBase(DocumentSchema):
         """ Called before a form is moved between modules or to a different position """
         raise NotImplementedError()
 
-    def wrapped_xform(self):
+    @memoized
+    def _wrapped_xform(self):
+        # Since this is memoized, if you use this, make sure to make a deepcopy of the return object
         return XForm(self.source)
+
+    def wrapped_xform(self):
+        return deepcopy(self._wrapped_xform())
 
     def validate_form(self):
         vc = self.get_validation_cache()
@@ -1156,7 +1161,7 @@ class FormBase(DocumentSchema):
 
     @memoized
     def render_xform(self, build_profile_id=None):
-        xform = XForm(self.source)
+        xform = self.wrapped_xform()
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
@@ -1175,7 +1180,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):
         try:
-            return XForm(self.source).get_questions(
+            return self.wrapped_xform().get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
@@ -1215,7 +1220,7 @@ class FormBase(DocumentSchema):
             pass
 
     def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
+        source = self.wrapped_xform()
         if source.exists():
             source.rename_language(old_code, new_code)
             self.source = source.render().decode('utf-8')
