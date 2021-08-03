@@ -39,7 +39,7 @@ class TestRepeaters(SimpleTestCase):
             'gender_id': '1',
             'mobile_number': '9999999999',
             'photo_id_type': '1',
-            'photo_id_number': 'XXXXXXXX1234',
+            'photo_id_number': '1234',
             'consent_version': "1"
         }
         case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
@@ -61,7 +61,7 @@ class TestRepeaters(SimpleTestCase):
                 'gender_id': 1,
                 'mobile_number': '9999999999',
                 "photo_id_type": 1,
-                'photo_id_number': 'XXXXXXXX1234',
+                'photo_id_number': '1234',
                 "consent_version": "1"
             }
         )
