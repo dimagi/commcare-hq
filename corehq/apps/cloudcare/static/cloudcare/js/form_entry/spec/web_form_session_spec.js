@@ -178,12 +178,14 @@ describe('WebForm', function () {
 
             var question = {
                 answer: sinon.spy(),
-                form: {
-                    erroredLabels: function () {
-                        return [];
-                    }
+                form: function () {
+                    return {
+                        erroredLabels : function () {
+                            return [];
+                        }
+                    };
                 }
-            }
+            };
 
             // First blocking request
             $.publish('formplayer.' + Const.ANSWER, question);
