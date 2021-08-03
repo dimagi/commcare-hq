@@ -3110,6 +3110,16 @@ class UserHistory(models.Model):
     """
     details = JSONField(default=dict)
 
+    # migrated from details.changed_via
+    # should always be present but start with allowing blank to avoid error for existing records
+    changed_via = models.CharField(max_length=255, blank=True)
+
+    # migrated from details.changes
+    changes = JSONField(default=dict, null=True)
+
+    # migrated from message but converted into structured messages
+    change_messages = JSONField(default=dict, null=True)
+
     class Meta:
         indexes = [
             models.Index(fields=['domain']),

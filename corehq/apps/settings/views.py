@@ -191,7 +191,7 @@ class MyAccountSettingsView(BaseMyAccountView):
                     couch_user=user,
                     changed_by_user=user,
                     changed_via=USER_CHANGE_VIA_WEB,
-                    message=UserChangeMessage.phone_number_added(self.phone_number),
+                    change_messages=UserChangeMessage.phone_number_added(self.phone_number),
                     domain_required_for_log=False,
                 )
             messages.success(self.request, _("Phone number added."))
@@ -279,7 +279,7 @@ class MyProjectsList(BaseMyAccountView):
                 self.request.couch_user.save()
                 log_user_change(None, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                                message=UserChangeMessage.domain_removal(self.domain_to_remove),
+                                change_messages=UserChangeMessage.domain_removal(self.domain_to_remove),
                                 domain_required_for_log=False,
                                 )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)

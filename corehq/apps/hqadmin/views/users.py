@@ -383,14 +383,14 @@ class DisableUserView(FormView):
         return redirect(self.redirect_url)
 
     def form_valid(self, form):
-        log_messages = []
+        change_messages = {}
         if not self.user:
             return self.redirect_response(self.request)
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
-            log_messages.append(UserChangeMessage.password_reset())
+            change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -398,10 +398,10 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_messages.append(UserChangeMessage.status_update(verb, reason))
+        change_messages.update(UserChangeMessage.status_update(self.user.is_active, reason))
         couch_user = CouchUser.from_django_user(self.user)
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
                         fields_changed={'is_active': self.user.is_active},
                         domain_required_for_log=False)
         mail_admins(
@@ -480,13 +480,13 @@ class DisableTwoFactorView(FormView):
 
     def form_valid(self, form):
         from django_otp import devices_for_user
-        log_messages = []
+        change_messages = {}
 
         username = form.cleaned_data['username']
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        log_messages.append(UserChangeMessage.registered_devices_reset())
+        change_messages.update(UserChangeMessage.registered_devices_reset())
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -494,15 +494,15 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
-            log_messages.append(UserChangeMessage.two_factor_disabled_for_days(disable_for_days))
+            change_messages.update(UserChangeMessage.two_factor_disabled_for_days(disable_for_days))
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
-        log_messages.append(
+        change_messages.update(
             UserChangeMessage.two_factor_disabled_with_verification(verified_by, verification)
         )
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
-                        changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
+                        changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
                         domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
