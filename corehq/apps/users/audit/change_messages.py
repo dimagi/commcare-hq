@@ -1,73 +1,85 @@
 class UserChangeMessage(object):
     @staticmethod
-    def role_change_message(user_role):
+    def program_change(program):
+        if program:
+            message = f"Program: {program.name}[{program.get_id}]"
+        else:
+            message = 'Program: None'
+        return message
+
+    @staticmethod
+    def role_change(user_role):
         message = 'Role: None'
         if user_role:
             message = f"Role: {user_role.name}[{user_role.get_qualified_id()}]"
         return message
 
     @staticmethod
-    def domain_removal_message(domain):
+    def domain_removal(domain):
         return f"Removed from domain '{domain}'"
 
     @staticmethod
-    def registered_devices_reset_message():
+    def registered_devices_reset():
         return "Registered devices reset"
 
     @staticmethod
-    def two_factor_disabled_for_days_message(days):
+    def two_factor_disabled_for_days(days):
         return f"Disabled for {days} days"
 
     @staticmethod
-    def two_factor_disabled_with_verification_message(verified_by, verification_mode):
+    def two_factor_disabled_with_verification(verified_by, verification_mode):
         return f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification_mode}"'
 
     @staticmethod
-    def password_reset_message():
+    def password_reset():
         return "Password reset"
 
     @staticmethod
-    def status_update_message(action, reason):
+    def status_update(action, reason):
         return f'User {action}. Reason: "{reason}"'
 
     @staticmethod
-    def phone_number_added_message(phone_number):
+    def phone_number_added(phone_number):
         return f"Added phone number {phone_number}"
 
     @staticmethod
-    def phone_number_removed_message(phone_number):
+    def phone_number_removed(phone_number):
         return f"Removed phone number {phone_number}"
 
     @staticmethod
-    def profile_info_message(profile_name):
+    def profile_info(profile_name):
         return f"CommCare Profile: {profile_name}"
 
     @staticmethod
-    def primary_location_removed_message():
+    def primary_location_removed():
         return "Primary location: None"
 
     @staticmethod
-    def commcare_user_primary_location_info_message(location_name):
+    def commcare_user_primary_location_info(location_name):
         return f"Primary location: {location_name}"
 
     @staticmethod
-    def web_user_primary_location_info_message(location):
-        return f"Primary location: {location.name}[{location.location_id}]"
+    def web_user_primary_location_info(location):
+        if location:
+            message = f"Primary location: {location.name}[{location.location_id}]"
+        else:
+            message = "Primary location: None"
+        return message
 
     @staticmethod
-    def commcare_user_assigned_locations_info_message(location_names):
+    def commcare_user_assigned_locations_info(location_names):
         return f"Assigned locations: {location_names}"
 
     @staticmethod
-    def web_user_assigned_locations_info_message(locations_info):
+    def web_user_assigned_locations_info(locations_info):
         return f"Assigned locations: {locations_info}"
 
     @staticmethod
-    def groups_info_message(groups_info):
+    def groups_info(groups_info):
         return f"Groups: {groups_info}"
 
     @staticmethod
-    def added_as_web_user_message(domain):
+    def added_as_web_user(domain):
         return f"Added as web user to domain '{domain}'"
 
     @staticmethod

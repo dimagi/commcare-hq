@@ -148,7 +148,7 @@ def _delete_web_user_membership(domain_name):
 def _log_web_user_membership_removed(user, domain, via):
     log_user_change(None, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message=UserChangeMessage.domain_removal_message(domain))
+                    message=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
@@ -373,6 +373,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
+    ModelDeletion('registry', 'DataRegistry', 'domain', [
+        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission', 'RegistryAuditLog'
+    ]),
+    ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
+    ModelDeletion('registry', 'RegistryInvitation', 'domain'),
+    ModelDeletion('registry', 'RegistryPermission', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),

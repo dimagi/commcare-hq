@@ -408,11 +408,11 @@ def format_location_codes(location_codes):
     return location_codes
 
 
-def clean_phone_numbers(phone_numbers, error_message=None):
+def clean_phone_numbers(phone_numbers):
     cleaned_numbers = []
     for number in phone_numbers:
         if number:
-            validate_phone_number(number, error_message)
+            validate_phone_number(number, f'Invalid phone number detected: {number}')
             cleaned_numbers.append(number)
     return cleaned_numbers
 
@@ -503,7 +503,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                     status_row['flag'] = 'created'
 
                 if phone_numbers:
-                    phone_numbers = clean_phone_numbers(phone_numbers, 'Invalid phone number detected')
+                    phone_numbers = clean_phone_numbers(phone_numbers)
                     commcare_user_importer.update_phone_numbers(phone_numbers)
 
                 if name:
@@ -588,10 +588,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
                 for group_name in group_names:
                     domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
-
             except ValidationError as e:
                 status_row['flag'] = e.message
-            except (UserUploadError, CouchUser.Inconsistent, ValidationError) as e:
+            except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
 
             ret["rows"].append(status_row)
@@ -801,4 +800,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(UserChangeMessage.domain_removal_message(domain))
+            user_change_logger.add_change_message(UserChangeMessage.domain_removal(domain))

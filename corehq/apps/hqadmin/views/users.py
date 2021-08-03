@@ -1,5 +1,6 @@
 import csv
 import itertools
+import os
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
@@ -51,7 +52,7 @@ from corehq.apps.hqadmin.forms import (
     SuperuserManagementForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
@@ -389,7 +390,7 @@ class DisableUserView(FormView):
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
-            log_messages.append(UserChangeMessage.password_reset_message())
+            log_messages.append(UserChangeMessage.password_reset())
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -397,7 +398,7 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        log_messages.append(UserChangeMessage.status_update_message(verb, reason))
+        log_messages.append(UserChangeMessage.status_update(verb, reason))
         couch_user = CouchUser.from_django_user(self.user)
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
@@ -485,7 +486,7 @@ class DisableTwoFactorView(FormView):
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        log_messages.append(UserChangeMessage.registered_devices_reset_message())
+        log_messages.append(UserChangeMessage.registered_devices_reset())
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -493,12 +494,12 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
-            log_messages.append(UserChangeMessage.two_factor_disabled_for_days_message(disable_for_days))
+            log_messages.append(UserChangeMessage.two_factor_disabled_for_days(disable_for_days))
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         log_messages.append(
-            UserChangeMessage.two_factor_disabled_with_verification_message(verified_by, verification)
+            UserChangeMessage.two_factor_disabled_with_verification(verified_by, verification)
         )
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, message=". ".join(log_messages),
@@ -569,19 +570,28 @@ class AppBuildTimingsView(TemplateView):
 
     @staticmethod
     def get_timing_context(app):
+        # Intended to reproduce a live-preview app build
+        # Contents should mirror the work done in the direct_ccz view
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
 
+            app.set_media_versions()
+
             with app.timing_context("build_zip"):
-                build_application_zip(
+                # mirroring the content of build_application_zip
+                # but with the same `app` instance to preserve timing data
+                fpath = create_files_for_ccz(
+                    build=app,
+                    build_profile_id=None,
                     include_multimedia_files=True,
                     include_index_files=True,
-                    domain=app.domain,
-                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',
+                    download_targeted_version=False,
+                    task=None,
                 )
 
+        os.remove(fpath)
         return app.timing_context
