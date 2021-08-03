@@ -266,7 +266,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model = this.parentModel;
             $inputGroups.each(function (index) {
                 var queryValue = $(this).find('.query-field').val(),
+                    inputType = model[index].get('input'),
+                    searchForBlank;
+
+                if (inputType === 'select1') {
+                    searchForBlank = queryValue === "-1";
+                } else if (inputType === 'select') {
+                    searchForBlank = false;  // handle it here instead
+                    queryValue = _.map(queryValue, function (val) {
+                        return val === "-1" ? "" : val;
+                    });
+                } else {
                     searchForBlank = $(this).find('.search-for-blank').prop('checked');
+                }
 
                 if (searchForBlank) {
                     answers[model[index].get('id')] = '';
