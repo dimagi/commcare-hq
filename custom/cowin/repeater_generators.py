@@ -12,9 +12,9 @@ class BeneficiaryRegistrationPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         data = {
             "name": cowin_api_data_registration_case.get_case_property('beneficiary_name'),
             "birth_year": cowin_api_data_registration_case.get_case_property('birth_year'),
-            "gender_id": cowin_api_data_registration_case.get_case_property('gender_id'),
+            "gender_id": int(cowin_api_data_registration_case.get_case_property('gender_id')),
             "mobile_number": cowin_api_data_registration_case.get_case_property('mobile_number'),
-            "photo_id_type": cowin_api_data_registration_case.get_case_property('photo_id_type'),
+            "photo_id_type": int(cowin_api_data_registration_case.get_case_property('photo_id_type')),
             "photo_id_number": cowin_api_data_registration_case.get_case_property('photo_id_number'),
             "consent_version": cowin_api_data_registration_case.get_case_property('consent_version'),
         }
@@ -26,7 +26,7 @@ class BeneficiaryVaccinationPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         data = {
             "beneficiary_reference_id": cowin_api_data_vaccination_case.get_case_property(
                 'beneficiary_reference_id'),
-            "center_id": cowin_api_data_vaccination_case.get_case_property('center_id'),
+            "center_id": int(cowin_api_data_vaccination_case.get_case_property('center_id')),
             "vaccine": cowin_api_data_vaccination_case.get_case_property('vaccine'),
             "vaccine_batch": cowin_api_data_vaccination_case.get_case_property('vaccine_batch'),
             "vaccinator_name": cowin_api_data_vaccination_case.get_case_property('vaccinator_name'),

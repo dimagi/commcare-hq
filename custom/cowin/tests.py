@@ -58,9 +58,9 @@ class TestRepeaters(SimpleTestCase):
             {
                 'name': 'Nitish Dube',
                 'birth_year': '2000',
-                'gender_id': '1',
+                'gender_id': 1,
                 'mobile_number': '9999999999',
-                "photo_id_type": '1',
+                "photo_id_type": 1,
                 'photo_id_number': 'XXXXXXXX1234',
                 "consent_version": "1"
             }
@@ -135,7 +135,7 @@ class TestRepeaters(SimpleTestCase):
             json.loads(payload),
             {
                 "beneficiary_reference_id": "1234567890123",
-                "center_id": "1234",
+                "center_id": 1234,
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 1,
@@ -160,7 +160,7 @@ class TestRepeaters(SimpleTestCase):
             json.loads(payload),
             {
                 "beneficiary_reference_id": "1234567890123",
-                "center_id": "1234",
+                "center_id": 1234,
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 2,
