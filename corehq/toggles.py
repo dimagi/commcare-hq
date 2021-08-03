@@ -2120,4 +2120,5 @@ WEB_USERS_IN_GROUPS = StaticToggle(
     'Allow Web Users in groups',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Web+Users+in+Groups"
 )
