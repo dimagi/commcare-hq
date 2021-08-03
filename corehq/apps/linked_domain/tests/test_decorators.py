@@ -23,7 +23,7 @@ class TestCanAccessLinkedDomains(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_returns_false_if_domain_has_privilege_but_user_is_not_admin(self, mock_user):
-        mock_user.is_domain_admin = False
+        mock_user.is_domain_admin.return_value = False
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
@@ -33,7 +33,7 @@ class TestCanAccessLinkedDomains(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_returns_true_if_domain_has_privilege_and_user_is_admin(self, mock_user):
-        mock_user.is_domain_admin = True
+        mock_user.is_domain_admin.return_value = True
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
             mock_domain_has_privilege.return_value = True
