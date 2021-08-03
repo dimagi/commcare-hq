@@ -306,7 +306,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null || questions[i].requiredNotAnswered()) {
+                if (questions[i].error() != null || questions[i].serverError() != null) {
                     qs.push(questions[i]);
                 }
             }
@@ -621,10 +621,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
             return Utils.resourceMap(resourceType);
         };
-
-        self.requiredNotAnswered = ko.computed(function () {
-            return self.required() && self.answer() === Const.NO_ANSWER;
-        });
 
         self.navigateTo = function () {
             // toggle nested collapsible Groups

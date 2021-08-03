@@ -11,7 +11,7 @@ class EnterprisePermissions(models.Model):
     "source" domain to be automatically granted their same set of permissions in all domains
     controlled by the config.
     """
-    account = models.ForeignKey('accounting.BillingAccount', null=False, on_delete=models.CASCADE)
+    account = models.OneToOneField(BillingAccount, null=False, on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)
     source_domain = models.CharField(max_length=128, null=True, blank=True)
     domains = ArrayField(

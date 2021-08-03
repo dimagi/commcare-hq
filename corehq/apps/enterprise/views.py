@@ -390,7 +390,9 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
         config.save()
         if config.source_domain:
             clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
-    messages.success(request, _('Users in {} now have access to {}.').format(config.source_domain, target_domain))
+
+    messages.success(request, _('{} is now included in enterprise permissions.').format(target_domain))
+
     return HttpResponseRedirect(redirect)
 
 
@@ -410,8 +412,7 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
         config.save()
         if config.source_domain:
             clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
-    messages.success(request, _('Users in {} no longer have access to {}.').format(config.source_domain,
-                                                                                   target_domain))
+    messages.success(request, _('{} is now excluded from enterprise permissions.').format(target_domain))
     return HttpResponseRedirect(redirect)
 
 
