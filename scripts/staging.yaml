@@ -69,9 +69,7 @@ branches:
     - jm/stale-es-case-search  # Joel July 21
     - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
     - gh/improve-erm-ui # Graham June 16 [QA]
-    - gh/custom-product-data-fields-behind-ff+rc/tableau-models-linked-spaces
     - rc/tableau-models-linked-spaces # Robert July 22
-    - gh/custom-product-data-fields-behind-ff # Graham July 28
     - caktus:case-upload-validate-dates # Jenny July 22
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
@@ -84,4 +82,6 @@ branches:
     - mk/user-history/add-message-helper # MK July 28
     - sk/data-registry-view  # Simon July 29
     - rc/show-hierarchy # Robert July 29
+    - jm/remove-es-scan  # Joel August 3
+    - gh/fix-js-issue # Graham August 3
 submodules: { }
