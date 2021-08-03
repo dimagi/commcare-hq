@@ -2,6 +2,8 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 
+from dateutil.parser import parse
+
 from corehq.motech.repeaters.repeater_generators import (
     CaseRepeaterJsonPayloadGenerator,
 )
@@ -34,11 +36,15 @@ class BeneficiaryVaccinationPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         if cowin_api_data_vaccination_case.get_case_property('dose') == '1':
             data.update({
                 "dose": 1,
-                "dose1_date": cowin_api_data_vaccination_case.get_case_property('dose1_date'),
+                "dose1_date": parse(
+                    cowin_api_data_vaccination_case.get_case_property('dose1_date')
+                ).strftime("%d-%m-%Y"),
             })
         elif cowin_api_data_vaccination_case.get_case_property('dose') == '2':
             data.update({
                 "dose": 2,
-                "dose2_date": cowin_api_data_vaccination_case.get_case_property('dose2_date'),
+                "dose2_date": parse(
+                    cowin_api_data_vaccination_case.get_case_property('dose2_date')
+                ).strftime("%d-%m-%Y"),
             })
         return json.dumps(data, cls=DjangoJSONEncoder)

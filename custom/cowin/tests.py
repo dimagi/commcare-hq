@@ -139,7 +139,7 @@ class TestRepeaters(SimpleTestCase):
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 1,
-                "dose1_date": "2020-01-01",
+                "dose1_date": "01-01-2020",
                 "vaccinator_name": "Neelima"
             }
         )
@@ -164,7 +164,7 @@ class TestRepeaters(SimpleTestCase):
                 "vaccine": "COVISHIELD",
                 "vaccine_batch": "123456",
                 "dose": 2,
-                "dose2_date": "2020-02-01",
+                "dose2_date": "01-02-2020",
                 "vaccinator_name": "Sumanthra"
             }
         )
