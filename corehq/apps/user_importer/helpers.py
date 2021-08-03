@@ -24,6 +24,7 @@ class UserChangeLogger(object):
         - text messages for changes
         - useful info for changes to associated data models like role/locations
     """
+
     def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
         self.domain = domain
         self.user = user
@@ -98,6 +99,7 @@ class BaseUserImporter(object):
     Imports a Web/CommCareUser via bulk importer and also handles the logging
     save_log should be called explicitly to save logs, after user is saved
     """
+
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, upload_record_id):
         """
         :param upload_domain: domain on which the bulk upload is being done
@@ -147,12 +149,19 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_password(password)
         self.logger.add_change_message("Password Reset")
 
-    def update_phone_number(self, phone_number):
-        fmt_phone_number = _fmt_phone(phone_number)
-        if fmt_phone_number not in self.user.phone_numbers:
-            self.logger.add_change_message(f"Added phone number {fmt_phone_number}")
-        # always call this to set phone number as default if needed
-        self.user.add_phone_number(fmt_phone_number, default=True)
+    def update_phone_numbers(self, phone_numbers):
+        """
+        The first item in 'phone_numbers' will be the default
+        """
+        old_user_phone_numbers = self.user.phone_numbers
+        fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
+
+        if any(fmt_phone_numbers):
+            self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        else:
+            self.user.set_phone_numbers([])
+
+        self._log_phone_number_changes(old_user_phone_numbers, fmt_phone_numbers)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))
@@ -229,6 +238,18 @@ class CommCareUserImporter(BaseUserImporter):
                 user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(f"Primary location: {user_updated_primary_location_name}")
 
+    def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
+        (items_added, items_removed) = find_differences_in_list(
+            target=new_phone_numbers,
+            source=old_phone_numbers
+        )
+
+        for number in items_added:
+            self.logger.add_change_message(f"Added phone number {number}")
+
+        for number in items_removed:
+            self.logger.add_change_message(f"Removed phone number {number}")
+
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, str):
@@ -304,3 +325,23 @@ def get_user_primary_location_name(user, domain):
     primary_location = user.get_sql_location(domain)
     if primary_location:
         return primary_location.name
+
+
+def find_differences_in_list(target: list, source: list):
+    """
+    Find the differences between 'source' and 'target' and
+    return (added_items, removed_items)
+
+    'added_items': items that are in 'target' but not in 'source'
+    'removed_items': items that are in 'source' but not 'target'
+
+    >>> find_differences_in_list(list_to_compare=[3,4,5,6], reference_list=[1,2,3,5])
+    ({4, 6}, {1, 2})
+    """
+
+    shared_items = set(target).intersection(source)
+
+    added_items = set(target).difference(shared_items)
+    removed_items = set(source).difference(shared_items)
+
+    return added_items, removed_items

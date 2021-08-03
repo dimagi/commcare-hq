@@ -64,6 +64,7 @@ class TestDownloadMobileWorkers(TestCase):
             None,
             first_name='Edith',
             last_name='Wharton',
+            phone_number='27786541239',
             metadata={'born': 1862}
         )
         cls.user1.set_location(cls.location)
@@ -101,10 +102,16 @@ class TestDownloadMobileWorkers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
+        # Add multiple phone numbers to user1
+        self.__class__.user1.add_phone_number('27786544321')
+        self.__class__.user1.save()
+
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {})
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
+        self.assertTrue('phone-number 1' in headers)
+        self.assertTrue('phone-number 2' in headers)
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual('edith', spec['username'])
@@ -115,6 +122,8 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
         self.assertEqual('1', spec['location_code 1'])
+        self.assertEqual(spec['phone-number 1'], '27786541239')
+        self.assertEqual(spec['phone-number 2'], '27786544321')
 
     def test_multiple_domain_download(self):
         (headers, rows) = parse_mobile_users(self.domain_obj.name, {'domains': ['bookshelf', 'book']})
