@@ -383,6 +383,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             'domain_link': build_domain_link_view_model(domain_link, timezone)
         }
 
+    @allow_remote_invocation
     def create_remote_report_link(self, in_data):
         linked_domain = in_data['linked_domain']
         master_domain = in_data['master_domain'].strip('/').split('/')[-1]
