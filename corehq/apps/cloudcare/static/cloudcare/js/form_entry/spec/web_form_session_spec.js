@@ -180,11 +180,11 @@ describe('WebForm', function () {
                 answer: sinon.spy(),
                 form: function () {
                     return {
-                        erroredLabels : function () {
+                        erroredLabels: function () {
                             return [];
-                        }
+                        },
                     };
-                }
+                },
             };
 
             // First blocking request
