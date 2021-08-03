@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
@@ -32,3 +34,17 @@ class UtilsTests(TestCase):
     def test_guess_domain_language_no_apps(self):
         lang = guess_domain_language(self.domain_name)
         self.assertEqual('en', lang)
+
+
+@contextmanager
+def test_domain(skip_full_delete=False):
+    """Context manager for use in tests"""
+    from corehq.apps.domain.shortcuts import create_domain
+    domain = create_domain('domain')
+    try:
+        yield domain
+    finally:
+        if skip_full_delete:
+            Domain.get_db().delete_doc(domain.get_id)
+        else:
+            domain.delete()
