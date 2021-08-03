@@ -66,6 +66,10 @@ class UserRoleManager(models.Manager):
         return query.get(couch_id=couch_id)
 
 
+def _uuid_str():
+    return str(uuid.uuid4())
+
+
 class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
@@ -76,7 +80,7 @@ class UserRole(models.Model):
     is_non_admin_editable = models.BooleanField(null=False, default=False)
     is_archived = models.BooleanField(null=False, default=False)
     upstream_id = models.CharField(max_length=32, null=True)
-    couch_id = models.CharField(max_length=126, null=True)
+    couch_id = models.CharField(max_length=126, null=True, default=_uuid_str)
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
