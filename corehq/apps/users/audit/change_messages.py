@@ -1,5 +1,13 @@
 class UserChangeMessage(object):
     @staticmethod
+    def program_change(program):
+        if program:
+            message = f"Program: {program.name}[{program.get_id}]"
+        else:
+            message = 'Program: None'
+        return message
+
+    @staticmethod
     def role_change(user_role):
         message = 'Role: None'
         if user_role:
@@ -35,6 +43,10 @@ class UserChangeMessage(object):
         return f"Added phone number {phone_number}"
 
     @staticmethod
+    def phone_number_removed(phone_number):
+        return f"Removed phone number {phone_number}"
+
+    @staticmethod
     def profile_info(profile_name):
         return f"CommCare Profile: {profile_name}"
 
@@ -48,7 +60,11 @@ class UserChangeMessage(object):
 
     @staticmethod
     def web_user_primary_location_info(location):
-        return f"Primary location: {location.name}[{location.location_id}]"
+        if location:
+            message = f"Primary location: {location.name}[{location.location_id}]"
+        else:
+            message = "Primary location: None"
+        return message
 
     @staticmethod
     def commcare_user_assigned_locations_info(location_names):

@@ -1068,14 +1068,18 @@ class CommtrackUserForm(forms.Form):
             if location_ids:
                 location_names = list(SQLLocation.objects.filter(location_id__in=location_ids).values_list(
                     'name', flat=True))
-                user_change_logger.add_info(f"Assigned locations: {location_names}")
+                user_change_logger.add_info(
+                    UserChangeMessage.commcare_user_assigned_locations_info(location_names)
+                )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
             user_change_logger.add_changes({'location_id': location_id})
             if location_id:
                 primary_location_name = SQLLocation.objects.get(location_id=location_id).name
-                user_change_logger.add_info(f"Primary location: {primary_location_name}")
+                user_change_logger.add_info(
+                    UserChangeMessage.commcare_user_primary_location_info(primary_location_name)
+                )
 
         if program_id is not None:
             self._log_program_changes(user_change_logger, program_id)
@@ -1085,9 +1089,9 @@ class CommtrackUserForm(forms.Form):
     def _log_program_changes(user_change_logger, program_id):
         if program_id:
             program = Program.get(program_id)
-            user_change_logger.add_info(f"Program: {program.name}[{program_id}]")
+            user_change_logger.add_info(UserChangeMessage.program_change(program))
         else:
-            user_change_logger.add_info("Program: None")
+            user_change_logger.add_info(UserChangeMessage.program_change(None))
 
     def _log_web_user_changes(self, user_change_logger, location_updates, program_id):
         if 'location_ids' in location_updates:
@@ -1097,18 +1101,25 @@ class CommtrackUserForm(forms.Form):
                     f"{location.name}[{location.location_id}]"
                     for location in SQLLocation.objects.filter(location_id__in=location_ids)
                 ])
-                user_change_logger.add_info(f"Assigned locations: {locations_info}")
+                user_change_logger.add_info(
+                    UserChangeMessage.web_user_assigned_locations_info(locations_info)
+                )
             else:
-                user_change_logger.add_info("Assigned locations: []")
+                user_change_logger.add_info(
+                    UserChangeMessage.web_user_assigned_locations_info([])
+                )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
             if location_id:
-                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    f"Primary location: {primary_location_name}[{location_id}]")
+                    UserChangeMessage.web_user_primary_location_info(primary_location)
+                )
             else:
-                user_change_logger.add_info("Primary location: None")
+                user_change_logger.add_info(
+                    UserChangeMessage.web_user_primary_location_info(None)
+                )
 
         if program_id is not None:
             self._log_program_changes(user_change_logger, program_id)

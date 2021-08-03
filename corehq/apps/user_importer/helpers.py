@@ -247,10 +247,10 @@ class CommCareUserImporter(BaseUserImporter):
         )
 
         for number in items_added:
-            self.logger.add_change_message(f"Added phone number {number}")
+            self.logger.add_change_message(UserChangeMessage.phone_number_added(number))
 
         for number in items_removed:
-            self.logger.add_change_message(f"Removed phone number {number}")
+            self.logger.add_change_message(UserChangeMessage.phone_number_removed(number))
 
 
 def _fmt_phone(phone_number):
