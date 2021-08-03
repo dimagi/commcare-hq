@@ -17,13 +17,13 @@ def can_access_linked_domains(user, domain):
     if not user or not domain:
         return False
     if domain_has_privilege(domain, RELEASE_MANAGEMENT):
-        return user.is_domain_admin
+        return user.is_domain_admin()
     else:
         return toggles.LINKED_DOMAINS.enabled(domain)
 
 
 def can_access_release_management_feature(user, domain):
-    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin
+    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin()
 
 
 def _clean_json(doc):
