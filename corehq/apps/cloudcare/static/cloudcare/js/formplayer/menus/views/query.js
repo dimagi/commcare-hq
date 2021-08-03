@@ -280,9 +280,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     searchForBlank = $(this).find('.search-for-blank').prop('checked');
                 }
 
+                var nothingSelected = (queryValue === ''
+                                       || (_.isArray(queryValue) && _.isEmpty(queryValue)));
                 if (searchForBlank) {
                     answers[model[index].get('id')] = '';
-                } else if (queryValue !== '') {
+                } else if (!nothingSelected) {
                     answers[model[index].get('id')] = encodeValue(model[index], queryValue);
                 }
             });
