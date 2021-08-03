@@ -359,7 +359,7 @@ class EditCommCareUserView(BaseEditUserView):
                         couch_user=self.editable_user,
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.phone_number_added_message(phone_number)
+                        message=UserChangeMessage.phone_number_added(phone_number)
                     )
                 messages.success(request, _("Phone number added."))
             else:

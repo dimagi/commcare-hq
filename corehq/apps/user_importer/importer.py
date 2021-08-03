@@ -786,4 +786,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(UserChangeMessage.domain_removal_message(domain))
+            user_change_logger.add_change_message(UserChangeMessage.domain_removal(domain))

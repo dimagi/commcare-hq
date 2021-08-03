@@ -212,14 +212,14 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             messages = []
             profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                messages.append(UserChangeMessage.role_change_message(user_new_role))
+                messages.append(UserChangeMessage.role_change(user_new_role))
             if metadata_updated:
                 props_updated['user_data'] = self.existing_user.user_data
             if profile_updated:
                 profile_name = None
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
-                messages.append(UserChangeMessage.profile_info_message(profile_name))
+                messages.append(UserChangeMessage.profile_info(profile_name))
             log_user_change(
                 self.request.domain,
                 couch_user=self.existing_user,
