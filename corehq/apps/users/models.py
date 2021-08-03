@@ -92,7 +92,7 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-from .models_sql import (  # noqa
+from .models_role import (  # noqa
     UserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
 )
 
