@@ -50,7 +50,7 @@ class TestLogUserChange(TestCase):
             self.commcare_user,
             self.web_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
-            change_messages=UserChangeMessage.phone_number_added("9999999999"),
+            change_messages=UserChangeMessage.phone_numbers_added(["9999999999"]),
             fields_changed={
                 'phone_numbers': self.commcare_user.phone_numbers,
                 'password': '******'

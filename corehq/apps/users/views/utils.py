@@ -90,13 +90,13 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
         fields_changed['location_id'] = user.location_id
         if user.location_id:
             location = SQLLocation.objects.get(location_id=user.location_id)
-        change_messages.update(UserChangeMessage.commcare_user_primary_location_info(location))
+        change_messages.update(UserChangeMessage.primary_location_info(location))
     if old_assigned_location_ids != user.assigned_location_ids:
         locations = []
         fields_changed['assigned_location_ids'] = user.assigned_location_ids
         if user.assigned_location_ids:
             locations = SQLLocation.objects.filter(location_id__in=user.assigned_location_ids)
-        change_messages.update(UserChangeMessage.commcare_user_assigned_locations_info(locations))
+        change_messages.update(UserChangeMessage.assigned_locations_info(locations))
 
     if change_messages:
         log_user_change(

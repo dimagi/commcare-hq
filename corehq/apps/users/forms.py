@@ -1068,7 +1068,7 @@ class CommtrackUserForm(forms.Form):
             if location_ids:
                 locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(locations)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
 
         if 'location_id' in location_updates:
@@ -1077,7 +1077,7 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(primary_location)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
 
         if program_id is not None:
@@ -1101,11 +1101,11 @@ class CommtrackUserForm(forms.Form):
                     for location in SQLLocation.objects.filter(location_id__in=location_ids)
                 ])
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info(locations_info)
+                    UserChangeMessage.assigned_locations_info(locations_info)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info([])
+                    UserChangeMessage.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
@@ -1113,11 +1113,11 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(primary_location)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(None)
+                    UserChangeMessage.primary_location_info(None)
                 )
 
         if program_id is not None:

@@ -223,14 +223,14 @@ class CommCareUserImporter(BaseUserImporter):
                 locations = [get_location_from_site_code(code, domain_info.location_cache)
                              for code in location_codes]
                 self.logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(locations))
+                    UserChangeMessage.assigned_locations_info(locations))
 
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != user_current_primary_location_id:
             self.logger.add_changes({'location_id': self.user.location_id})
             if self.user.location_id:
                 self.logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(
+                    UserChangeMessage.primary_location_info(
                         self.user.get_sql_location(self.user_domain)
                     )
                 )
@@ -265,7 +265,7 @@ class WebUserImporter(BaseUserImporter):
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)
-        self.logger.add_info(UserChangeMessage.web_user_primary_location_info(primary_location))
+        self.logger.add_info(UserChangeMessage.primary_location_info(primary_location))
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -300,7 +300,7 @@ class WebUserImporter(BaseUserImporter):
                              for code in location_codes]
             else:
                 locations = []
-            self.logger.add_info(UserChangeMessage.web_user_assigned_locations_info(locations))
+            self.logger.add_info(UserChangeMessage.assigned_locations_info(locations))
 
         # log this after assigned locations are updated, which can re-set primary location
         user_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)

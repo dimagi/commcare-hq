@@ -191,7 +191,7 @@ class MyAccountSettingsView(BaseMyAccountView):
                     couch_user=user,
                     changed_by_user=user,
                     changed_via=USER_CHANGE_VIA_WEB,
-                    change_messages=UserChangeMessage.phone_number_added(self.phone_number),
+                    change_messages=UserChangeMessage.phone_numbers_added([self.phone_number]),
                     domain_required_for_log=False,
                 )
             messages.success(self.request, _("Phone number added."))

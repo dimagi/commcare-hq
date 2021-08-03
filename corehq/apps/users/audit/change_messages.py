@@ -49,23 +49,9 @@ class UserChangeMessage(object):
         }
 
     @staticmethod
-    def phone_number_added(phone_number):
-        # ToDo: dedup with phone_numbers_added
-        return {
-            "phone_number": {"added": [phone_number]}
-        }
-
-    @staticmethod
     def phone_numbers_added(phone_numbers):
         return {
             "phone_number": {"added": phone_numbers}
-        }
-
-    @staticmethod
-    def phone_number_removed(phone_number):
-        # ToDo: dedup with phone_numbers_removed
-        return {
-            "phone_number": {"removed": [phone_number]}
         }
 
     @staticmethod
@@ -87,8 +73,7 @@ class UserChangeMessage(object):
         return {"location": {"id": None}}
 
     @staticmethod
-    def commcare_user_primary_location_info(location):
-        # ToDo: Dedup with web_user_primary_location_info
+    def primary_location_info(location):
         if location:
             change_message = {"location": {"id": location.location_id, "name": location.name}}
         else:
@@ -96,29 +81,7 @@ class UserChangeMessage(object):
         return change_message
 
     @staticmethod
-    def web_user_primary_location_info(location):
-        if location:
-            change_message = {"location": {"id": location.location_id, "name": location.name}}
-        else:
-            change_message = {"location": {"id": None}}
-        return change_message
-
-    @staticmethod
-    def commcare_user_assigned_locations_info(locations):
-        # ToDo: Dedup with web_user_assigned_locations_info
-        if locations:
-            change_message = {
-                "assigned_locations": [
-                    {'id': location.location_id, 'name': location.name}
-                    for location in locations
-                ]
-            }
-        else:
-            change_message = {"assigned_locations": []}
-        return change_message
-
-    @staticmethod
-    def web_user_assigned_locations_info(locations):
+    def assigned_locations_info(locations):
         if locations:
             change_message = {
                 "assigned_locations": [
