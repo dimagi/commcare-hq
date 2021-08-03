@@ -619,12 +619,12 @@ def update_user_groups(request, domain, couch_user_id):
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
     if form.is_valid():
         user = CommCareUser.get(couch_user_id)
-        current_group_ids = user.get_group_ids()
+        old_group_ids = user.get_group_ids()
         new_group_ids = form.cleaned_data['selected_ids']
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
         user.set_groups(new_group_ids)
-        if current_group_ids != new_group_ids:
+        if old_group_ids != new_group_ids:
             log_user_groups_change(domain, request, user, new_group_ids)
         messages.success(request, _("User groups updated!"))
     else:

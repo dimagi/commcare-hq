@@ -1019,44 +1019,46 @@ class CommtrackUserForm(forms.Form):
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
     def _update_location_data(self, user):
-        location_id = self.cleaned_data['primary_location']
-        location_ids = self.cleaned_data['assigned_locations']
+        new_location_id = self.cleaned_data['primary_location']
+        new_location_ids = self.cleaned_data['assigned_locations']
         updates = {}
 
         if user.is_commcare_user():
-            assigned_location_ids = set(user.assigned_location_ids)
+            # fetch this before set_location is called
+            old_assigned_location_ids = set(user.assigned_location_ids)
             old_location_id = user.location_id
-            if location_id != old_location_id:
-                if location_id:
-                    user.set_location(SQLLocation.objects.get(location_id=location_id))
+            if new_location_id != old_location_id:
+                if new_location_id:
+                    user.set_location(SQLLocation.objects.get(location_id=new_location_id))
                 else:
                     user.unset_location()
 
             old_location_ids = user.assigned_location_ids
-            if set(location_ids) != set(old_location_ids):
-                user.reset_locations(location_ids)
-            if assigned_location_ids != set(location_ids):
-                updates['location_ids'] = location_ids
+            if set(new_location_ids) != set(old_location_ids):
+                user.reset_locations(new_location_ids)
+            if old_assigned_location_ids != set(new_location_ids):
+                updates['location_ids'] = new_location_ids
         else:
             domain_membership = user.get_domain_membership(self.domain)
-            assigned_location_ids = set(domain_membership.assigned_location_ids)
+            # fetch this before set_location is called
+            old_assigned_location_ids = set(domain_membership.assigned_location_ids)
             old_location_id = domain_membership.location_id
-            if location_id != old_location_id:
-                if location_id:
-                    user.set_location(self.domain, SQLLocation.objects.get(location_id=location_id))
+            if new_location_id != old_location_id:
+                if new_location_id:
+                    user.set_location(self.domain, SQLLocation.objects.get(location_id=new_location_id))
                 else:
                     user.unset_location(self.domain)
 
             old_location_ids = domain_membership.assigned_location_ids
-            if set(location_ids) != set(old_location_ids):
-                user.reset_locations(self.domain, location_ids)
-            if assigned_location_ids != set(location_ids):
-                updates['location_ids'] = location_ids
+            if set(new_location_ids) != set(old_location_ids):
+                user.reset_locations(self.domain, new_location_ids)
+            if old_assigned_location_ids != set(new_location_ids):
+                updates['location_ids'] = new_location_ids
 
         # check for this post reset_locations which can also update location_id
         new_primary_location = user.get_sql_location(self.domain)
         if new_primary_location and old_location_id != new_primary_location.location_id:
-            updates['location_id'] = location_id
+            updates['location_id'] = new_location_id
         elif old_location_id and not new_primary_location:
             updates['location_id'] = None
         return updates
