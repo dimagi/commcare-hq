@@ -382,7 +382,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'name': 'James McNulty',
             'language': None,
             'is_active': 'True',
-            'phone-number': self.user.phone_number,
+            'phone-number': [self.user.phone_number],
             'password': 123,
             'email': None
         }, {
@@ -391,7 +391,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'name': 'William Moreland',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }]

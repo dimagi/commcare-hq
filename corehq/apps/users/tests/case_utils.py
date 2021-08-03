@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.groups.models import Group
-from corehq.apps.users.cases import get_owning_users, get_wrapped_owner
+from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.test_utils import generate_cases
@@ -25,34 +25,6 @@ class CaseUtilsTestCase(TestCase):
         self.addCleanup(group.delete)
         wrapped = get_wrapped_owner(group._id)
         self.assertTrue(isinstance(wrapped, Group))
-
-    def test_owned_by_user(self):
-        user = CommCareUser.create(self.domain, 'owned-user-test', 'password', None, None)
-        user.save()
-        self.addCleanup(user.delete, self.domain, deleted_by=None)
-        owners = get_owning_users(user._id)
-        self.assertEqual(1, len(owners))
-        self.assertEqual(owners[0]._id, user._id)
-        self.assertTrue(isinstance(owners[0], CommCareUser))
-
-    def test_owned_by_group(self):
-        ids = []
-        for i in range(5):
-            user = CommCareUser.create(self.domain, 'owned-group-test-user-%s' % i, 'password', None, None)
-            user.save()
-            self.addCleanup(user.delete, self.domain, deleted_by=None)
-            ids.append(user._id)
-
-        group = Group(domain=self.domain, name='owned-group-test-group', users=ids)
-        group.save()
-        self.addCleanup(group.delete)
-        owners = get_owning_users(group._id)
-        self.assertEqual(5, len(owners))
-        ids_back = []
-        for o in owners:
-            self.assertTrue(isinstance(o, CommCareUser))
-            ids_back.append(o._id)
-        self.assertEqual(set(ids), set(ids_back))
 
 
 @generate_cases(
