@@ -108,7 +108,7 @@ def prune_synclogs():
         drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
         with connections[db].cursor() as cursor:
             cursor.execute(drop_query)
-        oldest_date = datetime.fromisocalendar(year, week + 1, 1)
+        oldest_date += timedelta(weeks=1)
 
     # find and log synclogs for which the trigger did not function properly
     with connections[db].cursor() as cursor:
