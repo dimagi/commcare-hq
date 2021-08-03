@@ -78,7 +78,6 @@ branches:
     - jls/delay-web-apps-form-errors # Jenny July 27
     - cs/SC-1530-location-hierarchy-links  # Charl July 28
     - mk/user-history/track-ui-edits # MK July 28
-    - cs/SC-1529-multiple-mobile-numbers-upload+mk/user-history/add-message-helper # MK July 28
     - mk/user-history/add-message-helper # MK July 28
     - sk/data-registry-view  # Simon July 29
     - rc/show-hierarchy # Robert July 29
