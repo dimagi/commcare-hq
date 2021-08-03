@@ -149,6 +149,8 @@ class WrappedAttribs(object):
         self.namespaces = namespaces
 
     def __getattr__(self, name):
+        if name == "__setstate__":
+            raise AttributeError(name)
         return getattr(self.attrib, name)
 
     def _get_item_name(self, item):
@@ -232,6 +234,8 @@ class WrappedNode(object):
         return WrappedAttribs(self.xml.attrib, namespaces=self.namespaces)
 
     def __getattr__(self, attr):
+        if attr == "__setstate__":
+            raise AttributeError(attr)
         return getattr(self.xml, attr)
 
     def __bool__(self):
