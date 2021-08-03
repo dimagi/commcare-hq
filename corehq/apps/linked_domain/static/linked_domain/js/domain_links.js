@@ -100,11 +100,27 @@ hqDefine("linked_domain/js/domain_links", [
         // doesn't need to be observable because it is impossible to update the existing page to change this property
         self.isDownstreamDomain = data.is_downstream_domain;
 
-        self.pullTabActiveStatus = ko.computed(function () {
-            return self.isDownstreamDomain ? "in active" : "";
+        self.isOnlyDownstreamDomain = ko.computed(function () {
+            return !self.isUpstreamDomain() && self.isDownstreamDomain;
         });
 
-        self.manageTabActiveStatus = self.isDownstreamDomain ? "" : "in active";
+        // Tab Header Statuses
+        self.manageDownstreamDomainsTabStatus = ko.computed(function () {
+           return self.isUpstreamDomain() ? "active" : "";
+        });
+
+        self.pullContentTabStatus = ko.computed(function () {
+            return self.isOnlyDownstreamDomain() ? "active" : "";
+        });
+
+        // Tab Content Statuses
+        self.manageTabActiveStatus = ko.computed(function() {
+            return self.isUpstreamDomain() ? "in active" : "";
+        });
+
+        self.pullTabActiveStatus = ko.computed(function () {
+            return self.isOnlyDownstreamDomain() ? "in active" : "";
+        });
 
         self.showGetStarted = ko.computed(function () {
             return !self.isUpstreamDomain() && !self.isDownstreamDomain;
@@ -114,9 +130,6 @@ hqDefine("linked_domain/js/domain_links", [
             return self.isUpstreamDomain() || (self.isDownstreamDomain && self.showRemoteReports());
         });
 
-        self.isOnlyDownstreamDomain = ko.computed(function () {
-            return !self.isUpstreamDomain() && self.isDownstreamDomain && !self.showRemoteReports();
-        });
 
         // can only push content if a link with a downstream domain exists
         var pushContentData = {

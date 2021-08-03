@@ -29,17 +29,20 @@ hqDefine("app_manager/js/app_view", function () {
             // prepend with blank so placeholder works
             self.domainNames = [''].concat(data("domain_names"));
             self.linkableDomains = data("linkable_domains");
+            self.shouldLimitToLinkedDomains = data("limit_to_linked_domains");
 
             self.isChecked = ko.observable(false);
             self.shouldEnableLinkedAppOption = ko.observable(true);
 
             self.domainChanged = function (data, event) {
-                var selectedDomain = event.target.options[event.target.selectedIndex].value;
-                self.shouldEnableLinkedAppOption(self.linkableDomains.includes(selectedDomain));
+                if (self.shouldLimitToLinkedDomains) {
+                    var selectedDomain = event.currentTarget.options[event.currentTarget.selectedIndex].value;
+                    self.shouldEnableLinkedAppOption(self.linkableDomains.includes(selectedDomain));
 
-                // ensure not checked if linked apps is not allowed
-                if (!self.shouldEnableLinkedAppOption()) {
-                    self.isChecked(false);
+                    // ensure not checked if linked apps is not allowed
+                    if (!self.shouldEnableLinkedAppOption()) {
+                        self.isChecked(false);
+                    }
                 }
             };
 
