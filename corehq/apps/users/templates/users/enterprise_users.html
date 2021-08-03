@@ -21,6 +21,19 @@
                               action: function() { goToPage(1); },
                               placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
+        <div class="col-sm-6">
+            <button type="button" class="btn btn-default pull-right"
+                    data-bind="visible: !showDeactivated(), click: function() { showDeactivated(true); }"
+                    >
+              {% trans 'Show Deactivated Mobile Workers' %}
+            </button>
+            <button type="button" class="btn btn-default pull-right"
+                    data-bind="visible: showDeactivated(),
+                    click: function() { showDeactivated(false); }"
+                    >
+              {% trans 'Hide Deactivated Mobile Workers' %}
+            </button>
+        </div>
       </div>
     </div>
     <div class="panel-body">
