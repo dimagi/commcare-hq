@@ -1,3 +1,5 @@
+import json
+
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
@@ -128,7 +130,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            filters = filters & Q(**{"details__changes__has_key": user_property})
+            filters = filters & Q(**{"changes__has_key": user_property})
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
@@ -155,9 +157,9 @@ def _user_history_row(record, domain, timezone):
         cached_user_id_to_username(record.user_id),
         cached_user_id_to_username(record.changed_by),
         _get_action_display(record.action),
-        record.details['changed_via'],
-        record.message,
-        _user_history_details_cell(record.details['changes'], domain),
+        record.changed_via,
+        json.dumps(record.change_messages),
+        _user_history_details_cell(record.changes, domain),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
 
