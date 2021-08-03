@@ -190,19 +190,6 @@ class Permissions(DocumentSchema):
     access_default_login_as_user = BooleanProperty(default=False)
 
     @classmethod
-    def wrap(cls, data):
-        # this is why you don't store module paths in the database...
-        MOVED_REPORT_MAPPING = {
-            'corehq.apps.reports.standard.inspect.CaseListReport': 'corehq.apps.reports.standard.cases.basic.CaseListReport'
-        }
-        reports = data.get('view_report_list', [])
-        for i, report_name in enumerate(reports):
-            if report_name in MOVED_REPORT_MAPPING:
-                reports[i] = MOVED_REPORT_MAPPING[report_name]
-
-        return super(Permissions, cls).wrap(data)
-
-    @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
         permissions = Permissions.min()
