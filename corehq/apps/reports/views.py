@@ -1606,10 +1606,10 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
             domain=domain,
             display='demo_user',
         )
-    elif meta_username == 'admin':
+    elif meta_username in ('admin', 'system'):
         user_info = DocInfo(
             domain=domain,
-            display='admin',
+            display=meta_username,
         )
     else:
         user_info = get_doc_info_by_id(None, meta_userID)
