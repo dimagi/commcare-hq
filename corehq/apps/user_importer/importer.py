@@ -13,6 +13,7 @@ from couchdbkit.exceptions import (
     ResourceConflict
 )
 
+from django.core.exceptions import ValidationError
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
@@ -44,6 +45,8 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.apps.sms.util import validate_phone_number
+
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -78,6 +81,7 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
+
     if is_web_upload:
         missing_headers = web_required_headers - headers
     else:
@@ -404,6 +408,15 @@ def format_location_codes(location_codes):
     return location_codes
 
 
+def clean_phone_numbers(phone_numbers):
+    cleaned_numbers = []
+    for number in phone_numbers:
+        if number:
+            validate_phone_number(number, f'Invalid phone number detected: {number}')
+            cleaned_numbers.append(number)
+    return cleaned_numbers
+
+
 def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload_user, upload_record_id,
                                                group_memoizer=None,
                                                update_progress=None):
@@ -426,7 +439,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
     ret = {"errors": [], "rows": []}
 
     current = 0
-
     try:
         for row in user_specs:
             if update_progress:
@@ -458,7 +470,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
-            phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
             location_codes = row.get('location_code', []) if 'location_code' in row else None
@@ -466,6 +477,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
+            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
             try:
                 password = str(password) if password else None
@@ -490,8 +502,10 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if phone_number:
-                    commcare_user_importer.update_phone_number(phone_number)
+                if phone_numbers:
+                    phone_numbers = clean_phone_numbers(phone_numbers)
+                    commcare_user_importer.update_phone_numbers(phone_numbers)
+
                 if name:
                     commcare_user_importer.update_name(name)
 
@@ -574,7 +588,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
                 for group_name in group_names:
                     domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
-
+            except ValidationError as e:
+                status_row['flag'] = e.message
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
 
@@ -722,7 +737,6 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
 def modify_existing_user_in_domain(upload_domain, domain, domain_info, location_codes, membership,
                                    role_qualified_id, upload_user, current_user, web_user_importer,
                                    max_tries=3):
-
     if domain_info.can_assign_locations and location_codes is not None:
         web_user_importer.update_locations(location_codes, membership, domain_info)
     web_user_importer.update_role(role_qualified_id)
