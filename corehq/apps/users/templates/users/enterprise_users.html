@@ -11,10 +11,12 @@
 
   <div class="panel panel-default ko-template" id="web-users-panel">
     <div class="panel-heading">
-      <div class="row">
-        <div class="col-sm-6">
+        {% comment %} <div class="col-sm-6"> {% endcomment %}
           <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Users' %}</h3>
-        </div>
+        {% comment %} </div> {% endcomment %}
+    </div>
+    <div class="panel-body">
+      <div class="row">
         <div class="col-sm-6">
           <search-box data-apply-bindings="false"
                       params="value: query,
@@ -35,8 +37,6 @@
             </button>
         </div>
       </div>
-    </div>
-    <div class="panel-body">
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
       <div data-bind="visible: showLoadingSpinner">
         <i class="fa fa-spin fa-spinner"></i>
