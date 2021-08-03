@@ -31,7 +31,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -311,7 +311,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
-        user_change_logger.add_change_message(UserChangeMessage.invited_to_domain(domain))
+        user_change_logger.add_change_message(UserChangeMessageV1.invited_to_domain(domain))
 
 
 def find_location_id(location_codes, location_cache):
@@ -790,7 +790,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         if is_web_upload:
             remove_invited_web_user(domain, username)
             if user_change_logger:
-                user_change_logger.add_change_message(UserChangeMessage.invitation_revoked_for_domain(domain))
+                user_change_logger.add_change_message(UserChangeMessageV1.invitation_revoked_for_domain(domain))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -800,4 +800,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(UserChangeMessage.domain_removal(domain))
+            user_change_logger.add_change_message(UserChangeMessageV1.domain_removal(domain))

@@ -1,4 +1,4 @@
-class UserChangeMessage(object):
+class UserChangeMessageV1(object):
     @staticmethod
     def program_change(program):
         if program:

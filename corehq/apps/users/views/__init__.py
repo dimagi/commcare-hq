@@ -76,7 +76,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -820,7 +820,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        change_messages=UserChangeMessage.domain_removal(domain))
+                        change_messages=UserChangeMessageV1.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1335,7 +1335,7 @@ def change_password(request, domain, login_id):
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
-                change_messages=UserChangeMessage.password_reset()
+                change_messages=UserChangeMessageV1.password_reset()
             )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')

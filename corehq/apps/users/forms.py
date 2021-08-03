@@ -41,7 +41,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.models import SQLUserRole
 from corehq.apps.users.util import (
@@ -212,14 +212,14 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             change_messages = {}
             profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                change_messages.update(UserChangeMessage.role_change(user_new_role))
+                change_messages.update(UserChangeMessageV1.role_change(user_new_role))
             if metadata_updated:
                 props_updated['user_data'] = self.existing_user.user_data
             if profile_updated:
                 profile_name = None
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
-                change_messages.update(UserChangeMessage.profile_info(profile_id, profile_name))
+                change_messages.update(UserChangeMessageV1.profile_info(profile_id, profile_name))
             log_user_change(
                 self.request.domain,
                 couch_user=self.existing_user,
@@ -1068,7 +1068,7 @@ class CommtrackUserForm(forms.Form):
             if location_ids:
                 locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.assigned_locations_info(locations)
+                    UserChangeMessageV1.assigned_locations_info(locations)
                 )
 
         if 'location_id' in location_updates:
@@ -1077,7 +1077,7 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.primary_location_info(primary_location)
+                    UserChangeMessageV1.primary_location_info(primary_location)
                 )
 
         if program_id is not None:
@@ -1088,9 +1088,9 @@ class CommtrackUserForm(forms.Form):
     def _log_program_changes(user_change_logger, program_id):
         if program_id:
             program = Program.get(program_id)
-            user_change_logger.add_info(UserChangeMessage.program_change(program))
+            user_change_logger.add_info(UserChangeMessageV1.program_change(program))
         else:
-            user_change_logger.add_info(UserChangeMessage.program_change(None))
+            user_change_logger.add_info(UserChangeMessageV1.program_change(None))
 
     def _log_web_user_changes(self, user_change_logger, location_updates, program_id):
         if 'location_ids' in location_updates:
@@ -1098,11 +1098,11 @@ class CommtrackUserForm(forms.Form):
             if location_ids:
                 locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.assigned_locations_info(locations)
+                    UserChangeMessageV1.assigned_locations_info(locations)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.assigned_locations_info([])
+                    UserChangeMessageV1.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
@@ -1110,11 +1110,11 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.primary_location_info(primary_location)
+                    UserChangeMessageV1.primary_location_info(primary_location)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.primary_location_info(None)
+                    UserChangeMessageV1.primary_location_info(None)
                 )
 
         if program_id is not None:

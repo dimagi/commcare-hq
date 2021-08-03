@@ -54,7 +54,7 @@ from corehq.apps.hqadmin.forms import (
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -390,7 +390,7 @@ class DisableUserView(FormView):
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
             self.user.set_password(uuid.uuid4().hex)
-            change_messages.update(UserChangeMessage.password_reset())
+            change_messages.update(UserChangeMessageV1.password_reset())
 
         # toggle active state
         self.user.is_active = not self.user.is_active
@@ -398,7 +398,7 @@ class DisableUserView(FormView):
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
         reason = form.cleaned_data['reason']
-        change_messages.update(UserChangeMessage.status_update(self.user.is_active, reason))
+        change_messages.update(UserChangeMessageV1.status_update(self.user.is_active, reason))
         couch_user = CouchUser.from_django_user(self.user)
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
@@ -486,7 +486,7 @@ class DisableTwoFactorView(FormView):
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-        change_messages.update(UserChangeMessage.registered_devices_reset())
+        change_messages.update(UserChangeMessageV1.registered_devices_reset())
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -494,12 +494,12 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
-            change_messages.update(UserChangeMessage.two_factor_disabled_for_days(disable_for_days))
+            change_messages.update(UserChangeMessageV1.two_factor_disabled_for_days(disable_for_days))
 
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         change_messages.update(
-            UserChangeMessage.two_factor_disabled_with_verification(verified_by, verification)
+            UserChangeMessageV1.two_factor_disabled_with_verification(verified_by, verification)
         )
         log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,

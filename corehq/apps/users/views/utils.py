@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.models import (
     DomainMembershipError,
     StaticRole,
@@ -78,7 +78,7 @@ def log_user_groups_change(domain, request, user, group_ids=None):
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        change_messages=UserChangeMessage.groups_info(groups)
+        change_messages=UserChangeMessageV1.groups_info(groups)
     )
 
 
@@ -90,13 +90,13 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
         fields_changed['location_id'] = user.location_id
         if user.location_id:
             location = SQLLocation.objects.get(location_id=user.location_id)
-        change_messages.update(UserChangeMessage.primary_location_info(location))
+        change_messages.update(UserChangeMessageV1.primary_location_info(location))
     if old_assigned_location_ids != user.assigned_location_ids:
         locations = []
         fields_changed['assigned_location_ids'] = user.assigned_location_ids
         if user.assigned_location_ids:
             locations = SQLLocation.objects.filter(location_id__in=user.assigned_location_ids)
-        change_messages.update(UserChangeMessage.assigned_locations_info(locations))
+        change_messages.update(UserChangeMessageV1.assigned_locations_info(locations))
 
     if change_messages:
         log_user_change(

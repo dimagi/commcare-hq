@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
@@ -50,7 +50,7 @@ class TestLogUserChange(TestCase):
             self.commcare_user,
             self.web_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
-            change_messages=UserChangeMessage.phone_numbers_added(["9999999999"]),
+            change_messages=UserChangeMessageV1.phone_numbers_added(["9999999999"]),
             fields_changed={
                 'phone_numbers': self.commcare_user.phone_numbers,
                 'password': '******'

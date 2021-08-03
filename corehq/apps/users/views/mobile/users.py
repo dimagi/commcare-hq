@@ -66,7 +66,7 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessageV1
 from corehq.apps.users.bulk_download import get_domains_from_user_filters
 from corehq.apps.users.dbaccessors import (
     get_user_docs_by_username,
@@ -359,7 +359,7 @@ class EditCommCareUserView(BaseEditUserView):
                         couch_user=self.editable_user,
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB,
-                        change_messages=UserChangeMessage.phone_numbers_added([phone_number])
+                        change_messages=UserChangeMessageV1.phone_numbers_added([phone_number])
                     )
                 messages.success(request, _("Phone number added."))
             else:
