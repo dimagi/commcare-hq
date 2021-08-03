@@ -1096,12 +1096,9 @@ class CommtrackUserForm(forms.Form):
         if 'location_ids' in location_updates:
             location_ids = location_updates['location_ids']
             if location_ids:
-                locations_info = ", ".join([
-                    f"{location.name}[{location.location_id}]"
-                    for location in SQLLocation.objects.filter(location_id__in=location_ids)
-                ])
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.assigned_locations_info(locations_info)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
             else:
                 user_change_logger.add_info(
