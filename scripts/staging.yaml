@@ -83,4 +83,5 @@ branches:
     - sk/data-registry-view  # Simon July 29
     - rc/show-hierarchy # Robert July 29
     - jm/remove-es-scan  # Joel August 3
+    - gh/fix-js-issue # Graham August 3
 submodules: { }
