@@ -399,11 +399,14 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 
 class DomainChoiceProvider(ChainableChoiceProvider):
 
-    def _query_domains(self, domain, query_text):  # should we account for multiple registries?
-        registries = DataRegistry.objects.accessible_to_domain(domain)
+    def _query_domains(self, domain, query_text):
+        registry_slug = self.report.config.registry_slug
+        try:
+            registry = DataRegistry.objects.accessible_to_domain(domain, slug=registry_slug).get()
+        except DataRegistry.DoesNotExist:
+            return {domain}
         domains = {domain}
-        for registry in registries:
-            domains.update(registry.get_granted_domains(domain))
+        domains.update(registry.get_granted_domains(domain))
         if query_text:
             domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)

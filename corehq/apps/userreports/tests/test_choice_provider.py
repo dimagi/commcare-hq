@@ -17,7 +17,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
     GroupChoiceProvider,
@@ -523,7 +523,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         cls.domain_d = create_domain(name="D")
         for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
             domain.save()
-        report = ReportConfiguration(domain="A")
         cls.user = create_user("admin", "123")
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
 
@@ -536,19 +535,30 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         ]
         cls.registry = create_registry_for_test(cls.user, cls.domain, invitations, grants=grants, name="registry")
 
+        cls.config = RegistryDataSourceConfiguration(
+            domain="A", table_id='foo',
+            referenced_doc_type='CommCareCase', registry_slug=cls.registry.slug,
+        )
+        cls.config.save()
+
+        cls.report = ReportConfiguration(domain="A", config_id=cls.config._id)
+        cls.report.save()
+
         choices = [
             SearchableChoice("A", "A", ["A"]),
             SearchableChoice("B", "B", ["B"]),
             SearchableChoice("C", "C", ["C"]),
         ]
         choices.sort(key=lambda choice: choice.display)
-        cls.choice_provider = DomainChoiceProvider(report, None)
+        cls.choice_provider = DomainChoiceProvider(cls.report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
         delete_all_domains()
+        cls.config.delete()
+        cls.report.delete()
         super(DomainChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
@@ -575,19 +585,25 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         )
 
     def test_domain_with_some_grants(self):
-        report = ReportConfiguration(domain="B")
+        config = RegistryDataSourceConfiguration(
+            domain="B", table_id='foo',
+            referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
+        )
+        config.save()
+        report = ReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+        config.delete()
 
     def test_domain_with_no_grants(self):
-        report = ReportConfiguration(domain="C")
+        config = RegistryDataSourceConfiguration(
+            domain="C", table_id='foo',
+            referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
+        )
+        config.save()
+        report = ReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
-
-    def test_domain_with_no_access(self):
-        report = ReportConfiguration(domain="D")
-        self.choice_provider = DomainChoiceProvider(report, None)
-        self.assertEqual([Choice(value='D', display='D')],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+        config.delete()
