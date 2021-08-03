@@ -84,4 +84,5 @@ branches:
     - mk/user-history/add-message-helper # MK July 28
     - sk/data-registry-view  # Simon July 29
     - rc/show-hierarchy # Robert July 29
+    - jm/remove-es-scan  # Joel August 3
 submodules: { }
