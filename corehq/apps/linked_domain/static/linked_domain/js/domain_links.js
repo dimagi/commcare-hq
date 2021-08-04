@@ -107,7 +107,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // Tab Header Statuses
         self.manageDownstreamDomainsTabStatus = ko.computed(function () {
-           return self.isUpstreamDomain() ? "active" : "";
+            return self.isUpstreamDomain() ? "active" : "";
         });
 
         self.pullContentTabStatus = ko.computed(function () {
@@ -115,7 +115,7 @@ hqDefine("linked_domain/js/domain_links", [
         });
 
         // Tab Content Statuses
-        self.manageTabActiveStatus = ko.computed(function() {
+        self.manageTabActiveStatus = ko.computed(function () {
             return self.isUpstreamDomain() ? "in active" : "";
         });
 
