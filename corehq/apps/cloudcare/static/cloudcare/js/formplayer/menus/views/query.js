@@ -73,6 +73,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
+            blankSearchCheckbox: 'input.search-for-blank',
+        },
+
+        events: {
+            'change @ui.blankSearchCheckbox': 'toggleInputField',
         },
 
         modelEvents: {
@@ -218,6 +223,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.$el.hide();
             }
         },
+
+        toggleInputField: function () {
+            this.ui.queryField.prop('disabled', this.ui.blankSearchCheckbox.prop('checked'));
+        },
+
     });
 
     var QueryListView = Marionette.CollectionView.extend({
@@ -251,12 +261,31 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $fields = $(".query-field"),
+            var $inputGroups = $(".query-input-group"),
                 answers = {},
                 model = this.parentModel;
-            $fields.each(function (index) {
-                if (this.value !== '') {
-                    answers[model[index].get('id')] = encodeValue(model[index], $(this).val());
+            $inputGroups.each(function (index) {
+                var queryValue = $(this).find('.query-field').val(),
+                    inputType = model[index].get('input'),
+                    searchForBlank;
+
+                if (inputType === 'select1') {
+                    searchForBlank = queryValue === "-1";
+                } else if (inputType === 'select') {
+                    searchForBlank = false;  // handle it here instead
+                    queryValue = _.map(queryValue, function (val) {
+                        return val === "-1" ? "" : val;
+                    });
+                } else {
+                    searchForBlank = $(this).find('.search-for-blank').prop('checked');
+                }
+
+                var nothingSelected = (queryValue === ''
+                                       || (_.isArray(queryValue) && _.isEmpty(queryValue)));
+                if (searchForBlank) {
+                    answers[model[index].get('id')] = '';
+                } else if (!nothingSelected) {
+                    answers[model[index].get('id')] = encodeValue(model[index], queryValue);
                 }
             });
             return answers;
@@ -281,10 +310,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = response.models[i].get('value');
+                            value = $field.val();
+
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
-                        if ($field.attr('multiple')) {
-                            value = value.split(selectDelimiter);
+                        if (!$field.attr('multiple')) {
+                            value = String(value);
                         }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
