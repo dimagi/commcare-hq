@@ -58,6 +58,7 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
+        self.upstreamLink = data.master_link ? DomainLink(data.master_link) : null;
 
         // setup getting started view model
         var gettingStartedData = {
@@ -75,11 +76,11 @@ hqDefine("linked_domain/js/domain_links", [
 
         // can only pull content if a link with an upstream domain exists
         var pullReleaseContentData = null;
-        if (data.master_link) {
+        if (self.upstreamLink) {
             pullReleaseContentData = {
                 parent: self,
                 linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
-                domainLink: DomainLink(data.master_link),
+                domainLink: self.upstreamLink,
             };
             self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
         }
@@ -100,11 +101,27 @@ hqDefine("linked_domain/js/domain_links", [
         // doesn't need to be observable because it is impossible to update the existing page to change this property
         self.isDownstreamDomain = data.is_downstream_domain;
 
-        self.pullTabActiveStatus = ko.computed(function () {
-            return self.isDownstreamDomain ? "in active" : "";
+        self.isOnlyDownstreamDomain = ko.computed(function () {
+            return !self.isUpstreamDomain() && self.isDownstreamDomain;
         });
 
-        self.manageTabActiveStatus = self.isDownstreamDomain ? "" : "in active";
+        // Tab Header Statuses
+        self.manageDownstreamDomainsTabStatus = ko.computed(function () {
+           return self.isUpstreamDomain() ? "active" : "";
+        });
+
+        self.pullContentTabStatus = ko.computed(function () {
+            return self.isOnlyDownstreamDomain() ? "active" : "";
+        });
+
+        // Tab Content Statuses
+        self.manageTabActiveStatus = ko.computed(function() {
+            return self.isUpstreamDomain() ? "in active" : "";
+        });
+
+        self.pullTabActiveStatus = ko.computed(function () {
+            return self.isOnlyDownstreamDomain() ? "in active" : "";
+        });
 
         self.showGetStarted = ko.computed(function () {
             return !self.isUpstreamDomain() && !self.isDownstreamDomain;
@@ -114,9 +131,6 @@ hqDefine("linked_domain/js/domain_links", [
             return self.isUpstreamDomain() || (self.isDownstreamDomain && self.showRemoteReports());
         });
 
-        self.isOnlyDownstreamDomain = ko.computed(function () {
-            return !self.isUpstreamDomain() && self.isDownstreamDomain && !self.showRemoteReports();
-        });
 
         // can only push content if a link with a downstream domain exists
         var pushContentData = {
@@ -156,12 +170,13 @@ hqDefine("linked_domain/js/domain_links", [
         };
 
         self.linkableUcr = ko.observableArray(_.map(data.linkable_ucr, function (report) {
-            return RemoteLinkableReport(report, self.master_link);
+            return RemoteLinkableReport(report, self.upstreamLink);
         }));
+
         self.createRemoteReportLink = function (reportId) {
             _private.RMI("create_remote_report_link", {
-                "master_domain": self.master_link.master_domain,
-                "linked_domain": self.master_link.linked_domain,
+                "master_domain": self.upstreamLink.master_domain,
+                "linked_domain": self.upstreamLink.linked_domain(),
                 "report_id": reportId,
             }).done(function (data) {
                 if (data.success) {
@@ -301,7 +316,7 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
-    var RemoteLinkableReport = function (report, masterLink) {
+    var RemoteLinkableReport = function (report, upstreamLink) {
         var self = {};
         self.id = report.id;
         self.title = report.title;
@@ -309,8 +324,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.createLink = function () {
             _private.RMI("create_remote_report_link", {
-                "master_domain": masterLink.master_domain,
-                "linked_domain": masterLink.linked_domain,
+                "master_domain": upstreamLink.master_domain,
+                "linked_domain": upstreamLink.linked_domain(),
                 "report_id": self.id,
             }).done(function (data) {
                 if (data.success) {
