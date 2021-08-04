@@ -299,12 +299,17 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var ix = UI.getIx(q);
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
+            var form = q.form();
+
+            // We revalidate any errored labels while answering any of the questions
+            var erroredLabels = form.erroredLabels();
 
             this.serverRequest(
                 {
                     'action': Const.ANSWER,
                     'ix': ix,
                     'answer': answer,
+                    'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 },
                 function (resp) {
@@ -312,6 +317,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
                     }
+                    $.each(erroredLabels, function (ix) {
+                        self.serverError(UI.getForIx(form, ix), resp.errors[ix]);
+                    });
                 },
                 Const.BLOCK_SUBMIT,
                 function () {
@@ -435,6 +443,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                         if (o.isValid()) {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
                                 _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                            } else {
+                                _answers[UI.getIx(o)] = "OK";
                             }
                         } else {
                             prevalidated = false;
@@ -495,10 +505,12 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.serverError = function (q, resp) {
-            if (resp.type === "required") {
-                q.serverError("An answer is required");
+            if (!resp) {
+                q.serverError(null);
+            } else if (resp.type === "required") {
+                q.serverError(gettext("An answer is required"));
             } else if (resp.type === "constraint") {
-                q.serverError(resp.reason || 'This answer is outside the allowed range.');
+                q.serverError(resp.reason || gettext('This answer is outside the allowed range.'));
             }
         };
 
