@@ -331,7 +331,11 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
-        track_workflow(self.request.couch_user.username, "Linked domain: updated '{}' model".format(type_))
+        track_workflow(
+            self.request.couch_user.username,
+            "Linked domain: pulled data model",
+            {"data_model": type_}
+        )
 
         timezone = get_timezone_for_request()
         return {
