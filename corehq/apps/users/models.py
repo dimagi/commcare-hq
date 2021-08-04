@@ -171,6 +171,7 @@ class Permissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
+    download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
@@ -1215,6 +1216,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def set_default_phone_number(self, phone_number):
         self.add_phone_number(phone_number, True)
         self.save()
+
+    def set_phone_numbers(self, new_phone_numbers, default_number=''):
+        self.phone_numbers = list(set(new_phone_numbers))  # ensure uniqueness
+        if default_number:
+            self.add_phone_number(default_number, True)
 
     @property
     def default_phone_number(self):
@@ -2805,6 +2811,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_reports(self):
+        return False
+
+    def can_download_reports(self):
         return False
 
     def is_eula_signed(self, version=None):
