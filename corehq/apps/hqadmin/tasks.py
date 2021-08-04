@@ -179,8 +179,8 @@ def track_es_doc_counts():
                         'index': name,
                         'shard': f'{name}_{number}',
                     }
-                    metrics_gauge('elasticsearch.shards.docs.count', i['docs']['count'], tags)
-                    metrics_gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
+                    metrics_gauge('commcare.elasticsearch.shards.docs.count', i['docs']['count'], tags)
+                    metrics_gauge('commcare.elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="0"))
@@ -200,4 +200,4 @@ def track_pg_limits():
             for table, sequence in results:
                 cursor.execute(f'select last_value from {sequence}')
                 current_value = cursor.fetchone()[0]
-                metrics_gauge('postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+                metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
