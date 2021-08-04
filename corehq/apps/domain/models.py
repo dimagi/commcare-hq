@@ -49,6 +49,7 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
@@ -994,7 +995,7 @@ class TransferDomainRequest(models.Model):
         if by_user:
             log_user_change(self.domain, couch_user=self.from_user,
                             changed_by_user=by_user, changed_via=transfer_via,
-                            message=f"Removed from domain '{self.domain}'")
+                            message=UserChangeMessage.domain_removal(self.domain))
         self.to_user.save()
         self.active = False
         self.save()
