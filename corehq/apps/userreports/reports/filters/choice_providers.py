@@ -10,7 +10,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.exceptions import RegistryNotFound
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, NONE_CHOICE
@@ -400,13 +400,11 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 class DomainChoiceProvider(ChainableChoiceProvider):
 
     def _query_domains(self, domain, query_text):
-        registry_slug = self.report.config.registry_slug
-        try:
-            registry = DataRegistry.objects.accessible_to_domain(domain, slug=registry_slug).get()
-        except DataRegistry.DoesNotExist:
-            return {domain}
         domains = {domain}
-        domains.update(registry.get_granted_domains(domain))
+        try:
+            domains.update(self.report.registry_helper.visible_domains)
+        except RegistryNotFound:
+            return domains
         if query_text:
             domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)

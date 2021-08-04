@@ -877,6 +877,27 @@ STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
 
+class RegistryReportConfiguration(ReportConfiguration):
+    @property
+    def registry_slug(self):
+        return self.config.registry_slug
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, self.registry_slug)
+
+    @property
+    @memoized
+    def config(self):
+        try:
+            config = get_document_or_not_found(RegistryDataSourceConfiguration, self.domain, self.config_id)
+        except DocumentNotFound:
+            raise DataSourceConfigurationNotFoundError(_(
+                'The data source referenced by this report could not be found.'
+            ))
+        return config
+
+
 class StaticDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository.

@@ -17,7 +17,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration, \
+    RegistryReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
     GroupChoiceProvider,
@@ -541,7 +542,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         )
         cls.config.save()
 
-        cls.report = ReportConfiguration(domain="A", config_id=cls.config._id)
+        cls.report = RegistryReportConfiguration(domain="A", config_id=cls.config._id)
         cls.report.save()
 
         choices = [
@@ -590,7 +591,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
-        report = ReportConfiguration(domain="B", config_id=config._id)
+        report = RegistryReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
@@ -602,7 +603,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
-        report = ReportConfiguration(domain="C", config_id=config._id)
+        report = RegistryReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
