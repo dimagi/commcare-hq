@@ -106,6 +106,7 @@ from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
@@ -496,6 +497,11 @@ class HQLoginView(LoginView):
             settings.ENFORCE_SSO_LOGIN
             and self.steps.current == 'auth'
         )
+        domain = context.get('domain')
+        if domain and not is_domain_using_sso(domain):
+            # ensure that domain login pages not associated with SSO do not
+            # enforce SSO on the login screen
+            context['enforce_sso_login'] = False
         return context
 
 
@@ -1193,7 +1199,7 @@ def quick_find(request):
     if not result:
         raise Http404()
 
-    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_mirroring=True)
+    is_member = result.domain and request.couch_user.is_member_of(result.domain, allow_enterprise=True)
     if is_member or request.couch_user.is_superuser:
         doc_info = get_doc_info(result.doc)
     else:

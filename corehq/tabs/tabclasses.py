@@ -31,7 +31,6 @@ from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
@@ -49,6 +48,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
+from corehq.apps.linked_domain.util import can_access_release_management_feature
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -98,7 +98,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -130,12 +130,14 @@ class ProjectReportsTab(UITab):
     @property
     def sidebar_items(self):
         tools = self._get_tools_items()
+        tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + report_builder_nav
+        sidebar_items = (tools + tableau + report_builder_nav
                          + self._regroup_sidebar_items(custom_reports + project_reports))
         return self._filter_sidebar_items(sidebar_items)
 
@@ -167,6 +169,20 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         return [(_("Tools"), tools)]
+
+    def _get_tableau_items(self):
+        if not toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            return []
+
+        from corehq.apps.reports.models import TableauVisualization
+        from corehq.apps.reports.standard.tableau import TableauView
+        items = [{
+            'title': viz.name,
+            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+            'show_in_dropdown': False,
+        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
+        return [(_("Tableau Reports"), items)] if items else []
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -957,7 +973,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1444,19 +1460,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
-            from corehq.apps.users.models import DomainPermissionsMirror
-            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
-                    or DomainPermissionsMirror.mirror_domains(self.domain):
-                from corehq.apps.users.views import DomainPermissionsMirrorView
-                menu.append({
-                    'title': _(DomainPermissionsMirrorView.page_title),
-                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
-                    'description': _("View project spaces where users receive automatic access"),
-                    'subpages': [],
-                    'show_in_dropdown': False,
-                })
-
         return menu
 
     def _get_locations_menu(self):
@@ -1591,7 +1594,7 @@ class EnterpriseSettingsTab(UITab):
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
-                           args=[self.domain])
+                        args=[self.domain])
         })
         if IdentityProvider.domain_has_editable_identity_provider(self.domain):
             from corehq.apps.sso.views.enterprise_admin import (
@@ -1608,7 +1611,20 @@ class EnterpriseSettingsTab(UITab):
                     },
                 ],
             })
+        if self.couch_user.is_superuser:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or EnterprisePermissions.get_by_domain(self.domain).is_enabled:
+                enterprise_views.append({
+                    'title': _("Enterprise Permissions"),
+                    'url': reverse("enterprise_permissions", args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         items.append((_('Manage Enterprise'), enterprise_views))
+
         return items
 
 
@@ -1718,6 +1734,10 @@ class ProjectSettingsTab(UITab):
         feature_flag_items = _get_feature_flag_items(self.domain)
         if feature_flag_items and user_is_admin and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
+
+        release_management_items = _get_release_management_items(self.couch_user, self.domain)
+        if release_management_items:
+            items.append((_('Enterprise Release Management'), release_management_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1962,16 +1982,33 @@ def _get_feature_flag_items(domain):
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    if toggles.LINKED_DOMAINS.enabled(domain):
+    # show ERM version of linked projects if domain has privilege
+    if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
         feature_flag_items.append({
-            'title': _('Linked Projects'),
+            'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
         feature_flag_items.append({
-            'title': _('Linked Project History'),
+            'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items
+
+
+def _get_release_management_items(user, domain):
+    release_management_items = []
+
+    if can_access_release_management_feature(user, domain):
+        release_management_items.append({
+            'title': _('Linked Project Spaces'),
+            'url': reverse('domain_links', args=[domain])
+        })
+        release_management_items.append({
+            'title': _('Linked Project Space History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
+
+    return release_management_items
 
 
 class MySettingsTab(UITab):

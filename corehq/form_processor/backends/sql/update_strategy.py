@@ -32,6 +32,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
     RebuildWithReason,
+    STANDARD_CHARFIELD_LENGTH,
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util import cmp
@@ -53,10 +54,10 @@ def _validate_length(length):
 
 PROPERTY_TYPE_MAPPING = {
     'opened_on': iso8601.parse_date,
-    'name': _validate_length(255),
-    'type': _validate_length(255),
-    'owner_id': _validate_length(255),
-    'external_id': _validate_length(255),
+    'name': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'type': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'owner_id': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'external_id': _validate_length(STANDARD_CHARFIELD_LENGTH),
 }
 
 

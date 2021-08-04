@@ -1,9 +1,9 @@
 /**
- * hq.events.js
+ * hq_events.js
  *
  * This is framework for allowing messages from HQ
  */
-hqDefine("cloudcare/js/formplayer/hq.events", function () {
+hqDefine("cloudcare/js/formplayer/hq_events", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var Events = {};
 

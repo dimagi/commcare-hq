@@ -284,8 +284,6 @@ def release_build(request, domain, app_id, saved_app_id):
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
-    See ApplicationBase.save_copy
-
     """
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')

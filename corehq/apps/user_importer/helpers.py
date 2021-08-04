@@ -1,9 +1,9 @@
 from dimagi.utils.parsing import string_to_boolean
-from django.utils.translation import ugettext as _
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
 
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.util import log_user_change
 
@@ -25,6 +25,7 @@ class UserChangeLogger(object):
         - text messages for changes
         - useful info for changes to associated data models like role/locations
     """
+
     def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
         self.domain = domain
         self.user = user
@@ -58,9 +59,9 @@ class UserChangeLogger(object):
 
     def add_change_message(self, message):
         """
-        Add text messages for changes that are not exactly user properties.
+        Add raw/untranslated text messages for changes that are not exactly user properties.
         Ignored for new user since the whole user doc is logged for a new user
-        :param message: text message for the change like 'Password Reset' / 'Added as web user to domain foo'
+        :param message: text message for the change like 'Password reset' / 'Added as web user to domain foo'
         """
         if self.is_new_user:
             return
@@ -69,11 +70,11 @@ class UserChangeLogger(object):
 
     def add_info(self, info):
         """
-        Useful info for display, specifically of associated data models like roles/locations.
+        Useful raw/untranslated info for display, specifically of associated data models like roles/locations.
         Info will also include ID if the data model is not linked directly on the user like
         primary location for CommCareUser is present on the user record but for a WebUser it's
         stored on Domain Membership. So for WebUser, info should also include the primary location's location id.
-        :param info: text info like "Role: RoleName[role_id]" / "Primary Location: Boston[boston-location-id]"
+        :param info: text info like "Role: RoleName[role_id]" / "Primary location: Boston[boston-location-id]"
         """
         self.messages.append(info)
         self._save = True
@@ -99,6 +100,7 @@ class BaseUserImporter(object):
     Imports a Web/CommCareUser via bulk importer and also handles the logging
     save_log should be called explicitly to save logs, after user is saved
     """
+
     def __init__(self, upload_domain, user_domain, user, upload_user, is_new_user, via, upload_record_id):
         """
         :param upload_domain: domain on which the bulk upload is being done
@@ -129,13 +131,7 @@ class BaseUserImporter(object):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
-            if new_role:
-                self.logger.add_info(_("Role: {new_role_name}[{new_role_id}]").format(
-                    new_role_name=new_role.name,
-                    new_role_id=new_role.get_qualified_id()
-                ))
-            else:
-                self.logger.add_info("Role: None")
+            self.logger.add_info(UserChangeMessage.role_change(new_role))
 
         self._include_user_data_changes()
         self.logger.save()
@@ -149,16 +145,21 @@ class BaseUserImporter(object):
 class CommCareUserImporter(BaseUserImporter):
     def update_password(self, password):
         self.user.set_password(password)
-        self.logger.add_change_message(_("Password Reset"))
+        self.logger.add_change_message(UserChangeMessage.password_reset())
 
-    def update_phone_number(self, phone_number):
-        fmt_phone_number = _fmt_phone(phone_number)
-        if fmt_phone_number not in self.user.phone_numbers:
-            self.logger.add_change_message(_("Added phone number {new_phone_number}").format(
-                new_phone_number=fmt_phone_number)
-            )
-        # always call this to set phone number as default if needed
-        self.user.add_phone_number(fmt_phone_number, default=True)
+    def update_phone_numbers(self, phone_numbers):
+        """
+        The first item in 'phone_numbers' will be the default
+        """
+        old_user_phone_numbers = self.user.phone_numbers
+        fmt_phone_numbers = [_fmt_phone(n) for n in phone_numbers]
+
+        if any(fmt_phone_numbers):
+            self.user.set_phone_numbers(fmt_phone_numbers, default_number=fmt_phone_numbers[0])
+        else:
+            self.user.set_phone_numbers([])
+
+        self._log_phone_number_changes(old_user_phone_numbers, fmt_phone_numbers)
 
     def update_name(self, name):
         self.user.set_full_name(str(name))
@@ -190,9 +191,8 @@ class CommCareUserImporter(BaseUserImporter):
                 self.user.pop_metadata(key)
 
         if self.user.user_data.get(PROFILE_SLUG) and self.user.user_data[PROFILE_SLUG] != current_profile_id:
-            self.logger.add_info(_("CommCare Profile: {profile_name}").format(
-                profile_name=domain_info.profile_name_by_id[self.user.user_data[PROFILE_SLUG]])
-            )
+            profile_name = domain_info.profile_name_by_id[self.user.user_data[PROFILE_SLUG]]
+            self.logger.add_info(UserChangeMessage.profile_info(profile_name))
 
     def update_language(self, language):
         self.user.language = language
@@ -226,9 +226,8 @@ class CommCareUserImporter(BaseUserImporter):
             if location_ids:
                 location_names = [get_location_from_site_code(code, domain_info.location_cache).name
                                   for code in location_codes]
-                self.logger.add_info(_("Assigned locations: {location_names}").format(
-                    location_names=location_names
-                ))
+                self.logger.add_info(
+                    UserChangeMessage.commcare_user_assigned_locations_info(location_names))
 
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != user_current_primary_location_id:
@@ -236,9 +235,22 @@ class CommCareUserImporter(BaseUserImporter):
             if self.user.location_id:
                 user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    _("Primary location: {primary_location_name}").format(
-                        primary_location_name=user_updated_primary_location_name
-                    ))
+                    UserChangeMessage.commcare_user_primary_location_info(
+                        user_updated_primary_location_name
+                    )
+                )
+
+    def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
+        (items_added, items_removed) = find_differences_in_list(
+            target=new_phone_numbers,
+            source=old_phone_numbers
+        )
+
+        for number in items_added:
+            self.logger.add_change_message(UserChangeMessage.phone_number_added(number))
+
+        for number in items_removed:
+            self.logger.add_change_message(UserChangeMessage.phone_number_removed(number))
 
 
 def _fmt_phone(phone_number):
@@ -252,19 +264,13 @@ class WebUserImporter(BaseUserImporter):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
         self.role_updated = bool(role_qualified_id)
 
-        self.logger.add_change_message(_("Added as web user to domain '{domain_name}'").format(
-            domain_name=self.user_domain)
-        )
+        self.logger.add_change_message(UserChangeMessage.added_as_web_user(self.user_domain))
         if location_id:
             self._log_primary_location_info()
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)
-        self.logger.add_info(
-            _("Primary location: {primary_location_name}[{primary_location_id}]").format(
-                primary_location_name=primary_location.name,
-                primary_location_id=primary_location.location_id
-            ))
+        self.logger.add_info(UserChangeMessage.web_user_primary_location_info(primary_location))
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -276,7 +282,7 @@ class WebUserImporter(BaseUserImporter):
             self.user.unset_location(self.user_domain)
             # if there was a location before, log that it was cleared
             if current_primary_location_id:
-                self.logger.add_info("Primary location: None")
+                self.logger.add_info(UserChangeMessage.primary_location_removed())
 
     def update_locations(self, location_codes, membership, domain_info):
         from corehq.apps.user_importer.importer import (
@@ -300,9 +306,7 @@ class WebUserImporter(BaseUserImporter):
                 locations_info = ", ".join([f"{location.name}[{location.location_id}]" for location in locations])
             else:
                 locations_info = []
-            self.logger.add_info(_("Assigned locations: {locations_info}").format(
-                locations_info=locations_info
-            ))
+            self.logger.add_info(UserChangeMessage.web_user_assigned_locations_info(locations_info))
 
         # log this after assigned locations are updated, which can re-set primary location
         user_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -310,7 +314,7 @@ class WebUserImporter(BaseUserImporter):
             if user_updated_primary_location_id:
                 self._log_primary_location_info()
             else:
-                self.logger.add_info(_("Primary location: None"))
+                self.logger.add_info(UserChangeMessage.primary_location_removed())
 
 
 def get_user_primary_location_id(user, domain):
@@ -323,3 +327,23 @@ def get_user_primary_location_name(user, domain):
     primary_location = user.get_sql_location(domain)
     if primary_location:
         return primary_location.name
+
+
+def find_differences_in_list(target: list, source: list):
+    """
+    Find the differences between 'source' and 'target' and
+    return (added_items, removed_items)
+
+    'added_items': items that are in 'target' but not in 'source'
+    'removed_items': items that are in 'source' but not 'target'
+
+    >>> find_differences_in_list(list_to_compare=[3,4,5,6], reference_list=[1,2,3,5])
+    ({4, 6}, {1, 2})
+    """
+
+    shared_items = set(target).intersection(source)
+
+    added_items = set(target).difference(shared_items)
+    removed_items = set(source).difference(shared_items)
+
+    return added_items, removed_items
