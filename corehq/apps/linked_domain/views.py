@@ -358,7 +358,11 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
 
-        track_workflow(self.request.couch_user.username, f"Linked domain: pushed data models {in_data['models']}")
+        track_workflow(
+            self.request.couch_user.username,
+            "Linked domain: pushed data models",
+            {"data_models": in_data['models']}
+        )
 
         return {
             'success': True,
