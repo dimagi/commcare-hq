@@ -266,6 +266,7 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.registry',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -2026,19 +2027,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'ews-ghana$',
     'mvp-',
 )
-
-# Domains that we want to tag in metrics provider
-METRICS_TAGGED_DOMAINS = {
-    # ("env", "domain"),
-    ("production", "born-on-time-2"),
-    ("production", "hki-nepal-suaahara-2"),
-    ("production", "malawi-fp-study"),
-    ("production", "no-lean-season"),
-    ("production", "rec"),
-    ("production", "isth-production"),
-    ("production", "sauti-1"),
-    ("production", "ndoh-wbot"),
-}
 
 #### Django Compressor Stuff after localsettings overrides ####
 
