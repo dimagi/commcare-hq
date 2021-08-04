@@ -104,6 +104,8 @@ django-appconf==1.0.4
     # via
     #   django-compressor
     #   django-statici18n
+django-autoslug==1.9.8
+    # via -r base-requirements.in
 django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0

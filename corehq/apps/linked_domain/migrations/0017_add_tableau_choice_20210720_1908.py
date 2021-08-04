@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('linked_domain', '0015_add_previews_to_choices_20210617_2010'),
+        ('linked_domain', '0016_reorder_history_model_choices'),
     ]
 
     operations = [
