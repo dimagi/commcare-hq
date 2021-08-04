@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from memoized import memoized
 import re
 
 from django.utils.functional import cached_property
@@ -399,6 +400,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 
 class DomainChoiceProvider(ChainableChoiceProvider):
 
+    @memoized
     def _query_domains(self, domain, query_text):
         domains = {domain}
         try:
