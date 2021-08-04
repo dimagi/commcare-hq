@@ -6,8 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('linked_domain', '0016_update_remote_base_url_help_text'),
-        ('linked_domain', '0016_add_tableau_choice_20210720_1908'),
+        ('linked_domain', '0017_update_remote_base_url_help_text'),
+        ('linked_domain', '0017_add_tableau_choice_20210720_1908'),
     ]
 
     operations = [
