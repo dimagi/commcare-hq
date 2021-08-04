@@ -353,7 +353,10 @@ def validate_registry_name(request, domain):
 @require_GET
 def registry_audit_logs(request, domain, registry_slug):
     helper = DataRegistryAuditViewHelper(domain, registry_slug)
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
     return JsonResponse({
         "total": helper.get_total(),
-        "logs": helper.get_logs()
+        "logs": helper.get_logs(skip, limit)
     })

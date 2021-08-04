@@ -215,9 +215,9 @@ hqDefine("registry/js/registry_edit", [
             }
         };
 
-        self.logs = auditLogs.model(self.slug);
+        self.auditLogs = auditLogs.model(self.slug);
         $('[href="#audit-logs"]').on('shown.bs.tab', function () {
-            self.logs.load();
+            self.auditLogs.load();
         });
 
         return self;

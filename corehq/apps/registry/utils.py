@@ -168,8 +168,8 @@ class DataRegistryAuditViewHelper:
             query = query.filter(domain=self.domain)
         return query
 
-    def get_logs(self):
-        return [log.to_json() for log in self.base_query]
+    def get_logs(self, skip, limit):
+        return [log.to_json() for log in self.base_query[skip:skip + limit]]
 
     def get_total(self):
         return self.base_query.count()

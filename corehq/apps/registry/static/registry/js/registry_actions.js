@@ -106,9 +106,13 @@ hqDefine("registry/js/registry_actions", [
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     };
 
-    let loadLogs = function(registrySlug, onSuccess) {
+    let loadLogs = function(registrySlug, page, itemsPerPage, onSuccess) {
         return $.get({
             url: initialPageData.reverse('registry_audit_logs', registrySlug),
+            data: {
+                'page': page,
+                'limit': itemsPerPage,
+            },
             success: function (data) {
                 onSuccess(data);
             },
