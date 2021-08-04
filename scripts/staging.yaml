@@ -68,7 +68,6 @@ branches:
     - ml/add-bulk-delete-form-export-report # Minha July 20
     - jm/stale-es-case-search  # Joel July 21
     - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
-    - gh/improve-erm-ui # Graham June 16 [QA]
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
     - sr/memoized-toggle # Sravan July 26
