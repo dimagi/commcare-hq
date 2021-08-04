@@ -14,6 +14,7 @@ from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
@@ -147,7 +148,7 @@ def _delete_web_user_membership(domain_name):
 def _log_web_user_membership_removed(user, domain, via):
     log_user_change(None, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message=f"Removed from domain '{domain}'")
+                    message=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
