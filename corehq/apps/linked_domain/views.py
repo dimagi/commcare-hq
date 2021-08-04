@@ -357,6 +357,9 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     def create_release(self, in_data):
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
+
+        track_workflow(self.request.couch_user.username, f"Linked domain: pushed data models {in_data['models']}")
+
         return {
             'success': True,
             'message': ugettext('''
@@ -376,6 +379,8 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 'success': False,
                 'message': str(e)
             }
+
+        track_workflow(self.request.couch_user.username, "Linked domain: domain link created")
 
         timezone = get_timezone_for_request()
         return {
