@@ -1,4 +1,3 @@
-from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -1625,8 +1624,6 @@ class EnterpriseSettingsTab(UITab):
 
         items.append((_('Manage Enterprise'), enterprise_views))
 
-        items.extend(EnterpriseReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain))
         return items
 
 
