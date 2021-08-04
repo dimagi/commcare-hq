@@ -303,6 +303,16 @@ class RegistryAuditLog(models.Model):
             ),
         ]
 
+    def to_json(self):
+        return {
+            "registry_slug": self.registry.slug,
+            "date": self.date.isoformat(),
+            "action": self.action,
+            "action_display": self.get_action_display(),
+            "domain": self.domain,
+            "user": self.user.username,
+        }
+
 
 class RegistryAuditHelper:
     def __init__(self, registry):

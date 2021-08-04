@@ -16,7 +16,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
-from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper
+from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper
 
 
 @domain_admin_required
@@ -347,3 +347,13 @@ def validate_registry_name(request, domain):
 
     exists = DataRegistry.objects.filter(name=name).exists()
     return JsonResponse({"result": not exists})
+
+
+@domain_admin_required
+@require_GET
+def registry_audit_logs(request, domain, registry_slug):
+    helper = DataRegistryAuditViewHelper(domain, registry_slug)
+    return JsonResponse({
+        "total": helper.get_total(),
+        "logs": helper.get_logs()
+    })

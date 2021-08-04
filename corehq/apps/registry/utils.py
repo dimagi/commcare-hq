@@ -2,7 +2,7 @@ from django.db import transaction
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 
-from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
+from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryAuditLog
 from corehq.apps.registry.signals import (
     data_registry_activated,
     data_registry_deactivated,
@@ -153,3 +153,23 @@ class DataRegistryCrudHelper:
         # TODO: figure out what to do here
         self.registry.delete()
         data_registry_deleted.send(sender=DataRegistry, registry=self.registry)
+
+
+class DataRegistryAuditViewHelper:
+    def __init__(self, domain, registry_slug):
+        self.domain = domain
+        self.registry = _get_registry_or_404(domain, registry_slug)
+        self.is_owner = domain == self.registry.domain
+
+    @property
+    def base_query(self):
+        query = self.registry.audit_logs.select_related("user")
+        if not self.is_owner:
+            query = query.filter(domain=self.domain)
+        return query
+
+    def get_logs(self):
+        return [log.to_json() for log in self.base_query]
+
+    def get_total(self):
+        return self.base_query.count()

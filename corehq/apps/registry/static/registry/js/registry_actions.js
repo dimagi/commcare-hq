@@ -106,6 +106,16 @@ hqDefine("registry/js/registry_actions", [
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     };
 
+    let loadLogs = function(registrySlug, onSuccess) {
+        return $.get({
+            url: initialPageData.reverse('registry_audit_logs', registrySlug),
+            success: function (data) {
+                onSuccess(data);
+            },
+            error: handleError,
+        });
+    }
+
     return {
         acceptInvitation: accept,
         rejectInvitation: reject,
@@ -115,5 +125,6 @@ hqDefine("registry/js/registry_actions", [
         createGrant: createGrant,
         removeGrant: removeGrant,
         validateName: validateName,
+        loadLogs: loadLogs,
     };
 });
