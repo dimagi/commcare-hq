@@ -2,16 +2,15 @@
     This is the knockout-based, javascript analog of messages in Django.
 
     Use the function `alert_user` to make a message appear on the page.
+    This accepts three args, message, emphasis and append.
+    Emphasis corresponds to bootstrap styling, and can be
+    "success", "danger", "info", or "warning".
+    If specified, "append" will cause the message to be appended to the existing notification
+    bubble (as opposed to making a new bubble).
+    NOTE: append will change the class of the alert if it is more severe
+    (success < info < warning < danger)
 
-    alert_user("Awesome job!", "success");
-
-    Parameters:
-    message: The message to display
-    emphasis: one of "success", "info", "warning", "danger"
-    append: Set to 'true' to have the message appended to an existing message instead
-       of creating a new one. NOTE: append will change the class of the alert if it is more severe
-       (success < info < warning < danger).
-    fadeOut: Set to 'true' to have the message automatically removed from the UI after 5s.
+    alert_user("Awesome job!", "success", true);
 */
 hqDefine("hqwebapp/js/alert_user", [
     "jquery",
@@ -22,81 +21,53 @@ function (
     $,
     ko
 ) {
-    var MessageAlert = function (message, tags, fadeOut) {
-        var self = {
+    var message_alert = function (message, tags) {
+        var alert_obj = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
                 "alert fade in message-alert"
             ),
         };
         if (tags) {
-            self.alert_class(self.alert_class() + " " + tags);
+            alert_obj.alert_class(alert_obj.alert_class() + " " + tags);
         }
-        if (fadeOut) {
-            self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
-        }
-        self.restartTimer = function () {
-            if (self.timer) {
-                clearTimeout(self.timer);
-                self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
+        return alert_obj;
+    };
+    var message_alerts = ko.observableArray();
+
+    var alert_user = function (message, emphasis, append) {
+        var tags = "alert-" + emphasis;
+        if (!append || message_alerts().length === 0) {
+            message_alerts.push(message_alert(message, tags));
+        } else {
+            var alert = message_alerts()[0];
+            alert.message(alert.message() + "<br>" + message);
+            if (!alert.alert_class().includes(tags)) {
+                alert.alert_class(alert.alert_class() + ' ' + tags);
             }
         }
-        return self;
+
+        // Scroll to top of page to see alert
+        document.body.scrollTop = document.documentElement.scrollTop = 0;
     };
-
-    const ViewModel = function () {
-        let self = {};
-        self.alerts = ko.observableArray();
-        self.removeAlert = function (alertObj) {
-            self.alerts.remove(alertObj);
-        };
-
-        self.fadeOut = function (element) {
-            $(element).fadeOut('slow');
-        };
-
-        self.alert_user = function (message, emphasis, append, fadeOut) {
-            var tags = "alert-" + emphasis;
-            if (!append || self.alerts().length === 0) {
-                self.alerts.push(MessageAlert(message, tags, fadeOut));
-            } else {
-                var alert = self.alerts()[0];
-                alert.message(alert.message() + "<br>" + message);
-                if (!alert.alert_class().includes(tags)) {
-                    alert.alert_class(alert.alert_class() + ' ' + tags);
-                }
-                alert.restartTimer();
-            }
-
-            // Scroll to top of page to see alert
-            document.body.scrollTop = document.documentElement.scrollTop = 0;
-        };
-        return self;
-    };
-
-    const removeAlertTimerFunc = function (alertObj) {
-        return () => {
-            viewModel.removeAlert(alertObj);
-        };
-    };
-
-    const viewModel = ViewModel();
 
     $(function () {
         // remove closed alerts from backend model
         $(document).on('close.bs.alert','.message-alert', function () {
-            viewModel.removeAlert(ko.dataFor(this));
+            message_alerts.remove(ko.dataFor(this));
         });
 
         var message_element = $("#message-alerts").get(0);
         // this element is not available on templates like iframe_domain_login.html
         if (message_element) {
             ko.cleanNode(message_element);
-            $(message_element).koApplyBindings(viewModel);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
         }
     });
 
     return {
-        alert_user: viewModel.alert_user,
+        alert_user: alert_user,
     };
 });
