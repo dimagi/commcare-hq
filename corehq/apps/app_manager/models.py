@@ -2089,6 +2089,7 @@ class CaseSearchProperty(DocumentSchema):
     default_value = StringProperty()
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
+    allow_blank_value = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty()
