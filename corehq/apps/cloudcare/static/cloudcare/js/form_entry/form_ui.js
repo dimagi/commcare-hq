@@ -1,5 +1,5 @@
 /* global DOMPurify, mdAnchorRender */
-hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
+hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
@@ -295,7 +295,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null || questions[i].requiredNotAnswered()) {
+                if (questions[i].error() != null || questions[i].serverError() != null) {
                     qs.push(questions[i]);
                 }
             }
@@ -576,7 +576,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         };
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
-        self.entry = hqImport("cloudcare/js/form_entry/entrycontrols_full").getEntry(self);
+        self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
@@ -601,10 +601,6 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
             return Utils.resourceMap(resourceType);
         };
-
-        self.requiredNotAnswered = ko.computed(function () {
-            return self.required() && self.answer() === Const.NO_ANSWER;
-        });
 
         self.navigateTo = function () {
             // toggle nested collapsible Groups

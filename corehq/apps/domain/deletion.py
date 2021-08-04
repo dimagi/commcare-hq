@@ -372,6 +372,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
+    ModelDeletion('registry', 'DataRegistry', 'domain', [
+        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission', 'RegistryAuditLog'
+    ]),
+    ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
+    ModelDeletion('registry', 'RegistryInvitation', 'domain'),
+    ModelDeletion('registry', 'RegistryPermission', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
@@ -388,7 +394,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
-    ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'SQLUserRole', 'domain', [
         'RolePermission', 'RoleAssignableBy', 'SQLPermission'

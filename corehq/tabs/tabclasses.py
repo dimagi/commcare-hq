@@ -31,7 +31,6 @@ from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
@@ -1594,7 +1593,7 @@ class EnterpriseSettingsTab(UITab):
         enterprise_views.append({
             'title': _('Billing Statements'),
             'url': reverse('enterprise_billing_statements',
-                           args=[self.domain])
+                        args=[self.domain])
         })
         if IdentityProvider.domain_has_editable_identity_provider(self.domain):
             from corehq.apps.sso.views.enterprise_admin import (
@@ -1624,6 +1623,7 @@ class EnterpriseSettingsTab(UITab):
                 })
 
         items.append((_('Manage Enterprise'), enterprise_views))
+
         return items
 
 

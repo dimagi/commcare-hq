@@ -568,6 +568,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
+    @method_decorator(require_permission(Permissions.download_reports))
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):

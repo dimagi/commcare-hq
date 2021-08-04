@@ -171,6 +171,7 @@ class Permissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
+    download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
@@ -447,26 +448,6 @@ class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
 class DomainMembershipError(Exception):
     pass
-
-
-class DomainPermissionsMirror(models.Model):
-    # These are both domain names
-    source = models.CharField(max_length=126, db_index=True)
-    mirror = models.CharField(max_length=126, db_index=True, unique=True)
-
-    @classmethod
-    def mirror_domains(cls, source_domain):
-        try:
-            return [o.mirror for o in cls.objects.filter(source=source_domain)]
-        except DomainPermissionsMirror.DoesNotExist:
-            return []
-
-    @classmethod
-    def source_domain(cls, mirror_domain):
-        try:
-            return cls.objects.get(mirror=mirror_domain).source
-        except DomainPermissionsMirror.DoesNotExist:
-            return None
 
 
 class Membership(DocumentSchema):
@@ -1235,6 +1216,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def set_default_phone_number(self, phone_number):
         self.add_phone_number(phone_number, True)
         self.save()
+
+    def set_phone_numbers(self, new_phone_numbers, default_number=''):
+        self.phone_numbers = list(set(new_phone_numbers))  # ensure uniqueness
+        if default_number:
+            self.add_phone_number(default_number, True)
 
     @property
     def default_phone_number(self):
@@ -2827,6 +2813,9 @@ class AnonymousCouchUser(object):
     def can_edit_reports(self):
         return False
 
+    def can_download_reports(self):
+        return False
+
     def is_eula_signed(self, version=None):
         return True
 
@@ -3104,13 +3093,19 @@ class UserHistory(models.Model):
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
-    details = JSONField(default=dict)
     message = models.TextField(blank=True, null=True)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
 
+    """
+    dict with keys:
+       changed_via: one of the USER_CHANGE_VIA_* constants
+       changes: a dict of CouchUser attributes that changed and their new values
+    """
+    details = JSONField(default=dict)
+
     class Meta:
         indexes = [
-            models.Index(fields=['domain'])
+            models.Index(fields=['domain']),
         ]

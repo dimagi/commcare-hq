@@ -14,6 +14,7 @@ from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
+from corehq.apps.data_dictionary.util import fields_to_validate
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -23,7 +24,12 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED, DOMAIN_PERMISSIONS_MIRROR
+from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
+from corehq.toggles import (
+    BULK_UPLOAD_DATE_OPENED,
+    CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
+    DOMAIN_PERMISSIONS_MIRROR,
+)
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
@@ -81,6 +87,10 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
+        if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
+            self.fields_to_validate = fields_to_validate(domain, config.case_type)
+        else:
+            self.fields_to_validate = {}
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
@@ -97,6 +107,8 @@ class _Importer(object):
                         if self.domain != row.get('domain'):
                             continue
                     self.import_row(row_num, row)
+                except exceptions.CaseRowErrorList as errors:
+                    self.results.add_errors(row_num, errors)
                 except exceptions.CaseRowError as error:
                     self.results.add_error(row_num, error)
 
@@ -223,6 +235,7 @@ class _Importer(object):
         """
         field_map = self.field_map
         fields_to_update = {}
+        errors = []
         for key in field_map:
             try:
                 update_value = row[key]
@@ -251,7 +264,18 @@ class _Importer(object):
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
 
+            if update_field_name in self.fields_to_validate:
+                case_property = self.fields_to_validate[update_field_name]
+                try:
+                    case_property.check_validity(update_value)
+                except exceptions.CaseRowError as error:
+                    error.column_name = update_field_name
+                    errors.append(error)
+
             fields_to_update[update_field_name] = update_value
+
+        if errors:
+            raise exceptions.CaseRowErrorList(errors)
 
         return fields_to_update
 
@@ -359,8 +383,9 @@ class _CaseImportRow(object):
         self.owner_accessor = owner_accessor
 
         self.case_name = fields_to_update.pop('name', None)
+        self._check_case_name()
         self.external_id = fields_to_update.pop('external_id', None)
-        self.check_valid_external_id()
+        self._check_valid_external_id()
         self.parent_id = fields_to_update.pop('parent_id', None)
         self.parent_external_id = fields_to_update.pop('parent_external_id', None)
         self.parent_type = fields_to_update.pop('parent_type', self.config.case_type)
@@ -371,7 +396,14 @@ class _CaseImportRow(object):
         self.uploaded_owner_id = fields_to_update.pop('owner_id', None)
         self.date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
 
-    def check_valid_external_id(self):
+    def _check_case_name(self):
+        if self.case_name and len(self.case_name) > STANDARD_CHARFIELD_LENGTH:
+            raise exceptions.CaseNameTooLong('name')
+
+    def _check_valid_external_id(self):
+        if self.external_id and len(self.external_id) > STANDARD_CHARFIELD_LENGTH:
+            raise exceptions.ExternalIdTooLong('external_id')
+
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()
@@ -514,6 +546,10 @@ class _ImportResults(object):
             self._errors[key][column_name]['rows'] = []
 
         self._errors[key][column_name]['rows'].append(row_num)
+
+    def add_errors(self, row_num, errors):
+        for error in errors:
+            self.add_error(row_num, error)
 
     def add_created(self, row_num):
         self._results[row_num] = self.CREATED
