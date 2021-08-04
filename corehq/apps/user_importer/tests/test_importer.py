@@ -548,7 +548,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(
             user_history.message,
-            "Password Reset"
+            "Password reset"
         )
 
         import_users_and_groups(
@@ -722,7 +722,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_BULK_IMPORTER)
         self.assertEqual(
             user_history.message,
-            f"Password Reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_qualified_id()}]"
+            f"Password reset. Added phone number 23424123. Role: {self.role.name}[{self.role.get_qualified_id()}]"
         )
 
     def test_blank_is_active(self):
