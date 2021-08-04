@@ -95,7 +95,7 @@
           {% if registry.description %}<p class="text-muted">{{ registry.description }}</p>{% endif %}
           <p>
             {% blocktrans %}
-            This registry is managed by the '{{ domain }}' project space.
+            This registry is managed by the '{{ registry.domain }}' project space.
             {% endblocktrans %}
           </p>
           {% if not is_owner %}
