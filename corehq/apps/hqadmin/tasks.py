@@ -171,10 +171,10 @@ def cleanup_stale_es_on_couch_domains_task():
 def track_es_doc_counts():
     es = get_es_new()
     stats = es.indices.stats(level='shards', metric='docs')
-    for name, data in stats['indices'].keys():
-        for number, shard in data['shards'].keys():
+    for name, data in stats['indices'].items():
+        for number, shard in data['shards'].items():
             for i in shard:
-                if shard['routing']['primary']:
+                if i['routing']['primary']:
                     tags = {
                         'index': name,
                         'shard': f'{name}_{number}',
