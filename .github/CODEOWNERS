@@ -37,6 +37,7 @@
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @proteusvacuum
 /corehq/apps/hqwebapp/ @orangejenny
+/corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @esoergel @millerdev
 /corehq/apps/locations/static/ @esoergel @orangejenny
