@@ -67,6 +67,8 @@ branches:
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
     - jm/stale-es-case-search  # Joel July 21
+    - revert-30202-revert-29962-gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham August 5
+    - revert-30202-revert-29962-gh/improve-erm-ui # Graham August 5
     - rc/tableau-models-linked-spaces # Robert July 22
     - caktus:case-upload-validate-dates # Jenny July 22
     - sr/memoized-toggle # Sravan July 26
