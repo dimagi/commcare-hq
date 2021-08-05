@@ -1,5 +1,3 @@
-import json
-
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
