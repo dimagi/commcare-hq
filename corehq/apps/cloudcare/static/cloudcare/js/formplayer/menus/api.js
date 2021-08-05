@@ -152,30 +152,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         // If an endpoint is provided, first claim any cases it references, then navigate
-        var deferred = $.Deferred();
-        $.ajax({
-            type: 'POST',
-            url: initialPageData.reverse('claim_all_cases'),
-            data: {
-                username: user.restoreAs || user.username,
-                case_ids: _.values(options.endpointArgs),
-            },
-            success: function () {
-                API.queryFormplayer(options, "get_endpoint").done(function (menuResponse) {
-                    deferred.resolve(menuResponse);
-                }).fail(function () {
-                    deferred.reject();
-                    // Just go home. Error message will be displayed by the error handler in queryFormplayer.
-                    FormplayerFrontend.trigger('navigateHome');
-                });
-            },
-            error: function (xhr) {
-                deferred.reject();
-                FormplayerFrontend.trigger('showError', xhr.responseText);
-                FormplayerFrontend.trigger('navigateHome');
-            },
-        });
-        return deferred;
+        return API.queryFormplayer(options, "get_endpoint");
     });
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
