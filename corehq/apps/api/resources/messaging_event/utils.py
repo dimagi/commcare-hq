@@ -31,16 +31,19 @@ def sort_query(query, request_params):
 
     This is required for the cursor pagination.
     """
+    order_by = get_order_by_field(request_params)
+    return query.order_by(order_by, "id")
+
+
+def get_order_by_field(request_params):
     order_by = request_params.get("order_by")
 
     if not order_by:
-        order_by_args = ["date", "id"]
-    else:
-        if order_by not in ("date", "-date"):
-            raise BadRequest(_("No matching '{field_name}' field for ordering").format(field_name=order_by))
-        order_by_args = [order_by, "id"]
+        return "date"
 
-    return query.order_by(*order_by_args)
+    if order_by not in ("date", "-date", "date_last_activity", "-date_last_activity"):
+        raise BadRequest(_("No matching '{field_name}' field for ordering").format(field_name=order_by))
+    return order_by
 
 
 @attrs

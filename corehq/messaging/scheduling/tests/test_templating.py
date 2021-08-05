@@ -61,8 +61,8 @@ class TemplatingTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_user.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.mobile_user.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         cls.group.delete()
         cls.location.delete()
         cls.location_type.delete()

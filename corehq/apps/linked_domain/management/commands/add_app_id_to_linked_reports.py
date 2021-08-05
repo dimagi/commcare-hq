@@ -13,9 +13,9 @@ logger = logging.getLogger('linked_domains')
 def migrate_linked_reports(upstream_domain=None):
     logger.setLevel(logging.INFO)
     if upstream_domain:
-        domain_links = DomainLink.objects.filter(master_domain=upstream_domain)
+        domain_links = DomainLink.all_objects.filter(master_domain=upstream_domain)
     else:
-        domain_links = DomainLink.objects.all()
+        domain_links = DomainLink.all_objects.all()
 
     num_of_failed_attempts = 0
     for domain_link in domain_links:

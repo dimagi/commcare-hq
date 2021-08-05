@@ -66,6 +66,7 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.bulk_download import get_domains_from_user_filters
 from corehq.apps.users.dbaccessors import (
     get_user_docs_by_username,
@@ -99,6 +100,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    log_user_change,
     raw_username,
 )
 from corehq.apps.users.views import (
@@ -119,7 +121,6 @@ from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
-from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -131,6 +132,7 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
+from ..utils import log_user_groups_change
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -247,7 +249,7 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
@@ -256,6 +258,7 @@ class EditCommCareUserView(BaseEditUserView):
         assigned_locations = self.editable_user.assigned_location_ids
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': initial_id,
                 'program_id': program_id,
@@ -347,8 +350,17 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
+                is_new_phone_number = phone_number not in self.editable_user.phone_numbers
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
+                if is_new_phone_number:
+                    log_user_change(
+                        self.request.domain,
+                        couch_user=self.editable_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB,
+                        message=UserChangeMessage.phone_number_added(phone_number)
+                    )
                 messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
@@ -428,7 +440,7 @@ def delete_commcare_user(request, domain, user_id):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    user.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_WEB)
+    user.retire(request.domain, deleted_by=request.couch_user, deleted_via=USER_CHANGE_VIA_WEB)
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
@@ -457,7 +469,8 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
+    success, message = user.unretire(request.domain, unretired_by=request.couch_user,
+                                     unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -607,9 +620,13 @@ def update_user_groups(request, domain, couch_user_id):
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
     if form.is_valid():
         user = CommCareUser.get(couch_user_id)
+        old_group_ids = user.get_group_ids()
+        new_group_ids = form.cleaned_data['selected_ids']
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
-        user.set_groups(form.cleaned_data['selected_ids'])
+        user.set_groups(new_group_ids)
+        if old_group_ids != new_group_ids:
+            log_user_groups_change(domain, request, user, new_group_ids)
         messages.success(request, _("User groups updated!"))
     else:
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
@@ -770,7 +787,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.domain,
             username,
             password,
-            created_by=self.request.user,
+            created_by=self.request.couch_user,
             created_via=USER_CHANGE_VIA_WEB,
             email=email,
             device_id="Generated from HQ",
@@ -839,9 +856,8 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    change_message = "Activated User" if is_active else "Deactivated User"
-    log_model_change(request.user, user.get_django_user(), message=change_message,
-                     action=ModelAction.UPDATE)
+    log_user_change(request.domain, user, request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
     return JsonResponse({
         'success': True,
     })
@@ -979,7 +995,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 self.domain,
                 username,
                 password,
-                created_by=request.user,
+                created_by=request.couch_user,
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
@@ -1264,7 +1280,8 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
+                CommCareUser.wrap(doc).delete(request.domain, deleted_by=request.couch_user,
+                                              deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")

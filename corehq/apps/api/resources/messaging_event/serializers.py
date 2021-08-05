@@ -10,6 +10,7 @@ def serialize_event(event):
         "id": event.id,
         "content_type": MessagingEvent.CONTENT_TYPE_SLUGS.get(event.content_type, "unknown"),
         "date": event.date.isoformat(),
+        "date_last_activity": event.date_last_activity.isoformat(),
         "case_id": event.case_id,
         "domain": event.parent.domain,
         "error": _serialize_event_error(event),
@@ -104,23 +105,20 @@ def _serialize_event_form(event):
 def _get_messages_for_email(event):
     try:
         email = Email.objects.get(messaging_subevent=event.pk)
-        content = email.body
-        recipient_address = email.recipient_address
-        message_id = email.id
     except Email.DoesNotExist:
-        content = None
-        recipient_address = None
-        message_id = None
+        return []
 
+    date_modified = email.date_modified.isoformat() if email.date_modified else None
     return [{
-        "message_id": message_id,
-        "date": event.date,
+        "message_id": email.id,
+        "date": email.date.isoformat(),
+        "date_modified": date_modified,
         "type": "email",
         "direction": "outgoing",
-        "content": content,
+        "content": email.body,
         "status": MessagingEvent.STATUS_SLUGS.get(event.status, 'unknown'),
         "backend": "email",
-        "email_address": recipient_address
+        "email_address": email.recipient_address
     }]
 
 
@@ -151,9 +149,11 @@ def _get_message_dicts_for_sms(event, messages, type_):
         else:
             status = MessagingEvent.STATUS_SLUGS.get(event.status, "unknown")
 
+        date_modified = sms.date_modified.isoformat() if sms.date_modified else None
         message_data = {
             "message_id": sms.id,
             "date": sms.date,
+            "date_modified": date_modified,
             "type": type_,
             "direction": SMS.DIRECTION_SLUGS.get(sms.direction, "unknown"),
             "content": sms.text,

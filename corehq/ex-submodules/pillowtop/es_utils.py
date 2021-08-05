@@ -3,7 +3,6 @@ from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
-from corehq.pillows.mappings.utils import transform_for_es7
 from corehq.util.es.elasticsearch import TransportError
 from pillowtop.logger import pillow_logging
 
@@ -140,11 +139,7 @@ def initialize_index(es, index_info):
     mapping = index_info.mapping
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
     meta = copy(index_info.meta)
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        mapping = transform_for_es7(mapping)
-        meta.update({'mappings': mapping})
-    else:
-        meta.update({'mappings': {index_info.type: mapping}})
+    meta.update({'mappings': {index_info.type: mapping}})
 
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     es.indices.create(index=index, body=meta)
@@ -153,10 +148,7 @@ def initialize_index(es, index_info):
 
 def mapping_exists(es, index_info):
     try:
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return es.indices.get_mapping(index_info.index).get(index_info.index, {}).get('mappings', None)
-        else:
-            return es.indices.get_mapping(index_info.index, index_info.type)
+        return es.indices.get_mapping(index_info.index, index_info.type)
     except TransportError:
         return {}
 

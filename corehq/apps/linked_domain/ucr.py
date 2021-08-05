@@ -29,7 +29,7 @@ def create_linked_ucr(domain_link, report_config_id):
         datasource = DataSourceConfiguration.get(report_config.config_id)
 
     # grab the linked app this linked report references
-    downstream_app_id = get_downstream_app_id(domain_link.linked_domain, report_config.config.meta.build.app_id)
+    downstream_app_id = get_downstream_app_id(domain_link.linked_domain, datasource.meta.build.app_id)
     new_datasource = _get_or_create_datasource_link(domain_link, datasource, downstream_app_id)
     new_report = _get_or_create_report_link(domain_link, report_config, new_datasource)
     return LinkedUCRInfo(datasource=new_datasource, report=new_report)
@@ -112,7 +112,7 @@ def update_linked_ucr(domain_link, report_id):
     linked_datasource = linked_report.config
 
     if domain_link.is_remote:
-        remote_configs = remote_get_ucr_config(domain_link, report_id)
+        remote_configs = remote_get_ucr_config(domain_link, linked_report.report_meta.master_id)
         master_report = remote_configs["report"]
         master_datasource = remote_configs["datasource"]
     else:

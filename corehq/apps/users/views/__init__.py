@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 
 import langcodes
@@ -19,15 +20,13 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
-from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
@@ -47,7 +46,8 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.esaccessors import login_as_user_filter
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -55,16 +55,15 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import UserES
+from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.es import UserES, queries
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
-    WebUserInvitationForm,
 )
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -77,6 +76,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -90,14 +90,12 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
-    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -106,13 +104,12 @@ from corehq.apps.users.models import (
     Permissions,
     SQLUserRole,
 )
-from corehq.apps.users.tasks import (
-    bulk_download_users_async,
-)
+from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
-from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
@@ -311,11 +308,12 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -384,10 +382,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def form_user_update_permissions(self):
-        user = self.editable_user
-        is_super_user = user.is_superuser
-
-        return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
+        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
 
     @property
     def main_context(self):
@@ -416,19 +411,18 @@ class EditWebUserView(BaseEditUserView):
 
         ctx.update({'token': self.backup_token})
 
-        if toggles.ENTERPRISE_SSO.enabled_for_request(self.request):
-            idp = IdentityProvider.get_active_identity_provider_by_username(
-                self.editable_user.username
-            )
-            ctx.update({
-                'has_untrusted_identity_provider': (
-                    not IdentityProvider.does_domain_trust_user(
-                        self.domain,
-                        self.editable_user.username
-                    )
-                ),
-                'idp_name': idp.name if idp else '',
-            })
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.editable_user.username
+        )
+        ctx.update({
+            'has_untrusted_identity_provider': (
+                not IdentityProvider.does_domain_trust_user(
+                    self.domain,
+                    self.editable_user.username
+                )
+            ),
+            'idp_name': idp.name if idp else '',
+        })
 
         return ctx
 
@@ -444,8 +438,7 @@ class EditWebUserView(BaseEditUserView):
         if self.request.is_view_only:
             return self.get(request, *args, **kwargs)
 
-        if (toggles.ENTERPRISE_SSO.enabled_for_request(self.request)
-                and self.request.POST['form_type'] == 'trust-identity-provider'):
+        if self.request.POST['form_type'] == 'trust-identity-provider':
             idp = IdentityProvider.get_active_identity_provider_by_username(
                 self.editable_user.username
             )
@@ -464,10 +457,17 @@ class EditWebUserView(BaseEditUserView):
                 )
 
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
+            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
+            current_superuser_status = self.editable_user.is_superuser
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user, is_super_user=is_super_user):
-                messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
+                                                                        editable_user=self.editable_user,
+                                                                        is_superuser=is_superuser):
+                if current_superuser_status != is_superuser:
+                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB,
+                                    fields_changed={'is_superuser': is_superuser})
+                messages.success(self.request,
+                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -539,6 +539,20 @@ class BaseRoleAccessView(BaseUserSettingsView):
                 ))
             )
         return role_view_data
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
+class EnterpriseUsersView(BaseRoleAccessView):
+    template_name = 'users/enterprise_users.html'
+    page_title = ugettext_lazy("Enterprise Users")
+    urlname = 'enterprise_users'
+
+    @property
+    def page_context(self):
+        return {
+            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
+        }
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -683,68 +697,72 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
-@method_decorator(require_superuser, name='dispatch')
-class DomainPermissionsMirrorView(BaseUserSettingsView):
-    template_name = 'users/domain_permissions_mirror.html'
-    page_title = ugettext_lazy("Enterprise Permissions")
-    urlname = 'domain_permissions_mirror'
+@always_allow_project_access
+@require_can_edit_or_view_web_users
+@require_GET
+def paginate_enterprise_users(request, domain):
+    # Get web users
+    domains = [domain] + EnterprisePermissions.get_domains(domain)
+    web_users, pagination = _get_web_users(request, domains)
 
-    @property
-    def page_context(self):
-        return {
-            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
-        }
+    # Get linked mobile users
+    web_user_usernames = [u.username for u in web_users]
+    mobile_result = (
+        UserES().domains(domains).mobile_users().sort('username.exact')
+        .filter(
+            queries.nested(
+                'user_data_es',
+                login_as_user_filter(web_user_usernames)
+            )
+        )
+        .run()
+    )
+    mobile_users = defaultdict(list)
+    for hit in mobile_result.hits:
+        login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
+        mobile_users[login_as_user].append(CommCareUser.wrap(hit))
+
+    users = []
+    allowed_domains = set(domains) - {domain}
+    for web_user in web_users:
+        other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
+        users.append({
+            **_format_enterprise_user(domain, web_user),
+            'otherDomains': other_domains,
+            'loginAsUserCount': len(mobile_users[web_user.username]),
+        })
+        for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
+            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            users.append({
+                **_format_enterprise_user(mobile_user.domain, mobile_user),
+                'profile': profile.name if profile else None,
+                'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
+                'loginAsUser': web_user.username,
+            })
+
+    return JsonResponse({
+        'users': users,
+        **pagination,
+    })
 
 
-@require_superuser
-@require_POST
-def delete_domain_permission_mirror(request, domain, mirror):
-    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
-    if mirror_obj:
-        mirror_obj.delete()
-        message = _('You have successfully deleted the project space "{mirror}".')
-        messages.success(request, message.format(mirror=mirror))
-    else:
-        message = _('The project space you are trying to delete was not found.')
-        messages.error(request, message)
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
-
-
-@require_superuser
-@require_POST
-def create_domain_permission_mirror(request, domain):
-    form = CreateDomainPermissionsMirrorForm(domain=request.domain, data=request.POST)
-    if not form.is_valid():
-        for field, message in form.errors.items():
-            messages.error(request, message)
-    else:
-        form.save_mirror_domain()
-        mirror_domain_name = form.cleaned_data.get("mirror_domain")
-        message = _('You have successfully added the project space "{mirror_domain_name}".')
-        messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
-    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
-    return HttpResponseRedirect(redirect)
+# user may be either a WebUser or a CommCareUser
+def _format_enterprise_user(domain, user):
+    membership = user.get_domain_membership(domain)
+    role = membership.role if membership else None
+    return {
+        'username': user.raw_username,
+        'name': user.full_name,
+        'id': user.get_id,
+        'role': role.name if role else None,
+    }
 
 
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
 def paginate_web_users(request, domain):
-    limit = int(request.GET.get('limit', 10))
-    page = int(request.GET.get('page', 1))
-    skip = limit * (page - 1)
-    query = request.GET.get('query')
-
-    result = (
-        UserES().domain(domain).web_users().sort('username.exact')
-        .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
-    )
-
-    web_users = [WebUser.wrap(w) for w in result.hits]
-    is_sso_toggle_enabled = toggles.ENTERPRISE_SSO.enabled_for_request(request)
+    web_users, pagination = _get_web_users(request, [domain])
     web_users_fmt = [{
         'email': u.get_email(),
         'domain': domain,
@@ -757,19 +775,37 @@ def paginate_web_users(request, domain):
             reverse('remove_web_user', args=[domain, u.user_id])
             if request.user.username != u.username else None
         ),
-        'isUntrustedIdentityProvider': (
-            not IdentityProvider.does_domain_trust_user(
-                domain, u.username
-            ) if is_sso_toggle_enabled else False
+        'isUntrustedIdentityProvider': not IdentityProvider.does_domain_trust_user(
+            domain, u.username
         ),
     } for u in web_users]
 
     return JsonResponse({
         'users': web_users_fmt,
-        'total': result.total,
-        'page': page,
-        'query': query,
+        **pagination,
     })
+
+
+def _get_web_users(request, domains):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    result = (
+        UserES().domains(domains).web_users().sort('username.exact')
+        .search_string_query(query, ["username", "last_name", "first_name"])
+        .start(skip).size(limit).run()
+    )
+
+    return (
+        [WebUser.wrap(w) for w in result.hits],
+        {
+            'total': result.total,
+            'page': page,
+            'query': query,
+        },
+    )
 
 
 @always_allow_project_access
@@ -782,6 +818,9 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
+        log_user_change(request.domain, couch_user=user,
+                        changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                        message=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -824,9 +863,9 @@ def post_user_role(request, domain):
     try:
         role = _update_role_from_view(domain, role_data)
     except ValueError as e:
-        response = HttpResponseBadRequest()
-        response.content = str(e)
-        return response
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
 
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
@@ -878,6 +917,17 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        return JsonResponse({
+            "message": ngettext(
+                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Remove all users assigned to the role before deleting it.",
+                user_count
+            ).format(role=role_data["name"], user_count=user_count)
+        }, status=400)
     try:
         role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except SQLUserRole.DoesNotExist:
@@ -1013,8 +1063,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
-            if (toggles.ENTERPRISE_SSO.enabled_for_request(request)
-                    and not IdentityProvider.does_domain_trust_user(self.domain, data["email"])):
+            if not IdentityProvider.does_domain_trust_user(self.domain, data["email"]):
                 idp = IdentityProvider.get_active_identity_provider_by_username(data["email"])
                 idp.create_trust_with_domain(self.domain, self.request.user.username)
 
@@ -1047,6 +1096,7 @@ class BaseUploadUser(BaseUserSettingsView):
         except WorksheetNotFound:
             self.group_specs = []
         try:
+            from corehq.apps.user_importer.importer import check_headers
             check_headers(self.user_specs, self.domain, is_web_upload=self.is_web_upload)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
@@ -1280,6 +1330,13 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                domain=domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                message=UserChangeMessage.password_reset()
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:

@@ -55,38 +55,33 @@ branches:
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
     - sr/case-reindex-staging # Sravan Oct 14
-    # - gh/improve-queueing-repeaters # Graham Oct 22
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
-    - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
-    - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
-    - fr/remote-linked-ucr      # Farid June 4
-    - sk/messaging-event-api  # Simon June 7
-    - jm/remove-es7  # Joel June 9
-    - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
-    - sr/mixed-case-types  # Sravan June 15
-    - mjr/hidden-report-columns  # Matt June 15
-    - gh/improve-erm-ui # Graham June 16
-    - rn_disallow_yui_cors # Rohit Negi
-    - mk/user-history/base # MK June 21 [QA]
-    - cs/SC-1390-put_turn_behind_ff+mk/user-history/report
-    - mk/user-history/report # MK June 23 [QA]
-    - mk/user-history/bulk-upload # MK June 28 [QA]
-    - mk/user-history/remove-membership+sk/role-to-sql-auth
-    - mk/user-history/remove-membership # MK June 29 [QA]
-    - jm/repeater-domain-admins  # Joel June 21
-    - sk/role-to-sql-auth  # Simon June 23
-    #- jls/enterprise-user-overview  # Jenny June 24
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
-    - sp/csrf # Amit + Shivam June 30
-    - bmb/sso-debug-user-data  # Biyeun June 30
-    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
-    - sr/fup-form  # Sravan July 1
-    - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
-    - jls/merge-migrations # Jenny July 1
+    - cs/SC-691-add-support-for-geolocation  # Charl July 5
+    - ce/bulk-case-search # Cal July 6
+    - ap/auditcare-migration # Amit July 8
+    - rp/enterprize-sms-report # Rynhard July 12
+    - ml/add-bulk-delete-form-export-report # Minha July 20
+    - jm/stale-es-case-search  # Joel July 21
+    - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
+    - rc/tableau-models-linked-spaces # Robert July 22
+    - caktus:case-upload-validate-dates # Jenny July 22
+    - sr/memoized-toggle # Sravan July 26
+    - bmb/sso-login-v2  # Biyeun July 26
+    - bmb/noramilize-url  # Biyeun July 26
+    - smh/web-user-upload-invites-fix # Steph July 26
+    - jls/delay-web-apps-form-errors # Jenny July 27
+    - cs/SC-1530-location-hierarchy-links  # Charl July 28
+    - sk/data-registry-view  # Simon July 29
+    - rc/show-hierarchy # Robert July 29
+    - jm/remove-es-scan  # Joel August 3
+    - es/blank-case-search  # Ethan August 3
+    - labelValidation # Shubham August 4
+    - sk/uglify3 # Simon August 5
+    - ml/sms-billable-report-visibility-checkbox # Minha August 5
+    - ml/remove-show-field-sms-billables-report # Minha August 5
 submodules: { }

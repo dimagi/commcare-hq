@@ -70,4 +70,4 @@ def _get_cursor(objects, request_params):
     })
     encoded_params = urlencode(cursor_params)
     next_params = {'cursor': b64encode(encoded_params.encode('utf-8'))}
-    return reverse('api_messaging_events', args=[request_params.domain], params=next_params, absolute=True)
+    return reverse('api_messaging_event_list', args=[request_params.domain], params=next_params, absolute=True)

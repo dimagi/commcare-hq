@@ -40,7 +40,6 @@ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/re
     #   django-celery-results
 certifi==2020.6.20
     # via
-    #   elasticsearch7
     #   requests
     #   sentry-sdk
 cffi==1.14.3
@@ -71,6 +70,8 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
+coverage==5.5
+    # via -r test-requirements.in
 cryptography==3.4.7
     # via
     #   jwcrypto
@@ -126,6 +127,8 @@ django-appconf==1.0.4
     # via
     #   django-compressor
     #   django-statici18n
+django-autoslug==1.9.8
+    # via -r base-requirements.in
 django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0
@@ -201,8 +204,6 @@ dropbox==9.3.0
 elasticsearch==1.9.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
-    # via -r base-requirements.in
-elasticsearch7==7.9.1
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -649,7 +650,6 @@ urllib3==1.26.5
     #   botocore
     #   elasticsearch
     #   elasticsearch2
-    #   elasticsearch7
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

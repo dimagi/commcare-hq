@@ -14,7 +14,9 @@ from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
@@ -137,9 +139,16 @@ def _delete_web_user_membership(domain_name):
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
         if settings.UNIT_TESTING and not web_user.domain_memberships:
-            web_user.delete(deleted_by=None)
+            web_user.delete(domain_name, deleted_by=None)
         else:
             web_user.save()
+            _log_web_user_membership_removed(web_user, domain_name, __name__ + "._delete_web_user_membership")
+
+
+def _log_web_user_membership_removed(user, domain, via):
+    log_user_change(None, couch_user=user,
+                    changed_by_user=SYSTEM_USER_ID, changed_via=via,
+                    message=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
@@ -364,6 +373,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
+    ModelDeletion('registry', 'DataRegistry', 'domain', [
+        'RegistryInvitation', 'RegistryGrant', 'RegistryPermission', 'RegistryAuditLog'
+    ]),
+    ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
+    ModelDeletion('registry', 'RegistryInvitation', 'domain'),
+    ModelDeletion('registry', 'RegistryPermission', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
@@ -380,7 +395,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
-    ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'SQLUserRole', 'domain', [
         'RolePermission', 'RoleAssignableBy', 'SQLPermission'
@@ -391,6 +405,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('dhis2', 'SQLDataSetMap', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
+    ModelDeletion('fhir', 'FHIRImportConfig', 'domain', [
+        'FHIRImportResourceType', 'ResourceTypeRelationship',
+        'FHIRImportResourceProperty',
+    ]),
     ModelDeletion('repeaters', 'RepeaterStub', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),

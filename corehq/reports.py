@@ -50,10 +50,12 @@ from corehq.apps.reports.standard.cases.case_list_explorer import (
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -117,10 +119,6 @@ def REPORTS(project):
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
-
-    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
-        tableau_reports = tableau.get_reports(project.name)
-        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
 
     if project.commtrack_enabled:
         supply_reports = (
@@ -351,6 +349,12 @@ SMS_ADMIN_INTERFACES = (
     )),
 )
 
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
+    )),
+)
+
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
@@ -368,5 +372,12 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+    )),
+)
+
+
+USER_MANAGEMENT_REPORTS = (
+    (_("User Management"), (
+        UserHistoryReport,
     )),
 )

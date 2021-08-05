@@ -4,6 +4,7 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -16,12 +17,10 @@ from casexml.apps.case.const import (
     UNOWNED_EXTENSION_OWNER_ID,
 )
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.util.model_log import log_model_change
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.util.quickcache import quickcache
-from django.core.exceptions import ValidationError
-
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -35,6 +34,10 @@ WEIRD_USER_IDS = [
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
     CALLCENTER_USER
+]
+USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
+    '_id', '_rev', 'reporting_metadata', 'password',
+    'devices', 'last_device', 'device_ids'
 ]
 
 
@@ -311,19 +314,73 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-def log_user_role_update(domain, user, by_user, updated_via):
+def log_user_role_update(domain, user_role, user, by_user, updated_via):
     """
-    :param domain: domain name
+    :param domain: domain that initiated the change
+    :param user_role: user's new role
     :param user: couch user that got updated
-    :param by_user: django/couch user that made the update
+    :param by_user: couch user that made the update
     :param updated_via: web/bulk_importer
     """
-    user_role = user.get_role(domain)
-    message = "role: None"
-    if user_role:
-        if user_role.get_qualified_id() == 'admin':
-            message = f"role: {user_role.name}"
-        else:
-            message = f"role: {user_role.name}[{user_role.get_id}]"
-    message += f", updated_via: {updated_via}"
-    log_model_change(by_user, user.get_django_user(), message=message)
+    message = UserChangeMessage.role_change(user_role)
+    log_user_change(domain, user, by_user, changed_via=updated_via, message=message)
+
+
+def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
+                    message=None, fields_changed=None, action=None,
+                    domain_required_for_log=True, bulk_upload_record_id=None):
+    """
+    Log changes done to a user.
+    For a new user or a deleted user, log only specific fields.
+
+    :param domain: domain where the update was initiated
+    :param couch_user: user being changed
+    :param changed_by_user: user making the change or SYSTEM_USER_ID
+    :param changed_via: changed via medium i.e API/Web
+    :param message: Optional Message text. This message should NEVER be a translated message.
+        Refer https://github.com/dimagi/commcare-hq/pull/30064 for details.
+    :param fields_changed: dict of user fields that have changed with their current value
+    :param action: action on the user
+    :param domain_required_for_log: set to False to allow domain less log for specific changes
+    :param bulk_upload_record_id: ID of bulk upload record if changed via bulk upload
+    """
+    from corehq.apps.users.models import UserHistory
+    from corehq.apps.users.model_log import UserModelAction
+
+    action = action or UserModelAction.UPDATE
+    fields_changed = fields_changed or {}
+
+    # domain is essential to filter changes done in a domain
+    if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
+        raise ValueError("missing 'domain' argument'")
+
+    # for an update, there should always be fields that have changed
+    if action == UserModelAction.UPDATE and not fields_changed and not message:
+        raise ValueError("missing both 'fields_changed' and 'message' argument for update.")
+
+    return UserHistory.objects.create(
+        domain=domain,
+        user_type=couch_user.doc_type,
+        user_id=couch_user.get_id,
+        changed_by=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
+        details={
+            'changes': _get_changed_details(couch_user, action, fields_changed),
+            'changed_via': changed_via,
+        },
+        message=message,
+        action=action.value,
+        user_upload_record_id=bulk_upload_record_id,
+    )
+
+
+def _get_changed_details(couch_user, action, fields_changed):
+    from corehq.apps.users.model_log import UserModelAction
+
+    if action in [UserModelAction.CREATE, UserModelAction.DELETE]:
+        changed_details = couch_user.to_json()
+    else:
+        changed_details = fields_changed.copy()
+
+    for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
+        changed_details.pop(prop, None)
+    return changed_details

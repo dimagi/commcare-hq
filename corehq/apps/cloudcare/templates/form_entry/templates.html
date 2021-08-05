@@ -52,7 +52,12 @@
       </div>
       <span class="ix"></span>
     </fieldset>
-    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
+      <div data-bind="if: showChildren()">
+        <fieldset>
+        <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
+          <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
+        </fieldset>
+      </div>
   </div>
 </script>
 
@@ -149,7 +154,7 @@
       </div>
       <div data-bind="visible: erroredQuestions().length > 0">
         {% if environment == "web-apps" %}
-          {% if True or request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
+          {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
             <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
                  style="position: fixed; width: 300px; bottom: 65px;"
                  data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
@@ -211,6 +216,9 @@
         <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+      <!-- ko if: required() -->
+      <span class="sr-only">{% trans "A response is required for this question." %}</span>
+      <!-- /ko -->
     </label>
     <div class="widget-container controls" data-bind="css: controlWidth">
       <div class="loading">
@@ -240,6 +248,7 @@
     <div class="eoq"></div>
   </div>
   <div class="form-group-required-label"
+       aria-hidden="true"
        data-bind="visible: $data.required, css: {
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
@@ -293,6 +302,9 @@
 </script>
 
 <script type="text/html" id="text-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="
+        text: helpText()
+    "></span>
   <textarea class="textfield form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
@@ -302,22 +314,26 @@
             'aria-required': $parent.required() ? 'true' : 'false',
         },
     "></textarea>
-  <span class="help-block type" data-bind="
+  <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText()
     "></span>
 </script>
 
 <script type="text/html" id="password-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="text: helpText()"></span>
   <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         id: entryId,
         attr: {'aria-required': $parent.required() ? 'true' : 'false'},
     "/>
-  <span class="help-block type" data-bind="text: helpText()"></span>
+  <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
 
 <script type="text/html" id="str-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="
+        text: helpText()
+    "></span>
   <input autocomplete="off" type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
@@ -328,7 +344,7 @@
             'aria-required': $parent.required() ? 'true' : 'false',
         }
     "/>
-  <span class="help-block type" data-bind="
+  <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText()
     "></span>
 </script>
@@ -391,30 +407,37 @@
   </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
-  <div class="sel clear">
-    <div data-bind="foreach: choices, as: 'choice'">
-      <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
-        <label>
-          <input data-bind="
-                      checked: $parent.rawAnswer,
-                      checkedValue: $index() + 1,
-                      attr: {
-                          id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                          type: $parent.isMulti ? 'checkbox' : 'radio',
-                          name: $parent.entryId,
-                          class: 'group-' + $parent.entryId,
-                      },
-                  "/>
-          <span data-bind="renderMarkdown: $data"></span>
-        </label>
+  <fieldset>
+  <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
+    <div class="sel clear">
+      <div data-bind="foreach: choices, as: 'choice'">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+          <label>
+            <input data-bind="
+                        checked: $parent.rawAnswer,
+                        checkedValue: $index() + 1,
+                        attr: {
+                            id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                            type: $parent.isMulti ? 'checkbox' : 'radio',
+                            name: $parent.entryId,
+                            class: 'group-' + $parent.entryId,
+                        },
+                    "/>
+            <span data-bind="renderMarkdown: $data"></span>
+          </label>
+        </div>
       </div>
+      <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
+        {% trans "Clear" %}
+      </button>
     </div>
-    <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
-      {% trans "Clear" %}
-    </button>
-  </div>
+  </fieldset>
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
   <select class="form-control" data-bind="
         foreach: options,
         value: rawAnswer,
@@ -426,12 +449,16 @@
         ">
     <option data-bind="value: id, text: text"></option>
   </select>
-  <span class="help-block type" data-bind="
+  <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText(),
         visible: helpText(),
     "></span>
 </script>
 <script type="text/html" id="multidropdown-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="
+        text: helpText(),
+        visible: helpText(),
+    "></span>
   <select multiple class="form-control" data-bind="
         foreach: options,
         selectedOptions: rawAnswer,
@@ -443,7 +470,7 @@
         ">
     <option data-bind="value: id, text: text"></option>
   </select>
-  <span class="help-block type" data-bind="
+  <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText(),
         visible: helpText(),
     "></span>
@@ -492,11 +519,12 @@
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
+  <span class="help-block sr-only">{% trans "24-hour clock" %}</span>
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
-  <span class="help-block">{% trans "24-hour clock" %}</span>
+  <span class="help-block" aria-hidden="true">{% trans "24-hour clock" %}</span>
 </script>
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">

@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy
 from corehq import toggles
 
 MODEL_FLAGS = 'toggles'
+MODEL_PREVIEWS = 'previews'
 MODEL_FIXTURE = 'fixture'
 MODEL_ROLES = 'roles'
 MODEL_LOCATION_DATA = 'custom_location_data'
@@ -26,10 +27,13 @@ INDIVIDUAL_DATA_MODELS = [
 
 DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_USER_DATA, ugettext_lazy('Custom User Data Fields')),
-    (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
-    (MODEL_FLAGS, ugettext_lazy('Feature Flags and Previews')),
+    (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
+]
+
+SUPERUSER_DATA_MODELS = [
+    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
 ]
 
 FEATURE_FLAG_DATA_MODELS = [
@@ -38,11 +42,13 @@ FEATURE_FLAG_DATA_MODELS = [
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
+    (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
 ]
 
-LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS
+ALL_LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \
+    SUPERUSER_DATA_MODELS
 
-LINKED_MODELS_MAP = dict(LINKED_MODELS)
+LINKED_MODELS_MAP = dict(ALL_LINKED_MODELS)
 
 FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
@@ -50,4 +56,5 @@ FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_DIALER_SETTINGS: toggles.WIDGET_DIALER,
     MODEL_OTP_SETTINGS: toggles.GAEN_OTP_SERVER,
     MODEL_HMAC_CALLOUT_SETTINGS: toggles.HMAC_CALLOUT,
+    MODEL_PRODUCT_DATA: toggles.COMMTRACK,
 }

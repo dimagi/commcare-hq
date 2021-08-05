@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-01 01:06+0000\n"
+"POT-Creation-Date: 2021-07-21 19:15+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -343,6 +343,12 @@ msgid "All properties must be below a tab."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:207
 msgid "There are errors in your configuration."
 msgstr ""
 
@@ -677,11 +683,12 @@ msgstr ""
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:162
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:164
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:165
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -1694,7 +1701,7 @@ msgid "Are you sure you want to perform this action?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/registration/static/registration/js/user_login_form.js:45
+#: corehq/apps/registration/static/registration/js/user_login_form.js:47
 msgid "Continue"
 msgstr ""
 
@@ -3375,8 +3382,17 @@ msgstr ""
 msgid "Error updating."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:84
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:87
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:149
+msgid "Report successfully linked."
+msgstr ""
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:90
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:95
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:106
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:128
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:153
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:158
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
@@ -4066,38 +4082,38 @@ msgstr ""
 msgid "View Only"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:33
-msgid "No users matched your search."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/web_users.js:35
-msgid "This project has no web users. Please invite a web user above."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/web_users.js:63
-msgid ""
-"Could not load users. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/web_users.js:97
+#: corehq/apps/users/static/users/js/web_users.js:41
 msgid "<%- days %> days remaining"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:120
+#: corehq/apps/users/static/users/js/web_users.js:64
 msgid "Unable to delete invitation, please try again later."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:140
+#: corehq/apps/users/static/users/js/web_users.js:84
 msgid "Unable to resend invitation, please try again later."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:254
+#: corehq/apps/users/static/users/js/web_users.js:198
 msgid "Delete request"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:255
+#: corehq/apps/users/static/users/js/web_users.js:199
 msgid "Are you sure you want to delete this request?"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users_list.js:41
+msgid "No users matched your search."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users_list.js:43
+msgid "This project has no web users."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users_list.js:74
+msgid ""
+"Could not load users. Please try again later or report an issue if this "
+"problem persists."
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:18

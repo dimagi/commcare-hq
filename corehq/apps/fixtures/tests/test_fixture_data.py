@@ -113,7 +113,7 @@ class FixtureDataTest(TestCase):
     def tearDown(self):
         self.data_type.delete()
         self.data_item.delete()
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.fixture_ownership.delete()
         delete_all_users()
         delete_all_fixture_data_types()
@@ -399,7 +399,7 @@ class TestFixtureOrdering(TestCase):
         for data_item in cls.data_items:
             data_item.delete()
         cls.data_type.delete()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):

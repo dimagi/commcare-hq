@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.models_sql import (
@@ -9,7 +11,7 @@ from corehq.apps.users.models_sql import (
 class Command(PopulateSQLCommand):
     @classmethod
     def couch_db_slug(cls):
-        return "users"
+        return settings.USERS_GROUPS_DB
 
     @classmethod
     def couch_doc_type(self):

@@ -31,6 +31,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
+    CASE_API_V0_6,
     CASE_LIST_EXPLORER,
     EXPLORE_CASE_DATA,
     ECD_MIGRATED_DOMAINS,
@@ -62,7 +63,8 @@ def domains_needing_search_index():
     return set(list(case_search_enabled_domains())
                + CASE_LIST_EXPLORER.get_enabled_domains()
                + EXPLORE_CASE_DATA.get_enabled_domains()
-               + ECD_MIGRATED_DOMAINS.get_enabled_domains())
+               + ECD_MIGRATED_DOMAINS.get_enabled_domains()
+               + CASE_API_V0_6.get_enabled_domains())
 
 
 def domain_needs_search_index(domain):
@@ -283,8 +285,6 @@ def delete_case_search_cases(domain):
         "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
     }
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        op_kwargs.pop('_type')
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         **op_kwargs,

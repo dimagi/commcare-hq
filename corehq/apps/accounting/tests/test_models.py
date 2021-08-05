@@ -169,6 +169,12 @@ class TestSubscription(BaseAccountingTest):
         )
         self.assertEqual(self.subscription.next_subscription, next_future_subscription)
 
+    def test_get_active_domains_for_account(self):
+        tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
+        test_domains = ['test']
+        domains = Subscription.get_active_domains_for_account(self.account)
+        self.assertEqual(list(domains), test_domains)
+
     def tearDown(self):
         self.domain.delete()
 
