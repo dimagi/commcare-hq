@@ -158,7 +158,7 @@ def _minify(config):
         filename = module['name'] + ".js"
         path = os.path.join(ROOT_DIR, 'staticfiles', filename)
         ret = call([
-            "node", "node_modules/uglify-js/bin/uglifyjs", path, "-c", "-m", "-o", path,
+            "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
             "--source-map", f"url={filename}.map"
         ])
         if ret:
