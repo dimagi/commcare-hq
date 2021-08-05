@@ -523,6 +523,20 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
+    @flag_enabled('EMBEDDED_TABLEAU')
+    def test_build_feature_flag_view_models_returns_tableau_server_and_visualizations(self):
+        expected_view_models = [
+            {
+                'type': 'tableau_server_and_visualizations',
+                'name': 'Tableau Server and Visualizations',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
 
 class TestBuildDomainLevelViewModels(SimpleTestCase):
 
