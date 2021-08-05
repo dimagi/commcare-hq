@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import connections
 from django.db.models import Q
 from django.template import Context, Template
 from django.template.loader import render_to_string
@@ -170,13 +171,33 @@ def cleanup_stale_es_on_couch_domains_task():
 def track_es_doc_counts():
     es = get_es_new()
     stats = es.indices.stats(level='shards', metric='docs')
-    for name, data in stats['indices'].keys():
-        for number, shard in data['shards'].keys():
+    for name, data in stats['indices'].items():
+        for number, shard in data['shards'].items():
             for i in shard:
-                if shard['routing']['primary']:
+                if i['routing']['primary']:
                     tags = {
                         'index': name,
                         'shard': f'{name}_{number}',
                     }
-                    metrics_gauge('elasticsearch.shards.docs.count', i['docs']['count'], tags)
-                    metrics_gauge('elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
+                    metrics_gauge('commcare.elasticsearch.shards.docs.count', i['docs']['count'], tags)
+                    metrics_gauge('commcare.elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="0"))
+def track_pg_limits():
+    for db in settings.DATABASES:
+        with connections[db].cursor() as cursor:
+            query = """
+            select tab.relname, seq.relname
+              from pg_class seq
+              join pg_depend as dep on seq.oid=dep.objid
+              join pg_class as tab on dep.refobjid = tab.oid
+              join pg_attribute as att on att.attrelid=tab.oid and att.attnum=dep.refobjsubid
+              where seq.relkind='S' and att.attlen=4
+            """
+            cursor.execute(query)
+            results = cursor.fetchall()
+            for table, sequence in results:
+                cursor.execute(f'select last_value from {sequence}')
+                current_value = cursor.fetchone()[0]
+                metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
