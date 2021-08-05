@@ -16,4 +16,4 @@ data_registry_deleted = Signal(providing_args=["registry"])
 
 @receiver(data_registry_invitation_created)
 def send_invitation_email_receiver(sender, **kwargs):
-    send_invitation_email(kwargs["receiver"], kwargs["invitation"])
+    send_invitation_email(kwargs["registry"], kwargs["invitation"])
