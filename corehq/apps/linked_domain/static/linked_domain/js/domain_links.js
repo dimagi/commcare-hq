@@ -230,6 +230,7 @@ hqDefine("linked_domain/js/domain_links", [
     };
 
     var PushContentViewModel = function (data) {
+        var self = {};
         self.parent = data.parent;
         self.domainsToPush = ko.observableArray();
         self.modelsToPush = ko.observableArray();
@@ -277,6 +278,7 @@ hqDefine("linked_domain/js/domain_links", [
     };
 
     var PullReleaseContentViewModel = function (data) {
+        var self = {};
         // Pull Content Tab
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;

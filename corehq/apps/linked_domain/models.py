@@ -54,10 +54,7 @@ class DomainLink(models.Model):
     @property
     def downstream_url(self):
         if self.is_remote:
-            return '{}{}'.format(
-                self.remote_base_url,
-                reverse('domain_homepage', args=[self.linked_domain])
-            )
+            return self.linked_domain
         else:
             return reverse('domain_links', args=[self.linked_domain])
 

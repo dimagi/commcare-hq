@@ -52,7 +52,7 @@
                       </h4>
                       <p>
                         {% blocktrans %}
-                          This will pull <!-- ko text: name --><!-- /ko --> from the upstream project space <b data-bind="text: domainLink.master_domain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/>
+                          This will pull <!-- ko text: name --><!-- /ko --> from the upstream project space <b data-bind="text: $parent.domainLink.master_domain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/>
                           <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content from an upstream project space into a downstream project space.
                         {% endblocktrans %}
                       </p>
