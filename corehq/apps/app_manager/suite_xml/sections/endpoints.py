@@ -1,6 +1,5 @@
 from typing import List
 
-from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -45,6 +44,16 @@ class SessionEndpointContributor(SuiteContributorByModule):
             endpoint_id = module.session_endpoint_id
 
         stack = Stack()
+        arguments = []
+        children = self._get_frame_children(module, form)
+        for child in children:
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
+                frame = PushFrame()
+                stack.add_frame(frame)
+                frame.add_datum(
+                    StackDatum(id=child.id, value=f"${child.id}")
+                )
+                frame.add_command(f"'claim_command.{endpoint_id}.{child.id}'")
         frame = PushFrame()
         stack.add_frame(frame)
         arguments = []

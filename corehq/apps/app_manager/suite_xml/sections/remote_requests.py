@@ -6,6 +6,9 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     get_all_instances_referenced_in_xpaths,
 )
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    WorkflowDatumMeta,
+)
 from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailsHelper,
     get_instances_for_module,
@@ -28,7 +31,12 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Hint,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
+from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
+    CaseTypeXpath,
+    InstanceXpath,
+    interpolate_xpath,
+)
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -45,12 +53,21 @@ class QuerySessionXPath(InstanceXpath):
         return 'session/data/{}'.format(self)
 
 
-class RemoteRequestFactory(object):
-    def __init__(self, domain, app, module, detail_section_elements):
+class RemoteRequestFactory(object):     # TODO: subclass an EndpointRemoteRequestFactory?
+    def __init__(self, domain, app, module, detail_section_elements, suite=None, endpoint_id=None, child_id=None):
         self.domain = domain
         self.app = app
         self.module = module
         self.detail_section_elements = detail_section_elements
+        self.suite = suite
+        self.endpoint_id = endpoint_id
+        self.child_id = child_id    # TODO: name something other than child_id
+
+    @property
+    def case_session_var(self):
+        if self.child_id:
+            return self.child_id
+        return self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -67,31 +84,40 @@ class RemoteRequestFactory(object):
             "data": [
                 QueryData(
                     key='case_id',
-                    ref=QuerySessionXPath(self.module.search_config.case_session_var).instance(),
+                    ref=QuerySessionXPath(self.case_session_var).instance(),
                 ),
             ],
         }
-        relevant = self.module.search_config.get_relevant()
+        if self.endpoint_id:
+            relevant = CaseClaimXpath(self.case_session_var).default_relevant()
+        else:
+            relevant = self.module.search_config.get_relevant()
         if relevant:
             kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
+        if self.endpoint_id:
+            id = f"claim_command.{self.endpoint_id}.{self.child_id}"
+        else:
+            id = id_strings.search_command(self.module)
         return Command(
-            id=id_strings.search_command(self.module),
-            display=Display(
+            id=id,
+            display=Display(    # TODO: endpoitns don't need a display
                 text=Text(locale_id=id_strings.case_search_locale(self.module)),
             ),
         )
 
     def _build_instances(self):
+        # TODO: endpoints don't need these
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath(self.module.search_config.case_session_var).instance()]
+        # TODO: do endpoint instances need these?
+        query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
         query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
         query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
@@ -110,6 +136,8 @@ class RemoteRequestFactory(object):
         )
 
     def _build_remote_request_queries(self):
+        if self.endpoint_id:
+            return []
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
@@ -122,6 +150,12 @@ class RemoteRequestFactory(object):
         ]
 
     def _build_remote_request_datums(self):
+        if self.endpoint_id:
+            return [SessionDatum(
+                id=self.child_id,
+                function=f"instance('commcaresession')/session/data/{self.child_id}",
+            )]
+
         details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
@@ -140,7 +174,7 @@ class RemoteRequestFactory(object):
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
 
         return [SessionDatum(
-            id=self.module.search_config.case_session_var,
+            id=self.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
             detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
@@ -215,9 +249,11 @@ class RemoteRequestFactory(object):
         return prompts
 
     def _build_stack(self):
+        if self.endpoint_id:
+            return Stack()
         stack = Stack()
         frame = PushFrame()
-        frame.add_rewind(QuerySessionXPath(self.module.search_config.case_session_var).instance())
+        frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
 
@@ -238,7 +274,38 @@ class RemoteRequestContributor(SuiteContributorByModule):
 
     @time_method()
     def get_module_contributions(self, module, detail_section_elements):
+        elements = []
         if module_offers_search(module):
-            return [RemoteRequestFactory(
-                self.app.domain, self.app, module, detail_section_elements).build_remote_request()]
-        return []
+            elements.append(RemoteRequestFactory(
+                self.app.domain, self.app, module, detail_section_elements, self.suite).build_remote_request()
+            )
+        if module.session_endpoint_id:
+            elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id, detail_section_elements))
+        for form in module.get_forms():
+            if form.session_endpoint_id:
+                elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id, detail_section_elements))
+        return elements
+
+    def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
+        elements = []
+        children = _get_frame_children(self.suite, self.app, module, form=form)
+        for child in children:
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
+                elements.append(RemoteRequestFactory(
+                    self.app.domain, self.app, module, detail_section_elements, self.suite,
+                    endpoint_id=endpoint_id, child_id=child.id).build_remote_request(),
+                )
+        return elements
+
+
+# TODO: this is a copy-paste
+def _get_frame_children(suite, app, module, form):
+    from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+        prepend_parent_frame_children,
+        WorkflowHelper,
+    )
+    helper = WorkflowHelper(suite, app, [module])
+    frame_children = helper.get_frame_children(module, form)
+    if module.root_module_id:
+        frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
+    return frame_children

@@ -1,3 +1,5 @@
+from mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -60,12 +62,19 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def test_followup_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
         self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
                     <argument id="case_id"/>
                     <stack>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
                         <push>
                             <command value="'m0'"/>
                             <datum id="case_id" value="$case_id"/>
@@ -75,8 +84,36 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+        self.assertXmlPartialEqual(
+            # TODO: DRY up and/or extract these remote-request snippets?
+            """
+            <partial>
+                <remote-request>
+                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                    </post>
+                    <command id="claim_command.my_form.case_id">
+                        <display>
+                            <text>
+                                <locale id="case_search.m0"/>
+                            </text>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+            </partial>
+            """,
+            suite,
+            "./remote-request",
         )
 
     def test_child_module_form_session_endpoint_id(self):
@@ -86,6 +123,10 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -93,6 +134,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
+                        <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
@@ -104,8 +153,55 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <remote-request>
+                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) = 0">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
+                    </post>
+                    <command id="claim_command.my_form.parent_id">
+                        <display>
+                            <text>
+                                <locale id="case_search.m1"/>
+                            </text>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum id="parent_id" function="instance('commcaresession')/session/data/parent_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+                <remote-request>
+                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                    </post>
+                    <command id="claim_command.my_form.case_id">
+                        <display>
+                            <text>
+                                <locale id="case_search.m1"/>
+                            </text>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+            </partial>
+            """,
+            suite,
+            "./remote-request",
         )
 
     def test_multiple_session_endpoints(self):
@@ -116,6 +212,10 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -132,6 +232,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="case_id"/>
                     <stack>
                         <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_child_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_child_form.case_id'"/>
+                        </push>
+                        <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
                             <datum id="parent_id" value="$parent_id"/>
@@ -142,8 +250,55 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <remote-request>
+                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) = 0">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
+                    </post>
+                    <command id="claim_command.my_child_form.parent_id">
+                        <display>
+                            <text>
+                                <locale id="case_search.m1"/>
+                            </text>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum id="parent_id" function="instance('commcaresession')/session/data/parent_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+                <remote-request>
+                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                    </post>
+                    <command id="claim_command.my_child_form.case_id">
+                        <display>
+                            <text>
+                                <locale id="case_search.m1"/>
+                            </text>
+                        </display>
+                    </command>
+                    <instance id="casedb" src="jr://instance/casedb"/>
+                    <instance id="commcaresession" src="jr://instance/session"/>
+                    <session>
+                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
+                    </session>
+                    <stack/>
+                </remote-request>
+            </partial>
+            """,
+            suite,
+            "./remote-request",
         )
 
     def test_module_session_endpoint_id(self):
