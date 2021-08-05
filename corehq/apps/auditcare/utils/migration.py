@@ -13,7 +13,6 @@ CUTOFF_TIME = datetime(2013, 1, 1)
 CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
 
 logger = logging.getLogger(__name__)
-logger.setLevel('INFO')
 
 
 class AuditCareMigrationUtil():

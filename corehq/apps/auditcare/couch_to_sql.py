@@ -20,7 +20,6 @@ from corehq.apps.auditcare.utils.migration import (
 from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger(__name__)
-logger.setLevel('INFO')
 
 ACCESS_LOOKUP = {
     "login": ACCESS_LOGIN,
