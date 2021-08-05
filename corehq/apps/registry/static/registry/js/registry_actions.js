@@ -7,6 +7,14 @@ hqDefine("registry/js/registry_actions", [
     initialPageData,
     alertUser
 ) {
+    const handleError = function(response) {
+        let error = gettext("An unknown error occurred. Please try again or report an issue.");
+        if (response.responseJSON && response.responseJSON.error) {
+            error = response.responseJSON.error;
+        }
+        alertUser.alert_user(error, 'danger');
+    };
+
     let accept = function(registrySlug, onSuccess) {
         return acceptOrReject(
             initialPageData.reverse('accept_registry_invitation'),
@@ -33,9 +41,7 @@ hqDefine("registry/js/registry_actions", [
                 onSuccess(data);
                 alertUser.alert_user(message, 'success');
             },
-            error: function (response) {
-                alertUser.alert_user(response.responseJSON.error, 'danger');
-            },
+            error: handleError,
         });
     }
 
@@ -50,9 +56,7 @@ hqDefine("registry/js/registry_actions", [
                     alertUser.alert_user(data.message, 'success');
                 }
             },
-            error: function (response) {
-                alertUser.alert_user(response.responseJSON.error, 'danger');
-            },
+            error: handleError,
         });
     }
 
@@ -77,13 +81,7 @@ hqDefine("registry/js/registry_actions", [
                     alertUser.alert_user(data.message, 'success');
                 }
             },
-            error: function (response) {
-                let error = gettext("An unknown error occurred. Please try again or report an issue.");
-                if (response.responseJSON.error) {
-                    error = response.responseJSON.error;
-                }
-                alertUser.alert_user(error, 'danger');
-            },
+            error: handleError,
         });
     }
 

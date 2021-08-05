@@ -98,7 +98,7 @@ hqDefine("registry/js/registry_edit", [
             self.savingActiveState(true);
             actions.editAttr(self.slug, "is_active", {"value": !self.is_active()}, (data) => {
                 self.is_active(data.is_active);
-            }).done(() => {
+            }).always(() => {
                 self.savingActiveState(false);
             });
         }
@@ -110,7 +110,7 @@ hqDefine("registry/js/registry_edit", [
                 self.invitations(self.invitations().filter((invite) => {
                     return invite.id !== toRemove.id;
                 }));
-            }).done(() => {
+            }).always(() => {
                 self.modalSaving(false);
                 $(".modal").modal('hide');
             });
