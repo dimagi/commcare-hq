@@ -1,125 +1,149 @@
+from enum import Enum
 from django.utils.translation import ugettext as _
 
 
+class Change(Enum):
+    SET = 'set'
+    RESET = 'reset'
+    REMOVE = 'remove'
+    ADD = 'add'
+
+
 class UserChangeMessageV1(object):
+    """
+    Each change message to follow the structure
+    {
+        "field": {
+            "change": change_details
+        }
+    }
+    field: could be domain, phone_numbers etc
+    change: either 'set' / 'reset' / 'remove' / 'add'
+    change_details: a Boolean or
+                    a dict with details as needed for the change
+                    a list of a dicts as needed for the change
+    """
     @staticmethod
     def program_change(program):
         if program:
-            change_message = {"program": {"id": program.get_id, "name": program.name}}
+            change_message = {"program": {Change.SET: {"id": program.get_id, "name": program.name}}}
         else:
-            change_message = {"program": {"id": None}}
+            change_message = {"program": {Change.SET: {}}}
         return change_message
 
     @staticmethod
     def role_change(user_role):
         if user_role:
-            change_message = {'role': {'id': user_role.get_qualified_id(), 'name': user_role.name}}
+            change_message = {"role": {Change.SET: {"id": user_role.get_qualified_id(), "name": user_role.name}}}
         else:
-            change_message = {'role': {'id': None}}
+            change_message = {"role": {Change.SET: {}}}
         return change_message
 
     @staticmethod
     def domain_removal(domain):
-        return {"domain": {"removed": domain}}
+        return {"domain": {Change.REMOVE: {"name": domain}}}
 
     @staticmethod
     def registered_devices_reset():
-        return {"devices": {"reset": True}}
+        return {"devices": {Change.RESET: True}}
 
     @staticmethod
     def two_factor_disabled_for_days(days):
-        return {"two_factor": {"disabled": True, "days": days}}
+        return {"two_factor": {Change.REMOVE: {"days": days}}}
 
     @staticmethod
     def two_factor_disabled_with_verification(verified_by, verification_mode):
         return {
             "two_factor": {
-                "disabled": True,
-                "verified_by": verified_by,
-                "verification_mode": verification_mode
+                Change.REMOVE: {
+                    "verified_by": verified_by,
+                    "verification_mode": verification_mode
+                }
             }
         }
 
     @staticmethod
     def password_reset():
-        return {"password": {"reset": True}}
+        return {"password": {Change.RESET: True}}
 
     @staticmethod
     def status_update(active, reason):
         return {
             "status": {
-                "active": active,
-                "reason": reason
+                Change.SET: {
+                    "active": active,
+                    "reason": reason
+                }
             }
         }
 
     @staticmethod
     def phone_numbers_added(phone_numbers):
         return {
-            "phone_numbers": {"added": phone_numbers}
+            "phone_numbers": {Change.ADD: phone_numbers}
         }
 
     @staticmethod
     def phone_numbers_removed(phone_numbers):
         return {
-            "phone_numbers": {"removed": phone_numbers}
+            "phone_numbers": {Change.REMOVE: phone_numbers}
         }
 
     @staticmethod
     def profile_info(profile_id, profile_name=None):
         if profile_id:
-            change_message = {"profile": {"id": profile_id, "name": profile_name}}
+            change_message = {"profile": {Change.SET: {"id": profile_id, "name": profile_name}}}
         else:
-            change_message = {"profile": {"id": None}}
+            change_message = {"profile": {Change.SET: {}}}
         return change_message
 
     @staticmethod
     def primary_location_removed():
-        return {"location": {"id": None}}
+        return {"location": {Change.SET: {}}}
 
     @staticmethod
     def primary_location_info(location):
         if location:
-            change_message = {"location": {"id": location.location_id, "name": location.name}}
+            change_message = {"location": {Change.SET: {"id": location.location_id, "name": location.name}}}
         else:
-            change_message = {"location": {"id": None}}
+            change_message = {"location": {Change.SET: {}}}
         return change_message
 
     @staticmethod
     def assigned_locations_info(locations):
         if locations:
             change_message = {
-                "assigned_locations": [
+                "assigned_locations": {Change.SET: [
                     {'id': location.location_id, 'name': location.name}
                     for location in locations
-                ]
+                ]}
             }
         else:
-            change_message = {"assigned_locations": []}
+            change_message = {"assigned_locations": {Change.SET: []}}
         return change_message
 
     @staticmethod
     def groups_info(groups):
         if groups:
-            change_message = {'groups': [
+            change_message = {"groups": {Change.SET: [
                 {'id': group.get_id, 'name': group.name}
                 for group in groups
-            ]}
+            ]}}
         else:
-            change_message = {'groups': []}
+            change_message = {"groups": {Change.SET: []}}
         return change_message
 
     @staticmethod
     def added_as_web_user(domain):
-        return {"domain": {"added": domain, "web_user": True}}
+        return {"domain": {Change.ADD: {"name": domain, "web_user": True}}}
 
     @staticmethod
     def invited_to_domain(domain):
-        return {"domain_invitation": {"added": [domain]}}
+        return {"domain_invitation": {Change.ADD: {'domain': domain}}}
 
     @staticmethod
     def invitation_revoked_for_domain(domain):
-        return {"domain_invitation": {"revoked": [domain]}}
+        return {"domain_invitation": {Change.REMOVE: {'domain': domain}}}
 
 
 class UserChangeMessageFormatterV1(object):
@@ -143,148 +167,163 @@ class UserChangeMessageFormatterV1(object):
     @staticmethod
     def _program_messages(change_message):
         messages = []
-        if change_message["id"]:
-            messages.append(_("Program: {program_name}[{program_id}]").format(
-                program_name=change_message['name'],
-                program_id=change_message['id']
-            ))
-        else:
-            messages.append(_('Program: None'))
+        if Change.SET in change_message:
+            new_program = change_message[Change.SET]
+            if new_program:
+                messages.append(_("Program: {program_name}[{program_id}]").format(
+                    program_name=new_program['name'],
+                    program_id=new_program['id']
+                ))
+            else:
+                messages.append(_("Program: None"))
         return messages
 
     @staticmethod
     def _role_messages(change_message):
         messages = []
-        if change_message["id"]:
-            messages.append(_("Role: {role_name}[{role_id}]").format(
-                role_name=change_message['name'],
-                role_id=change_message['id']
-            ))
-        else:
-            messages.append(_('Role: None'))
+        if Change.SET in change_message:
+            new_role = change_message[Change.SET]
+            if new_role:
+                messages.append(_("Role: {role_name}[{role_id}]").format(
+                    role_name=new_role['name'],
+                    role_id=new_role['id']
+                ))
+            else:
+                messages.append(_("Role: None"))
         return messages
 
     @staticmethod
     def _domain_messages(change_message):
         messages = []
-        if change_message.get("removed"):
+        if Change.REMOVE in change_message:
             messages.append(_("Removed from domain '{domain}'").format(
-                domain=change_message.get("removed")
+                domain=change_message[Change.REMOVE]["name"]
             ))
-        elif change_message.get("added") and change_message.get("web_user"):
-            messages.append(_("Added as web user to domain '{domain}'").format(
-                domain=change_message.get("added")
-            ))
+        elif Change.ADD in change_message:
+            change = change_message[Change.ADD]
+            if change.get('web_user'):
+                messages.append(_("Added as web user to domain '{domain}'").format(
+                    domain=change_message['name']
+                ))
         return messages
 
     @staticmethod
     def _devices_messages(change_message):
         messages = []
-        if change_message.get("reset"):
+        if change_message.get(Change.RESET):
             messages.append(_("Registered devices reset"))
         return messages
 
     @staticmethod
     def _two_factor_messages(change_message):
         messages = []
-        if change_message.get('disabled'):
-            if change_message.get('days'):
+        if Change.REMOVE in change_message:
+            change = change_message[Change.REMOVE]
+            if change.get('days'):
                 messages.append(_("Disabled for {days} days").format(
-                    days=change_message.get('days')
+                    days=change['days']
                 ))
-            elif change_message.get('verified_by'):
+            elif change.get('verified_by'):
                 messages.append(
                     _('Two factor disabled. '
                       'Verified by: {verified_by}, verification mode: "{verification_mode}"'
-                      ).format(verified_by=change_message['verified_by'],
-                               verification_mode=change_message['verification_mode'])
+                      ).format(verified_by=change['verified_by'],
+                               verification_mode=change['verification_mode'])
                 )
         return messages
 
     @staticmethod
     def _password_messages(change_message):
         messages = []
-        if change_message.get("reset"):
+        if change_message.get(Change.RESET):
             messages.append(_("Password reset"))
         return messages
 
     @staticmethod
     def _status_messages(change_message):
         messages = []
-        if change_message['active']:
-            messages.append(
-                _('User re-enabled. Reason: "{reason}"').format(
-                    reason=change_message['reason']
+        if Change.SET in change_message:
+            change = change_message[Change.SET]
+            if change['active']:
+                messages.append(
+                    _('User re-enabled. Reason: "{reason}"').format(
+                        reason=change['reason']
+                    )
                 )
-            )
-        else:
-            messages.append(
-                _('User disabled. Reason: "{reason}"').format(
-                    reason=change_message['reason']
+            else:
+                messages.append(
+                    _('User disabled. Reason: "{reason}"').format(
+                        reason=change['reason']
+                    )
                 )
-            )
         return messages
 
     @staticmethod
     def _phone_numbers_messages(change_message):
         messages = []
-        if change_message.get("added"):
+        if Change.ADD in change_message:
             messages.append(_(
                 "Added phone number(s) {phone_numbers}"
-            ).format(phone_numbers=", ".join(change_message.get("added"))))
-        elif change_message.get("removed"):
+            ).format(phone_numbers=", ".join(change_message[Change.ADD])))
+        if Change.REMOVE in change_message:
             messages.append(_(
                 "Removed phone number(s) {phone_numbers}"
-            ).format(phone_numbers=", ".join(change_message.get("removed"))))
+            ).format(phone_numbers=", ".join(change_message[Change.REMOVE])))
         return messages
 
     @staticmethod
     def _profile_messages(change_message):
         messages = []
-        if change_message["id"]:
-            messages.append(_("Profile: {profile_name}[{profile_id}]").format(
-                profile_name=change_message['name'],
-                profile_id=change_message['id']
-            ))
-        else:
-            messages.append(_('Profile: None'))
+        if Change.SET in change_message:
+            new_profile = change_message[Change.SET]
+            if new_profile:
+                messages.append(_("Profile: {profile_name}[{profile_id}]").format(
+                    profile_name=new_profile['name'],
+                    profile_id=new_profile['id']
+                ))
+            else:
+                messages.append(_("Profile: None"))
         return messages
 
     @staticmethod
     def _location_messages(change_message):
         messages = []
-        if change_message["id"]:
-            messages.append(_("Primary location: {location_name}[{location_id}]").format(
-                location_name=change_message['name'],
-                location_id=change_message['id']
-            ))
-        else:
-            messages.append(_('Primary location: None'))
+        if Change.SET in change_message:
+            new_location = change_message[Change.SET]
+            if new_location:
+                messages.append(_("Primary location: {location_name}[{location_id}]").format(
+                    location_name=new_location['name'],
+                    location_id=new_location['id']
+                ))
+            else:
+                messages.append(_("Primary location: None"))
         return messages
 
     @staticmethod
     def _assigned_locations_messages(change_message):
         messages = []
-        locations_info = [f"{info['name']}[{info['id']}]" for info in change_message]
-        messages.append(_("Assigned locations: {locations_info}").format(locations_info=locations_info))
+        if Change.SET in change_message:
+            locations_info = [f"{info['name']}[{info['id']}]" for info in change_message[Change.SET]]
+            messages.append(_("Assigned locations: {locations_info}").format(locations_info=locations_info))
         return messages
 
     @staticmethod
     def _groups_messages(change_message):
         messages = []
-        groups_info = [f"{info['name']}[{info['id']}]" for info in change_message]
-        messages.append(_("Groups: {groups_info}").format(groups_info=groups_info))
+        if Change.SET in change_message:
+            groups_info = [f"{info['name']}[{info['id']}]" for info in change_message[Change.SET]]
+            messages.append(_("Groups: {groups_info}").format(groups_info=groups_info))
         return messages
 
     @staticmethod
     def _domain_invitation_messages(change_message):
         messages = []
-        if change_message.get("added"):
+        if change_message.get(Change.ADD):
             messages.append(_("Invited to domain '{domain}'").format(
-                domain=change_message.get("added")
+                domain=change_message[Change.ADD]["domain"]
             ))
-        elif change_message.get("revoked"):
+        if change_message.get(Change.REMOVE):
             messages.append(_("Invitation revoked for domain '{domain}'").format(
-                domain=change_message.get("revoked")
+                domain=change_message[Change.REMOVE]["domain"]
             ))
         return messages
