@@ -85,6 +85,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hint: '',
             appearance: '',
             isMultiselect: false,
+            allowBlankValue: false,
             defaultValue: '',
             hidden: false,
             receiverExpression: '',
@@ -97,6 +98,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hint = ko.observable(options.hint);
         self.appearance = ko.observable(options.appearance);
         self.isMultiselect = ko.observable(options.isMultiselect);
+        self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.appearanceFinal = ko.computed(function () {
@@ -148,8 +150,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
         self.itemset = itemsetModel(options.itemsetOptions, saveButton);
 
-        subscribeToSave(self,
-            ['name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden', 'receiverExpression', 'isMultiselect'], saveButton);
+        subscribeToSave(self, [
+            'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+        ], saveButton);
         return self;
     };
 
@@ -258,6 +262,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
+                // searchProperties is a list of CaseSearchProperty objects
                 // property labels/hints come in keyed by lang.
                 var label = searchProperties[i].label[lang];
                 var hint = searchProperties[i].hint[lang] || "";
@@ -284,6 +289,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     hint: hint,
                     appearance: appearance,
                     isMultiselect: isMultiselect,
+                    allowBlankValue: searchProperties[i].allow_blank_value,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -321,6 +327,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         hint: p.hint(),
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
+                        allow_blank_value: p.allowBlankValue(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
