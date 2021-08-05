@@ -31,6 +31,37 @@ ACCESS_LOOKUP = {
 COUCH_QUERY_LIMIT = 1000
 
 
+def copy_events_to_sql(start_time, end_time):
+    util = AuditCareMigrationUtil()
+    logger.info(f"Starting batch: {start_time} - {end_time}")
+    key = get_migration_key(start_time, end_time)
+    end_key = get_couch_key(end_time)
+    start_key = get_couch_key(start_time)
+    next_start_key = start_key
+    util.log_batch_start(key)
+    break_query = False
+    count = util.get_existing_count(key)
+    try:
+        while not break_query:
+            events_info = get_events_from_couch(next_start_key, end_key)
+            next_start_key = events_info['next_start_key']
+            NavigationEventAudit.objects.bulk_create(events_info['navigation_events'], ignore_conflicts=True)
+            AccessAudit.objects.bulk_create(events_info['audit_events'], ignore_conflicts=True)
+            count += events_info['count']
+            break_query = events_info['break_query']
+    except Exception as e:
+        message = f"""Error in copy_events_to_sql in key {key}
+            Next start key is {next_start_key}
+            {e}"""
+        util.set_batch_as_errored(key)
+        notify_exception(None, message=message)
+        _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
+        _soft_assert(False, message)
+        return
+    logger.info(f"Batch finished: {start_time} - {end_time}")
+    util.set_batch_as_finished(key, count)
+
+
 def get_couch_key(time):
     if not time:
         return
@@ -39,45 +70,6 @@ def get_couch_key(time):
 
 def get_migration_key(start_time, end_time):
     return get_formatted_datetime_string(start_time) + '_' + get_formatted_datetime_string(end_time)
-
-
-@retry_on_couch_error
-def _get_couch_docs(start_key, end_key):
-    db = get_db("auditcare")
-    result = db.view(
-        "auditcare/all_events",
-        startkey=start_key,
-        endkey=end_key,
-        reduce=False,
-        include_docs=True,
-        descending=True,
-        limit=COUCH_QUERY_LIMIT
-    )
-    return list(result)
-
-
-def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids):
-    existing_access_events = set(AccessAudit.objects.filter(
-        couch_id__in=access_couch_ids
-    ).values_list('couch_id', flat=True))
-    existing_nav_events = set(NavigationEventAudit.objects.filter(
-        couch_id__in=nav_couch_ids
-    ).values_list('couch_id', flat=True))
-
-    final_nav_events = ([
-        nav_obj for nav_obj in nav_objs
-        if nav_obj.couch_id not in existing_nav_events
-    ])
-
-    final_access_events = ([
-        access_obj for access_obj in access_objs
-        if access_obj.couch_id not in existing_access_events
-    ])
-    return {
-        "navigation_events": final_nav_events,
-        "audit_events": final_access_events,
-        "count": len(final_nav_events) + len(final_access_events)
-    }
 
 
 def get_events_from_couch(start_key, end_key):
@@ -134,35 +126,43 @@ def get_events_from_couch(start_key, end_key):
     return res_obj
 
 
-def copy_events_to_sql(start_time, end_time):
-    util = AuditCareMigrationUtil()
-    logger.info(f"Starting batch: {start_time} - {end_time}")
-    key = get_migration_key(start_time, end_time)
-    end_key = get_couch_key(end_time)
-    start_key = get_couch_key(start_time)
-    next_start_key = start_key
-    util.log_batch_start(key)
-    break_query = False
-    count = util.get_existing_count(key)
-    try:
-        while not break_query:
-            events_info = get_events_from_couch(next_start_key, end_key)
-            next_start_key = events_info['next_start_key']
-            NavigationEventAudit.objects.bulk_create(events_info['navigation_events'], ignore_conflicts=True)
-            AccessAudit.objects.bulk_create(events_info['audit_events'], ignore_conflicts=True)
-            count += events_info['count']
-            break_query = events_info['break_query']
-    except Exception as e:
-        message = f"""Error in copy_events_to_sql in key {key}
-            Next start key is {next_start_key}
-            {e}"""
-        util.set_batch_as_errored(key)
-        notify_exception(None, message=message)
-        _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
-        _soft_assert(False, message)
-        return
-    logger.info(f"Batch finished: {start_time} - {end_time}")
-    util.set_batch_as_finished(key, count)
+@retry_on_couch_error
+def _get_couch_docs(start_key, end_key):
+    db = get_db("auditcare")
+    result = db.view(
+        "auditcare/all_events",
+        startkey=start_key,
+        endkey=end_key,
+        reduce=False,
+        include_docs=True,
+        descending=True,
+        limit=COUCH_QUERY_LIMIT
+    )
+    return list(result)
+
+
+def get_unsaved_events(nav_objs, access_objs, nav_couch_ids, access_couch_ids):
+    existing_access_events = set(AccessAudit.objects.filter(
+        couch_id__in=access_couch_ids
+    ).values_list('couch_id', flat=True))
+    existing_nav_events = set(NavigationEventAudit.objects.filter(
+        couch_id__in=nav_couch_ids
+    ).values_list('couch_id', flat=True))
+
+    final_nav_events = ([
+        nav_obj for nav_obj in nav_objs
+        if nav_obj.couch_id not in existing_nav_events
+    ])
+
+    final_access_events = ([
+        access_obj for access_obj in access_objs
+        if access_obj.couch_id not in existing_access_events
+    ])
+    return {
+        "navigation_events": final_nav_events,
+        "audit_events": final_access_events,
+        "count": len(final_nav_events) + len(final_access_events)
+    }
 
 
 def _pick(doc, keys):
