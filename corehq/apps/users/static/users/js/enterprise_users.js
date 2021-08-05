@@ -31,12 +31,12 @@ hqDefine("users/js/enterprise_users", [
         // Only relevant for web users
         self.expanded = ko.observable(false);
 
+
         return self;
     };
 
     var enterpriseUsersList = function (options) {
         var self = webUsersList(options);
-
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
@@ -45,6 +45,8 @@ hqDefine("users/js/enterprise_users", [
                 }
             });
         };
+
+        self.showDeactivated = ko.observable(false);
 
         return self;
     };
