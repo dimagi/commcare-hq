@@ -34,7 +34,7 @@ from corehq.apps.hqmedia.models import (
     CommCareMultimedia,
 )
 from corehq.apps.linked_domain.applications import get_downstream_app_id
-from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import (
@@ -436,7 +436,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.domain_link.linked_domain = 'other'
         self.domain_link.save()
-        get_upstream_domain_link.clear('domain-2')
+        get_domain_master_link.clear('domain-2')
 
         def _revert():
             self.domain_link.linked_domain = 'domain-2'

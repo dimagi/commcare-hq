@@ -1,6 +1,5 @@
 from django import forms
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -19,31 +18,20 @@ from corehq import toggles
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
-from ..accounting.utils import domain_has_privilege
-from ..hqwebapp.widgets import BootstrapCheckboxInput
-from ...privileges import RELEASE_MANAGEMENT
 
 
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=ugettext_lazy("Copy this app to project"),
         widget=forms.Select(choices=[], attrs={
-            "data-bind": "autocompleteSelect2: domainNames, event:{ change: domainChanged }",
+            "data-bind": "autocompleteSelect2: domain_names",
         }))
     name = forms.CharField(required=True, label=ugettext_lazy('Name'))
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
-        widget=BootstrapCheckboxInput(
-            inline_label=mark_safe(_(
-                "<!-- ko ifnot: shouldEnableLinkedAppOption -->"
-                "The selected project space must first be linked to the current project space."
-                "<!-- /ko -->"
-            )),  # nosec: no user input
-            attrs={"data-bind": "enable: shouldEnableLinkedAppOption, checked: isChecked"},
-        ),
         help_text=_("This will create an application that can be updated from changes to this application."
-                    " This requires your app to have at least one released version."),
+                    " This requires your app to have at least one released version.")
     )
     build_id = forms.CharField(
         required=False,
@@ -60,9 +48,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if (toggles.LINKED_DOMAINS.enabled(self.from_domain)
-            or domain_has_privilege(self.from_domain, RELEASE_MANAGEMENT)) \
-                and not is_linked_app(app):
+        if toggles.LINKED_DOMAINS.enabled(self.from_domain) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()

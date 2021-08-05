@@ -22,7 +22,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_KEYWORD,
     MODEL_REPORT,
 )
-from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
@@ -211,7 +211,7 @@ The following linked project spaces received content:
 def release_domain(master_domain, linked_domain, username, models, build_apps=False):
     manager = ReleaseManager(master_domain, username)
 
-    domain_link = get_upstream_domain_link(linked_domain)
+    domain_link = get_domain_master_link(linked_domain)
     if not domain_link or domain_link.master_domain != master_domain:
         manager.add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
                                            "was released to it.").format(master_domain, linked_domain))

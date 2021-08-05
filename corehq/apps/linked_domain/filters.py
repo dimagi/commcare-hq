@@ -7,7 +7,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 class DomainLinkFilter(BaseSingleOptionFilter):
     slug = 'domain_link'
-    label = ugettext_lazy('Project Space Link')
+    label = ugettext_lazy('Project Link')
     default_text = None
 
     @property
@@ -21,7 +21,7 @@ class DomainLinkFilter(BaseSingleOptionFilter):
 
 class DomainLinkModelFilter(BaseSingleOptionFilter):
     slug = 'domain_link_model'
-    label = ugettext_lazy('Content')
+    label = ugettext_lazy('Data Model')
     default_text = ugettext_lazy("All")
 
     @property
