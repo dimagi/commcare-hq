@@ -148,7 +148,7 @@ def _r_js(local=False):
 
     ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
-        exit(1)
+        raise CommandError("Failed to build JS bundles")
 
     return config, local_js_dirs
 
