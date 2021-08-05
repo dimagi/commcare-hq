@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -13,7 +14,8 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
-from corehq.apps.accounting.models import Invoice, Subscription
+from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
+#from corehq.apps.accounting.forms import BillingAccountBasicForm
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
@@ -1624,6 +1626,10 @@ class EnterpriseSettingsTab(UITab):
                 })
 
         items.append((_('Manage Enterprise'), enterprise_views))
+
+        if BillingAccount._is_sms_billable_report_visible(self.domain):
+            items.extend(EnterpriseReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
 
         return items
 
