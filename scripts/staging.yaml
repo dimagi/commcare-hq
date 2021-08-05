@@ -77,9 +77,7 @@ branches:
     - jls/delay-web-apps-form-errors # Jenny July 27
     - cs/SC-1530-location-hierarchy-links  # Charl July 28
     - sk/data-registry-view  # Simon July 29
-    - rc/show-hierarchy # Robert July 29
     - jm/remove-es-scan  # Joel August 3
-    - es/blank-case-search  # Ethan August 3
     - labelValidation # Shubham August 4
     - sk/uglify3 # Simon August 5
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
