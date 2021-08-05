@@ -1,4 +1,5 @@
 import logging
+import re
 
 from couchdbkit.ext.django.loading import get_db
 
@@ -93,7 +94,15 @@ def get_events_from_couch(start_key, end_key):
         if doc["doc_type"] == "NavigationEventAudit":
             nav_couch_ids.append(doc['_id'])
             kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
-            path, _, params = doc.get("request_path", "").partition("?")
+            # Postgres does not play well with control characters in strings
+            # Some crafted URLs can contain these charachters, so replacing them with '' in request_path
+            # https://stackoverflow.com/a/14946355/3537212
+            request_path = re.sub(
+                r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]',
+                '',
+                doc.get("request_path", "")
+            )
+            path, _, params = request_path.partition("?")
             kwargs.update({
                 "path": path,
                 "params": params,
