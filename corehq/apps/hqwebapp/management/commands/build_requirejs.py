@@ -44,7 +44,7 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
-        no_optimize = options['no_optimize']
+        optimize = not options['no_optimize']
 
         if local:
             _confirm_or_exit()
@@ -56,7 +56,7 @@ class Command(ResourceStaticCommand):
             raise ResourceVersionsNotFoundException()
 
         config, local_js_dirs = _r_js(local=local)
-        if not no_optimize:
+        if optimize:
             _minify(config)
 
         if local:
@@ -78,7 +78,7 @@ class Command(ResourceStaticCommand):
             # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
 
-            if not no_optimize:
+            if optimize:
                 # Overwrite source map reference. Source maps are accessed on the CDN,
                 # so they need to have the version hash appended.
                 with open(filename, 'r') as fin:
