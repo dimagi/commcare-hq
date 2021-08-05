@@ -71,7 +71,7 @@ class DataRegistryCrudHelper:
         invitation, created = self.registry.invitations.get_or_create(domain=domain)
         if created:
             self.registry.logger.invitation_added(self.user, invitation)
-            data_registry_invitation_created.send(sender=DataRegistry, registry=self.registry, initation=invitation)
+            data_registry_invitation_created.send(sender=DataRegistry, registry=self.registry, invitation=invitation)
         return invitation, created
 
     @transaction.atomic
@@ -86,7 +86,7 @@ class DataRegistryCrudHelper:
 
         invitation.delete()
         self.registry.logger.invitation_removed(self.user, invitation_id, invitation)
-        data_registry_invitation_removed.send(sender=DataRegistry, registry=self.registry, initation=invitation)
+        data_registry_invitation_removed.send(sender=DataRegistry, registry=self.registry, invitation=invitation)
 
     @transaction.atomic
     def get_or_create_grant(self, from_domain, to_domains):
