@@ -106,9 +106,11 @@ def _get_end_time(start_time, batch_by):
 
 
 class MissingStartTimeError(Exception):
-    def __str__(self):
-        return """The migration process has already been started before
-                But we are unable to determine start key.
-                You can manually set the start key using
-                start_key = "2021-06-02_2021-06-01"
-                AuditCareMigraionUtil.set_next_batch_start(start_key)"""
+    message = """The migration process has already been started before
+        But we are unable to determine start key.
+        You can manually set the start key using
+        start_key = "2021-06-02_2021-06-01"
+        AuditCareMigraionUtil.set_next_batch_start(start_key)"""
+
+    def __init__(self, message=message):
+        super().__init__(message)
