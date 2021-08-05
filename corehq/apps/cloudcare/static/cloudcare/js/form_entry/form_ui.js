@@ -634,12 +634,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
                 currentNode = parent;
             }
-            var el;
-            if (self.datatype() === "info") {
-                el = $("span[for='" + self.entry.entryId + "']");
-            } else {
-                el = $("label[for='" + self.entry.entryId + "']");
-            }
+            var el = $("[for='" + self.entry.entryId + "']");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
