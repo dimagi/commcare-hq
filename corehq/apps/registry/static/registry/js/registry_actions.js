@@ -7,7 +7,7 @@ hqDefine("registry/js/registry_actions", [
     initialPageData,
     alertUser
 ) {
-    const handleError = function(response) {
+    const handleError = function (response) {
         let error = gettext("An unknown error occurred. Please try again or report an issue.");
         if (response.responseJSON && response.responseJSON.error) {
             error = response.responseJSON.error;
@@ -15,7 +15,7 @@ hqDefine("registry/js/registry_actions", [
         alertUser.alert_user(error, 'danger');
     };
 
-    let accept = function(registrySlug, onSuccess) {
+    let accept = function (registrySlug, onSuccess) {
         return acceptOrReject(
             initialPageData.reverse('accept_registry_invitation'),
             registrySlug,
@@ -24,7 +24,7 @@ hqDefine("registry/js/registry_actions", [
         )
     }
 
-    let reject = function(registrySlug, onSuccess) {
+    let reject = function (registrySlug, onSuccess) {
         return acceptOrReject(
             initialPageData.reverse('reject_registry_invitation'),
             registrySlug,
@@ -33,19 +33,19 @@ hqDefine("registry/js/registry_actions", [
         )
     }
 
-    let acceptOrReject = function(url, registrySlug, successMessage, onSuccess) {
+    let acceptOrReject = function (url, registrySlug, successMessage, onSuccess) {
         return $.post({
             url: url,
             data: {registry_slug: registrySlug},
             success: function (data) {
                 onSuccess(data);
-                alertUser.alert_user(message, 'success');
+                alertUser.alert_user(successMessage, 'success');
             },
             error: handleError,
         });
     }
 
-    let manageRelatedModels = function(url, registrySlug, data, onSuccess) {
+    let manageRelatedModels = function (url, registrySlug, data, onSuccess) {
         return $.post({
             url: initialPageData.reverse(url, registrySlug),
             data: data,
@@ -70,7 +70,7 @@ hqDefine("registry/js/registry_actions", [
         return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
-    let editAttr = function(registrySlug, attr, data, onSuccess) {
+    let editAttr = function (registrySlug, attr, data, onSuccess) {
         return $.post({
             url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
             data: data,
