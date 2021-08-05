@@ -211,6 +211,8 @@ class RemoteRequestFactory(object):
                     value_ref=prop.itemset.value,
                     sort_ref=prop.itemset.sort,
                 )
+            if prop.allow_blank_value:
+                kwargs['allow_blank_value'] = prop.allow_blank_value
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
