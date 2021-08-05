@@ -71,7 +71,7 @@ class DataRegistryCrudHelper:
         invitation, created = self.registry.invitations.get_or_create(domain=domain)
         if created:
             self.registry.logger.invitation_added(self.user, invitation)
-            data_registry_invitation_created(sender=DataRegistry, registry=self.registry, initation=invitation)
+            data_registry_invitation_created.send(sender=DataRegistry, registry=self.registry, initation=invitation)
         return invitation, created
 
     @transaction.atomic
