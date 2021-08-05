@@ -11,10 +11,12 @@ from subprocess import call
 from django.conf import settings
 
 import yaml
+from django.core.management import CommandError
 
 from corehq.apps.hqwebapp.exceptions import ResourceVersionsNotFoundException
 from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
@@ -53,7 +55,9 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
+        config, local_js_dirs = _r_js(local=local)
+        if not no_optimize:
+            _minify(config)
 
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
@@ -117,16 +121,13 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, no_optimize=False):
+def _r_js(local=False):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
         config = yaml.safe_load(f)
-
-    if no_optimize:
-        config['optimize'] = 'none'
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
@@ -149,6 +150,18 @@ def _r_js(local=False, no_optimize=False):
         exit(1)
 
     return config, local_js_dirs
+
+
+def _minify(config):
+    for module in with_progress_bar(config['modules'], prefix="Minifying", oneline=False):
+        filename = module['name'] + ".js"
+        path = os.path.join(ROOT_DIR, 'staticfiles', filename)
+        ret = call([
+            "node", "node_modules/uglify-js/bin/uglifyjs", path, "-c", "-m", "-o", path,
+            "--source-map", f"url={filename}.map"
+        ])
+        if ret:
+            raise CommandError(f"Failed to minify {filename}")
 
 
 def _get_html_files_and_local_js_dirs(local):
