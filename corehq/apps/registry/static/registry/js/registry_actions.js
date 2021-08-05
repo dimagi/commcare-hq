@@ -11,6 +11,7 @@ hqDefine("registry/js/registry_actions", [
         return acceptOrReject(
             initialPageData.reverse('accept_registry_invitation'),
             registrySlug,
+            gettext("Opt in successful"),
             onSuccess
         )
     }
@@ -19,17 +20,18 @@ hqDefine("registry/js/registry_actions", [
         return acceptOrReject(
             initialPageData.reverse('reject_registry_invitation'),
             registrySlug,
+            gettext("Opt out successful"),
             onSuccess
         )
     }
 
-    let acceptOrReject = function(url, registrySlug, onSuccess) {
+    let acceptOrReject = function(url, registrySlug, successMessage, onSuccess) {
         return $.post({
             url: url,
             data: {registry_slug: registrySlug},
             success: function (data) {
                 onSuccess(data);
-                alertUser.alert_user(gettext("Invitation accepted"), 'success');
+                alertUser.alert_user(message, 'success');
             },
             error: function (response) {
                 alertUser.alert_user(response.responseJSON.error, 'danger');
