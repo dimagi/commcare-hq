@@ -83,4 +83,5 @@ branches:
     - jm/remove-es-scan  # Joel August 3
     - es/blank-case-search  # Ethan August 3
     - labelValidation # Shubham August 4
+    - sk/uglify3 # Simon August 5
 submodules: { }
