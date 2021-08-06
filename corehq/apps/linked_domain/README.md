@@ -87,15 +87,17 @@ that the remote domain is allowed to sync from this domain.
 
 Run `link_to_upstream_domain` management command on downsream HQ.
 ```
-./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} --upstream_domain {upstream_domain_name} --username {username} --api_key {user_api_key} --downstream_domain {downstream_domain_name}
+$ ./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} --upstream_domain {upstream_domain_name} --username {username} --api_key {user_api_key} --downstream_domain {downstream_domain_name}
 ```
 The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling changes from master
 
 On downstream HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
 
-Linked apps can be setup between linked domains by running `link_app_to_remote` command on linked domain.
-
+To link apps, create an app in the upstream domain, and another app in the downstream domain. These app ids can then be used when running the `link_app_to_remote` command:
+```
+$ ./manage.py link_app_to_remote --master-id {upstream_app_id} --linked_id {downstream_app_id} --url_base {base url} --domain {upstream_domain_name} --username {username} --api_key {api_key}
+```
 # Linked Applications
 
 Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created. A linked/downstream app is tied to one or more master/upstream apps via the `upstream_app_id` and `upstream_version` attributes. 
