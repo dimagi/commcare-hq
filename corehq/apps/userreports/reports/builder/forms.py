@@ -285,13 +285,6 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     A data source could be an (app, form), (app, case_type) pair (see ApplicationDataSourceHelper),
     or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
-
-    @property
-    @abstractmethod
-    def source_id(self):
-        """Case type or Form ID. Only applies to managed data sources."""
-        pass
-
     @property
     @abstractmethod
     def uses_managed_data_source(self):
@@ -349,6 +342,15 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     def report_column_options(self):
         pass
 
+
+class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
+    @property
+    @abstractmethod
+    def source_id(self):
+        """Case type or Form ID. Only applies to managed data sources."""
+        pass
+
+    @abstractmethod
     def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
         """Override if `uses_managed_data_source` is False
 
@@ -360,14 +362,17 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def get_datasource_constructor_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
         """Override if `uses_managed_data_source` is False"""
         raise NotImplementedError
 
+    @abstractmethod
     def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
         """Override if `uses_managed_data_source` is False"""
         raise NotImplementedError
 
+    @abstractmethod
     def all_possible_indicators(self, required_columns, required_filters):
         """
         Override if `uses_managed_data_source` is False
@@ -376,7 +381,6 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         provided columns and filters
         """
         raise NotImplementedError
-
 
 
 class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
@@ -428,7 +432,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
         return options
 
 
-class ApplicationDataSourceHelper(ReportBuilderDataSourceInterface):
+class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     """
     A ReportBuilderDataSourceInterface that encapsulates an (app, form) or (app, case_type) pair.
     It also provides convenience methods for creating the underlying UCR data source associated
