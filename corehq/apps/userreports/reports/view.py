@@ -577,23 +577,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return result
 
     @classmethod
-    def report_preview_data(cls, domain, temp_report):
-        with tmp_report_config(temp_report) as report_config:
-            try:
-                export = ReportExport(domain, report_config.title, report_config, "en", {})
-                return {
-                    "table": cls.sanitize_export_table(export.get_table_data()),
-                    "map_config": report_config.map_config,
-                    "chart_configs": report_config.charts,
-                    "aaData": cls.sanitize_page(export.get_data()),
-                }
-            except UserReportsError:
-                # User posted an invalid report configuration
-                return None
-            except DataSourceConfigurationNotFoundError:
-                # A temporary data source has probably expired
-                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-                return None
+    def report_preview_data(cls, domain, report_config):
+        try:
+            export = ReportExport(domain, report_config.title, report_config, "en", {})
+            return {
+                "table": cls.sanitize_export_table(export.get_table_data()),
+                "map_config": report_config.map_config,
+                "chart_configs": report_config.charts,
+                "aaData": cls.sanitize_page(export.get_data()),
+            }
+        except UserReportsError:
+            # User posted an invalid report configuration
+            return None
+        except DataSourceConfigurationNotFoundError:
+            # A temporary data source has probably expired
+            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+            return None
 
 
 # Base class for classes that provide custom rendering for UCRs

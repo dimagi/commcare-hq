@@ -199,7 +199,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                 "report_column_col_id_percent": "150%"
             }]
         }
-        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_paginated_build_table(self):
