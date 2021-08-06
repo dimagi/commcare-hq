@@ -45,7 +45,8 @@ class SessionEndpointContributor(SuiteContributorByModule):
 
         stack = Stack()
         arguments = []
-        children = self._get_frame_children(module, form)
+        helper = EndpointsHelper(self.suite, self.app)
+        children = helper.get_frame_children(module, form)
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 frame = PushFrame()
@@ -57,7 +58,7 @@ class SessionEndpointContributor(SuiteContributorByModule):
         frame = PushFrame()
         stack.add_frame(frame)
         arguments = []
-        for child in self._get_frame_children(module, form):
+        for child in helper.get_frame_children(module, form):
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
@@ -72,8 +73,14 @@ class SessionEndpointContributor(SuiteContributorByModule):
             stack=stack,
         )
 
-    def _get_frame_children(self, module, form):
-        helper = WorkflowHelper(self.suite, self.app, self.modules)
+
+class EndpointsHelper(object):
+    def __init__(self, suite, app):
+        self.suite = suite
+        self.app = app
+
+    def get_frame_children(self, module, form):
+        helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())
         frame_children = helper.get_frame_children(module, form)
         if module.root_module_id:
             frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)

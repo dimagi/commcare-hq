@@ -13,6 +13,9 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailsHelper,
     get_instances_for_module,
 )
+from corehq.apps.app_manager.suite_xml.sections.endpoints import (
+    EndpointsHelper,
+)
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
@@ -302,24 +305,12 @@ class RemoteRequestContributor(SuiteContributorByModule):
         return elements
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
+        helper = EndpointsHelper(self.suite, self.app)
+        children = helper.get_frame_children(module, form)
         elements = []
-        children = _get_frame_children(self.suite, self.app, module, form=form)
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 elements.append(SessionEndpointRemoteRequestFactory(
                     module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
                 )
         return elements
-
-
-# TODO: this is a copy-paste
-def _get_frame_children(suite, app, module, form):
-    from corehq.apps.app_manager.suite_xml.post_process.workflow import (
-        prepend_parent_frame_children,
-        WorkflowHelper,
-    )
-    helper = WorkflowHelper(suite, app, [module])
-    frame_children = helper.get_frame_children(module, form)
-    if module.root_module_id:
-        frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
-    return frame_children
