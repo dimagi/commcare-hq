@@ -86,7 +86,10 @@ that the remote domain is allowed to sync from this domain.
 ### On 'linked domain'
 
 Run `link_to_upstream_domain` management command on downsream HQ.
-
+```
+./manage.py link_to_upstream_domain --url_base {base_url_for_upstream_domain} --upstream_domain {upstream_domain_name} --username {username} --api_key {user_api_key} --downstream_domain {downstream_domain_name}
+```
+The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling changes from master
 
 On downstream HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
