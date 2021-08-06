@@ -1569,13 +1569,23 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
+        return self._build_report_columns(
+            ui_aggregation_override=UI_AGG_GROUP_BY, is_aggregated_on_override=False
+        )
+
+    def _build_report_columns(self, ui_aggregation_override=None, is_aggregated_on_override=None):
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
+            ui_aggregation = conf['calculation'] if ui_aggregation_override is None else ui_aggregation_override
+            is_aggregated_on = is_aggregated_on_override
+            if is_aggregated_on_override is None:
+                is_aggregated_on = conf.get('calculation') == UI_AGG_GROUP_BY
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
                     index=i,
                     display_text=conf.get('display_text', conf['property']),
-                    ui_aggregation=UI_AGG_GROUP_BY
+                    ui_aggregation=ui_aggregation,
+                    is_aggregated_on=is_aggregated_on,
                 )
             )
         return columns
@@ -1632,17 +1642,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        columns = []
-        for i, conf in enumerate(self.cleaned_data['columns']):
-            column = self.ds_builder.report_column_options[conf['property']]
-            columns.extend(
-                column.to_column_dicts(
-                    index=i,
-                    display_text=conf['display_text'],
-                    ui_aggregation=conf['calculation'],
-                    is_aggregated_on=conf.get('calculation') == UI_AGG_GROUP_BY,
-                ))
-        return columns
+        return self._build_report_columns()
 
     @property
     @memoized
