@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, namedtuple
 
 from django import forms
@@ -286,7 +286,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def uses_managed_data_source(self):
         """
         Whether this interface uses a managed data source.
@@ -300,7 +301,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def data_source_properties(self):
         """
         A dictionary containing the various properties that may be used as indicators
@@ -336,7 +338,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def report_column_options(self):
         pass
 
