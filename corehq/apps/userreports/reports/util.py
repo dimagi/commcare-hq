@@ -60,15 +60,17 @@ class ReportExport(object):
         """
         return export_from_tables(self.get_table(), file_path, format_)
 
+    @property
+    def header_rows(self):
+        return [[
+            column.header
+            for column in self.data_source.inner_columns if column.data_tables_column.visible
+        ]]
+
     @memoized
     def get_table(self):
         """Generate a table of all rows of this report
         """
-        headers = [
-            column.header
-            for column in self.data_source.inner_columns if column.data_tables_column.visible
-        ]
-
         column_id_to_expanded_column_ids = get_expanded_columns(
             self.data_source.top_level_columns,
             self.data_source.config
@@ -84,7 +86,7 @@ class ReportExport(object):
         export_table = [
             [
                 self.title,
-                [headers] + rows + total_rows
+                self.header_rows + rows + total_rows
             ]
         ]
 
