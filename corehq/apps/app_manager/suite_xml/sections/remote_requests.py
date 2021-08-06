@@ -54,14 +54,11 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, domain, app, module, detail_section_elements, suite=None, endpoint_id=None, child_id=None):
-        self.domain = domain
-        self.app = app
+    def __init__(self, module, detail_section_elements):
+        self.app = module.get_app()
+        self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        self.suite = suite
-        self.endpoint_id = endpoint_id
-        self.child_id = child_id    # TODO: name something other than child_id
 
     @property
     def case_session_var(self):
@@ -243,6 +240,11 @@ class RemoteRequestFactory(object):
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
+    def __init__(self, module, detail_section_elements, endpoint_id, child_id):
+        super().__init__(module, detail_section_elements)
+        self.endpoint_id = endpoint_id
+        self.child_id = child_id    # TODO: name something other than child_id
+
     @property
     def case_session_var(self):
         return self.child_id
@@ -288,13 +290,15 @@ class RemoteRequestContributor(SuiteContributorByModule):
         elements = []
         if module_offers_search(module):
             elements.append(RemoteRequestFactory(
-                self.app.domain, self.app, module, detail_section_elements, self.suite).build_remote_request()
+                module, detail_section_elements).build_remote_request()
             )
         if module.session_endpoint_id:
-            elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id, detail_section_elements))
+            elements.extend(self.get_endpoint_contributions(module, None, module.session_endpoint_id,
+                                                            detail_section_elements))
         for form in module.get_forms():
             if form.session_endpoint_id:
-                elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id, detail_section_elements))
+                elements.extend(self.get_endpoint_contributions(module, form, form.session_endpoint_id,
+                                                                detail_section_elements))
         return elements
 
     def get_endpoint_contributions(self, module, form, endpoint_id, detail_section_elements):
@@ -303,8 +307,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 elements.append(SessionEndpointRemoteRequestFactory(
-                    self.app.domain, self.app, module, detail_section_elements, self.suite,
-                    endpoint_id=endpoint_id, child_id=child.id).build_remote_request(),
+                    module, detail_section_elements, endpoint_id, child.id).build_remote_request(),
                 )
         return elements
 
