@@ -5,16 +5,14 @@
      <data key="case_id" ref="instance('commcaresession')/session/data/{datum_id}"/>
    </post>
    <command id="claim_command.{endpoint_id}.{datum_id}">
-   <display>
-    <text>
-      <locale id="case_search.m{module_id}"/>
-    </text>
-   </display>
+     <display>
+       <text/>
+     </display>
    </command>
    <instance id="casedb" src="jr://instance/casedb"/>
    <instance id="commcaresession" src="jr://instance/session"/>
    <session>
-   <datum id="{datum_id}" function="instance('commcaresession')/session/data/{datum_id}"/>
+     <datum id="{datum_id}" function="instance('commcaresession')/session/data/{datum_id}"/>
    </session>
    <stack/>
   </remote-request>

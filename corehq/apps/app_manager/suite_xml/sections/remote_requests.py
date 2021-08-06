@@ -97,13 +97,9 @@ class RemoteRequestFactory(object):
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
-        if self.endpoint_id:
-            id = f"claim_command.{self.endpoint_id}.{self.child_id}"
-        else:
-            id = id_strings.search_command(self.module)
         return Command(
-            id=id,
-            display=Display(    # TODO: endpoitns don't need a display
+            id=id_strings.search_command(self.module),
+            display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(self.module)),
             ),
         )
@@ -249,6 +245,12 @@ class RemoteRequestFactory(object):
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
+    def _build_command(self):
+        return Command(
+            id=f"claim_command.{self.endpoint_id}.{self.child_id}",
+            display=Display(text=Text()),   # users never see this, but a Display and Text are required
+        )
+
     def _build_remote_request_queries(self):
         return []
 

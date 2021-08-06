@@ -92,7 +92,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
                 datum_id="case_id",
                 endpoint_id="my_form",
-                module_id=0,
             ),
             suite,
             "./remote-request",
@@ -143,7 +142,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
                 datum_id="parent_id",
                 endpoint_id="my_form",
-                module_id=1,
             ),
             suite,
             "./remote-request[1]",
@@ -152,7 +150,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
                 datum_id="case_id",
                 endpoint_id="my_form",
-                module_id=1,
             ),
             suite,
             "./remote-request[2]",
@@ -212,7 +209,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
                 datum_id="parent_id",
                 endpoint_id="my_child_form",
-                module_id=1,
             ),
             suite,
             "./remote-request[1]",
@@ -221,7 +217,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
                 datum_id="case_id",
                 endpoint_id="my_child_form",
-                module_id=1,
             ),
             suite,
             ".remote-request[2]",
