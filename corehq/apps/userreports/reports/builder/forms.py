@@ -355,7 +355,7 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         pass
 
     @abstractmethod
-    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
+    def indicators(self, columns, filters, as_dict=False):
         """Override if `uses_managed_data_source` is False
 
         Return a list of indicators to be used in a data source configuration that supports the given columns and
@@ -481,7 +481,7 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         raise NotImplementedError
 
-    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
+    def indicators(self, columns, filters, as_dict=False):
         """
         Return a list of indicators to be used in a data source configuration that supports the given columns and
         indicators.
@@ -495,7 +495,7 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
             # Property is only set if the column exists in report_column_options
             if column['property']:
                 column_option = self.report_column_options[column['property']]
-                for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
+                for indicator in column_option.get_indicators(column['calculation']):
                     # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
                     # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
                     # will use a second indicator for the field's numerical value. "column_id" includes the
@@ -584,11 +584,7 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
 
     def get_datasource_constructor_kwargs(self, columns, filters,
                                           is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(
-            columns,
-            filters,
-            is_multiselect_chart_report
-        )
+        indicators = self.indicators(columns, filters)
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
@@ -1082,7 +1078,6 @@ class ConfigureNewReportBase(forms.Form):
                 indicators = self.ds_builder.indicators(
                     self._configured_columns,
                     self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
-                    self._is_multiselect_chart_report,
                 )
                 if data_source.configured_indicators != indicators:
                     for property_name, value in self._get_data_source_configuration_kwargs().items():
