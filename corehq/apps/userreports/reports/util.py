@@ -67,6 +67,10 @@ class ReportExport(object):
             for column in self.data_source.inner_columns if column.data_tables_column.visible
         ]]
 
+    @memoized
+    def get_data(self):
+        return list(self.data_source.get_data())
+
     @property
     @memoized
     def total_rows(self):
@@ -84,7 +88,7 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data()]
 
     def get_table_data(self):
         return self.header_rows + self.data_rows + self.total_rows
