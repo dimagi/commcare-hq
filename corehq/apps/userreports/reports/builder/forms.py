@@ -288,6 +288,12 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
 
     @property
     @abstractmethod
+    def source_id(self):
+        """Case type or Form ID. Only applies to managed data sources."""
+        pass
+
+    @property
+    @abstractmethod
     def uses_managed_data_source(self):
         """
         Whether this interface uses a managed data source.
@@ -342,6 +348,35 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     @abstractmethod
     def report_column_options(self):
         pass
+
+    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
+        """Override if `uses_managed_data_source` is False
+
+        Return a list of indicators to be used in a data source configuration that supports the given columns and
+        indicators.
+        :param columns: A list of objects representing columns in the report.
+            Each object has a "property" and "calculation" key
+        :param filters: A list of filter configuration objects
+        """
+        raise NotImplementedError
+
+    def get_ds_config_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
+        """Override if `uses_managed_data_source` is False"""
+        raise NotImplementedError
+
+    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
+        """Override if `uses_managed_data_source` is False"""
+        raise NotImplementedError
+
+    def all_possible_indicators(self, required_columns, required_filters):
+        """
+        Override if `uses_managed_data_source` is False
+
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
+        raise NotImplementedError
+
 
 
 class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
@@ -413,9 +448,9 @@ class ApplicationDataSourceHelper(ReportBuilderDataSourceInterface):
         self.app = app
         self.source_type = source_type
         # source_id is a case type of form id
-        self.source_id = source_id
+        self._source_id = source_id
         self.data_source_meta = get_app_data_source_meta(self.domain, self.app.id,
-                                                         self.source_type, self.source_id)
+                                                         self.source_type, source_id)
         if self.source_type == 'form':
             self.source_form = self.data_source_meta.source_form
             self.source_xform = self.data_source_meta.source_xform
@@ -425,6 +460,10 @@ class ApplicationDataSourceHelper(ReportBuilderDataSourceInterface):
                 include_parent_properties=True,
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+
+    @property
+    def source_id(self):
+        return self._source_id
 
     @property
     def uses_managed_data_source(self):
