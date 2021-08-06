@@ -65,8 +65,6 @@ class RemoteRequestFactory(object):
 
     @property
     def case_session_var(self):
-        if self.child_id:
-            return self.child_id
         return self.module.search_config.case_session_var
 
     def build_remote_request(self):
@@ -88,13 +86,13 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        if self.endpoint_id:
-            relevant = CaseClaimXpath(self.case_session_var).default_relevant()
-        else:
-            relevant = self.module.search_config.get_relevant()
+        relevant = self._get_post_relevant()
         if relevant:
             kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
+
+    def _get_post_relevant(self):
+        return self.module.search_config.get_relevant()
 
     def _build_command(self):
         return Command(
@@ -245,6 +243,13 @@ class RemoteRequestFactory(object):
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
+    @property
+    def case_session_var(self):
+        return self.child_id
+
+    def _get_post_relevant(self):
+        return CaseClaimXpath(self.case_session_var).default_relevant()
+
     def _build_command(self):
         return Command(
             id=f"claim_command.{self.endpoint_id}.{self.child_id}",
