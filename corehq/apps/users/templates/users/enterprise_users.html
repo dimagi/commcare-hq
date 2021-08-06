@@ -24,7 +24,7 @@
                               placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
         <div class="col-sm-6">
-            <button type="button" class="btn btn-default pull-right"
+            <button type="button" class="btn btn-default pull-right "
                     data-bind="visible: !showDeactivated(), click: function() { showDeactivated(true); }"
                     >
               {% trans 'Show Deactivated Mobile Workers' %}
@@ -71,7 +71,8 @@
               "></i>
               <i class="fa fa-link" data-bind="visible: loginAsUser" style="margin-left: 15px;"></i>
               <span data-bind="attr: {style: (loginAsUserCount || loginAsUser ? 'margin-left: 1px' : 'margin-left: 15px;')}, text: username"></span>
-              <span class="label label-success" data-bind="text: loginAsUserCount"></span>
+              <span class="label label-success" data-bind="text: loginAsUserCount, visible: loginAsUserCount > 0, "></span>
+              <span class="label label-success" data-bind="text: inactiveMobileCount, visible: inactiveMobileCount > 0,"></span>
             </td>
             <td data-bind="text: name">
             </td>

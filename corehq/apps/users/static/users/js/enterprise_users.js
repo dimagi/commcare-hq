@@ -23,6 +23,7 @@ hqDefine("users/js/enterprise_users", [
             profile: null,
             loginAsUser: null,
             loginAsUserCount: 0,
+            inactiveMobileCount: 0,
         });
 
         // Only varies for mobile users
@@ -40,13 +41,27 @@ hqDefine("users/js/enterprise_users", [
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
-                if (user.loginAsUser === webUser.username) {
+                if (user.loginAsUser === webUser.username && user.is_active) {
                     user.visible(webUser.expanded());
                 }
             });
         };
 
         self.showDeactivated = ko.observable(false);
+
+        self.showDeactivated.subscribe(function () {
+            self.showDeactivated();
+        });
+
+        self.showHideDeactivated = function (webUser) {
+            self.showDeactivated(!webUser.expanded());
+            _.each(self.users(), function (user) {
+                if (user.loginAsUser === webUser.username && !user.is_active) {
+                    console.log(user);
+                    user.visible(self.showDeactivated());
+                }
+            });
+        }
 
         return self;
     };
