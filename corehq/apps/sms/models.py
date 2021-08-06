@@ -188,6 +188,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     STATUS_QUEUED = "queued"
     STATUS_RECEIVED = "received"
     STATUS_FORWARDED = "forwarded"
+    STATUS_DELIVERED = "delivered"  # the specific gateway need to tell us this
     STATUS_UNKNOWN = "unknown"
 
     STATUS_DISPLAY = {
@@ -296,6 +297,10 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
     def is_status_pending(self):
         return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
+
+    def add_custom_metadata(self, metadata):
+        self.custom_metadata.update(metadata)
+        self.save()
 
 
 class SMS(SMSBase):
