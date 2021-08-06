@@ -59,10 +59,7 @@ class RemoteRequestFactory(object):
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-
-    @property
-    def case_session_var(self):
-        return self.module.search_config.case_session_var
+        self.case_session_var = self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -240,21 +237,17 @@ class RemoteRequestFactory(object):
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
-    def __init__(self, module, detail_section_elements, endpoint_id, child_id):
+    def __init__(self, module, detail_section_elements, endpoint_id, case_session_var):
         super().__init__(module, detail_section_elements)
         self.endpoint_id = endpoint_id
-        self.child_id = child_id    # TODO: name something other than child_id
-
-    @property
-    def case_session_var(self):
-        return self.child_id
+        self.case_session_var = case_session_var
 
     def get_post_relevant(self):
         return CaseClaimXpath(self.case_session_var).default_relevant()
 
     def build_command(self):
         return Command(
-            id=f"claim_command.{self.endpoint_id}.{self.child_id}",
+            id=f"claim_command.{self.endpoint_id}.{self.case_session_var}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
 
@@ -263,8 +256,8 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
 
     def build_remote_request_datums(self):
         return [SessionDatum(
-            id=self.child_id,
-            function=f"instance('commcaresession')/session/data/{self.child_id}",
+            id=self.case_session_var,
+            function=f"instance('commcaresession')/session/data/{self.case_session_var}",
         )]
 
     def build_stack(self):
