@@ -49,17 +49,14 @@ def process_incoming_message(*args, **kwargs):
 
 
 @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
-def process_message_status(**kwargs):
-    message_id = kwargs.pop('message_id', '')
-    if message_id:
-        sms = SMS.objects.filter(couch_id=message_id)
-        message_status = kwargs.pop('status')
+def process_message_status(message_id, status, **kwargs):
+    sms = SMS.objects.get(couch_id=message_id)
 
-        handle_message_status_update(
-            message=sms,
-            status=message_status,
-            **kwargs
-        )
+    handle_message_status_update(
+        message=sms,
+        status=status,
+        **kwargs
+    )
 
 
 def handle_message_status_update(message: SMS, status: str, **kwargs):

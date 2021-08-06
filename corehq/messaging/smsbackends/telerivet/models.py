@@ -78,11 +78,10 @@ class SQLTelerivetBackend(SQLSMSBackend):
         }
 
         if msg.custom_metadata.get('case_id', False):
-            status_callback_url = '{url}?cc_message_id={cc_message_id}'.format(
-                url=reverse('telerivet_message_status'),
-                cc_message_id=msg.couch_id
-            )
-            payload.update({'status_url': status_callback_url})
+            payload.update({
+                'status_url': reverse('telerivet_message_status'),
+                'vars': {'message_id': msg.couch_id}
+            })
 
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
 
