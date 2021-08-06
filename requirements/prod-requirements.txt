@@ -35,7 +35,7 @@ https://github.com/dimagi/celery/raw/4e4ad229423db5568186c94fdbfaa00f0d5b76c9/re
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2020.6.20
+certifi==2021.5.30
     # via
     #   -r prod-requirements.in
     #   requests
