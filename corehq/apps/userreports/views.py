@@ -123,7 +123,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView, tmp_report_config
+from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -736,7 +736,7 @@ class ReportPreview(BaseDomainView):
         if bound_form.is_valid():
             try:
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-                with tmp_report_config(temp_report) as report_config:
+                with delete_report_config(temp_report) as report_config:
                     response_data = ConfigurableReportView.report_preview_data(self.domain, report_config)
                 if response_data:
                     return json_response(response_data)
