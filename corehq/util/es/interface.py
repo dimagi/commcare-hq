@@ -113,7 +113,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return results
 
     def scan(self, index_alias, query, doc_type):
-        return scan(self.es, query=query, index=index_alias, doc_type=doc_type, search_type='scan')
+        return scan(self.es, query=query, index=index_alias, doc_type=doc_type,
+                    preserve_order=True)
 
     @staticmethod
     def _fix_hit(hit):
