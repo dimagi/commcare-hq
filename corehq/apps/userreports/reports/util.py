@@ -86,6 +86,9 @@ class ReportExport(object):
 
         return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
 
+    def get_table_data(self):
+        return self.header_rows + self.data_rows + self.total_rows
+
     @memoized
     def get_table(self):
         """Generate a table of all rows of this report
@@ -93,7 +96,7 @@ class ReportExport(object):
         export_table = [
             [
                 self.title,
-                self.header_rows + self.data_rows + self.total_rows
+                self.get_table_data()
             ]
         ]
 
