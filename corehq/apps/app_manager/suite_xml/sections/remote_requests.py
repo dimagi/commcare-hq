@@ -66,14 +66,14 @@ class RemoteRequestFactory(object):
 
     def build_remote_request(self):
         return RemoteRequest(
-            post=self._build_remote_request_post(),
-            command=self._build_command(),
-            instances=self._build_instances(),
-            session=self._build_session(),
-            stack=self._build_stack(),
+            post=self.build_remote_request_post(),
+            command=self.build_command(),
+            instances=self.build_instances(),
+            session=self.build_session(),
+            stack=self.build_stack(),
         )
 
-    def _build_remote_request_post(self):
+    def build_remote_request_post(self):
         kwargs = {
             "url": absolute_reverse('claim_case', args=[self.domain]),
             "data": [
@@ -83,15 +83,15 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self._get_post_relevant()
+        relevant = self.get_post_relevant()
         if relevant:
             kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
-    def _get_post_relevant(self):
+    def get_post_relevant(self):
         return self.module.search_config.get_relevant()
 
-    def _build_command(self):
+    def build_command(self):
         return Command(
             id=id_strings.search_command(self.module),
             display=Display(
@@ -99,7 +99,7 @@ class RemoteRequestFactory(object):
             ),
         )
 
-    def _build_instances(self):
+    def build_instances(self):
         # TODO: endpoints don't need these
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
@@ -120,25 +120,25 @@ class RemoteRequestFactory(object):
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
 
-    def _build_session(self):
+    def build_session(self):
         return RemoteRequestSession(
-            queries=self._build_remote_request_queries(),
-            data=self._build_remote_request_datums(),
+            queries=self.build_remote_request_queries(),
+            data=self.build_remote_request_datums(),
         )
 
-    def _build_remote_request_queries(self):
+    def build_remote_request_queries(self):
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
                 data=self._get_remote_request_query_datums(),
-                prompts=self._build_query_prompts(),
+                prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
             )
         ]
 
-    def _build_remote_request_datums(self):
+    def build_remote_request_datums(self):
         details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
@@ -192,7 +192,7 @@ class RemoteRequestFactory(object):
             )
         return default_query_datums + extra_query_datums
 
-    def _build_query_prompts(self):
+    def build_query_prompts(self):
         prompts = []
         for prop in self.module.search_config.properties:
             text = Text(locale_id=id_strings.search_property_locale(self.module, prop.name))
@@ -231,7 +231,7 @@ class RemoteRequestFactory(object):
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
-    def _build_stack(self):
+    def build_stack(self):
         stack = Stack()
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
@@ -249,25 +249,25 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
     def case_session_var(self):
         return self.child_id
 
-    def _get_post_relevant(self):
+    def get_post_relevant(self):
         return CaseClaimXpath(self.case_session_var).default_relevant()
 
-    def _build_command(self):
+    def build_command(self):
         return Command(
             id=f"claim_command.{self.endpoint_id}.{self.child_id}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
 
-    def _build_remote_request_queries(self):
+    def build_remote_request_queries(self):
         return []
 
-    def _build_remote_request_datums(self):
+    def build_remote_request_datums(self):
         return [SessionDatum(
             id=self.child_id,
             function=f"instance('commcaresession')/session/data/{self.child_id}",
         )]
 
-    def _build_stack(self):
+    def build_stack(self):
         return Stack()
 
 
