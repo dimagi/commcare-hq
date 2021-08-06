@@ -53,7 +53,7 @@ class QuerySessionXPath(InstanceXpath):
         return 'session/data/{}'.format(self)
 
 
-class RemoteRequestFactory(object):     # TODO: subclass an EndpointRemoteRequestFactory?
+class RemoteRequestFactory(object):
     def __init__(self, domain, app, module, detail_section_elements, suite=None, endpoint_id=None, child_id=None):
         self.domain = domain
         self.app = app
@@ -136,8 +136,6 @@ class RemoteRequestFactory(object):     # TODO: subclass an EndpointRemoteReques
         )
 
     def _build_remote_request_queries(self):
-        if self.endpoint_id:
-            return []
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
@@ -150,12 +148,6 @@ class RemoteRequestFactory(object):     # TODO: subclass an EndpointRemoteReques
         ]
 
     def _build_remote_request_datums(self):
-        if self.endpoint_id:
-            return [SessionDatum(
-                id=self.child_id,
-                function=f"instance('commcaresession')/session/data/{self.child_id}",
-            )]
-
         details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
@@ -249,13 +241,25 @@ class RemoteRequestFactory(object):     # TODO: subclass an EndpointRemoteReques
         return prompts
 
     def _build_stack(self):
-        if self.endpoint_id:
-            return Stack()
         stack = Stack()
         frame = PushFrame()
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+
+class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
+    def _build_remote_request_queries(self):
+        return []
+
+    def _build_remote_request_datums(self):
+        return [SessionDatum(
+            id=self.child_id,
+            function=f"instance('commcaresession')/session/data/{self.child_id}",
+        )]
+
+    def _build_stack(self):
+        return Stack()
 
 
 class RemoteRequestContributor(SuiteContributorByModule):
@@ -291,7 +295,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
         children = _get_frame_children(self.suite, self.app, module, form=form)
         for child in children:
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
-                elements.append(RemoteRequestFactory(
+                elements.append(SessionEndpointRemoteRequestFactory(
                     self.app.domain, self.app, module, detail_section_elements, self.suite,
                     endpoint_id=endpoint_id, child_id=child.id).build_remote_request(),
                 )
