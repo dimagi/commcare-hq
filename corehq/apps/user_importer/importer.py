@@ -502,7 +502,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if phone_numbers:
+                if type(phone_numbers) is list:
                     phone_numbers = clean_phone_numbers(phone_numbers)
                     commcare_user_importer.update_phone_numbers(phone_numbers)
 
