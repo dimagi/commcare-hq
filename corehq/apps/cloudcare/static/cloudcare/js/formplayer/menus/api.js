@@ -4,8 +4,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var API = {
         queryFormplayer: function (params, route) {
