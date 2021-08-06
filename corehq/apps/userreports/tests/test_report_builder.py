@@ -30,7 +30,7 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
     ApplicationDataSourceHelper,
-    UnmanagedDataSourceHelper,
+    UnmanagedDataSourceHelper, ApplicationCaseDataSourceHelper,
 )
 from corehq.apps.userreports.tests.utils import get_simple_xform
 from corehq.util.test_utils import flag_enabled
@@ -109,7 +109,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('First Name', name_prop.get_text())
 
     def test_builder_for_cases(self):
-        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
         self.assertEqual('CommCareCase', builder.source_doc_type)
         expected_filter = {
             "operator": "eq",
@@ -135,7 +135,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
     def test_owner_as_location(self):
-        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
@@ -447,7 +447,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
                 'columns':
                     '['
                     '   {"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"},'
-                    '   {"property": "/data/state", "display_text": "state", "calculation": "Count Per Choice"}'
+                    '   {"property": "/data/state", "display_text": "state", "calculation": "Count per Choice"}'
                     ']',
             }
         )

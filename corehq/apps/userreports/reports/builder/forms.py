@@ -24,7 +24,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
     DATA_SOURCE_TYPE_RAW,
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
-    get_app_data_source_meta,
+    get_app_data_source_meta, DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM,
 )
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE, LENIENT_MAXIMUM_EXPANSION
@@ -817,9 +817,176 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
+class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
+    def __init__(self, domain, app, source_type, source_id):
+        assert source_type == 'case'
+        super().__init__(domain, app, source_type, source_id)
+        prop_map = get_case_properties(
+            self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
+            include_parent_properties=True,
+        )
+        self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+
+    def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
+        assert not is_multiselect_chart_report
+        return {}
+
+    @property
+    @memoized
+    def data_source_properties(self):
+        property_map = {
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
+        }
+
+        properties = OrderedDict()
+        for property in self.case_properties:
+            if property in DEFAULT_CASE_PROPERTY_DATATYPES:
+                data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
+            else:
+                data_types = ["string", "decimal", "datetime"]
+
+            properties[property] = DataSourceProperty(
+                type=PROPERTY_TYPE_CASE_PROP,
+                id=property,
+                text=property_map.get(property, property.replace('_', ' ')),
+                source=property,
+                data_types=data_types,
+            )
+        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
+        properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
+
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
+            properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_archived_with_descendants_pseudo_property()
+
+        return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_owner_name_pseudo_property():
+        # owner_name is a special pseudo-case property for which
+        # the report builder will create a related_doc indicator based
+        # on the owner_id of the case.
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            text=_('Case Owner'),
+            source=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_pseudo_property(cls):
+        # owner_location is a special pseudo-case property for which
+        # the report builder reference the owner_id, but treat it as a location
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            text=_('Case Owner (Location)'),
+            source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_archived_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants and Archived Locations)'),
+            source=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_user_name_pseudo_property():
+        # user_name is a special pseudo case property for which
+        # the report builder will create a related_doc indicator based on the
+        # user_id of the case
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_USER_NAME_PROPERTY_ID,
+            text=_('Mobile Worker Last Updating Case'),
+            source=COMPUTED_USER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @property
+    @memoized
+    def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        return "{} (v{}) {}".format(self.source_id, self.app.version, today)
+
+    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
+        if is_multiselect_chart_report:
+            base_item_expression = self.base_item_expression(True, multiselect_field)
+        else:
+            base_item_expression = self.base_item_expression(False)
+
+        return dict(
+            display_name=self.data_source_name,
+            referenced_doc_type=self.source_doc_type,
+            configured_filter=self.filter,
+            configured_indicators=indicators,
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
+        indicators = self.all_possible_indicators(required_columns, required_filters)
+        return self._ds_config_kwargs(indicators)
+
+    def get_datasource_constructor_kwargs(self, columns, filters,
+                                          is_multiselect_chart_report=False, multiselect_field=None):
+        indicators = self.indicators(
+            columns,
+            filters,
+            is_multiselect_chart_report
+        )
+        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
+
 def get_data_source_interface(domain, app, source_type, source_id):
     if source_type in APP_DATA_SOURCE_TYPE_VALUES:
-        return ApplicationDataSourceHelper(domain, app, source_type, source_id)
+        helper = {
+            DATA_SOURCE_TYPE_CASE: ApplicationCaseDataSourceHelper,
+            DATA_SOURCE_TYPE_FORM: ApplicationDataSourceHelper
+        }[source_type]
+        return helper(domain, app, source_type, source_id)
     else:
         return UnmanagedDataSourceHelper(domain, app, source_type, source_id)
 
