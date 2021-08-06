@@ -529,7 +529,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
-        if True or self.include_metadata:
+        if self.include_metadata:
             table = list(result[0][1])
             table[0].append(_("Message Log ID"))
             table[0].append(_("Case ID"))
