@@ -17,6 +17,7 @@ from .util import (
 @patch_get_xform_resource_overrides()
 @flag_enabled('SESSION_ENDPOINTS')
 class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
+    file_path = ('data',)
 
     def setUp(self):
         self.domain = 'test-domain'
@@ -88,30 +89,11 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             "./endpoint",
         )
         self.assertXmlPartialEqual(
-            # TODO: DRY up and/or extract these remote-request snippets?
-            """
-            <partial>
-                <remote-request>
-                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
-                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-                    </post>
-                    <command id="claim_command.my_form.case_id">
-                        <display>
-                            <text>
-                                <locale id="case_search.m0"/>
-                            </text>
-                        </display>
-                    </command>
-                    <instance id="casedb" src="jr://instance/casedb"/>
-                    <instance id="commcaresession" src="jr://instance/session"/>
-                    <session>
-                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
-                    </session>
-                    <stack/>
-                </remote-request>
-            </partial>
-            """,
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+                module_id=0,
+            ),
             suite,
             "./remote-request",
         )
@@ -158,50 +140,22 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
 
         self.assertXmlPartialEqual(
-            """
-            <partial>
-                <remote-request>
-                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
-                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) = 0">
-                        <data key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
-                    </post>
-                    <command id="claim_command.my_form.parent_id">
-                        <display>
-                            <text>
-                                <locale id="case_search.m1"/>
-                            </text>
-                        </display>
-                    </command>
-                    <instance id="casedb" src="jr://instance/casedb"/>
-                    <instance id="commcaresession" src="jr://instance/session"/>
-                    <session>
-                        <datum id="parent_id" function="instance('commcaresession')/session/data/parent_id"/>
-                    </session>
-                    <stack/>
-                </remote-request>
-                <remote-request>
-                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
-                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-                    </post>
-                    <command id="claim_command.my_form.case_id">
-                        <display>
-                            <text>
-                                <locale id="case_search.m1"/>
-                            </text>
-                        </display>
-                    </command>
-                    <instance id="casedb" src="jr://instance/casedb"/>
-                    <instance id="commcaresession" src="jr://instance/session"/>
-                    <session>
-                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
-                    </session>
-                    <stack/>
-                </remote-request>
-            </partial>
-            """,
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_form",
+                module_id=1,
+            ),
             suite,
-            "./remote-request",
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+                module_id=1,
+            ),
+            suite,
+            "./remote-request[2]",
         )
 
     def test_multiple_session_endpoints(self):
@@ -255,50 +209,22 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
         )
 
         self.assertXmlPartialEqual(
-            """
-            <partial>
-                <remote-request>
-                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
-                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) = 0">
-                        <data key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
-                    </post>
-                    <command id="claim_command.my_child_form.parent_id">
-                        <display>
-                            <text>
-                                <locale id="case_search.m1"/>
-                            </text>
-                        </display>
-                    </command>
-                    <instance id="casedb" src="jr://instance/casedb"/>
-                    <instance id="commcaresession" src="jr://instance/session"/>
-                    <session>
-                        <datum id="parent_id" function="instance('commcaresession')/session/data/parent_id"/>
-                    </session>
-                    <stack/>
-                </remote-request>
-                <remote-request>
-                    <post url="https://www.example.com/a/test-domain/phone/claim-case/"
-                          relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-                        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-                    </post>
-                    <command id="claim_command.my_child_form.case_id">
-                        <display>
-                            <text>
-                                <locale id="case_search.m1"/>
-                            </text>
-                        </display>
-                    </command>
-                    <instance id="casedb" src="jr://instance/casedb"/>
-                    <instance id="commcaresession" src="jr://instance/session"/>
-                    <session>
-                        <datum id="case_id" function="instance('commcaresession')/session/data/case_id"/>
-                    </session>
-                    <stack/>
-                </remote-request>
-            </partial>
-            """,
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_child_form",
+                module_id=1,
+            ),
             suite,
-            "./remote-request",
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_child_form",
+                module_id=1,
+            ),
+            suite,
+            ".remote-request[2]",
         )
 
     def test_module_session_endpoint_id(self):
