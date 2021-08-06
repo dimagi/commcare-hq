@@ -76,10 +76,8 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'content': msg.text,
             'message_type': MESSAGE_TYPE_SMS,
         }
-        if kwargs.get('custom_metadata'):
-            msg.add_custom_metadata(kwargs.get('custom_metadata'))
 
-        if kwargs.get('status_callback', False):
+        if msg.custom_metadata.get('case_id', False):
             status_callback_url = '{url}?cc_message_id={cc_message_id}'.format(
                 url=reverse('telerivet_message_status'),
                 cc_message_id=msg.couch_id
