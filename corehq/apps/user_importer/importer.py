@@ -709,10 +709,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                 else:
                     if status == "Invited":
                         try:
-                            invitation = Invitation.objects.get(domain=domain, email=username)
+                            invitation = Invitation.objects.get(domain=domain, email=username, is_accepted=False)
                         except Invitation.DoesNotExist:
-                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
-                                                    " {web_user} is not yet invited.").format(web_user=username))
+                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web "
+                                                    "User. {web_user} has no invitations for this project "
+                                                    "space.").format(web_user=username))
                         if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
                             raise UserUploadError(_("The email has bounced for this user's invite. Please try "
                                                     "again with a different username").format(web_user=username))

@@ -36,7 +36,6 @@ hqDefine("users/js/enterprise_users", [
 
     var enterpriseUsersList = function (options) {
         var self = webUsersList(options);
-
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {

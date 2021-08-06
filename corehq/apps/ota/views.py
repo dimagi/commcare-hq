@@ -166,7 +166,7 @@ def claim(request, domain):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
-        claim_case(domain, restore_user.user_id, case_id,
+        claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
