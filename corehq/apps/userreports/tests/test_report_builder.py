@@ -29,8 +29,9 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    ApplicationDataSourceHelper,
-    UnmanagedDataSourceHelper, ApplicationCaseDataSourceHelper,
+    UnmanagedDataSourceHelper,
+    ApplicationFormDataSourceHelper,
+    ApplicationCaseDataSourceHelper,
 )
 from corehq.apps.userreports.tests.utils import get_simple_xform
 from corehq.util.test_utils import flag_enabled
@@ -67,10 +68,14 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     def test_builder_bad_type(self):
         with self.assertRaises(AssertionError):
-            ApplicationDataSourceHelper(self.domain, self.app, 'invalid-type', self.form.unique_id)
+            ApplicationFormDataSourceHelper(self.domain, self.app, 'case', self.form.unique_id)
+
+    def test_builder_bad_type_case(self):
+        with self.assertRaises(AssertionError):
+            ApplicationCaseDataSourceHelper(self.domain, self.app, 'form', self.form.unique_id)
 
     def test_builder_for_forms(self):
-        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        builder = ApplicationFormDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
             "type": "and",
