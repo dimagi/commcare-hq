@@ -282,8 +282,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     Abstract interface to a data source in report builder.
 
-    A data source could be an (app, form), (app, case_type) pair (see DataSourceBuilder),
-    or it can be a real UCR data soure (see ReportBuilderDataSourceReference)
+    A data source could be an (app, form), (app, case_type) pair (see ApplicationDataSourceHelper),
+    or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
 
     @abstractproperty
@@ -341,7 +341,7 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         pass
 
 
-class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
+class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
     """
     A ReportBuilderDataSourceInterface that encapsulates an existing data source.
     """
@@ -390,13 +390,13 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         return options
 
 
-class DataSourceBuilder(ReportBuilderDataSourceInterface):
+class ApplicationDataSourceHelper(ReportBuilderDataSourceInterface):
     """
     A ReportBuilderDataSourceInterface that encapsulates an (app, form) or (app, case_type) pair.
     It also provides convenience methods for creating the underlying UCR data source associated
     with the data.
 
-    When configuring a report, one can use DataSourceBuilder to determine some
+    When configuring a report, one can use ApplicationDataSourceHelper to determine some
     of the properties of the required report data source, such as:
         - referenced doc type
         - filter
@@ -773,9 +773,9 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
 def get_data_source_interface(domain, app, source_type, source_id):
     if source_type in APP_DATA_SOURCE_TYPE_VALUES:
-        return DataSourceBuilder(domain, app, source_type, source_id)
+        return ApplicationDataSourceHelper(domain, app, source_type, source_id)
     else:
-        return ReportBuilderDataSourceReference(domain, app, source_type, source_id)
+        return UnmanagedDataSourceHelper(domain, app, source_type, source_id)
 
 
 class DataSourceForm(forms.Form):
@@ -947,7 +947,7 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _configured_columns(self):
         """
-        To be used by DataSourceBuilder.indicators()
+        To be used by ApplicationDataSourceHelper.indicators()
         """
         configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")

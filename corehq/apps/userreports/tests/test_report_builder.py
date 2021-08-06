@@ -29,8 +29,8 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    DataSourceBuilder,
-    ReportBuilderDataSourceReference,
+    ApplicationDataSourceHelper,
+    UnmanagedDataSourceHelper,
 )
 from corehq.apps.userreports.tests.utils import get_simple_xform
 from corehq.util.test_utils import flag_enabled
@@ -67,10 +67,10 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     def test_builder_bad_type(self):
         with self.assertRaises(AssertionError):
-            DataSourceBuilder(self.domain, self.app, 'invalid-type', self.form.unique_id)
+            ApplicationDataSourceHelper(self.domain, self.app, 'invalid-type', self.form.unique_id)
 
     def test_builder_for_forms(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
             "type": "and",
@@ -109,7 +109,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('First Name', name_prop.get_text())
 
     def test_builder_for_cases(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
         self.assertEqual('CommCareCase', builder.source_doc_type)
         expected_filter = {
             "operator": "eq",
@@ -135,7 +135,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
     def test_owner_as_location(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
@@ -166,7 +166,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
     def test_reference_for_forms(self):
         form_data_source = get_form_data_source(self.app, self.form)
         form_data_source.save()
-        reference = ReportBuilderDataSourceReference(
+        reference = UnmanagedDataSourceHelper(
             self.domain, self.app, DATA_SOURCE_TYPE_RAW, form_data_source._id,
         )
         # todo: we should filter out some of these columns
@@ -190,7 +190,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
     def test_reference_for_cases(self):
         case_data_source = get_case_data_source(self.app, self.case_type)
         case_data_source.save()
-        reference = ReportBuilderDataSourceReference(
+        reference = UnmanagedDataSourceHelper(
             self.domain, self.app, DATA_SOURCE_TYPE_RAW, case_data_source._id,
         )
         # todo: we should filter out some of these columns
