@@ -243,6 +243,14 @@ class BillingAccountBasicForm(forms.Form):
                     data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                 )
             )
+            #eventually hide this w visible: is_customer_billing_account
+            additional_fields.append(hqcrispy.B3MultiField(
+                "SMS Billable Report Visible",
+                hqcrispy.MultiInlineField(
+                    'is_sms_billable_report_visible',
+                    data_bind="checked: is_sms_billable_report_visible",
+                ),
+            ))
             additional_fields.append(
                 crispy.Div(
                     crispy.Field(
