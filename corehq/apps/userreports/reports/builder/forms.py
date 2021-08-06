@@ -345,6 +345,10 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
 
 class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
+    def uses_managed_data_source(self):
+        return True
+
+    @property
     @abstractmethod
     def source_id(self):
         """Case type or Form ID. Only applies to managed data sources."""
@@ -459,10 +463,6 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     @property
     def source_id(self):
         return self._source_id
-
-    @property
-    def uses_managed_data_source(self):
-        return True
 
     @property
     @memoized
@@ -840,38 +840,6 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
     def data_source_name(self):
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         return "{} (v{}) {}".format(self.source_id, self.app.version, today)
-
-    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
-        if is_multiselect_chart_report:
-            base_item_expression = self.base_item_expression(True, multiselect_field)
-        else:
-            base_item_expression = self.base_item_expression(False)
-
-        return dict(
-            display_name=self.data_source_name,
-            referenced_doc_type=self.source_doc_type,
-            configured_filter=self.filter,
-            configured_indicators=indicators,
-            base_item_expression=base_item_expression,
-            meta=DataSourceMeta(build=DataSourceBuildInformation(
-                source_id=self.source_id,
-                app_id=self.app._id,
-                app_version=self.app.version,
-            ))
-        )
-
-    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
-        indicators = self.all_possible_indicators(required_columns, required_filters)
-        return self._ds_config_kwargs(indicators)
-
-    def get_datasource_constructor_kwargs(self, columns, filters,
-                                          is_multiselect_chart_report=False, multiselect_field=None):
-        indicators = self.indicators(
-            columns,
-            filters,
-            is_multiselect_chart_report
-        )
-        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
 def get_data_source_interface(domain, app, source_type, source_id):
