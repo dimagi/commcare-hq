@@ -124,7 +124,7 @@
               {% blocktrans %}
                 Please correct the answers below before submitting.
                 <br>
-                You can use the <strong><i class='fa fa-arrow-down'></i> Next Question</strong> button on the left-hand side of the screen to navigate between required fields.
+                You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
               {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
@@ -175,8 +175,8 @@
           {% endif %}
         {% endif %}
         <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
-          <i class='fa fa-arrow-down'> </i>
-              {% trans "Next Question" %}
+          <i class='fa fa-fast-forward'> </i>
+              {% trans "Next Error" %}
         </div>
       </div>
     </div>
