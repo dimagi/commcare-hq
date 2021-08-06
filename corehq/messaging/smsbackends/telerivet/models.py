@@ -1,11 +1,12 @@
 import requests
-from django.urls import reverse
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.messaging.smsbackends.telerivet.exceptions import TelerivetException
 from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
 from django.conf import settings
 from django.db import models
 from requests.exceptions import RequestException
+from django.urls import reverse
+from dimagi.utils.web import get_url_base
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -79,7 +80,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
 
         if msg.custom_metadata.get('case_id', False):
             payload.update({
-                'status_url': reverse('telerivet_message_status'),
+                'status_url': f'{get_url_base()}{reverse("telerivet_message_status")}',
                 'vars': {'message_id': msg.couch_id}
             })
 
