@@ -11,32 +11,19 @@
 
   <div class="panel panel-default ko-template" id="web-users-panel">
     <div class="panel-heading">
-        {% comment %} <div class="col-sm-6"> {% endcomment %}
-          <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Users' %}</h3>
-        {% comment %} </div> {% endcomment %}
-    </div>
-    <div class="panel-body">
       <div class="row">
+        <div class="col-sm-6">
+          <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Users' %}</h3>
+        </div>
         <div class="col-sm-6">
           <search-box data-apply-bindings="false"
                       params="value: query,
                               action: function() { goToPage(1); },
                               placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
-        <div class="col-sm-6">
-            <button type="button" class="btn btn-default pull-right"
-                    data-bind="visible: !showDeactivated(), click: function() { showDeactivated(true); }"
-                    >
-              {% trans 'Show Deactivated Mobile Workers' %}
-            </button>
-            <button type="button" class="btn btn-default pull-right"
-                    data-bind="visible: showDeactivated(),
-                    click: function() { showDeactivated(false); }"
-                    >
-              {% trans 'Hide Deactivated Mobile Workers' %}
-            </button>
-        </div>
       </div>
+    </div>
+    <div class="panel-body">
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
       <div data-bind="visible: showLoadingSpinner">
         <i class="fa fa-spin fa-spinner"></i>

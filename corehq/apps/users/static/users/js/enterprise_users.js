@@ -31,7 +31,6 @@ hqDefine("users/js/enterprise_users", [
         // Only relevant for web users
         self.expanded = ko.observable(false);
 
-
         return self;
     };
 
@@ -45,8 +44,6 @@ hqDefine("users/js/enterprise_users", [
                 }
             });
         };
-
-        self.showDeactivated = ko.observable(false);
 
         return self;
     };
