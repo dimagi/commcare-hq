@@ -232,16 +232,19 @@ class BillingAccountBasicForm(forms.Form):
                         css_class='input-xxlarge accounting-email-select2',
                         data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                     ),
-                    hqcrispy.B3MultiField(
-                        "SMS Billable Report Visible",
-                        hqcrispy.MultiInlineField(
-                            'is_sms_billable_report_visible',
-                            data_bind="checked: is_sms_billable_report_visible",
-                        )
-                    ),
                     data_bind='visible: is_customer_billing_account',
                     data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                 )
+            )
+            additional_fields.append(
+                hqcrispy.B3MultiField(
+                    "SMS Billable Report Visible",
+                    hqcrispy.MultiInlineField(
+                        'is_sms_billable_report_visible',
+                        data_bind="checked: is_sms_billable_report_visible",
+                    ),
+                    data_bind='visible: is_customer_billing_account',
+                ),
             )
             additional_fields.append(
                 crispy.Div(
