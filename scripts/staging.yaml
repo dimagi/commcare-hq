@@ -83,4 +83,5 @@ branches:
     - sk/uglify3 # Simon August 5
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
     - ml/remove-show-field-sms-billables-report # Minha August 5
+    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
 submodules: { }
