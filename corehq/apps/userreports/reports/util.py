@@ -72,10 +72,9 @@ class ReportExport(object):
     def total_rows(self):
         return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
+    @property
     @memoized
-    def get_table(self):
-        """Generate a table of all rows of this report
-        """
+    def data_rows(self):
         column_id_to_expanded_column_ids = get_expanded_columns(
             self.data_source.top_level_columns,
             self.data_source.config
@@ -85,12 +84,16 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
 
+    @memoized
+    def get_table(self):
+        """Generate a table of all rows of this report
+        """
         export_table = [
             [
                 self.title,
-                self.header_rows + rows + self.total_rows
+                self.header_rows + self.data_rows + self.total_rows
             ]
         ]
 
