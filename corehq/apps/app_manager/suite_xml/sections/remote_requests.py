@@ -97,14 +97,12 @@ class RemoteRequestFactory(object):
         )
 
     def build_instances(self):
-        # TODO: endpoints don't need these
         prompt_select_instances = [
             Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
             if prop.itemset.instance_id
         ]
 
-        # TODO: do endpoint instances need these?
         query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
         query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
         query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
@@ -250,6 +248,15 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
             id=f"claim_command.{self.endpoint_id}.{self.case_session_var}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
+
+    def build_instances(self):
+        query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
+        query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
+        query_xpaths.append(self.get_post_relevant())
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
+
+        # sorted list to prevent intermittent test failures
+        return sorted(instances, key=lambda i: i.id)
 
     def build_remote_request_queries(self):
         return []
