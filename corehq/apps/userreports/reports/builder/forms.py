@@ -360,11 +360,11 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def get_ds_config_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
+    def get_datasource_constructor_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
         """Override if `uses_managed_data_source` is False"""
         raise NotImplementedError
 
-    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
         """Override if `uses_managed_data_source` is False"""
         raise NotImplementedError
 
@@ -799,12 +799,12 @@ class ApplicationDataSourceHelper(ReportBuilderDataSourceInterface):
             ))
         )
 
-    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
         indicators = self.all_possible_indicators(required_columns, required_filters)
         return self._ds_config_kwargs(indicators)
 
-    def get_ds_config_kwargs(self, columns, filters,
-                             is_multiselect_chart_report=False, multiselect_field=None):
+    def get_datasource_constructor_kwargs(self, columns, filters,
+                                          is_multiselect_chart_report=False, multiselect_field=None):
         indicators = self.indicators(
             columns,
             filters,
@@ -1004,10 +1004,10 @@ class ConfigureNewReportBase(forms.Form):
     def _get_data_source_configuration_kwargs(self):
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
-        return self.ds_builder.get_ds_config_kwargs(self._configured_columns,
-                                                    filters,
-                                                    self._is_multiselect_chart_report,
-                                                    ms_field)
+        return self.ds_builder.get_datasource_constructor_kwargs(self._configured_columns,
+                                                                 filters,
+                                                                 self._is_multiselect_chart_report,
+                                                                 ms_field)
 
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
@@ -1131,7 +1131,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=clean_table_name(self.domain, uuid.uuid4().hex),
-            **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
+            **self.ds_builder.get_temp_datasource_constructor_kwargs(columns, filters)
         )
         data_source_config.validate()
         data_source_config.save()
@@ -1184,7 +1184,7 @@ class ConfigureNewReportBase(forms.Form):
 
         # rebuild the table
         if missing_columns:
-            temp_config = self.ds_builder.get_temp_ds_config_kwargs(self._configured_columns, filters)
+            temp_config = self.ds_builder.get_temp_datasource_constructor_kwargs(self._configured_columns, filters)
             data_source_config.configured_indicators = temp_config["configured_indicators"]
             data_source_config.configured_filter = temp_config["configured_filter"]
             data_source_config.base_item_expression = temp_config["base_item_expression"]
