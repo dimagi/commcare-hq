@@ -354,12 +354,6 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     def uses_managed_data_source(self):
         return True
 
-    @property
-    @abstractmethod
-    def source_id(self):
-        """Case type or Form ID"""
-        pass
-
     @abstractmethod
     def indicators(self, columns, filters, as_dict=False):
         """Override if `uses_managed_data_source` is False
@@ -465,12 +459,9 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         self.domain = domain
         self.app = app
         self.source_type = source_type
-        self._source_id = source_id
 
-    @property
-    def source_id(self):
-        """Case Type or Form ID"""
-        return self._source_id
+        # case type or form ID
+        self.source_id = source_id
 
     @property
     @abstractmethod
