@@ -499,7 +499,7 @@ class Content(models.Model):
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
-        if is_commcarecase(recipient) and not bool(metadata.get('case_id')):
+        if is_commcarecase(recipient) and not bool(metadata.custom_metadata.get('case_id')):
             metadata['case_id'] = recipient.case_id
 
         if isinstance(phone_entry_or_number, PhoneNumber):
