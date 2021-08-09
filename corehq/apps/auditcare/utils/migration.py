@@ -9,7 +9,7 @@ from dimagi.utils.dates import force_to_datetime
 from corehq.apps.auditcare.models import AuditcareMigrationMeta
 from corehq.apps.auditcare.utils.export import get_sql_start_date
 
-CUTOFF_TIME = datetime(2021, 2, 1)
+CUTOFF_TIME = datetime(2013, 1, 1)
 CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
 
 logger = logging.getLogger(__name__)
