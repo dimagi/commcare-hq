@@ -17,6 +17,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports import tasks
@@ -24,7 +25,8 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
     DATA_SOURCE_TYPE_RAW,
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
-    get_app_data_source_meta, DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM,
+    DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM, get_data_source_doc_type,
+    make_case_data_source_filter, make_form_data_source_filter,
 )
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE, LENIENT_MAXIMUM_EXPANSION
@@ -455,27 +457,25 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         self.domain = domain
         self.app = app
         self.source_type = source_type
-        # source_id is a case type of form id
         self._source_id = source_id
-        self.data_source_meta = get_app_data_source_meta(self.domain, self.app.id,
-                                                         self.source_type, source_id)
 
     @property
     def source_id(self):
+        """Case Type or Form ID"""
         return self._source_id
 
     @property
     @memoized
     def source_doc_type(self):
-        return self.data_source_meta.get_doc_type()
+        return get_data_source_doc_type(self.source_type)
 
     @property
-    @memoized
+    @abstractmethod
     def filter(self):
         """
         Return the filter configuration for the DataSourceConfiguration.
         """
-        return self.data_source_meta.get_filter()
+        raise NotImplementedError
 
     @abstractmethod
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
@@ -592,8 +592,8 @@ class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
     def __init__(self, domain, app, source_type, source_id):
         assert source_type == 'form'
         super().__init__(domain, app, source_type, source_id)
-        self.source_form = self.data_source_meta.source_form
-        self.source_xform = self.data_source_meta.source_xform
+        self.source_form = self.app.get_form(source_id)
+        self.source_xform = XForm(self.source_form.source)
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """
@@ -651,6 +651,12 @@ class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
                 },
                 "map_expression": sub_doc(path)
             }
+
+    @property
+    @memoized
+    def filter(self):
+        return make_form_data_source_filter(
+            self.source_xform.data_node.tag_xmlns, self.source_form.get_app().get_id)
 
     @property
     @memoized
@@ -720,6 +726,11 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         assert not is_multiselect_chart_report
         return {}
+
+    @property
+    @memoized
+    def filter(self):
+        return make_case_data_source_filter(self.source_id)
 
     @property
     @memoized
