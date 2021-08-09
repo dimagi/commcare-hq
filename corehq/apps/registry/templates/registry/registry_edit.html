@@ -94,8 +94,8 @@
         <div class="registry-form-container">
           {% if registry.description %}<p class="text-muted">{{ registry.description }}</p>{% endif %}
           <p>
-            {% blocktrans %}
-            This registry is managed by the '{{ registry.domain }}' project space.
+            {% blocktrans with owning_domain=registry.domain %}
+            This registry is managed by the '{{ owning_domain }}' project space.
             {% endblocktrans %}
           </p>
           {% if not is_owner %}
