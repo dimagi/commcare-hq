@@ -1193,7 +1193,7 @@ MESSAGE_LOG_CASE_ID = StaticToggle(
     'message_log_case_id',
     'Include case id in Message Log export.',
     TAG_CUSTOM,
-    [NAMESPACE_USER],
+    [NAMESPACE_DOMAIN],
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
