@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.models import Application
@@ -35,6 +36,23 @@ class Command(BaseCommand):
             'form': FormExportInstance,
             'case': CaseExportInstance,
         }[export_type]
-        export_instance = export_class.get(export_id)
-        app_name = self.get_app_name(export_instance.app_id)
-        self.stdout.write(f'{export_id}\t{export_type}\t{export_instance.domain}\t{export_instance.name}\t{export_instance.app_id}\t{app_name}')
+        try:
+            export_instance = export_class.get(export_id)
+            export_domain = export_instance.domain
+            export_name = export_instance.name
+            export_app_id = export_instance.app_id
+        except ResourceNotFound:
+            export_domain = '-'
+            export_name = 'not found (deleted)'
+            export_app_id = None
+
+        if export_app_id:
+            try:
+                app_name = self.get_app_name(export_app_id)
+            except ResourceNotFound:
+                app_name = "not found (deleted)"
+        else:
+            export_app_id = '-'
+            app_name = '-'
+
+        self.stdout.write(f'{export_id}\t{export_type}\t{export_domain}\t{export_name}\t{export_app_id}\t{app_name}')
