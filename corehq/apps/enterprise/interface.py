@@ -10,7 +10,6 @@ from corehq.apps.smsbillables.filters import (
     DateSentFilter,
     GatewayTypeFilter,
     HasGatewayFeeFilter,
-    ShowBillablesFilter,
 )
 from corehq.apps.enterprise.filters import EnterpriseDomainFilter
 from corehq.apps.accounting.models import (
@@ -40,7 +39,6 @@ class EnterpriseSMSBillablesReport(GenericTabularReport):
     fields = [
         DateSentFilter,
         DateCreatedFilter,
-        ShowBillablesFilter,
         EnterpriseDomainFilter,
         HasGatewayFeeFilter,
         GatewayTypeFilter,
@@ -89,10 +87,6 @@ class EnterpriseSMSBillablesReport(GenericTabularReport):
                 {
                     'name': DateCreatedFilter.optional_filter_slug(),
                     'value': DateCreatedFilter.optional_filter_string_value(self.request)
-                },
-                {
-                    'name': ShowBillablesFilter.slug,
-                    'value': ShowBillablesFilter.get_value(self.request, self.domain)
                 },
                 {
                     'name': EnterpriseDomainFilter.slug,
@@ -157,12 +151,6 @@ class EnterpriseSMSBillablesReport(GenericTabularReport):
                 DateCreatedFilter.get_start_date(self.request), DateCreatedFilter.get_end_date(self.request)
             )
             selected_billables = SmsBillable.filter_selected_billables_by_date(selected_billables, date_span)
-        show_billables = ShowBillablesFilter.get_value(
-            self.request, self.domain)
-        if show_billables:
-            selected_billables = SmsBillable.filter_selected_billables_show_billables(
-                selected_billables, show_billables
-            )
         domain = EnterpriseDomainFilter.get_value(self.request, self.domain)
         if domain:
             selected_billables = selected_billables.filter(
