@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.models import Application
-from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.apps.userreports.models import report_config_id_is_static, \
     StaticReportConfiguration, ReportConfiguration
 from corehq.util.couch import get_document_or_not_found
@@ -24,37 +22,30 @@ class Command(BaseCommand):
 
     def handle(self, log_file_path, stat_type, **options):
         if stat_type == 'export':
-            self.stdout.write(f'\nexport type\ttimestamp\tuser\tproject\texport id\texport name\tapp id\tapp name')
+            self.stdout.write(f'\nexport type\ttimestamp\tuser\tproject\texport id')
         if stat_type == 'ucr':
-            self.stdout.write(f'\ttimestamp\tuser\tproject\treport id\treport name')
+            self.stdout.write(f'\ntimestamp\tuser\tproject\treport id\treport name')
         if stat_type == 'excel':
-            self.stdout.write(f'\ttimestamp\tuser\tproject\treport slug')
+            self.stdout.write(f'\ntimestamp\tuser\tproject\treport slug')
 
         with open(log_file_path, encoding='utf-8') as f:
             lines = f.readlines()
+            form_export_ids = []
+            case_export_ids = []
             for line in lines:
                 if stat_type == 'export':
-                    self.show_export_data(line, 'form')
-                    self.show_export_data(line, 'case')
+                    self.show_export_data(line, 'form', form_export_ids)
+                    self.show_export_data(line, 'case', case_export_ids)
                 if stat_type == 'ucr':
                     self.show_ucr_data(line)
                 if stat_type == 'excel':
                     self.show_export_to_excel_data(line)
 
-    @quickcache(['self.slug', 'app_id'])
-    def get_app_name(self, app_id):
-        app = Application.get(app_id)
-        return app.name
-
-    @quickcache(['self.slug', 'export_id', 'export_type'])
-    def get_export_info(self, export_id, export_type):
-        export_class = {
-            'form': FormExportInstance,
-            'case': CaseExportInstance,
-        }[export_type]
-        export_instance = export_class.get(export_id)
-        app_name = self.get_app_name(export_instance.app_id)
-        return export_instance.name, export_instance.app_id, app_name
+        if stat_type == 'export':
+            self.stdout.write('\n\nFORM IDS')
+            self.stdout.write(','.join(set(form_export_ids)))
+            self.stdout.write('\n\nCASE IDS')
+            self.stdout.write(','.join(set(case_export_ids)))
 
     def show_ucr_data(self, line):
         url_path = 'configurable_reports/export_status'
@@ -75,7 +66,7 @@ class Command(BaseCommand):
         else:
             return get_document_or_not_found(ReportConfiguration, domain, ucr_id)
 
-    def show_export_data(self, line, export_type):
+    def show_export_data(self, line, export_type, export_ids):
         export_url_path = f'data/export/custom/new/{export_type}/download'
         if export_url_path in line:
             data = line.split(',')
@@ -84,8 +75,8 @@ class Command(BaseCommand):
             domain = data[2]
             url = data[-1]
             export_id = url.split('/')[-2]
-            export_info = self.get_export_info(export_id, export_type)
-            self.stdout.write(f'{export_type}\t{timestamp}\t{user}\t{domain}\t{export_id}\t{export_info[0]}\t{export_info[1]}\t{export_info[2]}')
+            export_ids.append(export_id)
+            self.stdout.write(f'{export_type}\t{timestamp}\t{user}\t{domain}\t{export_id}')
 
     def show_export_to_excel_data(self, line):
         url_path = 'reports/export'
@@ -96,4 +87,4 @@ class Command(BaseCommand):
             domain = data[2]
             url = data[-1]
             report_slug = url.split('/')[-2]
-            self.stdout.write(f'\t{timestamp}\t{user}\t{domain}\t{report_slug}')
+            self.stdout.write(f'{timestamp}\t{user}\t{domain}\t{report_slug}')
