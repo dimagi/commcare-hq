@@ -75,7 +75,6 @@ branches:
     - cs/SC-1530-location-hierarchy-links  # Charl July 28
     - sk/data-registry-view  # Simon July 29
     - jm/remove-es-scan  # Joel August 3
-    - sk/uglify3 # Simon August 5
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
     - ml/remove-show-field-sms-billables-report # Minha August 5
     - revert-30202-revert-29962-gh/improve-erm-ui # Graham August 5
