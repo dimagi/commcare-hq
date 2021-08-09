@@ -48,7 +48,7 @@ def process_incoming_message(*args, **kwargs):
             log_call(from_number, "TELERIVET-%s" % kwargs["message_id"], backend=backend)
 
 
-@task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
+# @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
     sms = SMS.objects.get(couch_id=message_id)
 

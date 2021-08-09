@@ -56,12 +56,12 @@ def incoming_message(request):
 @csrf_exempt
 def message_status(request):
     resource_vars = request.POST.get('vars')
-    if resource_vars and resource_vars.get('message_id'):
-        process_message_status.delay(
-            resource_vars.get('message_id'),
-            request.POST.get('status'),
-            error_message=request.POST.get('error_message')
-        )
+    # if resource_vars and resource_vars.get('message_id'):
+    process_message_status(
+        resource_vars.get('message_id'),
+        request.POST.get('status'),
+        error_message=request.POST.get('error_message')
+    )
 
     return HttpResponse()
 
