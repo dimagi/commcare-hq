@@ -1,14 +1,8 @@
-from django.utils.translation import ugettext_lazy as _
-
 DATA_SOURCE_TYPE_CASE = 'case'
 DATA_SOURCE_TYPE_FORM = 'form'
 DATA_SOURCE_TYPE_RAW = 'data_source'  # this is only used in report builder
 APP_DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM)
 REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_RAW)
-DATA_SOURCE_TYPE_CHOICES = (
-    (DATA_SOURCE_TYPE_CASE, _("Cases")),
-    (DATA_SOURCE_TYPE_FORM, _("Forms")),
-)
 
 
 def make_case_data_source_filter(case_type):
