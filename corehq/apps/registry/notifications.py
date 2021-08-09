@@ -1,9 +1,9 @@
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.util import reverse
 
 
 def send_invitation_email(registry, invitation):
@@ -11,7 +11,7 @@ def send_invitation_email(registry, invitation):
     context = {
         'domain': invitation.domain,
         'owning_domain': registry.domain,
-        'registry_url': reverse('manage_registry', args=[invitation.domain, registry.slug])
+        'registry_url': reverse('manage_registry', args=[invitation.domain, registry.slug], absolute=True)
     }
 
     recipients = {u.get_email() for u in WebUser.get_admins_by_domain(invitation.domain)}
