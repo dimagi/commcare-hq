@@ -180,6 +180,27 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    def test_report_preview_data(self):
+        """
+        Test the output of ConfigurableReportView.export_table()
+        """
+        report, view = self._build_report_and_view()
+
+        actual = ConfigurableReportView.report_preview_data(report.domain, report)
+        expected = {
+            "table": [
+                ['report_column_display_fruit', 'report_column_display_percent'],
+                ['apple', '150%']
+            ],
+            "map_config": report.map_config,
+            "chart_configs": report.charts,
+            "aaData": [{
+                "report_column_col_id_fruit": "apple",
+                "report_column_col_id_percent": "150%"
+            }]
+        }
+        self.assertEqual(actual, expected)
+
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
