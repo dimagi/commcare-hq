@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.http import require_POST, require_GET
 
 from corehq import toggles
@@ -233,7 +233,11 @@ def manage_invitations(request, domain, registry_slug):
             "invitations": [
                 invitation.to_json() for invitation in invitations
             ],
-            "message": _("{count} invitations sent").format(count=len(invitations))
+            "message": ngettext(
+                "{count} invitation sent",
+                "{count} invitations sent",
+                len(invitations)
+            ).format(len(invitations))
         })
 
 
