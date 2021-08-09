@@ -56,7 +56,7 @@ class LocationResource(HqBaseResource):
         domain = kwargs['domain']
         project = getattr(bundle.request, 'project', self.domain_obj(domain))
         parent_id = bundle.request.GET.get('parent_id', None)
-        include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
+        include_inactive = json.loads(bundle.request.GET.get('include_inactive') or 'false')
         user = bundle.request.couch_user
 
         if not parent_id:
