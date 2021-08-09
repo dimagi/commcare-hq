@@ -108,6 +108,11 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False
     )
+    is_sms_billable_report_visible = forms.BooleanField(
+        label=ugettext_lazy("SMS Billable Report Visible"),
+        required=False,
+        initial=False
+    )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
         required=False,
@@ -174,6 +179,7 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': contact_info.email_list,
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
+                'is_sms_billable_report_visible': account.is_sms_billable_report_visible,
                 'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'invoicing_plan': account.invoicing_plan,
@@ -229,6 +235,16 @@ class BillingAccountBasicForm(forms.Form):
                     data_bind='visible: is_customer_billing_account',
                     data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                 )
+            )
+            additional_fields.append(
+                hqcrispy.B3MultiField(
+                    "SMS Billable Report Visible",
+                    hqcrispy.MultiInlineField(
+                        'is_sms_billable_report_visible',
+                        data_bind="checked: is_sms_billable_report_visible",
+                    ),
+                    data_bind='visible: is_customer_billing_account',
+                ),
             )
             additional_fields.append(
                 crispy.Div(
@@ -400,6 +416,7 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
+        account.is_sms_billable_report_visible = self.cleaned_data['is_sms_billable_report_visible']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
