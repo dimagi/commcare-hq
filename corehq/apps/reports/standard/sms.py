@@ -285,6 +285,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         table = list(table)
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
+
         for row in table[1:]:
             contact_info = row[self.contact_index_in_result].split("|||")
             row[self.contact_index_in_result] = contact_info[0]
@@ -368,6 +369,11 @@ class MessageLogReport(BaseCommConnectLogReport):
     @memoized
     def include_metadata(self):
         return toggles.MESSAGE_LOG_METADATA.enabled(self.request.couch_user.username)
+
+    @property
+    @memoized
+    def include_case_id(self):
+        return toggles.MESSAGE_LOG_CASE_ID.enabled(self.request.couch_user.username)
 
     @property
     @memoized
@@ -484,6 +490,11 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
+        def get_case_id(sms_message):
+            if sms_message.custom_metadata:
+                return sms_message.custom_metadata.get('case_id')
+            return ''
+
         content_cache = {}
         messages = self._get_data(paginate)
         events = self._get_events_by_xforms_session(messages) if self.show_v2 else {}
@@ -498,6 +509,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
+                get_case_id(message) if self.include_case_id else Ellipsis,
             ] if val != Ellipsis]
 
     @property
@@ -527,10 +539,13 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
+        table = list(result[0][1])
         if self.include_metadata:
-            table = list(result[0][1])
             table[0].append(_("Message Log ID"))
-            result[0][1] = table
+        if self.include_case_id:
+            table[0].append(_("Case ID"))
+        result[0][1] = table
+
         return result
 
     def _get_data(self, paginate):
