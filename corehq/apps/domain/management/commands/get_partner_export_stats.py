@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
+from corehq.util.couch import DocumentNotFound
 from corehq.util.quickcache import quickcache
 
 
@@ -49,7 +50,7 @@ class Command(BaseCommand):
         if export_app_id:
             try:
                 app_name = self.get_app_name(export_app_id)
-            except ResourceNotFound:
+            except (ResourceNotFound, DocumentNotFound):
                 app_name = "not found (deleted)"
         else:
             export_app_id = '-'
