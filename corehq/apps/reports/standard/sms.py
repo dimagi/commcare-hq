@@ -102,7 +102,6 @@ from corehq.messaging.scheduling.views import (
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.hqcase.utils import get_case_by_identifier
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -492,10 +491,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             return table_cell['raw'] if raw else table_cell['html']
 
         def get_case_id(sms_message):
-            phone_number_id = sms_message.phone_number.replace('+', '')
-            case = get_case_by_identifier(sms_message.domain, phone_number_id)
-            if case:
-                return case.case_id
+            if sms_message.custom_metadata:
+                return sms_message.custom_metadata.get('case_id')
             return ''
 
         content_cache = {}
