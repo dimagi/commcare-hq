@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 from collections import defaultdict
+from pathlib import Path
 from uuid import uuid4
 from shutil import copyfile
 from subprocess import call
@@ -155,14 +156,14 @@ def _r_js(local=False):
 
 def _minify(config):
     for module in with_progress_bar(config['modules'], prefix="Minifying", oneline=False):
-        filename = module['name'] + ".js"
-        path = os.path.join(ROOT_DIR, 'staticfiles', filename)
+        rel_path = Path(module['name'] + ".js")
+        path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
         ret = call([
             "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
-            "--source-map", f"url={filename}.map"
+            "--source-map", f"url={rel_path.name}.map"
         ])
         if ret:
-            raise CommandError(f"Failed to minify {filename}")
+            raise CommandError(f"Failed to minify {rel_path}")
 
 
 def _get_html_files_and_local_js_dirs(local):
