@@ -102,6 +102,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.hqcase.utils import get_case_by_identifier
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -372,6 +373,11 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     @memoized
+    def include_case_id(self):
+        return toggles.MESSAGE_LOG_CASE_ID.enabled(self.request.couch_user.username)
+
+    @property
+    @memoized
     def uses_locations(self):
         return Domain.get_by_name(self.domain).uses_locations
 
@@ -485,6 +491,13 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
+        def get_case_id(sms_message):
+            phone_number_id = sms_message.phone_number.replace('+', '')
+            case = get_case_by_identifier(sms_message.domain, phone_number_id)
+            if case:
+                return case.case_id
+            return ''
+
         content_cache = {}
         messages = self._get_data(paginate)
         events = self._get_events_by_xforms_session(messages) if self.show_v2 else {}
@@ -499,7 +512,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
-                message.custom_metadata.get('case_id') if self.include_metadata else Ellipsis,
+                get_case_id(message) if self.include_case_id else Ellipsis,
             ] if val != Ellipsis]
 
     @property
@@ -529,11 +542,13 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
+        table = list(result[0][1])
         if self.include_metadata:
-            table = list(result[0][1])
             table[0].append(_("Message Log ID"))
+        if self.include_case_id:
             table[0].append(_("Case ID"))
-            result[0][1] = table
+        result[0][1] = table
+
         return result
 
     def _get_data(self, paginate):

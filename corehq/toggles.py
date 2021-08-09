@@ -1189,6 +1189,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+MESSAGE_LOG_CASE_ID = StaticToggle(
+    'message_log_case_id',
+    'Include case id in Message Log export.',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
