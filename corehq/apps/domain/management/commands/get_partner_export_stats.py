@@ -19,7 +19,7 @@ class Command(BaseCommand):
             help="comma separated list of export_ids",
         )
 
-    def handle(self, export_type, export_ids):
+    def handle(self, export_type, export_ids, **options):
         self.stdout.write('export id\texport type\tproject\texport name\tapp id\tapp name')
         export_ids = export_ids.split(',')
         for export_id in export_ids:

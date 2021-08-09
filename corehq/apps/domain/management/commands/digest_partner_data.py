@@ -43,9 +43,11 @@ class Command(BaseCommand):
 
         if stat_type == 'export':
             self.stdout.write('\n\nFORM IDS')
-            self.stdout.write(','.join(set(form_export_ids)))
+            unique_form_exports = ','.join(set(form_export_ids))
+            self.stdout.write(f'"{unique_form_exports}"')
             self.stdout.write('\n\nCASE IDS')
-            self.stdout.write(','.join(set(case_export_ids)))
+            unique_case_exports = ','.join(set(case_export_ids))
+            self.stdout.write(f'"{unique_case_exports}"')
 
     def show_ucr_data(self, line):
         url_path = 'configurable_reports/export_status'
