@@ -477,7 +477,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
-            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+            phone_numbers = row.get('phone-number', [])
 
             try:
                 password = str(password) if password else None
