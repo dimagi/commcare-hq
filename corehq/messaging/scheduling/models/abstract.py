@@ -34,6 +34,7 @@ from corehq.messaging.templating import (
     CaseMessagingTemplateParam,
 )
 from django.utils.functional import cached_property
+from corehq.form_processor.utils import is_commcarecase
 
 
 class Schedule(models.Model):
@@ -498,6 +499,8 @@ class Content(models.Model):
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
+        if is_commcarecase(recipient) and not bool(metadata.get('case_id')):
+            metadata['case_id'] = recipient.case_id
 
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
