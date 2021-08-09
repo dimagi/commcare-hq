@@ -29,7 +29,11 @@ hqDefine("registry/js/registry_edit", [
         self.cssIcon = text.getStatusIcon(self.status);
         self.cssClass = text.getStatusCssClass(self.status);
         self.invitationDate = moment(self.created_on).format("D MMM YYYY");
-        self.responseDate = moment(self.modified_on).format("D MMM YYYY");
+        if (self.status === 'pending') {
+            self.responseDate = "";
+        } else {
+            self.responseDate = moment(self.modified_on).format("D MMM YYYY");
+        }
         return self;
     }
     let GrantModel = function(currentDomain, data) {
