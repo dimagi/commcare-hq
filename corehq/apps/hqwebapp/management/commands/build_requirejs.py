@@ -11,10 +11,12 @@ from subprocess import call
 from django.conf import settings
 
 import yaml
+from django.core.management import CommandError
 
 from corehq.apps.hqwebapp.exceptions import ResourceVersionsNotFoundException
 from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
@@ -42,7 +44,7 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
-        no_optimize = options['no_optimize']
+        optimize = not options['no_optimize']
 
         if local:
             _confirm_or_exit()
@@ -53,7 +55,9 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
+        config, local_js_dirs = _r_js(local=local)
+        if optimize:
+            _minify(config)
 
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
@@ -74,15 +78,16 @@ class Command(ResourceStaticCommand):
             # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
 
-            # Overwrite source map reference. Source maps are accessed on the CDN,
-            # so they need to have the version hash appended.
-            with open(filename, 'r') as fin:
-                lines = fin.readlines()
-            with open(filename, 'w') as fout:
-                for line in lines:
-                    if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                        line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                    fout.write(line)
+            if optimize:
+                # Overwrite source map reference. Source maps are accessed on the CDN,
+                # so they need to have the version hash appended.
+                with open(filename, 'r') as fin:
+                    lines = fin.readlines()
+                with open(filename, 'w') as fout:
+                    for line in lines:
+                        if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                            line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                        fout.write(line)
             resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
@@ -117,16 +122,13 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, no_optimize=False):
+def _r_js(local=False):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
         config = yaml.safe_load(f)
-
-    if no_optimize:
-        config['optimize'] = 'none'
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
@@ -146,9 +148,21 @@ def _r_js(local=False, no_optimize=False):
 
     ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
-        exit(1)
+        raise CommandError("Failed to build JS bundles")
 
     return config, local_js_dirs
+
+
+def _minify(config):
+    for module in with_progress_bar(config['modules'], prefix="Minifying", oneline=False):
+        filename = module['name'] + ".js"
+        path = os.path.join(ROOT_DIR, 'staticfiles', filename)
+        ret = call([
+            "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
+            "--source-map", f"url={filename}.map"
+        ])
+        if ret:
+            raise CommandError(f"Failed to minify {filename}")
 
 
 def _get_html_files_and_local_js_dirs(local):
