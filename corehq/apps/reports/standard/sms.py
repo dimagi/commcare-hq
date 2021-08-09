@@ -373,7 +373,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     @memoized
     def include_case_id(self):
-        return toggles.MESSAGE_LOG_CASE_ID.enabled(self.request.couch_user.username)
+        return toggles.MESSAGE_LOG_CASE_ID.enabled(self.domain)
 
     @property
     @memoized
