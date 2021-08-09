@@ -67,7 +67,7 @@ class DataRegistry(models.Model):
     domain = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     # slug used for referencing the registry in app suite files, APIs etc.
-    slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
+    slug = AutoSlugField(populate_from='name', slugify=slugify_remove_stops, unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -80,7 +80,7 @@ class DataRegistry(models.Model):
     objects = RegistryManager()
 
     class Meta:
-        unique_together = ('domain', 'slug')
+        unique_together = ('slug',)
 
     @classmethod
     @transaction.atomic
