@@ -21,7 +21,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
@@ -246,7 +246,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
 
             # user_role should be deleted along with the domain.
-            user_role = SQLUserRole.create(
+            user_role = UserRole.create(
                 domain=domain.name,
                 name=rolename,
                 permissions=Permissions(edit_commcare_users=True,

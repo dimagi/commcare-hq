@@ -102,7 +102,7 @@ from corehq.apps.users.models import (
     StaticRole,
     WebUser,
     Permissions,
-    SQLUserRole,
+    UserRole,
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
@@ -504,7 +504,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            SQLUserRole.objects.get_by_domain(self.domain),
+            UserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -887,14 +887,14 @@ def _update_role_from_view(domain, role_data):
 
     if "_id" in role_data:
         try:
-            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
-        except SQLUserRole.DoesNotExist:
-            role = SQLUserRole()
+            role = UserRole.objects.by_couch_id(role_data["_id"])
+        except UserRole.DoesNotExist:
+            role = UserRole()
         else:
             if role.domain != domain:
                 raise Http404()
     else:
-        role = SQLUserRole()
+        role = UserRole()
 
     role.domain = domain
     role.name = role_data["name"]
@@ -929,8 +929,8 @@ def delete_user_role(request, domain):
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
-    except SQLUserRole.DoesNotExist:
+        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except UserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id
     role.delete()

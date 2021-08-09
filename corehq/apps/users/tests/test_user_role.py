@@ -6,8 +6,8 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
     Permissions,
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
-    StaticRole, UserRole
+    UserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
+    StaticRole
 )
 
 
@@ -18,15 +18,15 @@ class RolesTests(TestCase):
     def setUpTestData(cls):
         SQLPermission.create_all()
         cls.roles = [
-            SQLUserRole(
+            UserRole(
                 domain=cls.domain,
                 name="role1",
             ),
-            SQLUserRole(
+            UserRole(
                 domain=cls.domain,
                 name="role2",
             ),
-            SQLUserRole(
+            UserRole(
                 domain='other-domain',
                 name="role3",
             )
@@ -40,15 +40,8 @@ class RolesTests(TestCase):
             PermissionInfo(Permissions.edit_data.name),
         ])
 
-    @classmethod
-    def tearDownClass(cls):
-        # user couch role since SQL roles get rolled back with the transaction
-        for role in UserRole.by_domain(cls.domain, include_archived=True):
-            role.delete()
-        super().tearDownClass()
-
     def test_set_assignable_by(self):
-        role = SQLUserRole(
+        role = UserRole(
             domain=self.domain,
             name="test-role",
         )
@@ -70,14 +63,14 @@ class RolesTests(TestCase):
         }
         role.set_assignable_by([r.id for r in new_assignments])
 
-        role2 = SQLUserRole.objects.get(id=role.id)
+        role2 = UserRole.objects.get(id=role.id)
         self.assertEqual(
             {a.assignable_by_role.name for a in role2.get_assignable_by()},
             {r.name for r in new_assignments}
         )
 
     def test_set_assignable_by_clear_prefetched_cache(self):
-        role = SQLUserRole.create(
+        role = UserRole.create(
             domain=self.domain,
             name="test-role",
             assignable_by=[self.roles[0].id]
@@ -89,7 +82,7 @@ class RolesTests(TestCase):
         new_assignments = {
             self.roles[2]
         }
-        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch = UserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
         role_with_prefetch.set_assignable_by([r.id for r in new_assignments])
 
         self.assertEqual(
@@ -97,12 +90,12 @@ class RolesTests(TestCase):
             {r.name for r in new_assignments}
         )
 
-        role_with_prefetch = SQLUserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
+        role_with_prefetch = UserRole.objects.prefetch_related("roleassignableby_set").get(id=role.id)
         role_with_prefetch.set_assignable_by([])
         self.assertEqual(list(role_with_prefetch.roleassignableby_set.all()), [])
 
     def test_set_assignable_by_couch(self):
-        role = SQLUserRole(
+        role = UserRole(
             domain=self.domain,
             name="test-role",
         )
@@ -114,14 +107,14 @@ class RolesTests(TestCase):
         }
         role.set_assignable_by_couch([r.couch_id for r in new_assignments])
 
-        role2 = SQLUserRole.objects.get(id=role.id)
+        role2 = UserRole.objects.get(id=role.id)
         self.assertEqual(
             {a.assignable_by_role.name for a in role2.get_assignable_by()},
             {r.name for r in new_assignments}
         )
 
     def test_set_permissions(self):
-        role = SQLUserRole(
+        role = UserRole(
             domain=self.domain,
             name="test-role",
         )
@@ -144,7 +137,7 @@ class RolesTests(TestCase):
         }
         role.set_permissions(new_permissions)
 
-        role2 = SQLUserRole.objects.get(id=role.id)
+        role2 = UserRole.objects.get(id=role.id)
         self.assertEqual(set(role2.get_permission_infos()), new_permissions)
 
         # change parameterized permission to allow all
@@ -153,11 +146,11 @@ class RolesTests(TestCase):
         }
         role.set_permissions(new_permissions)
 
-        role2 = SQLUserRole.objects.get(id=role.id)
+        role2 = UserRole.objects.get(id=role.id)
         self.assertEqual(set(role2.get_permission_infos()), new_permissions)
 
     def test_set_permissions_clear_prefetch_cache(self):
-        role = SQLUserRole.create(
+        role = UserRole.create(
             domain=self.domain,
             name="test-role",
             permissions=Permissions()
@@ -165,49 +158,43 @@ class RolesTests(TestCase):
 
         self.assertEqual(set(role.get_permission_infos()), set(Permissions().to_list()))
 
-        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        role_with_prefetch = UserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
         new_permissions = {PermissionInfo(Permissions.access_api.name)}
         role_with_prefetch.set_permissions(new_permissions)
 
         self.assertEqual(set(role_with_prefetch.get_permission_infos()), new_permissions)
 
-        role_with_prefetch = SQLUserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
+        role_with_prefetch = UserRole.objects.prefetch_related("rolepermission_set").get(id=role.id)
         role_with_prefetch.set_permissions([])
         self.assertEqual(list(role_with_prefetch.get_permission_infos()), [])
 
     def test_by_couch_id(self):
-        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id)
+        role = UserRole.objects.by_couch_id(self.roles[0].get_id)
         self.assertEqual(role.id, self.roles[0].id)
 
-        role = SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain=self.roles[0].domain)
+        role = UserRole.objects.by_couch_id(self.roles[0].get_id, domain=self.roles[0].domain)
         self.assertEqual(role.id, self.roles[0].id)
 
-        with self.assertRaises(SQLUserRole.DoesNotExist):
-            SQLUserRole.objects.by_couch_id(self.roles[0].get_id, domain="other-domain")
+        with self.assertRaises(UserRole.DoesNotExist):
+            UserRole.objects.by_couch_id(self.roles[0].get_id, domain="other-domain")
 
     def test_create_atomic(self):
         sql_roles_in_domain = {role.get_id for role in self.roles[0:2]}
-        couch_roles = UserRole.by_domain(self.domain)
-        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
         permissions_raises_exception = Mock(side_effect=Exception)
         with self.assertRaises(Exception):
-            SQLUserRole.create(self.domain, 'test_atomic', permissions=permissions_raises_exception)
+            UserRole.create(self.domain, 'test_atomic', permissions=permissions_raises_exception)
 
         # check sql role not created
-        sql_roles = SQLUserRole.objects.get_by_domain(self.domain)
+        sql_roles = UserRole.objects.get_by_domain(self.domain)
         self.assertEqual({role.get_id for role in sql_roles}, sql_roles_in_domain)
-
-        # check couch role not created
-        couch_roles = UserRole.by_domain(self.domain)
-        self.assertEqual({role.get_id for role in couch_roles}, sql_roles_in_domain)
 
 
 class TestRolePermissionsModel(TestCase):
     domain = "user-role-test"
 
     def setUp(self):
-        self.role1 = SQLUserRole(domain=self.domain, name="role1")
+        self.role1 = UserRole(domain=self.domain, name="role1")
         self.role1.save()
         self.addCleanup(self.role1.delete)
 
@@ -239,7 +226,7 @@ class TestRolePermissionsModel(TestCase):
             RolePermission(permission=Permissions.edit_data.name, allow_all=True),
         ], bulk=False)
 
-        role2 = SQLUserRole(domain=self.domain, name="role2")
+        role2 = UserRole(domain=self.domain, name="role2")
         role2.save()
         self.addCleanup(role2.delete)
 
@@ -250,7 +237,7 @@ class TestRolePermissionsModel(TestCase):
     @atomic
     def test_unique_constraint_fail(self):
         """the same role can not have duplicate permissions"""
-        sql_role = SQLUserRole(domain=self.domain, name="role1")
+        sql_role = UserRole(domain=self.domain, name="role1")
         sql_role.save()
         self.addCleanup(sql_role.delete)
 

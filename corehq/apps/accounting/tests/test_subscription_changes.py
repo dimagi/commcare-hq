@@ -28,7 +28,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
-    SQLUserRole,
+    UserRole,
     UserRolePresets,
     WebUser,
 )
@@ -76,8 +76,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
         self.other_domain.save()
         initialize_domain_with_default_roles(self.domain.name)
-        self.user_roles = SQLUserRole.objects.get_by_domain(self.domain.name)
-        self.custom_role = SQLUserRole.create(
+        self.user_roles = UserRole.objects.get_by_domain(self.domain.name)
+        self.custom_role = UserRole.create(
             self.domain.name,
             "Custom Role",
             permissions=Permissions(
@@ -120,7 +120,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._change_std_roles()
         subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
-        custom_role = SQLUserRole.objects.by_couch_id(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
 
         self._assertInitialRoles()
@@ -133,10 +133,10 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
         self._change_std_roles()
         new_subscription = subscription.change_plan(DefaultProductPlan.get_default_plan_version())
-        custom_role = SQLUserRole.objects.by_couch_id(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
         new_subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
-        custom_role = SQLUserRole.objects.by_couch_id(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
         self._assertInitialRoles()
@@ -144,7 +144,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def _change_std_roles(self):
         for u in self.user_roles:
-            user_role = SQLUserRole.objects.by_couch_id(u.get_id)
+            user_role = UserRole.objects.by_couch_id(u.get_id)
             user_role.set_permissions(Permissions(
                 view_reports=True,
                 edit_commcare_users=True,
@@ -161,7 +161,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def _assertInitialRoles(self):
         for u in self.user_roles:
-            user_role = SQLUserRole.objects.by_couch_id(u.get_id)
+            user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
                 UserRolePresets.get_permissions(user_role.name)

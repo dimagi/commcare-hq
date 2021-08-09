@@ -332,16 +332,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
     def test_dump_roles(self):
-        from corehq.apps.users.models import SQLUserRole, Permissions, RoleAssignableBy, RolePermission
+        from corehq.apps.users.models import UserRole, Permissions, RoleAssignableBy, RolePermission
 
         expected_object_counts = Counter({
-            SQLUserRole: 2,
+            UserRole: 2,
             RolePermission: 11,
             RoleAssignableBy: 1
         })
 
-        role1 = SQLUserRole.create(self.domain_name, 'role1')
-        role2 = SQLUserRole.create(
+        role1 = UserRole.create(self.domain_name, 'role1')
+        role2 = UserRole.create(
             self.domain_name, 'role1',
             permissions=Permissions(edit_web_users=True),
             assignable_by=[role1.id]
@@ -351,8 +351,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
-        role1_loaded = SQLUserRole.objects.get(id=role1.id)
-        role2_loaded = SQLUserRole.objects.get(id=role2.id)
+        role1_loaded = UserRole.objects.get(id=role1.id)
+        role2_loaded = UserRole.objects.get(id=role2.id)
 
         self.assertEqual(role1_loaded.permissions.to_list(), Permissions().to_list())
         self.assertEqual(role1_loaded.assignable_by, [])

@@ -95,7 +95,7 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import SQLUserRole, Permissions
+from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 
@@ -239,7 +239,7 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = SQLUserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
+    local_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
     local_roles_by_name = {}
     local_roles_by_upstream_id = {}
     for role in local_roles:
@@ -251,7 +251,7 @@ def update_user_roles(domain_link):
     for role_def in master_results:
         role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
         if not role:
-            role = SQLUserRole(domain=domain_link.linked_domain)
+            role = UserRole(domain=domain_link.linked_domain)
         local_roles_by_upstream_id[role_def['_id']] = role
         role.upstream_id = role_def['_id']
 

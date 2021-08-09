@@ -1,3 +1,5 @@
+import uuid
+
 import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
@@ -5,7 +7,6 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin, disable_sync_to_couch
 
 
 @attr.s(frozen=True)
@@ -59,13 +60,17 @@ class UserRoleManager(models.Manager):
 
     def by_couch_id(self, couch_id, domain=None):
         if domain:
-            query = SQLUserRole.objects.filter(domain=domain)
+            query = UserRole.objects.filter(domain=domain)
         else:
-            query = SQLUserRole.objects
+            query = UserRole.objects
         return query.get(couch_id=couch_id)
 
 
-class SQLUserRole(SyncSQLToCouchMixin, models.Model):
+def _uuid_str():
+    return uuid.uuid4().hex
+
+
+class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
     default_landing_page = models.CharField(
@@ -75,7 +80,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     is_non_admin_editable = models.BooleanField(null=False, default=False)
     is_archived = models.BooleanField(null=False, default=False)
     upstream_id = models.CharField(max_length=32, null=True)
-    couch_id = models.CharField(max_length=126, null=True)
+    couch_id = models.CharField(max_length=126, null=True, default=_uuid_str)
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -92,41 +97,18 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import Permissions
-        with transaction.atomic(), disable_sync_to_couch(cls):
-            # disable sync to couch to avoid partially syncing the role. Sync happens
-            # after the transaction succeeds
-            role = SQLUserRole.objects.create(domain=domain, name=name, **kwargs)
+        with transaction.atomic():
+            role = UserRole.objects.create(domain=domain, name=name, **kwargs)
             if permissions is None:
                 # match couch functionality and set default permissions
                 permissions = Permissions()
-            role.set_permissions(permissions.to_list(), sync_to_couch=False)
+            role.set_permissions(permissions.to_list())
             if assignable_by:
                 if not isinstance(assignable_by, list):
                     assignable_by = [assignable_by]
-                role.set_assignable_by(assignable_by, sync_to_couch=False)
+                role.set_assignable_by(assignable_by)
 
-        role._migration_do_sync()  # sync role to couch
         return role
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "name",
-            "default_landing_page",
-            "is_non_admin_editable",
-            "is_archived",
-            "upstream_id",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        from corehq.apps.users.models import UserRole
-        return UserRole
-
-    def _migration_sync_submodels_to_couch(self, couch_object):
-        couch_object.permissions = self.permissions
-        couch_object.assignable_by = self.assignable_by
 
     @property
     def get_id(self):
@@ -144,19 +126,16 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
         return role_to_dict(self)
 
     @transaction.atomic
-    def set_permissions(self, permission_infos, sync_to_couch=True):
-        def _clear_cache_sync_with_couch():
+    def set_permissions(self, permission_infos):
+        def _clear_query_cache():
             try:
                 self.refresh_from_db(fields=["rolepermission_set"])
             except FieldDoesNotExist:
                 pass
 
-            if sync_to_couch:
-                self._migration_do_sync()  # sync role to couch
-
         if not permission_infos:
             RolePermission.objects.filter(role=self).delete()
-            _clear_cache_sync_with_couch()
+            _clear_query_cache()
             return
 
         permissions_by_name = {
@@ -177,7 +156,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             old_ids = [old.id for old in permissions_by_name.values()]
             RolePermission.objects.filter(id__in=old_ids).delete()
 
-        _clear_cache_sync_with_couch()
+        _clear_query_cache()
 
     def get_permission_infos(self):
         return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
@@ -190,23 +169,20 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
     def set_assignable_by_couch(self, couch_role_ids):
         sql_ids = []
         if couch_role_ids:
-            sql_ids = SQLUserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
+            sql_ids = UserRole.objects.filter(couch_id__in=couch_role_ids).values_list('id', flat=True)
         self.set_assignable_by(sql_ids)
 
     @transaction.atomic
-    def set_assignable_by(self, role_ids, sync_to_couch=True):
-        def _clear_cache_sync_with_couch():
+    def set_assignable_by(self, role_ids):
+        def _clear_query_cache():
             try:
                 self.refresh_from_db(fields=["roleassignableby_set"])
             except FieldDoesNotExist:
                 pass
 
-            if sync_to_couch:
-                self._migration_do_sync()
-
         if not role_ids:
             self.roleassignableby_set.all().delete()
-            _clear_cache_sync_with_couch()
+            _clear_query_cache()
             return
 
         assignments_by_role_id = {
@@ -224,16 +200,10 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
             old_ids = list(assignments_by_role_id.values())
             RoleAssignableBy.objects.filter(id__in=old_ids).delete()
 
-        _clear_cache_sync_with_couch()
+        _clear_query_cache()
 
     def get_assignable_by(self):
         return list(self.roleassignableby_set.select_related("assignable_by_role").all())
-
-    @property
-    def assignable_by_sql(self):
-        return list(
-            self.roleassignableby_set.values_list('assignable_by_role_id', flat=True)
-        )
 
     @property
     def assignable_by_couch(self):
@@ -252,7 +222,7 @@ class SQLUserRole(SyncSQLToCouchMixin, models.Model):
 
 @foreign_value_init
 class RolePermission(models.Model):
-    role = models.ForeignKey("SQLUserRole", on_delete=models.CASCADE)
+    role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     permission_fk = models.ForeignKey("SQLPermission", on_delete=models.CASCADE)
     permission = ForeignValue(permission_fk)
 
@@ -300,36 +270,23 @@ class SQLPermission(models.Model):
 
 
 class RoleAssignableBy(models.Model):
-    role = models.ForeignKey("SQLUserRole", on_delete=models.CASCADE)
+    role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     assignable_by_role = models.ForeignKey(
-        "SQLUserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
+        "UserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
     )
 
 
-def migrate_role_permissions_to_sql(user_role, sql_role):
-    sql_role.set_permissions(user_role.permissions.to_list(), sync_to_couch=False)
-
-
-def migrate_role_assignable_by_to_sql(couch_role, sql_role):
-    from corehq.apps.users.models import UserRole
-
-    assignable_by_mapping = {
-        ids[0]: ids[1] for ids in
-        SQLUserRole.objects.filter(couch_id__in=couch_role.assignable_by).values_list('couch_id', 'id')
-    }
-    if len(assignable_by_mapping) != len(couch_role.assignable_by):
-        for couch_id in couch_role.assignable_by:
-            if couch_id not in assignable_by_mapping:
-                assignable_by_sql_role = UserRole.get(couch_id)._migration_do_sync()  # noqa
-                assert assignable_by_sql_role is not None
-                assignable_by_mapping[couch_id] = assignable_by_sql_role.id
-
-    sql_role.set_assignable_by(list(assignable_by_mapping.values()), sync_to_couch=False)
-
-
 def role_to_dict(role):
+    simple_fields = [
+        "domain",
+        "name",
+        "default_landing_page",
+        "is_non_admin_editable",
+        "is_archived",
+        "upstream_id",
+    ]
     data = {}
-    for field in SQLUserRole._migration_get_fields():
+    for field in simple_fields:
         data[field] = getattr(role, field)
     data["permissions"] = role.permissions.to_json()
     data["assignable_by"] = role.assignable_by
