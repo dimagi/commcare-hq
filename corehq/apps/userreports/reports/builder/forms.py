@@ -25,7 +25,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
     DATA_SOURCE_TYPE_RAW,
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
-    DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM, get_data_source_doc_type,
+    DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM,
     make_case_data_source_filter, make_form_data_source_filter,
 )
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
@@ -465,9 +465,10 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         return self._source_id
 
     @property
-    @memoized
+    @abstractmethod
     def source_doc_type(self):
-        return get_data_source_doc_type(self.source_type)
+        """Return the doc_type the datasource.referenced_doc_type"""
+        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -653,6 +654,10 @@ class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
             }
 
     @property
+    def source_doc_type(self):
+        return 'XFormInstance'
+
+    @property
     @memoized
     def filter(self):
         return make_form_data_source_filter(
@@ -726,6 +731,10 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         assert not is_multiselect_chart_report
         return {}
+
+    @property
+    def source_doc_type(self):
+        return 'CommCareCase'
 
     @property
     @memoized
