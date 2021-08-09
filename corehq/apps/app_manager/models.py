@@ -4870,6 +4870,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             else:
                 form.version = None
 
+    @time_method()
     def set_media_versions(self):
         """
         Set the media version numbers for all media in the app to the current app version

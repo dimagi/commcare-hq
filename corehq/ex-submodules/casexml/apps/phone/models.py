@@ -83,6 +83,10 @@ class OTARestoreUser(object):
         return 1
 
     @property
+    def full_username(self):
+        return self._couch_user.username
+
+    @property
     def username(self):
         return self._couch_user.raw_username
 

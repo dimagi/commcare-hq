@@ -76,6 +76,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -101,7 +102,7 @@ from corehq.apps.users.models import (
     StaticRole,
     WebUser,
     Permissions,
-    SQLUserRole,
+    UserRole,
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
@@ -307,11 +308,12 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -502,7 +504,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            SQLUserRole.objects.get_by_domain(self.domain),
+            UserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -818,7 +820,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=f"Removed from domain '{domain}'")
+                        message=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -885,14 +887,14 @@ def _update_role_from_view(domain, role_data):
 
     if "_id" in role_data:
         try:
-            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
-        except SQLUserRole.DoesNotExist:
-            role = SQLUserRole()
+            role = UserRole.objects.by_couch_id(role_data["_id"])
+        except UserRole.DoesNotExist:
+            role = UserRole()
         else:
             if role.domain != domain:
                 raise Http404()
     else:
-        role = SQLUserRole()
+        role = UserRole()
 
     role.domain = domain
     role.name = role_data["name"]
@@ -927,8 +929,8 @@ def delete_user_role(request, domain):
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
-    except SQLUserRole.DoesNotExist:
+        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except UserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id
     role.delete()
@@ -1328,6 +1330,13 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                domain=domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                message=UserChangeMessage.password_reset()
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:

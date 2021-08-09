@@ -70,6 +70,8 @@ contextlib2==0.6.0.post1
     # via
     #   git-build-branch
     #   schema
+coverage==5.5
+    # via -r test-requirements.in
 cryptography==3.4.7
     # via
     #   jwcrypto
@@ -125,6 +127,8 @@ django-appconf==1.0.4
     # via
     #   django-compressor
     #   django-statici18n
+django-autoslug==1.9.8
+    # via -r base-requirements.in
 django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0

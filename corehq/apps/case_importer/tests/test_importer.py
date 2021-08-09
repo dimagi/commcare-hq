@@ -19,6 +19,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
     get_interned_exception
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.groups.models import Group
@@ -566,6 +567,39 @@ class ImporterTest(TestCase):
             ])
         case = CaseAccessors(self.domain).get_case(case.case_id)
         self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
+
+    @run_with_all_backends
+    def test_date_validity_checking(self):
+        setup_data_dictionary(self.domain, self.default_case_type, [('d1', 'date'), ('d2', 'date')])
+        file_rows = [
+            ['case_id', 'd1', 'd2'],
+            ['', '2011-04-16', ''],
+            ['', '2011-44-22', '2021-03-44'],
+        ]
+
+        # With validity checking enabled, the two bad dates on row 3
+        # should casue that row to fail to import, and both should be
+        # flagged as invalid dates in the error report. (The blank date
+        # on row 2 "passes" validity checking, there is currently not
+        # a way to indicate whether a field is required or not so it's
+        # assumed not required.)
+        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
+            res = self.import_mock_file(file_rows)
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(1, res['failed_count'])
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidDate.title
+        error_cols = ['d1', 'd2']
+        for col in error_cols:
+            self.assertEqual(res['errors'][error_message][col]['rows'], [3])
+
+        # Without the flag enabled, all the rows should be imported.
+        res = self.import_mock_file(file_rows)
+        self.assertEqual(2, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        self.assertFalse(res['errors'])
 
     @run_with_all_backends
     def test_columns_and_rows_align(self):
