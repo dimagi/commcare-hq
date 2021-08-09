@@ -92,7 +92,7 @@
         "lodash": "4.17.21",
         "mocha": "8.4.0",
         "mocha-headless-chrome": "3.0.0",
-        "sinon": "2.3.2"
+        "sinon": "11.1.2"
     },
     "engines": {
         "yarn": ">= 1.0.0"
