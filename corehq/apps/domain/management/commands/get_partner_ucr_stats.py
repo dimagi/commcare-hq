@@ -6,7 +6,7 @@ from corehq.apps.userreports.models import (
     StaticReportConfiguration,
     ReportConfiguration,
 )
-from corehq.util.couch import get_document_or_not_found
+from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 
 
 class Command(BaseCommand):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, ucr_ids, **options):
-        self.stdout.write('export id\texport type\tproject\texport name\tapp id\tapp name')
+        self.stdout.write('report id\tproject\treport name')
         ucr_ids = ucr_ids.split(',')
         for ucr_id in ucr_ids:
             self.print_ucr_info(ucr_id, domain)
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         try:
             report_config = self.get_ucr_config(ucr_id, domain)
             report_title = report_config.title
-        except ResourceNotFound:
+        except (ResourceNotFound, DocumentNotFound):
             report_title = "not found (deleted)"
 
         self.stdout.write(f'{ucr_id}\t{domain}\t{report_title}')
