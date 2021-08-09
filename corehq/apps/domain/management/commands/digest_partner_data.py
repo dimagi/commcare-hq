@@ -1,10 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.models import report_config_id_is_static, \
-    StaticReportConfiguration, ReportConfiguration
-from corehq.util.couch import get_document_or_not_found
-from corehq.util.quickcache import quickcache
-
 
 class Command(BaseCommand):
     help = "Give stats on export downloads based on logs"
@@ -32,24 +27,30 @@ class Command(BaseCommand):
             lines = f.readlines()
             form_export_ids = []
             case_export_ids = []
+            ucr_ids = []
             for line in lines:
                 if stat_type == 'export':
                     self.show_export_data(line, 'form', form_export_ids)
                     self.show_export_data(line, 'case', case_export_ids)
                 if stat_type == 'ucr':
-                    self.show_ucr_data(line)
+                    self.show_ucr_data(line, ucr_ids)
                 if stat_type == 'excel':
                     self.show_export_to_excel_data(line)
 
         if stat_type == 'export':
-            self.stdout.write('\n\nFORM IDS')
+            self.stdout.write('\n\nFORM EXPORT CONFIG IDS')
             unique_form_exports = ','.join(set(form_export_ids))
             self.stdout.write(f'"{unique_form_exports}"')
-            self.stdout.write('\n\nCASE IDS')
+            self.stdout.write('\n\nCASE EXPORT CONFIG IDS')
             unique_case_exports = ','.join(set(case_export_ids))
             self.stdout.write(f'"{unique_case_exports}"')
 
-    def show_ucr_data(self, line):
+        if stat_type == 'ucr':
+            self.stdout.write('\n\nUCR IDS')
+            unique_ucrs = ','.join(set(ucr_ids))
+            self.stdout.write(f'"{unique_ucrs}"')
+
+    def show_ucr_data(self, line, ucr_ids):
         url_path = 'configurable_reports/export_status'
         if url_path in line:
             data = line.split(',')
@@ -58,15 +59,8 @@ class Command(BaseCommand):
             domain = data[2]
             url = data[-1]
             ucr_id = url.split('/')[-2]
-            report_config = self.get_ucr_config(ucr_id, domain)
-            self.stdout.write(f'{timestamp}\t{user}\t{domain}\t{ucr_id}\t{report_config.title}')
-
-    @quickcache(['self.slug', 'ucr_id', 'domain'])
-    def get_ucr_config(self, ucr_id, domain):
-        if report_config_id_is_static(ucr_id):
-            return StaticReportConfiguration.by_id(ucr_id, domain=domain)
-        else:
-            return get_document_or_not_found(ReportConfiguration, domain, ucr_id)
+            ucr_ids.append(ucr_id)
+            self.stdout.write(f'{timestamp}\t{user}\t{domain}\t{ucr_id}')
 
     def show_export_data(self, line, export_type, export_ids):
         export_url_path = f'data/export/custom/new/{export_type}/download'
