@@ -294,9 +294,9 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
         Whether this interface uses a managed data source.
 
         If true, the data source will be created / modified with the report, and the
-        temporary data source workflow will be enageld.
+        temporary data source workflow will be enabled.
 
-        If false, the data source is assumed to exist and be available as self.source_id.
+        If false, the data source is assumed to exist and be available as self.data_source_id.
 
         :return:
         """
@@ -346,6 +346,10 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
 
 
 class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
+    """Abstract class that represents the interface required for building managed
+    data sources
+    """
+
     @property
     def uses_managed_data_source(self):
         return True
@@ -353,7 +357,7 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     @abstractmethod
     def source_id(self):
-        """Case type or Form ID. Only applies to managed data sources."""
+        """Case type or Form ID"""
         pass
 
     @abstractmethod
@@ -400,7 +404,11 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
         self.app = app
         self.source_type = source_type
         # source_id is the ID of a UCR data source
-        self.source_id = source_id
+        self._source_id = source_id
+
+    @property
+    def data_source_id(self):
+        return self._source_id
 
     @property
     def uses_managed_data_source(self):
@@ -409,7 +417,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     @memoized
     def data_source(self):
-        return get_datasource_config_infer_type(self.source_id, self.domain)[0]
+        return get_datasource_config_infer_type(self._source_id, self.domain)[0]
 
     @property
     def data_source_properties(self):
@@ -1114,7 +1122,7 @@ class ConfigureNewReportBase(forms.Form):
         if self.ds_builder.uses_managed_data_source:
             data_source_config_id = self._build_data_source()
         else:
-            data_source_config_id = self.ds_builder.source_id
+            data_source_config_id = self.ds_builder.data_source_id
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
@@ -1171,7 +1179,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         if not self.ds_builder.uses_managed_data_source:
             # if the data source interface doens't use a temp data source then the id is just the source_id
-            return self.ds_builder.source_id
+            return self.ds_builder.data_source_id
 
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]
