@@ -79,6 +79,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'message_type': MESSAGE_TYPE_SMS,
         }
 
+        # Ugly side effect! This needs to happen higher up in the stream
         phone_number_id = msg.phone_number.replace('+', '')
         related_case = get_case_by_identifier(msg.domain, phone_number_id)
 
