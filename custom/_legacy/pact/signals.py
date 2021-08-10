@@ -31,5 +31,5 @@ def process_dots_submission(sender, xform, **kwargs):
         notify_exception(None, message="Error processing PACT DOT submission due to an unknown error: %s\n\tTraceback: %s" % (ex, tb))
 
 #xform_saved.connect(process_dots_submission)
-successful_form_received.connect(process_dots_submission)
-
+# Signal disabled since forms and cases were migrated from Couch to SQL
+#successful_form_received.connect(process_dots_submission)
