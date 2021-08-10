@@ -611,11 +611,7 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
 
 
 def get_instances_for_module(app, module, detail_section_elements):
-    """
-    This method is used by CloudCare when filtering cases.
-    """
-    modules = list(app.get_modules())
-    helper = DetailsHelper(app, modules)
+    helper = DetailsHelper(app)
     details = detail_section_elements
     detail_mapping = {detail.id: detail for detail in details}
     details_by_id = detail_mapping
