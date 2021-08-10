@@ -129,9 +129,9 @@ hqDefine("locations/js/location", [
             treeModel.load(locs);
 
             var pseudoRootLocation = locationTreeModel.locationModel(locData, treeModel, 1);
-            var rootLocation = {pseudoRoot: pseudoRootLocation};
+            treeModel.root = pseudoRootLocation;
 
-            $('#location_descendants_tree').koApplyBindings(rootLocation);
+            $('#location_tree').koApplyBindings(treeModel);
         }
     });
 });
