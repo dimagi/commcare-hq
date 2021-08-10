@@ -55,10 +55,8 @@ def incoming_message(request):
 @require_POST
 @csrf_exempt
 def message_status(request):
-    resource_vars = request.POST.get('vars')
-    # if resource_vars and resource_vars.get('message_id'):
     process_message_status(
-        resource_vars.get('message_id'),
+        request.POST.get('message_id'),
         request.POST.get('status'),
         error_message=request.POST.get('error_message')
     )
