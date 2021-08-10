@@ -1177,15 +1177,16 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
         changes = user_history.message
-        self.assertTrue('Removed phone number 12345678912' in changes)
+
+        self.assertTrue('Removed phone number 12345678912' not in changes)
 
         # Check if user is updated
         users = CommCareUser.by_domain(self.domain.name)
         user = next((u for u in users if u._id == user._id))
 
-        self.assertEqual(user.default_phone_number, None)
-        self.assertEqual(user.phone_number, None)
-        self.assertEqual(user.phone_numbers, [])
+        self.assertEqual(user.default_phone_number, '12345678912')
+        self.assertEqual(user.phone_number, '12345678912')
+        self.assertEqual(user.phone_numbers, ['12345678912'])
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
