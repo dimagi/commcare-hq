@@ -1,5 +1,4 @@
-import json
-
+from dimagi.utils.parsing import string_to_boolean
 from memoized import memoized
 from tastypie import fields
 from tastypie.exceptions import BadRequest
@@ -56,7 +55,12 @@ class LocationResource(HqBaseResource):
         domain = kwargs['domain']
         project = getattr(bundle.request, 'project', self.domain_obj(domain))
         parent_id = bundle.request.GET.get('parent_id', None)
-        include_inactive = json.loads(bundle.request.GET.get('include_inactive') or 'false')
+
+        try:
+            include_inactive = string_to_boolean(bundle.request.GET.get('include_inactive', False))
+        except ValueError:
+            include_inactive = False
+
         user = bundle.request.couch_user
 
         if not parent_id:
