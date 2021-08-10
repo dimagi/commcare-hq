@@ -64,7 +64,7 @@ class CustomRecipientTest(TestCase):
                     domain=self.domain,
                     case_id=case_id or case.case_id,
                     recipient_type='CustomRecipient',
-                    recipient_id='CASE_OWNER_LOCATION_PARENT'
+                    recipient_id='CASE_OWNER_PARENT_LOCATION'
                 )
 
             # Test the recipient is returned correctly
