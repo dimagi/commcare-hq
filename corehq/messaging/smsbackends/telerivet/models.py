@@ -87,7 +87,10 @@ class SQLTelerivetBackend(SQLSMSBackend):
             msg.save()
 
             payload.update({
-                'status_url': f'{get_url_base()}{reverse("telerivet_message_status")}/{msg.couch_id}/'
+                'status_url': "{base_url}{resource}".format(
+                    base_url=get_url_base(),
+                    resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
+                )
             })
 
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
