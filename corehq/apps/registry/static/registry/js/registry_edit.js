@@ -83,14 +83,17 @@ hqDefine("registry/js/registry_edit", [
         self.availableInviteDomains = ko.computed(() => {
             const existingInvites = self.invitations().map((invite) => invite.domain);
             return availableDomains.filter((domain) => {
-                return domain !== self.current_domain && !existingInvites.includes(domain)
+                return domain !== self.current_domain && !existingInvites.includes(domain);
             });
+        });
+        self.allInvitations = ko.computed(() => {
+           return Array.from(new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain))));
         });
         self.availableGrantDomains = ko.computed(() => {
             // use invitedDomains since invitations() will be empty if the current domain is not the owner
-            let availableDomains = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain))),
+            let availableDomains = new Set(self.allInvitations()),
                 granted = self.grants().filter((grant) => grant.from_domain === self.current_domain).flatMap((grant) => {
-                    return grant.to_domains
+                    return grant.to_domains;
                 });
             availableDomains.delete(self.current_domain);
             granted.forEach((domain) => availableDomains.delete(domain));

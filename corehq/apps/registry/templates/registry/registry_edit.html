@@ -100,7 +100,10 @@
           </p>
           {% if not is_owner %}
           <p data-bind="visible: domain_invitation.status() === 'accepted'">
-            {% trans "Participating project spaces" %}: <span data-bind="text: availableGrantDomains().join(', ')"></span>
+            {% trans "Participating project spaces:" %}
+          </p>
+          <p data-bind="foreach: allInvitations">
+            <span class="label label-default-light" data-bind="text: $data"></span>
           </p>
           {% endif %}
         </div>
