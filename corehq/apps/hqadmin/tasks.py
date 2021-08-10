@@ -198,6 +198,6 @@ def track_pg_limits():
             cursor.execute(query)
             results = cursor.fetchall()
             for table, sequence in results:
-                cursor.execute(f'select last_value from {sequence}')
+                cursor.execute(f'select last_value from "{sequence}"')
                 current_value = cursor.fetchone()[0]
                 metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})

@@ -159,7 +159,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
         this.sessionId = options.sessionId;
-        this.steps = options.steps;
+        this.selections = options.selections;
         this.endpointId = options.endpointId;
         this.endpointArgs = options.endpointArgs;
         this.page = options.page;
@@ -171,19 +171,19 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.forceLoginAs = options.forceLoginAs;
         this.forceManualAction = options.forceManualAction;
 
-        this.setSteps = function (steps) {
-            this.steps = steps;
+        this.setSelections = function (selections) {
+            this.selections = selections;
         };
 
-        this.addStep = function (step) {
-            if (!this.steps) {
-                this.steps = [];
+        this.addSelection = function (selection) {
+            if (!this.selections) {
+                this.selections = [];
             }
 
-            // Steps only deal with strings, because formplayer will send them back as strings
-            this.steps.push(String(step));
+            // Selections only deal with strings, because formplayer will send them back as strings
+            this.selections.push(String(selection));
 
-            // clear out pagination and search when we take a step
+            // clear out pagination and search when we navigate
             this.page = null;
             this.search = null;
         };
@@ -213,11 +213,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.queryData) {
                 this.queryData = {};
             }
-            var steps = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().steps;
+            var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
                 execute: execute,
-                selections: steps,
+                selections: selections,
             };
             this.page = null;
             this.search = null;
@@ -227,15 +227,15 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.forceManualAction = force;
         };
 
-        this.replaceEndpoint = function (steps) {
+        this.replaceEndpoint = function (selections) {
             delete this.endpointId;
             delete this.endpointArgs;
-            this.steps = steps || [];
+            this.selections = selections || [];
         };
 
         this.clearExceptApp = function () {
             this.sessionId = null;
-            this.steps = null;
+            this.selections = null;
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -251,19 +251,19 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.forceManualAction = null;
         };
 
-        this.spliceSteps = function (index) {
+        this.spliceSelections = function (index) {
             // null out the session if we clicked the root (home)
             if (index === 0) {
-                this.steps = null;
+                this.selections = null;
                 this.sessionId = null;
             } else {
-                this.steps = this.steps.splice(0, index);
-                var stepsKey = this.steps.join(",");
+                this.selections = this.selections.splice(0, index);
+                var key = this.selections.join(",");
                 // Query data is necessary to formplayer navigation, so keep it,
-                // but only for the steps that are still relevant to the session.
+                // but only for the selections that are still relevant to the session.
                 this.queryData = _.pick(this.queryData, function (value) {
                     var valueKey = value.selections.join(",");
-                    return stepsKey.startsWith(valueKey) && stepsKey !== valueKey;
+                    return key.startsWith(valueKey) && key !== valueKey;
                 });
             }
             this.page = null;
@@ -282,7 +282,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             endpointId: self.endpointId,
             endpointArgs: self.endpointArgs,
             sessionId: self.sessionId,
-            steps: self.steps,
+            selections: self.selections,
             page: self.page,
             search: self.search,
             queryData: self.queryData || {},    // formplayer can't handle a null
@@ -302,7 +302,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'endpointId': data.endpointId,
             'endpointArgs': data.endpointArgs,
             'sessionId': data.sessionId,
-            'steps': data.steps,
+            'selections': data.selections,
             'page': data.page,
             'search': data.search,
             'queryData': data.queryData,
