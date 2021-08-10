@@ -28,6 +28,7 @@ def make_time():
     return datetime.now(tz=timezone(settings.TIME_ZONE))
 
 
+# TODO: delete
 class DOTCalendarReporter(object):
 
     patient_casedoc = None

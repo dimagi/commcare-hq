@@ -37,6 +37,7 @@ from dimagi.ext.couchdbkit import (
 dp = parser()
 
 
+# TODO: delete
 class DOTSubmission(XFormInstance):
 
     @property
