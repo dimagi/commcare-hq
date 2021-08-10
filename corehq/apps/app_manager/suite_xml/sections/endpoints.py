@@ -1,6 +1,5 @@
 from typing import List
 
-from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -45,10 +44,21 @@ class SessionEndpointContributor(SuiteContributorByModule):
             endpoint_id = module.session_endpoint_id
 
         stack = Stack()
+        arguments = []
+        helper = EndpointsHelper(self.suite, self.app)
+        children = helper.get_frame_children(module, form)
+        for child in children:
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
+                frame = PushFrame()
+                stack.add_frame(frame)
+                frame.add_datum(
+                    StackDatum(id=child.id, value=f"${child.id}")
+                )
+                frame.add_command(f"'claim_command.{endpoint_id}.{child.id}'")
         frame = PushFrame()
         stack.add_frame(frame)
         arguments = []
-        for child in self._get_frame_children(module, form):
+        for child in helper.get_frame_children(module, form):
             if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
                 arguments.append(Argument(id=child.id))
                 frame.add_datum(
@@ -63,8 +73,14 @@ class SessionEndpointContributor(SuiteContributorByModule):
             stack=stack,
         )
 
-    def _get_frame_children(self, module, form):
-        helper = WorkflowHelper(self.suite, self.app, self.modules)
+
+class EndpointsHelper(object):
+    def __init__(self, suite, app):
+        self.suite = suite
+        self.app = app
+
+    def get_frame_children(self, module, form):
+        helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())
         frame_children = helper.get_frame_children(module, form)
         if module.root_module_id:
             frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
