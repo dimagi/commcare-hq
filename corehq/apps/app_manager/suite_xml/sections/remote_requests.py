@@ -90,14 +90,14 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath(self.module.search_config.case_session_var).instance()]
-        query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
-        query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
-        query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
+        xpaths = [QuerySessionXPath(self.module.search_config.case_session_var).instance()]
+        xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
+        xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
+        xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
-        instances |= self._get_instances_for_module()
+        xpaths.extend(self._get_xpaths_for_module())
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, xpaths)
 
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
@@ -106,7 +106,7 @@ class RemoteRequestFactory(object):
     def _details_helper(self):
         return DetailsHelper(self.app)
 
-    def _get_instances_for_module(self):
+    def _get_xpaths_for_module(self):
         details = self.detail_section_elements
         detail_mapping = {detail.id: detail for detail in details}
         details_by_id = detail_mapping
@@ -115,12 +115,9 @@ class RemoteRequestFactory(object):
                       if enabled]
         detail_ids = [_f for _f in detail_ids if _f]
         xpaths = set()
-
         for detail_id in detail_ids:
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
-
-        instances, _ = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-        return instances
+        return list(xpaths)
 
     def _build_session(self):
         return RemoteRequestSession(
