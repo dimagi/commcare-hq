@@ -477,7 +477,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             role = row.get('role', None)
             profile = row.get('user_profile', None)
             web_user_username = row.get('web_user')
-            phone_numbers = row.get('phone-number', [])
+            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
             try:
                 password = str(password) if password else None
@@ -502,7 +502,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if type(phone_numbers) is list:
+                if phone_numbers is not None:
                     phone_numbers = clean_phone_numbers(phone_numbers)
                     commcare_user_importer.update_phone_numbers(phone_numbers)
 
