@@ -1,5 +1,5 @@
 from corehq.apps.api.es import ReportCaseESView
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
+from pact.enums import PACT_DOMAIN
 from io import BytesIO
 from django.test.client import RequestFactory
 from corehq.apps.receiverwrapper.views import post
@@ -44,55 +44,6 @@ def pact_script_fields():
         """
         }
     }
-
-
-def case_script_field():
-    """
-    Hack method to give a single case_id placeholder for viewing results for both old and new style
-    """
-    return {
-        "script_case_id": {
-            "script": """
-            if(_source['form']['case'] != null) {
-              if (_source['form']['case']['@case_id'] != null) {
-                _source['form']['case']['@case_id'];
-              }
-              else { _source['form']['case']['case_id'];
-             }
-            }"""
-        }
-    }
-
-
-def query_per_case_submissions_facet(domain, username=None, limit=100):
-    """
-    Xform query to get count facet by case_id
-    """
-    query = {
-        "facets": {
-            "case_submissions": {
-                "terms": {
-                    "script_field": case_script_field()['script_case_id']['script'],
-                    "size": limit
-                },
-                "facet_filter": {
-                    "and": [
-                        {
-                            "term": {
-                                "domain.exact": domain
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        "size": 0
-    }
-
-    if username is not None:
-        query['facets']['case_submissions']['facet_filter']['and'].append(
-            {"term": {"form.meta.username": username}})
-    return query
 
 
 def get_case_id(xform):
