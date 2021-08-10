@@ -237,7 +237,7 @@ def manage_invitations(request, domain, registry_slug):
                 "{count} invitation sent",
                 "{count} invitations sent",
                 len(invitations)
-            ).format(len(invitations))
+            ).format(count=len(invitations))
         })
 
 
