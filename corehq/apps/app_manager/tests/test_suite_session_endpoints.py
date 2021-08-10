@@ -1,3 +1,5 @@
+from mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -15,6 +17,7 @@ from .util import (
 @patch_get_xform_resource_overrides()
 @flag_enabled('SESSION_ENDPOINTS')
 class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
+    file_path = ('data',)
 
     def setUp(self):
         self.domain = 'test-domain'
@@ -60,12 +63,19 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
     def test_followup_form_session_endpoint_id(self):
         self.form.session_endpoint_id = 'my_form'
         self.factory.form_requires_case(self.form, case_type=self.parent_case_type)
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
                 <endpoint id="my_form">
                     <argument id="case_id"/>
                     <stack>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
                         <push>
                             <command value="'m0'"/>
                             <datum id="case_id" value="$case_id"/>
@@ -75,8 +85,16 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request",
         )
 
     def test_child_module_form_session_endpoint_id(self):
@@ -86,6 +104,10 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -93,6 +115,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="parent_id"/>
                     <argument id="case_id"/>
                     <stack>
+                        <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_form.case_id'"/>
+                        </push>
                         <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
@@ -104,8 +134,25 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_form",
+            ),
+            suite,
+            "./remote-request[2]",
         )
 
     def test_multiple_session_endpoints(self):
@@ -116,6 +163,10 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             case_type=self.child_case_type,
             parent_case_type=self.parent_case_type
         )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.factory.app.create_suite()
+
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -132,6 +183,14 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                     <argument id="case_id"/>
                     <stack>
                         <push>
+                            <datum id="parent_id" value="$parent_id"/>
+                            <command value="'claim_command.my_child_form.parent_id'"/>
+                        </push>
+                        <push>
+                            <datum id="case_id" value="$case_id"/>
+                            <command value="'claim_command.my_child_form.case_id'"/>
+                        </push>
+                        <push>
                             <command value="'m0'"/>
                             <command value="'m1'"/>
                             <datum id="parent_id" value="$parent_id"/>
@@ -142,8 +201,25 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
                 </endpoint>
             </partial>
             """,
-            self.factory.app.create_suite(),
+            suite,
             "./endpoint",
+        )
+
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="parent_id",
+                endpoint_id="my_child_form",
+            ),
+            suite,
+            "./remote-request[1]",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml("session_endpoint_remote_request").decode('utf-8').format(
+                datum_id="case_id",
+                endpoint_id="my_child_form",
+            ),
+            suite,
+            ".remote-request[2]",
         )
 
     def test_module_session_endpoint_id(self):
