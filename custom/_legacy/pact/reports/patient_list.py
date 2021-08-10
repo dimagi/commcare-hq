@@ -20,31 +20,3 @@ class PactPrimaryHPField(BaseSingleOptionFilter):
             #yield dict(val=x._id, text=x.raw_username)
             yield dict(val=x.raw_username, text=x.raw_username)
 #        self.options = [dict(val=case['_id'], text="(%s) - %s" % (case['pactid'], case['name'])) for case in patient_cases]
-
-
-# TODO: delete?
-class HPStatusField(BaseSingleOptionFilter):
-    slug = "hp_status"
-    label = "HP Status"
-    default_text = "All Active HP"
-    ANY_HP = "any_hp"
-
-    @property
-    def options(self):
-        options = [(self.ANY_HP, "All Active HP")]
-        options.extend(PACT_HP_CHOICES)
-        return options
-
-
-# TODO: delete?
-class DOTStatus(BaseSingleOptionFilter):
-    slug = "dot_status"
-    label = "DOT Status"
-    default_text = "All"
-    ANY_DOT = "any_dot"
-
-    @property
-    def options(self):
-        options = [(self.ANY_DOT, "Any DOT")]
-        options.extend(PACT_DOT_CHOICES[:3])
-        return options
