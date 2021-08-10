@@ -109,7 +109,7 @@ class BillingAccountBasicForm(forms.Form):
         initial=False
     )
     is_sms_billable_report_visible = forms.BooleanField(
-        label=ugettext_lazy("SMS Billable Report Visible"),
+        label="",
         required=False,
         initial=False
     )
