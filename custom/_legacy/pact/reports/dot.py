@@ -17,6 +17,7 @@ from pact.reports.dot_calendar import DOTCalendarReporter
 from pact.utils import get_base_form_es_query, get_base_case_es_query
 
 
+# TODO: delete
 class PactDOTPatientField(BaseSingleOptionFilter):
     slug = "dot_patient"
     label = "DOT Patient"
