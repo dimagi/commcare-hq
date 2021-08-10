@@ -34,7 +34,7 @@ def commit_migration(domain):
 
 def recommit_migration(domain):
     print("This is meant be used when a previous COMMIT failed with the error:")
-    print("could not set use_sql_backend for domain womenengagement (try again)")
+    print(f"could not set use_sql_backend for domain {domain} (try again)")
     answer = input("Type 'commit' to continue: ")
     if answer != "commit":
         print("Abort.")
