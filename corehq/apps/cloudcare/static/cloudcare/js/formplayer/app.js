@@ -141,18 +141,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         showWarning(message, $("#cloudcare-notifications"));
     });
 
-    FormplayerFrontend.getChannel().reply('showSuccess', function (successMessage) {
+    FormplayerFrontend.on('showSuccess', function (successMessage) {
         showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
     });
 
-    FormplayerFrontend.getChannel().reply('handleNotification', function (notification) {
+    FormplayerFrontend.on('handleNotification', function (notification) {
         var type = notification.type;
         if (!type) {
             type = notification.error ? "error" : "success";
         }
 
         if (type === "success") {
-            FormplayerFrontend.getChannel().request('showSuccess', notification.message);
+            FormplayerFrontend.trigger('showSuccess', notification.message);
         } else if (type === "warning") {
             FormplayerFrontend.trigger('showWarning', notification.message);
         } else {

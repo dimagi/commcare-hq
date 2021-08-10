@@ -24,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             // show any notifications from Formplayer
             if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
-                FormplayerFrontend.getChannel().request("handleNotification", menuResponse.notification);
+                FormplayerFrontend.trigger("handleNotification", menuResponse.notification);
             }
 
             // If redirect was set, clear and go home.

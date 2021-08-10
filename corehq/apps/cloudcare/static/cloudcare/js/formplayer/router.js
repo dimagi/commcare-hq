@@ -94,7 +94,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             response.appId = urlObject.appId;
 
              if (response.notification) {
-                FormplayerFrontend.getChannel().request("handleNotification", response.notification);
+                FormplayerFrontend.trigger("handleNotification", response.notification);
              }
 
             // When the response gets parsed, it will automatically trigger form
