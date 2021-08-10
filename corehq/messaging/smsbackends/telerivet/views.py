@@ -54,9 +54,9 @@ def incoming_message(request):
 @waf_allow('XSS_BODY')
 @require_POST
 @csrf_exempt
-def message_status(request):
+def message_status(request, message_id):
     process_message_status(
-        request.POST.get('message_id'),
+        message_id,
         request.POST.get('status'),
         error_message=request.POST.get('error_message')
     )

@@ -5,7 +5,7 @@ from .views import create_backend, get_last_inbound_sms, send_sample_sms
 
 urlpatterns = [
     url(r'^in/?$', incoming_message, name='telerivet_in'),
-    url(r'^status/?$', message_status, name='telerivet_message_status'),
+    url(r'^status/(?P<message_id>[\w\-]+)/$', message_status, name='telerivet_message_status'),
 ]
 
 
