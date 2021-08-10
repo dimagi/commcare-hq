@@ -368,17 +368,15 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
 
         var urlObject = Util.currentUrlToObject();
-        var selections = urlObject.steps;
-        var appId = urlObject.appId;
 
         $debug.html('');
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
-            selections: selections,
+            selections: urlObject.selections,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,
-            appId: appId,
+            appId: urlObject.appId,
             tabs: [
                 TabIDs.EVAL_XPATH,
             ],
