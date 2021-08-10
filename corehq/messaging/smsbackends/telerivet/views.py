@@ -58,7 +58,8 @@ def message_status(request, message_id):
     process_message_status(
         message_id,
         request.POST.get('status'),
-        error_message=request.POST.get('error_message')
+        error_message=request.POST.get('error_message'),
+        request_secret=request.POST.get('secret')
     )
 
     return HttpResponse()

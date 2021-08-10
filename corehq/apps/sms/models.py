@@ -299,8 +299,11 @@ class SMSBase(UUIDGeneratorMixin, Log):
     def is_status_pending(self):
         return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
 
-    def add_custom_metadata(self, metadata):
-        self.custom_metadata.update(metadata)
+    def add_custom_metadata(self, metadata: dict):
+        if type(self.custom_metadata) is dict:
+            self.custom_metadata.update(metadata)
+        else:
+            self.custom_metadata = metadata
         self.save()
 
 

@@ -90,7 +90,8 @@ class SQLTelerivetBackend(SQLSMSBackend):
                 'status_url': "{base_url}{resource}".format(
                     base_url=get_url_base(),
                     resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
-                )
+                ),
+                'secret': self.config.webhook_secret,
             })
 
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
