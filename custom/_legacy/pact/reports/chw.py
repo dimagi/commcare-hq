@@ -13,6 +13,7 @@ from pact.utils import (
     pact_script_fields, case_script_field, get_base_form_es_query, get_base_case_es_query)
 
 
+# TODO: delete, this one is also broken
 class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
     slug = "chw_profile"
     description = "CHW Profile"

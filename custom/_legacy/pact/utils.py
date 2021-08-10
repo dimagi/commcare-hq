@@ -64,6 +64,7 @@ def case_script_field():
     }
 
 
+# TODO: delete
 def query_per_case_submissions_facet(domain, username=None, limit=100):
     """
     Xform query to get count facet by case_id
