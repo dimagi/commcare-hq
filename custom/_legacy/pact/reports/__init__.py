@@ -54,6 +54,5 @@ CUSTOM_REPORTS = (
     ("PACT Reports", (
         patient.PactPatientInfoReport,
         chw_list.PactCHWDashboard,
-        chw.PactCHWProfileReport,
     )),
 )
