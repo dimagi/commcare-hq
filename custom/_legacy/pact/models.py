@@ -445,6 +445,3 @@ class CObservationAddendum(OldDocument):
 
     class Meta(object):
         app_label = 'pact'
-
-
-from .signals import *
