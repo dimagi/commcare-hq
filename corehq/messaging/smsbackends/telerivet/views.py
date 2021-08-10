@@ -8,7 +8,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
+from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message, process_message_status
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
@@ -48,6 +48,19 @@ TELERIVET_INBOUND_FIELD_MAP = (
 def incoming_message(request):
     kwargs = {a: request.POST.get(b) for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
     process_incoming_message.delay(**kwargs)
+    return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def message_status(request):
+    process_message_status(
+        request.POST.get('message_id'),
+        request.POST.get('status'),
+        error_message=request.POST.get('error_message')
+    )
+
     return HttpResponse()
 
 
