@@ -31,6 +31,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
@@ -38,7 +39,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
-    SQLUserRole,
+    UserRole,
     InvitationStatus
 )
 from corehq.apps.users.util import normalize_username
@@ -310,7 +311,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
-        user_change_logger.add_change_message(f"Invited to domain '{domain}'")
+        user_change_logger.add_change_message(UserChangeMessage.invited_to_domain(domain))
 
 
 def find_location_id(location_codes, location_cache):
@@ -363,7 +364,7 @@ def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, up
             upload_domain=upload_domain,
         )
     else:
-        roles_by_name = {role.name: role.get_qualified_id() for role in SQLUserRole.objects.get_by_domain(domain)}
+        roles_by_name = {role.name: role.get_qualified_id() for role in UserRole.objects.get_by_domain(domain)}
         definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
         if definition:
             profiles = definition.get_profiles()
@@ -501,7 +502,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 else:
                     status_row['flag'] = 'created'
 
-                if phone_numbers:
+                if phone_numbers is not None:
                     phone_numbers = clean_phone_numbers(phone_numbers)
                     commcare_user_importer.update_phone_numbers(phone_numbers)
 
@@ -708,10 +709,11 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                 else:
                     if status == "Invited":
                         try:
-                            invitation = Invitation.objects.get(domain=domain, email=username)
+                            invitation = Invitation.objects.get(domain=domain, email=username, is_accepted=False)
                         except Invitation.DoesNotExist:
-                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web User."
-                                                    " {web_user} is not yet invited.").format(web_user=username))
+                            raise UserUploadError(_("You can only set 'Status' to 'Invited' on a pending Web "
+                                                    "User. {web_user} has no invitations for this project "
+                                                    "space.").format(web_user=username))
                         if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
                             raise UserUploadError(_("The email has bounced for this user's invite. Please try "
                                                     "again with a different username").format(web_user=username))
@@ -789,7 +791,7 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         if is_web_upload:
             remove_invited_web_user(domain, username)
             if user_change_logger:
-                user_change_logger.add_change_message(f"Invitation revoked for domain '{domain}'")
+                user_change_logger.add_change_message(UserChangeMessage.invitation_revoked_for_domain(domain))
         else:
             raise UserUploadError(_("You cannot remove a web user that is not a member of this project."
                                     " {web_user} is not a member.").format(web_user=user))
@@ -799,4 +801,4 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.delete_domain_membership(domain)
         user.save()
         if user_change_logger:
-            user_change_logger.add_change_message(f"Removed from domain '{domain}'")
+            user_change_logger.add_change_message(UserChangeMessage.domain_removal(domain))

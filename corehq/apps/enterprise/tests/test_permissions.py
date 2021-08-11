@@ -11,7 +11,7 @@ from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.users.models import (
     HQApiKey,
     Permissions,
-    SQLUserRole,
+    UserRole,
     WebUser,
 )
 
@@ -28,7 +28,7 @@ class EnterprisePermissionsTest(TestCase):
         create_domain('staging')
 
         # Set up users
-        cls.master_role = SQLUserRole.create("state", "role1", permissions=Permissions(
+        cls.master_role = UserRole.create("state", "role1", permissions=Permissions(
             view_web_users=True,
             edit_web_users=False,
             view_groups=True,

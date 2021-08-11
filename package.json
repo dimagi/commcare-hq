@@ -74,7 +74,7 @@
         "requirejs": "2.3.6",
         "select2": "4.1.0-rc.0",
         "topojson": "3.0.2",
-        "uglify-js": "2.8.29",
+        "uglify-js": "3",
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
         "url-polyfill": "1.1.10",

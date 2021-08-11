@@ -108,7 +108,10 @@ def js_api_keys(request):
 
     if (api_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID')
             and not is_hubspot_js_allowed_for_request(request)):
-        del api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID']
+        # set to an empty string rather than delete. otherwise a strange race
+        # happens in redis, throwing an error
+        api_keys['ANALYTICS_IDS']['HUBSPOT_API_ID'] = ''
+        api_keys['ANALYTICS_IDS']['HUBSPOT_API_KEY'] = ''
 
     return api_keys
 

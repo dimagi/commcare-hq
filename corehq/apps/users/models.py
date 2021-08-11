@@ -92,10 +92,8 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-from .models_sql import (  # noqa
-    SQLUserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
-    migrate_role_permissions_to_sql,
-    migrate_role_assignable_by_to_sql,
+from .models_role import (  # noqa
+    UserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
 )
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -118,6 +116,10 @@ def _get_default(list):
 
 
 class PermissionInfo(namedtuple("Permission", "name, allow")):
+    """Data class that represents a single permission.
+    Some permissions can be parameterized to restrict access to only specific items
+    instead of ALL items.
+    """
     ALLOW_ALL = "*"
 
     def __new__(cls, name, allow=ALLOW_ALL):
@@ -186,19 +188,6 @@ class Permissions(DocumentSchema):
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, data):
-        # this is why you don't store module paths in the database...
-        MOVED_REPORT_MAPPING = {
-            'corehq.apps.reports.standard.inspect.CaseListReport': 'corehq.apps.reports.standard.cases.basic.CaseListReport'
-        }
-        reports = data.get('view_report_list', [])
-        for i, report_name in enumerate(reports):
-            if report_name in MOVED_REPORT_MAPPING:
-                reports[i] = MOVED_REPORT_MAPPING[report_name]
-
-        return super(Permissions, cls).wrap(data)
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -371,81 +360,6 @@ class UserRolePresets(object):
                 return name
 
 
-class UserRole(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    domain = StringProperty()
-    name = StringProperty()
-    default_landing_page = StringProperty(
-        choices=[page.id for page in ALL_LANDING_PAGES],
-    )
-    permissions = SchemaProperty(Permissions)
-    # role can be assigned by all non-admins
-    is_non_admin_editable = BooleanProperty(default=False)
-    # role assignable by specific non-admins
-    assignable_by = StringListProperty(default=[])
-    is_archived = BooleanProperty(default=False)
-    upstream_id = StringProperty()
-
-    @classmethod
-    def by_domain(cls, domain, include_archived=False):
-        all_roles = cls.view(
-            'users/roles_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True,
-            reduce=False,
-        )
-        if include_archived:
-            return list(all_roles)
-        return [x for x in all_roles if not x.is_archived]
-
-    @classmethod
-    def by_domain_and_name(cls, domain, name):
-        all_roles = cls.view(
-            'users/roles_by_domain',
-            key=[domain, name],
-            include_docs=True,
-            reduce=False,
-        )
-        return list(all_roles)
-
-    @classmethod
-    def create(cls, domain, name, **kwargs):
-        role = cls(domain=domain, name=name, **kwargs)
-        role.save()
-        return role
-
-    def get_qualified_id(self):
-        return 'user-role:%s' % self.get_id
-
-    @property
-    def cache_version(self):
-        return self._rev
-
-    def accessible_by_non_admin_role(self, role_id):
-        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "name",
-            "default_landing_page",
-            "is_non_admin_editable",
-            "is_archived",
-            "upstream_id",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLUserRole
-
-    def _migration_sync_submodels_to_sql(self, sql_object):
-        if not sql_object._get_pk_val():
-            sql_object.save(sync_to_couch=False)
-        migrate_role_permissions_to_sql(self, sql_object)
-        migrate_role_assignable_by_to_sql(self, sql_object)
-
-
 class DomainMembershipError(Exception):
     pass
 
@@ -493,8 +407,8 @@ class DomainMembership(Membership):
             return StaticRole.domain_admin(self.domain)
         elif self.role_id:
             try:
-                return SQLUserRole.objects.by_couch_id(self.role_id)
-            except SQLUserRole.DoesNotExist:
+                return UserRole.objects.by_couch_id(self.role_id)
+            except UserRole.DoesNotExist:
                 logging.exception('no role found in domain', extra={
                     'role_id': self.role_id,
                     'domain': self.domain
@@ -1053,6 +967,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def update_metadata(self, data):
         self.user_data.update(data)
+        return True
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
@@ -1683,6 +1598,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 
         new_data = {**self.user_data, **data}
+        old_profile_id = self.user_data.get(PROFILE_SLUG)
 
         profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
@@ -1692,7 +1608,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for key in profile.fields.keys():
                 new_data.pop(key, None)
 
+        profile_updated = old_profile_id != new_data.get(PROFILE_SLUG)
+        metadata_updated = new_data != self.user_data
         self.user_data = new_data
+        return metadata_updated, profile_updated
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
@@ -2707,8 +2626,8 @@ class Invitation(models.Model):
             else:
                 role_id = self.role[len('user-role:'):]
                 try:
-                    return SQLUserRole.objects.by_couch_id(role_id).name
-                except SQLUserRole.DoesNotExist:
+                    return UserRole.objects.by_couch_id(role_id).name
+                except UserRole.DoesNotExist:
                     return _('Unknown Role')
         else:
             return None
@@ -3068,8 +2987,8 @@ class HQApiKey(models.Model):
     def role(self):
         if self.role_id:
             try:
-                return SQLUserRole.objects.by_couch_id(self.role_id)
-            except SQLUserRole.DoesNotExist:
+                return UserRole.objects.by_couch_id(self.role_id)
+            except UserRole.DoesNotExist:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
         elif self.domain:
             return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role

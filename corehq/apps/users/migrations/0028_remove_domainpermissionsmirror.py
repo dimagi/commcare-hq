@@ -3,12 +3,12 @@ import sys
 from django.db import migrations
 
 from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
 def migrate_mirrors(apps, schema_editor):
+    from corehq.apps.enterprise.models import EnterprisePermissions
     DomainPermissionsMirror = apps.get_model('users', 'DomainPermissionsMirror')
     sources = {o.source for o in DomainPermissionsMirror.objects.all()}
     for source in sources:

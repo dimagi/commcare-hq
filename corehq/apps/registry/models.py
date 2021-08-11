@@ -93,6 +93,17 @@ class DataRegistry(models.Model):
         registry.logger.invitation_added(user, invitation)
         return registry
 
+    @classmethod
+    @transaction.atomic
+    def create(cls, user, domain, name):
+        registry = DataRegistry.objects.create(domain=domain, name=name)
+        # creating domain is automatically added to the registry
+        invitation = registry.invitations.create(
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
+        )
+        registry.logger.invitation_added(user, invitation)
+        return registry
+
     @transaction.atomic
     def activate(self, user):
         self.is_active = True
@@ -111,6 +122,11 @@ class DataRegistry(models.Model):
             self.grants.filter(to_domains__contains=[domain])
             .values_list('from_domain', flat=True)
         )
+
+    def get_participating_domains(self):
+        return set(self.invitations.filter(
+            status=RegistryInvitation.STATUS_ACCEPTED,
+        ).values_list('domain', flat=True))
 
     def check_access(self, domain):
         if not self.is_active:

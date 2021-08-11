@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
 from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.blobs import get_blob_db
 import unittest
@@ -90,7 +90,7 @@ class TestEmailReport(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[REPORT_NAME_LOOKUP['worker_activity']]
         ))
 
@@ -411,7 +411,7 @@ class TestExportReport(TestCase):
         super().setUp()
 
         # Create a basic role for the user
-        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[]
         ))
 
@@ -522,7 +522,7 @@ class TestViewScheduledReport(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.reports_role = SQLUserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
             view_report_list=[]
         ))
         self.user = WebUser.create(self.domain,
