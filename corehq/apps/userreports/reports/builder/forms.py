@@ -398,11 +398,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
         self.app = app
         self.source_type = source_type
         # source_id is the ID of a UCR data source
-        self._source_id = source_id
-
-    @property
-    def data_source_id(self):
-        return self._source_id
+        self.data_source_id = source_id
 
     @property
     def uses_managed_data_source(self):
@@ -411,7 +407,7 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
     @property
     @memoized
     def data_source(self):
-        return get_datasource_config_infer_type(self._source_id, self.domain)[0]
+        return get_datasource_config_infer_type(self.data_source_id, self.domain)[0]
 
     @property
     def data_source_properties(self):
