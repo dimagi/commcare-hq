@@ -368,17 +368,15 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
 
         var urlObject = Util.currentUrlToObject();
-        var selections = urlObject.steps;
-        var appId = urlObject.appId;
 
         $debug.html('');
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
-            selections: selections,
+            selections: urlObject.selections,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,
-            appId: appId,
+            appId: urlObject.appId,
             tabs: [
                 TabIDs.EVAL_XPATH,
             ],
@@ -408,9 +406,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('navigation:back', function () {
         var url = Backbone.history.getFragment();
-        if (!url.includes('single_app')) {
-            window.history.back();
+        if (url.includes('single_app')) {
+            return;
         }
+        try {
+            var options = JSON.parse(url);
+            if (_.has(options, "endpointId")) {
+                return;
+            }
+        } catch (e) {
+            // do nothing
+        }
+        window.history.back();
     });
 
     FormplayerFrontend.on('setAppDisplayProperties', function (app) {
@@ -429,6 +436,23 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             domain,
             username
         );
+    });
+
+    // Support for workflows that require Login As before moving on to the
+    // screen that the user originally requested.
+    FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
+        FormplayerFrontend.LoginAsNextOptions = options;
+        if (Object.freeze) {
+            Object.freeze(FormplayerFrontend.LoginAsNextOptions);
+        }
+    });
+
+    FormplayerFrontend.on('clearLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions = null;
+    });
+
+    FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
+        return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
     /**
