@@ -68,19 +68,33 @@ class AuditCareMigrationUtil():
     def log_batch_start(self, key):
         if AuditcareMigrationMeta.objects.filter(key=key):
             return
-        AuditcareMigrationMeta.objects.create(key=key, state=AuditcareMigrationMeta.STARTED, record_count=0)
-
-    def set_batch_as_finished(self, key, count):
-        AuditcareMigrationMeta.objects.filter(key=key).update(
-            state=AuditcareMigrationMeta.FINISHED,
-            record_count=count
+        AuditcareMigrationMeta.objects.create(
+            key=key,
+            state=AuditcareMigrationMeta.STARTED,
+            created_at=datetime.now()
         )
 
-    def set_batch_as_errored(self, key):
-        AuditcareMigrationMeta.objects.filter(key=key).update(state=AuditcareMigrationMeta.ERRORED)
+    def set_batch_as_finished(self, key, count, other_doc_type_count=0):
+        AuditcareMigrationMeta.objects.filter(key=key).update(
+            state=AuditcareMigrationMeta.FINISHED,
+            record_count=count,
+            other_doc_type_count=other_doc_type_count,
+            finished_at=datetime.now()
+        )
+
+    def set_batch_as_errored(self, key, last_doc=None, other_doc_count=0):
+        AuditcareMigrationMeta.objects.filter(key=key).update(
+            state=AuditcareMigrationMeta.ERRORED,
+            last_doc_processed=last_doc,
+            other_doc_type_count=other_doc_count
+        )
 
     def get_existing_count(self, key):
-        return AuditcareMigrationMeta.objects.filter(key=key).values_list('record_count', flat=True).first() or 0
+        counts = AuditcareMigrationMeta.objects.filter(key=key).values_list(
+            'record_count',
+            'other_doc_type_count',
+        ).first()
+        return list(counts) if counts else [0, 0]
 
 
 def get_formatted_datetime_string(datetime_obj):
