@@ -55,7 +55,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
             if (response.selections) {
                 var urlObject = Util.currentUrlToObject();
-                urlObject.setSteps(response.selections);
+                urlObject.setSelections(response.selections);
                 Util.setUrlToObject(urlObject);
             }
 
