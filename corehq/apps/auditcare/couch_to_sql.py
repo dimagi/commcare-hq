@@ -124,7 +124,8 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
             if access_type == "logout":
                 kwargs.update({"path": "accounts/logout"})
             access_objects.append(AccessAudit(**kwargs))
-
+        else:
+            other_doc_type += 1
     res_obj = get_unsaved_events(
         navigation_objects,
         access_objects,
