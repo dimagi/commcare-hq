@@ -15,13 +15,13 @@ class RegistryModelsTests(TestCase):
         cls.active = DataRegistry.objects.create(domain=cls.domain, name="active")
         cls.inactive = DataRegistry.objects.create(domain=cls.domain, name="inactive", is_active=False)
 
-    def test_slug_unique_per_domain(self):
+    def test_slug_unique(self):
         r1 = DataRegistry.objects.create(domain=self.domain, name="patient registry")
         r2 = DataRegistry.objects.create(domain=self.domain, name="the patient registry")
         r3 = DataRegistry.objects.create(domain="other_domain", name="the patient registry")
         self.assertEqual(r1.slug, "patient-registry")
         self.assertEqual(r2.slug, "patient-registry-2")
-        self.assertEqual(r3.slug, "patient-registry")
+        self.assertEqual(r3.slug, "patient-registry-3")
 
     def test_get_owned(self):
         self.assertEqual(
