@@ -561,9 +561,5 @@ def _patch_save_to_raise_error(test_class):
         'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
         side_effect=InternalError
     )
-    couch_patch = patch(
-        'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
-        side_effect=InternalError
-    )
-    with sql_patch, couch_patch, test_class.assertRaises(InternalError):
+    with sql_patch, test_class.assertRaises(InternalError):
         yield

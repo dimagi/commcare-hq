@@ -3,12 +3,9 @@ import re
 from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
-from django.conf import settings
-from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case import const
-from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.exceptions import (
     KafkaPublishingError,
     PostSaveError,
@@ -52,24 +49,14 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def xform_model(self):
-        from couchforms.models import XFormInstance
         from corehq.form_processor.models import XFormInstanceSQL
-
-        if self.use_sql_domain:
-            return XFormInstanceSQL
-        else:
-            return XFormInstance
+        return XFormInstanceSQL
 
     @property
     @memoized
     def processor(self):
-        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
         from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-
-        if self.use_sql_domain:
-            return FormProcessorSQL
-        else:
-            return FormProcessorCouch
+        return FormProcessorSQL
 
     @property
     @memoized
@@ -138,19 +125,7 @@ class FormProcessorInterface(object):
         Check if there is already a form with the given ID. If domain is specified only check for
         duplicates within that domain.
         """
-        if domain:
-            return self.processor.is_duplicate(xform_id, domain=domain)
-        else:
-            # check across Couch & SQL to ensure global uniqueness
-            # check this domains DB first to support existing bad data
-            return (
-                self.processor.is_duplicate(xform_id) or
-                # don't bother checking other DB if there's only one active domain
-                (
-                    not settings.ENTERPRISE_MODE and
-                    self.other_db_processor().is_duplicate(xform_id)
-                )
-            )
+        return self.processor.is_duplicate(xform_id, domain=domain)
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -256,21 +231,7 @@ class FormProcessorInterface(object):
         :return: tuple(case, lock). Either could be None
         :raises: IllegalCaseId
         """
-        case, lock = self.processor.get_case_with_lock(case_id, lock, wrap)
-        if case:
-            return case, lock
-
-        if self.other_db_processor().case_exists(case_id):
-            raise IllegalCaseId("Bad case id")
-
-        return case, lock
-
-    def other_db_processor(self):
-        """Get the processor for the database not used by this domain."""
-        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-        (other_processor,) = {FormProcessorSQL, FormProcessorCouch} - {self.processor}
-        return other_processor
+        return self.processor.get_case_with_lock(case_id, lock, wrap)
 
 
 def _list_to_processed_forms_tuple(forms):

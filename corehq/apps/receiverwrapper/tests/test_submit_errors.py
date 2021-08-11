@@ -191,11 +191,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        couch_patch = patch(
-            'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
-            side_effect=InternalError
-        )
-        with sql_patch, couch_patch:
+        with sql_patch:
             with self.assertRaises(InternalError):
                 _, res = self._submit('form_with_case.xml')
 
