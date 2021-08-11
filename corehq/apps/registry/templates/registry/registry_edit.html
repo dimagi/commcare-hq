@@ -99,10 +99,10 @@
             {% endblocktrans %}
           </p>
           {% if not is_owner %}
-          <p data-bind="visible: domain_invitation.status() === 'accepted'">
+          <p>
             {% trans "Participating project spaces:" %}
           </p>
-          <p data-bind="foreach: allInvitations">
+          <p data-bind="foreach: participatingDomains">
             <span class="label label-default-light" data-bind="text: $data"></span>
           </p>
           {% endif %}
