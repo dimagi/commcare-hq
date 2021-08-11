@@ -724,9 +724,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
+    'CASE_OWNER_PARENT_LOCATION':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
+    'CASE_OWNER_LOCATION_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location_old_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 
@@ -739,9 +742,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
+    'CASE_OWNER_PARENT_LOCATION':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
+    'CASE_OWNER_LOCATION_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location_new_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
