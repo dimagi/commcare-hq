@@ -106,7 +106,7 @@ class RegistryLoggingTests(TestCase):
     def _assertLogs(self, expected_actions, ignore_actions=None):
         actions = list(
             RegistryAuditLog.objects
-            .filter(registry=self.registry)
+            .filter(registry=self.registry, )
             .order_by('date')
             .values_list("domain", "action")
         )

@@ -6,10 +6,10 @@ from django.conf import settings
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_EXTENSION
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -106,7 +106,7 @@ def safe_hard_delete(case):
     interface.hard_delete_case_and_forms(case, forms)
 
 
-def claim_case(domain, owner_id, host_id, host_type=None, host_name=None, device_id=None):
+def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, device_id=None):
     """
     Claim a case identified by host_id for claimant identified by owner_id.
 
@@ -123,7 +123,7 @@ def claim_case(domain, owner_id, host_id, host_type=None, host_name=None, device
         case_id=claim_id,
         case_name=host_name,
         case_type=CLAIM_CASE_TYPE,
-        owner_id=owner_id,
+        owner_id=restore_user.user_id,
         index={
             identifier: IndexAttrs(
                 case_type=host_type,
@@ -132,7 +132,21 @@ def claim_case(domain, owner_id, host_id, host_type=None, host_name=None, device
             )
         }
     ).as_xml()
-    post_case_blocks([claim_case_block], {'domain': domain}, device_id=device_id)
+    form_extras = {}
+    if restore_user.request_user:
+        form_extras["auth_context"] = AuthContext(
+            domain=domain,
+            user_id=restore_user.request_user_id,
+            authenticated=True
+        )
+    submit_case_blocks(
+        [ElementTree.tostring(claim_case_block, encoding='utf-8').decode('utf-8')],
+        domain=domain,
+        form_extras=form_extras,
+        username=restore_user.full_username,
+        user_id=restore_user.user_id,
+        device_id=device_id,
+    )
     return claim_id
 
 

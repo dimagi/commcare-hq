@@ -132,3 +132,19 @@ class RegistryModelsTests(TestCase):
         ]
         visible = DataRegistry.objects.visible_to_domain(self.domain)
         self.assertEqual({r.name for r in registries}, {v.name for v in visible})
+
+    def test_get_participating_domains(self):
+        invitations = [
+            Invitation('A'),
+            Invitation('B', accepted=False),
+            Invitation('C', rejected=True)
+        ]
+        registry = create_registry_for_test(self.user, self.domain, invitations)
+        domains = registry.get_participating_domains()
+        self.assertEqual({self.domain, 'A'}, domains)
+
+    def test_check_ownership(self):
+        registry = create_registry_for_test(self.user, self.domain)
+        registry.check_ownership(self.domain)
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_ownership('not the owner')
