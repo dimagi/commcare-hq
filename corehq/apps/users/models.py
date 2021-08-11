@@ -82,7 +82,7 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -1779,7 +1779,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.users.model_log import UserModelAction
 
-        NotAllowed.check(self.domain)
         if not unretired_by and not settings.UNIT_TESTING:
             raise ValueError("Missing unretired_by")
 
@@ -1810,7 +1809,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self, retired_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
 
-        NotAllowed.check(self.domain)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
 

@@ -9,7 +9,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
-from corehq.form_processor.exceptions import NotAllowed
 from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, **options):
-        NotAllowed.check(domain)
         if not options['noinput']:
             confirm = input(
                 """

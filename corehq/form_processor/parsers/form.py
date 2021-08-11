@@ -6,7 +6,7 @@ from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 from django.conf import settings
 
-from corehq.form_processor.exceptions import MissingFormXml, NotAllowed
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -201,7 +201,6 @@ def _handle_duplicate(new_doc):
     if existing_md5 is None or existing_md5 != new_md5:
 
         def _deprecate_old_form():
-            NotAllowed.check(new_doc.domain)
             existing, new = apply_deprecation(existing_doc, new_doc, interface)
             return new, existing
 
