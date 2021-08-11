@@ -96,7 +96,7 @@ class OTARestoreUser(object):
 
     @property
     def user_session_data(self):
-        return self._couch_user.user_session_data
+        return self._couch_user.get_user_session_data(self.domain)
 
     @property
     def date_joined(self):

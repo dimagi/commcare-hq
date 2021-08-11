@@ -1860,7 +1860,7 @@ class EditFormInstance(View):
         if not user:
             return _error(_('Could not find user for this submission.'))
 
-        edit_session_data = get_user_contributions_to_touchforms_session(user)
+        edit_session_data = get_user_contributions_to_touchforms_session(domain, user)
 
         # add usercase to session
         form = self._get_form_from_instance(instance)

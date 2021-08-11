@@ -1070,12 +1070,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
-    @property
-    def user_session_data(self):
+    def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
             SYSTEM_PREFIX,
             COMMCARE_USER_TYPE_KEY,
-            COMMCARE_USER_TYPE_DEMO
+            COMMCARE_USER_TYPE_DEMO,
+            COMMCARE_PROJECT
         )
 
         session_data = self.metadata
@@ -1084,6 +1084,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data.update({
                 COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
             })
+
+        if COMMCARE_PROJECT not in session_data:
+            session_data[COMMCARE_PROJECT] = domain
 
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
