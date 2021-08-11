@@ -224,11 +224,13 @@ class AuditcareMigrationMeta(models.Model):
         FINISHED: "Finished",
         ERRORED: "Errored",
     }
-    key = models.CharField(max_length=50, db_index=True)
+    key = models.CharField(max_length=50, db_index=True, unique=True)
     state = models.CharField(max_length=1, choices=MIGRATION_STATES.items())
-    record_count = models.PositiveIntegerField(null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
+    record_count = models.PositiveIntegerField(default=0)
+    other_doc_type_count = models.PositiveIntegerField(default=0)
+    last_doc_processed = models.CharField(max_length=50, null=True)
+    created_at = models.DateTimeField(null=True)
+    finished_at = models.DateTimeField(null=True)
 
 
 def audit_login(sender, *, request, user, **kwargs):
