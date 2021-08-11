@@ -85,4 +85,5 @@ branches:
     - cs/SC-1529-follow-up  # Charl Aug 10
     - mjr/record_failure_login_ips  # Matt Aug 10
     - dependabot/npm_and_yarn/tar-4.4.15 # Graham Aug 10
+    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
 submodules: { }
