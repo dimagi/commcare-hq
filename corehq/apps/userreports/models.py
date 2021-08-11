@@ -1294,8 +1294,7 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
                 _raise_not_found()
         else:
             try:
-                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id,
-                                                   additional_doc_types=[RegistryDataSourceConfiguration.__name__])
+                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
                 _raise_not_found()
         return config, is_static
