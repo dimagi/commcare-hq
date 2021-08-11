@@ -76,7 +76,6 @@ branches:
     - ml/remove-show-field-sms-billables-report+ml/sms-billable-report-visibility-checkbox  # Charl Aug 11
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
     - ml/remove-show-field-sms-billables-report # Minha August 5
-    - revert-30202-revert-29962-gh/improve-erm-ui # Graham August 5
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/smart-linking-mvp-claim-on-formplayer+jls/web-apps-steps-to-selections
     - jls/smart-linking-mvp  # Jenny Aug 9
