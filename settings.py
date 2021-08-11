@@ -727,8 +727,8 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'CASE_OWNER_PARENT_LOCATION':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
-    'for ':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location',
+    'CASE_OWNER_LOCATION_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location_old_framework',
          "Abt: The case owner location's parent location"],
 }
 
@@ -746,7 +746,7 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
     'CASE_OWNER_LOCATION_PARENT_LOCATION':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location',
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_location_new_framework',
          "Abt: The case owner location's parent location"],
 }
 

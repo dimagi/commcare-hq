@@ -42,9 +42,25 @@ def abt_case_owner_location_parent_new_framework(case_schedule_instance):
     return owner_location.parent
 
 
-def abt_case_owner_location_parent_location(case_schedule_instance):
-    # Get the case owner, which we always expect to be a mobile worker in
-    # this one-off feature
+def abt_case_owner_location_parent_location_old_framework(handler, reminder):
+    case = reminder.case
+    if not case:
+        return None
+
+    owner_location = reminder.case_owner
+    if not isinstance(owner_location, SQLLocation):
+        return None
+
+    # Get that owner location's parent location
+    parent_location = owner_location.parent
+    if not parent_location:
+        return None
+
+    return [parent_location]
+
+
+def abt_case_owner_location_parent_location_new_framework(case_schedule_instance):
+    # Get the case owner, which is expected to be a location
     owner_location = case_schedule_instance.case_owner
     if not isinstance(owner_location, SQLLocation):
         return None
