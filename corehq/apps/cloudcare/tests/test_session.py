@@ -53,6 +53,7 @@ class SessionUtilsTest(TestCase):
             Field(slug='word', label='A Word'),
         ])
         definition.save()
+        self.addCleanup(definition.delete)
         profile = CustomDataFieldsProfile(name='prof', fields={'word': 'supernova'}, definition=definition)
         profile.save()
         user = CommCareUser.create(
@@ -64,10 +65,10 @@ class SessionUtilsTest(TestCase):
             uuid=uuid.uuid4().hex,
             metadata={PROFILE_SLUG: profile.id},
         )
+        self.addCleanup(user.delete, None, None)
         user_data = get_user_contributions_to_touchforms_session('cloudcare-tests', user)['user_data']
         self.assertEqual(profile.id, user_data[PROFILE_SLUG])
         self.assertEqual('supernova', user_data['word'])
-        definition.delete()
 
     def test_load_session_data_for_web_user(self):
         user = WebUser(
