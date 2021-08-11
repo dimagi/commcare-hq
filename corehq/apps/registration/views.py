@@ -83,10 +83,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         raise Http404()
 
     def _create_new_account(self, reg_form, additional_hubspot_data=None):
-        activate_new_user_via_reg_form(reg_form, created_by=None, created_via=USER_CHANGE_VIA_WEB, ip=get_ip(self.request))
+        activate_new_user_via_reg_form(
+            reg_form, created_by=None, created_via=USER_CHANGE_VIA_WEB, ip=get_ip(self.request))
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
-            password=reg_form.cleaned_data['password']
+            password=reg_form.cleaned_data['password'],
+            request=self.request
         )
         web_user = WebUser.get_by_username(new_user.username, strict=True)
 
