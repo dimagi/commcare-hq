@@ -54,7 +54,7 @@ class CustomRecipientTest(TestCase):
         self.domain_obj.delete()
 
     @run_with_all_backends
-    def test_recipient_case_owner_parent_location(self):
+    def test_recipient_mobile_worker_case_owner_location_parent(self):
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.user.get_id) as case:
             self.assertEqual(case.owner_id, self.user.get_id)
 
@@ -64,7 +64,7 @@ class CustomRecipientTest(TestCase):
                     domain=self.domain,
                     case_id=case_id or case.case_id,
                     recipient_type='CustomRecipient',
-                    recipient_id='CASE_OWNER_PARENT_LOCATION'
+                    recipient_id='MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT'
                 )
 
             # Test the recipient is returned correctly
@@ -83,7 +83,7 @@ class CustomRecipientTest(TestCase):
             self.assertIsNone(instance(case_id='does-not-exist').recipient)
 
     @run_with_all_backends
-    def test_recipient_case_owner_location_parent_location(self):
+    def test_recipient_location_case_owner_parent_location(self):
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.child_location.location_id) as case:
             self.assertEqual(case.owner_id, self.child_location.location_id)
 
@@ -93,7 +93,7 @@ class CustomRecipientTest(TestCase):
                     domain=self.domain,
                     case_id=case_id or case.case_id,
                     recipient_type='CustomRecipient',
-                    recipient_id='CASE_OWNER_LOCATION_PARENT_LOCATION'
+                    recipient_id='LOCATION_CASE_OWNER_PARENT_LOCATION'
                 )
 
             # Test the recipient is returned correctly

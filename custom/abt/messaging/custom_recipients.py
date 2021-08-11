@@ -2,7 +2,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import SQLLocation
 
 
-def abt_case_owner_location_parent_old_framework(handler, reminder):
+def abt_mobile_worker_case_owner_location_parent_old_framework(handler, reminder):
     case = reminder.case
     if not case:
         return None
@@ -26,7 +26,7 @@ def abt_case_owner_location_parent_old_framework(handler, reminder):
     return [parent_location]
 
 
-def abt_case_owner_location_parent_new_framework(case_schedule_instance):
+def abt_mobile_worker_case_owner_location_parent_new_framework(case_schedule_instance):
     # Get the case owner, which we always expect to be a mobile worker in
     # this one-off feature
     owner = case_schedule_instance.case_owner
@@ -42,7 +42,7 @@ def abt_case_owner_location_parent_new_framework(case_schedule_instance):
     return owner_location.parent
 
 
-def abt_case_owner_location_parent_location_old_framework(handler, reminder):
+def abt_location_case_owner_parent_location_old_framework(handler, reminder):
     case = reminder.case
     if not case:
         return None
@@ -59,7 +59,7 @@ def abt_case_owner_location_parent_location_old_framework(handler, reminder):
     return [parent_location]
 
 
-def abt_case_owner_location_parent_location_new_framework(case_schedule_instance):
+def abt_location_case_owner_parent_location_new_framework(case_schedule_instance):
     # Get the case owner, which is expected to be a location
     owner_location = case_schedule_instance.case_owner
     if not isinstance(owner_location, SQLLocation):
