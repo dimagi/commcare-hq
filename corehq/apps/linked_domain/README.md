@@ -97,7 +97,7 @@ On downstream HQ, enable `linked_domains` feature flag and navigate to `project 
 
 To link apps, create an app in the upstream domain, and another app in the downstream domain. These app ids can then be used when running the `link_app_to_remote` command:
 ```
-$ ./manage.py link_app_to_remote --master-id {upstream_app_id} --linked_id {downstream_app_id} --url_base {base url} --domain {upstream_domain_name} --username {username} --api_key {api_key}
+$ ./manage.py link_app_to_remote --master_id {upstream_app_id} --linked_id {downstream_app_id} --url_base {base url} --domain {upstream_domain_name} --username {username} --api_key {api_key}
 ```
 # Linked Applications
 
