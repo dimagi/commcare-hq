@@ -37,10 +37,10 @@ class UtilsTests(TestCase):
 
 
 @contextmanager
-def test_domain(skip_full_delete=False):
+def test_domain(name="domain", skip_full_delete=False):
     """Context manager for use in tests"""
     from corehq.apps.domain.shortcuts import create_domain
-    domain = create_domain('domain')
+    domain = create_domain(name)
     try:
         yield domain
     finally:

@@ -74,7 +74,7 @@ class RegistryLoggingTests(TestCase):
         ], ignore_actions=[RegistryAuditLog.ACTION_INVITATION_ADDED])
 
     def test_create_invitation_logging(self):
-        with test_domain(skip_full_delete=True):
+        with test_domain(name="B", skip_full_delete=True):
             self.helper.get_or_create_invitation("B")
             self._assertLogs([
                 (self.domain, RegistryAuditLog.ACTION_INVITATION_ADDED),
