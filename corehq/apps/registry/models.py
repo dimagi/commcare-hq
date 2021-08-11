@@ -3,6 +3,7 @@ from datetime import datetime
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
+from django.db.models import Q
 from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -25,6 +26,17 @@ class RegistryManager(models.Manager):
         if is_active is not None:
             query = query.filter(is_active=is_active)
         return query
+
+    def visible_to_domain(self, domain):
+        """Return list of all registries that are visible to the domain. This includes
+        registries that are owned by the domain as well as those they have been invited
+        to participate in
+        """
+        return (
+            self.filter(Q(domain=domain) | Q(invitations__domain=domain))
+            .distinct()  # avoid getting duplicate registries
+            .prefetch_related("invitations")
+        )
 
     def accessible_to_domain(self, domain, slug=None, has_grants=False):
         """
@@ -55,9 +67,11 @@ class DataRegistry(models.Model):
     domain = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     # slug used for referencing the registry in app suite files, APIs etc.
-    slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
+    slug = AutoSlugField(populate_from='name', slugify=slugify_remove_stops, unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+
+    # [{"case_type": "X"}, {"case_type": "Y"}]
     schema = JSONField(null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
@@ -66,7 +80,18 @@ class DataRegistry(models.Model):
     objects = RegistryManager()
 
     class Meta:
-        unique_together = ('domain', 'slug')
+        unique_together = ('slug',)
+
+    @classmethod
+    @transaction.atomic
+    def create(cls, user, domain, name, **kwargs):
+        registry = DataRegistry.objects.create(domain=domain, name=name, **kwargs)
+        # creating domain is automatically added to the registry
+        invitation = registry.invitations.create(
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
+        )
+        registry.logger.invitation_added(user, invitation)
+        return registry
 
     @classmethod
     @transaction.atomic
@@ -81,17 +106,15 @@ class DataRegistry(models.Model):
 
     @transaction.atomic
     def activate(self, user):
-        if not self.is_active:
-            self.is_active = True
-            self.save()
-            self.logger.registry_activated(user)
+        self.is_active = True
+        self.save()
+        self.logger.registry_activated(user)
 
     @transaction.atomic
     def deactivate(self, user):
-        if self.is_active:
-            self.is_active = False
-            self.save()
-            self.logger.registry_deactivated(user)
+        self.is_active = False
+        self.save()
+        self.logger.registry_deactivated(user)
 
     def get_granted_domains(self, domain):
         self.check_access(domain)
@@ -116,9 +139,11 @@ class DataRegistry(models.Model):
             raise RegistryAccessDenied()
         return True
 
-    def check_ownership(self, domain):
-        if self.domain != domain:
-            raise RegistryAccessDenied()
+    @property
+    def case_types(self):
+        return [
+            item["case_type"] for item in self.schema
+        ] if self.schema else []
 
     @cached_property
     def logger(self):
@@ -161,6 +186,24 @@ class RegistryInvitation(models.Model):
         self.save()
         self.registry.logger.invitation_rejected(user, self)
 
+    @property
+    def is_accepted(self):
+        return self.status == self.STATUS_ACCEPTED
+
+    @property
+    def is_rejected(self):
+        return self.status == self.STATUS_REJECTED
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "registry_id": self.registry_id,
+            "domain": self.domain,
+            "created_on": self.created_on,
+            "modified_on": self.modified_on,
+            "status": self.status,
+        }
+
 
 class RegistryGrant(models.Model):
     """Grants provide the model for giving access to data. The ownership of the grant
@@ -170,6 +213,14 @@ class RegistryGrant(models.Model):
     registry = models.ForeignKey("DataRegistry", related_name="grants", on_delete=models.CASCADE)
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "registry_id": self.registry_id,
+            "from_domain": self.from_domain,
+            "to_domains": list(self.to_domains)
+        }
 
 
 class RegistryPermission(models.Model):
@@ -260,16 +311,16 @@ class RegistryAuditHelper:
         return self._log_invitation_accepted_rejected(user, invitation, is_accepted=False)
 
     def invitation_added(self, user, invitation):
-        return self._log_invitation_added_removed(user, invitation, is_added=True)
+        return self._log_invitation_added_removed(user, invitation.id, invitation, is_added=True)
 
-    def invitation_removed(self, user, invitation):
-        return self._log_invitation_added_removed(user, invitation, is_added=False)
+    def invitation_removed(self, user, invitation_id, invitation):
+        return self._log_invitation_added_removed(user, invitation_id, invitation, is_added=False)
 
     def grant_added(self, user, grant):
-        return self._log_grant_added_removed(user, grant, is_added=True)
+        return self._log_grant_added_removed(user, grant.id, grant, is_added=True)
 
-    def grant_removed(self, user, grant):
-        return self._log_grant_added_removed(user, grant, is_added=False)
+    def grant_removed(self, user, grant_id, grant):
+        return self._log_grant_added_removed(user, grant_id, grant, is_added=False)
 
     def schema_changed(self, user, new, old):
         return RegistryAuditLog.objects.create(
@@ -318,7 +369,7 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_REGISTRY,
         )
 
-    def _log_invitation_added_removed(self, user, invitation, is_added):
+    def _log_invitation_added_removed(self, user, invitation_id, invitation, is_added):
         if is_added:
             action = RegistryAuditLog.ACTION_INVITATION_ADDED
         else:
@@ -328,7 +379,7 @@ class RegistryAuditHelper:
             user=user,
             action=action,
             domain=invitation.domain,
-            related_object_id=invitation.id,
+            related_object_id=invitation_id,
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
             detail={} if is_added else {"invitation_status": invitation.status}
         )
@@ -347,13 +398,13 @@ class RegistryAuditHelper:
             related_object_type=RegistryAuditLog.RELATED_OBJECT_INVITATION,
         )
 
-    def _log_grant_added_removed(self, user, grant, is_added):
+    def _log_grant_added_removed(self, user, grant_id, grant, is_added):
         RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
             action=RegistryAuditLog.ACTION_GRANT_ADDED if is_added else RegistryAuditLog.ACTION_GRANT_REMOVED,
-            domain=grant.domain,
-            related_object_id=grant.id,
+            domain=grant.from_domain,
+            related_object_id=grant_id,
             related_object_type=RegistryAuditLog.RELATED_OBJECT_GRANT,
             detail={"to_domains": grant.to_domains}
         )
