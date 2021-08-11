@@ -105,7 +105,7 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
             # https://stackoverflow.com/a/14946355/3537212
             request_path = re.sub(
                 r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]',
-                '',
+                lambda match: repr(match.group(0)),
                 doc.get("request_path", "")
             )
             path, _, params = request_path.partition("?")
