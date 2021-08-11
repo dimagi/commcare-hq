@@ -300,7 +300,7 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
 
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
