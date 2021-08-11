@@ -40,18 +40,21 @@ def copy_events_to_sql(start_time, end_time):
     next_start_key = start_key
     util.log_batch_start(key)
     break_query = False
+    last_doc_id = None
     count = util.get_existing_count(key)
     try:
         while not break_query:
-            events_info = get_events_from_couch(next_start_key, end_key)
+            events_info = get_events_from_couch(next_start_key, end_key, last_doc_id)
             next_start_key = events_info['next_start_key']
             NavigationEventAudit.objects.bulk_create(events_info['navigation_events'], ignore_conflicts=True)
             AccessAudit.objects.bulk_create(events_info['audit_events'], ignore_conflicts=True)
             count += events_info['count']
             break_query = events_info['break_query']
+            last_doc_id = events_info['last_doc_id']
     except Exception as e:
         message = f"""Error in copy_events_to_sql in key {key}
             Next start key is {next_start_key}
+            Last doc id processed is {last_doc_id}
             {e}"""
         util.set_batch_as_errored(key)
         notify_exception(None, message=message)
@@ -72,14 +75,16 @@ def get_migration_key(start_time, end_time):
     return get_formatted_datetime_string(start_time) + '_' + get_formatted_datetime_string(end_time)
 
 
-def get_events_from_couch(start_key, end_key):
+def get_events_from_couch(start_key, end_key, start_doc_id=None):
     navigation_objects = []
     access_objects = []
     records_returned = 0
     next_start_time = None
     nav_couch_ids = []
     access_couch_ids = []
-    couch_docs = _get_couch_docs(start_key, end_key)
+    other_doc_type = 0
+    processed_doc_id = start_doc_id
+    couch_docs = _get_couch_docs(start_key, end_key, start_doc_id)
     for result in couch_docs:
         records_returned += 1
         doc = result["doc"]
@@ -90,7 +95,7 @@ def get_events_from_couch(start_key, end_key):
             "event_date": next_start_time,
             "couch_id": doc["_id"],
         })
-
+        processed_doc_id = doc["_id"]
         if doc["doc_type"] == "NavigationEventAudit":
             nav_couch_ids.append(doc['_id'])
             kwargs.update(_pick(doc, ["headers", "status_code", "view", "view_kwargs"]))
@@ -130,22 +135,38 @@ def get_events_from_couch(start_key, end_key):
     res_obj.update({
         "break_query": records_returned < COUCH_QUERY_LIMIT or not next_start_time,
         "next_start_key": get_couch_key(next_start_time),
+        "last_doc_id": processed_doc_id,
     })
     return res_obj
 
 
 @retry_on_couch_error
-def _get_couch_docs(start_key, end_key):
+def _get_couch_docs(start_key, end_key, start_doc_id=None):
     db = get_db("auditcare")
-    result = db.view(
-        "auditcare/all_events",
-        startkey=start_key,
-        endkey=end_key,
-        reduce=False,
-        include_docs=True,
-        descending=True,
-        limit=COUCH_QUERY_LIMIT
-    )
+    if not start_doc_id:
+        # We are incrementing seconds by one for the first call
+        # because matching records were not returned in descending order
+        start_key[5] += 1
+        result = db.view(
+            "auditcare/all_events",
+            startkey=start_key,
+            endkey=end_key,
+            reduce=False,
+            include_docs=True,
+            descending=True,
+            limit=COUCH_QUERY_LIMIT
+        )
+    else:
+        result = result = db.view(
+            "auditcare/all_events",
+            startkey=start_key,
+            endkey=end_key,
+            reduce=False,
+            include_docs=True,
+            descending=True,
+            limit=COUCH_QUERY_LIMIT,
+            startkey_docid=start_doc_id,
+        )
     return list(result)
 
 
