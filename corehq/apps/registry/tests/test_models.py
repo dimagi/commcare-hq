@@ -121,3 +121,19 @@ class RegistryModelsTests(TestCase):
         self.assertEqual({"A"}, registry.get_granted_domains("B"))
         self.assertEqual({"B", "C"}, registry.get_granted_domains("A"))
         self.assertEqual({"B"}, registry.get_granted_domains("C"))
+
+    def test_get_participating_domains(self):
+        invitations = [
+            Invitation('A'),
+            Invitation('B', accepted=False),
+            Invitation('C', rejected=True)
+        ]
+        registry = create_registry_for_test(self.user, self.domain, invitations)
+        domains = registry.get_participating_domains()
+        self.assertEqual({self.domain, 'A'}, domains)
+
+    def test_check_ownership(self):
+        registry = create_registry_for_test(self.user, self.domain)
+        registry.check_ownership(self.domain)
+        with self.assertRaises(RegistryAccessDenied):
+            registry.check_ownership('not the owner')

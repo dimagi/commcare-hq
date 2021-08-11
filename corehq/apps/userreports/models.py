@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 import yaml
@@ -18,6 +19,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -58,6 +60,8 @@ from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
+    get_all_registry_data_source_ids,
+    get_registry_data_sources_by_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -617,6 +621,77 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
+
+
+class RegistryDataSourceConfiguration(DataSourceConfiguration):
+    """This is a special data source that can contain data from
+    multiple domains. These data sources are built from
+    data accessible to the domain via a Data Registry."""
+
+    # this field indicates whether the data source is available
+    # to all domains participating in the registry
+    globally_accessible = BooleanProperty(default=False)
+    registry_slug = StringProperty(required=True)
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, self.registry_slug)
+
+    @property
+    def data_domains(self):
+        if self.globally_accessible:
+            return self.registry_helper.participating_domains
+        else:
+            return self.registry_helper.visible_domains
+
+    def validate(self, required=True):
+        super().validate(required)
+        if self.referenced_doc_type != 'CommCareCase':
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
+
+    def _get_domain_filter_spec(self):
+        return {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "in",
+            "property_value": self.data_domains,
+        }
+
+    @property
+    @memoized
+    def default_indicators(self):
+        default_indicators = super().default_indicators
+        default_indicators.append(IndicatorFactory.from_spec({
+            "column_id": "domain",
+            "type": "expression",
+            "display_name": "Project Space",
+            "datatype": "string",
+            "is_nullable": False,
+            "create_index": True,
+            "expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "domain"
+                }
+            }
+        }, self.get_factory_context()))
+        return default_indicators
+
+    def get_report_count(self):
+        raise NotImplementedError("TODO")
+
+    @classmethod
+    def by_domain(cls, domain):
+        return get_registry_data_sources_by_domain(domain)
+
+    @classmethod
+    def all_ids(cls):
+        return get_all_registry_data_source_ids()
 
 
 class ReportMeta(DocumentSchema):

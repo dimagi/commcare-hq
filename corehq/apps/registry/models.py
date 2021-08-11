@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
@@ -66,6 +68,17 @@ class DataRegistry(models.Model):
     class Meta:
         unique_together = ('domain', 'slug')
 
+    @classmethod
+    @transaction.atomic
+    def create(cls, user, domain, name):
+        registry = DataRegistry.objects.create(domain=domain, name=name)
+        # creating domain is automatically added to the registry
+        invitation = registry.invitations.create(
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
+        )
+        registry.logger.invitation_added(user, invitation)
+        return registry
+
     @transaction.atomic
     def activate(self, user):
         if not self.is_active:
@@ -87,6 +100,11 @@ class DataRegistry(models.Model):
             .values_list('from_domain', flat=True)
         )
 
+    def get_participating_domains(self):
+        return set(self.invitations.filter(
+            status=RegistryInvitation.STATUS_ACCEPTED,
+        ).values_list('domain', flat=True))
+
     def check_access(self, domain):
         if not self.is_active:
             raise RegistryAccessDenied()
@@ -97,6 +115,10 @@ class DataRegistry(models.Model):
         if invite.status != RegistryInvitation.STATUS_ACCEPTED:
             raise RegistryAccessDenied()
         return True
+
+    def check_ownership(self, domain):
+        if self.domain != domain:
+            raise RegistryAccessDenied()
 
     @cached_property
     def logger(self):
