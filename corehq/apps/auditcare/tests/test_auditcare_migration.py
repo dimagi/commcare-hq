@@ -226,7 +226,7 @@ class TestCopyEventsToSQL(AuditcareTest):
             )
             self.assertEqual(
                 [e.params for e in NavigationEventAudit.objects.order_by("-event_date").all()],
-                ["version=2.0&since=...", "version=2.0&since=...", "version=2.0&since=...", "version=2.0&since=..."]
+                ["version=2.0&since=...&db=/etc/passwd'\\x00'", "version=2.0&since=...", "version=2.0&since=...", "version=2.0&since=..."]
             )
             self.assertEqual(AccessAudit.objects.count(), 1)
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")

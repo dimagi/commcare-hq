@@ -224,7 +224,7 @@ task_docs = [
             'REQUEST_METHOD': 'GET',
         },
         'ip_address': '10.1.2.3',
-        'request_path': '/a/sandwich/phone/restore/?version=2.0&since=...',
+        'request_path': '/a/sandwich/phone/restore/?version=2.0&since=...&db=/etc/passwd\x00',
         'session_key': 'abc123',
         'status_code': 200,
         'view_kwargs': {'domain': 'sandwich'},
