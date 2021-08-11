@@ -1,9 +1,11 @@
 import csv
 import io
 from datetime import date, timedelta
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.db import connections
 from django.db.models import Q
 from django.template import Context, Template
@@ -22,6 +24,7 @@ from pillowtop.utils import get_couch_pillow_instances
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.metrics import metrics_gauge
@@ -201,3 +204,39 @@ def track_pg_limits():
                 cursor.execute(f'select last_value from "{sequence}"')
                 current_value = cursor.fetchone()[0]
                 metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+def reconcile_es_cases():
+    _reconcile_es_data('case', 'commcare.elasticsearch.stale_cases', 'reconcile_es_cases')
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+def reconcile_es_forms():
+    _reconcile_es_data('form', 'commcare.elasticsearch.stale_forms', 'reconcile_es_forms')
+
+
+def _reconcile_es_data(data_type, metric, blob_parent_id):
+    today = date.today()
+    two_days_ago = today - timedelta(days=2)
+    with NamedTemporaryFile('w', delete=False) as output_file:
+        file_name = output_file.name
+        call_command('stale_data_in_es', data_type, start=two_days_ago.isoformat(), stdout=output_file)
+    with open(file_name, 'r') as f:
+        line_count = sum(1 for line in f)
+        # ignore the headers
+        stale_docs = line_count - 1
+        metrics_gauge(metric, stale_docs)
+    call_command('republish_doc_changes', file_name)
+    with open(file_name, 'rb') as f:
+        blob_db = get_blob_db()
+        key = f'{blob_parent_id}_{today.isoformat()}'
+        thirty_days = 60 * 24 * 30
+        blob_db.put(
+            f,
+            type_code=CODES.tempfile,
+            domain='<unknown>',
+            parent_id=blob_parent_id,
+            key=key,
+            timeout=thirty_days
+        )
