@@ -217,7 +217,7 @@ task_docs = [
     {
         'doc_type': 'NavigationEventAudit',
         'user': 'couch@test.com',
-        'event_date': datetime(2021, 2, 1, 5).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'event_date': datetime(2021, 2, 2).strftime("%Y-%m-%dT%H:%M:%SZ"),
         'description': 'User Name',
         'extra': {},
         'headers': {
