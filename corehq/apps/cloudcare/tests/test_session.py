@@ -29,6 +29,7 @@ class SessionUtilsTest(TestCase):
         self.assertEqual('worker', data['username'])
         self.assertEqual(user._id, data['user_id'])
         self.assertTrue(isinstance(data['user_data'], dict))
+        self.assertTrue(data['user_data']['commcare_project'], 'cloudcare-tests')
 
     def test_default_user_data(self):
         user = CommCareUser(
@@ -77,6 +78,7 @@ class SessionUtilsTest(TestCase):
         self.assertEqual('web-user@example.com', data['username'])
         self.assertEqual(user._id, data['user_id'])
         self.assertTrue(isinstance(data['user_data'], dict))
+        self.assertTrue(data['user_data']['commcare_project'], 'cloudcare-tests')
 
     def test_load_session_data_for_commconnect_case(self):
         user = CommCareCase(
