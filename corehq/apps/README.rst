@@ -178,8 +178,6 @@ hqcase
    Utility functions for handling cases, such as the ability to programmatically submit cases.
 mocha
    JavaScript testing framework.
-tzmigration
-   This relates to a timezone migration done in 2015. See `#6341 <https://github.com/dimagi/commcare-hq/pull/6341>`_ if curious.
 
 Limited-Use and Retired Apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
