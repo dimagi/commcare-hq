@@ -14,7 +14,6 @@ from corehq.form_processor.exceptions import (
 )
 from memoized import memoized
 from ..system_action import system_action
-from ..utils import should_use_sql_backend
 
 
 class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata',
@@ -44,7 +43,6 @@ class FormProcessorInterface(object):
 
     def __init__(self, domain=None):
         self.domain = domain
-        self.use_sql_domain = should_use_sql_backend(self.domain)
 
     @property
     @memoized
@@ -61,13 +59,8 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def casedb_cache(self):
-        from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
         from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-
-        if self.use_sql_domain:
-            return CaseDbCacheSQL
-        else:
-            return CaseDbCacheCouch
+        return CaseDbCacheSQL
 
     @property
     @memoized
