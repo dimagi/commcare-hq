@@ -41,7 +41,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, SQLUserRole
+from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
@@ -446,7 +446,7 @@ def num_custom_roles(domain):
 
 
 def num_location_restricted_roles(domain):
-    roles = [r for r in SQLUserRole.objects.get_by_domain(domain)
+    roles = [r for r in UserRole.objects.get_by_domain(domain)
              if not r.permissions.access_all_locations]
     return len(roles)
 

@@ -27,7 +27,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             // show any notifications from Formplayer
             if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
-                FormplayerFrontend.getChannel().request("handleNotification", menuResponse.notification);
+                FormplayerFrontend.trigger("handleNotification", menuResponse.notification);
             }
 
             // If redirect was set, clear and go home.
@@ -75,7 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var selectDetail = function (caseId, detailIndex, isPersistent) {
         var urlObject = Util.currentUrlToObject();
         if (!isPersistent) {
-            urlObject.addStep(caseId);
+            urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {

@@ -108,7 +108,7 @@ from corehq.apps.users.models import (
     Permissions,
     RoleAssignableBy,
     RolePermission,
-    SQLUserRole,
+    UserRole,
     UserHistory,
     WebUser,
 )
@@ -910,17 +910,17 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(user_history.details['changes'], {})
 
     def _assert_role_counts(self, domain_name, roles, permissions, assignments):
-        self.assertEqual(SQLUserRole.objects.filter(domain=domain_name).count(), roles)
+        self.assertEqual(UserRole.objects.filter(domain=domain_name).count(), roles)
         self.assertEqual(RolePermission.objects.filter(role__domain=domain_name).count(), permissions)
         self.assertEqual(RoleAssignableBy.objects.filter(role__domain=domain_name).count(), assignments)
 
     def test_roles_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            role1 = SQLUserRole.objects.create(
+            role1 = UserRole.objects.create(
                 domain=domain_name,
                 name="role1"
             )
-            role = SQLUserRole.objects.create(
+            role = UserRole.objects.create(
                 domain=domain_name,
                 name="role2"
             )

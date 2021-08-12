@@ -67,21 +67,22 @@ branches:
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
     - jm/stale-es-case-search  # Joel July 21
-    - gh/improve-erm-ui+rc/tableau-models-linked-spaces # Graham July 24
-    - rc/tableau-models-linked-spaces # Robert July 22
-    - caktus:case-upload-validate-dates # Jenny July 22
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - bmb/noramilize-url  # Biyeun July 26
-    - smh/web-user-upload-invites-fix # Steph July 26
-    - jls/delay-web-apps-form-errors # Jenny July 27
-    - cs/SC-1530-location-hierarchy-links  # Charl July 28
     - sk/data-registry-view  # Simon July 29
-    - rc/show-hierarchy # Robert July 29
     - jm/remove-es-scan  # Joel August 3
-    - es/blank-case-search  # Ethan August 3
-    - labelValidation # Shubham August 4
-    - sk/uglify3 # Simon August 5
+    - ml/remove-show-field-sms-billables-report+ml/sms-billable-report-visibility-checkbox  # Charl Aug 11
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
     - ml/remove-show-field-sms-billables-report # Minha August 5
+    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
+    - jls/smart-linking-mvp-claim-on-formplayer+jls/web-apps-steps-to-selections
+    - jls/smart-linking-mvp  # Jenny Aug 9
+    - jls/smart-linking-mvp-claim-on-formplayer  # Jenny Aug 9
+    - jls/smart-linking-mvp-qabugs # Jenny Aug 12
+    - jls/web-apps-steps-to-selections # Jenny Aug 10
+    - mjr/record_failure_login_ips  # Matt Aug 10
+    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
+    - jls/smart-linking-mvp-claim-on-formplayer+es/optimize-builds  # Ethan Aug 11
+    - es/optimize-build  # Ethan Aug 11
 submodules: { }

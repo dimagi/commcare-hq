@@ -25,7 +25,7 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    SQLUserRole,
+    UserRole,
     UserHistory,
     WebUser,
 )
@@ -47,8 +47,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             is_superuser=True)
 
-        cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
-        cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
         cls.upload_record = UserUploadRecord(
             domain=cls.domain_name,
             user_id=cls.uploading_user.get_id
@@ -1134,6 +1134,60 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(res['messages']['rows'][0]['flag'], f'Invalid phone number detected: {bad_number}')
 
+    def test_upload_with_no_phone_numbers(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+        user_specs['phone-number'] = []
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+        self.assertTrue('Removed phone number 12345678912' in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, None)
+        self.assertEqual(user.phone_number, None)
+        self.assertEqual(user.phone_numbers, [])
+
+    def test_upload_with_no_phone_number_in_row(self):
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None, phone_number='12345678912')
+
+        user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
+
+        import_users_and_groups(
+            self.domain.name,
+            [user_specs],
+            [],
+            self.uploading_user,
+            self.upload_record.pk,
+            False
+        )
+        user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
+        changes = user_history.message
+
+        self.assertTrue('Removed phone number 12345678912' not in changes)
+
+        # Check if user is updated
+        users = CommCareUser.by_domain(self.domain.name)
+        user = next((u for u in users if u._id == user._id))
+
+        self.assertEqual(user.default_phone_number, '12345678912')
+        self.assertEqual(user.phone_number, '12345678912')
+        self.assertEqual(user.phone_numbers, ['12345678912'])
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     @classmethod
@@ -1267,9 +1321,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
-        cls.role = SQLUserRole.create(cls.domain.name, 'edit-apps')
-        cls.other_role = SQLUserRole.create(cls.domain.name, 'admin')
-        cls.other_domain_role = SQLUserRole.create(cls.other_domain.name, 'view-apps')
+        cls.role = UserRole.create(cls.domain.name, 'edit-apps')
+        cls.other_role = UserRole.create(cls.domain.name, 'admin')
+        cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
