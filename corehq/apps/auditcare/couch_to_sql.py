@@ -41,7 +41,7 @@ def copy_events_to_sql(start_time, end_time):
     util.log_batch_start(key)
     break_query = False
     last_doc_id = None
-    count, other_doc_count = util.get_existing_count(key)
+    count, other_doc_type_count = util.get_existing_count(key)
     try:
         while not break_query:
             events_info = get_events_from_couch(next_start_key, end_key, last_doc_id)
@@ -51,19 +51,19 @@ def copy_events_to_sql(start_time, end_time):
             count += events_info['count']
             break_query = events_info['break_query']
             last_doc_id = events_info['last_doc_id']
-            other_doc_count += events_info['other_doc_type_count']
+            other_doc_type_count += events_info['other_doc_type_count']
     except Exception as e:
         message = f"""Error in copy_events_to_sql in key {key}
             Next start key is {next_start_key}
             Last doc id processed is {last_doc_id}
             {e}"""
-        util.set_batch_as_errored(key, last_doc_id, other_doc_count)
+        util.set_batch_as_errored(key, last_doc_id, other_doc_type_count)
         notify_exception(None, message=message)
         _soft_assert = soft_assert(to="{}@{}.com".format('aphulera', 'dimagi'), notify_admins=False)
         _soft_assert(False, message)
         return
     logger.info(f"Batch finished: {start_time} - {end_time}")
-    util.set_batch_as_finished(key, count, other_doc_count)
+    util.set_batch_as_finished(key, count, other_doc_type_count)
 
 
 def get_couch_key(time):

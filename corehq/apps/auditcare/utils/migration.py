@@ -82,11 +82,11 @@ class AuditCareMigrationUtil():
             finished_at=datetime.now()
         )
 
-    def set_batch_as_errored(self, key, last_doc=None, other_doc_count=0):
+    def set_batch_as_errored(self, key, last_doc=None, other_doc_type_count=0):
         AuditcareMigrationMeta.objects.filter(key=key).update(
             state=AuditcareMigrationMeta.ERRORED,
             last_doc_processed=last_doc,
-            other_doc_type_count=other_doc_count
+            other_doc_type_count=other_doc_type_count
         )
 
     def get_existing_count(self, key):
