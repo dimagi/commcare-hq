@@ -4,14 +4,13 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
-from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CouchSaveAborted
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
     case_model_classes = (dict, CommCareCase)
-    case_update_strategy = CouchCaseUpdateStrategy
+    case_update_strategy = None  # pending removal of CaseDbCacheCouch
 
     def _validate_case(self, doc):
         if self.domain and doc['domain'] != self.domain:
