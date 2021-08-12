@@ -169,7 +169,7 @@ Marionette's `regions <https://marionettejs.com/docs/master/marionette.region.ht
 
 We rarely touch the region-handling code, which defines the high-level structure of the page: the "main" region, the progress bar, breadcrumbs, and the restore as banner. The persistent case tile also has a region. Most web apps development happens within the ``main`` region.
 
-It is sometimes useful to know how the breadcrumbs work. The breadcrumbs are tightly tied to formplayer's selections-based navigation. See `Navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_ for an overview and examples. The breadcrumbs use this same selections array, which corresponds to the "steps" attribute of ``CloudcareURL``, with one breadcrumb for each selection.
+It is sometimes useful to know how the breadcrumbs work. The breadcrumbs are tightly tied to formplayer's selections-based navigation. See `Navigation and replaying of sessions <https://github.com/dimagi/commcare-hq/blob/master/docs/formplayer.rst#navigation-and-replaying-of-sessions>`_ for an overview and examples. The breadcrumbs use this same selections array, which is also an attribute of ``CloudcareURL``, with one breadcrumb for each selection.
 
 Backbone.Radio and Events
 -------------------------

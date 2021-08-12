@@ -86,8 +86,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             );
                         }
                         var urlObject = Util.currentUrlToObject();
-                        if (urlObject.steps) {
-                            urlObject.steps.pop();
+                        if (urlObject.selections) {
+                            urlObject.selections.pop();
                             Util.setUrlToObject(urlObject);
                         }
                         defer.reject();
@@ -100,7 +100,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "domain": user.domain,
                     "app_id": params.appId,
                     "locale": displayOptions.language,
-                    "selections": params.steps,
+                    "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
