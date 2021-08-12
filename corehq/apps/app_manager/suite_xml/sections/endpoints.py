@@ -44,7 +44,6 @@ class SessionEndpointContributor(SuiteContributorByModule):
             endpoint_id = module.session_endpoint_id
 
         stack = Stack()
-        arguments = []
         helper = EndpointsHelper(self.suite, self.app)
         children = helper.get_frame_children(module, form)
         for child in children:
