@@ -11,7 +11,8 @@
     ],
     "server_environment": [
         "production",
-        "localdev"
+        "localdev",
+        "monolith"
     ],
     "config": {
         "engine_id": "ucr",
