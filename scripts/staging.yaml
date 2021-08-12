@@ -81,6 +81,4 @@ branches:
     - jls/smart-linking-mvp-qabugs # Jenny Aug 12
     - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - jls/smart-linking-mvp-claim-on-formplayer+es/optimize-builds  # Ethan Aug 11
-    - es/optimize-build  # Ethan Aug 11
 submodules: { }
