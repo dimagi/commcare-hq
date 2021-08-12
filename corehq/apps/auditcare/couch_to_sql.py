@@ -146,30 +146,26 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
 @retry_on_couch_error
 def _get_couch_docs(start_key, end_key, start_doc_id=None):
     db = get_db("auditcare")
-    if not start_doc_id:
+    if start_doc_id:
+        kwargs = {"startkey_docid": start_doc_id}
+    else:
         # We are incrementing seconds by one for the first call
         # because matching records were not returned in descending order
+        # due to the key structure: [2020, 2, 2, 0, 0, 0] comes after
+        # [2020, 2, 2, 0, 0, 0, "AccessAudit", "system"] when descending
+        assert len(start_key) == 6, start_key
         start_key[5] += 1
-        result = db.view(
-            "auditcare/all_events",
-            startkey=start_key,
-            endkey=end_key,
-            reduce=False,
-            include_docs=True,
-            descending=True,
-            limit=COUCH_QUERY_LIMIT
-        )
-    else:
-        result = result = db.view(
-            "auditcare/all_events",
-            startkey=start_key,
-            endkey=end_key,
-            reduce=False,
-            include_docs=True,
-            descending=True,
-            limit=COUCH_QUERY_LIMIT,
-            startkey_docid=start_doc_id,
-        )
+        kwargs = {}
+    result = db.view(
+        "auditcare/all_events",
+        startkey=start_key,
+        endkey=end_key,
+        reduce=False,
+        include_docs=True,
+        descending=True,
+        limit=COUCH_QUERY_LIMIT,
+        **kwargs
+    )
     return list(result)
 
 
