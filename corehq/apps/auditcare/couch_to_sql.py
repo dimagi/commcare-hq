@@ -30,6 +30,8 @@ ACCESS_LOOKUP = {
 
 COUCH_QUERY_LIMIT = 1000
 
+IGNORED_DOC_TYPES = {"ModelActionAudit"}
+
 
 def copy_events_to_sql(start_time, end_time):
     util = AuditCareMigrationUtil()
@@ -126,6 +128,7 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
                 kwargs.update({"path": "accounts/logout"})
             access_objects.append(AccessAudit(**kwargs))
         else:
+            assert doc["doc_type"] in IGNORED_DOC_TYPES, doc
             other_doc_type_count += 1
     res_obj = get_unsaved_events(
         navigation_objects,
