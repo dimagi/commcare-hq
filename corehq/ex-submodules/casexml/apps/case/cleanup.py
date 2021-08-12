@@ -10,7 +10,6 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.auth import AuthContext
-from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
@@ -51,19 +50,6 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
 
 def close_case(case_id, domain, user, device_id):
     return close_cases([case_id], domain, user, device_id)
-
-
-def rebuild_case_from_actions(case, actions):
-    strategy = CouchCaseUpdateStrategy(case)
-    strategy.reset_case_state()
-    # in addition to resetting the state, also manually clear xform_ids and actions
-    # since we're going to rebuild these from the forms
-    case.xform_ids = []
-
-    case.actions = actions
-    # call "rebuild" on the case, which should populate xform_ids
-    # and re-sort actions if necessary
-    strategy.soft_rebuild_case()
 
 
 def rebuild_case_from_forms(domain, case_id, detail):
