@@ -267,7 +267,7 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
     def build_remote_request_datums(self):
         return [SessionDatum(
             id=self.case_session_var,
-            function=f"instance('commcaresession')/session/data/{self.case_session_var}",
+            function=QuerySessionXPath(self.case_session_var).instance(),
         )]
 
     def build_stack(self):
