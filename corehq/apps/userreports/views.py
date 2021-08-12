@@ -697,7 +697,7 @@ def _get_form_type(report_type):
     if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
-            return ConfigureTableReportForm
+        return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
 
