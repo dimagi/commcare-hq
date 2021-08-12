@@ -124,7 +124,7 @@
               {% blocktrans %}
                 Please correct the answers below before submitting.
                 <br>
-                You can use the <strong><i class='fa fa-arrow-down'></i> Next Question</strong> button on the left-hand side of the screen to navigate between required fields.
+                You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
               {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
@@ -175,8 +175,8 @@
           {% endif %}
         {% endif %}
         <div id="scroll-bottom" class="btn btn-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
-          <i class='fa fa-arrow-down'> </i>
-              {% trans "Next Question" %}
+          <i class='fa fa-fast-forward'> </i>
+              {% trans "Next Error" %}
         </div>
       </div>
     </div>
@@ -257,11 +257,18 @@
   <div class="info panel panel-default">
     <div class="panel-body">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), attr: {'for': entry.entryId}"></span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
       </div>
+      <div class="widget-container controls" data-bind="css: controlWidth">
+      <!-- labels only deal with server errors, since there's no data type validation for the browser to do-->
+      <div class="text-danger error-message" data-bind="
+                visible: serverError,
+                text: serverError
+      "></div>
+    </div>
     </div>
   </div>
   <!-- /ko -->

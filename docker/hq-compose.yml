@@ -28,6 +28,8 @@ services:
       TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
       TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      TRAVIS_PULL_REQUEST_BRANCH: "${TRAVIS_PULL_REQUEST_BRANCH}"
+      TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
     privileged: true  # allows mount inside container

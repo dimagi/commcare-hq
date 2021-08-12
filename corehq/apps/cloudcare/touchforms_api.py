@@ -21,7 +21,7 @@ class BaseSessionDataHelper(object):
             'app_version': '2.0',
             'domain': self.domain,
         }
-        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
+        session_data.update(get_user_contributions_to_touchforms_session(self.domain, self.couch_user))
         return session_data
 
     def get_full_context(self, root_extras=None, session_extras=None):
@@ -101,12 +101,12 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         return session_var
 
 
-def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
+def get_user_contributions_to_touchforms_session(domain, couch_user_or_commconnect_case):
     return {
         'username': couch_user_or_commconnect_case.raw_username,
         'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
         # a case, in which case there is no user_data.
-        'user_data': (couch_user_or_commconnect_case.user_session_data
+        'user_data': (couch_user_or_commconnect_case.get_user_session_data(domain)
             if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

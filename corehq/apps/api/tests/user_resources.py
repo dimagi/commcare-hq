@@ -20,7 +20,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     WebUser,
     UserRolePresets,
-    SQLUserRole
+    UserRole
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -316,7 +316,7 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_users[0])
 
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
-        role = SQLUserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
         another_user.set_role(self.domain.name, role.get_qualified_id())
         another_user.save()
         self.addCleanup(another_user.delete, self.domain.name, deleted_by=None)
@@ -388,7 +388,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.get_role(self.domain.name).name, 'Field Implementer')
 
     def test_create_with_preset_role_deleted(self):
-        SQLUserRole.objects.filter(domain=self.domain, name=UserRolePresets.APP_EDITOR).delete()
+        UserRole.objects.filter(domain=self.domain, name=UserRolePresets.APP_EDITOR).delete()
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = UserRolePresets.APP_EDITOR
         user_json["is_admin"] = False
@@ -400,7 +400,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role \'App Editor\'"}')
 
     def test_create_with_custom_role(self):
-        new_user_role = SQLUserRole.create(self.domain.name, 'awesomeness')
+        new_user_role = UserRole.create(self.domain.name, 'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False

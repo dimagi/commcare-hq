@@ -16,7 +16,7 @@ class BasePillowTestCase(CallCenterDomainMockTest):
         # and @run_with_all_backends is a multiplier
         cls.patches = [
             patch.object(StaticDataSourceConfiguration, "_all", lambda: []),
-            patch.object(ConfigurableReportTableManager, "rebuild_tables_if_necessary"),
+            patch("corehq.apps.userreports.pillow.rebuild_sql_tables"),
         ]
         for px in cls.patches:
             px.start()

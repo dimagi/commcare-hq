@@ -6,7 +6,8 @@ allowSourceOverwrites: true
 keepBuildDir: true
 findNestedDependencies: true
 skipDirOptimize: true   # could turn this off to minify everything
-generateSourceMaps: true
+generateSourceMaps: false
+optimize: none
 fileExclusionRegExp: ^\.|\.css$
 modules:
   # These two modules are referenced in hqwebapp/base.html, not in a requirejs_main tag,
