@@ -54,6 +54,7 @@ from corehq.motech.const import (
 )
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import SQLCaseRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     ValueSource,
@@ -69,6 +70,19 @@ from .const import (
     OWNER_TYPE_USER,
 )
 from .validators import validate_supported_type
+
+
+class SQLFHIRRepeater(SQLCaseRepeater):
+    fhir_version = models.CharField(
+        max_length=10,
+        choices=FHIR_VERSIONS,
+        default=FHIR_VERSION_4_0_1,
+    )
+    patient_registration_enabled = models.BooleanField(default=True)
+    patient_search_enabled = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'fhir_fhirrepeater'
 
 
 class FHIRResourceType(models.Model):

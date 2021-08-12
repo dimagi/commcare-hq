@@ -294,14 +294,14 @@ class SQLRepeatRecordReport(BaseRepeatRecordReport):
             created_at = self._format_date(list(record.attempts)[-1].created_at)
         else:
             created_at = '---'
-        if record.repeater_stub.next_attempt_at:
-            next_attempt_at = self._format_date(record.repeater_stub.next_attempt_at)
+        if record.repeater.next_attempt_at:
+            next_attempt_at = self._format_date(record.repeater.next_attempt_at)
         else:
             next_attempt_at = '---'
         row = [
             checkbox,
             self._make_state_label(record),
-            record.repeater_stub.repeater.get_url(record),
+            record.repeater.repeater.get_url(record),
             created_at,
             next_attempt_at,
             render_to_string('repeaters/partials/attempt_history.html',
