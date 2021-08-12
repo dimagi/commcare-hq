@@ -16,9 +16,6 @@ from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import (
     schedule_detail_variables,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import (
-    get_all_instances_referenced_in_xpaths,
-)
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -608,28 +605,6 @@ def get_detail_column_infos_for_tabs_with_sorting(detail):
             ])
 
     return columns
-
-
-def get_instances_for_module(app, module, detail_section_elements):
-    """
-    This method is used by CloudCare when filtering cases.
-    """
-    modules = list(app.get_modules())
-    helper = DetailsHelper(app, modules)
-    details = detail_section_elements
-    detail_mapping = {detail.id: detail for detail in details}
-    details_by_id = detail_mapping
-    detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                  for detail_type, detail, enabled in module.get_details()
-                  if enabled]
-    detail_ids = [_f for _f in detail_ids if _f]
-    xpaths = set()
-
-    for detail_id in detail_ids:
-        xpaths.update(details_by_id[detail_id].get_all_xpaths())
-
-    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
-    return instances
 
 
 class CaseTileHelper(object):

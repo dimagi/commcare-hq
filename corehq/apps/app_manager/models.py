@@ -2452,6 +2452,7 @@ class ModuleDetailsMixin(object):
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
+    @memoized
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -3158,6 +3159,7 @@ class AdvancedModule(ModuleBase):
         detail.instance_name = RESULTS_INSTANCE
         return detail
 
+    @memoized
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -3627,6 +3629,7 @@ class ReportModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
+    @memoized
     def get_details(self):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_details()
