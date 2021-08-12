@@ -28,10 +28,8 @@ BUILD_TXT_FILENAME = "staticfiles/build.txt"
 class Command(ResourceStaticCommand):
     help = '''
         Runs RequireJS optimizer to concatenate, minify, and bundle JavaScript files
-        and set them up with the CDN.
+        and set them up with the CDN. Use `--verbosity=2` for full output.
     '''
-
-
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -45,6 +43,7 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
+        verbose = options['verbosity'] > 1
         optimize = not options['no_optimize']
 
         if local:
@@ -56,9 +55,9 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local)
+        config, local_js_dirs = _r_js(local=local, verbose=verbose)
         if optimize:
-            _minify(config)
+            _minify(config, verbose=verbose)
 
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
@@ -123,13 +122,17 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False):
+def _r_js(local=False, verbose=False):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
         config = yaml.safe_load(f)
+
+    config['logLevel'] = 0 if verbose else 2  # TRACE or WARN
+    if not verbose:
+        print("Compiling Javascript bundles")
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
@@ -154,8 +157,13 @@ def _r_js(local=False):
     return config, local_js_dirs
 
 
-def _minify(config):
-    for module in with_progress_bar(config['modules'], prefix="Minifying", oneline=False):
+def _minify(config, verbose=False):
+    modules = config['modules']
+    if verbose:
+        modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
+    else:
+        print("Minifying Javascript bundles (estimated wait time: 5min)")
+    for module in modules:
         rel_path = Path(module['name'] + ".js")
         path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
         ret = call([
