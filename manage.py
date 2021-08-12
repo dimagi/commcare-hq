@@ -30,6 +30,7 @@ def main():
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
         GeventCommand('run_all_management_command'),
+        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32)
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
