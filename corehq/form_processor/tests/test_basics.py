@@ -21,8 +21,8 @@ from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from corehq.form_processor.utils import get_simple_form_xml
+from corehq.util.dates import coerce_to_datetime
 
 DOMAIN = 'fundamentals'
 
