@@ -60,21 +60,30 @@ branches:
     - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
-    - gh/improve-erm-ui # Graham June 16 [QA]
-    - rn_disallow_yui_cors # Rohit Negi
-    - jm/repeater-domain-admins  # Joel June 21
-    - sp/csrf # Amit + Shivam June 30
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
-    - gh/add-app-id-behind-ff # Graham July 6 [QA]
     - ce/bulk-case-search # Cal July 6
     - ap/auditcare-migration # Amit July 8
-    - rc/explain-before-entering # Robert July 8 [QA]
     - rp/enterprize-sms-report # Rynhard July 12
-    - bmb/hubspot-privacy  # Biyeun July 12
-    - jls/single-tableau-view # Jenny July 16
-    - bmb/sso-domain-login-update  # Biyeun July 15
-    - smh/tableau-server-dropdown-modification # Steph July 19
-    - bmb/sso-alternate-login  # Biyeun July 19
-    - revert-30073-revert-29936-gh/split-toggles-and-previews # Graham July 19
+    - ml/add-bulk-delete-form-export-report # Minha July 20
+    - jm/stale-es-case-search  # Joel July 21
+    - sr/memoized-toggle # Sravan July 26
+    - bmb/sso-login-v2  # Biyeun July 26
+    - bmb/noramilize-url  # Biyeun July 26
+    - cs/SC-1530-location-hierarchy-links  # Charl July 28
+    - sk/data-registry-view  # Simon July 29
+    - jm/remove-es-scan  # Joel August 3
+    - ml/remove-show-field-sms-billables-report+ml/sms-billable-report-visibility-checkbox  # Charl Aug 11
+    - ml/sms-billable-report-visibility-checkbox # Minha August 5
+    - ml/remove-show-field-sms-billables-report # Minha August 5
+    - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
+    - jls/smart-linking-mvp-claim-on-formplayer+jls/web-apps-steps-to-selections
+    - jls/smart-linking-mvp  # Jenny Aug 9
+    - jls/smart-linking-mvp-claim-on-formplayer  # Jenny Aug 9
+    - jls/web-apps-steps-to-selections # Jenny Aug 10
+    - cs/SC-1529-follow-up  # Charl Aug 10
+    - mjr/record_failure_login_ips  # Matt Aug 10
+    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
+    - jls/smart-linking-mvp-claim-on-formplayer+es/optimize-builds  # Ethan Aug 11
+    - es/optimize-build  # Ethan Aug 11
 submodules: { }

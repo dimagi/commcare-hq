@@ -508,8 +508,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
     def get_domains(self):
-        subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
-        return [s.subscriber.domain for s in subscriptions]
+        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                    'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
@@ -1770,6 +1770,16 @@ class Subscription(models.Model):
         if no_current_entry_point and self_serve and not self.is_trial:
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
+
+    @classmethod
+    def get_active_domains_for_account(cls, account_name):
+        try:
+            return cls.visible_objects.filter(
+                is_active=True,
+                account=account_name,
+            ).values_list('subscriber__domain', flat=True).distinct()
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):

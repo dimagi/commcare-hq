@@ -55,6 +55,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -118,10 +119,6 @@ def REPORTS(project):
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
-
-    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
-        tableau_reports = tableau.get_reports(project.name)
-        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
 
     if project.commtrack_enabled:
         supply_reports = (
@@ -349,6 +346,12 @@ SMS_ADMIN_INTERFACES = (
     (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
+    )),
+)
+
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
     )),
 )
 

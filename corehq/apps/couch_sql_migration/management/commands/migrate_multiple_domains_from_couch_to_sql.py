@@ -53,10 +53,17 @@ class Command(BaseCommand):
         parser.add_argument('--live', action='store_true', default=False,
             help="Do live migration. Leave in unfinished state if there are "
                  "unpatchable diffs, otherwise patch, finish and commit.")
+        parser.add_argument('--resume', action='store_true', default=False,
+            help="Resume previously started (live) migration. This should "
+                 "only be used when it is known that no other migration "
+                 "commands are running on the given domain(s).")
 
     def handle(self, domains, state_dir, **options):
         self.strict = options['strict']
         self.live_migrate = options["live"]
+        self.resume = options["resume"]
+        if self.resume and not self.live_migrate:
+            raise CommandError("--resume can only be used with --live")
 
         domains = list_domains(domains)
         failed = []
@@ -95,7 +102,8 @@ class Command(BaseCommand):
             return
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            raise Incomplete("migration is in progress")
+            if not self.resume:
+                raise Incomplete("migration is in progress")
 
         set_couch_sql_migration_started(domain, self.live_migrate)
         try:

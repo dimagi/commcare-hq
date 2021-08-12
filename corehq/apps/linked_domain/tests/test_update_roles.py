@@ -9,7 +9,7 @@ from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.userreports.util import get_ucr_class_name
-from corehq.apps.users.models import Permissions, SQLUserRole
+from corehq.apps.users.models import Permissions, UserRole
 
 
 class TestUpdateRoles(BaseLinkedAppsTest):
@@ -23,8 +23,8 @@ class TestUpdateRoles(BaseLinkedAppsTest):
                 'corehq.reports.DynamicReportmaster_report_id'
             ]
         )
-        cls.role = SQLUserRole.create(cls.domain, 'test', permissions, is_non_admin_editable=True)
-        cls.other_role = SQLUserRole.create(
+        cls.role = UserRole.create(cls.domain, 'test', permissions, is_non_admin_editable=True)
+        cls.other_role = UserRole.create(
             cls.domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
         cls.other_role.set_assignable_by([cls.role.id])
@@ -36,18 +36,18 @@ class TestUpdateRoles(BaseLinkedAppsTest):
         super(TestUpdateRoles, cls).tearDownClass()
 
     def tearDown(self):
-        for role in SQLUserRole.objects.get_by_domain(self.linked_domain):
+        for role in UserRole.objects.get_by_domain(self.linked_domain):
             role.delete()
         super(TestUpdateRoles, self).tearDown()
 
     def test_update_report_list(self):
-        self.assertEqual([], SQLUserRole.objects.get_by_domain(self.linked_domain))
+        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
 
         report_mapping = {'master_report_id': 'linked_report_id'}
         with patch('corehq.apps.linked_domain.updates.get_static_report_mapping', return_value=report_mapping):
             update_user_roles(self.domain_link)
 
-        roles = {r.name: r for r in SQLUserRole.objects.get_by_domain(self.linked_domain)}
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
         self.assertEqual(2, len(roles))
         self.assertEqual(roles['test'].permissions.view_report_list, [get_ucr_class_name('linked_report_id')])
         self.assertTrue(roles['test'].is_non_admin_editable)
@@ -56,30 +56,30 @@ class TestUpdateRoles(BaseLinkedAppsTest):
         self.assertEqual(roles['other_test'].assignable_by, [roles['test'].get_id])
 
     def test_match_names(self):
-        self.assertEqual([], SQLUserRole.objects.get_by_domain(self.linked_domain))
+        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
 
         # create role in linked domain with the same name but no 'upstream_id'
-        SQLUserRole.create(
+        UserRole.create(
             self.linked_domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
         )
 
         update_user_roles(self.domain_link)
-        roles = {r.name: r for r in SQLUserRole.objects.get_by_domain(self.linked_domain)}
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
         self.assertEqual(2, len(roles))
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
         self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
 
     def test_match_ids(self):
-        self.assertEqual([], SQLUserRole.objects.get_by_domain(self.linked_domain))
+        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
 
         # create role in linked domain with upstream_id and name not matching upstream name
-        SQLUserRole.create(
+        UserRole.create(
             self.linked_domain, 'id_test', Permissions(edit_web_users=False, view_locations=True),
             upstream_id=self.other_role.get_id
         )
 
         update_user_roles(self.domain_link)
-        roles = {r.name: r for r in SQLUserRole.objects.get_by_domain(self.linked_domain)}
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
         self.assertEqual(2, len(roles), roles.keys())
         self.assertIsNotNone(roles.get('other_test'))
         self.assertTrue(roles['other_test'].permissions.edit_web_users)
@@ -120,7 +120,7 @@ class TestUpdateRolesRemote(TestCase):
 
     def setUp(self):
         self.upstream_role1_id = uuid.uuid4().hex
-        self.role1 = SQLUserRole.create(
+        self.role1 = UserRole.create(
             domain=self.linked_domain,
             name='test',
             permissions=Permissions(
@@ -134,7 +134,7 @@ class TestUpdateRolesRemote(TestCase):
             upstream_id=self.upstream_role1_id
         )
 
-        self.other_role = SQLUserRole.create(
+        self.other_role = UserRole.create(
             domain=self.linked_domain,
             name='other_test',
             permissions=Permissions(
@@ -146,7 +146,7 @@ class TestUpdateRolesRemote(TestCase):
         self.other_role.save()
 
     def tearDown(self):
-        for role in SQLUserRole.objects.get_by_domain(self.linked_domain):
+        for role in UserRole.objects.get_by_domain(self.linked_domain):
             role.delete()
         super(TestUpdateRolesRemote, self).tearDown()
 
@@ -178,7 +178,7 @@ class TestUpdateRolesRemote(TestCase):
 
         update_user_roles(self.domain_link)
 
-        roles = {r.name: r for r in SQLUserRole.objects.get_by_domain(self.linked_domain)}
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
         self.assertEqual(3, len(roles))
         self.assertEqual(roles['test'].permissions, remote_permissions)
         self.assertEqual(roles['test'].is_non_admin_editable, False)

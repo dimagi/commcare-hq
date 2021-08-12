@@ -1,4 +1,5 @@
 import calendar
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 import functools
 import hashlib
 import json
@@ -172,6 +173,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
+            EnterpriseReportDispatcher
         ]
 
         for dispatcher in dispatchers:
@@ -670,7 +672,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
-        if not self.owner.is_member_of(self.domain, allow_mirroring=True):
+        if not self.owner.is_member_of(self.domain, allow_enterprise=True):
             self.delete()
             return
 
