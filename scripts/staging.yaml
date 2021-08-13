@@ -82,6 +82,7 @@ branches:
     - jls/endpoints-no-dof # Jenny Aug 12
     - jls/checkbox-disabling # Jenny Aug 13
     - jls/smart-linking-mvp-no-shadow-menu-forms # Jenny Aug 13
+    - caktus:allowed_values_ui # Jenny Aug 13
     - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
 submodules: { }
