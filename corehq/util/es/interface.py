@@ -6,6 +6,8 @@ from django.conf import settings
 
 from corehq.util.es.elasticsearch import bulk, scan
 
+logger = logging.getLogger(__name__)
+
 
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def __init__(self, es):
@@ -113,7 +115,28 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return results
 
     def scan(self, index_alias, query, doc_type):
-        return scan(self.es, query=query, index=index_alias, doc_type=doc_type, search_type='scan')
+        """Call the elasticsearch-py library's `scan()` helper function.
+
+        In library versions <5.x this results in a `search_type='scan'` query.
+        In library versions >=5.x this results in the query['sort'] getting
+        silently clobbered to '_doc'.
+
+        To handle this appropriately across versions >=2.x:
+        1. Explicitly set query['sort'] = '_doc' (this is the recommended
+           replacement for search_type='scan'), logging a warning if the sort
+           parameter is already set differently.
+        2. Call scan(..., preserve_order=True) to prevent that function from
+           doing anything special related to "scan" behavior.
+        """
+        query = query.copy() if query else {}
+        qsort = query.setdefault("sort", "_doc")
+        if qsort != "_doc":
+            logger.warning("Inefficient scan query (sort=%r). Calling scan()"
+                           "with the query 'sort' parameter set to anything "
+                           "other than '_doc' negates the benefits of using "
+                           "scan().", qsort)
+        return scan(self.es, query=query, index=index_alias, doc_type=doc_type,
+                    preserve_order=True)
 
     @staticmethod
     def _fix_hit(hit):
