@@ -2,16 +2,19 @@ import logging
 import os
 from pathlib import Path
 
-import jinja2
-from couchdbkit.ext.django import schema
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date, parse_datetime
 
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
-from corehq.util.couchdb_management import couch_config
+import jinja2
+from couchdbkit.ext.django import schema
+from requests.exceptions import HTTPError
+
 from dimagi.ext import jsonobject
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
+
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
+from corehq.util.couchdb_management import couch_config
 
 logger = logging.getLogger(__name__)
 
