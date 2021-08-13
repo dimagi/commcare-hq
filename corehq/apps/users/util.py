@@ -354,7 +354,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
-    # for an update, there should always be fields that have changed
+    # for an update, there should always be fields that have changed or change messages
     if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
         raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
