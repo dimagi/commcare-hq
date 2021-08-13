@@ -1,6 +1,5 @@
 from typing import List
 
-from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
@@ -45,26 +44,55 @@ class SessionEndpointContributor(SuiteContributorByModule):
             endpoint_id = module.session_endpoint_id
 
         stack = Stack()
+        helper = EndpointsHelper(self.suite, self.app)
+        children = helper.get_frame_children(module, form)
+        argument_ids = self._get_argument_ids(children)
+
+        # Add a claim request for each endpoint argument.
+        # This assumes that all arguments are case ids.
+        for arg_id in argument_ids:
+            self._add_claim_frame(stack, arg_id, endpoint_id)
+
+        # Add a frame to navigate to the endpoint
         frame = PushFrame()
         stack.add_frame(frame)
-        arguments = []
-        for child in self._get_frame_children(module, form):
-            if isinstance(child, WorkflowDatumMeta) and child.requires_selection:
-                arguments.append(Argument(id=child.id))
-                frame.add_datum(
-                    StackDatum(id=child.id, value=f"${child.id}")
-                )
-            elif isinstance(child, CommandId):
+        for child in children:
+            if isinstance(child, CommandId):
                 frame.add_command(child.to_command())
+            elif child.id in argument_ids:
+                self._add_datum_for_arg(frame, child.id)
 
         return SessionEndpoint(
             id=endpoint_id,
-            arguments=arguments,
+            arguments=[Argument(id=i) for i in argument_ids],
             stack=stack,
         )
 
-    def _get_frame_children(self, module, form):
-        helper = WorkflowHelper(self.suite, self.app, self.modules)
+    def _get_argument_ids(self, frame_children):
+        return [
+            child.id for child in frame_children
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection
+        ]
+
+    def _add_claim_frame(self, stack, arg_id, endpoint_id):
+        frame = PushFrame()
+        stack.add_frame(frame)
+        self._add_datum_for_arg(frame, arg_id)
+        frame.add_command(f"'claim_command.{endpoint_id}.{arg_id}'")
+
+    def _add_datum_for_arg(self, frame, arg_id):
+        frame.add_datum(
+            StackDatum(id=arg_id, value=f"${arg_id}")
+        )
+
+
+class EndpointsHelper(object):
+    def __init__(self, suite, app):
+        self.suite = suite
+        self.app = app
+
+    def get_frame_children(self, module, form):
+        helper = WorkflowHelper(self.suite, self.app, self.app.get_modules())
         frame_children = helper.get_frame_children(module, form)
         if module.root_module_id:
             frame_children = prepend_parent_frame_children(helper, frame_children, module.root_module)
