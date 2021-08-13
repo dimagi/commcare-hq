@@ -368,6 +368,12 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
+        if self.module.put_in_root and self.module.session_endpoint_id:
+            errors.append({
+                'type': 'endpoint to display only forms',
+                'module': self.get_module_info(),
+            })
+
         return errors
 
     def validate_detail_columns(self, columns):
