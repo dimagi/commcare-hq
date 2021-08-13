@@ -3015,17 +3015,27 @@ class UserHistory(models.Model):
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
+    # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
+    # JSON structured replacement for the deprecated text message field
+    change_messages = JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
-
+    # ToDo: remove post migration/reset of existing records
     """
     dict with keys:
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
     details = JSONField(default=dict)
+    # ToDo: remove blank=true post migration/reset of existing records since it will always be present
+    # same as the deprecated details.changed_via
+    # one of the USER_CHANGE_VIA_* constants
+    changed_via = models.CharField(max_length=255, blank=True)
+    # same as the deprecated details.changes
+    # a dict of CouchUser attributes that changed and their new values
+    changes = JSONField(default=dict)
 
     class Meta:
         indexes = [

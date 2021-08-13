@@ -1,7 +1,6 @@
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
@@ -35,14 +34,9 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertIsNotNone(user_history.changed_by)
         self.assertEqual(user_history.changed_by, self.web_user.get_id)
-        self.assertEqual(
-            user_history.details,
-            {
-                'changes': _get_expected_changes_json(self.commcare_user),
-                'changed_via': USER_CHANGE_VIA_WEB,
-            }
-        )
-        self.assertIsNone(user_history.message)
+        self.assertEqual(user_history.changes, _get_expected_changes_json(self.commcare_user))
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_WEB)
+        self.assertEqual(user_history.change_messages, {})
         self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
     def test_update(self):
@@ -50,12 +44,21 @@ class TestLogUserChange(TestCase):
 
         self.commcare_user.add_phone_number("9999999999")
 
+        # ToDo: replace with UserChangeMessage.phone_numbers_added(["9999999999"]) once available
+        change_messages = {"phone_numbers": [
+            {
+                "slug": "add_phone_numbers",
+                "params": {
+                    "phone_numbers": ["9999999999"]
+                }
+            }
+        ]}
         user_history = log_user_change(
             self.domain,
             self.commcare_user,
             self.web_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
-            message=UserChangeMessage.phone_number_added("9999999999"),
+            change_messages=change_messages,
             fields_changed={
                 'phone_numbers': self.commcare_user.phone_numbers,
                 'password': '******'
@@ -69,14 +72,9 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertIsNotNone(user_history.changed_by)
         self.assertEqual(user_history.changed_by, self.web_user.get_id)
-        self.assertEqual(
-            user_history.details,
-            {
-                'changes': {'phone_numbers': ['9999999999']},
-                'changed_via': USER_CHANGE_VIA_BULK_IMPORTER,
-            }
-        )
-        self.assertEqual(user_history.message, "Added phone number 9999999999")
+        self.assertEqual(user_history.changes, {'phone_numbers': ['9999999999']})
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.action, UserModelAction.UPDATE.value)
 
         self.commcare_user.phone_numbers = restore_phone_numbers_to
@@ -97,14 +95,9 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.web_user.get_id)
-        self.assertEqual(
-            user_history.details,
-            {
-                'changes': _get_expected_changes_json(user_to_delete),
-                'changed_via': USER_CHANGE_VIA_WEB,
-            }
-        )
-        self.assertIsNone(user_history.message)
+        self.assertEqual(user_history.changes, _get_expected_changes_json(user_to_delete))
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_WEB)
+        self.assertEqual(user_history.change_messages, {})
         self.assertEqual(user_history.action, UserModelAction.DELETE.value)
 
     def test_domain_less_actions(self):

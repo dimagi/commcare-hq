@@ -327,7 +327,7 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
 
 
 def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
-                    message=None, fields_changed=None, action=None,
+                    change_messages=None, fields_changed=None, action=None,
                     domain_required_for_log=True, bulk_upload_record_id=None):
     """
     Log changes done to a user.
@@ -337,8 +337,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     :param couch_user: user being changed
     :param changed_by_user: user making the change or SYSTEM_USER_ID
     :param changed_via: changed via medium i.e API/Web
-    :param message: Optional Message text. This message should NEVER be a translated message.
-        Refer https://github.com/dimagi/commcare-hq/pull/30064 for details.
+    :param change_messages: Optional dict of change messages
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
     :param domain_required_for_log: set to False to allow domain less log for specific changes
@@ -349,25 +348,24 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
 
     action = action or UserModelAction.UPDATE
     fields_changed = fields_changed or {}
+    change_messages = change_messages or {}
 
     # domain is essential to filter changes done in a domain
     if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed
-    if action == UserModelAction.UPDATE and not fields_changed and not message:
-        raise ValueError("missing both 'fields_changed' and 'message' argument for update.")
+    if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
+        raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
     return UserHistory.objects.create(
         domain=domain,
         user_type=couch_user.doc_type,
         user_id=couch_user.get_id,
         changed_by=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
-        details={
-            'changes': _get_changed_details(couch_user, action, fields_changed),
-            'changed_via': changed_via,
-        },
-        message=message,
+        changes=_get_changed_details(couch_user, action, fields_changed),
+        changed_via=changed_via,
+        change_messages=change_messages,
         action=action.value,
         user_upload_record_id=bulk_upload_record_id,
     )
