@@ -267,7 +267,15 @@
                 {% trans "Login-As Default User" %}
               </label>
               <div class="col-sm-8 controls">
-                <div class="form-check">
+                {# Placeholder disabled checkbox when login as isn't allowed #}
+                <div class="form-check" data-bind="visible: !permissions.login_as_all_users() && !permissions.limited_login_as()">
+                  <input type="checkbox" disabled="disabled" />
+                  <label for="default-login-as-checkbox">
+                    {% trans "Allow the user to login as the default user in Web Apps." %}
+                  </label>
+                </div>
+                {# Real checkbox #}
+                <div class="form-check" data-bind="visible: permissions.login_as_all_users() || permissions.limited_login_as()">
                   <input type="checkbox"
                          id="default-login-as-checkbox"
                          data-bind="checked: permissions.access_default_login_as_user,
