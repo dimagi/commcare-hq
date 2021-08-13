@@ -68,7 +68,11 @@ class Command(BaseCommand):
             self.couch_class = to_function(self.models_path)
             self.class_name = self.models_path.split(".")[-1]
 
-        doc_ids = get_doc_ids_by_class(self.couch_class)
+        try:
+            doc_ids = get_doc_ids_by_class(self.couch_class)
+        except HTTPError:
+            view_name = input("Unable to query model. Please enter view to query: ")
+            doc_ids = self.couch_class.get_db().view(view_name).all()
         print("Found {} {} docs\n".format(len(doc_ids), self.class_name))
 
         for doc in iter_docs(self.couch_class.get_db(), doc_ids):
