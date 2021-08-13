@@ -1,0 +1,28 @@
+{% load i18n %}
+
+<div class="alert alert-danger"
+     data-bind="visible: bulkExportDownloadCount()"
+     style="overflow: hidden">
+  <div class="row">
+    <div class="col-sm-5 col-lg-7">
+      <p style="margin-top: 15px">
+        {% blocktrans %}
+          All of the selected exports will be deleted.
+        {% endblocktrans %}
+      </p>
+    </div>
+    <div class="col-sm-4 col-lg-5" style="float:right; height: 48px">
+      <input name="delete_list" type="hidden"/>
+      <p style="float:right">
+        <a class="btn btn-danger btn-lg"
+           data-toggle="modal"
+           data-bind="attr: {
+                        href: '#bulk-delete-export-modal'
+                      }">
+          <span>{% trans 'Delete Selected Exports' %}</span>
+        </a>
+        {% include "export/dialogs/bulk_delete_custom_export_dialog.html" %}
+      </p>
+    </div>
+  </div>
+</div>
