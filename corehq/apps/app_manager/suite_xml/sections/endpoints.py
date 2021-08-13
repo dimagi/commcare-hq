@@ -32,9 +32,10 @@ class SessionEndpointContributor(SuiteContributorByModule):
         endpoints = []
         if module.session_endpoint_id:
             endpoints.append(self._make_session_endpoint(module))
-        for form in module.get_suite_forms():
-            if form.session_endpoint_id:
-                endpoints.append(self._make_session_endpoint(module, form))
+        if module.module_type != "shadow":
+            for form in module.get_suite_forms():
+                if form.session_endpoint_id:
+                    endpoints.append(self._make_session_endpoint(module, form))
         return endpoints
 
     def _make_session_endpoint(self, module, form=None):
