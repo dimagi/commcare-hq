@@ -59,7 +59,7 @@
         <th>{% trans "Case Property" %}</th>
         <th>{% trans "Data Type" %}</th>
         <th>{% trans "Description" %}</th>
-        <th></th>
+        <th>{% trans "Valid Values" %}</th>
         {% if fhir_integration_enabled %}
           <th>{% trans "FHIR Resource Property Path" %}</th>
         {% endif %}
@@ -104,7 +104,6 @@
           </td>
           <td>
             <div data-bind="visible: canHaveAllowedValues()">
-              <b>{% trans "Allowed Values" %}</b>
               <div data-bind="jqueryElement: $allowedValues"></div>
             </div>
           </td>

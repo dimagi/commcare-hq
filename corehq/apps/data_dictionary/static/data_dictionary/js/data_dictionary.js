@@ -60,8 +60,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         self.allowedValues = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
-            gettext("Allowed Values"),
-            {"key": gettext("allowed value"), "value": gettext("description")}
+            gettext("Valid Values"),
+            {"key": gettext("valid value"), "value": gettext("description")}
         );
         self.allowedValues.val(allowedValues);
         self.$allowedValues = self.allowedValues.ui;

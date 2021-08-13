@@ -45,7 +45,7 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
-ALLOWED_VALUES_SHEET_SUFFIX = "-allowed-values"
+ALLOWED_VALUES_SHEET_SUFFIX = "-valid-values"
 
 data_dictionary_rebuild_rate_limiter = RateLimiter(
     feature_key='data_dictionary_rebuilds_per_user',
@@ -187,7 +187,7 @@ def _export_data_dictionary(domain):
     export_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     case_type_headers = [_('Case Type'), _('FHIR Resource Type'), _('Remove Resource Type(Y)')]
     case_prop_headers = [_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated')]
-    allowed_value_headers = [_('Case Property'), _('Allowed Value'), _('Allowed Value Description')]
+    allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
 
     case_type_data, case_prop_data = _generate_data_for_export(domain, export_fhir_data)
 
@@ -216,8 +216,8 @@ def _generate_data_for_export(domain, export_fhir_data):
             prop_dict['allowed_values'] = [
                 {
                     _('Case Property'): case_prop.name,
-                    _('Allowed Value'): av.allowed_value,
-                    _('Allowed Value Description'): av.description,
+                    _('Valid Value'): av.allowed_value,
+                    _('Valid Value Description'): av.description,
                 } for av in case_prop.allowed_values.all()
             ]
         if export_fhir_data:

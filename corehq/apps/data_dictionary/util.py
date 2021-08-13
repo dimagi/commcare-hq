@@ -165,7 +165,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
             av_obj, _ = CasePropertyAllowedValue.objects.update_or_create(
                 case_property=prop, allowed_value=allowed_value, defaults={"description": av_desc})
             obj_pks.append(av_obj.pk)
-        # Ddelete any database-resident allowed values that were not found in
+        # Delete any database-resident allowed values that were not found in
         # the set supplied by caller.
         prop.allowed_values.exclude(pk__in=obj_pks).delete()
 

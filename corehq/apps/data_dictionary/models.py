@@ -107,4 +107,4 @@ class CasePropertyAllowedValue(models.Model):
         unique_together = ('case_property', 'allowed_value')
 
     def __str__(self):
-        return f'{self.case_property} allowed value: "{self.allowed_value}"'
+        return f'{self.case_property} valid value: "{self.allowed_value}"'
