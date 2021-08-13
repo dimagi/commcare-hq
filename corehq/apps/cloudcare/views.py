@@ -602,7 +602,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
     if force_login_as and not can_use_restore_as(request):
-        _fail(_("This user cannot access this link."))
+        return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
         "appId": build._id,
