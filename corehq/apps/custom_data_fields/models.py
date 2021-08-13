@@ -12,6 +12,7 @@ CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
 COMMCARE_USER_TYPE_DEMO = 'demo'
+COMMCARE_PROJECT = "commcare_project"
 
 # This stores the id of the user's CustomDataFieldsProfile, if any
 PROFILE_SLUG = "commcare_profile"

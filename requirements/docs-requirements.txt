@@ -104,6 +104,8 @@ django-appconf==1.0.4
     # via
     #   django-compressor
     #   django-statici18n
+django-autoslug==1.9.8
+    # via -r base-requirements.in
 django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0
@@ -458,7 +460,7 @@ socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
     # via intervaltree
-sphinx==4.0.2
+sphinx==4.1.2
     # via
     #   -r docs-requirements.in
     #   myst-parser
@@ -471,13 +473,13 @@ sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-django==0.5.1
     # via -r docs-requirements.in
-sphinxcontrib-htmlhelp==1.0.3
+sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.4
+sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 sqlagg==0.17.2
     # via -r base-requirements.in

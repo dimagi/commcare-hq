@@ -808,11 +808,13 @@ WEBAPPS_STICKY_SEARCH = StaticToggle(
 
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
+    from corehq.apps.es import CaseSearchES
     from corehq.pillows.case_search import domains_needing_search_index
     domains_needing_search_index.clear()
-    if enabled:
-        # action is no longer reversible due to roll out of EXPLORE_CASE_DATA
-        # and upcoming migration of CaseES to CaseSearchES
+
+    has_case_search_cases = CaseSearchES().domain(domain).count() > 0
+    if enabled and not has_case_search_cases:
+        # action is not reversible, we want all projects here eventually
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -858,6 +860,7 @@ CASE_API_V0_6 = StaticToggle(
     'Enable the v0.6 Case API',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -1389,14 +1392,6 @@ VIEW_APP_CHANGES = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
-COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
-    'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
-    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
 )
 
 ACTIVE_COUCH_DOMAINS = StaticToggle(
@@ -2003,6 +1998,7 @@ ENTERPRISE_USER_MANAGEMENT = StaticToggle(
     'USH: UI for managing all web users in an enterprise',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
 )
 
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
@@ -2084,10 +2080,28 @@ TURN_IO_BACKEND = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
     'Option to configure follow up forms on parent case for Case List Form menu setting of '
     'child modules that use Parent Child Selection',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+DATA_REGISTRY = StaticToggle(
+    'data_registry',
+    'Enable Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
+)
+  
+CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
+    'case_import_data_dictionary_validaton',
+    'Validate data per data dictionary definitions during case import',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
 )

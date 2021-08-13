@@ -246,7 +246,6 @@ HQ_APPS = (
     'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
-    'corehq.apps.couch_sql_migration',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
@@ -266,6 +265,7 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.registry',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -744,10 +744,14 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 }
 
 LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
-AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {
+    'COVID_US_ASSOCIATED_USER_CASES': 'custom.covid.rules.custom_criteria.associated_usercase_closed'
+}
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+}
 
 ####### auditcare parameters #######
 AUDIT_ALL_VIEWS = False
@@ -1162,7 +1166,7 @@ _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
-IS_INDIA_ENVIRONMENT = SERVER_ENVIRONMENT == 'india'
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -2026,19 +2030,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'ews-ghana$',
     'mvp-',
 )
-
-# Domains that we want to tag in metrics provider
-METRICS_TAGGED_DOMAINS = {
-    # ("env", "domain"),
-    ("production", "born-on-time-2"),
-    ("production", "hki-nepal-suaahara-2"),
-    ("production", "malawi-fp-study"),
-    ("production", "no-lean-season"),
-    ("production", "rec"),
-    ("production", "isth-production"),
-    ("production", "sauti-1"),
-    ("production", "ndoh-wbot"),
-}
 
 #### Django Compressor Stuff after localsettings overrides ####
 

@@ -86,7 +86,7 @@
           </td>
           <td data-bind="text: name"></td>
           <td>
-            <select class ="form-control"
+            <select class="form-control"
                     data-bind="
                                 options: $root.availableDataTypes,
                                 optionsCaption: 'Select a data type',
@@ -94,6 +94,11 @@
                                 optionsValue: 'value',
                                 value: dataType,
                             "></select>
+            {% if request|toggle_enabled:'CASE_IMPORT_DATA_DICTIONARY_VALIDATION' %}
+              <p class="help-block" data-bind="visible: dataType() === 'date'">
+                {% trans "YYYY-MM-DD" %}
+              </p>
+            {% endif %}
           </td>
           <td>
                             <textarea class="form-control vertical-resize" data-bind="

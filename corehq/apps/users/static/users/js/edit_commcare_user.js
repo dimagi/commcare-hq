@@ -59,9 +59,6 @@ hqDefine('users/js/edit_commcare_user', [
             self.signOff = ko.observable('');
             self.formDeleteUserSent = ko.observable(false);
             self.disabled = function () {
-                if (!initialPageData.get('is_delete_allowed')) {
-                    return true;
-                }
                 var understand = self.signOff().toLowerCase() === initialPageData.get('couch_user_username');
                 return self.formDeleteUserSent() || !understand;
             };

@@ -286,6 +286,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
+        self.erroredLabels = ko.computed(function () {
+            var questions = getQuestions(self);
+            var erroredLabels = {};
+            for (var i = 0; i < questions.length; i++) {
+                if (questions[i].isLabel && !questions[i].isValid()) {
+                    erroredLabels[getIx(questions[i])] = "OK";
+                }
+            }
+            return erroredLabels;
+        });
+
         self.erroredQuestions = ko.computed(function () {
             if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
                 return [];
@@ -295,7 +306,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null || questions[i].requiredNotAnswered()) {
+                if (questions[i].error() != null || questions[i].serverError() != null) {
                     qs.push(questions[i]);
                 }
             }
@@ -571,11 +582,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
+        self.form = function () {
+            var parent = self.parent;
+            while (parent.type && parent.type() !== null) {
+                parent = parent.parent;
+            }
+            return parent;
+        };
+
         self.isValid = function () {
             return self.error() === null && self.serverError() === null;
         };
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+        self.isLabel = self.datatype() === 'info';
         self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
@@ -602,10 +622,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return Utils.resourceMap(resourceType);
         };
 
-        self.requiredNotAnswered = ko.computed(function () {
-            return self.required() && self.answer() === Const.NO_ANSWER;
-        });
-
         self.navigateTo = function () {
             // toggle nested collapsible Groups
             var hasParent = self.parent !== undefined;
@@ -618,7 +634,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
                 currentNode = parent;
             }
-            var el = $("label[for='" + self.entry.entryId + "']");
+            var el = $("[for='" + self.entry.entryId + "']");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });

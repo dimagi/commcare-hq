@@ -508,6 +508,35 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
+    @flag_enabled('COMMTRACK')
+    def test_build_feature_flag_view_models_returns_product_data_fields(self):
+        expected_view_models = [
+            {
+                'type': 'custom_product_data',
+                'name': 'Custom Product Data Fields',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
+
+    @flag_enabled('EMBEDDED_TABLEAU')
+    def test_build_feature_flag_view_models_returns_tableau_server_and_visualizations(self):
+        expected_view_models = [
+            {
+                'type': 'tableau_server_and_visualizations',
+                'name': 'Tableau Server and Visualizations',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
 
 class TestBuildDomainLevelViewModels(SimpleTestCase):
 
@@ -516,13 +545,6 @@ class TestBuildDomainLevelViewModels(SimpleTestCase):
             {
                 'type': 'custom_user_data',
                 'name': 'Custom User Data Fields',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True
-            },
-            {
-                'type': 'custom_product_data',
-                'name': 'Custom Product Data Fields',
                 'detail': None,
                 'last_update': 'Never',
                 'can_update': True
@@ -610,6 +632,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
+    @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_built(self):
         view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + len(FEATURE_FLAG_DATA_MODELS)
@@ -620,6 +644,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
+    @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_ignored(self):
         view_models = build_view_models_from_data_models(
             self.downstream_domain, {}, {}, {}, {}, ignore_models=dict(FEATURE_FLAG_DATA_MODELS).keys()

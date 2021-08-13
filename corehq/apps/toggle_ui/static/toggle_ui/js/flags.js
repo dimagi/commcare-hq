@@ -35,4 +35,14 @@ hqDefine('toggle_ui/js/flags', [
     viewModel.tagFilter.subscribe(function (value) {
         table.datatable.fnDraw();
     });
+
+    var downloadToFile = function () {
+        var appliedFilter = viewModel.tagFilter();
+        if (appliedFilter === "all") {
+            appliedFilter = '';
+        }
+        open('export_toggles?tag=' + appliedFilter);
+    };
+
+    $('#export-button').koApplyBindings({downloadFile: downloadToFile});
 });

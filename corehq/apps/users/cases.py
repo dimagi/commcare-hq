@@ -54,17 +54,3 @@ def get_wrapped_owner(owner_id, support_deleted=False):
         return cls.wrap(owner_doc) if cls else None
 
     return None
-
-
-def get_owning_users(owner_id):
-    """
-    Given an owner ID, get a list of the owning users, regardless of whether
-    it's a user or group.
-    """
-    owner = get_wrapped_owner(owner_id)
-    if not owner:
-        return []
-    elif isinstance(owner, Group):
-        return owner.get_users()
-    else:
-        return [owner]

@@ -86,7 +86,7 @@ class ColumnOption(object):
         """
         raise NotImplementedError
 
-    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation):
         """
         Return the indicators corresponding to this column option.
         """
@@ -230,7 +230,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
-    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation):
         """
         Return the report config snippets that specify the data source indicator that will be used for
         aggregating this question, and the data source indicator for the multi-select question's choices.

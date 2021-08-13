@@ -329,11 +329,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         caseListAction: function (e) {
             var index = $(e.currentTarget).data().index,
-                step = "action " + index;
-            if (step === this.redoLast) {
+                selection = "action " + index;
+            if (selection === this.redoLast) {
                 FormplayerFrontend.trigger("menu:select");
             } else {
-                FormplayerFrontend.trigger("menu:select", step);
+                FormplayerFrontend.trigger("menu:select", selection);
             }
         },
 
