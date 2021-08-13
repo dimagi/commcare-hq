@@ -122,7 +122,7 @@ class MissingStartTimeError(Exception):
         
         from datetime import datetime
         from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
-        start_key = datetime(2021,6,1)
+        start_key = datetime(2021,6,1)  # customize date as necessary
         AuditCareMigrationUtil().set_next_batch_start(start_key)"""
 
     def __init__(self, message=message):
