@@ -1394,14 +1394,6 @@ VIEW_APP_CHANGES = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
-COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
-    'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
-    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 ACTIVE_COUCH_DOMAINS = StaticToggle(
     'active_couch_domains',
     "Domains that are still on the Couch DB backend which we consider most "

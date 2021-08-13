@@ -256,18 +256,12 @@ class FormProcessorInterface(object):
         :return: tuple(case, lock). Either could be None
         :raises: IllegalCaseId
         """
-        # check across Couch & SQL to ensure global uniqueness
-        # check this domains DB first to support existing bad data
-        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-
         case, lock = self.processor.get_case_with_lock(case_id, lock, wrap)
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain) and not settings.ENTERPRISE_MODE:
-            # during migration we're copying from one DB to the other so this check will always fail
-            if self.other_db_processor().case_exists(case_id):
-                raise IllegalCaseId("Bad case id")
+        if self.other_db_processor().case_exists(case_id):
+            raise IllegalCaseId("Bad case id")
 
         return case, lock
 
