@@ -607,7 +607,10 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     cloudcare_state = json.dumps({
         "appId": build._id,
         "endpointId": endpoint_id,
-        "endpointArgs": request.GET,
+        "endpointArgs": {
+            six.moves.urllib.parse.quote_plus(key): six.moves.urllib.parse.quote_plus(value)
+            for key, value in request.GET.items()
+        },
         "forceLoginAs": force_login_as,
     })
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
