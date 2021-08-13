@@ -580,6 +580,7 @@ def _message_to_sentry_thread_topic(message):
 @login_and_domain_required
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+@location_safe
 def session_endpoint(request, domain, app_id, endpoint_id):
     def _fail(error):
         messages.error(request, error)
