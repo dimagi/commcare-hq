@@ -79,6 +79,7 @@ branches:
     - jls/smart-linking-mvp  # Jenny Aug 9
     - jls/smart-linking-mvp-qabugs # Jenny Aug 12
     - jls/endpoints-no-dof # Jenny Aug 12
+    - jls/checkbox-disabling # Jenny Aug 13
     - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
 submodules: { }
