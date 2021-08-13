@@ -15,13 +15,13 @@ class RegistryModelsTests(TestCase):
         cls.active = DataRegistry.objects.create(domain=cls.domain, name="active")
         cls.inactive = DataRegistry.objects.create(domain=cls.domain, name="inactive", is_active=False)
 
-    def test_slug_unique_per_domain(self):
+    def test_slug_unique(self):
         r1 = DataRegistry.objects.create(domain=self.domain, name="patient registry")
         r2 = DataRegistry.objects.create(domain=self.domain, name="the patient registry")
         r3 = DataRegistry.objects.create(domain="other_domain", name="the patient registry")
         self.assertEqual(r1.slug, "patient-registry")
         self.assertEqual(r2.slug, "patient-registry-2")
-        self.assertEqual(r3.slug, "patient-registry")
+        self.assertEqual(r3.slug, "patient-registry-3")
 
     def test_get_owned(self):
         self.assertEqual(
@@ -121,6 +121,17 @@ class RegistryModelsTests(TestCase):
         self.assertEqual({"A"}, registry.get_granted_domains("B"))
         self.assertEqual({"B", "C"}, registry.get_granted_domains("A"))
         self.assertEqual({"B"}, registry.get_granted_domains("C"))
+
+    def test_visible_to_domain(self):
+        invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
+        registries = [
+            self.active,
+            self.inactive,
+            create_registry_for_test(self.user, self.domain, invitations),
+            create_registry_for_test(self.user, "other", [Invitation(self.domain, accepted=False)]),
+        ]
+        visible = DataRegistry.objects.visible_to_domain(self.domain)
+        self.assertEqual({r.name for r in registries}, {v.name for v in visible})
 
     def test_get_participating_domains(self):
         invitations = [
