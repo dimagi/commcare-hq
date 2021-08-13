@@ -7,11 +7,10 @@
         action="{{ bulk_download_url }}">
     {% csrf_token %}
     <div class="row">
-      <div class="col-sm-5 col-lg-4">
+      <div class="col-sm-4 col-lg-3">
         <input name="export_list" type="hidden" data-bind="value: bulkExportList" />
         <button type="submit"
-                class="btn btn-primary btn-lg"
-                style="width: 100%;">
+                class="btn btn-primary btn-lg">
           {% trans 'Bulk Export' %}
           (<span data-bind="text: bulkExportDownloadCount()"></span>)
         </button>

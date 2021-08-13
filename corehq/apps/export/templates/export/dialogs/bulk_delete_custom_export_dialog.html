@@ -3,25 +3,46 @@
 <div data-bind="attr: {id: 'bulk-delete-export-modal'}" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header" style="color:black;">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title">
-          {% blocktrans %}
-              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Exports
-            {% endblocktrans %}
-        </h4>
-      </div>
-      <div class="modal-body">
-        <p>
-          <div data-bind="if: !multipleBulkSelected()">
+          <div data-bind="if: isOData || isFeed">
             {% blocktrans %}
-              Are you sure you want to permanently delete this <strong>1 export</strong>:
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Feeds
             {% endblocktrans %}
           </div>
-          <div data-bind="if: multipleBulkSelected()">
+          <div data-bind="if: !isOData && !isFeed">
             {% blocktrans %}
-              Are you sure you want to permanently delete these <strong><span data-bind="text: bulkExportDownloadCount()"></span> exports</strong>:
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Exports
             {% endblocktrans %}
+          </div>
+        </h4>
+      </div>
+      <div class="modal-body" style="color:black;">
+        <p>
+          <div data-bind="if: !multipleBulkSelected()">
+            <div data-bind="if: isOData || isFeed">
+              {% blocktrans %}
+                Are you sure you want to permanently delete this <strong>1 feed</strong>:
+              {% endblocktrans %}
+            </div>
+            <div data-bind="if: !isOData && !isFeed">
+              {% blocktrans %}
+                Are you sure you want to permanently delete this <strong>1 export</strong>:
+              {% endblocktrans %}
+            </div>
+          </div>
+          <div data-bind="if: multipleBulkSelected()">
+            <div data-bind="if: isOData || isFeed">
+              {% blocktrans %}
+                Are you sure you want to permanently delete these <strong><span data-bind="text: bulkExportDownloadCount()"></span> feeds</strong>:
+              {% endblocktrans %}
+            </div>
+            <div data-bind="if: !isOData && !isFeed">
+              {% blocktrans %}
+                Are you sure you want to permanently delete these <strong><span data-bind="text: bulkExportDownloadCount()"></span> exports</strong>:
+              {% endblocktrans %}
+            </div>
           </div>
           <br>
             <ul data-bind="foreach: bulkDeleteList()">
@@ -31,10 +52,18 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-danger" data-bind="click: BulkExportDelete" data-dismiss="modal">
-          <i class="fa fa-remove"></i>
-          {% blocktrans %}
-            Delete <span data-bind="text: bulkExportDownloadCount()"></span> Exports
-          {% endblocktrans %}
+          <div data-bind="if: isOData || isFeed">
+            <i class="fa fa-remove"></i>
+            {% blocktrans %}
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Feeds
+            {% endblocktrans %}
+          </div>
+          <div data-bind="if: !isOData && !isFeed">
+            <i class="fa fa-remove"></i>
+            {% blocktrans %}
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Exports
+            {% endblocktrans %}
+          </div>
         </button>
         <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
       </div>

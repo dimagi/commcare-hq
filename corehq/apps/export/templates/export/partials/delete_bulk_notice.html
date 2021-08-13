@@ -5,9 +5,14 @@
      style="overflow: hidden">
   <div class="row">
     <div class="col-sm-5 col-lg-7">
-      <p style="margin-top: 15px">
+      <p style="margin-top: 15px" data-bind="if: !isOData && !isFeed">
         {% blocktrans %}
           All of the selected exports will be deleted.
+        {% endblocktrans %}
+      </p>
+      <p style="margin-top: 15px" data-bind="if: isOData || isFeed">
+        {% blocktrans %}
+          All of the selected feeds will be deleted.
         {% endblocktrans %}
       </p>
     </div>
@@ -19,7 +24,8 @@
            data-bind="attr: {
                         href: '#bulk-delete-export-modal'
                       }">
-          <span>{% trans 'Delete Selected Exports' %}</span>
+          <span data-bind="if: !isOData && !isFeed">{% trans 'Delete Selected Exports' %}</span>
+          <span data-bind="if: isOData || isFeed">{% trans 'Delete Selected Feeds' %}</span>
         </a>
         {% include "export/dialogs/bulk_delete_custom_export_dialog.html" %}
       </p>
