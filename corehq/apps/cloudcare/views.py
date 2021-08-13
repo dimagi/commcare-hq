@@ -602,12 +602,15 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
     if force_login_as and not can_use_restore_as(request):
-        _fail(_("This user cannot access this link."))
+        return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
         "appId": build._id,
         "endpointId": endpoint_id,
-        "endpointArgs": request.GET,
+        "endpointArgs": {
+            six.moves.urllib.parse.quote_plus(key): six.moves.urllib.parse.quote_plus(value)
+            for key, value in request.GET.items()
+        },
         "forceLoginAs": force_login_as,
     })
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
