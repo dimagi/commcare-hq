@@ -119,8 +119,11 @@ class MissingStartTimeError(Exception):
     message = """The migration process has already been started before
         But we are unable to determine start key.
         You can manually set the start key using
-        start_key = "2021-06-02_2021-06-01"
-        AuditCareMigraionUtil.set_next_batch_start(start_key)"""
+        
+        from datetime import datetime
+        from corehq.apps.auditcare.utils.migration import AuditCareMigrationUtil
+        start_key = datetime(2021,6,1)  # customize date as necessary
+        AuditCareMigrationUtil().set_next_batch_start(start_key)"""
 
     def __init__(self, message=message):
         super().__init__(message)
