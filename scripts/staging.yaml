@@ -69,7 +69,6 @@ branches:
     - jm/stale-es-case-search  # Joel July 21
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - bmb/noramilize-url  # Biyeun July 26
     - sk/data-registry-view  # Simon July 29
     - jm/remove-es-scan  # Joel August 3
     - ml/remove-show-field-sms-billables-report+ml/sms-billable-report-visibility-checkbox  # Charl Aug 11
