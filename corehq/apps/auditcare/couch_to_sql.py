@@ -82,20 +82,20 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
     navigation_objects = []
     access_objects = []
     records_returned = 0
-    next_start_time = None
+    next_start_key = None
     nav_couch_ids = []
     access_couch_ids = []
     other_doc_type_count = 0
     processed_doc_id = start_doc_id
     couch_docs = _get_couch_docs(start_key, end_key, start_doc_id)
     for result in couch_docs:
+        next_start_key = result['key']
         records_returned += 1
         doc = result["doc"]
-        next_start_time = force_to_datetime(doc.get("event_date"))
         kwargs = _pick(doc, ["user", "domain", "ip_address", "session_key",
                             "status_code", "user_agent"])
         kwargs.update({
-            "event_date": next_start_time,
+            "event_date": force_to_datetime(doc.get("event_date")),
             "couch_id": doc["_id"],
         })
         processed_doc_id = doc["_id"]
@@ -138,8 +138,8 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
     )
 
     res_obj.update({
-        "break_query": records_returned < COUCH_QUERY_LIMIT or not next_start_time,
-        "next_start_key": get_couch_key(next_start_time),
+        "break_query": records_returned < COUCH_QUERY_LIMIT or not next_start_key,
+        "next_start_key": next_start_key,
         "last_doc_id": processed_doc_id,
         "other_doc_type_count": other_doc_type_count
     })
