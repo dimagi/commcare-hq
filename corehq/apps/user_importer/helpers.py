@@ -220,19 +220,18 @@ class CommCareUserImporter(BaseUserImporter):
             self.user.reset_locations(location_ids, commit=False)
             self.logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = [get_location_from_site_code(code, domain_info.location_cache).name
-                                  for code in location_codes]
+                locations = [get_location_from_site_code(code, domain_info.location_cache)
+                             for code in location_codes]
                 self.logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(location_names))
+                    UserChangeMessage.assigned_locations_info(locations))
 
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != user_current_primary_location_id:
             self.logger.add_changes({'location_id': self.user.location_id})
             if self.user.location_id:
-                user_updated_primary_location_name = get_user_primary_location_name(self.user, self.user_domain)
                 self.logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(
-                        user_updated_primary_location_name
+                    UserChangeMessage.primary_location_info(
+                        self.user.get_sql_location(self.user_domain)
                     )
                 )
 
@@ -266,7 +265,7 @@ class WebUserImporter(BaseUserImporter):
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)
-        self.logger.add_info(UserChangeMessage.web_user_primary_location_info(primary_location))
+        self.logger.add_info(UserChangeMessage.primary_location_info(primary_location))
 
     def update_primary_location(self, location_id):
         current_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)
@@ -299,10 +298,9 @@ class WebUserImporter(BaseUserImporter):
             if location_ids:
                 locations = [get_location_from_site_code(code, domain_info.location_cache)
                              for code in location_codes]
-                locations_info = ", ".join([f"{location.name}[{location.location_id}]" for location in locations])
             else:
-                locations_info = []
-            self.logger.add_info(UserChangeMessage.web_user_assigned_locations_info(locations_info))
+                locations = []
+            self.logger.add_info(UserChangeMessage.assigned_locations_info(locations))
 
         # log this after assigned locations are updated, which can re-set primary location
         user_updated_primary_location_id = get_user_primary_location_id(self.user, self.user_domain)

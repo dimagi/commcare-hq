@@ -1066,19 +1066,18 @@ class CommtrackUserForm(forms.Form):
             location_ids = location_updates['location_ids']
             user_change_logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = list(SQLLocation.objects.filter(location_id__in=location_ids).values_list(
-                    'name', flat=True))
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(location_names)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
             user_change_logger.add_changes({'location_id': location_id})
             if location_id:
-                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(primary_location_name)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
 
         if program_id is not None:
@@ -1097,16 +1096,13 @@ class CommtrackUserForm(forms.Form):
         if 'location_ids' in location_updates:
             location_ids = location_updates['location_ids']
             if location_ids:
-                locations_info = ", ".join([
-                    f"{location.name}[{location.location_id}]"
-                    for location in SQLLocation.objects.filter(location_id__in=location_ids)
-                ])
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info(locations_info)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info([])
+                    UserChangeMessage.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
@@ -1114,11 +1110,11 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(primary_location)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(None)
+                    UserChangeMessage.primary_location_info(None)
                 )
 
         if program_id is not None:
