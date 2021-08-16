@@ -91,7 +91,7 @@ class RemoteRequestFactory(object):
         ]
 
         xpaths = {QuerySessionXPath(self.module.search_config.case_session_var).instance()}
-        xpaths.update(datum.ref for datum in self._get_remote_request_query_datums())
+        xpaths.update(datum.ref for datum in self._remote_request_query_datums)
         xpaths.add(self.module.search_config.get_relevant())
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
@@ -128,7 +128,7 @@ class RemoteRequestFactory(object):
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
-                data=self._get_remote_request_query_datums(),
+                data=self._remote_request_query_datums,
                 prompts=self._build_query_prompts(),
                 default_search=self.module.search_config.default_search,
             )
@@ -159,7 +159,8 @@ class RemoteRequestFactory(object):
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
         )]
 
-    def _get_remote_request_query_datums(self):
+    @cached_property
+    def _remote_request_query_datums(self):
         default_query_datums = [
             QueryData(
                 key='case_type',
