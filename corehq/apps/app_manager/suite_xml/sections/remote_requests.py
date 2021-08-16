@@ -27,8 +27,15 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
-from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.app_manager.xpath import (
+    CaseTypeXpath,
+    InstanceXpath,
+    interpolate_xpath,
+)
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+)
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
@@ -176,6 +183,13 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
+                )
+            )
+        if self.module.search_config.data_registry_id:
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_REGISTRY_ID_KEY,
+                    ref=self.module.search_config.data_registry_id,
                 )
             )
         return datums
