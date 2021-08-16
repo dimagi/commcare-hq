@@ -132,12 +132,6 @@ def primary_actions(case):
     return [a for a in case.actions if not a.is_case_rebuild]
 
 
-def iter_cases(case_ids, wrap=True):
-    from casexml.apps.case.models import CommCareCase
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
-        yield CommCareCase.wrap(doc) if wrap else doc
-
-
 def property_changed_in_action(domain, case_transaction, case_id, case_property_name):
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')

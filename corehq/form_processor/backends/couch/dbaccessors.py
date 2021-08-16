@@ -8,7 +8,7 @@ from casexml.apps.case.dbaccessors import (
     get_reverse_indexed_cases,
 )
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import get_case_xform_ids, iter_cases
+from casexml.apps.case.util import get_case_xform_ids
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -127,27 +127,6 @@ class FormAccessorCouch(AbstractFormAccessor):
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
-
-    @staticmethod
-    def get_closed_and_deleted_ids(domain, case_ids):
-        """Get the subset of given list of case ids that are closed or deleted
-
-        WARNING this is inefficient (better version in SQL).
-        """
-        return [(case.case_id, case.closed, case.is_deleted)
-            for case in iter_cases(case_ids)
-            if case.domain == domain and (case.closed or case.is_deleted)]
-
-    @staticmethod
-    def get_modified_case_ids(accessor, case_ids, sync_log):
-        """Get the subset of given list of case ids that have been modified
-        since sync date/log id
-
-        WARNING this is inefficient (better version in SQL).
-        """
-        return [case.case_id
-            for case in accessor.iter_cases(case_ids)
-            if not case.is_deleted and case.modified_since_sync(sync_log)]
 
     @staticmethod
     def case_exists(case_id):
