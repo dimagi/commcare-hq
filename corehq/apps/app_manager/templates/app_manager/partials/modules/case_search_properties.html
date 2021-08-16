@@ -147,6 +147,16 @@
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
             <!-- /ko -->
           </div>
+          <div class="form-group">
+              <label for="data-registry-id" class="{% css_label_class %} control-label">
+                  {% trans "Registry ID" %}
+                  <span class="hq-help-template" data-title="{% trans "Registry ID" %}"
+                        data-content="{% trans_html_attr "Enter the ID of a case registry.  Users with access will see results from the registry when performing this search." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                  <input class="form-control" type="text" id="data-registry-id" data-bind="value: dataRegistryId"/>
+              </div>
+          </div>
           {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">

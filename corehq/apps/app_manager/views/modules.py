@@ -231,6 +231,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'data_registry_id': module.search_config.data_registry_id,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1209,6 +1210,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 auto_launch=bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
+                data_registry_id=search_properties.get('data_registry_id', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
