@@ -67,20 +67,18 @@ class BulkUploadResponseWrapper(object):
 
 
 def log_user_groups_change(domain, request, user, group_ids=None):
+    # ToDo: refactor to remove redundant group_ids args and just use Group.by_user_id
     if group_ids is None:
         group_ids = user.get_group_ids()
-    groups_info = []
+    groups = []
     if group_ids:
-        groups_info = ", ".join(
-            f"{group.name}[{group.get_id}]"
-            for group in Group.by_user_id(user.get_id)
-        )
+        groups = Group.by_user_id(user.get_id)
     log_user_change(
         domain,
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        change_messages=UserChangeMessage.groups_info(groups_info)
+        change_messages=UserChangeMessage.groups_info(groups)
     )
 
 
