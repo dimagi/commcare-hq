@@ -78,7 +78,7 @@
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
         "url-polyfill": "1.1.10",
-        "xpath": "dimagi/js-xpath#v0.0.4",
+        "xpath": "dimagi/js-xpath#v0.0.5",
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {
