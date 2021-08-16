@@ -7,10 +7,8 @@ from io import StringIO
 
 import mock
 from django.contrib.admin.utils import NestedObjects
-from django.core import serializers
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
-from django.db.transaction import TransactionManagementError
 from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
