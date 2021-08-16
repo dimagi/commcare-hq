@@ -37,8 +37,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [program],
             {
                 "program": {
-                    "slug": "set_program",
-                    "params": {"id": program_id, "name": "Program Name"}
+                    "set_program": {"id": program_id, "name": "Program Name"}
                 }
             },
             f"Program: Program Name[{program_id}]"
@@ -50,7 +49,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [None],
             {
                 "program": {
-                    "slug": "clear_program"
+                    "clear_program": {}
                 }
             },
             "Program: None"
@@ -67,8 +66,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [role],
             {
                 "role": {
-                    "slug": "set_role",
-                    "params": {"id": role_id, "name": "Role Name"}
+                    "set_role": {"id": role_id, "name": "Role Name"}
                 }
             },
             f"Role: Role Name[{role_id}]"
@@ -80,7 +78,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [None],
             {
                 "role": {
-                    "slug": "clear_role"
+                    "clear_role": {}
                 }
             },
             "Role: None"
@@ -93,8 +91,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [domain],
             {
                 "domain": {
-                    "slug": "remove_from_domain",
-                    "params": {"domain": domain}
+                    "remove_from_domain": {"domain": domain}
                 }
             },
             "Removed from domain 'test-domain'"
@@ -107,8 +104,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [domain],
             {
                 "domain": {
-                    "slug": "add_as_web_user",
-                    "params": {"domain": domain}
+                    "add_as_web_user": {"domain": domain}
                 }
             },
             "Added as web user to domain 'test-domain'"
@@ -120,7 +116,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [],
             {
                 "devices": {
-                    "slug": "reset_devices"
+                    "reset_devices": {}
                 }
             },
             "Registered devices reset"
@@ -133,8 +129,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [days],
             {
                 "two_factor": {
-                    "slug": "disable_for_days",
-                    "params": {"days": 3}
+                    "disable_for_days": {"days": 3}
                 }
             },
             "Disabled for 3 days"
@@ -148,8 +143,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [verified_by, verification_mode],
             {
                 "two_factor": {
-                    "slug": "disable_with_verification",
-                    "params": {
+                    "disable_with_verification": {
                         "verified_by": verified_by,
                         "verification_mode": verification_mode
                     }
@@ -164,7 +158,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [],
             {
                 "password": {
-                    "slug": "reset_password"
+                    "reset_password": {}
                 }
             },
             "Password reset"
@@ -177,8 +171,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [True, reason],
             {
                 "status": {
-                    "slug": "activate_user",
-                    "params": {
+                    "activate_user": {
                         "reason": reason
                     }
                 }
@@ -193,8 +186,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [False, reason],
             {
                 "status": {
-                    "slug": "deactivate_user",
-                    "params": {
+                    "deactivate_user": {
                         "reason": reason
                     }
                 }
@@ -212,8 +204,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [phone_numbers],
             {
                 "phone_numbers": {
-                    "slug": "add_phone_numbers",
-                    "params": {
+                    "add_phone_numbers": {
                         "phone_numbers": phone_numbers
                     }
                 }
@@ -231,8 +222,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [phone_numbers],
             {
                 "phone_numbers": {
-                    "slug": "remove_phone_numbers",
-                    "params": {
+                    "remove_phone_numbers": {
                         "phone_numbers": phone_numbers
                     }
                 }
@@ -249,8 +239,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [profile_id, profile_name],
             {
                 "profile": {
-                    "slug": "set_profile",
-                    "params": {"id": profile_id, "name": "Profile Name"}
+                    "set_profile": {"id": profile_id, "name": "Profile Name"}
                 }
             },
             f"Profile: Profile Name[{profile_id}]"
@@ -262,7 +251,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [None],
             {
                 "profile": {
-                    "slug": "clear_profile"
+                    "clear_profile": {}
                 }
             },
             "Profile: None"
@@ -279,8 +268,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [location],
             {
                 "location": {
-                    "slug": "set_primary_location",
-                    "params": {"id": location_id, "name": "Location Name"}
+                    "set_primary_location": {"id": location_id, "name": "Location Name"}
                 }
             },
             f"Primary location: Location Name[{location_id}]"
@@ -292,7 +280,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [],
             {
                 "location": {
-                    "slug": "clear_primary_location"
+                    "clear_primary_location": {}
                 }
             },
             "Primary location: None"
@@ -303,7 +291,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [None],
             {
                 "location": {
-                    "slug": "clear_primary_location"
+                    "clear_primary_location": {}
                 }
             },
             "Primary location: None"
@@ -325,8 +313,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [[location1, location2]],
             {
                 "assigned_locations": {
-                    "slug": "set_assigned_locations",
-                    "params": {
+                    "set_assigned_locations": {
                         "locations": [{'id': location1_id, 'name': "Location 1"},
                                       {'id': location2_id, 'name': "Location 2"}]
                     }
@@ -341,7 +328,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [[]],
             {
                 "assigned_locations": {
-                    "slug": "clear_assigned_locations"
+                    "clear_assigned_locations": {}
                 }
             },
             "Assigned locations: []"
@@ -363,8 +350,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [[group1, group2]],
             {
                 "groups": {
-                    "slug": "set_groups",
-                    "params": {
+                    "set_groups": {
                         "groups": [{'id': group1_id, 'name': "Group 1"},
                                    {'id': group2_id, 'name': "Group 2"}]
                     }
@@ -379,7 +365,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [[]],
             {
                 "groups": {
-                    "slug": "clear_groups"
+                    "clear_groups": {}
                 }
             },
             "Groups: []"
@@ -392,8 +378,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [domain],
             {
                 "domain_invitation": {
-                    "slug": "add_domain_invitation",
-                    "params": {"domain": 'test-domain'}
+                    "add_domain_invitation": {"domain": 'test-domain'}
                 }
             },
             "Invited to domain 'test-domain'"
@@ -406,8 +391,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             [domain],
             {
                 "domain_invitation": {
-                    "slug": "remove_domain_invitation",
-                    "params": {"domain": 'test-domain'}
+                    "remove_domain_invitation": {"domain": 'test-domain'}
                 }
             },
             "Invitation revoked for domain 'test-domain'"

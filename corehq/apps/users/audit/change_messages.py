@@ -7,8 +7,7 @@ class UserChangeMessage(object):
     Each change message to follow the structure
     {
         "field": {
-            "slug": message_slug,
-            "params": {} # optional params for the message
+            "slug": params, # params for the message
         }
     }
     field: could be domain, phone_numbers etc as the top-level key to make them searchable
@@ -20,14 +19,13 @@ class UserChangeMessage(object):
         if program:
             change_message = {
                 "program": {
-                    "slug": "set_program",
-                    "params": {"id": program.get_id, "name": program.name}
+                    "set_program": {"id": program.get_id, "name": program.name}
                 }
             }
         else:
             change_message = {
                 "program": {
-                    "slug": "clear_program"
+                    "clear_program": {}
                 }
             }
         return change_message
@@ -37,14 +35,13 @@ class UserChangeMessage(object):
         if user_role:
             change_message = {
                 "role": {
-                    "slug": "set_role",
-                    "params": {"id": user_role.get_qualified_id(), "name": user_role.name}
+                    "set_role": {"id": user_role.get_qualified_id(), "name": user_role.name}
                 }
             }
         else:
             change_message = {
                 "role": {
-                    "slug": "clear_role"
+                    "clear_role": {}
                 }
             }
         return change_message
@@ -53,8 +50,7 @@ class UserChangeMessage(object):
     def domain_removal(domain):
         return {
             "domain": {
-                "slug": "remove_from_domain",
-                "params": {"domain": domain}
+                "remove_from_domain": {"domain": domain}
             }
         }
 
@@ -63,7 +59,7 @@ class UserChangeMessage(object):
     def registered_devices_reset():
         return {
             "devices": {
-                "slug": "reset_devices"
+                "reset_devices": {}
             }
         }
 
@@ -71,8 +67,7 @@ class UserChangeMessage(object):
     def two_factor_disabled_for_days(days):
         return {
             "two_factor": {
-                "slug": "disable_for_days",
-                "params": {"days": days}
+                "disable_for_days": {"days": days}
             }
         }
 
@@ -80,8 +75,7 @@ class UserChangeMessage(object):
     def two_factor_disabled_with_verification(verified_by, verification_mode):
         return {
             "two_factor": {
-                "slug": "disable_with_verification",
-                "params": {
+                "disable_with_verification": {
                     "verified_by": verified_by,
                     "verification_mode": verification_mode
                 }
@@ -92,16 +86,16 @@ class UserChangeMessage(object):
     def password_reset():
         return {
             "password": {
-                "slug": "reset_password"
+                "reset_password": {}
             }
         }
 
     @staticmethod
     def status_update(active, reason):
+        slug = "activate_user" if active else "deactivate_user"
         return {
             "status": {
-                "slug": "activate_user" if active else "deactivate_user",
-                "params": {
+                slug: {
                     "reason": reason
                 }
             }
@@ -111,8 +105,7 @@ class UserChangeMessage(object):
     def phone_numbers_added(phone_numbers):
         return {
             "phone_numbers": {
-                "slug": "add_phone_numbers",
-                "params": {
+                "add_phone_numbers": {
                     "phone_numbers": phone_numbers
                 }
             }
@@ -122,8 +115,7 @@ class UserChangeMessage(object):
     def phone_numbers_removed(phone_numbers):
         return {
             "phone_numbers": {
-                "slug": "remove_phone_numbers",
-                "params": {
+                "remove_phone_numbers": {
                     "phone_numbers": phone_numbers
                 }
             }
@@ -134,14 +126,13 @@ class UserChangeMessage(object):
         if profile_id:
             change_message = {
                 "profile": {
-                    "slug": "set_profile",
-                    "params": {"id": profile_id, "name": profile_name}
+                    "set_profile": {"id": profile_id, "name": profile_name}
                 }
             }
         else:
             change_message = {
                 "profile": {
-                    "slug": "clear_profile"
+                    "clear_profile": {}
                 }
             }
         return change_message
@@ -150,7 +141,7 @@ class UserChangeMessage(object):
     def primary_location_removed():
         return {
             "location": {
-                "slug": "clear_primary_location"
+                "clear_primary_location": {}
             }
         }
 
@@ -159,14 +150,13 @@ class UserChangeMessage(object):
         if location:
             change_message = {
                 "location": {
-                    "slug": "set_primary_location",
-                    "params": {"id": location.location_id, "name": location.name}
+                    "set_primary_location": {"id": location.location_id, "name": location.name}
                 }
             }
         else:
             change_message = {
                 "location": {
-                    "slug": "clear_primary_location"
+                    "clear_primary_location": {}
                 }
             }
         return change_message
@@ -176,8 +166,7 @@ class UserChangeMessage(object):
         if locations:
             change_message = {
                 "assigned_locations": {
-                    "slug": "set_assigned_locations",
-                    "params": {
+                    "set_assigned_locations": {
                         "locations": [{'id': loc.location_id, 'name': loc.name} for loc in locations]
                     }
                 }
@@ -185,7 +174,7 @@ class UserChangeMessage(object):
         else:
             change_message = {
                 "assigned_locations": {
-                    "slug": "clear_assigned_locations"
+                    "clear_assigned_locations": {}
                 }
             }
         return change_message
@@ -195,8 +184,7 @@ class UserChangeMessage(object):
         if groups:
             change_message = {
                 "groups": {
-                    "slug": "set_groups",
-                    "params": {
+                    "set_groups": {
                         "groups": [{'id': group.get_id, 'name': group.name} for group in groups]
                     }
                 }
@@ -204,7 +192,7 @@ class UserChangeMessage(object):
         else:
             change_message = {
                 "groups": {
-                    "slug": "clear_groups"
+                    "clear_groups": {}
                 }
             }
         return change_message
@@ -213,8 +201,7 @@ class UserChangeMessage(object):
     def added_as_web_user(domain):
         return {
             "domain": {
-                "slug": "add_as_web_user",
-                "params": {"domain": domain}
+                "add_as_web_user": {"domain": domain}
             }
         }
 
@@ -222,8 +209,7 @@ class UserChangeMessage(object):
     def invited_to_domain(domain):
         return {
             "domain_invitation": {
-                "slug": "add_domain_invitation",
-                "params": {"domain": domain}
+                "add_domain_invitation": {"domain": domain}
             }
         }
 
@@ -231,8 +217,7 @@ class UserChangeMessage(object):
     def invitation_revoked_for_domain(domain):
         return {
             "domain_invitation": {
-                "slug": "remove_domain_invitation",
-                "params": {"domain": domain}
+                "remove_domain_invitation": {"domain": domain}
             }
         }
 
@@ -240,34 +225,34 @@ class UserChangeMessage(object):
 class UserChangeFormatter(object):
     @staticmethod
     def simple_formatter(raw_message):
-        def _formatter(change_details):
-            return _(raw_message).format(**change_details.get('params', {}))
+        def _formatter(params):
+            return _(raw_message).format(**params)
         return _formatter
 
     @staticmethod
     def phone_numbers_formatter(raw_message):
-        def _formatter(change_details):
-            params = change_details['params'].copy()
-            params['phone_numbers'] = ", ".join(params['phone_numbers'])
-            return _(raw_message).format(**params)
+        def _formatter(params):
+            _params = params.copy()
+            _params['phone_numbers'] = ", ".join(params['phone_numbers'])
+            return _(raw_message).format(**_params)
         return _formatter
 
     @staticmethod
     def assigned_locations_formatter(raw_message):
-        def _formatter(change_details):
-            params = change_details['params'].copy()
-            locations = params.pop('locations')
-            params['locations_info'] = [f"{loc['name']}[{loc['id']}]" for loc in locations]
-            return _(raw_message).format(**params)
+        def _formatter(params):
+            _params = params.copy()
+            locations = _params.pop('locations')
+            _params['locations_info'] = [f"{loc['name']}[{loc['id']}]" for loc in locations]
+            return _(raw_message).format(**_params)
         return _formatter
 
     @staticmethod
     def assigned_groups_formatter(raw_message):
-        def _formatter(change_details):
-            params = change_details['params'].copy()
-            groups = params.pop('groups')
-            params['groups_info'] = [f"{group['name']}[{group['id']}]" for group in groups]
-            return _(raw_message).format(**params)
+        def _formatter(params):
+            _params = params.copy()
+            groups = _params.pop('groups')
+            _params['groups_info'] = [f"{group['name']}[{group['id']}]" for group in groups]
+            return _(raw_message).format(**_params)
         return _formatter
 
 
@@ -310,5 +295,6 @@ MESSAGES = {
 
 
 def get_messages(change_messages):
-    for field_name, change_details in change_messages.items():
-        yield MESSAGES[change_details['slug']](change_details)
+    for field_name, changes in change_messages.items():
+        for slug, params in changes.items():
+            yield MESSAGES[slug](params)
