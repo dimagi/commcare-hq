@@ -662,7 +662,7 @@ wcwidth==0.2.5
     # via prompt-toolkit
 werkzeug==1.0.1
     # via -r base-requirements.in
-wheel==0.36.2
+wheel==0.37.0
     # via
     #   -r dev-requirements.in
     #   pip-tools

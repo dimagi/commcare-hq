@@ -536,7 +536,7 @@ vine==1.3.0
     # via amqp
 werkzeug==1.0.1
     # via -r base-requirements.in
-wheel==0.36.2
+wheel==0.37.0
     # via pip-tools
 wrapt==1.12.1
     # via deprecated
