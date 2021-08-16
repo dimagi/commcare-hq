@@ -243,10 +243,10 @@ class CommCareUserImporter(BaseUserImporter):
         )
 
         if items_added:
-            self.logger.add_change_message(UserChangeMessage.phone_numbers_added(items_added))
+            self.logger.add_change_message(UserChangeMessage.phone_numbers_added(list(items_added)))
 
         if items_removed:
-            self.logger.add_change_message(UserChangeMessage.phone_numbers_removed(items_removed))
+            self.logger.add_change_message(UserChangeMessage.phone_numbers_removed(list(items_removed)))
 
 
 def _fmt_phone(phone_number):
