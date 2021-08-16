@@ -65,14 +65,20 @@ class UserChangeLogger(object):
         """
         if self.is_new_user:
             return
-        self.change_messages.update(message)
+        self._update_change_message(message)
         self._save = True
+
+    def _update_change_message(self, change_messages):
+        for slug in change_messages:
+            if slug in self.change_messages:
+                raise UserUploadError(f"Double Entry for {slug}")
+        self.change_messages.update(change_messages)
 
     def add_info(self, info):
         """
         Useful info for display, specifically of associated data models like roles/locations.
         """
-        self.change_messages.update(info)
+        self._update_change_message(info)
         self._save = True
 
     def save(self):

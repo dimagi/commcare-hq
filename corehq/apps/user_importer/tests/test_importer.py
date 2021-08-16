@@ -16,6 +16,8 @@ from corehq.apps.custom_data_fields.models import (
     Field,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
@@ -1727,3 +1729,98 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
+
+
+class TestUserChangeLogger(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
+                                            is_superuser=True)
+        cls.upload_record = UserUploadRecord(
+            domain=cls.domain_name,
+            user_id=cls.uploading_user.get_id
+        )
+        cls.upload_record.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.upload_record.delete()
+        cls.uploading_user.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def test_add_change_message_duplicate_slug_entry(self):
+        new_user = CommCareUser()
+        user_change_logger = UserChangeLogger(
+            domain=self.domain_name,
+            user=new_user,
+            is_new_user=True,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        # no change noted for new user
+        self.assertEqual(user_change_logger.change_messages, {})
+
+        # no exception raised for new user
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
+
+        user_change_logger = UserChangeLogger(
+            domain=self.domain_name,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.password_reset())
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for password"):
+            user_change_logger.add_change_message(UserChangeMessage.password_reset())
+
+    def test_add_info_duplicate_slug_entry(self):
+        new_user = CommCareUser()
+        user_change_logger = UserChangeLogger(
+            domain=self.domain_name,
+            user=new_user,
+            is_new_user=True,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.program_change(None))
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for program"):
+            user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+                                   created_by=None, created_via=None)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
+
+        user_change_logger = UserChangeLogger(
+            domain=self.domain_name,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.uploading_user,
+            changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
+            upload_record_id=self.upload_record.pk
+        )
+        user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+        self.assertEqual(user_change_logger.change_messages, UserChangeMessage.program_change(None))
+
+        with self.assertRaisesMessage(UserUploadError, "Double Entry for program"):
+            user_change_logger.add_info(UserChangeMessage.program_change(None))
