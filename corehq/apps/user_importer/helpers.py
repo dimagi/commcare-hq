@@ -186,9 +186,10 @@ class CommCareUserImporter(BaseUserImporter):
             if value is None or value == '':
                 self.user.pop_metadata(key)
 
-        if self.user.user_data.get(PROFILE_SLUG) and self.user.user_data[PROFILE_SLUG] != current_profile_id:
-            profile_name = domain_info.profile_name_by_id[self.user.user_data[PROFILE_SLUG]]
-            self.logger.add_info(UserChangeMessage.profile_info(profile_name))
+        new_profile_id = self.user.user_data.get(PROFILE_SLUG)
+        if new_profile_id and new_profile_id != current_profile_id:
+            profile_name = domain_info.profile_name_by_id[new_profile_id]
+            self.logger.add_info(UserChangeMessage.profile_info(new_profile_id, profile_name))
 
     def update_language(self, language):
         self.user.language = language
