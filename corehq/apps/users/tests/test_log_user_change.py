@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
@@ -44,15 +45,7 @@ class TestLogUserChange(TestCase):
 
         self.commcare_user.add_phone_number("9999999999")
 
-        # ToDo: replace with UserChangeMessage.phone_numbers_added(["9999999999"]) once available
-        change_messages = {"phone_numbers": [
-            {
-                "slug": "add_phone_numbers",
-                "params": {
-                    "phone_numbers": ["9999999999"]
-                }
-            }
-        ]}
+        change_messages = UserChangeMessage.phone_numbers_added(["9999999999"])
         user_history = log_user_change(
             self.domain,
             self.commcare_user,
