@@ -396,11 +396,7 @@ class CaseAccessors(object):
     @memoized
     def db_accessor(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
-        if should_use_sql_backend(self.domain):
-            return CaseAccessorSQL
-        else:
-            return CaseAccessorCouch
+        return CaseAccessorSQL
 
     def get_case(self, case_id):
         if not case_id:
