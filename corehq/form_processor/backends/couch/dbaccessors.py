@@ -6,7 +6,6 @@ from casexml.apps.case.dbaccessors import (
     get_indexed_case_ids,
     get_all_reverse_indices_info,
     get_reverse_indexed_cases,
-    get_related_indices,
 )
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids, iter_cases
@@ -128,24 +127,6 @@ class FormAccessorCouch(AbstractFormAccessor):
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
-
-    @staticmethod
-    def get_case(case_id):
-        return CommCareCase.get(case_id)
-
-    @staticmethod
-    def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        # prefetched_indices is ignored sinces cases already have them
-        return [
-            CommCareCase.wrap(doc) for doc in iter_docs(
-                CommCareCase.get_db(),
-                case_ids
-            )
-        ]
-
-    @staticmethod
-    def get_related_indices(domain, case_ids, exclude_indices):
-        return get_related_indices(domain, case_ids, exclude_indices)
 
     @staticmethod
     def get_closed_and_deleted_ids(domain, case_ids):
