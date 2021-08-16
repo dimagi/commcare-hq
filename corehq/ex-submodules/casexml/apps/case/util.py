@@ -98,18 +98,6 @@ def create_real_cases_from_dummy_cases(cases):
     return posted_forms, posted_cases
 
 
-def get_case_xform_ids(case_id):
-    results = XFormInstance.get_db().view('form_case_index/form_case_index',
-                                          reduce=False,
-                                          startkey=[case_id],
-                                          endkey=[case_id, {}])
-
-    # also have to add commtrack forms, which may not appear in the form --> case index
-    commtrack_reports = StockReport.objects.filter(stocktransaction__case_id=case_id)
-    commtrack_forms = commtrack_reports.values_list('form_id', flat=True).distinct()
-    return list(set([row['key'][1] for row in results] + list(commtrack_forms)))
-
-
 def prune_previous_log(sync_log):
     if sync_log.previous_log_id:
         delete_synclogs(sync_log)
