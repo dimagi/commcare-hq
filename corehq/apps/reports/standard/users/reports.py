@@ -19,6 +19,7 @@ from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
+from corehq.apps.users.audit.change_messages import get_messages
 from corehq.apps.users.models import UserHistory
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
@@ -128,7 +129,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             filters = filters & Q(changed_by__in=changed_by_user_ids)
 
         if user_property:
-            filters = filters & Q(**{"details__changes__has_key": user_property})
+            filters = filters & Q(**{"changes__has_key": user_property})
 
         if actions and ChangeActionFilter.ALL not in actions:
             filters = filters & Q(action__in=actions)
@@ -155,9 +156,9 @@ def _user_history_row(record, domain, timezone):
         cached_user_id_to_username(record.user_id),
         cached_user_id_to_username(record.changed_by),
         _get_action_display(record.action),
-        record.details['changed_via'],
-        record.message,
-        _user_history_details_cell(record.details['changes'], domain),
+        record.changed_via,
+        list(get_messages(record.change_messages)),
+        _user_history_details_cell(record.changes, domain),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
 
