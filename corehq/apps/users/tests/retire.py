@@ -76,7 +76,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
-        self.assertEqual(user_history.details['changed_via'], deleted_via)
+        self.assertEqual(user_history.changed_via, deleted_via)
 
     @override_settings(UNIT_TESTING=False)
     def test_unretire_missing_unretired_by(self):
@@ -122,7 +122,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(user_history.domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
-        self.assertEqual(user_history.details['changed_via'], "Test")
+        self.assertEqual(user_history.changed_via, "Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))
