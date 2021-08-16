@@ -29,7 +29,6 @@ from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
@@ -499,9 +498,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             form_json = convert_xform_to_json(xml)
         except XMLSyntaxError:
             return {}
-        # we can assume all sql domains are new timezone domains
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_json)
+        adjust_datetimes(form_json)
 
         scrub_form_meta(self.form_id, form_json)
         return form_json

@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from collections import namedtuple
 import os
@@ -26,7 +25,6 @@ class SharedDriveConfiguration(object):
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
         self.blob_dir = self._init_dir(blob_dir)
-        self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
         if not self.shared_drive_path or not os.path.isdir(self.shared_drive_path) or not name:

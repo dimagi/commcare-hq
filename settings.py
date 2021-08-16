@@ -269,7 +269,6 @@ HQ_APPS = (
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
-    'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db.app_config.SqlDbAppConfig',
