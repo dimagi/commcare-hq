@@ -1426,10 +1426,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(user_history.domain, self.domain.name)
         self.assertEqual(user_history.change_messages, f"Invited to domain '{self.domain.name}'")
-        self.assertDictEqual(
-            user_history.details,
-            {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
-        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.changes, {})
 
     def test_web_user_user_name_change(self):
         self.setup_users()
@@ -1481,10 +1479,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         )
         self.assertEqual(user_history.change_messages, f"Role: {self.role.name}[{self.role.get_qualified_id()}]")
-        self.assertDictEqual(
-            user_history.details,
-            {'changed_via': USER_CHANGE_VIA_BULK_IMPORTER, 'changes': {}}
-        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+        self.assertEqual(user_history.changes, {})
 
     def test_update_role_current_user(self):
         self.setup_users()
