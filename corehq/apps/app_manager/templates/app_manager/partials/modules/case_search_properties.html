@@ -147,6 +147,8 @@
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
             <!-- /ko -->
           </div>
+          {% endif %}
+          {% if request|toggle_enabled:'DATA_REGISTRY' %}
           <div class="form-group">
               <label for="data-registry-id" class="{% css_label_class %} control-label">
                   {% trans "Registry ID" %}
