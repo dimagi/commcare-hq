@@ -101,6 +101,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     DomainRequest,
     Invitation,
@@ -904,7 +905,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(user_history.domain, None)
         self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
         self.assertEqual(user_history.user_id, web_user.get_id)
-        self.assertEqual(user_history.change_messages, f"Removed from domain '{self.domain.name}'")
+        self.assertEqual(user_history.change_messages, UserChangeMessage.domain_removal(self.domain.name))
         self.assertEqual(user_history.changed_via,
                          'corehq.apps.domain.deletion._delete_web_user_membership')
         self.assertEqual(user_history.changes, {})
