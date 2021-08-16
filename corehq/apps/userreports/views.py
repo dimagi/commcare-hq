@@ -471,7 +471,7 @@ class ConfigureReport(ReportBuilderView):
     @use_nvd3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
-        if self.existing_report:
+        if self.existing_report:  # TODO: modify for existing registry report
             self.source_type = get_source_type_from_report_config(self.existing_report)
             if self.source_type != DATA_SOURCE_TYPE_RAW:
                 self.source_id = self.existing_report.config.meta.build.source_id
@@ -481,12 +481,18 @@ class ConfigureReport(ReportBuilderView):
                 self.source_id = self.existing_report.config_id
                 self.app_id = self.app = None
         else:
-            self.app_id = self.request.GET['application']
-            self.app = Application.get(self.app_id)
-            self.source_type = self.request.GET['source_type']
-            self.source_id = self.request.GET['source']
+            self.registry_slug = self.request.GET.get('registry_slug', None)
+            self.app_id = self.request.GET.get('application', None)
+            if self.registry_slug:
+                self.source_type = 'case'
+                self.source_id = self.request.GET['case_type']
+                self.app = None  # TODO: drop the need for this data anyways?
+            else:
+                self.app = Application.get(self.app_id)
+                self.source_type = self.request.GET['source_type']
+                self.source_id = self.request.GET['source']
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
