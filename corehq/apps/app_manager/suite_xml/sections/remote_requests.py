@@ -162,28 +162,23 @@ class RemoteRequestFactory(object):
     @cached_property
     def _remote_request_query_datums(self):
         default_query_datums = [
-            QueryData(
-                key='case_type',
-                ref="'{}'".format(self.module.case_type)
-            ),
+            QueryData(key='case_type', ref=f"'{self.module.case_type}'"),
         ]
-        additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
-        for type in additional_types:
+
+        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
+        for case_type in additional_types:
             default_query_datums.append(
-                QueryData(
-                    key='case_type',
-                    ref="'{}'".format(type)
-                )
+                QueryData(key='case_type', ref=f"'{case_type}'")
             )
         extra_query_datums = [
-            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+            QueryData(key=c.property, ref=c.defaultValue)
             for c in self.module.search_config.default_properties
         ]
         if self.module.search_config.blacklisted_owner_ids_expression:
             extra_query_datums.append(
                 QueryData(
                     key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-                    ref="{}".format(self.module.search_config.blacklisted_owner_ids_expression)
+                    ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
         return default_query_datums + extra_query_datums
