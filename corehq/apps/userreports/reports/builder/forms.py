@@ -853,7 +853,13 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
         return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
 
-def get_data_source_interface(domain, app, source_type, source_id):
+class RegistryCaseDataSourceHelper(ReportBuilderDataSourceInterface):
+    pass
+
+
+def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
+    if registry_slug is not None:  # TODO: refactor
+        return RegistryCaseDataSourceHelper(domain, registry_slug, source_type, source_id)
     if source_type in APP_DATA_SOURCE_TYPE_VALUES:
         helper = {
             DATA_SOURCE_TYPE_CASE: ApplicationCaseDataSourceHelper,
@@ -973,7 +979,7 @@ class ConfigureNewReportBase(forms.Form):
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None,
+    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None, registry_slug=None,
                  *args, **kwargs):
         """
         This form can be used to create a new ReportConfiguration, or to modify
@@ -986,6 +992,7 @@ class ConfigureNewReportBase(forms.Form):
         if self.existing_report:
             self._bootstrap(self.existing_report)
         else:
+            self.registry_slug = registry_slug
             self.report_name = report_name
             assert source_type in REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
             self.source_type = source_type
@@ -995,7 +1002,7 @@ class ConfigureNewReportBase(forms.Form):
                 assert self.domain == self.app.domain
 
         self.ds_builder = get_data_source_interface(
-            self.domain, self.app, self.source_type, self.report_source_id
+            self.domain, self.app, self.source_type, self.report_source_id, self.registry_slug
         )
         self.report_column_options = self.ds_builder.report_column_options
 
