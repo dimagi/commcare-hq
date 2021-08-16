@@ -40,7 +40,7 @@ class UserChangeLogger(object):
             self.original_user_doc = None
 
         self.fields_changed = {}
-        self.messages = []
+        self.change_messages = {}
 
         self._save = False  # flag to check if log needs to be saved for updates
 
@@ -59,24 +59,20 @@ class UserChangeLogger(object):
 
     def add_change_message(self, message):
         """
-        Add raw/untranslated text messages for changes that are not exactly user properties.
+        Add change message for changes that are not exactly user properties.
         Ignored for new user since the whole user doc is logged for a new user
         :param message: text message for the change like 'Password reset' / 'Added as web user to domain foo'
         """
         if self.is_new_user:
             return
-        self.messages.append(message)
+        self.change_messages.update(message)
         self._save = True
 
     def add_info(self, info):
         """
-        Useful raw/untranslated info for display, specifically of associated data models like roles/locations.
-        Info will also include ID if the data model is not linked directly on the user like
-        primary location for CommCareUser is present on the user record but for a WebUser it's
-        stored on Domain Membership. So for WebUser, info should also include the primary location's location id.
-        :param info: text info like "Role: RoleName[role_id]" / "Primary location: Boston[boston-location-id]"
+        Useful info for display, specifically of associated data models like roles/locations.
         """
-        self.messages.append(info)
+        self.change_messages.update(info)
         self._save = True
 
     def save(self):
@@ -88,7 +84,7 @@ class UserChangeLogger(object):
                 self.user,
                 changed_by_user=self.changed_by_user,
                 changed_via=self.changed_via,
-                message=". ".join(self.messages),
+                change_messages=self.change_messages,
                 action=action,
                 fields_changed=fields_changed,
                 bulk_upload_record_id=self.upload_record_id,

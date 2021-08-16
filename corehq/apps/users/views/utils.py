@@ -80,7 +80,7 @@ def log_user_groups_change(domain, request, user, group_ids=None):
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=UserChangeMessage.groups_info(groups_info)
+        change_messages=UserChangeMessage.groups_info(groups_info)
     )
 
 
@@ -108,5 +108,5 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
             changed_by_user=request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
             fields_changed=fields_changed,
-            message=". ".join(messages)
+            change_messages=messages
         )

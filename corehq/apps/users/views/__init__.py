@@ -820,7 +820,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.domain_removal(domain))
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1335,7 +1335,7 @@ def change_password(request, domain, login_id):
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
-                message=UserChangeMessage.password_reset()
+                change_messages=UserChangeMessage.password_reset()
             )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')

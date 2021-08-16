@@ -148,7 +148,7 @@ def _delete_web_user_membership(domain_name):
 def _log_web_user_membership_removed(user, domain, via):
     log_user_change(None, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message=UserChangeMessage.domain_removal(domain))
+                    change_messages=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
