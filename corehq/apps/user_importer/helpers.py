@@ -242,11 +242,11 @@ class CommCareUserImporter(BaseUserImporter):
             source=old_phone_numbers
         )
 
-        for number in items_added:
-            self.logger.add_change_message(UserChangeMessage.phone_number_added(number))
+        if items_added:
+            self.logger.add_change_message(UserChangeMessage.phone_numbers_added(items_added))
 
-        for number in items_removed:
-            self.logger.add_change_message(UserChangeMessage.phone_number_removed(number))
+        if items_removed:
+            self.logger.add_change_message(UserChangeMessage.phone_numbers_removed(items_removed))
 
 
 def _fmt_phone(phone_number):
