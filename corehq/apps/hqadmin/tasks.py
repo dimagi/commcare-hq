@@ -223,11 +223,17 @@ def _reconcile_es_data(data_type, metric, blob_parent_id):
         file_name = output_file.name
         call_command('stale_data_in_es', data_type, start=two_days_ago.isoformat(), stdout=output_file)
     with open(file_name, 'r') as f:
-        line_count = sum(1 for line in f)
+        reader = csv.reader(f)
         # ignore the headers
-        stale_docs = line_count - 1
-        metrics_counter(metric, stale_docs)
-    call_command('republish_doc_changes', file_name)
+        next(reader)
+        count = 0
+        by_domain = defaultdict(int)
+        for line in reader:
+            domain = line[3]
+            by_domain[domain] += 1
+        for domain, count in by_domain.items()
+            metrics_counter(metric, count, tags={'domain': domain})
+    call_command('republish_doc_changes', file_name, skip_domains=True)
     with open(file_name, 'rb') as f:
         blob_db = get_blob_db()
         key = f'{blob_parent_id}_{today.isoformat()}'

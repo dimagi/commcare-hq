@@ -8,6 +8,7 @@ from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.toggles import DO_NOT_REPUBLISH_DOCS
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
@@ -40,6 +41,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('stale_data_in_es_file')
         parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
+        parser.add_arument('--skip_domains', action='store_true')
 
     def handle(self, stale_data_in_es_file, delimiter, *args, **options):
         data_rows = _get_data_rows(stale_data_in_es_file, delimiter=delimiter)
@@ -53,8 +55,8 @@ class Command(BaseCommand):
                 form_records.append(record)
             else:
                 assert False, f'Bad doc type {record.doc_type} should have been caught already below.'
-        _publish_cases(case_records)
-        _publish_forms(form_records)
+        _publish_cases(case_records, skip_domains=skip_domains)
+        _publish_forms(form_records, skip_domains=skip_domains)
 
 
 def _get_data_rows(stale_data_in_es_file, delimiter):
@@ -79,16 +81,20 @@ def _get_document_records(data_rows):
         yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
 
 
-def _publish_cases(case_records):
+def _publish_cases(case_records, skip_domains):
     for domain, records in itertools.groupby(case_records, lambda r: r.domain):
+        if skip_domains and DO_NOT_REPUBLISH_DOCS.enabled(domain):
+            continue
         if should_use_sql_backend(domain):
             _publish_cases_for_sql(domain, list(records))
         else:
             _publish_cases_for_couch(domain, list(records))
 
 
-def _publish_forms(form_records):
+def _publish_forms(form_records, skip_domains):
     for domain, records in itertools.groupby(form_records, lambda r: r.domain):
+        if skip_domains and DO_NOT_REPUBLISH_DOCS.enabled(domain):
+            continue
         if should_use_sql_backend(domain):
             _publish_forms_for_sql(domain, records)
         else:
