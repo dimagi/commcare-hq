@@ -1,3 +1,4 @@
+import logging
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
@@ -5,12 +6,16 @@ from corehq.apps.ivr.api import log_call
 from celery.task import task
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
+from corehq.apps.sms.models import SMS
+from .const import (
+    EVENT_INCOMING,
+    MESSAGE_TYPE_SMS,
+    MESSAGE_TYPE_CALL,
+    TELERIVIT_FAILED_STATUSES,
+    DELIVERED,
+)
 
-EVENT_INCOMING = "incoming_message"
-MESSAGE_TYPE_SMS = "sms"
-MESSAGE_TYPE_MMS = "mms"
-MESSAGE_TYPE_USSD = "ussd"
-MESSAGE_TYPE_CALL = "call"
+logger = logging.getLogger()
 
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
@@ -44,3 +49,30 @@ def process_incoming_message(*args, **kwargs):
                 domain_scope=domain_scope, backend_id=backend.couch_id)
         elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
             log_call(from_number, "TELERIVET-%s" % kwargs["message_id"], backend=backend)
+
+
+@task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
+def process_message_status(message_id, status, **kwargs):
+    try:
+        sms = SMS.objects.get(couch_id=message_id)
+    except SMS.DoesNotExist:
+        return
+
+    metadata = {}
+
+    if kwargs.get('case_id'):
+        metadata.update({'case_id': kwargs.get('case_id')})
+
+    if status == DELIVERED:
+        metadata.update({'gateway_delivered': True})
+
+    if status in TELERIVIT_FAILED_STATUSES:
+        error = kwargs.get('error_message', 'Error occurred')
+        sms.set_system_error(error)
+
+    if metadata:
+        if type(sms.custom_metadata) is dict:
+            sms.custom_metadata.update(metadata)
+        else:
+            sms.custom_metadata = metadata
+        sms.save()
