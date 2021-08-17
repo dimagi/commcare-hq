@@ -54,14 +54,15 @@ def process_incoming_message(*args, **kwargs):
 # @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
     logger.info('Processing Telerivit message status')
-    backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
+    # backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
 
-    if backend is None:
-        # Ignore the message if the webhook secret is not recognized
-        return
+    # if backend is None:
+    #     logger.info('Ignoring Telerivit message status update')
+    #     # Ignore the message if the webhook secret is not recognized
+    #     return
 
     sms = SMS.objects.get(couch_id=message_id)
-
+    logger.info('Next: handle_message_status_update')
     handle_message_status_update(
         message=sms,
         status=status,
@@ -70,7 +71,7 @@ def process_message_status(message_id, status, **kwargs):
 
 
 def handle_message_status_update(message: SMS, status: str, **kwargs):
-    logger.info('Handle message status')
+    logger.info(f'Handle message status: {status}')
 
     if status == DELIVERED:
         logger.info('Update gateway_delivered')
