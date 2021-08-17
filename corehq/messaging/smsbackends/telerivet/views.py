@@ -60,15 +60,24 @@ def message_status(request, message_id):
     logger.info(f'Updating Telerivit message status: id: {message_id}, params: {request.POST}')
     status = request.POST.get('status')
     error = request.POST.get('error_message')
-    sec = request.POST.get('secret')
+    breakpoint()
+    vars1 = request.POST.get('vars')
+    vars2 = request.POST.get('vars[case_id]')
+    logger.info(f'vars test 1: {vars1}')
+    logger.info(f'vars test 2: {vars2}')
 
-    logger.info(f'status: {status}, error: {error}, secret: {sec}')
+    if vars1:
+        case_id = vars1.get('case_id')
+    if vars2:
+        case_id = vars2
+
+    logger.info(f'status: {status}, error: {error}, case_id: {case_id}')
 
     process_message_status(
         message_id,
         status,
-        error_message=request.POST.get('error_message'),
-        request_secret=request.POST.get('secret')
+        error_message=request.POST.get('error_message') or '',
+        case_id=case_id or '',
     )
 
     return HttpResponse()

@@ -84,16 +84,15 @@ class SQLTelerivetBackend(SQLSMSBackend):
         related_case = get_case_by_identifier(msg.domain, phone_number_id)
 
         if related_case:
-            msg.custom_metadata['case_id'] = related_case.case_id
-            msg.save()
+            # msg.custom_metadata['case_id'] = related_case.case_id
+            # msg.save()
 
             payload.update({
                 'status_url': "{base_url}{resource}".format(
                     base_url=get_url_base(),
                     resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
                 ),
-                'vars': {'case_id': related_case.case_id},
-                'secret': self.config.webhook_secret,
+                'vars': {'case_id': related_case.case_id}
             })
 
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id

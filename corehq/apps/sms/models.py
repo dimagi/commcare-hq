@@ -299,13 +299,6 @@ class SMSBase(UUIDGeneratorMixin, Log):
     def is_status_pending(self):
         return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
 
-    def add_custom_metadata(self, metadata: dict):
-        if type(self.custom_metadata) is dict:
-            self.custom_metadata.update(metadata)
-        else:
-            self.custom_metadata = metadata
-        self.save()
-
 
 class SMS(SMSBase):
     date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)

@@ -54,29 +54,18 @@ def process_incoming_message(*args, **kwargs):
 # @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
     logger.info('Processing Telerivit message status')
-    # backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
-
-    # if backend is None:
-    #     logger.info('Ignoring Telerivit message status update')
-    #     # Ignore the message if the webhook secret is not recognized
-    #     return
 
     sms = SMS.objects.get(couch_id=message_id)
-    logger.info('Next: handle_message_status_update')
-    handle_message_status_update(
-        message=sms,
-        status=status,
-        **kwargs
-    )
 
-
-def handle_message_status_update(message: SMS, status: str, **kwargs):
-    logger.info(f'Handle message status: {status}')
+    if kwargs.get('case_id'):
+        sms.custom_metadata['case_id'] = kwargs.get('case_id')
 
     if status == DELIVERED:
         logger.info('Update gateway_delivered')
-        message.add_custom_metadata({'gateway_delivered': True})
+        sms.custom_metadata['gateway_delivered'] = True
 
     if status in TELERIVIT_FAILED_STATUSES:
         error = kwargs.get('error_message', 'Error occurred')
-        message.set_system_error(error)
+        sms.set_system_error(error)
+
+    sms.save()
