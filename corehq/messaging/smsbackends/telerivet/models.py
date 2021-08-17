@@ -77,6 +77,11 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'to_number': msg.phone_number,
             'content': msg.text,
             'message_type': MESSAGE_TYPE_SMS,
+            'status_url': "{base_url}{resource}".format(
+                base_url=get_url_base(),
+                resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
+            ),
+            'status_secret': self.config.webhook_secret
         }
 
         # This can maybe happen higher up in the stream?
@@ -84,13 +89,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
         related_case = get_case_by_identifier(msg.domain, phone_number_id)
 
         if related_case:
-            payload.update({
-                'status_url': "{base_url}{resource}".format(
-                    base_url=get_url_base(),
-                    resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
-                ),
-                'vars': {'case_id': related_case.case_id}
-            })
+            payload.update({'vars': {'case_id': related_case.case_id}})
 
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
 

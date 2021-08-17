@@ -50,6 +50,11 @@ def process_incoming_message(*args, **kwargs):
 
 @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
+    backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
+
+    if backend is None:
+        return
+
     try:
         sms = SMS.objects.get(couch_id=message_id)
     except SMS.DoesNotExist:

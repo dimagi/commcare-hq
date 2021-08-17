@@ -63,8 +63,9 @@ def message_status(request, message_id):
     process_message_status.delay(
         message_id,
         status,
-        case_id=request.POST.get('vars[case_id]') or '',
-        error_message=request.POST.get('error_message') or '',
+        case_id=request.POST.get('vars[case_id]', ''),
+        error_message=request.POST.get('error_message', ''),
+        request_secret=request.POST.get('secret', ''),
     )
 
     return HttpResponse()
