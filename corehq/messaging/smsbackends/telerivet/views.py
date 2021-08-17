@@ -1,4 +1,5 @@
 import uuid
+import logging
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -22,6 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
 
+logger = logging.getLogger()
 
 # Tuple of (hq field name, telerivet field name) tuples
 TELERIVET_INBOUND_FIELD_MAP = (
@@ -55,9 +57,13 @@ def incoming_message(request):
 @require_POST
 @csrf_exempt
 def message_status(request, message_id):
+    message_status = request.POST.get('status')
+
+    logger.info(f'Updating Telerivit message status: {message_status}')
+
     process_message_status(
         message_id,
-        request.POST.get('status'),
+        message_status,
         error_message=request.POST.get('error_message'),
         request_secret=request.POST.get('secret')
     )

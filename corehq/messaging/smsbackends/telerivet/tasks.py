@@ -1,3 +1,4 @@
+import logging
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
@@ -13,6 +14,8 @@ from .const import (
     TELERIVIT_FAILED_STATUSES,
     DELIVERED,
 )
+
+logger = logging.getLogger()
 
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
@@ -50,6 +53,7 @@ def process_incoming_message(*args, **kwargs):
 
 # @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
+    logger.info('Processing Telerivit message status')
     backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
 
     if backend is None:
@@ -66,7 +70,10 @@ def process_message_status(message_id, status, **kwargs):
 
 
 def handle_message_status_update(message: SMS, status: str, **kwargs):
+    logger.info('Handle message status')
+
     if status == DELIVERED:
+        logger.info('Update gateway_delivered')
         message.add_custom_metadata({'gateway_delivered': True})
 
     if status in TELERIVIT_FAILED_STATUSES:
