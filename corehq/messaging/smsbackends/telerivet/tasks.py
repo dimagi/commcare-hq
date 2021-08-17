@@ -1,4 +1,3 @@
-import logging
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
@@ -14,8 +13,6 @@ from .const import (
     TELERIVIT_FAILED_STATUSES,
     DELIVERED,
 )
-
-logger = logging.getLogger()
 
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
