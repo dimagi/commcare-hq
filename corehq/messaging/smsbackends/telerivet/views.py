@@ -60,7 +60,7 @@ def message_status(request, message_id):
     logger.info(f'Updating Telerivit message status: id: {message_id}, params: {request.POST}')
     status = request.POST.get('status')
     error = request.POST.get('error_message')
-    breakpoint()
+
     vars1 = request.POST.get('vars')
     vars2 = request.POST.get('vars[case_id]')
     logger.info(f'vars test 1: {vars1}')
