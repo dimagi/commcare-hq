@@ -43,5 +43,6 @@ __all__ = [
     'SnapshotClient',
     'TransportError',
     'bulk',
+    'scan',
     'elasticsearch',
 ]
