@@ -1,5 +1,6 @@
 import csv
 import io
+from collections import defaultdict
 from datetime import date, timedelta
 from tempfile import NamedTemporaryFile
 
@@ -234,7 +235,7 @@ def count_es_forms_past_window():
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
-def count_es_forms_past_window():
+def count_es_cases_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)
     four_days_ago = today - timedelta(days=4)
@@ -267,7 +268,7 @@ def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, 
             domain = line[3]
             counts_by_domain[domain] += 1
         if counts_by_domain:
-            for domain, count in by_domain.items():
+            for domain, count in counts_by_domain.items():
                 metrics_counter(metric, count, tags={'domain': domain})
         else:
             metrics_counter(metric, 0)
