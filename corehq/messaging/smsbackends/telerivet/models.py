@@ -92,6 +92,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
                     base_url=get_url_base(),
                     resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
                 ),
+                'vars': {'case_id': related_case.case_id},
                 'secret': self.config.webhook_secret,
             })
 
