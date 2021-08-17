@@ -216,24 +216,63 @@ def reconcile_es_forms():
     _reconcile_es_data('form', 'commcare.elasticsearch.stale_forms', 'reconcile_es_forms')
 
 
-def _reconcile_es_data(data_type, metric, blob_parent_id):
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+def count_es_forms_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)
+    four_days_ago = today - timedelta(days=4)
+    start = two_days_ago.isoformat()
+    end = four_days_ago.isoformat()
+    _reconcile_es_data(
+        'form',
+        'commcare.elasticsearch.stale_forms_past_window',
+        'es_forms_past_window',
+        start=start,
+        end=end,
+        publish=False
+    )
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+def count_es_forms_past_window():
+    today = date.today()
+    two_days_ago = today - timedelta(days=2)
+    four_days_ago = today - timedelta(days=4)
+    start = two_days_ago.isoformat()
+    end = four_days_ago.isoformat()
+    _reconcile_es_data(
+        'case',
+        'commcare.elasticsearch.stale_cases_past_window',
+        'es_cases_past_window',
+        start=start,
+        end=end,
+        publish=False
+    )
+
+
+def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, republish=True):
+    if not start:
+        today = date.today()
+        two_days_ago = today - timedelta(days=2)
+        start = two_days_ago.isoformat()
     with NamedTemporaryFile('w', delete=False) as output_file:
         file_name = output_file.name
-        call_command('stale_data_in_es', data_type, start=two_days_ago.isoformat(), stdout=output_file)
+        call_command('stale_data_in_es', data_type, start=start, end=end, stdout=output_file)
     with open(file_name, 'r') as f:
         reader = csv.reader(f)
         # ignore the headers
         next(reader)
-        count = 0
-        by_domain = defaultdict(int)
+        counts_by_domain = defaultdict(int)
         for line in reader:
             domain = line[3]
-            by_domain[domain] += 1
-        for domain, count in by_domain.items()
-            metrics_counter(metric, count, tags={'domain': domain})
-    call_command('republish_doc_changes', file_name, skip_domains=True)
+            counts_by_domain[domain] += 1
+        if counts_by_domain:
+            for domain, count in by_domain.items():
+                metrics_counter(metric, count, tags={'domain': domain})
+        else:
+            metrics_counter(metric, 0)
+    if republish:
+        call_command('republish_doc_changes', file_name, skip_domains=True)
     with open(file_name, 'rb') as f:
         blob_db = get_blob_db()
         key = f'{blob_parent_id}_{today.isoformat()}'
