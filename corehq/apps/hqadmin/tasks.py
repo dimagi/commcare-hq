@@ -27,7 +27,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.soft_assert import soft_assert
 
 from .utils import check_for_rewind
@@ -226,7 +226,7 @@ def _reconcile_es_data(data_type, metric, blob_parent_id):
         line_count = sum(1 for line in f)
         # ignore the headers
         stale_docs = line_count - 1
-        metrics_gauge(metric, stale_docs)
+        metrics_counter(metric, stale_docs)
     call_command('republish_doc_changes', file_name)
     with open(file_name, 'rb') as f:
         blob_db = get_blob_db()
