@@ -77,6 +77,12 @@
                 to a menu using "Display only forms," which makes that menu an invalid choice.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "endpoint to display only forms" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses "Display only forms" and also has a Session Endpoint ID.
+                Session endpoints cannot be used with "Display only forms."
+              {% endblocktrans %}
             {% case "no ref detail" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
