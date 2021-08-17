@@ -51,21 +51,28 @@ def process_incoming_message(*args, **kwargs):
             log_call(from_number, "TELERIVET-%s" % kwargs["message_id"], backend=backend)
 
 
-# @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
 def process_message_status(message_id, status, **kwargs):
-    logger.info('Processing Telerivit message status')
+    try:
+        sms = SMS.objects.get(couch_id=message_id)
+    except SMS.DoesNotExist:
+        return
 
-    sms = SMS.objects.get(couch_id=message_id)
+    metadata = {}
 
     if kwargs.get('case_id'):
-        sms.custom_metadata['case_id'] = kwargs.get('case_id')
+        metadata.update({'case_id': kwargs.get('case_id')})
 
     if status == DELIVERED:
-        logger.info('Update gateway_delivered')
-        sms.custom_metadata['gateway_delivered'] = True
+        metadata.update({'gateway_delivered': True})
 
     if status in TELERIVIT_FAILED_STATUSES:
         error = kwargs.get('error_message', 'Error occurred')
         sms.set_system_error(error)
 
-    sms.save()
+    if metadata:
+        if type(sms.custom_metadata) is dict:
+            sms.custom_metadata.update(metadata)
+        else:
+            sms.custom_metadata = metadata
+        sms.save()

@@ -79,14 +79,11 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'message_type': MESSAGE_TYPE_SMS,
         }
 
-        # Ugly side effect! This needs to happen higher up in the stream
+        # This can maybe happen higher up in the stream?
         phone_number_id = msg.phone_number.replace('+', '')
         related_case = get_case_by_identifier(msg.domain, phone_number_id)
 
         if related_case:
-            # msg.custom_metadata['case_id'] = related_case.case_id
-            # msg.save()
-
             payload.update({
                 'status_url': "{base_url}{resource}".format(
                     base_url=get_url_base(),
