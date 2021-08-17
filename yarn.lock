@@ -6541,9 +6541,9 @@ xdg-basedir@^3.0.0:
   resolved "https://registry.yarnpkg.com/xdg-basedir/-/xdg-basedir-3.0.0.tgz#496b2cc109eca8dbacfe2dc72b603c17c5870ad4"
   integrity sha1-SWsswQnsqNus/i3HK2A8F8WHCtQ=
 
-xpath@dimagi/js-xpath#v0.0.4:
+xpath@dimagi/js-xpath#v0.0.5:
   version "0.0.4"
-  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/3a152a7bc5cd1f88a5d1da0055cb9d32e389003d"
+  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/e65fd5396f2392c5099fb5d8e979f0e98eedc0c5"
   dependencies:
     biginteger "^1.0.3"
 
