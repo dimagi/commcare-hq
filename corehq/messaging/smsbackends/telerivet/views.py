@@ -57,13 +57,11 @@ def incoming_message(request):
 @require_POST
 @csrf_exempt
 def message_status(request, message_id):
-    message_status = request.POST.get('status')
-
-    logger.info(f'Updating Telerivit message status: {message_status}')
+    logger.info(f'Updating Telerivit message status: id: {message_id}, params: {request.POST}')
 
     process_message_status(
         message_id,
-        message_status,
+        request.POST.get('status'),
         error_message=request.POST.get('error_message'),
         request_secret=request.POST.get('secret')
     )
