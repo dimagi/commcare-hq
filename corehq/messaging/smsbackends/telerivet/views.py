@@ -1,4 +1,5 @@
 import uuid
+import logging
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -8,7 +9,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
+from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message, process_message_status
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
@@ -22,6 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
 
+logger = logging.getLogger()
 
 # Tuple of (hq field name, telerivet field name) tuples
 TELERIVET_INBOUND_FIELD_MAP = (
@@ -48,6 +50,36 @@ TELERIVET_INBOUND_FIELD_MAP = (
 def incoming_message(request):
     kwargs = {a: request.POST.get(b) for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
     process_incoming_message.delay(**kwargs)
+    return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def message_status(request, message_id):
+    logger.info(f'Updating Telerivit message status: id: {message_id}, params: {request.POST}')
+    status = request.POST.get('status')
+    error = request.POST.get('error_message')
+    breakpoint()
+    vars1 = request.POST.get('vars')
+    vars2 = request.POST.get('vars[case_id]')
+    logger.info(f'vars test 1: {vars1}')
+    logger.info(f'vars test 2: {vars2}')
+
+    if vars1:
+        case_id = vars1.get('case_id')
+    if vars2:
+        case_id = vars2
+
+    logger.info(f'status: {status}, error: {error}, case_id: {case_id}')
+
+    process_message_status(
+        message_id,
+        status,
+        error_message=request.POST.get('error_message') or '',
+        case_id=case_id or '',
+    )
+
     return HttpResponse()
 
 
