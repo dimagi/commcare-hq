@@ -295,7 +295,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null) {
+                if (questions[i].error() != null || questions[i].serverError() != null
+                            || (questions[i].required() && questions[i].answer() == null)) {
                     qs.push(questions[i]);
                 }
             }
