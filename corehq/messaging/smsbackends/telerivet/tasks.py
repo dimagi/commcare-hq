@@ -10,7 +10,7 @@ from .const import (
     EVENT_INCOMING,
     MESSAGE_TYPE_SMS,
     MESSAGE_TYPE_CALL,
-    TELERIVIT_FAILED_STATUSES,
+    TELERIVET_FAILED_STATUSES,
     DELIVERED,
 )
 
@@ -49,8 +49,8 @@ def process_incoming_message(*args, **kwargs):
 
 
 @task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
-def process_message_status(message_id, status, **kwargs):
-    backend = SQLTelerivetBackend.by_webhook_secret(kwargs["request_secret"])
+def process_message_status(message_id, status, request_secret, **kwargs):
+    backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
 
     if backend is None:
         return
@@ -62,18 +62,19 @@ def process_message_status(message_id, status, **kwargs):
 
     metadata = {}
 
-    if kwargs.get('case_id'):
-        metadata.update({'case_id': kwargs.get('case_id')})
+    case_id = kwargs.get('case_id')
+    if case_id:
+        metadata['case_id'] = case_id
 
     if status == DELIVERED:
-        metadata.update({'gateway_delivered': True})
+        metadata['gateway_delivered'] = True
 
-    if status in TELERIVIT_FAILED_STATUSES:
+    if status in TELERIVET_FAILED_STATUSES:
         error = kwargs.get('error_message', 'Error occurred')
         sms.set_system_error(error)
 
     if metadata:
-        if type(sms.custom_metadata) is dict:
+        if sms.custom_metadata is not None:
             sms.custom_metadata.update(metadata)
         else:
             sms.custom_metadata = metadata

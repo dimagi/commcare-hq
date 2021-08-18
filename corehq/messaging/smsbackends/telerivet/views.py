@@ -58,14 +58,14 @@ def incoming_message(request):
 @csrf_exempt
 def message_status(request, message_id):
     status = request.POST.get('status')
-    logger.info(f'Updating Telerivit message status: message_id={message_id}, status={status}')
+    logger.info(f'Updating Telerivet message status: message_id={message_id}, status={status}')
 
     process_message_status.delay(
         message_id,
         status,
+        request.POST.get('secret', ''),
         case_id=request.POST.get('vars[case_id]', ''),
         error_message=request.POST.get('error_message', ''),
-        request_secret=request.POST.get('secret', ''),
     )
 
     return HttpResponse()
