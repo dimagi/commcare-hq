@@ -453,6 +453,25 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
 
+        # role is ignored
+        self.assertEqual(modified.get_role(self.domain.name), None)
+
+        # is_admin, permissions are simply set on user but have no visible effect
+        self.assertTrue(modified.is_admin)
+        self.assertFalse(modified.is_domain_admin(self.domain.name))
+        self.assertFalse(modified.is_global_admin(), False)
+
+        self.assertEqual(
+            modified.permissions,
+            {
+                'edit_apps': True, 'edit_data': True, 'view_apps': True, 'view_roles': True,
+                'edit_groups': True, 'view_groups': True, 'edit_reports': True, 'view_reports': True,
+                'edit_locations': True, 'edit_web_users': True, 'view_locations': True,
+                'view_web_users': True, 'edit_commcare_users': True, 'view_commcare_users': True,
+                'edit_users_in_groups': True, 'edit_users_in_locations': True
+            }
+        )
+
     def _delete_user(self, username):
         user = WebUser.get_by_username(username)
         if user:
