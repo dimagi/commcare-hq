@@ -62,10 +62,6 @@ def process_message_status(message_id, status, request_secret, **kwargs):
 
     metadata = {}
 
-    case_id = kwargs.get('case_id')
-    if case_id:
-        metadata['case_id'] = case_id
-
     if status == DELIVERED:
         metadata['gateway_delivered'] = True
 

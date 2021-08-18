@@ -64,7 +64,6 @@ def message_status(request, message_id):
         message_id,
         status,
         request.POST.get('secret', ''),
-        case_id=request.POST.get('vars[case_id]', ''),
         error_message=request.POST.get('error_message', ''),
     )
 

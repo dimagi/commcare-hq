@@ -84,13 +84,6 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'status_secret': self.config.webhook_secret
         }
 
-        # This can maybe happen higher up in the stream?
-        phone_number_id = msg.phone_number.replace('+', '')
-        related_case = get_case_by_identifier(msg.domain, phone_number_id)
-
-        if related_case:
-            payload.update({'vars': {'case_id': related_case.case_id}})
-
         url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
 
         # Sending with the json param automatically sets the Content-Type header to application/json
