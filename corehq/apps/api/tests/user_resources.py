@@ -440,6 +440,7 @@ class TestWebUserResource(APIResourceTest):
                               created_by=None, created_via=None)
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         user_json = deepcopy(self.default_user_json)
+        user_json["phone_numbers"] = ["9999999999", "9899999999"]
         user_json.pop('username')
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
@@ -452,6 +453,8 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.first_name, "Joe")
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
+        self.assertEqual(modified.phone_numbers, ["9999999999", "9899999999"])
+        self.assertEqual(modified.default_phone_number, "9999999999")
 
         # role is ignored
         self.assertEqual(modified.get_role(self.domain.name), None)
