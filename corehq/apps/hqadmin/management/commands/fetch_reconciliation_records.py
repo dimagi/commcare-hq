@@ -23,4 +23,3 @@ class Command(BaseCommand):
         )
         data = blob.read().decode('utf-8')
         self.stdout.write(data)
-
