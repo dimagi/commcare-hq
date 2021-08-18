@@ -230,7 +230,7 @@ def count_es_forms_past_window():
         'es_forms_past_window',
         start=start,
         end=end,
-        publish=False
+        republish=False
     )
 
 
@@ -247,20 +247,20 @@ def count_es_cases_past_window():
         'es_cases_past_window',
         start=start,
         end=end,
-        publish=False
+        republish=False
     )
 
 
 def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, republish=True):
+    today = date.today()
     if not start:
-        today = date.today()
         two_days_ago = today - timedelta(days=2)
         start = two_days_ago.isoformat()
     with TransientTempfile() as file_path:
         with open(file_path, 'w') as output_file:
             call_command('stale_data_in_es', data_type, start=start, end=end, stdout=output_file)
         with open(file_path, 'r') as f:
-            reader = csv.reader(f)
+            reader = csv.reader(f, delimiter='\t')
             # ignore the headers
             next(reader)
             counts_by_domain = defaultdict(int)
