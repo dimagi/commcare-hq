@@ -69,7 +69,7 @@ class DataRegistry(models.Model):
         unique_together = ('domain', 'slug')
 
     def __repr__(self):
-        return f"DataRegistry(domain='{self.domain}', slug='{self.slug}')"
+        return f"DataRegistry(id='{self.id}', domain='{self.domain}', slug='{self.slug}')"
 
     @classmethod
     @transaction.atomic
@@ -153,7 +153,8 @@ class RegistryInvitation(models.Model):
         unique_together = ("registry", "domain")
 
     def __repr__(self):
-        return f"RegistryInvitation(domain='{self.domain}', status='{self.status}')"
+        return (f"RegistryInvitation(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', status='{self.status}')")
 
     @transaction.atomic
     def accept(self, user):
@@ -178,7 +179,8 @@ class RegistryGrant(models.Model):
     to_domains = ArrayField(models.CharField(max_length=255))
 
     def __repr__(self):
-        return f"RegistryGrant(from_domain='{self.from_domain}', to_domains='{self.to_domains}')"
+        return (f"RegistryGrant(registry_id='{self.registry_id}', "
+                f"from_domain='{self.from_domain}', to_domains='{self.to_domains}')")
 
 
 class RegistryPermission(models.Model):
@@ -191,7 +193,8 @@ class RegistryPermission(models.Model):
         unique_together = ('registry', 'domain')
 
     def __repr__(self):
-        return f"RegistryPermission(domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')"
+        return (f"RegistryPermission(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')")
 
 
 class RegistryAuditLog(models.Model):
