@@ -36,11 +36,13 @@ hqDefine("registry/js/registry_edit", [
         }
         return self;
     }
+
     let GrantModel = function(currentDomain, data) {
-        let self = data;
-        self.canDelete = self.from_domain === currentDomain;
+        let self = ko.mapping.fromJS(data);
+        self.canDelete = self.from_domain() === currentDomain;
         return self;
     }
+
     let EditModel = function(data, availableCaseTypes, availableDomains, invitedDomains) {
         const mapping = {
             'copy': ["domain", "current_domain", "is_owner", "slug", "description"],
@@ -54,9 +56,9 @@ hqDefine("registry/js/registry_edit", [
         };
         const grantSort = (a, b) => {
             // show grants for current domain at the top
-            if (a.from_domain === b.from_domain) {
+            if (a.from_domain() === b.from_domain()) {
                 return 0;
-            } else if (a.from_domain === data.current_domain) {
+            } else if (a.from_domain() === data.current_domain) {
                 return -1;
             }
             return 1;
@@ -67,13 +69,13 @@ hqDefine("registry/js/registry_edit", [
         self.sortedGrants = ko.computed(() => {
             let grants = self.grants();
             if (!self.showAllGrants()) {
-                grants = grants.filter((grant) => grant.from_domain === self.current_domain);
+                grants = grants.filter((grant) => grant.from_domain() === self.current_domain);
             }
             return grants.sort(grantSort);
         });
         self.currentDomainGrants = self.grants().filter(
-            (grant) => grant.to_domains.includes(self.current_domain)
-        ).map((grant) => grant.from_domain).sort();
+            (grant) => grant.to_domains().includes(self.current_domain)
+        ).map((grant) => grant.from_domain()).sort();
         self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
         self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
         self.showAccept = ko.computed(() => ['pending', 'rejected'].includes(self.domain_invitation.status()));
@@ -96,8 +98,8 @@ hqDefine("registry/js/registry_edit", [
         });
         self.availableGrantDomains = ko.computed(() => {
             let availableDomains = new Set(self.participatingDomains()),
-                granted = self.grants().filter((grant) => grant.from_domain === self.current_domain).flatMap((grant) => {
-                    return grant.to_domains;
+                granted = self.grants().filter((grant) => grant.from_domain() === self.current_domain).flatMap((grant) => {
+                    return grant.to_domains();
                 });
             availableDomains.delete(self.current_domain);
             granted.forEach((domain) => availableDomains.delete(domain));
@@ -173,7 +175,7 @@ hqDefine("registry/js/registry_edit", [
             self.modalSaving(true);
             actions.removeGrant(self.slug, toRemove.id, () => {
                 self.grants(self.grants().filter((grant) => {
-                    return grant.id !== toRemove.id;
+                    return grant.id() !== toRemove.id();
                 }));
             }).always(() => {
                 self.modalSaving(false);

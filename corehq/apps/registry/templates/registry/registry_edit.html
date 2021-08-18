@@ -513,7 +513,7 @@
           {% blocktrans trimmed %}
             Are you sure you want to remove the grant from {{ domain }} to
           {% endblocktrans %}
-          <mark data-bind="text: to_domains.join(', ')"></mark>
+          <mark data-bind="text: to_domains().join(', ')"></mark>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
