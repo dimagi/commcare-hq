@@ -101,7 +101,7 @@ class DataRegistryCrudHelper:
         if created:
             self.registry.logger.grant_added(self.user, grant)
             data_registry_grant_created.send(
-                sender=DataRegistry, from_domain=from_domain, to_domains=to_domains
+                sender=DataRegistry, registry=self.registry, from_domain=from_domain, to_domains=to_domains
             )
         return grant, created
 
@@ -116,7 +116,7 @@ class DataRegistryCrudHelper:
         grant.delete()
         self.registry.logger.grant_removed(self.user, grant_id, grant)
         data_registry_grant_removed.send(
-            sender=DataRegistry, from_domain=from_domain, to_domains=grant.to_domains
+            sender=DataRegistry, registry=self.registry, from_domain=from_domain, to_domains=grant.to_domains
         )
         return grant
 
@@ -130,7 +130,7 @@ class DataRegistryCrudHelper:
             previous_status = invitation.status
             invitation.accept(self.user)
             data_registry_invitation_accepted.send(
-                sender=DataRegistry, registry=self.registry, previous_status=previous_status
+                sender=DataRegistry, registry=self.registry, invitation=invitation, previous_status=previous_status
             )
         return invitation
 
@@ -144,7 +144,7 @@ class DataRegistryCrudHelper:
             previous_status = invitation.status
             invitation.reject(self.user)
             data_registry_invitation_rejected.send(
-                sender=DataRegistry, registry=self.registry, previous_status=previous_status
+                sender=DataRegistry, registry=self.registry, invitation=invitation, previous_status=previous_status
             )
         return invitation
 
