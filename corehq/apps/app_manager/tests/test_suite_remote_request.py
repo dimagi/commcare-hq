@@ -350,7 +350,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
     def test_search_data_registry(self, *args):
-        self.module.search_config.data_registry_id = "myregistry"
+        self.module.search_config.data_registry = "myregistry"
         suite = self.app.create_suite()
         expected = """
         <partial>

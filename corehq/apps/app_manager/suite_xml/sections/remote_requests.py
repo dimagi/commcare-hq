@@ -185,11 +185,11 @@ class RemoteRequestFactory(object):
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        if self.module.search_config.data_registry_id:
+        if self.module.search_config.data_registry:
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
-                    ref=self.module.search_config.data_registry_id,
+                    ref=self.module.search_config.data_registry,
                 )
             )
         return datums
