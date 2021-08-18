@@ -2,7 +2,6 @@ import csv
 import io
 from collections import defaultdict
 from datetime import date, timedelta
-from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -28,6 +27,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
+from corehq.util.files import TransientTempfile
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.soft_assert import soft_assert
 
@@ -256,33 +256,33 @@ def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, 
         today = date.today()
         two_days_ago = today - timedelta(days=2)
         start = two_days_ago.isoformat()
-    with NamedTemporaryFile('w', delete=False) as output_file:
-        file_name = output_file.name
-        call_command('stale_data_in_es', data_type, start=start, end=end, stdout=output_file)
-    with open(file_name, 'r') as f:
-        reader = csv.reader(f)
-        # ignore the headers
-        next(reader)
-        counts_by_domain = defaultdict(int)
-        for line in reader:
-            domain = line[3]
-            counts_by_domain[domain] += 1
-        if counts_by_domain:
-            for domain, count in counts_by_domain.items():
-                metrics_counter(metric, count, tags={'domain': domain})
-        else:
-            metrics_counter(metric, 0)
-    if republish:
-        call_command('republish_doc_changes', file_name, skip_domains=True)
-    with open(file_name, 'rb') as f:
-        blob_db = get_blob_db()
-        key = f'{blob_parent_id}_{today.isoformat()}'
-        thirty_days = 60 * 24 * 30
-        blob_db.put(
-            f,
-            type_code=CODES.tempfile,
-            domain='<unknown>',
-            parent_id=blob_parent_id,
-            key=key,
-            timeout=thirty_days
-        )
+    with TransientTempfile() as file_path:
+        with open(file_path, 'w') as output_file:
+            call_command('stale_data_in_es', data_type, start=start, end=end, stdout=output_file)
+        with open(file_path, 'r') as f:
+            reader = csv.reader(f)
+            # ignore the headers
+            next(reader)
+            counts_by_domain = defaultdict(int)
+            for line in reader:
+                domain = line[3]
+                counts_by_domain[domain] += 1
+            if counts_by_domain:
+                for domain, count in counts_by_domain.items():
+                    metrics_counter(metric, count, tags={'domain': domain})
+            else:
+                metrics_counter(metric, 0)
+        if republish:
+            call_command('republish_doc_changes', file_path, skip_domains=True)
+        with open(file_path, 'rb') as f:
+            blob_db = get_blob_db()
+            key = f'{blob_parent_id}_{today.isoformat()}'
+            thirty_days = 60 * 24 * 30
+            blob_db.put(
+                f,
+                type_code=CODES.tempfile,
+                domain='<unknown>',
+                parent_id=blob_parent_id,
+                key=key,
+                timeout=thirty_days
+            )
