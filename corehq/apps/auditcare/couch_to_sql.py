@@ -150,14 +150,17 @@ def get_events_from_couch(start_key, end_key, start_doc_id=None):
 def _get_couch_docs(start_key, end_key, start_doc_id=None):
     db = get_db("auditcare")
     if start_doc_id:
-        kwargs = {"startkey_docid": start_doc_id}
+        kwargs = {"startkey_docid": start_doc_id, "skip": 1}
     else:
         # We are incrementing seconds by one for the first call
         # because matching records were not returned in descending order
         # due to the key structure: [2020, 2, 2, 0, 0, 0] comes after
         # [2020, 2, 2, 0, 0, 0, "AccessAudit", "system"] when descending
+        # Records matching end_key will be start_key of another batch and may cause race conditions
+        # We are adding 1 to end_key to avoid querying them.
         assert len(start_key) == 6, start_key
         start_key[5] += 1
+        end_key[5] += 1
         kwargs = {}
     result = db.view(
         "auditcare/all_events",
