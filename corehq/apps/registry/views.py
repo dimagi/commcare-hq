@@ -249,7 +249,7 @@ def manage_grants(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
 
     action = request.POST.get("action")
-    if action not in ("add", "remove"):
+    if action not in ("create", "remove"):
         return JsonResponse({"error": _("Unable to process your request")}, status=400)
 
     if action == "remove":
@@ -270,7 +270,7 @@ def manage_grants(request, domain, registry_slug):
             )
         })
 
-    if action == "add":
+    if action == "create":
         to_domains = request.POST.getlist("domains")
         if not to_domains:
             return JsonResponse({"error": _("No Project Spaces specified")}, status=400)

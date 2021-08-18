@@ -40,6 +40,9 @@ hqDefine("registry/js/registry_edit", [
     let GrantModel = function(currentDomain, data) {
         let self = ko.mapping.fromJS(data);
         self.canDelete = self.from_domain() === currentDomain;
+        self.to_domains.subscribe((val) => {
+            console.log(val);
+        });
         return self;
     }
 
@@ -96,6 +99,7 @@ hqDefine("registry/js/registry_edit", [
             }
            return Array.from(allInvitations);
         });
+        self.selectedGrant = ko.observable();
         self.availableGrantDomains = ko.computed(() => {
             let availableDomains = new Set(self.participatingDomains()),
                 granted = self.grants().filter((grant) => grant.from_domain() === self.current_domain).flatMap((grant) => {
@@ -103,6 +107,9 @@ hqDefine("registry/js/registry_edit", [
                 });
             availableDomains.delete(self.current_domain);
             granted.forEach((domain) => availableDomains.delete(domain));
+            if (self.selectedGrant()) {
+                self.selectedGrant().to_domains().forEach((domain) => availableDomains.add(domain));
+            }
             return Array.from(availableDomains);
         });
 
@@ -154,17 +161,30 @@ hqDefine("registry/js/registry_edit", [
             });
         }
 
-        self.grantDomains = ko.observable([]);
+        self.createGrant = function () {
+            self.editGrant(GrantModel(self.current_domain, {
+                from_domain: self.current_domain, to_domains: [],
+                id: null
+            }))
+        }
+        self.editGrant = function (grant) {
+            self.selectedGrant(grant);
+        }
+        self.cancelGrantEdit = function () {
+            // self.selectedGrant(null);
+            $(".modal").modal('hide');
+        }
         self.cancelGrantEdit = function () {
             self.grantDomains([]);
         };
-        self.createGrant = function() {
+        self.saveGrant = function(grant) {
+            let grantData = ko.toJS(grant);
             self.modalSaving(true);
-            actions.createGrant(self.slug, self.grantDomains(), (data) => {
+            actions.saveGrant(self.slug, grantData.id, grantData.to_domains, (data) => {
                 _.each(data.grants, (grant) => {
                    self.grants.unshift(GrantModel(self.current_domain, grant));
                 });
-                self.grantDomains([]);
+                self.selectedGrant(null);
             }).always(() => {
                 self.modalSaving(false);
                 $(".modal").modal('hide');

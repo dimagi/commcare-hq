@@ -177,5 +177,17 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         },
     };
 
+    ko.bindingHandlers.multiselectSelectedOptions = {
+        init: function (element, valueAccessor) {
+            // add the `options` binding to the element, valueAccessor() should return an observable
+            ko.applyBindingsToNode(element, {selectedOptions: valueAccessor()});
+        },
+        update: function (element, valueAccessor) {
+            // have to access the observable to get the `update` method to fire on changes
+            ko.unwrap(valueAccessor());
+            $(element).multiSelect('refresh');
+        },
+    };
+
     return multiselect_utils;
 });

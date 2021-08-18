@@ -258,7 +258,7 @@
               </div>
               <div class="col-md-2">
                 <div class="pull-right">
-                  <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
+                  <button type="button" class="btn btn-primary" data-bind="click: createGrant, openModal: 'create-grant-modal'">
                     <i class="fa fa-plus"></i>
                     {% trans "Grant Access" %}
                   </button>
@@ -285,6 +285,9 @@
                     <span class="label label-default" data-bind="text: $data"></span>
                   </td>
                   <td>
+                    <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'create-grant-modal', click: $root.editGrant" title="{% trans_html_attr "Update Grant" %}">
+                      <i class="fa fa-pencil"></i>
+                    </button>
                     <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
                       <i class="fa fa-trash"></i>
                     </button>
@@ -449,7 +452,7 @@
     </div>
 </script>
 <script type="text/html" id="create-grant-modal">
-    <div class="modal-dialog">
+    <div class="modal-dialog" data-bind="with: $root.selectedGrant">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">
@@ -464,19 +467,19 @@
               You are granting access to data from this project space ({{ domain }}).
               {% endblocktrans %}
             </p>
-            <p data-bind="visible: availableGrantDomains().length">
+            <p data-bind="visible: $root.availableGrantDomains().length || id() !== null">
               {% blocktrans trimmed %}
               Granting another project space access will allow users in that project space to view your data via this data registry.
               Authorized users will only be able to view case data for the case types configured in the registry.
               {% endblocktrans %}
             </p>
           </div>
-          <div class="alert alert-info" data-bind="visible: !availableGrantDomains().length">
+          <div class="alert alert-info" data-bind="visible: !($root.availableGrantDomains().length || id() !== null)">
             {% blocktrans trimmed %}
               All the project spaces associated with this registry have already been granted access.
             {% endblocktrans %}
           </div>
-          <div data-bind="visible: availableGrantDomains().length">
+          <div data-bind="visible: $root.availableGrantDomains().length || id() !== null">
             <select multiple class="form-control" data-bind="
                 selectedOptions: grantDomains,
                 multiselectProperties: {
@@ -488,11 +491,11 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal" data-bind="click: $root.cancelGrantEdit">{% trans "Cancel" %}</a>
-          <button href="#" class="btn btn-primary" data-bind="click: createGrant, enable: grantDomains().length">
+          <a href="#" class="btn btn-default" data-bind="click: $root.cancelGrantEdit" data-bind="click: $root.cancelGrantEdit">{% trans "Cancel" %}</a>
+          <button href="#" class="btn btn-primary" data-bind="click: $root.saveGrant, enable: to_domains().length">
             <i class="fa" data-bind="css: {
-              'fa-spin': modalSaving,
-              'fa-refresh': modalSaving
+              'fa-spin': $root.modalSaving,
+              'fa-refresh': $root.modalSaving
             }"></i>
             {% trans "Grant Access" %}
           </button>

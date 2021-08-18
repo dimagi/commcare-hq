@@ -96,8 +96,8 @@ hqDefine("registry/js/registry_actions", [
         });
     };
 
-    let createGrant = function (registrySlug, domains, onSuccess) {
-        const data = {"action": "add", "domains": domains};
+    let saveGrant = function (registrySlug, grant_id, domains, onSuccess) {
+        const data = {"action": grant_id === null ? "create" : "update", "domains": domains, "id": grant_id};
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     };
 
@@ -112,7 +112,7 @@ hqDefine("registry/js/registry_actions", [
         addInvitations: addInvitations,
         removeInvitation: removeInvitation,
         editAttr: editAttr,
-        createGrant: createGrant,
+        saveGrant: saveGrant,
         removeGrant: removeGrant,
         validateName: validateName,
     };
