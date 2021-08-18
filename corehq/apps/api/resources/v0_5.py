@@ -7,6 +7,7 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
+
 from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
@@ -18,6 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.bulk import get_docs
+from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -32,9 +34,10 @@ from corehq.apps.api.odata.views import (
 )
 from corehq.apps.api.resources.auth import (
     AdminAuthentication,
+    LoginAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
-    LoginAuthentication)
+)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
@@ -86,14 +89,15 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
-from phonelog.models import DeviceReportEntry
+
 from . import (
+    CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
     HqBaseResource,
     v0_1,
     v0_4,
-    CorsResourceMixin)
+)
 from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None

@@ -8,21 +8,21 @@ from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     UserHistory,
-    WebUser,
+    UserRole,
     UserRolePresets,
-    UserRole
+    WebUser,
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
