@@ -6,11 +6,11 @@ Dear {{ owning_domain }} administrator,
 
 {% if invitation.status == 'accepted' %}
 {% blocktrans %}
-The '{{ domain }}' project space has opted in to the '{{ name }}' CommCare data registry.
+The '{{ domain }}' project space has opted in to the '{{ registry_name }}' CommCare data registry.
 {% endblocktrans %}
 {% else %}
 {% blocktrans %}
-The '{{ domain }}' project space has opted out of the '{{ name }}' CommCare data registry.
+The '{{ domain }}' project space has opted out of the '{{ registry_name }}' CommCare data registry.
 {% endblocktrans %}
 {% endif %}
 

@@ -12,6 +12,7 @@ def send_invitation_email(registry, invitation):
     context = {
         'domain': invitation.domain,
         'owning_domain': registry.domain,
+        'registry_name': registry.name,
         'registry_url': reverse('manage_registry', args=[invitation.domain, registry.slug], absolute=True)
     }
 

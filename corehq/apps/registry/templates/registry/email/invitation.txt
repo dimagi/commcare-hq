@@ -2,7 +2,7 @@
 {% blocktrans %}
 Dear {{ domain }} administrator,
 
-The '{{ domain }}' project space has been invited to participate in the "{{ name }}" CommCare data registry by
+The '{{ domain }}' project space has been invited to participate in the '{{ registry_name }}' CommCare data registry by
 the '{{ owning_domain }}' project space.
 
 You can opt in or out of the registry by following this link: {{ registry_url }}
