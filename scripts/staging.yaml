@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
-    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
+    # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
