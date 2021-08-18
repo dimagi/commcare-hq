@@ -25,7 +25,12 @@ def send_invitation_email_receiver(sender, **kwargs):
 
 @receiver([data_registry_invitation_accepted, data_registry_invitation_rejected])
 def send_invitation_response_email_receiver(sender, **kwargs):
-    send_invitation_response_email(kwargs["registry"], kwargs["invitation"])
+    registry = kwargs["registry"]
+    invitation = kwargs["invitation"]
+    if invitation.domain == registry.domain:
+        # don't send emails for the owning domain's invitation
+        return
+    send_invitation_response_email(registry, invitation)
 
 
 @receiver(data_registry_grant_created)
