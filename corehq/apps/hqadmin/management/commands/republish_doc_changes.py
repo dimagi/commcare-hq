@@ -43,7 +43,7 @@ class Command(BaseCommand):
         parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
         parser.add_arument('--skip_domains', action='store_true')
 
-    def handle(self, stale_data_in_es_file, delimiter, *args, **options):
+    def handle(self, stale_data_in_es_file, delimiter, skip_domains, *args, **options):
         data_rows = _get_data_rows(stale_data_in_es_file, delimiter=delimiter)
         document_records = _get_document_records(data_rows)
         form_records = []
