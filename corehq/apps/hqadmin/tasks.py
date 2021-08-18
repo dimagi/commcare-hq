@@ -222,8 +222,8 @@ def count_es_forms_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)
     four_days_ago = today - timedelta(days=4)
-    start = two_days_ago.isoformat()
-    end = four_days_ago.isoformat()
+    start = four_days_ago.isoformat()
+    end = two_days_ago.isoformat()
     _reconcile_es_data(
         'form',
         'commcare.elasticsearch.stale_forms_past_window',
@@ -239,8 +239,8 @@ def count_es_cases_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)
     four_days_ago = today - timedelta(days=4)
-    start = two_days_ago.isoformat()
-    end = four_days_ago.isoformat()
+    start = four_days_ago.isoformat()
+    end = two_days_ago.isoformat()
     _reconcile_es_data(
         'case',
         'commcare.elasticsearch.stale_cases_past_window',
