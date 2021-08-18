@@ -159,6 +159,7 @@ def _get_couch_docs(start_key, end_key, start_doc_id=None):
         # Records matching end_key will be start_key of another batch and may cause race conditions
         # We are adding 1 to end_key to avoid querying them.
         assert len(start_key) == 6, start_key
+        assert len(end_key) == 6, end_key
         start_key[5] += 1
         end_key[5] += 1
         kwargs = {}
