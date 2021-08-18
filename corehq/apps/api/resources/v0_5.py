@@ -17,6 +17,8 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.couch.bulk import get_docs
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
@@ -68,6 +70,7 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
@@ -208,23 +211,38 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle):
+    def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-
-                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        formatted_phone_number = strip_plus(phone_number)
+                        if user_change_logger and formatted_phone_number not in bundle.obj.phone_numbers:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_added(formatted_phone_number))
+                        bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
-                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                            bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
                 elif key == 'groups':
-                    bundle.obj.set_groups(bundle.data.get("groups", []))
+                    group_ids = bundle.data.get("groups", [])
+                    groups_updated = bundle.obj.set_groups(group_ids)
+                    if user_change_logger and groups_updated:
+                        groups_info = []
+                        if group_ids:
+                            groups_info = ", ".join(
+                                f"{group['name']}[{group['_id']}]"
+                                for group in get_docs(Group.get_db(), group_ids)
+                            )
+                        user_change_logger.add_info(UserChangeMessage.groups_info(groups_info))
                     should_save = True
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj, key, value.lower())
+                    lowercase_value = value.lower()
+                    if user_change_logger:
+                        user_change_logger.add_changes({key: lowercase_value})
+                    setattr(bundle.obj, key, lowercase_value)
                     should_save = True
                 elif key == 'password':
                     domain = Domain.get_by_name(bundle.obj.domain)
@@ -237,13 +255,20 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
+                    if user_change_logger:
+                        user_change_logger.add_change_message(UserChangeMessage.password_reset())
                     should_save = True
                 elif key == 'user_data':
                     try:
                         bundle.obj.update_metadata(value)
+                        if user_change_logger:
+                            user_change_logger.add_changes({'user_data': bundle.obj.user_data})
                     except ValueError as e:
                         raise BadRequest(str(e))
                 else:
+                    # first_name, last_name, language
+                    if user_change_logger:
+                        user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
         return should_save
@@ -277,9 +302,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_update(self, bundle, **kwargs):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
-        if self._update(bundle):
+        user_change_logger = self._get_user_change_logger(bundle)
+        if self._update(bundle, user_change_logger):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
+            user_change_logger.save()
             return bundle
         else:
             raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))

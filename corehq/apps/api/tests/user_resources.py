@@ -16,14 +16,17 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import update_analytics_indexes
+from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
+    UserHistory,
     WebUser,
     UserRolePresets,
     UserRole
 )
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -189,7 +192,8 @@ class TestCommCareUserResource(APIResourceTest):
             "user_data": {
                 PROFILE_SLUG: self.profile.id,
                 "chw_id": "13/43/DFA"
-            }
+            },
+            "password": "qwerty1234"
         }
 
         backend_id = user._id
@@ -210,6 +214,28 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.metadata[PROFILE_SLUG], self.profile.id)
         self.assertEqual(modified.metadata["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
+
+        # test user history audit
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=user._id)
+        self.assertDictEqual(
+            user_history.details['changes'],
+            {
+                'email': 'tlast@example.org',
+                'language': 'pol',
+                'last_name': 'last',
+                'first_name': 'test',
+                'user_data': {
+                    'chw_id': '13/43/DFA',
+                    'commcare_profile': self.profile.id,
+                    'commcare_project': 'qwerty'
+                }
+            }
+        )
+        self.assertEqual(user_history.message, f"Added phone number 50253311399. Added phone number 50253314588. "
+                                               f"Groups: {group.name}[{group.get_id}]. "
+                                               "Password reset")
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
 
     def test_update_profile_conflict(self):
 

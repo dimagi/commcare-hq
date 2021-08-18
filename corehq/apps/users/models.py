@@ -1913,6 +1913,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
 
         Group.bulk_save(touched)
+        return bool(touched)
 
     def get_time_zone(self):
         if self.memoized_usercase:
