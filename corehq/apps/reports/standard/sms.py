@@ -285,7 +285,6 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         table = list(table)
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
-
         for row in table[1:]:
             contact_info = row[self.contact_index_in_result].split("|||")
             row[self.contact_index_in_result] = contact_info[0]
@@ -528,10 +527,10 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
-        table = list(result[0][1])
         if self.include_metadata:
+            table = list(result[0][1])
             table[0].append(_("Message Log ID"))
-        result[0][1] = table
+            result[0][1] = table
 
         return result
 

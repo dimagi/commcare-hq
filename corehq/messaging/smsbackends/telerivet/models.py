@@ -5,9 +5,7 @@ from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
 from django.conf import settings
 from django.db import models
 from requests.exceptions import RequestException
-from django.urls import reverse
-from dimagi.utils.web import get_url_base
-from corehq.apps.hqcase.utils import get_case_by_identifier
+from corehq.util.view_utils import absolute_reverse
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -77,10 +75,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'to_number': msg.phone_number,
             'content': msg.text,
             'message_type': MESSAGE_TYPE_SMS,
-            'status_url': "{base_url}{resource}".format(
-                base_url=get_url_base(),
-                resource=reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
-            ),
+            'status_url': absolute_reverse('telerivet_message_status', kwargs={'message_id': msg.couch_id}),
             'status_secret': self.config.webhook_secret
         }
 
