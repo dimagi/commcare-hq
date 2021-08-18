@@ -352,7 +352,7 @@ class WebUserResource(v0_1.WebUserResource):
             if not bundle.data.get('role', None):
                 raise BadRequest("Please assign role for non admin user")
 
-    def _update(self, bundle):
+    def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
             if key == "role":
@@ -362,14 +362,27 @@ class WebUserResource(v0_1.WebUserResource):
                 if key == 'phone_numbers':
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        bundle.obj.add_phone_number(strip_plus(phone_number))
+                        formatted_phone_number = strip_plus(phone_number)
+                        if user_change_logger and formatted_phone_number not in bundle.obj.phone_numbers:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_added(formatted_phone_number))
+                        bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
-                            bundle.obj.set_default_phone_number(strip_plus(phone_number))
+                            bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
                 elif key in ['email', 'username']:
-                    setattr(bundle.obj, key, value.lower())
+                    lowercase_value = value.lower()
+                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
+                        user_change_logger.add_changes({key: lowercase_value})
+                    setattr(bundle.obj, key, lowercase_value)
                     should_save = True
                 else:
+                    if user_change_logger:
+                        # we do call setattr for keys that are not really attributes i.e is_admin & permissions
+                        # track only once that are attributes
+                        if hasattr(bundle.obj, key):
+                            # first_name, last_name
+                            user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
         return should_save
@@ -411,9 +424,11 @@ class WebUserResource(v0_1.WebUserResource):
         self._validate(bundle)
         bundle.obj = WebUser.get(kwargs['pk'])
         assert kwargs['domain'] in bundle.obj.domains
-        if self._update(bundle):
+        user_change_logger = self._get_user_change_logger(bundle)
+        if self._update(bundle, user_change_logger):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
+            user_change_logger.save()
         return bundle
 
 

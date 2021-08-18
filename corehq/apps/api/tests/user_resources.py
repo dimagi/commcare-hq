@@ -501,6 +501,20 @@ class TestWebUserResource(APIResourceTest):
             }
         )
 
+        # test user history audit
+        user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
+                                               user_id=user._id)
+        self.assertDictEqual(
+            user_history.details['changes'],
+            {
+                'email': 'admin@example.com',
+                'last_name': 'Admin',
+                'first_name': 'Joe'
+            }
+        )
+        self.assertEqual(user_history.message, "Added phone number 9999999999. Added phone number 9899999999")
+        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
+
     def _delete_user(self, username):
         user = WebUser.get_by_username(username)
         if user:
