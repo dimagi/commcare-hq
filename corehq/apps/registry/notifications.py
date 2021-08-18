@@ -27,10 +27,25 @@ def send_invitation_response_email(registry, invitation):
     context = {
         'domain': invitation.domain,
         'owning_domain': registry.domain,
+        'registry_name': registry.name,
         'registry_url': reverse('manage_registry', args=[invitation.domain, registry.slug], absolute=True)
     }
 
     _send_registry_email(registry.domain, subject, 'invitation_response', context)
+
+
+def send_grant_email(registry, from_domain, to_domains):
+    subject = _("CommCare Data Registry: Access Granted")
+    for domain in to_domains:
+        context = {
+            'domain': domain,
+            'access_domain': from_domain,
+            'owning_domain': registry.domain,
+            'registry_name': registry.name,
+            'registry_url': reverse('manage_registry', args=[domain, registry.slug], absolute=True)
+        }
+
+        _send_registry_email(domain, subject, 'access_granted', context)
 
 
 def _send_registry_email(for_domain, subject, template, context):
