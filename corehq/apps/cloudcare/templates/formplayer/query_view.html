@@ -39,11 +39,6 @@
       <% if (input == "select1") { %>
         <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
           <option value=""></option>
-
-          <% if (allow_blank_value) { %>
-          <option value="-1" <% if (value === "-1") { %>selected<% } %>>(empty)</option>
-          <% } %>
-
           <% for (var i = 0; i < itemsetChoices.length; i++) { %>
             <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
               <%- itemsetChoices[i] %>
@@ -53,11 +48,6 @@
 
       <% } else if (input == "select") { %>
         <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>">
-
-          <% if (allow_blank_value) { %>
-          <option value="-1" <% if (_.contains(value, "-1")) { %>selected<% } %>>(empty)</option>
-          <% } %>
-
           <% for (var i = 0; i < itemsetChoices.length; i++) { %>
             <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
               <%- itemsetChoices[i] %>
@@ -67,12 +57,6 @@
 
       <% } else if (input == "daterange") { %>
         <input type="text" class="daterange query-field form-control" value="<%- value %>">
-        <% if (allow_blank_value) { %>
-        <label>
-            <input type="checkbox" class="search-for-blank">
-            {% trans "Search for blank values" %}
-        </label>
-        <% } %>
 
       <% } else if (input == "address") { %>
         <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
@@ -80,12 +64,13 @@
 
       <% } else { %>
         <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
-        <% if (allow_blank_value) { %>
-        <label>
-            <input type="checkbox" class="search-for-blank">
-            {% trans "Search for blank values" %}
-        </label>
-        <% } %>
+      <% } %>
+
+      <% if (allow_blank_value) { %>
+      <label>
+          <input type="checkbox" class="search-for-blank">
+          {% trans "Search for blank values" %}
+      </label>
       <% } %>
 
     </div>
