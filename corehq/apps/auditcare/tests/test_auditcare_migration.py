@@ -75,6 +75,7 @@ class TestAuditcareMigrationUtil(TestCase):
         # generation should stop
         batches = self.util.generate_batches(5, 'd')
         expected_batches = [
+            [datetime(2013, 1, 1), datetime(2012, 12, 31)]
             [datetime(2013, 1, 3), datetime(2013, 1, 2)],
             [datetime(2013, 1, 2), datetime(2013, 1, 1)],
         ]
