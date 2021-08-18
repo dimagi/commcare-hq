@@ -114,6 +114,7 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
@@ -201,6 +202,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registries': [
+            (registry.pk, registry.name) for registry in
+            DataRegistry.objects.accessible_to_domain(app.domain)
+        ],
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
