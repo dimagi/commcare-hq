@@ -974,7 +974,7 @@
 ├─ pascalcase@0.1.1
 ├─ path-exists@3.0.0
 ├─ path-is-absolute@1.0.1
-├─ path-parse@1.0.6
+├─ path-parse@1.0.7
 ├─ path-root-regex@0.1.2
 ├─ path-root@0.1.1
 │  └─ path-root-regex@^0.1.0
@@ -1376,4 +1376,4 @@
 └─ yauzl@2.10.0
    ├─ buffer-crc32@~0.2.3
    └─ fd-slicer@~1.1.0
-Done in 0.28s.
+Done in 0.41s.
