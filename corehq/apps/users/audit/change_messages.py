@@ -54,33 +54,21 @@ class UserChangeMessage(object):
             }
         }
 
-    # ToDo: combine this method with the 2 following for two_factor reset
     @staticmethod
-    def registered_devices_reset():
-        return {
-            "devices": {
-                "reset_devices": {}
-            }
-        }
-
-    @staticmethod
-    def two_factor_disabled_for_days(days):
-        return {
-            "two_factor": {
-                "disable_for_days": {"days": days}
-            }
-        }
-
-    @staticmethod
-    def two_factor_disabled_with_verification(verified_by, verification_mode):
-        return {
+    def two_factor_disabled_with_verification(verified_by, verification_mode, devices_reset, disable_for_days):
+        change_message = {
             "two_factor": {
                 "disable_with_verification": {
                     "verified_by": verified_by,
-                    "verification_mode": verification_mode
+                    "verification_mode": verification_mode,
                 }
             }
         }
+        if devices_reset:
+            change_message["two_factor"].update({"reset_devices": {}})
+        if disable_for_days:
+            change_message["two_factor"].update({"disable_for_days": {"days": disable_for_days}})
+        return change_message
 
     @staticmethod
     def password_reset():
