@@ -4,7 +4,6 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 
 @contextmanager
@@ -14,10 +13,7 @@ def create_case(domain, case_type, **kwargs):
     try:
         yield case
     finally:
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
 
 def create_empty_rule(domain, workflow, case_type='person'):
