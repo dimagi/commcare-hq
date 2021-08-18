@@ -16,6 +16,8 @@
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
  *  - saveParams: Any additional data to pass along. May contain observables.
  *  - errorMessage: Message to display if server returns an error.
+ *  - containerClass: CSS class to use for the field container
+ *  - iconClass: If specified add an icon in front of the container e.g. 'fa fa-envelope
  */
 
 hqDefine('hqwebapp/js/components/inline_edit', [
