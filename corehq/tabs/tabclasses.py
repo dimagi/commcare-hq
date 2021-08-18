@@ -15,7 +15,6 @@ from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
 from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
-#from corehq.apps.accounting.forms import BillingAccountBasicForm
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
