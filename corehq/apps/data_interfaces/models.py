@@ -88,6 +88,9 @@ class AutomaticUpdateRule(models.Model):
     # Used when the rule spawns schedule instances in the scheduling framework
     WORKFLOW_SCHEDULING = 'SCHEDULING'
 
+    # Used when the rule runs a deduplication workflow to find duplicate cases
+    WORKFLOW_DEDUPLICATE = 'DEDUPLICATE'
+
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
     case_type = models.CharField(max_length=126)
@@ -323,6 +326,11 @@ class AutomaticUpdateRule(models.Model):
 
         if self.filter_on_server_modified and \
                 (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
+            return False
+
+        if (self.workflow == AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+                and self.last_run
+                and not case.server_modified_on >= self.last_run):
             return False
 
         for criteria in self.memoized_criteria:
