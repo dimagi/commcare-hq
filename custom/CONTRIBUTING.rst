@@ -17,7 +17,15 @@ sure to put in the effort to ensure it can be maintained, understood, and
 transferred to other developers. This document is a series of guidelines with
 the aim of achieving those goals.
 
-
+It is important to note upfront that although CommCare's code is an Open Source
+community good, the willingness of the code maintainers to accept custom code
+contributions should be considered a privilege and not a right. Since custom 
+code creates a permanent drag on the organizations and individuals who maintain
+the software, the project maintainers are free to use their judgement in the
+decision of whether that long term cost is warranted, just as they are in the
+determination of whether new features are appropriate. These guidelines should
+be interpreted as neccessary, but not sufficient, for a custom contribution's
+inclusion.
 
 Tests
 -----
