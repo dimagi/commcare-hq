@@ -20,8 +20,6 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import (
     deprecated_synclog_id_from_restore_payload,
 )
-from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.models import StockReport, StockTransaction
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 
 from corehq.apps.commtrack import const
@@ -63,11 +61,11 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import sharded
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@sharded
 class XMLTest(TestCase):
     user_definitions = [util.FIXED_USER]
 
@@ -228,11 +226,6 @@ class CommTrackOTATest(XMLTest):
         self.domain = Domain.get(self.domain._id)
 
 
-@sharded
-class CommTrackOTATestSQL(CommTrackOTATest):
-    pass
-
-
 class CommTrackSubmissionTest(XMLTest):
 
     @classmethod
@@ -281,11 +274,8 @@ class CommTrackSubmissionTest(XMLTest):
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
 
-        if should_use_sql_backend(self.domain):
-            if latest_trans.type == LedgerTransaction.TYPE_TRANSFER:
-                self.assertEqual(int(expected_qty), latest_trans.delta)
-        else:
-            self.assertEqual(expected_qty, latest_trans.quantity)
+        if latest_trans.type == LedgerTransaction.TYPE_TRANSFER:
+            self.assertEqual(int(expected_qty), latest_trans.delta)
 
     def _get_all_ledger_transactions(self, q_):
         return list(paginate_query_across_partitioned_databases(LedgerTransaction, q_))
@@ -321,18 +311,10 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
             inferred = amt - initial
-            if should_use_sql_backend(self.domain):
-                sql_txn = LedgerAccessors(self.domain.name).get_latest_transaction(
-                    self.sp.case_id, 'stock', product
-                )
-                self.assertEqual(inferred, sql_txn.delta)
-            else:
-                inferred_txn = StockTransaction.objects.get(
-                    case_id=self.sp.case_id, product_id=product, subtype=stockconst.TRANSACTION_SUBTYPE_INFERRED
-                )
-                self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
-                self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
-                self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
+            sql_txn = LedgerAccessors(self.domain.name).get_latest_transaction(
+                self.sp.case_id, 'stock', product
+            )
+            self.assertEqual(inferred, sql_txn.delta)
 
     def test_balance_consumption_with_date(self):
         initial = float(100)
@@ -449,12 +431,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        trans_count = StockTransaction.objects.all().count()
+        trans_count = len(self._get_all_ledger_transactions(Q()))
 
         initial_amounts = [(p._id, '') for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        self.assertEqual(trans_count, StockTransaction.objects.all().count())
+        self.assertEqual(trans_count, len(self._get_all_ledger_transactions(Q())))
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
@@ -491,11 +473,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertTrue('IllegalCaseId' in instance.problem)
 
 
-@sharded
-class CommTrackBalanceTransferTestSQL(CommTrackBalanceTransferTest):
-    pass
-
-
 class BugSubmissionsTest(CommTrackSubmissionTest):
 
     def test_device_report_submissions_ignored(self):
@@ -504,10 +481,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         get processed
         """
         def _assert_no_stock_transactions():
-            if should_use_sql_backend(self.domain):
-                self.assertEqual(0, len(self._get_all_ledger_transactions(Q())))
-            else:
-                self.assertEqual(0, StockTransaction.objects.count())
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q())))
 
         _assert_no_stock_transactions()
 
@@ -578,11 +552,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         self.assertNotIn(instance_id, case.xform_ids)
 
 
-@sharded
-class BugSubmissionsTestSQL(BugSubmissionsTest):
-    pass
-
-
 class CommTrackSyncTest(CommTrackSubmissionTest):
 
     def setUp(self):
@@ -622,11 +591,6 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
-@sharded
-class CommTrackSyncTestSQL(CommTrackSyncTest):
-    pass
-
-
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
     def setUp(self):
@@ -647,12 +611,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         ledger_accessors = LedgerAccessors(self.domain.name)
 
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain):
-                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
-            else:
-                self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
-                # 6 = 3 stockonhand and 3 inferred consumption txns
-                self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+            self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
 
             ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
             self.assertEqual(3, len(ledger_values))
@@ -671,11 +630,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         with self.process_legder_changes:
             form.archive()
 
-        if should_use_sql_backend(self.domain):
-            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
-        else:
-            self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
-            self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+        self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
 
         ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
         self.assertEqual(3, len(ledger_values))
@@ -701,11 +656,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # check that we made stuff
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain):
-                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
-            else:
-                self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
-                self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
+            self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
 
             ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
             self.assertEqual(3, len(ledger_values))
@@ -718,20 +669,11 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form = FormAccessors(self.domain.name).get_form(form_id)
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
-        if should_use_sql_backend(self.domain):
-            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
-        else:
-            self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
-            self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
+        self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
 
         # unarchive and confirm commtrack data is restored
         form.unarchive()
         _assert_initial_state()
-
-
-@sharded
-class CommTrackArchiveSubmissionTestSQL(CommTrackArchiveSubmissionTest):
-    pass
 
 
 def _report_soh(soh_reports, case_id, domain):
