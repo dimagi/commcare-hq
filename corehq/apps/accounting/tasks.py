@@ -727,7 +727,7 @@ def run_downgrade_process():
     downgrade_eligible_domains()
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
+@task(queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -746,7 +746,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
+@task(queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:
