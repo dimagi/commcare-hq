@@ -1375,6 +1375,9 @@ class UserFilterForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
 
+        user_type = 'Mobile Workers' if self.user_type == MOBILE_USER_TYPE else 'Users'
+        page_title = _(f'Filter and Download {user_type}')
+
         fields = []
         if subdomains:
             fields += [crispy.Field("domains", data_bind="value: domains")]
@@ -1400,7 +1403,7 @@ class UserFilterForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Filter and Download Users"),
+                page_title,
                 *fields,
             ),
             hqcrispy.FormActions(

@@ -1129,7 +1129,6 @@ class DownloadUsersStatusView(BaseUserSettingsView):
 
 
 class FilteredUserDownload(BaseUserSettingsView):
-    page_title = ugettext_noop('Filter and Download Users')
 
     def get(self, request, domain, *args, **kwargs):
         form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=self.user_type)
@@ -1146,6 +1145,7 @@ class FilteredUserDownload(BaseUserSettingsView):
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
+    page_title = ugettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
@@ -1157,6 +1157,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
+    page_title = ugettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
