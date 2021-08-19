@@ -19,7 +19,8 @@ from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
-from corehq.util.validation import is_url_or_host_banned
+
+from .form_handling import form_clean_url
 
 
 class HttpBackendForm(BackendForm):
@@ -59,9 +60,7 @@ class HttpBackendForm(BackendForm):
 
     def clean_url(self):
         value = self.cleaned_data.get("url")
-        if is_url_or_host_banned(value):
-            raise ValidationError(_("Invalid URL"))
-        return value
+        return form_clean_url(value)
 
     def clean_additional_params(self):
         value = self.cleaned_data.get("additional_params")
