@@ -1071,8 +1071,14 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         change_messages["phone_numbers"].update(
             UserChangeMessage.phone_numbers_removed([initial_default_number])['phone_numbers']
         )
-        change_messages.update(UserChangeMessage.password_reset())
-        self.assertDictEqual(user_history.change_messages, change_messages)
+        self.assertEqual(
+            set(user_history.change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"]),
+            set(change_messages["phone_numbers"]["add_phone_numbers"]["phone_numbers"])
+        )
+        self.assertEqual(
+            set(user_history.change_messages["phone_numbers"]["remove_phone_numbers"]["phone_numbers"]),
+            set(change_messages["phone_numbers"]["remove_phone_numbers"]["phone_numbers"])
+        )
 
         # Check if user is updated
         users = CommCareUser.by_domain(self.domain.name)
