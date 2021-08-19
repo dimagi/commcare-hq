@@ -2,11 +2,22 @@
 Writing Custom Code
 ===================
 
-Code written for an individual project ("custom code") is a sometimes-necessary
-evil. We should strive to minimize the use of it, and when it is necessary, be
+CommCare is designed as an end-user-development system which can support the 
+deployment of hundreds or thousands of projects through configuraiton rather 
+than source code. However, the purpose of the code platform is also to support
+social impact in resource constrained settings, so in extreme cirucmstances we
+accept that including code written for an individual project ("custom code") is 
+a sometimes-necessary evil to support unique oppurtunitites to support that 
+mission in the real world.
+
+CommCare's maintainers will apply extreme scrutiny to contributions of custom
+code, and in cases where there are obvious alternatives, such contributions
+will be rejected.  When it is necessary, it will be expected that developers be
 sure to put in the effort to ensure it can be maintained, understood, and
 transferred to other developers. This document is a series of guidelines with
 the aim of achieving those goals.
+
+
 
 Tests
 -----
@@ -62,7 +73,11 @@ Maintainable code is unsurprising. That means following existing conventions,
 patterns, and styles whenever reasonable. The code should pass lint checks and
 strive to be as readable as possible, such as by using only short classes,
 functions, and methods, limiting the use of inheritance, avoiding duplication,
-and generally being as straightforward as possible.
+and generally being as straightforward as possible. Adhering to these standards
+supports maintainers in understanding code, but more importantly it allows the
+code to be refactored and migrated as needed in the future through automated
+translation, significantly lowering the burden (and risk) of permanently
+retaining the code.
 
 Custom code should be isolated as much as possible from core code. It should
 live primarily in a project-specific module in ``custom/``. It can be tied in to
@@ -78,16 +93,36 @@ registered in ``DOMAIN_MODULE_MAP``, so it’s clear which domains are expected 
 use the code, and it should be restricted to run only on those domains, and on a
 specific server environment (or multiple, if necessary).
 
+Dependencies
+------------
+Custom code should rely on as few dependencies as possible which will increase
+the burden of maintenance long term. This means that the code should rely only
+on the common and public interfaces to the rest of the core code, and stricly
+avoid coupling to implementation details or undocumented behaviors. 
+
+In addition custom modules should avoid new external dependencies whenever 
+possible. When new dependencies are a requirement of custom code, they should
+be compatible with the common dependencies of the core code, and should have
+a clear low-risk path to maintenance. 
+
 Support
 -------
-When custom code is developed by an external contractor, they should have access
-to a Dimagi developer for backstopping. This person can answer questions about
-how to meet the above requirements, or decide that it’s okay to waive one or
-more in some particular circumstance. The contractor should check in regularly
-during the development process with the Dimagi developer to ensure the approach
+When custom code is developed by a contributor who is not a core maintainer, 
+they should generally be connected with a project maintainer for backstopping 
+before beginning development.
+
+This person can answer questions about how to meet the above requirements, and
+how much effort is practical to require The contributor should check in regularly
+during the development process with the maintainer to ensure the approach being
 taken is correct. Submitting large amounts of code for monolithic review is
 likely to result in a long, painful period of code review. Regular check-ins and
-following standardizations can greatly help with this. This Dimagi developer
-will share responsibility for the robustness of the code, and so will likely
-have extensive input during the review process, though all PR feedback should be
-considered, regardless of who provides it.
+following standardizations can greatly help with this. 
+
+A maintainer working with a contributor will share responsibility for the 
+robustness of the code, and so will likely have extensive input during the review 
+process, though all PR feedback should be considered, regardless of who provides it.
+Other project maintainers have a responsibility to reject contributions which can
+create risk for the project, whether due to visible defects or due to a lack of 
+confidence in the lack of defects. As such, contributors should expect that clearly
+demonstrating adherence to these standards is important in providing reviewers with
+confidence that new custom code is safe and appropriate.
