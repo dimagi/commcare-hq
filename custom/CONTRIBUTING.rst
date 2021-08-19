@@ -7,8 +7,8 @@ deployment of hundreds or thousands of projects through configuration rather
 than source code. However, the purpose of the code platform is also to support
 social impact in resource constrained settings, so in extreme cirucmstances we
 accept that including code written for an individual project ("custom code") is 
-a sometimes-necessary evil to support unique oppurtunitites to support that 
-mission in the real world.
+a sometimes-necessary evil to take advantage of unique opportunities to support
+that mission in the real world.
 
 CommCare's maintainers will apply extreme scrutiny to contributions of custom
 code, and in cases where there are obvious alternatives, such contributions
