@@ -3,7 +3,7 @@ Writing Custom Code
 ===================
 
 CommCare is designed as an end-user-development system which can support the 
-deployment of hundreds or thousands of projects through configuraiton rather 
+deployment of hundreds or thousands of projects through configuration rather 
 than source code. However, the purpose of the code platform is also to support
 social impact in resource constrained settings, so in extreme cirucmstances we
 accept that including code written for an individual project ("custom code") is 
