@@ -488,7 +488,7 @@ class TestWebUserResource(APIResourceTest):
         # is_admin, permissions are simply set on user but have no visible effect
         self.assertTrue(modified.is_admin)
         self.assertFalse(modified.is_domain_admin(self.domain.name))
-        self.assertFalse(modified.is_global_admin(), False)
+        self.assertFalse(modified.is_global_admin())
 
         self.assertEqual(
             modified.permissions,
