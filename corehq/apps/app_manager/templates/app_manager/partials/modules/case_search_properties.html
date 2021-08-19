@@ -151,9 +151,9 @@
           {% if request|toggle_enabled:'DATA_REGISTRY' %}
           <div class="form-group">
               <label for="data-registry" class="{% css_label_class %} control-label">
-                  {% trans "Data Registry ID" %}
-                  <span class="hq-help-template" data-title="{% trans "Data Registry ID" %}"
-                        data-content="{% trans_html_attr "Enter the ID of a case registry.  Users with access will see results from the registry when performing this search." %}">
+                  {% trans "Data Registry" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
               </label>
               <div class="{% css_field_class %}">
                   <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
