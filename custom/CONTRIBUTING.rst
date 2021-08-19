@@ -105,7 +105,7 @@ Dependencies
 ------------
 Custom code should rely on as few dependencies as possible which will increase
 the burden of maintenance long term. This means that the code should rely only
-on the common and public interfaces to the rest of the core code, and stricly
+on the common and public interfaces to the rest of the core code, and strictly
 avoid coupling to implementation details or undocumented behaviors. 
 
 In addition custom modules should avoid new external dependencies whenever 
