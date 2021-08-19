@@ -285,13 +285,8 @@ def check_credit_line_balances():
                 )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
-def generate_invoices(based_on_date=None):
-    """
-    Generates all invoices for the past month.
-    """
-    today = based_on_date or datetime.date.today()
-    invoice_start, invoice_end = get_previous_month_date_range(today)
+def generate_invoices_based_on_date(invoice_date):
+    invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
     log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime(USER_DATE_FORMAT),
         'end': invoice_end.strftime(USER_DATE_FORMAT),
@@ -357,6 +352,15 @@ def generate_invoices(based_on_date=None):
 
     if not settings.UNIT_TESTING:
         _invoicing_complete_soft_assert(False, "Invoicing is complete!")
+
+
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+def generate_invoices():
+    """
+    Generates all invoices for the past month.
+    """
+    invoice_date = datetime.date.today()
+    generate_invoices_based_on_date(invoice_date)
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
