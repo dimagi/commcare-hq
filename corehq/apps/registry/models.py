@@ -93,17 +93,6 @@ class DataRegistry(models.Model):
         registry.logger.invitation_added(user, invitation)
         return registry
 
-    @classmethod
-    @transaction.atomic
-    def create(cls, user, domain, name):
-        registry = DataRegistry.objects.create(domain=domain, name=name)
-        # creating domain is automatically added to the registry
-        invitation = registry.invitations.create(
-            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
-        )
-        registry.logger.invitation_added(user, invitation)
-        return registry
-
     @transaction.atomic
     def activate(self, user):
         self.is_active = True
