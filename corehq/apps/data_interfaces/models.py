@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models, transaction
 from django.db.models import Q
 
@@ -644,6 +644,8 @@ class CaseRuleAction(models.Model):
     custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE, null=True)
     create_schedule_instance_definition = models.ForeignKey('CreateScheduleInstanceActionDefinition',
         on_delete=models.CASCADE, null=True)
+    case_deduplication_action_definition = models.ForeignKey('CaseDeduplicationActionDefinition',
+                                                             on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -872,6 +874,28 @@ class CustomActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
+
+
+class CaseDeduplicationMatchTypeChoices:
+    ANY = "ANY"
+    ALL = "ALL"
+    CHOICES = (
+        (ANY, ANY),
+        (ALL, ALL),
+    )
+
+
+class CaseDeduplicationActionDefinition(CaseRuleActionDefinition):
+    match_type = models.CharField(choices=CaseDeduplicationMatchTypeChoices.CHOICES, max_length=5)
+    case_properties = ArrayField(models.TextField())
+    include_closed = models.BooleanField(default=False)
+    properties_to_update = JSONField(default=list, null=True)
+
+
+class CaseDuplicate(models.Model):
+    case_id = models.CharField(max_length=126, null=True, db_index=True)
+    action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
+    potential_duplicates = models.ManyToManyField('self', symmetrical=True)
 
 
 class VisitSchedulerIntegrationHelper(object):
