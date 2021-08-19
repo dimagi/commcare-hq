@@ -120,7 +120,7 @@ they should generally be connected with a project maintainer for backstopping
 before beginning development.
 
 This person can answer questions about how to meet the above requirements, and
-how much effort is practical to require The contributor should check in regularly
+how much effort is practical to require. The contributor should check in regularly
 during the development process with the maintainer to ensure the approach being
 taken is correct. Submitting large amounts of code for monolithic review is
 likely to result in a long, painful period of code review. Regular check-ins and
