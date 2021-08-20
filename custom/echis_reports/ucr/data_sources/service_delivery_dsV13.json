@@ -9,7 +9,7 @@
     "echis"
   ],
   "config": {
-    	"base_item_expression": {
+    	"base_item_expression":  {
 			"test": {
 			  "filter": {
 				"operator": "in",
@@ -780,7 +780,7 @@
 			],
 			"type": "iterator"
 		  },
-	"configured_filter": {
+	"configured_filter":  {
 		"type": "or",
 		"filters": [
 		  {

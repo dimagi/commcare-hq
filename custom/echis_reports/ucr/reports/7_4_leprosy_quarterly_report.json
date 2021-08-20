@@ -1,0 +1,441 @@
+{
+    "domains": [
+        "fmoh-echis",
+        "fmoh-echis-staging",
+        "fmoh-echis-link-test"
+    ],
+    "server_environment": [
+        "production",
+        "echis"
+    ],
+    "report_id": "7_4_leprosy_quarterly_report",
+    "data_source_table": "static_leprosy_datasource",
+    "config": {
+        "title": "7.4 Leprosy Quarterly Report",
+        "aggregation_columns":  [
+          "health_center_id",
+          "health_post_id",
+          "quarterly_report_date"
+        ],
+        "filters":  [
+          {
+            "datatype": "string",
+            "choice_provider": {
+              "include_descendants": true,
+              "type": "location",
+              "show_full_path": true
+            },
+            "show_all": true,
+            "slug": "health_post_id",
+            "field": "health_post_id",
+            "ancestor_expression": {},
+            "type": "dynamic_choice_list",
+            "display": "Location"
+          },
+          {
+            "compare_as_string": false,
+            "show_all": true,
+            "datatype": "string",
+            "type": "dynamic_choice_list",
+            "required": false,
+            "slug": "quarterly_report_date",
+            "field": "quarterly_report_date",
+            "ancestor_expression": {},
+            "choice_provider": {},
+            "display": "Quarterly Report Date"
+          },
+          {
+            "compare_as_string": false,
+            "datatype": "date",
+            "required": false,
+            "slug": "quarterly_date",
+            "field": "quarterly_date",
+            "type": "date",
+            "display": "Date(for mobile)"
+          },
+          {
+            "display": "Test or Real",
+            "datatype": "string",
+            "show_all": true,
+            "choices": [
+              {
+                "display": "Test",
+                "value": "Test"
+              },
+              {
+                "display": "Real",
+                "value": "Real"
+              }
+            ],
+            "field": "test_or_real",
+            "type": "choice_list",
+            "slug": "test_or_real"
+          },
+          {
+            "comment": null,
+            "datatype": "string",
+            "display": "region",
+            "field": "region",
+            "type": "dynamic_choice_list",
+            "slug": "region"
+          },
+          {
+            "comment": null,
+            "datatype": "string",
+            "display": "Zone",
+            "field": "zone",
+            "type": "dynamic_choice_list",
+            "slug": "zone"
+          },
+          {
+            "comment": null,
+            "datatype": "string",
+            "display": "Woreda",
+            "field": "woreda",
+            "type": "dynamic_choice_list",
+            "slug": "woreda"
+          },
+          {
+            "datatype": "string",
+            "field": "health_center",
+            "type": "dynamic_choice_list",
+            "display": "Health Center",
+            "slug": "health_center"
+          },
+          {
+            "datatype": "string",
+            "field": "health_center_id",
+            "type": "dynamic_choice_list",
+            "display": "Health Center Id(for Mobile)",
+            "slug": "health_center_id"
+          },
+          {
+            "datatype": "string",
+            "field": "health_post",
+            "type": "dynamic_choice_list",
+            "display": "Health Post",
+            "slug": "health_post"
+          },
+          {
+            "type": "pre",
+            "field": "health_post",
+            "slug": "health_post_pre",
+            "datatype": "string",
+            "pre_value": "",
+            "pre_operator": "!=",
+            "display": null
+          },
+          {
+            "type": "pre",
+            "field": "quarterly_report_date",
+            "slug": "quarterly_report_date_pre",
+            "datatype": "string",
+            "pre_value": "",
+            "pre_operator": "!=",
+            "display": null
+          }
+        ],
+        "columns": [
+          {
+            "field": "health_center_id",
+            "sortable": false,
+            "description": null,
+            "format": "default",
+            "css_class": null,
+            "transform": {},
+            "column_id": "health_center_id",
+            "visible": false,
+            "display": "Health Center Id",
+            "calculate_total": false,
+            "type": "field",
+            "width": null,
+            "aggregation": "simple"
+          },
+          {
+            "field": "health_post_id",
+            "sortable": false,
+            "description": null,
+            "format": "default",
+            "css_class": null,
+            "transform": {},
+            "column_id": "health_post_id",
+            "visible": false,
+            "display": "Health Post Id",
+            "calculate_total": false,
+            "type": "field",
+            "width": null,
+            "aggregation": "simple"
+          },
+          {
+            "field": "quarterly_report_date",
+            "sortable": false,
+            "description": null,
+            "format": "default",
+            "css_class": null,
+            "transform": {},
+            "column_id": "quarterly_report_date",
+            "visible": true,
+            "display": "Quarter",
+            "calculate_total": false,
+            "type": "field",
+            "width": null,
+            "aggregation": "simple"
+          },
+          {
+            "comment": "4.2.3.1.1-Leprosy case notification: All leprosy case detected( N+O+R+D)",
+            "field": "Leprosy_case_notification:_All_leprosy_case_detected",
+            "description": "4.2.3.1.1-Leprosy case notification: All leprosy case detected( N+O+R+D)",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification:_All_leprosy_case_detected",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: All leprosy case detected( N+O+R+D)"
+          },
+          {
+            "comment": "4.2.3.1.2-Leprosy case notification: Male",
+            "field": "Leprosy_case_notification:_Male",
+            "description": "4.2.3.1.2-Leprosy case notification: Male",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification:_Male",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: Male"
+          },
+          {
+            "comment": "4.2.3.1.3-Leprosy case notification: Female",
+            "field": "Leprosy_case_notification_Female",
+            "description": "4.2.3.1.3-Leprosy case notification: Female",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_Female",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: Female"
+          },
+          {
+            "comment": "4.2.3.1.4-Leprosy case notification: New Leprosy cases detected",
+            "field": "Leprosy_case_notification_New_Leprosy_cases_detected_",
+            "description": "4.2.3.1.4-Leprosy case notification: New Leprosy cases detected",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_New_Leprosy_cases_detected_",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: New Leprosy cases detected"
+          },
+          {
+            "comment": "4.2.3.1.5-Leprosy case notification: PB: Male <15 yrs",
+            "field": "Leprosy_case_notification_PB_Male_lt_15_yrs",
+            "description": "4.2.3.1.5-Leprosy case notification: PB: Male <15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_PB_Male_lt_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: PB: Male <15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.6-Leprosy case notification: PB: Male = >15 yrs",
+            "field": "Leprosy_case_notification_PB_Male_gte_15_yrs",
+            "description": "4.2.3.1.6-Leprosy case notification: PB: Male = >15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_PB_Male_gte_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: PB: Male = >15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.7-Leprosy case notification: PB: Female <15 yrs",
+            "field": "Leprosy_case_notification_PB_Female_lt_15_yrs",
+            "description": "4.2.3.1.7-Leprosy case notification: PB: Female <15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_PB_Female_lt_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: PB: Female <15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.8-Leprosy case notification: PB: Female = >15 yrs",
+            "field": "Leprosy_case_notification_PB_Female_gte_15_yrs",
+            "description": "4.2.3.1.8-Leprosy case notification: PB: Female = >15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_PB_Female_gte_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: PB: Female = >15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.9-Leprosy case notification: MB : Male <15 yrs",
+            "field": "Leprosy_case_notification_MB__Male_lt_15_yrs",
+            "description": "4.2.3.1.9-Leprosy case notification: MB : Male <15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_MB__Male_lt_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: MB : Male <15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.10-Leprosy case notification: MB : Male = >15 yrs",
+            "field": "Leprosy_case_notification_MB__Male_gte_15_yrs",
+            "description": "4.2.3.1.10-Leprosy case notification: MB : Male = >15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_MB__Male_gte_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: MB : Male = >15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.11-Leprosy case notification: MB : Female < 15 yrs",
+            "field": "Leprosy_case_notification_MB__Female_lt__15_yrs",
+            "description": "4.2.3.1.11-Leprosy case notification: MB : Female < 15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_MB__Female_lt__15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: MB : Female < 15 yrs"
+          },
+          {
+            "comment": "4.2.3.1.12-Leprosy case notification: MB : Female => 15 yrs",
+            "field": "Leprosy_case_notification_MB__Female_=>_15_yrs",
+            "description": "4.2.3.1.12-Leprosy case notification: MB : Female => 15 yrs",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Leprosy_case_notification_MB__Female_=>_15_yrs",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Leprosy case notification: MB : Female => 15 yrs"
+          },
+          {
+            "comment": "4.2.3.2.1-Grade II disability rate among new cases of leprosy: New leprosy cases with Grade II disability (MB+PB)",
+            "field": "Grade_II_disability_rate",
+            "description": "4.2.3.2.1-Grade II disability rate among new cases of leprosy: New leprosy cases with Grade II disability (MB+PB)",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Grade_II_disability_rate",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Grade II disability rate among new cases of leprosy: New leprosy cases with Grade II disability (MB+PB)"
+          },
+          {
+            "comment": "4.2.3.2.2-Grade II disability rate among new cases of leprosy: Male <15",
+            "field": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_lt_15",
+            "description": "4.2.3.2.2-Grade II disability rate among new cases of leprosy: Male <15",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_lt_15",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Grade II disability rate among new cases of leprosy: Male <15"
+          },
+          {
+            "comment": "4.2.3.2.3-Grade II disability rate among new cases of leprosy: Male =>15",
+            "field": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_=>15",
+            "description": "4.2.3.2.3-Grade II disability rate among new cases of leprosy: Male =>15",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_=>15",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Grade II disability rate among new cases of leprosy: Male =>15"
+          },
+          {
+            "comment": "4.2.3.2.4-Grade II disability rate among new cases of leprosy: Female<15",
+            "field": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female<15",
+            "description": "4.2.3.2.4-Grade II disability rate among new cases of leprosy: Female<15",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female<15",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Grade II disability rate among new cases of leprosy: Female<15"
+          },
+          {
+            "comment": "4.2.3.2.5-Grade II disability rate among new cases of leprosy: Female =>15",
+            "field": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female_=>15",
+            "description": "4.2.3.2.5-Grade II disability rate among new cases of leprosy: Female =>15",
+            "format": "default",
+            "css_class": null,
+            "width": null,
+            "aggregation": "sum",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female_=>15",
+            "visible": true,
+            "transform": {},
+            "calculate_total": false,
+            "type": "field",
+            "display": "Grade II disability rate among new cases of leprosy: Female =>15"
+          }
+        ]
+    }
+}

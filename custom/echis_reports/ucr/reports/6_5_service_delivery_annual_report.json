@@ -12,10 +12,11 @@
     "data_source_table": "static_annual_service_delivery_dS_v1",
     "config": {
       "title": "6.5 Service Delivery Annual Report",
-      "aggregation_columns":[ 
-        "health_post" 
-      ]  ,
-      "filters":  [
+      "aggregation_columns":[
+        "health_post",
+        "annual_report_date"
+      ] ,
+      "filters":   [
         {
           "datatype": "string",
           "choice_provider": {
@@ -46,10 +47,10 @@
           "compare_as_string": false,
           "datatype": "date",
           "required": false,
-          "slug": "annual_report_date",
-          "field": "annual_report_date",
+          "slug": "annual_date",
+          "field": "annual_date",
           "type": "date",
-          "display": "Report Month (for mobile)"
+          "display": "Annual Date(for mobile)"
         },
         {
           "display": "Test or Real",
@@ -126,22 +127,36 @@
         }
       ],
       "columns":  [
-       
+        {
+          "field": "health_post",
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "css_class": null,
+          "transform": {},
+          "column_id": "health_post",
+          "visible": true,
+          "display": "Health Post",
+          "calculate_total": false,
+          "type": "field",
+          "width": null,
+          "aggregation": "max"
+        },
         {
           "comment": null,
-          "field": "health_post",
+          "field": "annual_report_date",
           "description": null,
           "format": "default",
           "css_class": null,
           "width": null,
           "aggregation": "simple",
-          "column_id": "health_post",
+          "column_id": "annual_report_date",
           "visible": true,
           "transform": {},
           "calculate_total": false,
           "type": "field",
-          "display": "Health Post"
-        } ,
+          "display": "Annual Report Date"
+        },
         {
           "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
           "field": "FP_CYP_1",

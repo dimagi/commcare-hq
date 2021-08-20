@@ -20,7 +20,7 @@
         "health_post",
         "report_week_date"
       ],
-      "filters": [
+      "filters":  [
         {
           "datatype": "string",
           "choice_provider": {
@@ -120,7 +120,7 @@
           "slug": "illness_start_report_month"
         }
       ] ,
-      "columns":  [
+      "columns":   [
         {
           "comment": null,
           "field": "region",

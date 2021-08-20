@@ -1,0 +1,3682 @@
+{
+    "domains": [
+        "fmoh-echis",
+        "fmoh-echis-staging",
+        "fmoh-echis-link-test"
+    ],
+    "server_environment": [
+        "production",
+        "echis"
+    ],
+    "config": {
+        "configured_indicators": [
+          {
+            "comment": null,
+            "create_index": true,
+            "display_name": "quarterly_report_date",
+            "datatype": "string",
+            "expression": {
+              "datatype": "string",
+              "type": "property_name",
+              "property_name": "hew_screening_report_quarterly"
+            },
+            "transform": {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "quarterly_report_date"
+          },
+          {
+            "comment": null,
+            "create_index": true,
+            "display_name": "quarterly_date",
+            "datatype": "date",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "hew_screening_date"
+            },
+            "transform": {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "quarterly_date"
+          },
+          {
+            "type": "expression",
+            "column_id": "region",
+            "datatype": "string",
+            "display_name": "region",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "name",
+                      "datatype": null
+                    }
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "test": {
+                              "operator": "eq",
+                              "type": "boolean_expression",
+                              "expression": {
+                                "type": "location_parent_id",
+                                "location_id_expression": {
+                                  "type": "root_doc",
+                                  "expression": {
+                                    "type": "property_name",
+                                    "property_name": "owner_id",
+                                    "datatype": null
+                                  }
+                                }
+                              },
+                              "comment": null,
+                              "property_value": ""
+                            },
+                            "expression_if_false": {
+                              "type": "root_doc",
+                              "expression": {
+                                "type": "property_name",
+                                "property_name": "owner_id",
+                                "datatype": null
+                              }
+                            },
+                            "type": "conditional",
+                            "expression_if_true": {
+                              "constant": "-",
+                              "type": "constant"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "name",
+                    "datatype": null
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "type": "location_parent_id",
+                  "location_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "test": {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                              "type": "location_parent_id",
+                              "location_id_expression": {
+                                "type": "root_doc",
+                                "expression": {
+                                  "type": "property_name",
+                                  "property_name": "owner_id",
+                                  "datatype": null
+                                }
+                              }
+                            },
+                            "comment": null,
+                            "property_value": ""
+                          },
+                          "expression_if_false": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          },
+                          "type": "conditional",
+                          "expression_if_true": {
+                            "constant": "-",
+                            "type": "constant"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "zone",
+            "datatype": "string",
+            "display_name": "zone",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "name",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "test": {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                              "type": "location_parent_id",
+                              "location_id_expression": {
+                                "type": "root_doc",
+                                "expression": {
+                                  "type": "property_name",
+                                  "property_name": "owner_id",
+                                  "datatype": null
+                                }
+                              }
+                            },
+                            "comment": null,
+                            "property_value": ""
+                          },
+                          "expression_if_false": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          },
+                          "type": "conditional",
+                          "expression_if_true": {
+                            "constant": "-",
+                            "type": "constant"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "name",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "type": "location_parent_id",
+                  "location_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "test": {
+                          "operator": "eq",
+                          "type": "boolean_expression",
+                          "expression": {
+                            "type": "location_parent_id",
+                            "location_id_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "type": "property_name",
+                                "property_name": "owner_id",
+                                "datatype": null
+                              }
+                            }
+                          },
+                          "comment": null,
+                          "property_value": ""
+                        },
+                        "expression_if_false": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        },
+                        "type": "conditional",
+                        "expression_if_true": {
+                          "constant": "-",
+                          "type": "constant"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "woreda",
+            "datatype": "string",
+            "display_name": "woreda",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "name",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "test": {
+                          "operator": "eq",
+                          "type": "boolean_expression",
+                          "expression": {
+                            "type": "location_parent_id",
+                            "location_id_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "type": "property_name",
+                                "property_name": "owner_id",
+                                "datatype": null
+                              }
+                            }
+                          },
+                          "comment": null,
+                          "property_value": ""
+                        },
+                        "expression_if_false": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        },
+                        "type": "conditional",
+                        "expression_if_true": {
+                          "constant": "-",
+                          "type": "constant"
+                        }
+                      }
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "name",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "type": "location_parent_id",
+                  "location_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "test": {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          }
+                        },
+                        "comment": null,
+                        "property_value": ""
+                      },
+                      "expression_if_false": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      },
+                      "type": "conditional",
+                      "expression_if_true": {
+                        "constant": "-",
+                        "type": "constant"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "health_center",
+            "datatype": "string",
+            "display_name": "health_center",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "name",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "test": {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          }
+                        },
+                        "comment": null,
+                        "property_value": ""
+                      },
+                      "expression_if_false": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      },
+                      "type": "conditional",
+                      "expression_if_true": {
+                        "constant": "-",
+                        "type": "constant"
+                      }
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "name",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "type": "location_parent_id",
+                  "location_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id",
+                        "datatype": null
+                      }
+                    },
+                    "type": "conditional",
+                    "expression_if_true": {
+                      "constant": "-",
+                      "type": "constant"
+                    }
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "health_center_id",
+            "datatype": "string",
+            "display_name": "health_center_id",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "_id",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "type": "location_parent_id",
+                    "location_id_expression": {
+                      "test": {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          }
+                        },
+                        "comment": null,
+                        "property_value": ""
+                      },
+                      "expression_if_false": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      },
+                      "type": "conditional",
+                      "expression_if_true": {
+                        "constant": "-",
+                        "type": "constant"
+                      }
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "_id",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "type": "location_parent_id",
+                  "location_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id",
+                        "datatype": null
+                      }
+                    },
+                    "type": "conditional",
+                    "expression_if_true": {
+                      "constant": "-",
+                      "type": "constant"
+                    }
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "health_post",
+            "datatype": "string",
+            "display_name": "health_post",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "name",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id",
+                        "datatype": null
+                      }
+                    },
+                    "type": "conditional",
+                    "expression_if_true": {
+                      "constant": "-",
+                      "type": "constant"
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "name",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "test": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      }
+                    },
+                    "comment": null,
+                    "property_value": ""
+                  },
+                  "expression_if_false": {
+                    "type": "root_doc",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id",
+                      "datatype": null
+                    }
+                  },
+                  "type": "conditional",
+                  "expression_if_true": {
+                    "constant": "-",
+                    "type": "constant"
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "health_post_id",
+            "datatype": "string",
+            "display_name": "health_post_id",
+            "expression": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                  }
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": "-"
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "value_expression": {
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "_id",
+                    "datatype": null
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id",
+                        "datatype": null
+                      }
+                    },
+                    "type": "conditional",
+                    "expression_if_true": {
+                      "constant": "-",
+                      "type": "constant"
+                    }
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "indices",
+                        "datatype": null
+                      }
+                    },
+                    "index_expression": {
+                      "type": "constant",
+                      "constant": 0
+                    }
+                  }
+                }
+              },
+              "expression_if_false": {
+                "value_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "_id",
+                    "datatype": null
+                  }
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "test": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "location_parent_id",
+                      "location_id_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      }
+                    },
+                    "comment": null,
+                    "property_value": ""
+                  },
+                  "expression_if_false": {
+                    "type": "root_doc",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id",
+                      "datatype": null
+                    }
+                  },
+                  "type": "conditional",
+                  "expression_if_true": {
+                    "constant": "-",
+                    "type": "constant"
+                  }
+                }
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "type": "expression",
+            "column_id": "is_closed",
+            "datatype": "string",
+            "display_name": "is_closed",
+            "expression": {
+              "type": "property_name",
+              "property_name": "closed",
+              "datatype": "string"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": null
+          },
+          {
+            "comment": null,
+            "create_index": true,
+            "display_name": "test_or_real",
+            "datatype": "string",
+            "expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "test_or_real"
+              }
+            },
+            "transform": {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "test_or_real"
+          },
+          {
+            "type": "expression",
+            "column_id": "Leprosy_case_notification:_All_leprosy_case_detected",
+            "datatype": "integer",
+            "display_name": "Leprosy case notification: All leprosy case detected( N+O+R+D)",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.1-Leprosy case notification: All leprosy case detected( N+O+R+D)"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.2-Leprosy case notification: Male",
+            "display_name": "Leprosy case notification: Male",
+            "column_id": "Leprosy_case_notification:_Male"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.3-Leprosy case notification: Female",
+            "display_name": "Leprosy case notification: Female",
+            "column_id": "Leprosy_case_notification_Female"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.4-Leprosy case notification: New Leprosy cases detected :",
+            "display_name": "Leprosy case notification: New Leprosy cases detected :",
+            "column_id": "Leprosy_case_notification_New_Leprosy_cases_detected_"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "pb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.5-Leprosy case notification: PB: Male <15 yrs",
+            "display_name": "Leprosy case notification: PB: Male <15 yrs",
+            "column_id": "Leprosy_case_notification_PB_Male_lt_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "pb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.6-Leprosy case notification: PB: Male = >15 yrs",
+            "display_name": "Leprosy case notification: PB: Male = >15 yrs",
+            "column_id": "Leprosy_case_notification_PB_Male_gte_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "pb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.7-Leprosy case notification: PB: Female <15 yrs",
+            "display_name": "Leprosy case notification: PB: Female <15 yrs",
+            "column_id": "Leprosy_case_notification_PB_Female_lt_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "pb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.8-Leprosy case notification: PB: Female = >15 yrs",
+            "display_name": "Leprosy case notification: PB: Female = >15 yrs",
+            "column_id": "Leprosy_case_notification_PB_Female_gte_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "mb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.9-Leprosy case notification: MB : Male <15 yrs",
+            "display_name": "Leprosy case notification: MB : Male <15 yrs",
+            "column_id": "Leprosy_case_notification_MB__Male_lt_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "mb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.10-Leprosy case notification: MB : Male = >15 yrs",
+            "display_name": "Leprosy case notification: MB : Male = >15 yrs",
+            "column_id": "Leprosy_case_notification_MB__Male_gte_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "mb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.11-Leprosy case notification: MB : Female < 15 yrs",
+            "display_name": "Leprosy case notification: MB : Female < 15 yrs",
+            "column_id": "Leprosy_case_notification_MB__Female_lt__15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_screening_classification",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "mb_leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.1.12-Leprosy case notification: MB : Female => 15 yrs",
+            "display_name": "Leprosy case notification: MB : Female => 15 yrs",
+            "column_id": "Leprosy_case_notification_MB__Female_=>_15_yrs"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "level_of_leprosy_grade",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "disability_grade_2",
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.2.1-Grade II disability rate among new cases of leprosy: New leprosy cases with Grade II disability (MB+PB)",
+            "display_name": "Grade II disability rate among new cases of leprosy: New leprosy cases with Grade II disability (MB+PB)",
+            "column_id": "Grade_II_disability_rate"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "level_of_leprosy_grade",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "disability_grade_2",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.2.2-Grade II disability rate among new cases of leprosy: Male <15",
+            "display_name": "Grade II disability rate among new cases of leprosy: Male <15",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_lt_15"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "level_of_leprosy_grade",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "disability_grade_2",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "male",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.2.3-Grade II disability rate among new cases of leprosy: Male =>15",
+            "display_name": "Grade II disability rate among new cases of leprosy: Male =>15",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Male_=>15"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "level_of_leprosy_grade",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "disability_grade_2",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "lt",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.2.4-Grade II disability rate among new cases of leprosy: Female<15",
+            "display_name": "Grade II disability rate among new cases of leprosy: Female<15",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female<15"
+          },
+          {
+            "type": "expression",
+            "datatype": "integer",
+            "expression": {
+              "datatype": "integer",
+              "test": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "illness"
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "new_leprosy_case",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "illness_type",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "hc_leprosy_result",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "leprosy_positive",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "coalesce",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "level_of_leprosy_grade",
+                        "datatype": null
+                      },
+                      "default_expression": {
+                        "type": "constant",
+                        "constant": ""
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "disability_grade_2",
+                    "comment": null
+                  },
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "gender"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "female",
+                    "comment": null
+                  },
+                  {
+                    "operator": "gte",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "integer",
+                        "type": "property_name",
+                        "property_name": "age_years"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "type": "array_index",
+                          "array_expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                          },
+                          "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                          }
+                        }
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 15,
+                    "comment": null
+                  }
+                ]
+              },
+              "type": "conditional",
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 1
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": 0
+              }
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "create_index": false,
+            "transform": {},
+            "comment": "4.2.3.2.5-Grade II disability rate among new cases of leprosy: Female =>15",
+            "display_name": "Grade II disability rate among new cases of leprosy: Female =>15",
+            "column_id": "Grade_II_disability_rate_among_new_cases_of_leprosy_Female_=>15"
+          }
+        ],
+        "base_item_expression": {},
+        "configured_filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+              },
+              "type": "boolean_expression",
+              "comment": null,
+              "property_value": "illness"
+            },
+            {
+              "operator": "not_eq",
+              "expression": {
+                "type": "coalesce",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "hew_screening_report_quarterly",
+                  "datatype": null
+                },
+                "default_expression": {
+                  "type": "constant",
+                  "constant": ""
+                }
+              },
+              "type": "boolean_expression",
+              "property_value": "",
+              "comment": null
+            }
+          ]
+        },
+        "description": "",
+        "referenced_doc_type": "CommCareCase",
+        "display_name": "Leprosy Datasource",
+        "table_id": "static_leprosy_datasource"
+    }
+}
