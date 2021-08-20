@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='dataregistry',
             name='slug',
-            field=autoslug.fields.AutoSlugField(editable=False, populate_from='name', slugify=corehq.apps.registry.models.slugify_remove_stops),
+            field=autoslug.fields.AutoSlugField(editable=False, populate_from='name', slugify=corehq.apps.registry.models.slugify_remove_stops, unique=True),
         ),
         migrations.AlterUniqueTogether(
             name='dataregistry',
