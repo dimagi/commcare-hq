@@ -257,26 +257,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model = this.parentModel;
             $inputGroups.each(function (index) {
                 var queryValue = $(this).find('.query-field').val(),
-                    inputType = model[index].get('input'),
-                    searchForBlank;
+                    fieldId = model[index].get('id'),
+                    searchForBlank = $(this).find('.search-for-blank').prop('checked'),
+                    queryProvided = !(queryValue === '' || (_.isArray(queryValue) && _.isEmpty(queryValue))),
+                    encodedValue = encodeValue(model[index], queryValue);
 
-                if (inputType === 'select1') {
-                    searchForBlank = queryValue === "-1";
-                } else if (inputType === 'select') {
-                    searchForBlank = false;  // handle it here instead
-                    queryValue = _.map(queryValue, function (val) {
-                        return val === "-1" ? "" : val;
-                    });
-                } else {
-                    searchForBlank = $(this).find('.search-for-blank').prop('checked');
-                }
-
-                var nothingSelected = (queryValue === ''
-                                       || (_.isArray(queryValue) && _.isEmpty(queryValue)));
-                if (searchForBlank) {
-                    answers[model[index].get('id')] = '';
-                } else if (!nothingSelected) {
-                    answers[model[index].get('id')] = encodeValue(model[index], queryValue);
+                if (searchForBlank && queryProvided) {
+                    answers[fieldId] = selectDelimiter + encodedValue;
+                } else if (queryProvided) {
+                    answers[fieldId] = encodedValue;
+                } else if (searchForBlank) {
+                    answers[fieldId] = "";
                 }
             });
             return answers;
@@ -301,17 +292,27 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = $field.val();
-
+                            value = response.models[i].get('value'),
+                            includeBlank = false;
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
-                        if (!$field.attr('multiple')) {
-                            value = String(value);
+                        if (value !== null) {
+                            value = value.split(selectDelimiter);
+                            if (_.first(value) === "") {
+                                includeBlank = true;
+                                value = _.rest(value);
+                            }
+                            if (!$field.attr('multiple')) {
+                                value = _.isEmpty(value) ? null : value[0];
+                            }
                         }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
                         });
                         $field.trigger('change.select2');
+
+                        // recheck the check box if needed
+                        $($(".query-input-group")[i]).find('.search-for-blank').prop('checked', includeBlank);
                     }
                 }
                 self.setStickyQueryInputs();
