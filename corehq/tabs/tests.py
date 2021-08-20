@@ -50,7 +50,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
-    def test_get_release_management_items_returns_none(self, mock_user, mock_domain):
+    def test_get_release_management_items_returns_none(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = False
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
@@ -61,7 +61,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
-    def test_get_release_management_items_returns_none_with_admin(self, mock_user, mock_domain):
+    def test_get_release_management_items_returns_none_with_admin(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = True
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
@@ -72,7 +72,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
-    def test_get_release_management_items_returns_none_with_domain_privilege(self, mock_user, mock_domain):
+    def test_get_release_management_items_returns_none_with_domain_privilege(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = False
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege:
@@ -83,7 +83,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     @patch('corehq.apps.domain.models.Domain')
-    def test_get_release_management_items_returns_some(self, mock_user, mock_domain):
+    def test_get_release_management_items_returns_some(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = True
 
         with patch('corehq.apps.linked_domain.util.domain_has_privilege') as mock_domain_has_privilege, \
