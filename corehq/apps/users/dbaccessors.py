@@ -74,8 +74,18 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
+    only_selected_location = user_filters.get('only_selected_location', False)
+    user_active_status = user_filters.get('user_active_status', None)
+    breakpoint()
+    if user_active_status is None:
+        # Show all
+        query = UserES().domain(domain).remove_default_filter('active')
+    elif user_active_status:
+        # Active users filtered by default
+        query = UserES().domain(domain)
+    else:
+        query = UserES().domain(domain).show_only_inactive()
 
-    query = UserES().domain(domain).remove_default_filter('active')
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
     if user_type == WEB_USER_TYPE:
@@ -86,7 +96,11 @@ def _get_es_query(domain, user_type, user_filters):
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
     if location_id:
-        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+        if only_selected_location:
+            location_ids = [location_id]
+        else:
+            location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+
         query = query.location(location_ids)
     return query
 

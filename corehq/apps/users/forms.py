@@ -55,6 +55,20 @@ from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
+# Reuse in Locations - put in more global const file
+SHOW_ALL = _('Show All')
+ONLY_ACTIVE = _('Only Active')
+ONLY_DEACTIVATED = _('Only Deactivated')
+
+ACTIVE = 'active'
+INACTIVE = 'inactive'
+
+USER_ACTIVE_STATUS = [
+    ('', SHOW_ALL),
+    (ACTIVE, ONLY_ACTIVE),
+    (INACTIVE, ONLY_DEACTIVATED)
+]
+
 
 def get_mobile_worker_max_username_length(domain):
     """
@@ -1332,6 +1346,17 @@ class UserFilterForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    only_selected_location = forms.BooleanField(
+        required=False,
+        label=_('Only include mobile workers at the selected location'),
+        initial=False,
+    )
+    user_active_status = forms.ChoiceField(
+        label='Active / Deactivated',
+        choices=(),
+        required=False
+    )
+
     columns = forms.ChoiceField(
         required=False,
         label=ugettext_noop("Columns"),
@@ -1364,6 +1389,9 @@ class UserFilterForm(forms.Form):
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
+
+        self.fields['user_active_status'].choices = USER_ACTIVE_STATUS
+
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1374,9 +1402,6 @@ class UserFilterForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
-
-        user_type = 'Mobile Workers' if self.user_type == MOBILE_USER_TYPE else 'Users'
-        page_title = _(f'Filter and Download {user_type}')
 
         fields = []
         if subdomains:
@@ -1392,18 +1417,26 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
+        user_type_title = 'Users'
+
         if self.user_type == MOBILE_USER_TYPE:
+            user_type_title = 'Mobile Workers'
             fields += [
                 crispy.Div(
                     crispy.Field("location_id", data_bind="value: location_id"),
                     data_bind="slideVisible: !isCrossDomain()",
+                ),
+                crispy.Field("only_selected_location", data_bind="value: only_selected_location"),
+                crispy.Field(
+                    "user_active_status",
+                    data_bind="value: user_active_status",
                 ),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                page_title,
+                _(f'Filter and Download {user_type_title}'),
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1443,3 +1476,12 @@ class UserFilterForm(forms.Form):
             domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
         return sorted(domains)
+
+    def clean_user_active_status(self):
+        user_active_status = self.cleaned_data['user_active_status']
+
+        if user_active_status == ACTIVE:
+            return True
+        if user_active_status == INACTIVE:
+            return False
+        return None

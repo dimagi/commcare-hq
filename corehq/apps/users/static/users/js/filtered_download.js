@@ -19,6 +19,8 @@ hqDefine('users/js/filtered_download', [
         self.role_id = ko.observable();
         self.search_string = ko.observable();
         self.location_id = ko.observable();
+        self.only_selected_location = ko.observable();
+        self.user_active_status = ko.observable();
         self.columns = ko.observable();
         self.domains = ko.observableArray();
 
@@ -65,6 +67,9 @@ hqDefine('users/js/filtered_download', [
         self.location_id.subscribe(self.countUsers);
         self.columns.subscribe(self.countUsers);
         self.domains.subscribe(self.countUsers);
+// What does this do?
+//        self.only_selected_location(self.countUsers);
+//        self.user_active_status(self.countUsers);
 
         return self;
     }

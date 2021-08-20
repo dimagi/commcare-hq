@@ -1349,6 +1349,7 @@ def _count_users(request, domain, user_type):
         count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
+
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
