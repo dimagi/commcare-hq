@@ -46,10 +46,10 @@ class TestAccessToLinkedProjects(SimpleTestCase):
         self.assertFalse(items)
 
 
+@patch('corehq.apps.users.models.CouchUser')
+@patch('corehq.apps.domain.models.Domain')
 class TestAccessToReleaseManagementTab(SimpleTestCase):
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = False
 
@@ -59,8 +59,6 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
         self.assertFalse(items)
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none_with_admin(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = True
 
@@ -70,8 +68,6 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
         self.assertFalse(items)
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_none_with_domain_privilege(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = False
 
@@ -81,8 +77,6 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
 
         self.assertFalse(items)
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.domain.models.Domain')
     def test_get_release_management_items_returns_some(self, mock_domain, mock_user):
         mock_user.is_domain_admin.return_value = True
 
