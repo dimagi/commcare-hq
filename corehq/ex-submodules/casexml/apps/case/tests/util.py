@@ -3,18 +3,18 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
+
+from lxml import etree
+
+from dimagi.utils.dates import utcnow_sans_milliseconds
+
+from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.xml import NS_VERSION_MAP, V1, V2
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
-
-from dimagi.utils.dates import utcnow_sans_milliseconds
-from lxml import etree
-
-from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from six.moves import range
-
 
 TEST_DOMAIN_NAME = 'test-domain'
 
