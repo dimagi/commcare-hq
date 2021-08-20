@@ -7,18 +7,8 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.toggles import DO_NOT_REPUBLISH_DOCS
-from couchforms.models import XFormInstance
-from dimagi.utils.chunked import chunked
 
-from casexml.apps.case.models import CommCareCase
-from corehq.util.couch import bulk_get_revs
-from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
-    create_case_change_meta,
-    create_form_change_meta,
-    publish_change,
-)
 from pillowtop.feed.interface import ChangeMeta
 
 
@@ -85,24 +75,14 @@ def _publish_cases(case_records, skip_domains):
     for domain, records in itertools.groupby(case_records, lambda r: r.domain):
         if skip_domains and DO_NOT_REPUBLISH_DOCS.enabled(domain):
             continue
-        if should_use_sql_backend(domain):
-            _publish_cases_for_sql(domain, list(records))
-        else:
-            _publish_cases_for_couch(domain, list(records))
+        _publish_cases_for_sql(domain, records)
 
 
 def _publish_forms(form_records, skip_domains):
     for domain, records in itertools.groupby(form_records, lambda r: r.domain):
         if skip_domains and DO_NOT_REPUBLISH_DOCS.enabled(domain):
             continue
-        if should_use_sql_backend(domain):
-            _publish_forms_for_sql(domain, records)
-        else:
-            _publish_forms_for_couch(domain, records)
-
-
-def _publish_cases_for_couch(domain, case_records):
-    _publish_docs_for_couch(CommCareCase, create_case_change_meta, domain, case_records)
+        _publish_forms_for_sql(domain, records)
 
 
 def _publish_cases_for_sql(domain, case_records):
@@ -134,10 +114,6 @@ def _publish_forms_for_sql(domain, form_records):
         )
 
 
-def _publish_forms_for_couch(domain, form_records):
-    _publish_docs_for_couch(XFormInstance, create_form_change_meta, domain, form_records)
-
-
 def _change_meta_for_sql_form_record(domain, form_record):
     return ChangeMeta(
         document_id=form_record.doc_id,
@@ -148,13 +124,3 @@ def _change_meta_for_sql_form_record(domain, form_record):
         domain=domain,
         is_deletion=False,
     )
-
-
-def _publish_docs_for_couch(doc_cls, get_meta, domain, records):
-    doc_ids = [r.doc_id for r in records]
-    for ids in chunked(doc_ids, 500):
-        doc_id_rev_list = bulk_get_revs(doc_cls.get_db(), ids)
-        for doc_id, doc_rev in doc_id_rev_list:
-            publish_change(
-                get_meta(domain, doc_id, doc_rev)
-            )
