@@ -73,11 +73,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
-            blankSearchCheckbox: 'input.search-for-blank',
-        },
-
-        events: {
-            'change @ui.blankSearchCheckbox': 'toggleInputField',
         },
 
         modelEvents: {
@@ -222,10 +217,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.options.model.get('hidden') === 'true') {
                 this.$el.hide();
             }
-        },
-
-        toggleInputField: function () {
-            this.ui.queryField.prop('disabled', this.ui.blankSearchCheckbox.prop('checked'));
         },
 
     });
