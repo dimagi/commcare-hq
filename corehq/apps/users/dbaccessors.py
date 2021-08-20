@@ -76,7 +76,7 @@ def _get_es_query(domain, user_type, user_filters):
     location_id = user_filters.get('location_id', None)
     only_selected_location = user_filters.get('only_selected_location', False)
     user_active_status = user_filters.get('user_active_status', None)
-    breakpoint()
+
     if user_active_status is None:
         # Show all
         query = UserES().domain(domain).remove_default_filter('active')
