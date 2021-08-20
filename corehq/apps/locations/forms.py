@@ -38,6 +38,20 @@ from .models import (
 from .permissions import user_can_access_location_id
 from .signals import location_edited
 
+# Reuse in Users - put in more global const file
+SHOW_ALL = _('Show All')
+ONLY_ACTIVE = _('Only Active')
+ONLY_ARCHIVED = _('Only Archived')
+
+ACTIVE = 'active'
+ARCHIVED = 'archived'
+
+LOCATION_ACTIVE_STATUS = [
+    ('', SHOW_ALL),
+    (ACTIVE, ONLY_ACTIVE),
+    (ARCHIVED, ONLY_ARCHIVED)
+]
+
 
 class LocationSelectWidget(forms.Widget):
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
@@ -556,14 +570,25 @@ class LocationFixtureForm(forms.ModelForm):
 
 class LocationFilterForm(forms.Form):
     root_location_id = forms.CharField(
-        label=ugettext_noop("Root Location"),
+        label=ugettext_noop("Location"),
         required=False,
+    )
+    only_selected_location = forms.BooleanField(
+        required=False,
+        label=_('Only include selected location'),
+        initial=False,
+    )
+    location_active_status = forms.ChoiceField(
+        label='Active / Archived',
+        choices=(),
+        required=False
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         super().__init__(*args, **kwargs)
         self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
+        self.fields['location_active_status'].choices = LOCATION_ACTIVE_STATUS
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
@@ -574,6 +599,8 @@ class LocationFilterForm(forms.Form):
                 _("Filter and Download Locations"),
                 crispy.Field('root_location_id'),
             ),
+            crispy.Field('only_selected_location'),
+            crispy.Field('location_active_status'),
             hqcrispy.FormActions(
                 StrictButton(
                     _("Download Locations"),
