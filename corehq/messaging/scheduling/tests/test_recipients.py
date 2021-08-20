@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from mock import patch
 
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -13,7 +14,6 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
-from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import update_case

@@ -1,4 +1,4 @@
-from corehq.apps.data_interfaces.tests.util import create_case
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import partitioned, run_with_all_backends
