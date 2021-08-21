@@ -1,12 +1,15 @@
 import uuid
 from collections import Counter
-
 from datetime import date
-from django.test.testcases import SimpleTestCase
+
 from django.test import TestCase
+from django.test.testcases import SimpleTestCase
+
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearchProperty,
@@ -14,20 +17,25 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.case_search.const import RELEVANCE_SCORE
-from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    FuzzyProperties,
+    IgnorePatterns,
+)
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
     get_related_case_relationships,
-    get_related_case_results, get_related_cases,
+    get_related_case_results,
+    get_related_cases,
 )
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
     case_property_text_query,
     flatten_result,
 )
-from corehq.elastic import get_es_new, SIZE_LIMIT
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.elastic import SIZE_LIMIT, get_es_new
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     run_with_sql_backend,
@@ -39,7 +47,6 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 @es_test
@@ -574,6 +581,25 @@ class TestCaseSearchLookups(TestCase):
             ['c1', 'c2']
         )
         fuzzy_properties.delete()
+        config.delete()
+
+    def test_ignore_patterns(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'person', 'phone_number': '8675309'},
+            {'_id': 'c2', 'case_type': 'person', 'phone_number': '9045555555'},
+        ]
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        pattern = IgnorePatterns.objects.create(
+            domain=self.domain, case_type='person', case_property='phone_number', regex="+1")
+        config.ignore_patterns.add(pattern)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['person'], {'phone_number': '+18675309'}).search_es,
+            None,
+            ['c1']
+        )
+        pattern.delete()
         config.delete()
 
     def test_multiple_case_types(self):
