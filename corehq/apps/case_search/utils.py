@@ -175,7 +175,7 @@ class CaseSearchCriteria(object):
                 else:
                     value = re.sub(to_remove, '', value)
 
-            fuzzy = key in self.fuzzy_properties
+            fuzzy = key in self._fuzzy_properties
             if '/' in key:
                 query = '{} = "{}"'.format(key, value)
                 self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=fuzzy)
@@ -183,15 +183,12 @@ class CaseSearchCriteria(object):
                 self.search_es = self.search_es.case_property_query(key, value, fuzzy=fuzzy)
 
     @cached_property
-    def fuzzy_properties(self):
-        fuzzies = []
-        for case_type in self.case_types:
-            try:
-                fuzzies += self.config.fuzzy_properties.get(
-                    domain=self.domain, case_type=case_type).properties
-            except FuzzyProperties.DoesNotExist:
-                fuzzies = []
-        return fuzzies
+    def _fuzzy_properties(self):
+        return [
+            prop for properties_config in
+            self.config.fuzzy_properties.filter(domain=self.domain, case_type__in=self.case_types)
+            for prop in properties_config.properties
+        ]
 
 
 def get_related_cases(domain, app_id, case_types, cases):

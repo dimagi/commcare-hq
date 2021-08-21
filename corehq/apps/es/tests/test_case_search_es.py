@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.case_search.const import RELEVANCE_SCORE
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
     get_related_case_relationships,
@@ -556,6 +556,25 @@ class TestCaseSearchLookups(TestCase):
         self.assertEqual(ids, set(result_ids))
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
+
+    def test_fuzzy_properties(self):
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Neu York'},
+            {'_id': 'c3', 'case_type': 'show', 'description': 'Boston'},
+        ]
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        fuzzy_properties = FuzzyProperties.objects.create(domain=self.domain, case_type='song', properties=['description'])
+        config.fuzzy_properties.add(fuzzy_properties)
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            CaseSearchCriteria(self.domain, ['song', 'show'], {'description': 'New York'}).search_es,
+            None,
+            ['c1', 'c2']
+        )
+        fuzzy_properties.delete()
+        config.delete()
 
     def test_multiple_case_types(self):
         cases = [
