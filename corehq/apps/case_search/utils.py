@@ -113,14 +113,6 @@ class CaseSearchCriteria(object):
                     key, gte=startdate, lte=enddate)
 
     def _add_case_property_queries(self):
-        fuzzies = []
-        for case_type in self.case_types:
-            try:
-                fuzzies += self.config.fuzzy_properties.get(
-                    domain=self.domain, case_type=case_type).properties
-            except FuzzyProperties.DoesNotExist:
-                fuzzies = []
-
         for key, value in self.criteria.items():
             if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
                 continue
@@ -141,11 +133,23 @@ class CaseSearchCriteria(object):
                 else:
                     value = re.sub(to_remove, '', value)
 
+            fuzzy = key in self.fuzzy_properties
             if '/' in key:
                 query = '{} = "{}"'.format(key, value)
-                self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=(key in fuzzies))
+                self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=fuzzy)
             else:
-                self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+                self.search_es = self.search_es.case_property_query(key, value, fuzzy=fuzzy)
+
+    @cached_property
+    def fuzzy_properties(self):
+        fuzzies = []
+        for case_type in self.case_types:
+            try:
+                fuzzies += self.config.fuzzy_properties.get(
+                    domain=self.domain, case_type=case_type).properties
+            except FuzzyProperties.DoesNotExist:
+                fuzzies = []
+        return fuzzies
 
 
 def get_related_cases(domain, app_id, case_types, cases):
