@@ -84,4 +84,5 @@ branches:
     - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
+    - rc/audit-log-ux # Robert Aug 22
 submodules: { }
