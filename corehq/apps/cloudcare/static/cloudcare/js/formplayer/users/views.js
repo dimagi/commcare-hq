@@ -52,19 +52,26 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onClickUser: function () {
             Util.confirmationModal({
-                title: gettext('Log in as ' + this.model.get('username') + '?'),
+                title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
                     hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
-                    FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
                             model: FormplayerFrontend.getChannel().request('currentUser'),
                         })
                     );
+                    var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
+                    if (loginAsNextOptions) {
+                        FormplayerFrontend.trigger("clearLoginAsNextOptions");
+                        var menusController = hqImport("cloudcare/js/formplayer/menus/controller");
+                        menusController.selectMenu(loginAsNextOptions);
+                    } else {
+                        FormplayerFrontend.trigger('navigateHome');
+                    }
                 }.bind(this),
             });
         },
