@@ -200,7 +200,7 @@
                   </label>
                   <span data-bind="makeHqHelp: { description: '{% trans "Use the Data Dictionary to manage available case types." %}'}"></span>
                   <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8 controls">
-                      <select multiple name="case_types" class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: caseTypes">
+                      <select multiple name="case_types" class="form-control" required data-bind="select2: availableCaseTypes, selectedOptions: caseTypes">
                       </select>
                   </div>
                 </div>
