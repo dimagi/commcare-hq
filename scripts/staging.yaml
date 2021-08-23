@@ -82,4 +82,5 @@ branches:
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
     - rc/audit-log-ux # Robert Aug 22
     - jm/es5-containers  # Joel Aug 23
+    - es/blank-case-search  # Ethan Aug 23
 submodules: { }
