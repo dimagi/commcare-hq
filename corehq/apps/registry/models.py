@@ -68,6 +68,9 @@ class DataRegistry(models.Model):
     class Meta:
         unique_together = ('domain', 'slug')
 
+    def __repr__(self):
+        return f"DataRegistry(id='{self.id}', domain='{self.domain}', slug='{self.slug}')"
+
     @classmethod
     @transaction.atomic
     def create(cls, user, domain, name):
@@ -149,6 +152,10 @@ class RegistryInvitation(models.Model):
     class Meta:
         unique_together = ("registry", "domain")
 
+    def __repr__(self):
+        return (f"RegistryInvitation(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', status='{self.status}')")
+
     @transaction.atomic
     def accept(self, user):
         self.status = self.STATUS_ACCEPTED
@@ -171,6 +178,10 @@ class RegistryGrant(models.Model):
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
 
+    def __repr__(self):
+        return (f"RegistryGrant(registry_id='{self.registry_id}', "
+                f"from_domain='{self.from_domain}', to_domains='{self.to_domains}')")
+
 
 class RegistryPermission(models.Model):
     """This model controls which users in a domain can access the data registry."""
@@ -180,6 +191,10 @@ class RegistryPermission(models.Model):
 
     class Meta:
         unique_together = ('registry', 'domain')
+
+    def __repr__(self):
+        return (f"RegistryPermission(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')")
 
 
 class RegistryAuditLog(models.Model):
