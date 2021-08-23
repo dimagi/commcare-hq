@@ -18,7 +18,12 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es import queries
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_range_query,
+    flatten_result,
+)
 
 
 class CaseSearchCriteria(object):
@@ -113,8 +118,10 @@ class CaseSearchCriteria(object):
             match = pattern.match(value)
             if match:
                 _, _, startdate, enddate = value.split('__')
-                self.search_es = self.search_es.date_range_case_property_query(
-                    key, gte=startdate, lte=enddate)
+                self.search_es = self.search_es.add_query(
+                    case_property_range_query(key, gte=startdate, lte=enddate),
+                    queries.MUST,
+                )
 
     def _add_case_property_queries(self):
         for key, value in self.criteria.items():

@@ -26,9 +26,11 @@ from corehq.apps.case_search.utils import (
     get_related_case_relationships,
     get_related_case_results,
 )
+from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
+    case_property_range_query,
     case_property_text_query,
     flatten_result,
 )
@@ -433,7 +435,10 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c3', 'dob': date(2020, 3, 3)},
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchES().domain(self.domain).date_range_case_property_query('dob', gte='2020-03-02', lte='2020-03-03'),
+            CaseSearchES().domain(self.domain).add_query(
+                case_property_range_query('dob', gte='2020-03-02', lte='2020-03-03'),
+                clause=queries.MUST
+            ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
             ['c2', 'c3']
         )
