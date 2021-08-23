@@ -315,6 +315,19 @@ def create_registry(request, domain):
     name = request.POST.get("name")
     description = request.POST.get("description")
     case_types = request.POST.getlist("case_types")
+
+    if not name:
+        messages.error(request, _("Registry 'name' is required"))
+        return redirect("data_registries", domain=domain)
+
+    if not case_types:
+        messages.error(request, _("Registry 'case types' is required"))
+        return redirect("data_registries", domain=domain)
+
+    if DataRegistry.objects.filter(name=name).exists():
+        messages.error(request, _("Registry 'name' must be unique"))
+        return redirect("data_registries", domain=domain)
+
     schema = [{"case_type": case_type} for case_type in case_types]
     registry = DataRegistry.create(
         request.user, domain, name,
