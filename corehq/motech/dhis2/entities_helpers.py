@@ -9,6 +9,7 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.dhis2.const import XMLNS_DHIS2
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.exceptions import (
@@ -214,6 +215,22 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         case_updates[case_property] = tei_id
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+
+
+def get_supercase(case_trigger_info, relationship_config):
+
+    def matches_config(idx):
+        return (
+            idx.identifier == relationship_config.identifier
+            and idx.referenced_type == relationship_config.referenced_type
+            and idx.relationship == relationship_config.relationship
+        )
+
+    case_accessor = CaseAccessors(case_trigger_info.domain)
+    case = case_accessor.get_case(case_trigger_info.case_id)
+    for index in case.live_indices:
+        if matches_config(index):
+            return case_accessor.get_case(index.referenced_id)
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):
