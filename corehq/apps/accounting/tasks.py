@@ -1,7 +1,7 @@
+import csv
 import datetime
 import io
 import json
-import uuid
 from datetime import date
 
 from django.conf import settings
@@ -11,7 +11,6 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-import csv
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
@@ -21,25 +20,19 @@ from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
 
-from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
-from corehq.apps.accounting.utils.downgrade import (
-    downgrade_eligible_domains,
-)
-from corehq.apps.accounting.utils.subscription import (
-    assign_explicit_unpaid_subscription,
-)
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
+from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.exceptions import (
-    CreditLineError,
-    InvoiceError,
-    NoActiveSubscriptionError,
-    MultipleActiveSubscriptionsError,
+    AccountingCommunicationError,
     ActiveSubscriptionWithoutDomain,
     CreditLineBalanceMismatchError,
-    AccountingCommunicationError,
+    CreditLineError,
+    InvoiceError,
+    MultipleActiveSubscriptionsError,
+    NoActiveSubscriptionError,
     SubscriptionTaskError,
 )
 from corehq.apps.accounting.invoicing import (
@@ -53,7 +46,6 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FeatureType,
     InvoicingPlan,
-    StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -65,12 +57,19 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.payment_handlers import (
     AutoPayInvoicePaymentHandler,
 )
+from corehq.apps.accounting.task_utils import (
+    get_context_to_send_autopay_failed_email,
+)
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
     get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
+)
+from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
+from corehq.apps.accounting.utils.subscription import (
+    assign_explicit_unpaid_subscription,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
@@ -85,7 +84,6 @@ from corehq.const import (
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
-from corehq.util.view_utils import absolute_reverse
 
 _invoicing_complete_soft_assert = soft_assert(
     to=[
@@ -545,39 +543,22 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice):
-    subscription = invoice.subscription
-    auto_payer = subscription.account.auto_pay_user
-    payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-    autopay_card = payment_method.get_autopay_card(subscription.account)
-    web_user = WebUser.get_by_username(auto_payer)
-    if web_user:
-        recipient = web_user.get_email()
-    else:
-        recipient = auto_payer
-    domain = invoice.get_domain()
-
-    context = {
-        'domain': domain,
-        'subscription_plan': subscription.plan_version.plan.name,
-        'billing_date': datetime.date.today(),
-        'invoice_number': invoice.invoice_number,
-        'autopay_card': autopay_card,
-        'domain_url': absolute_reverse('dashboard_default', args=[domain]),
-        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain]),
-        'support_email': settings.INVOICING_CONTACT_EMAIL,
-    }
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def send_autopay_failed(invoice_id):
+    context = get_context_to_send_autopay_failed_email(invoice_id)
 
     template_html = 'accounting/email/autopay_failed.html'
+    html_content = render_to_string(template_html, context['template_context'])
+
     template_plaintext = 'accounting/email/autopay_failed.txt'
+    text_content = render_to_string(template_plaintext, context['template_context'])
 
     send_HTML_email(
-        subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
-        recipient=recipient,
-        html_content=render_to_string(template_html, context),
-        text_content=render_to_string(template_plaintext, context),
-        email_from=get_dimagi_from_email(),
+        subject=_(f"Subscription Payment for CommCare Invoice {context['invoice_number']} was declined"),
+        recipient=context['email_to'],
+        html_content=html_content,
+        text_content=text_content,
+        email_from=context['email_from'],
     )
 
 

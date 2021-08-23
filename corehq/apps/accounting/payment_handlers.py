@@ -453,7 +453,7 @@ class AutoPayInvoicePaymentHandler(object):
             "error = {error}"
             .format(invoice=invoice.id, domain=invoice.get_domain(), error=err)
         )
-        send_autopay_failed.delay(invoice)
+        send_autopay_failed.delay(invoice.id)
 
     @staticmethod
     def _handle_card_errors(invoice, e):
