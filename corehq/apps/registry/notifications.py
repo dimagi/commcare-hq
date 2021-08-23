@@ -26,6 +26,7 @@ def send_invitation_response_email(registry, invitation):
         subject = _("CommCare Data Registry: Participant opted out")
 
     context = {
+        'invitation': invitation,
         'domain': invitation.domain,
         'owning_domain': registry.domain,
         'registry_name': registry.name,
