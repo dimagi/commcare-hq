@@ -160,12 +160,15 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.copyOf = options.copyOf;
         this.sessionId = options.sessionId;
         this.selections = options.selections;
+        this.endpointId = options.endpointId;
+        this.endpointArgs = options.endpointArgs;
         this.page = options.page;
         this.search = options.search;
         this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
+        this.forceLoginAs = options.forceLoginAs;
         this.forceManualAction = options.forceManualAction;
 
         this.setSelections = function (selections) {
@@ -224,6 +227,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.forceManualAction = force;
         };
 
+        this.replaceEndpoint = function (selections) {
+            delete this.endpointId;
+            delete this.endpointArgs;
+            this.selections = selections || [];
+        };
+
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.selections = null;
@@ -270,6 +279,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         var dict = {
             appId: self.appId,
             copyOf: self.copyOf,
+            endpointId: self.endpointId,
+            endpointArgs: self.endpointArgs,
             sessionId: self.sessionId,
             selections: self.selections,
             page: self.page,
@@ -277,6 +288,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
+            forceLoginAs: self.forceLoginAs,
             forceManualAction: self.forceManualAction,
         };
         return JSON.stringify(dict);
@@ -287,6 +299,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         var options = {
             'appId': data.appId,
             'copyOf': data.copyOf,
+            'endpointId': data.endpointId,
+            'endpointArgs': data.endpointArgs,
             'sessionId': data.sessionId,
             'selections': data.selections,
             'page': data.page,
@@ -294,6 +308,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'queryData': data.queryData,
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
+            'forceLoginAs': data.forceLoginAs,
             'forceManualAction': data.forceManualAction,
         };
         return new Util.CloudcareUrl(options);
