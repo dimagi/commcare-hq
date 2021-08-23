@@ -21,9 +21,7 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
@@ -141,7 +139,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = six.moves.urllib.parse.quote(
+        cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -580,6 +578,7 @@ def _message_to_sentry_thread_topic(message):
 @login_and_domain_required
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
+@location_safe
 def session_endpoint(request, domain, app_id, endpoint_id):
     def _fail(error):
         messages.error(request, error)
@@ -602,12 +601,15 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
     if force_login_as and not can_use_restore_as(request):
-        _fail(_("This user cannot access this link."))
+        return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
         "appId": build._id,
         "endpointId": endpoint_id,
-        "endpointArgs": request.GET,
+        "endpointArgs": {
+            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+            for key, value in request.GET.items()
+        },
         "forceLoginAs": force_login_as,
     })
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
