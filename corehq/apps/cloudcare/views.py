@@ -21,9 +21,7 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
@@ -141,7 +139,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = six.moves.urllib.parse.quote(
+        cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -609,7 +607,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         "appId": build._id,
         "endpointId": endpoint_id,
         "endpointArgs": {
-            six.moves.urllib.parse.quote_plus(key): six.moves.urllib.parse.quote_plus(value)
+            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
             for key, value in request.GET.items()
         },
         "forceLoginAs": force_login_as,
