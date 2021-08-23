@@ -141,8 +141,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     /*
-     * A custom binding for using multiselect in knockout content.
-     * This binding does not handle dynamic options, but could be extended to do so.
+     * A custom binding for setting multiselect properties in knockout content.
+     * This binding does not handle dynamic properties, but could be extended to do so.
+     * For a list of available options, see http://loudev.com/ under Options
      */
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
@@ -153,6 +154,22 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 options.selectedHeaderTitle || gettext("Selected items"),
                 options.searchItemTitle || gettext("Search items")
             );
+        },
+    };
+
+    /*
+    * A custom binding for dynamically updating select options when using the multiselect binding
+    * Replace the `options` binding with `multiselectOptions`, and the binding will take care of the rest
+    */
+    ko.bindingHandlers.multiselectOptions = {
+        init: function (element, valueAccessor) {
+            // add the `options` binding to the element, valueAccessor() should return an observable
+            ko.applyBindingsToNode(element, {options: valueAccessor()});
+        },
+        update: function (element, valueAccessor) {
+            // have to access the observable to get the `update` method to fire on changes
+            ko.unwrap(valueAccessor());
+            $(element).multiSelect('refresh');
         },
     };
 

@@ -337,9 +337,9 @@ class EndOfFormNavigationWorkflow(object):
         else:
             frame_children = _get_datums_matched_to_source(target_frame_children, source_form_datums)
 
-        # I think this is a bug - it only executes when linking to a child of the current module
-        if target_module in module.get_child_modules():
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, module)
+        if target_module.root_module_id:
+            root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
+            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module)
 
         return StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums)
 

@@ -179,7 +179,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
-    for xpath in xpaths:
+    for xpath in set(xpaths):
         if not xpath:
             continue
 

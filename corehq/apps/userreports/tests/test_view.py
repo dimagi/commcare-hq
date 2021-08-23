@@ -21,7 +21,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.users.models import Permissions, SQLUserRole, WebUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
 
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
@@ -180,6 +180,27 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    def test_report_preview_data(self):
+        """
+        Test the output of ConfigurableReportView.export_table()
+        """
+        report, view = self._build_report_and_view()
+
+        actual = ConfigurableReportView.report_preview_data(report.domain, report)
+        expected = {
+            "table": [
+                ['report_column_display_fruit', 'report_column_display_percent'],
+                ['apple', '150%']
+            ],
+            "map_config": report.map_config,
+            "chart_configs": report.charts,
+            "aaData": [{
+                "report_column_col_id_fruit": "apple",
+                "report_column_col_id_percent": "150%"
+            }]
+        }
+        self.assertEqual(actual, expected)
+
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
@@ -225,7 +246,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
 
             # user_role should be deleted along with the domain.
-            user_role = SQLUserRole.create(
+            user_role = UserRole.create(
                 domain=domain.name,
                 name=rolename,
                 permissions=Permissions(edit_commcare_users=True,

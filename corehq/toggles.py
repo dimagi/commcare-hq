@@ -1394,14 +1394,6 @@ VIEW_APP_CHANGES = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
-COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
-    'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
-    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 ACTIVE_COUCH_DOMAINS = StaticToggle(
     'active_couch_domains',
     "Domains that are still on the Couch DB backend which we consider most "
@@ -2110,5 +2102,13 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
     'Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
+)
+
+DO_NOT_REPUBLISH_DOCS = StaticToggle(
+    'do_not_republish_docs',
+    'Prevents automatic attempts to repair stale ES docs in this domain',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )

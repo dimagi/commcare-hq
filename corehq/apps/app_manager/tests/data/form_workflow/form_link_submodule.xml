@@ -26,9 +26,10 @@
     </session>
     <stack>
       <create if="true()">
-        <command value="'m1'"/>
+        <command value="'m0'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <datum id="case_id_new_visit_0" value="uuid()"/>
+        <command value="'m1'"/>
         <datum id="case_id_load_visit_0" value="instance('commcaresession')/session/data/case_id_load_visit_0"/>
         <command value="'m1-f1'"/>
       </create>

@@ -46,7 +46,7 @@ class TestEnterpriseSMSBillablesReport(TestCase):
 
         report = self.create_interface(
             report_filter_date_created_use_filter='on',
-            date_sent_startdate='2021-06-30',
+            date_sent_startdate='2021-01-01',  # ensure date sent includes all models
             date_sent_enddate='2021-07-30',
             date_created_startdate='2021-06-30',
             date_created_enddate='2021-07-30'
@@ -245,6 +245,8 @@ class TestEnterpriseSMSBillablesReport(TestCase):
         else:
             smsbillable.gateway_fee = None
         smsbillable.save()
+        SmsBillable.objects.filter(id=smsbillable.id).update(date_created=date)
+        return smsbillable
 
     def create_fake_sms(self, backend_api_id, backend_couch_id, text, date):
         msg = SMS(

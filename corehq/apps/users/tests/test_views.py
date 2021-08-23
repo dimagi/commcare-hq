@@ -5,8 +5,8 @@ from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, Permissions, UserRole
-from corehq.apps.users.models_sql import SQLUserRole
+from corehq.apps.users.models import CouchUser, WebUser, Permissions
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.util.test_utils import generate_cases
@@ -96,7 +96,7 @@ class TestUpdateRoleFromView(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.role = SQLUserRole(
+        cls.role = UserRole(
             domain=cls.domain,
             name="role1",
         )
@@ -108,7 +108,7 @@ class TestUpdateRoleFromView(TestCase):
         super().tearDownClass()
 
     def tearDown(self):
-        for role in SQLUserRole.objects.all():
+        for role in UserRole.objects.all():
             if role.id != self.role.id:
                 role.delete()
 
@@ -122,10 +122,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertFalse(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [self.role.couch_id])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
-
-        couch_role = UserRole.get(role.couch_id)
-        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
-        self.assertEqual(couch_role.assignable_by, [self.role.couch_id])
 
     def test_update_role(self):
         self.test_create_role()
@@ -141,10 +137,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertTrue(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
-
-        couch_role = UserRole.get(role.couch_id)
-        self.assertEqual(couch_role.permissions.to_list(), role.permissions.to_list())
-        self.assertEqual(couch_role.assignable_by, [])
 
     def test_landing_page_validation(self):
         role_data = self.BASE_JSON.copy()

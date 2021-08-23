@@ -27,7 +27,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import (
     CommCareUser,
     Invitation,
-    SQLUserRole,
+    UserRole,
     WebUser,
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -50,8 +50,8 @@ class AllCommCareUsersTest(TestCase):
         bootstrap_location_types(cls.ccdomain.name)
 
         initialize_domain_with_default_roles(cls.ccdomain.name)
-        cls.user_roles = SQLUserRole.objects.get_by_domain(cls.ccdomain.name)
-        cls.custom_role = SQLUserRole.create(cls.ccdomain.name, "Custom Role")
+        cls.user_roles = UserRole.objects.get_by_domain(cls.ccdomain.name)
+        cls.custom_role = UserRole.create(cls.ccdomain.name, "Custom Role")
 
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")

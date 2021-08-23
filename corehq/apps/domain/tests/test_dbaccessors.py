@@ -24,7 +24,6 @@ from corehq.apps.domain.dbaccessors import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import UserRole
 
 
 class DBAccessorsTest(TestCase):
@@ -55,19 +54,6 @@ class DBAccessorsTest(TestCase):
             get_doc_count_in_domain_by_class, self.domain, CommCareCase)
 
         self.assertEqual(get(), 2)
-
-    def test_get_doc_ids_in_domain_by_class(self):
-        user_role = UserRole(domain=self.domain)
-        group = Group(domain=self.domain)
-        xform = XFormInstance(domain=self.domain)
-        user_role.save()
-        group.save()
-        xform.save()
-        self.addCleanup(user_role.delete)
-        self.addCleanup(group.delete)
-        self.addCleanup(xform.delete)
-        [doc_id] = get_doc_ids_in_domain_by_class(self.domain, UserRole)
-        self.assertEqual(doc_id, user_role.get_id)
 
     def test_get_docs_in_domain_by_class(self):
         group = Group(domain=self.domain)

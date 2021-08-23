@@ -429,7 +429,8 @@ class UsersAtLocationForm(forms.Form):
         widget=Select2Ajax(multiple=True),
     )
 
-    def __init__(self, domain_object, location, *args, **kwargs):
+    def __init__(self, request, domain_object, location, *args, **kwargs):
+        self.request = request
         self.domain_object = domain_object
         self.location = location
         super(UsersAtLocationForm, self).__init__(
@@ -488,13 +489,35 @@ class UsersAtLocationForm(forms.Form):
         return self.data.getlist('users-selected_ids')
 
     def save(self):
+        from corehq.apps.users.views.utils import log_commcare_user_locations_changes
+
         selected_users = set(self.cleaned_data['selected_ids'])
         previous_users = set([u['id'] for u in self.get_users_at_location()])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users
+        users_to_be_updated = set.union(to_add, to_remove)
+
+        # fetch before updates and fetch from Couch to avoid any ES lag
+        targeted_users_old_locations = {
+            user_doc['_id']: {
+                'location_id': user_doc['location_id'],
+                'assigned_location_ids': user_doc['assigned_location_ids']
+            }
+            for user_doc in iter_docs(CommCareUser.get_db(), users_to_be_updated)
+        }
+
         self.unassign_users(to_remove)
         self.assign_users(to_add)
         self.cache_users_at_location(selected_users)
+
+        # re-fetch users to get fresh locations
+        for updated_user_doc in iter_docs(CommCareUser.get_db(), users_to_be_updated):
+            updated_user = CommCareUser.wrap_correctly(updated_user_doc)
+            user_old_locations = targeted_users_old_locations[updated_user.get_id]
+            log_commcare_user_locations_changes(
+                self.domain_object.name, self.request, updated_user,
+                old_location_id=user_old_locations['location_id'],
+                old_assigned_location_ids=user_old_locations['assigned_location_ids'])
 
     def cache_users_at_location(self, selected_users):
         user_cache_list = []

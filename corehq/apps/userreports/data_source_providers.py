@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
+from corehq.apps.userreports.dbaccessors import get_all_registry_data_source_ids, \
+    get_registry_data_sources_modified_since
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    StaticDataSourceConfiguration,
+    StaticDataSourceConfiguration, RegistryDataSourceConfiguration,
 )
+from dimagi.utils.couch.database import iter_docs
 
 
 class DataSourceProvider(metaclass=ABCMeta):
@@ -13,10 +16,12 @@ class DataSourceProvider(metaclass=ABCMeta):
 
     @abstractmethod
     def get_all_data_sources(self):
+        """Return a list of active data sources"""
         pass
 
     @abstractmethod
     def get_data_sources_modified_since(self, timestamp):
+        """Return a list of active data sources modified since the given timestamp"""
         pass
 
     def get_data_sources(self):
@@ -41,6 +46,17 @@ class DynamicDataSourceProvider(DataSourceProvider):
             reduce=False,
             include_docs=True
         ).all()
+
+
+class RegistryDataSourceProvider(DataSourceProvider):
+
+    def get_all_data_sources(self):
+        active_ids = get_all_registry_data_source_ids(is_active=True)
+        for result in iter_docs(RegistryDataSourceConfiguration.get_db(), active_ids):
+            yield RegistryDataSourceConfiguration.wrap(result)
+
+    def get_data_sources_modified_since(self, timestamp):
+        return get_registry_data_sources_modified_since(timestamp)
 
 
 class StaticDataSourceProvider(DataSourceProvider):

@@ -228,6 +228,7 @@ class TableauVisualization(models.Model):
     domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
+    upstream_id = models.CharField(max_length=32, null=True)
 
     @property
     def name(self):

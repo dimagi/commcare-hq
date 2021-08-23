@@ -1,11 +1,10 @@
 language: python
-sudo: required
 group: edge
 branches:
   only:
     - master
 env:
-  matrix:
+  jobs:
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
@@ -25,6 +24,8 @@ env:
     - secure: "YJYYdkYEzN33IwHGMhFy8NIKy5fm3IjCSngwYSLTF2wwmtVTdDSObQbRwvU8zN7aziAbyYvfDQjrQZ+XG8q7RhcirqBkV8Odvzc+OxyRqw2m5Rmr6IU/Cjdja5BXuKuZBlmNmh0fzZguH7EwteAh8lKwzPs+05WCbjZ2cA5YupE="
     # DOCKER_PASSWORD
     - secure: "P6wHEvcVIStEeWPVyS7DY5dEEhCTxMlQ0K6e35Q/4tj1kBvrVMquCs1r5i6TWSpVSYrEePvMabqRljShpyKJhjSJCyP4BkqXVsu9VWpI29qROEZeIGMxu2X80LfpPsvxhZeQ9dGtIUyUgSRxgwnSNI1m8Tzk8vptuDD3bX26NCQ="
+    # CODECOV_TOKEN
+    - secure: "b5cW5K0gK6wUqZh8lKZSmsj7Bxyh7vaGMtBOnIAWZ+ksvE1SExahvpQ/ANI+9zczBxhluFiVFgPwdmWZ0nAi4gKsmSLEigu7nQJLkeWxcfzQj8KJXtoM+Z7ykDPKP117p5Sp0GN+XhBvih/JUqRMFLp8xtIQZGYevtqqZwHm9ms="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -36,10 +37,6 @@ before_script:
   - docker version
   - docker-compose version
 script:
-  # workaround for env vars
-  - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
-  - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
-  - export DATADOG_API_KEY=$DATADOG_API_KEY
   - if [[ "$DOCKER_USERNAME" && "$DOCKER_PASSWORD" ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
   - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --max-test-time=29
 after_success:

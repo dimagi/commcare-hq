@@ -18,7 +18,7 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    ReportConfiguration,
+    ReportConfiguration, RegistryDataSourceConfiguration,
 )
 from corehq.sql_db.connections import connection_manager
 
@@ -31,6 +31,10 @@ def get_sample_data_source():
     return _get_sample_doc('sample_data_source.json', DataSourceConfiguration)
 
 
+def get_sample_registry_data_source(**kwargs):
+    return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration, **kwargs)
+
+
 def get_data_source_with_related_doc_type():
     return _get_sample_doc('parent_child_data_source.json', DataSourceConfiguration)
 
@@ -39,11 +43,12 @@ def get_data_source_with_repeat():
     return _get_sample_doc('data_source_with_repeat.json', DataSourceConfiguration)
 
 
-def _get_sample_doc(filename, doc_class):
+def _get_sample_doc(filename, doc_class, **kwargs):
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, filename)
     with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
+        structure.update(kwargs)
         return doc_class.wrap(structure)
 
 
