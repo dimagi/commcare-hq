@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
 
-from django.test import override_settings
 from django.db.models import Q
 from django.test import TestCase
 
