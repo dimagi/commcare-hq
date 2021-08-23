@@ -30,7 +30,7 @@ def send_invitation_response_email(registry, invitation):
         'domain': invitation.domain,
         'owning_domain': registry.domain,
         'registry_name': registry.name,
-        'registry_url': reverse('manage_registry', args=[invitation.domain, registry.slug], absolute=True)
+        'registry_url': reverse('manage_registry', args=[registry.domain, registry.slug], absolute=True)
     }
 
     _send_registry_email(registry.domain, subject, 'invitation_response', context)
