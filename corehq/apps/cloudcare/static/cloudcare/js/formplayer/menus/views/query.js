@@ -20,10 +20,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (model.get("input") === "daterange") {
                 return "__range__" + value.replace(separator, "__");
             }
-            if (model.get('input') === 'address') {
-                // skip geocoder address
-                return true;
-            }
             if (model.get('input') === 'select') {
                 return value.join(selectDelimiter);
             }
@@ -256,6 +252,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 answers = {},
                 model = this.parentModel;
             $inputGroups.each(function (index) {
+                if (model[index].get('input') === 'address') {
+                    return;  // skip geocoder address
+                }
                 var queryValue = $(this).find('.query-field').val(),
                     fieldId = model[index].get('id'),
                     searchForBlank = $(this).find('.search-for-blank').prop('checked'),
