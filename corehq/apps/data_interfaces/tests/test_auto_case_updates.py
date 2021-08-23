@@ -32,7 +32,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
-    use_sql_backend,
+    run_with_sql_backend,
     set_case_property_directly,
 )
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
@@ -99,7 +99,7 @@ def _create_empty_rule(domain, case_type='person', active=True, deleted=False):
     )
 
 
-@use_sql_backend
+@run_with_sql_backend
 class BaseCaseRuleTest(TestCase):
     domain = 'case-rule-test'
 

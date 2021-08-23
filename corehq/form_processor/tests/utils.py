@@ -178,6 +178,8 @@ run_with_all_backends = functools.partial(
     nose_tags={'all_backends': True}
 )
 
+run_with_sql_backend = override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+
 
 def partitioned(cls):
     """
