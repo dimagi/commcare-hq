@@ -630,19 +630,20 @@ class TestCaseSearchLookups(TestCase):
         )
         config.delete()
 
-    def test_blank_property_value(self):
+    def test_blank_case_search(self):
         # foo = '' should match all cases where foo is empty or absent
         config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': ''},
-                {'_id': 'c4'},
-            ],
-            CaseSearchCriteria(self.domain, [self.case_type], {'foo': ''}).search_es,
-            None,
-            ['c3', 'c4']
-        )
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'foo': 'redbeard'},
+            {'_id': 'c2', 'foo': 'blackbeard'},
+            {'_id': 'c3', 'foo': ''},
+            {'_id': 'c4'},
+        ])
+        for criteria, expected in [
+            ({'foo': ''}, ['c3', 'c4']),
+            ({'foo': ['', 'blackbeard']}, ['c2', 'c3', 'c4']),
+        ]:
+            actual = CaseSearchCriteria(self.domain, [self.case_type], criteria).search_es.get_ids()
+            msg = f"{criteria} yielded {actual}, not {expected}"
+            self.assertItemsEqual(actual, expected, msg=msg)
         config.delete()

@@ -23,9 +23,10 @@ from corehq.apps.case_search.models import (
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
 )
-from corehq.apps.es import queries
+from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_missing,
     case_property_query,
     case_property_range_query,
     flatten_result,
@@ -165,7 +166,19 @@ class CaseSearchCriteria(object):
         for key, value in self.criteria.items():
             if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
                 continue
-            self.search_es = self.search_es.add_query(self._get_query(key, value), queries.MUST)
+            if isinstance(value, list) and '' in value:
+                value = [v for v in value if v != '']
+                if value:
+                    value = value[0] if len(value) == 1 else value
+                    query = filters.OR(
+                        self._get_query(key, value),
+                        case_property_missing(key),
+                    )
+                else:
+                    query = case_property_missing(key)
+            else:
+                query = self._get_query(key, value)
+            self.search_es = self.search_es.add_query(query, queries.MUST)
 
     def _get_query(self, key, value):
         if not isinstance(value, list) and value.startswith('__range__'):
