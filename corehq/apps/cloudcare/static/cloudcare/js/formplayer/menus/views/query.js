@@ -69,6 +69,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
+            searchForBlank: '.search-for-blank',
+        },
+
+        events: {
+            'change @ui.searchForBlank': 'toggleBlankSearch',
         },
 
         modelEvents: {
@@ -212,6 +217,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
             if (this.options.model.get('hidden') === 'true') {
                 this.$el.hide();
+            }
+        },
+
+        toggleBlankSearch: function (e) {
+            // When checking the blank search box for a geocoder field, toggle all its receiver fields
+            var geocoderTopic = this.options.model.get('id');
+            if (this.options.model.get('input') === 'address') {
+                _.each($('.query-input-group'), function (elem) {
+                    var $queryField = $(elem).find('.query-field'),
+                        $searchForBlank = $(elem).find('.search-for-blank'),
+                        receiveExpression = $queryField.data('receive');
+                    if (receiveExpression && receiveExpression.split("-")[0] === geocoderTopic) {
+                        $searchForBlank.prop('checked', $(e.target).prop('checked'));
+                    }
+                });
             }
         },
 
