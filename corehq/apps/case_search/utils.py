@@ -112,28 +112,25 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
-        self._validate_multiple_parameter_values()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_case_property_queries()
 
-    def _validate_multiple_parameter_values(self):
+    def _validate_multiple_parameter_values(self, key, val):
+        if not isinstance(val, list):
+            return
         disallowed_multiple_value_parameters = [
             CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
             'owner_id',
             CASE_SEARCH_XPATH_QUERY_KEY,
         ]
-
-        for key, val in self.criteria.items():
-            if not isinstance(val, list):
-                continue
-            is_daterange = any([v.startswith('__range__') for v in val])
-            if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
-                raise CaseFilterError(
-                    _("Multiple values are only supported for simple text and range searches"),
-                    key
-                )
+        is_daterange = any([v.startswith('__range__') for v in val])
+        if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
+            raise CaseFilterError(
+                _("Multiple values are only supported for simple text and range searches"),
+                key
+            )
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
@@ -155,12 +152,11 @@ class CaseSearchCriteria(object):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
         #   used by App manager case-search feature
-        if not isinstance(value, list):
-            pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
-            match = pattern.match(value)
-            if match:
-                _, _, startdate, enddate = value.split('__')
-                return case_property_range_query(key, gte=startdate, lte=enddate),
+        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
+        match = pattern.match(value)
+        if match:
+            _, _, startdate, enddate = value.split('__')
+            return case_property_range_query(key, gte=startdate, lte=enddate),
 
     def _add_case_property_queries(self):
         for key, value in self.criteria.items():
@@ -181,6 +177,7 @@ class CaseSearchCriteria(object):
             self.search_es = self.search_es.add_query(query, queries.MUST)
 
     def _get_query(self, key, value):
+        self._validate_multiple_parameter_values(key, value)
         if not isinstance(value, list) and value.startswith('__range__'):
             return self._get_daterange_query(key, value)
 
