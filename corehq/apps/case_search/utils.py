@@ -9,7 +9,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.filter_dsl import CaseFilterError
+from corehq.apps.case_search.filter_dsl import (
+    CaseFilterError,
+    build_filter_from_xpath,
+)
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -21,6 +24,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_query,
     case_property_range_query,
     flatten_result,
 )
@@ -109,7 +113,7 @@ class CaseSearchCriteria(object):
             for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
                 self.search_es = self.search_es.blacklist_owner_id(blacklisted_owner_id)
 
-    def _add_daterange_query(self, key, value):
+    def _get_daterange_query(self, key, value):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
         #   used by App manager case-search feature
@@ -118,26 +122,25 @@ class CaseSearchCriteria(object):
             match = pattern.match(value)
             if match:
                 _, _, startdate, enddate = value.split('__')
-                self.search_es = self.search_es.add_query(
-                    case_property_range_query(key, gte=startdate, lte=enddate),
-                    queries.MUST,
-                )
+                return case_property_range_query(key, gte=startdate, lte=enddate),
 
     def _add_case_property_queries(self):
         for key, value in self.criteria.items():
             if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
                 continue
-            if not isinstance(value, list) and value.startswith('__range__'):
-                self._add_daterange_query(key, value)
-                continue
+            self.search_es = self.search_es.add_query(self._get_query(key, value), queries.MUST)
 
-            value = self._remove_ignored_patterns(key, value)
-            fuzzy = key in self._fuzzy_properties
-            if '/' in key:
-                query = '{} = "{}"'.format(key, value)
-                self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=fuzzy)
-            else:
-                self.search_es = self.search_es.case_property_query(key, value, fuzzy=fuzzy)
+    def _get_query(self, key, value):
+        if not isinstance(value, list) and value.startswith('__range__'):
+            return self._get_daterange_query(key, value)
+
+        value = self._remove_ignored_patterns(key, value)
+        fuzzy = key in self._fuzzy_properties
+        if '/' in key:
+            query = '{} = "{}"'.format(key, value)
+            return build_filter_from_xpath(self.domain, query, fuzzy=fuzzy),
+        else:
+            return case_property_query(key, value, fuzzy=fuzzy)
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:
