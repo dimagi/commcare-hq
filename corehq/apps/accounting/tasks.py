@@ -2,6 +2,7 @@ import csv
 import datetime
 import io
 import json
+from decimal import Decimal
 from datetime import date
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
+import simplejson
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
@@ -471,7 +473,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(serializer='pickle', ignore_result=True, acks_late=True)
+@task(ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 amount,
@@ -484,7 +486,18 @@ def create_wire_credits_invoice(domain_name,
         date_due=None,
         balance=amount,
     )
-    wire_invoice.items = invoice_items
+
+    deserialized_items = []
+    for item in invoice_items:
+        amount = item['amount']
+        deserialized_amount = simplejson.loads(amount)
+        if not isinstance(deserialized_amount, Decimal):
+            # there are cases (whole numbers), where simplejson does not load the value back as a Decimal
+            # so we need to coerce the value to be a Decimal
+            deserialized_amount = Decimal(deserialized_amount)
+        deserialized_items.append({'type': item['type'], 'amount': deserialized_amount})
+
+    wire_invoice.items = deserialized_items
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
