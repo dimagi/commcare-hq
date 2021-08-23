@@ -68,7 +68,7 @@ hqDefine("registry/js/registry_list", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
         });
 
         self.validatingPending = ko.observable(false);
@@ -76,7 +76,7 @@ hqDefine("registry/js/registry_list", [
         self.nameChecked = ko.observable(false);
         self.name.subscribe((value) => {
             self.validatingPending(true);
-            actions.validateName(self.name(), (isValid) => {
+            actions.validateName(value, (isValid) => {
                 self.nameValid(isValid);
                 self.nameChecked(true);
             }).always(() => {

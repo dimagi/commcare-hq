@@ -22,7 +22,7 @@ hqDefine("registry/js/registry_actions", [
             gettext("Opt in successful"),
             onSuccess
         )
-    }
+    };
 
     let reject = function (registrySlug, onSuccess) {
         return acceptOrReject(
@@ -31,7 +31,7 @@ hqDefine("registry/js/registry_actions", [
             gettext("Opt out successful"),
             onSuccess
         )
-    }
+    };
 
     let acceptOrReject = function (url, registrySlug, successMessage, onSuccess) {
         return $.post({
@@ -43,7 +43,7 @@ hqDefine("registry/js/registry_actions", [
             },
             error: handleError,
         });
-    }
+    };
 
     let manageRelatedModels = function (url, registrySlug, data, onSuccess) {
         return $.post({
@@ -58,17 +58,17 @@ hqDefine("registry/js/registry_actions", [
             },
             error: handleError,
         });
-    }
+    };
 
     let addInvitations = function (registrySlug, domains, onSuccess) {
         const data = {"action": "add", "domains": domains};
         return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
-    }
+    };
 
     let removeInvitation = function (registrySlug, invitationId, domain, onSuccess) {
         const data = {"action": "remove", "id": invitationId, "domain": domain};
         return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
-    }
+    };
 
     let validateName = function (name, onSuccess) {
         return $.post({
@@ -79,7 +79,7 @@ hqDefine("registry/js/registry_actions", [
             },
             error: handleError,
         });
-    }
+    };
 
     let editAttr = function (registrySlug, attr, data, onSuccess) {
         return $.post({
@@ -94,17 +94,17 @@ hqDefine("registry/js/registry_actions", [
             },
             error: handleError,
         });
-    }
+    };
 
     let createGrant = function (registrySlug, domains, onSuccess) {
         const data = {"action": "add", "domains": domains};
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
-    }
+    };
 
     let removeGrant = function (registrySlug, grantId, onSuccess) {
         const data = {"action": "remove", "id": grantId};
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
-    }
+    };
 
     return {
         acceptInvitation: accept,
