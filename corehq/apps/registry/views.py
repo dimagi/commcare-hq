@@ -169,6 +169,8 @@ def edit_registry_attr(request, domain, registry_slug, attr):
         value = request.POST.get("value")
         if not value:
             return JsonResponse({"error": _("'name' must not be blank")}, status=400)
+        if DataRegistry.objects.filter(name=value).exclude(id=helper.registry.id).exists():
+            return JsonResponse({"error": _("'name' must be unique")}, status=400)
     elif attr == "description":
         value = request.POST.get("value")
     elif attr == "schema":

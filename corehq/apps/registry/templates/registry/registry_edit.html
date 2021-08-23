@@ -38,7 +38,6 @@
           placeholder: '{% trans "Untitled Data Registry"|escapejs %}',
           rows: 1,
           nodeName: 'input',
-          errorMessage: '{% trans "Name must not be blank" %}',
           disallow_edit: {{ is_owner|yesno:"false,true" }}
       "></inline-edit>
     </div>

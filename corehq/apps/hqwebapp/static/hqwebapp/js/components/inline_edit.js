@@ -64,7 +64,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
 
             // Save to server
             self.url = params.url;
-            self.errorMessage = params.errorMessage || gettext("Error saving, please try again.");
+            self.errorMessage = ko.observable(params.errorMessage || gettext("Error saving, please try again."));
             self.saveParams = ko.utils.unwrapObservable(params.saveParams) || {};
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
@@ -120,7 +120,10 @@ hqDefine('hqwebapp/js/components/inline_edit', [
                             }
                             $(window).off("beforeunload", self.beforeUnload);
                         },
-                        error: function () {
+                        error: function (response) {
+                            if (response.responseJSON && response.responseJSON.error) {
+                                self.errorMessage(response.responseJSON.error);
+                            }
                             self.isEditing(true);
                             self.isSaving(false);
                             self.hasError(true);
