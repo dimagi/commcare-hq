@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
-    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
+    # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
@@ -63,26 +63,26 @@ branches:
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
     - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - ce/bulk-case-search # Cal July 6
-    - ap/auditcare-migration # Amit July 8
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
     - jm/stale-es-case-search  # Joel July 21
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - bmb/noramilize-url  # Biyeun July 26
     - sk/data-registry-view  # Simon July 29
     - jm/remove-es-scan  # Joel August 3
     - ml/remove-show-field-sms-billables-report+ml/sms-billable-report-visibility-checkbox  # Charl Aug 11
     - ml/sms-billable-report-visibility-checkbox # Minha August 5
     - ml/remove-show-field-sms-billables-report # Minha August 5
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
-    - jls/smart-linking-mvp-claim-on-formplayer+jls/web-apps-steps-to-selections
+    # All smart linking branches are in QA, please notify Kiran/Ben if they need to be removed
     - jls/smart-linking-mvp  # Jenny Aug 9
-    - jls/smart-linking-mvp-claim-on-formplayer  # Jenny Aug 9
     - jls/smart-linking-mvp-qabugs # Jenny Aug 12
-    - jls/web-apps-steps-to-selections # Jenny Aug 10
+    - jls/endpoints-no-dof # Jenny Aug 12
+    - jls/checkbox-disabling # Jenny Aug 13
+    - jls/smart-linking-mvp-no-shadow-menu-forms # Jenny Aug 13
+    - caktus:allowed_values_ui # Jenny Aug 13
     - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - jls/smart-linking-mvp-claim-on-formplayer+es/optimize-builds  # Ethan Aug 11
-    - es/optimize-build  # Ethan Aug 11
+    - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
+    - rc/audit-log-ux # Robert Aug 22
 submodules: { }

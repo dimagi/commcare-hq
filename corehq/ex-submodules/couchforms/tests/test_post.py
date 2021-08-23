@@ -5,9 +5,6 @@ from django.conf import settings
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
-from corehq.apps.tzmigration.test_utils import \
-    run_pre_and_post_timezone_migration
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
@@ -39,7 +36,7 @@ class PostTestMixin(TestFileMixin):
 
     def _get_expected_name(self, name, tz_differs):
         expected_name = name
-        if tz_differs and phone_timezones_should_be_processed():
+        if tz_differs:
             expected_name = name + '-tz'
 
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
@@ -68,7 +65,6 @@ class PostCouchOnlyTest(TestCase, PostTestMixin):
         super(PostCouchOnlyTest, self).tearDown()
 
     @softer_assert()
-    @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
         FormProcessorTestUtils.delete_all_xforms()
