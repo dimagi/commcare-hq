@@ -321,3 +321,14 @@ def create_registry(request, domain):
         description=description, schema=schema
     )
     return redirect("manage_registry", domain=domain, registry_slug=registry.slug)
+
+
+@domain_admin_required
+@require_POST
+def validate_registry_name(request, domain):
+    name = request.POST.get("name")
+    if not name:
+        return JsonResponse({"result": False})
+
+    exists = DataRegistry.objects.filter(name=name).exists()
+    return JsonResponse({"result": not exists})

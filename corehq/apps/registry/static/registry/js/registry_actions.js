@@ -70,6 +70,17 @@ hqDefine("registry/js/registry_actions", [
         return manageRelatedModels('manage_invitations', registrySlug, data, onSuccess);
     }
 
+    let validateName = function (name, onSuccess) {
+        return $.post({
+            url: initialPageData.reverse('validate_registry_name'),
+            data: {name: name},
+            success: function (data) {
+                onSuccess(data.result);
+            },
+            error: handleError,
+        });
+    }
+
     let editAttr = function (registrySlug, attr, data, onSuccess) {
         return $.post({
             url: initialPageData.reverse('edit_registry_attr', registrySlug, attr),
@@ -103,5 +114,6 @@ hqDefine("registry/js/registry_actions", [
         editAttr: editAttr,
         createGrant: createGrant,
         removeGrant: removeGrant,
+        validateName: validateName,
     };
 });

@@ -67,6 +67,23 @@ hqDefine("registry/js/registry_list", [
         };
 
         // CREATE workflow
+        self.name = ko.observable("").extend({
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 }
+        });
+
+        self.validatingPending = ko.observable(false);
+        self.nameValid = ko.observable(false);
+        self.nameChecked = ko.observable(false);
+        self.name.subscribe((value) => {
+            self.validatingPending(true);
+            actions.validateName(self.name(), (isValid) => {
+                self.nameValid(isValid);
+                self.nameChecked(true);
+            }).always(() => {
+                self.validatingPending(false);
+            });
+        });
+
         self.caseTypes = ko.observable([]);
         self.formCreateRegistrySent = ko.observable(false);
         self.submitCreate = function () {

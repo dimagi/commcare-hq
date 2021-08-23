@@ -10,6 +10,7 @@ from corehq.apps.registry.views import (
     manage_grants,
     delete_registry,
     create_registry,
+    validate_registry_name,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path('manage_grants/<slug:registry_slug>/', manage_grants, name='manage_grants'),
     path('delete/<slug:registry_slug>/', delete_registry, name='delete_registry'),
     path('create/', create_registry, name='create_registry'),
+    path('validate_name/', validate_registry_name, name='validate_registry_name'),
 ]
