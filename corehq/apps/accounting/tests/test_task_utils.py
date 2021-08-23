@@ -1,10 +1,15 @@
-from collections import namedtuple
 import datetime
-from unittest.mock import patch, MagicMock
+from collections import namedtuple
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.accounting.tasks import get_context_to_send_autopay_failed_email
+from corehq.apps.accounting.task_utils import (
+    get_context_to_send_purchase_receipt,
+)
+from corehq.apps.accounting.tasks import (
+    get_context_to_send_autopay_failed_email,
+)
 
 
 class TestGetContextToSendAutopayFailedEmail(SimpleTestCase):
@@ -123,3 +128,114 @@ class MockAutopayFailedInfo:
         self.payment_method_patcher.stop()
         self.web_user_patcher.stop()
         self.datetime_patcher.stop()
+
+
+class TestGetContextToSendPurchaseReceipt(SimpleTestCase):
+
+    def test_context_has_expected_keys(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {}
+
+        with MockPurchaseReceiptInfo('username'):
+            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        expected_keys = {'template_context', 'email_to', 'email_from'}
+        self.assertEqual(set(context.keys()), expected_keys)
+
+    def test_template_context_has_expected_keys(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {}
+
+        with MockPurchaseReceiptInfo('username'):
+            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        expected_template_keys = {'name', 'amount', 'project', 'date_paid', 'transaction_id'}
+        self.assertEqual(set(context['template_context'].keys()), expected_template_keys)
+
+    def test_template_context_has_additional_keys_if_supplied(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {'extra_key': 'extra_value'}
+
+        with MockPurchaseReceiptInfo('username'):
+            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        expected_template_keys = {'name', 'amount', 'project', 'date_paid', 'transaction_id', 'extra_key'}
+        self.assertEqual(set(context['template_context'].keys()), expected_template_keys)
+
+    def test_recipient_is_web_user_if_web_user_exists(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {}
+
+        with MockPurchaseReceiptInfo('username', web_user_email='web-user@dimagi.com'):
+            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        template_context = context['template_context']
+        self.assertTrue(context['email_to'], 'web-user@dimagi.com')
+        self.assertTrue(template_context['name'], 'web-user@dimagi.com')
+
+    def test_recipient_is_username_if_web_user_does_not_exist(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {}
+
+        with MockPurchaseReceiptInfo('username'):
+            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        template_context = context['template_context']
+        self.assertTrue(context['email_to'], 'username')
+        self.assertTrue(template_context['name'], 'username')
+
+    def test_exception_is_logged_if_web_user_does_not_exist(self):
+        payment_record_id = 1
+        domain = 'test'
+        additional_context = {}
+
+        patcher = patch('corehq.apps.accounting.task_utils.raise_except_and_log_accounting_comms_error')
+        mock_log_method = patcher.start()
+
+        with MockPurchaseReceiptInfo('username'):
+            get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+        mock_log_method.assert_called()
+        patcher.stop()
+
+
+class MockPurchaseReceiptInfo:
+
+    def __init__(self, username, web_user_email=None, date_paid=None, amount_paid=100):
+        self.username = username
+        self.web_user_email = web_user_email
+        self.date_paid = date_paid or datetime.date(2020, 1, 1)
+        self.amount_paid = amount_paid
+        self.transaction_id = 1
+
+    def __enter__(self):
+        mock_payment_record = MagicMock()
+        mock_payment_record.payment_method.web_user = self.username
+        mock_payment_record.amount = self.amount_paid
+        mock_payment_record.date_created = self.date_paid
+        mock_payment_record.public_transaction_id = self.transaction_id
+
+        self.payment_record_patcher = patch(
+            'corehq.apps.accounting.task_utils.PaymentRecord.objects.get',
+            return_value=mock_payment_record
+        )
+        self.payment_record_patcher.start()
+
+        mock_web_user = None
+        if self.web_user_email:
+            mock_web_user = MagicMock()
+            mock_web_user.get_email.return_value = self.web_user_email
+        self.web_user_patcher = patch(
+            'corehq.apps.accounting.task_utils.WebUser.get_by_username',
+            return_value=mock_web_user
+        )
+        self.web_user_patcher.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.payment_record_patcher.stop()
+        self.web_user_patcher.stop()

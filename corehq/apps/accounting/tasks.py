@@ -26,7 +26,6 @@ from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.exceptions import (
-    AccountingCommunicationError,
     ActiveSubscriptionWithoutDomain,
     CreditLineBalanceMismatchError,
     CreditLineError,
@@ -59,11 +58,10 @@ from corehq.apps.accounting.payment_handlers import (
 )
 from corehq.apps.accounting.task_utils import (
     get_context_to_send_autopay_failed_email,
+    get_context_to_send_purchase_receipt,
 )
 from corehq.apps.accounting.utils import (
-    fmt_dollar_amount,
     get_change_status,
-    get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
 )
@@ -503,43 +501,19 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(serializer='pickle', ignore_result=True, acks_late=True)
-def send_purchase_receipt(payment_record, domain,
-                          template_html, template_plaintext,
-                          additional_context):
-    username = payment_record.payment_method.web_user
-    web_user = WebUser.get_by_username(username)
-    if web_user:
-        email = web_user.get_email()
-        name = web_user.first_name
-    else:
-        try:
-            # needed for sentry
-            raise AccountingCommunicationError()
-        except AccountingCommunicationError:
-            log_accounting_error(
-                f"A payment attempt was made by a user that "
-                f"does not exist: {username}",
-                show_stack_trace=True,
-            )
-        name = email = username
-
-    context = {
-        'name': name,
-        'amount': fmt_dollar_amount(payment_record.amount),
-        'project': domain,
-        'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
-        'transaction_id': payment_record.public_transaction_id,
-    }
-    context.update(additional_context)
+@task(ignore_result=True, acks_late=True)
+def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
+    context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
 
     email_html = render_to_string(template_html, context)
     email_plaintext = render_to_string(template_plaintext, context)
 
     send_HTML_email(
-        _("Payment Received - Thank You!"), email, email_html,
+        subject=_("Payment Received - Thank You!"),
+        recipient=context['email_to'],
+        html_content=email_html,
         text_content=email_plaintext,
-        email_from=get_dimagi_from_email(),
+        email_from=context['email_from'],
     )
 
 
