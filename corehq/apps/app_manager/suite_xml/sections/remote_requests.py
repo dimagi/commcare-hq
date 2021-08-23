@@ -1,3 +1,5 @@
+from django.utils.functional import cached_property
+
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import (
@@ -6,13 +8,11 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     get_all_instances_referenced_in_xpaths,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import (
-    DetailsHelper,
-    get_instances_for_module,
-)
+from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    Hint,
     Instance,
     Itemset,
     PushFrame,
@@ -25,11 +25,17 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionDatum,
     Stack,
     Text,
-    Hint,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
-from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.app_manager.xpath import (
+    CaseTypeXpath,
+    InstanceXpath,
+    interpolate_xpath,
+)
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+)
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
@@ -91,17 +97,31 @@ class RemoteRequestFactory(object):
             if prop.itemset.instance_id
         ]
 
-        query_xpaths = [QuerySessionXPath(self.module.search_config.case_session_var).instance()]
-        query_xpaths.extend([datum.ref for datum in self._get_remote_request_query_datums()])
-        query_xpaths.extend([self.module.search_config.get_relevant(), self.module.search_config.search_filter])
-        query_xpaths.extend([prop.default_value for prop in self.module.search_config.properties])
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
+        xpaths = {QuerySessionXPath(self.module.search_config.case_session_var).instance()}
+        xpaths.update(datum.ref for datum in self._remote_request_query_datums)
+        xpaths.add(self.module.search_config.get_relevant())
+        xpaths.add(self.module.search_config.search_filter)
+        xpaths.update(prop.default_value for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
-        instances |= get_instances_for_module(self.app, self.module, self.detail_section_elements)
+        xpaths.update(self._get_xpaths_for_module())
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, xpaths)
 
         # sorted list to prevent intermittent test failures
         return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
+
+    @cached_property
+    def _details_helper(self):
+        return DetailsHelper(self.app)
+
+    def _get_xpaths_for_module(self):
+        details_by_id = {detail.id: detail for detail in self.detail_section_elements}
+        detail_ids = [self._details_helper.get_detail_id_safe(self.module, detail_type)
+                      for detail_type, detail, enabled in self.module.get_details()
+                      if enabled]
+        detail_ids = [_f for _f in detail_ids if _f]
+        for detail_id in detail_ids:
+            yield from details_by_id[detail_id].get_all_xpaths()
 
     def _build_session(self):
         return RemoteRequestSession(
@@ -115,14 +135,13 @@ class RemoteRequestFactory(object):
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
-                data=self._get_remote_request_query_datums(),
+                data=self._remote_request_query_datums,
                 prompts=self._build_query_prompts(),
                 default_search=self.module.search_config.default_search,
             )
         ]
 
     def _build_remote_request_datums(self):
-        details_helper = DetailsHelper(self.app)
         if self.module.case_details.short.custom_xml:
             short_detail_id = 'case_short'
             long_detail_id = 'case_long'
@@ -143,37 +162,37 @@ class RemoteRequestFactory(object):
             id=self.module.search_config.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
-            detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
-            detail_confirm=details_helper.get_detail_id_safe(self.module, long_detail_id),
+            detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
+            detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
         )]
 
-    def _get_remote_request_query_datums(self):
-        default_query_datums = [
-            QueryData(
-                key='case_type',
-                ref="'{}'".format(self.module.case_type)
-            ),
+    @cached_property
+    def _remote_request_query_datums(self):
+        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
+        datums = [
+            QueryData(key='case_type', ref=f"'{case_type}'")
+            for case_type in [self.module.case_type] + list(additional_types)
         ]
-        additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
-        for type in additional_types:
-            default_query_datums.append(
-                QueryData(
-                    key='case_type',
-                    ref="'{}'".format(type)
-                )
-            )
-        extra_query_datums = [
-            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+
+        datums.extend(
+            QueryData(key=c.property, ref=c.defaultValue)
             for c in self.module.search_config.default_properties
-        ]
+        )
         if self.module.search_config.blacklisted_owner_ids_expression:
-            extra_query_datums.append(
+            datums.append(
                 QueryData(
                     key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-                    ref="{}".format(self.module.search_config.blacklisted_owner_ids_expression)
+                    ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        return default_query_datums + extra_query_datums
+        if self.module.search_config.data_registry:
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_REGISTRY_ID_KEY,
+                    ref=self.module.search_config.data_registry,
+                )
+            )
+        return datums
 
     def _build_query_prompts(self):
         prompts = []

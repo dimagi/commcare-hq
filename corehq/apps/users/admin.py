@@ -22,8 +22,12 @@ admin.site.register(PartialDigest, DDPartialDigestAdmin)
 
 class ApiKeyInline(admin.TabularInline):
     model = HQApiKey
-    readonly_fields = ['key', 'created']
-    extra = 1
+    readonly_fields = ('created',)
+    exclude = ('key',)
+    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 class CustomUserAdmin(UserAdmin):
@@ -42,6 +46,9 @@ admin.site.register(User, CustomUserAdmin)
 class HQApiKeyAdmin(admin.ModelAdmin):
     list_display = ['user', 'name', 'created', 'domain']
     list_filter = ['created', 'domain']
+
+    readonly_fields = ('created',)
+    exclude = ('key',)
 
 
 admin.site.register(HQApiKey, HQApiKeyAdmin)

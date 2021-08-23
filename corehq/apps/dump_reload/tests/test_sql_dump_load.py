@@ -7,10 +7,8 @@ from io import StringIO
 
 import mock
 from django.contrib.admin.utils import NestedObjects
-from django.core import serializers
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
-from django.db.transaction import TransactionManagementError
 from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
@@ -19,7 +17,6 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.dump_reload.sql import SqlDataDumper, SqlDataLoader
 from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
@@ -69,9 +66,7 @@ class BaseDumpLoadTest(TestCase):
         cls.domain = Domain(name=cls.domain_name)
         cls.domain.save()
 
-        cls.default_objects_counts = Counter({
-            DomainMigrationProgress: 1
-        })
+        cls.default_objects_counts = Counter({})
 
     @classmethod
     def tearDownClass(cls):
