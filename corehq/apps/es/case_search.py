@@ -90,13 +90,6 @@ class CaseSearchES(CaseES):
             clause
         )
 
-    def date_range_case_property_query(self, case_property_name, gt=None,
-                                       gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the date range criteria.
-        """
-        return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
-
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
