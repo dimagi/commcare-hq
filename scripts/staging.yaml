@@ -65,7 +65,6 @@ branches:
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
-    - jm/stale-es-case-search  # Joel July 21
     - sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
     - sk/data-registry-view  # Simon July 29
@@ -84,4 +83,5 @@ branches:
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
     - rc/audit-log-ux # Robert Aug 22
+    - jm/es5-containers  # Joel Aug 23
 submodules: { }
