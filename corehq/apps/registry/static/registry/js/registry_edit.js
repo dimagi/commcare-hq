@@ -87,6 +87,7 @@ hqDefine("registry/js/registry_edit", [
             });
         });
         self.participatingDomains = ko.computed(() => {
+            // use invitedDomains since invitations() will be empty if the current domain is not the owner
             let allInvitations = new Set(invitedDomains.concat(self.invitations().map((invite) => invite.domain)));
             if (self.domain_invitation.status() !== 'accepted') {
                 allInvitations.delete(self.current_domain);
@@ -94,7 +95,6 @@ hqDefine("registry/js/registry_edit", [
            return Array.from(allInvitations);
         });
         self.availableGrantDomains = ko.computed(() => {
-            // use invitedDomains since invitations() will be empty if the current domain is not the owner
             let availableDomains = new Set(self.participatingDomains()),
                 granted = self.grants().filter((grant) => grant.from_domain === self.current_domain).flatMap((grant) => {
                     return grant.to_domains;
