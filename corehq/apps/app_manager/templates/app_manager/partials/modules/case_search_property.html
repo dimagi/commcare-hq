@@ -92,6 +92,8 @@
                           <input type="checkbox" data-bind="checked: isMultiselect"/>
                       </div>
                   </div>
+                {% endif %}
+                {% if js_options.default_value_expression_enabled %}
                   <div class="form-group">
                     <label class="control-label col-xs-12 col-sm-3">
                       {% trans "Allow searching for blank values" %}
