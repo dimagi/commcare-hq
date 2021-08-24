@@ -3,6 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
+from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -10,9 +11,14 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.data_interfaces.deduplication import (
     find_duplicate_ids_for_case,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseDeduplicationActionDefinition,
+    CaseDeduplicationMatchTypeChoices,
+)
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -113,3 +119,62 @@ class FindingDuplicatesTest(TestCase):
     def test_find_duplicates_or_rule(self):
         """find duplicates where any case properties match
         """
+
+
+class CaseDeduplicationActionTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls, *args, **kwargs):
+        super().setUpClass(*args, **kwargs)
+
+        cls.domain = 'case-dedupe-test'
+        cls.case_type = 'adult'
+
+        cls.rule = AutomaticUpdateRule.objects.create(
+            domain=cls.domain,
+            name='test',
+            case_type=cls.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, cls.action = cls.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            close_case=False,
+            case_properties=["name", "age", "weight"],
+        )
+
+        cls.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='is_potential_duplicate',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='yes',
+            )
+        ])
+        cls.action.save()
+
+    @classmethod
+    def tearDownClass(cls, *args, **kwargs):
+        cls.rule.hard_delete()
+        super().tearDownClass()
+
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_ids_for_case")
+    def test_updates_a_duplicate(self, duplicate_ids_mock):
+        factory = CaseFactory(self.domain)
+        accessor = CaseAccessors(self.domain)
+
+        case_1 = factory.create_case(case_name='first')
+        case_2 = factory.create_case(case_name='second')
+
+        duplicate_ids_mock.return_value = [case_1.case_id, case_2.case_id]
+
+        self.rule.run_actions_when_case_matches(case_1)
+
+        case_1 = accessor.get_case(case_1.case_id)
+        case_2 = accessor.get_case(case_2.case_id)
+
+        self.assertEqual(case_1.get_case_property('is_potential_duplicate'), 'yes')
+        self.assertEqual(case_2.get_case_property('is_potential_duplicate'), 'yes')

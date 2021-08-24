@@ -27,6 +27,9 @@ from dimagi.utils.modules import to_function
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
+from corehq.apps.data_interfaces.deduplication import (
+    find_duplicate_ids_for_case,
+)
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import update_case
@@ -655,6 +658,8 @@ class CaseRuleAction(models.Model):
             return self.custom_action_definition
         elif self.create_schedule_instance_definition_id:
             return self.create_schedule_instance_definition
+        elif self.case_deduplication_action_definition_id:
+            return self.case_deduplication_action_definition
         else:
             raise ValueError("No available definition found")
 
@@ -670,6 +675,8 @@ class CaseRuleAction(models.Model):
             self.custom_action_definition = value
         elif isinstance(value, CreateScheduleInstanceActionDefinition):
             self.create_schedule_instance_definition = value
+        elif isinstance(value, CaseDeduplicationActionDefinition):
+            self.case_deduplication_action_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -737,7 +744,10 @@ class CaseRuleActionDefinition(models.Model):
         return CaseRuleActionResult()
 
 
-class UpdateCaseDefinition(CaseRuleActionDefinition):
+class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
+    class Meta(object):
+        abstract = True
+
     # Expected to be a list of PropertyDefinition objects representing the
     # case properties to update
     properties_to_update = jsonfield.JSONField(default=list)
@@ -776,14 +786,13 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
         result = []
         for p in properties:
             if not isinstance(p, self.PropertyDefinition):
-                raise ValueError("Expected UpdateCaseDefinition.PropertyDefinition")
+                raise ValueError("Expected {}.PropertyDefinition".format(self.__class__.__name__))
 
             result.append(p.to_json())
 
         self.properties_to_update = result
 
-    def when_case_matches(self, case, rule):
-        cases_to_update = defaultdict(dict)
+    def _add_case_and_ancestor_updates(self, case, cases_to_update):
 
         def _get_case_property_value(current_case, name):
             result = current_case.resolve_case_property(name)
@@ -825,6 +834,9 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             if value != _get_case_property_value(case, prop.name):
                 _add_update_property(prop.name, value, case)
 
+    def when_case_matches(self, case, rule):
+        cases_to_update = self.get_case_updates(case)
+
         num_updates = 0
         num_closes = 0
         num_related_updates = 0
@@ -859,6 +871,16 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             num_related_updates=num_related_updates,
         )
 
+    def get_cases_to_update(self):
+        raise NotImplementedError()
+
+
+class UpdateCaseDefinition(BaseUpdateCaseDefinition):
+    def get_case_updates(self, case):
+        cases_to_update = defaultdict(dict)
+        self._add_case_and_ancestor_updates(case, cases_to_update)
+        return cases_to_update
+
 
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
@@ -885,11 +907,21 @@ class CaseDeduplicationMatchTypeChoices:
     )
 
 
-class CaseDeduplicationActionDefinition(CaseRuleActionDefinition):
+class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     match_type = models.CharField(choices=CaseDeduplicationMatchTypeChoices.CHOICES, max_length=5)
     case_properties = ArrayField(models.TextField())
     include_closed = models.BooleanField(default=False)
-    properties_to_update = JSONField(default=list, null=True)
+
+    def get_case_updates(self, case):
+        duplicate_ids = find_duplicate_ids_for_case(
+            case.domain, case, self.case_properties, self.include_closed, self.match_type
+        )
+
+        cases_to_update = defaultdict(dict)
+        for duplicate_case in CaseAccessors(case.domain).iter_cases(duplicate_ids):
+            self._add_case_and_ancestor_updates(duplicate_case, cases_to_update)
+
+        return cases_to_update
 
 
 class CaseDuplicate(models.Model):
