@@ -609,6 +609,7 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
+            'registry_slug': self.registry_slug,
             'report_preview_url': reverse(ReportPreview.urlname,
                                           args=[self.domain, temp_ds_id]),
             'preview_datasource_id': temp_ds_id,
@@ -629,6 +630,7 @@ class ConfigureReport(ReportBuilderView):
             self.source_type,
             self.source_id,
             self.existing_report,
+            self.registry_slug,
             report_data
         )
 
@@ -719,7 +721,7 @@ def _munge_report_data(report_data):
     report_data['default_filters'] = json.dumps(report_data['default_filters'])
 
 
-class ReportPreview(BaseDomainView):
+class ReportPreview(BaseDomainView):  # TODO: fix with adding registry info
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
@@ -733,10 +735,11 @@ class ReportPreview(BaseDomainView):
         bound_form = form_class(
             domain,
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
-            report_data['app'],
+            report_data['app'],  # TODO: errors since app is None for registry
             report_data['source_type'],
             report_data['source_id'],
             None,
+            report_data['registry_slug'],
             report_data
         )
         if bound_form.is_valid():
