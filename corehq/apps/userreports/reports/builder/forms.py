@@ -18,6 +18,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports import tasks
@@ -39,6 +40,7 @@ from corehq.apps.userreports.models import (
     ReportMeta,
     get_datasource_config_infer_type,
     guess_data_source_type,
+    RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
@@ -853,8 +855,142 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
         return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
 
-class RegistryCaseDataSourceHelper(ReportBuilderDataSourceInterface):
-    pass
+class RegistryCaseDataSourceHelper(UnmanagedDataSourceHelper):
+    def __init__(self, domain, registry_slug, source_type, source_id):
+        assert source_type == 'case'
+
+        self.domain = domain
+        self.registry_slug = registry_slug
+        self.source_type = source_type
+        self.source_id = source_id
+
+        owning_domain = self.data_source.registry_helper.registry.domain
+        prop_map = get_data_dict_props_by_case_type(owning_domain)
+        self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
+
+    @property
+    @memoized
+    def data_source(self):
+        data_sources = RegistryDataSourceConfiguration.view(
+            'registry_data_sources/view',
+            reduce=False,
+            include_docs=True,
+        )
+        return [
+            row for row in data_sources
+            if (self.registry_slug in row['registry_slug'])
+        ][0]
+
+    # TODO: remaining methods in class are also in from ApplicationCaseDataSourceHelper. Refactor.
+    @property
+    @memoized
+    def data_source_properties(self):  # should it instead act like data_source_properties in UnmanagedDataSourceHelper?
+        property_map = {
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
+        }
+
+        properties = OrderedDict()
+        for property in self.case_properties:
+            if property in DEFAULT_CASE_PROPERTY_DATATYPES:
+                data_types = DEFAULT_CASE_PROPERTY_DATATYPES[property]
+            else:
+                data_types = ["string", "decimal", "datetime"]
+
+            properties[property] = DataSourceProperty(
+                type=PROPERTY_TYPE_CASE_PROP,
+                id=property,
+                text=property_map.get(property, property.replace('_', ' ')),
+                source=property,
+                data_types=data_types,
+            )
+        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
+        properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
+
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
+            properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_archived_with_descendants_pseudo_property()
+
+        return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_owner_name_pseudo_property():
+        # owner_name is a special pseudo-case property for which
+        # the report builder will create a related_doc indicator based
+        # on the owner_id of the case.
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            text=_('Case Owner'),
+            source=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_pseudo_property(cls):
+        # owner_location is a special pseudo-case property for which
+        # the report builder reference the owner_id, but treat it as a location
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            text=_('Case Owner (Location)'),
+            source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_archived_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants and Archived Locations)'),
+            source=COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @staticmethod
+    def _get_user_name_pseudo_property():
+        # user_name is a special pseudo case property for which
+        # the report builder will create a related_doc indicator based on the
+        # user_id of the case
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_USER_NAME_PROPERTY_ID,
+            text=_('Mobile Worker Last Updating Case'),
+            source=COMPUTED_USER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
