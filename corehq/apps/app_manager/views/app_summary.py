@@ -300,7 +300,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     post_form_workflow = "form:\n{}".format(
                         "\n".join(
                             ["{form}: {xpath} [{datums}]".format(
-                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                form=_get_translated_form_name(self.app, link.form_id, language),   # TODO: update helper function to handle modules
                                 xpath=link.xpath,
                                 datums=", ".join(
                                     "{}: {}".format(

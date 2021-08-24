@@ -364,9 +364,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 for datum_json in request.POST.getlist('datums_json')
             ],
         )
+        module_unique_ids = [m.unique_id for m in app.get_modules()]
         form.form_links = [FormLink(
             xpath=link[0],
-            form_id=link[1],
+            form_id=link[1] if link[1] not in module_unique_ids else None,
+            module_unique_id=link[1] if link[1] in module_unique_ids else None,
             datums=[
                 FormDatum(name=datum['name'], xpath=datum['xpath'])
                 for datum in link[2]
@@ -804,10 +806,17 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
                 'auto_link': auto_link
             }
 
-        context['linkable_forms'] = [
+        context['linkable_forms'] = sorted([
             linkable_form(candidate_form) for candidate_module in all_modules
             for candidate_form in candidate_module.get_forms()
-        ]
+        ] + [
+            {
+                'unique_id': m.unique_id,
+                'name': trans(m.name, langs),   # TODO add star, I guess
+                'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
+            }
+            for m in modules    # TODO this is a list, with duplicates
+        ], key=lambda link: link['name'])   # TODO: sorting not working?
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
