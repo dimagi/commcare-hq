@@ -16,14 +16,14 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sharded_db,
+    sharded,
 )
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
 
 
-@use_sharded_db
+@sharded
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 class TestCaseAPI(TestCase):

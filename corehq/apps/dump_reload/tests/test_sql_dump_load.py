@@ -50,7 +50,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    use_sharded_db,
+    sharded,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -155,7 +155,7 @@ def delete_domain_sql_data_for_dump_load_test(domain_name):
     assert [] == list(get_objects_to_dump(domain_name, [], [])), "Not all SQL objects deleted"
 
 
-@use_sharded_db
+@sharded
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 

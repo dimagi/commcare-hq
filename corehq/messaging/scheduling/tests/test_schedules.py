@@ -1,7 +1,7 @@
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import use_sharded_db, run_with_all_backends
+from corehq.form_processor.tests.utils import sharded, run_with_all_backends
 from corehq.apps.hqcase.utils import update_case
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     save_alert_schedule_instance,
@@ -80,7 +80,7 @@ class BaseScheduleTest(TestCase):
         self.assertEqual(len(list(get_timed_schedule_instances_for_schedule(self.schedule))), num)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class TimedScheduleActiveFlagTest(BaseScheduleTest):
@@ -363,7 +363,7 @@ class StopDateCasePropertyTest(TestCase):
                     msg="Failed with %s" % next_event_due)
 
 
-@use_sharded_db
+@sharded
 class DeleteScheduleInstancesTest(BaseScheduleTest):
 
     def setUp(self):
@@ -431,7 +431,7 @@ class DeleteScheduleInstancesTest(BaseScheduleTest):
         self.assertEqual(self.count(get_timed_schedule_instances_for_schedule(self.timed_schedule_2)), 0)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class DailyScheduleTest(BaseScheduleTest):
@@ -562,7 +562,7 @@ class DailyScheduleTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 0)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class CustomDailyScheduleTest(BaseScheduleTest):
@@ -639,7 +639,7 @@ class CustomDailyScheduleTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 4)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class RandomTimedEventTest(BaseScheduleTest):
@@ -695,7 +695,7 @@ class RandomTimedEventTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 2)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class RandomTimedEventSpanningTwoDaysTest(BaseScheduleTest):
@@ -733,7 +733,7 @@ class RandomTimedEventSpanningTwoDaysTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 0)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class StartDayOfWeekTest(BaseScheduleTest):
@@ -856,7 +856,7 @@ class StartDayOfWeekTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 2)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class StartDayOfWeekWithStartOffsetTest(BaseScheduleTest):
@@ -915,7 +915,7 @@ class StartDayOfWeekWithStartOffsetTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 2)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class MonthlyScheduleTest(TestCase):
@@ -1037,7 +1037,7 @@ class MonthlyScheduleTest(TestCase):
         self.assertEqual(send_patch.call_count, 0)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class EndOfMonthScheduleTest(TestCase):
@@ -1111,7 +1111,7 @@ class EndOfMonthScheduleTest(TestCase):
         self.assertEqual(send_patch.call_count, 2)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class DailyRepeatEveryTest(BaseScheduleTest):
@@ -1178,7 +1178,7 @@ class DailyRepeatEveryTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 3)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class WeeklyRepeatEveryTest(BaseScheduleTest):
@@ -1274,7 +1274,7 @@ class WeeklyRepeatEveryTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 6)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class MonthlyRepeatEveryTest(BaseScheduleTest):
@@ -1351,7 +1351,7 @@ class MonthlyRepeatEveryTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 4)
 
 
-@use_sharded_db
+@sharded
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class AlertTest(TestCase):

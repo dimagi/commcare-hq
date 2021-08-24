@@ -10,7 +10,7 @@ from corehq.apps.receiverwrapper.util import (
     get_version_from_build_id,
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sharded_db
+from corehq.form_processor.tests.utils import sharded
 
 
 class TestAppId(TestCase):
@@ -72,6 +72,6 @@ class TestAppId(TestCase):
                          build.version)
 
 
-@use_sharded_db
+@sharded
 class TestAppIdSQL(TestAppId):
     pass

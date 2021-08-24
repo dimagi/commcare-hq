@@ -26,7 +26,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sharded_db,
+    sharded,
 )
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import TestFileMixin, flag_enabled, capture_log_output
@@ -280,7 +280,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertEqual(response.status_code, 423)
 
 
-@use_sharded_db
+@sharded
 class SubmissionErrorTestSQL(SubmissionErrorTest):
 
     def test_error_publishing_to_kafka(self):

@@ -16,7 +16,7 @@ from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sharded_db
+from corehq.form_processor.tests.utils import sharded
 
 
 class FakeFile(object):
@@ -323,11 +323,11 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(InsecureAuthTest, self).tearDown()
 
 
-@use_sharded_db
+@sharded
 class AuthTestSQL(AuthTest):
     pass
 
 
-@use_sharded_db
+@sharded
 class InsecureAuthTestSQL(InsecureAuthTest):
     pass
