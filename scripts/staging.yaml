@@ -77,7 +77,6 @@ branches:
     - jls/smart-linking-mvp-content-type # Jenny Aug 23
     - jls/checkbox-disabling # Jenny Aug 13
     - caktus:allowed_values_ui # Jenny Aug 13
-    - mjr/record_failure_login_ips  # Matt Aug 10
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
     - rc/audit-log-ux # Robert Aug 22
