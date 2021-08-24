@@ -916,11 +916,16 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         duplicate_ids = find_duplicate_ids_for_case(
             case.domain, case, self.case_properties, self.include_closed, self.match_type
         )
+        # TODO: Maybe instead here we should fetch the case only with the case properties we need to check
 
         cases_to_update = defaultdict(dict)
         for duplicate_case in CaseAccessors(case.domain).iter_cases(duplicate_ids):
             self._add_case_and_ancestor_updates(duplicate_case, cases_to_update)
+        # TODO: This will currently update each case individually, do this in a batch.
 
+        # Separate this from the case update process in the parent
+        # class, maybe we should just do this separately even though the
+        # functionality is almost the same
         return cases_to_update
 
 
