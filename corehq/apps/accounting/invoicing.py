@@ -101,7 +101,9 @@ class DomainInvoiceFactory(object):
                 & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
-            date_start__lte=self.date_end
+            date_start__lte=self.date_end,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
