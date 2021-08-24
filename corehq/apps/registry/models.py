@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.domain.utils import domain_name_stop_words
 from corehq.apps.registry.exceptions import RegistryAccessDenied
+from corehq.apps.registry.schema import RegistrySchema
 
 
 def slugify_remove_stops(text):
@@ -92,6 +93,10 @@ class DataRegistry(models.Model):
             self.is_active = False
             self.save()
             self.logger.registry_deactivated(user)
+
+    @property
+    def wrapped_schema(self):
+        return RegistrySchema(self.schema)
 
     def get_granted_domains(self, domain):
         self.check_access(domain)
