@@ -79,4 +79,5 @@ branches:
     - erroredQuestionMessagingFix #Shubham Aug 24
     - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
+    - mjr/translations_fix  # Matt Aug 24
 submodules: { }
