@@ -125,6 +125,21 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])
 
+    def test_paused_plan_generates_no_invoice(self):
+        """
+        Ensure that paused plans do not generate invoices.
+        """
+        paused_plan = generator.subscribable_plan_version(
+            edition=SoftwarePlanEdition.PAUSED
+        )
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, paused_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end + datetime.timedelta(days=1),
+
+        )
+        self.assertListEqual(self.invoice_factory._get_subscriptions(), [])
+
 
 class TestInvoicingMethods(BaseAccountingTest):
 
