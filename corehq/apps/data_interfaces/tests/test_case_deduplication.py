@@ -178,3 +178,40 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.assertEqual(case_1.get_case_property('is_potential_duplicate'), 'yes')
         self.assertEqual(case_2.get_case_property('is_potential_duplicate'), 'yes')
+
+    def test_stores_all_duplicates(self):
+        """When it finds duplicates, store them in the CaseDuplicate model
+        """
+
+    def test_case_no_longer_duplicate(self):
+        """When the case is no longer a duplicate, it should be removed from the CaseDuplicate model
+        """
+
+    def test_case_already_duplicate(self):
+        """What happens when a case is already in the list
+        """
+
+    @es_test
+    def test_integration_test(self):
+        """Don't mock the find_duplicate_ids response to make sure it works
+        """
+
+    def test_close_case_closes_cases(self):
+        """Should we allow this? (probably not)
+        if not, remove it from the base class
+        """
+        # Closing cases could remove them from the duplicate search (i.e. they are no longer duplicates)
+        # Do we remove the case from the duplicate list?
+
+    def test_update_case_no_longer_duplicate(self):
+        """What happens if the case update deduplicates the case?
+        """
+        # If "ALL" & update is one of the target properties, we know to remove it
+        # If "ANY", do we need to search again?
+        # Do we allow this? (could block on updating target properties, for example)
+
+    def test_last_case_changed_not_duplicate(self):
+        """Case A and Case B are duplicates of each other. Case A is changed so it is
+        no longer a duplicate, Case B should be removed from the list of
+        duplicates.
+        """
