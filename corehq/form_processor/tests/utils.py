@@ -179,7 +179,7 @@ run_with_all_backends = functools.partial(
 )
 
 
-def partitioned(cls):
+def _sharded_db(cls):
     """
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
@@ -204,11 +204,11 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(partitioned(cls))
+    return skip_unless(_sharded_db(cls))
 
 
 def use_sharded_db(cls):
-    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return _sharded_db(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
 def patch_testcase_databases():
