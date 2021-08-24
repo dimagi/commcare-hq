@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
 
-
 SEND_FREQUENCY_WEEKLY = 'weekly'
 SEND_FREQUENCY_MONTHLY = 'monthly'
 SEND_FREQUENCY_QUARTERLY = 'quarterly'
@@ -66,3 +65,15 @@ DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
 DHIS2_MAX_VERSION = "2.35.1"
+
+COMPLETE_DATE_EMPTY = "complete_date_empty"
+COMPLETE_DATE_COLUMN = "complete_date_column"
+COMPLETE_DATE_ON_PERIOD_END = "complete_date_on_period_end"
+COMPLETE_DATE_ON_SEND = "complete_date_on_send"
+
+COMPLETE_DATE_CHOICES = [
+    (COMPLETE_DATE_EMPTY, _('None')),
+    (COMPLETE_DATE_COLUMN, _('UCR column')),
+    (COMPLETE_DATE_ON_PERIOD_END, _('Use last day of period')),
+    (COMPLETE_DATE_ON_SEND, _('Use date that dataValues are sent')),
+]
