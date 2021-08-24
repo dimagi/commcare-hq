@@ -22,7 +22,7 @@ from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    use_sharded_db,
 )
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
@@ -769,7 +769,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         })
 
 
-@use_sql_backend
+@use_sharded_db
 class SyncTokenUpdateTestSQL(SyncTokenUpdateTest):
     pass
 
@@ -778,7 +778,7 @@ class LiveQuerySyncTokenUpdateTest(SyncTokenUpdateTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQuerySyncTokenUpdateTestSQL(LiveQuerySyncTokenUpdateTest):
     pass
 
@@ -811,7 +811,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
         # todo: in the future we may also want to purge the child
 
 
-@use_sql_backend
+@use_sharded_db
 class SyncDeletedCasesTestSQL(SyncDeletedCasesTest):
     pass
 
@@ -820,7 +820,7 @@ class LiveQuerySyncDeletedCasesTest(SyncDeletedCasesTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQuerySyncDeletedCasesTestSQL(LiveQuerySyncDeletedCasesTest):
     pass
 
@@ -1052,7 +1052,7 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
         self.assertEqual(sync_log.case_ids_on_phone, all_ids)
 
 
-@use_sql_backend
+@use_sharded_db
 class ExtensionCasesSyncTokenUpdatesSQL(ExtensionCasesSyncTokenUpdates):
     pass
 
@@ -1061,7 +1061,7 @@ class LiveQueryExtensionCasesSyncTokenUpdates(ExtensionCasesSyncTokenUpdates):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryExtensionCasesSyncTokenUpdatesSQL(LiveQueryExtensionCasesSyncTokenUpdates):
     pass
 
@@ -1095,7 +1095,7 @@ class ExtensionCasesFirstSync(BaseSyncTest):
         self.assertFalse(config.restore_state.is_first_extension_sync)
 
 
-@use_sql_backend
+@use_sharded_db
 class ExtensionCasesFirstSyncSQL(ExtensionCasesFirstSync):
     pass
 
@@ -1104,7 +1104,7 @@ class LiveQueryExtensionCasesFirstSync(ExtensionCasesFirstSync):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryExtensionCasesFirstSyncSQL(LiveQueryExtensionCasesFirstSync):
     pass
 
@@ -1166,7 +1166,7 @@ class ChangingOwnershipTest(BaseSyncTest):
         self.assertTrue(sync2.log.phone_is_holding_case(case_id))
 
 
-@use_sql_backend
+@use_sharded_db
 class ChangingOwnershipTestSQL(ChangingOwnershipTest):
     pass
 
@@ -1175,7 +1175,7 @@ class LiveQueryChangingOwnershipTest(ChangingOwnershipTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
     pass
 
@@ -1279,7 +1279,7 @@ class SyncTokenCachingTest(BaseSyncTest):
         self.assertNotEqual(original_name, next_name)
 
 
-@use_sql_backend
+@use_sharded_db
 class SyncTokenCachingTestSQL(SyncTokenCachingTest):
     pass
 
@@ -1288,7 +1288,7 @@ class LiveQuerySyncTokenCachingTest(SyncTokenCachingTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQuerySyncTokenCachingTestSQL(LiveQuerySyncTokenCachingTest):
     pass
 
@@ -1834,7 +1834,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertEqual(set(sync3.cases), set())
 
 
-@use_sql_backend
+@use_sharded_db
 class MultiUserSyncTestSQL(MultiUserSyncTest):
     pass
 
@@ -1843,7 +1843,7 @@ class LiveQueryMultiUserSyncTest(MultiUserSyncTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryMultiUserSyncTestSQL(LiveQueryMultiUserSyncTest):
     pass
 
@@ -1996,7 +1996,7 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
         self.assertFalse(sync1.cases)
 
 
-@use_sql_backend
+@use_sharded_db
 class SteadyStateExtensionSyncTestSQL(SteadyStateExtensionSyncTest):
     pass
 
@@ -2005,7 +2005,7 @@ class LiveQuerySteadyStateExtensionSyncTest(SteadyStateExtensionSyncTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQuerySteadyStateExtensionSyncTestSQL(LiveQuerySteadyStateExtensionSyncTest):
     pass
 
@@ -2038,7 +2038,7 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         self.assertFalse(getattr(sync_log, 'has_assert_errors', False))
 
 
-@use_sql_backend
+@use_sharded_db
 class SyncTokenReprocessingTestSQL(SyncTokenReprocessingTest):
     pass
 
@@ -2047,7 +2047,7 @@ class LiveQuerySyncTokenReprocessingTest(SyncTokenReprocessingTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQuerySyncTokenReprocessingTestSQL(LiveQuerySyncTokenReprocessingTest):
     pass
 
@@ -2075,7 +2075,7 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
             ).get_payload()
 
 
-@use_sql_backend
+@use_sharded_db
 class LooseSyncTokenValidationTestSQL(LooseSyncTokenValidationTest):
     pass
 
@@ -2084,7 +2084,7 @@ class LiveQueryLooseSyncTokenValidationTest(LooseSyncTokenValidationTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryLooseSyncTokenValidationTestSQL(LiveQueryLooseSyncTokenValidationTest):
     pass
 
@@ -2121,7 +2121,7 @@ class IndexSyncTest(BaseSyncTest):
         self.assertIn(wave_index, sync.cases[child_id].index)
 
 
-@use_sql_backend
+@use_sharded_db
 class IndexSyncTestSQL(IndexSyncTest):
     pass
 
@@ -2130,6 +2130,6 @@ class LiveQueryIndexSyncTest(IndexSyncTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@use_sharded_db
 class LiveQueryIndexSyncTestSQL(LiveQueryIndexSyncTest):
     pass

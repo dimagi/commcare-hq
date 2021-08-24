@@ -5,7 +5,7 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 
 
 class AuthTest(TestCase, TestFileMixin):
@@ -19,6 +19,6 @@ class AuthTest(TestCase, TestFileMixin):
         self.assertEqual(result.xform.auth_context, {'doc_type': 'DefaultAuthContext'})
 
 
-@use_sql_backend
+@use_sharded_db
 class AuthTestSQL(AuthTest):
     pass

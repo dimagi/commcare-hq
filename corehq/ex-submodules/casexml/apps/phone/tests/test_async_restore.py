@@ -13,7 +13,7 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -272,7 +272,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         self.assertTrue(invalidate.called)
 
 
-@use_sql_backend
+@use_sharded_db
 class AsyncRestoreTestSQL(AsyncRestoreTest):
     pass
 

@@ -27,7 +27,7 @@ from corehq.form_processor.document_stores import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    use_sharded_db,
 )
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.exceptions import DatabaseNotFound
@@ -259,7 +259,7 @@ class DocumentStoreDbTests(TestCase):
         super().tearDownClass()
 
 
-@use_sql_backend
+@use_sharded_db
 class DocumentStoreDbTestsSQL(TestCase):
     pass
 

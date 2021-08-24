@@ -13,7 +13,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sharded_db
 
 
 class BaseReindexAccessorTest(object):
@@ -124,7 +124,7 @@ class BaseReindexAccessorTest(object):
         self.assertSetEqual(set(self.all_doc_ids_domain), set(doc_store.iter_document_ids()))
 
 
-@use_sql_backend
+@use_sharded_db
 class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = CaseReindexAccessor
     doc_type = 'CommCareCase'
@@ -145,7 +145,7 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
         return [doc.case_id for doc in docs]
 
 
-@use_sql_backend
+@use_sharded_db
 class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = FormReindexAccessor
     doc_type = 'XFormInstance'
@@ -164,7 +164,7 @@ class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
         return [doc.form_id for doc in docs]
 
 
-@use_sql_backend
+@use_sharded_db
 class UnshardedLedgerReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = LedgerReindexAccessor
     doc_type = 'ledger'

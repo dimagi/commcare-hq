@@ -16,7 +16,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    use_sharded_db,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -194,7 +194,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
-@use_sql_backend
+@use_sharded_db
 class CaseBugTestSQL(CaseBugTest):
     pass
 
@@ -360,7 +360,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('t1', case2.type)
 
 
-@use_sql_backend
+@use_sharded_db
 class TestCaseHierarchySQL(TestCaseHierarchy):
     pass
 
@@ -424,6 +424,6 @@ class TestCaseHierarchyContext(TestCase):
         self.child = accessors.get_case(self.child.case_id)
 
 
-@use_sql_backend
+@use_sharded_db
 class TestCaseHierarchyContextSQL(TestCaseHierarchyContext):
     pass

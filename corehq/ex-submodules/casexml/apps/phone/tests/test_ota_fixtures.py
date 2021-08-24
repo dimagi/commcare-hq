@@ -14,7 +14,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
@@ -84,7 +84,7 @@ class OtaFixtureTest(TestCase):
         self.assertNotIn('<fixture ', restore_without_fixture)
 
 
-@use_sql_backend
+@use_sharded_db
 class OtaFixtureTestSQL(OtaFixtureTest):
     pass
 

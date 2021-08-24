@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -65,6 +65,6 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertNotEqual(result1.xform.form_id, result2.xform.form_id)
 
 
-@use_sql_backend
+@use_sharded_db
 class DuplicateFormTestSQL(DuplicateFormTest):
     pass

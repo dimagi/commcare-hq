@@ -10,7 +10,7 @@ from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 from six.moves import range
 
 
@@ -522,7 +522,7 @@ class OwnerCleanlinessTest(DeprecatedBaseSyncTest):
         self._verify_set_cleanliness_flags()
 
 
-@use_sql_backend
+@use_sharded_db
 class OwnerCleanlinessTestSQL(OwnerCleanlinessTest):
     pass
 
@@ -542,7 +542,7 @@ class SetCleanlinessFlagsTest(TestCase):
                 set_cleanliness_flags('whatever', invalid_owner)
 
 
-@use_sql_backend
+@use_sharded_db
 class SetCleanlinessFlagsTestSQL(SetCleanlinessFlagsTest):
     pass
 
@@ -708,7 +708,7 @@ class GetCaseFootprintInfoTest(TestCase):
         )
 
 
-@use_sql_backend
+@use_sharded_db
 class GetCaseFootprintInfoTestSQL(GetCaseFootprintInfoTest):
     pass
 
@@ -798,6 +798,6 @@ class GetDependentCasesTest(TestCase):
                          get_dependent_case_info(self.domain, [parent.case_id]).extension_ids)
 
 
-@use_sql_backend
+@use_sharded_db
 class GetDependentCasesTestSQL(GetDependentCasesTest):
     pass

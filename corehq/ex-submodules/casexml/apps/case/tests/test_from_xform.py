@@ -8,7 +8,7 @@ from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 
 
@@ -131,6 +131,6 @@ class CaseFromXFormTest(TestCase):
             self.assertFalse(transaction.revoked)
 
 
-@use_sql_backend
+@use_sharded_db
 class CaseFromXFormTestSQL(CaseFromXFormTest):
     pass

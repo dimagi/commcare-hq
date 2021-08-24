@@ -35,7 +35,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, use_sql_backend
+from corehq.form_processor.tests.utils import run_with_all_backends, use_sharded_db
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -641,6 +641,6 @@ class TestSavingToUCRDatabase(BaseCCTests):
             self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
 
 
-@use_sql_backend
+@use_sharded_db
 class TestSavingToUCRDatabaseSQL(TestSavingToUCRDatabase):
     pass

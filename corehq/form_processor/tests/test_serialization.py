@@ -8,13 +8,13 @@ from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    use_sharded_db,
 )
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.sql_db.routers import HINT_PLPROXY
 
 
-@use_sql_backend
+@use_sharded_db
 class SerializationTests(TestCase):
 
     @classmethod

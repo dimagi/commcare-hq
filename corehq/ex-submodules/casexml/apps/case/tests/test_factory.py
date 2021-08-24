@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 
 
 class CaseRelationshipTest(SimpleTestCase):
@@ -201,6 +201,6 @@ class CaseFactoryTest(TestCase):
         self.assertEqual('differenttoken', form.last_sync_token)
 
 
-@use_sql_backend
+@use_sharded_db
 class CaseFactoryTestSQL(CaseFactoryTest):
     pass

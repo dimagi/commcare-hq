@@ -22,7 +22,7 @@ from corehq.apps.reports.analytics.dbaccessors import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    use_sharded_db,
 )
 from corehq.form_processor.utils import get_simple_form_xml
 
@@ -101,7 +101,7 @@ class TestSupplyAccessors(TestCase):
         self.assertEqual(97, results[self.product_a._id])
 
 
-@use_sql_backend
+@use_sharded_db
 class LedgerDBAccessorTest(TestCase):
 
     @classmethod

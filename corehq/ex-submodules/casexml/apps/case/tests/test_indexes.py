@@ -12,7 +12,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -185,7 +185,7 @@ class IndexTest(TestCase):
         self.assertEqual(cases[0].indices[0].relationship, 'child')
 
 
-@use_sql_backend
+@use_sharded_db
 class IndexTestSQL(IndexTest):
     pass
 

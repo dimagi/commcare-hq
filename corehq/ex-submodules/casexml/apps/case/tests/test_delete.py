@@ -7,7 +7,7 @@ from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sharded_db
 from corehq.form_processor.utils.general import should_use_sql_backend
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -80,6 +80,6 @@ class TestHardDelete(TestCase):
         self.assertIsNotNone(self.casedb.get_case(c2.case_id))
 
 
-@use_sql_backend
+@use_sharded_db
 class TestHardDeleteSQL(TestHardDelete):
     pass

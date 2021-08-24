@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
@@ -86,6 +86,6 @@ class KafkaPublishingTest(TestCase):
         self.assertTrue(change_meta.is_deletion)
 
 
-@use_sql_backend
+@use_sharded_db
 class KafkaPublishingTestSQL(KafkaPublishingTest):
     pass
