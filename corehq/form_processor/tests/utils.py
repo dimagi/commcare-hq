@@ -184,7 +184,7 @@ def partitioned(cls):
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
     """
-    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
+    return patch_shard_db_transactions(attr(sharded_db=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
