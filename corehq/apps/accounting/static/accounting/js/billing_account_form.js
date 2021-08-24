@@ -9,13 +9,13 @@ hqDefine('accounting/js/billing_account_form', [
     ko,
     initialPageData
 ) {
-    var billingAccountFormModel = function (isActive, isCustomerBillingAccount, enterpriseAdminEmails, isSMSBillableReportVisible) {
+    var billingAccountFormModel = function (isActive, isCustomerBillingAccount, enterpriseAdminEmails, isSmsBillableReportVisible) {
         'use strict';
         var self = {};
 
         self.is_active = ko.observable(isActive);
         self.is_customer_billing_account = ko.observable(isCustomerBillingAccount);
-        self.is_sms_billable_report_visible = ko.observable(isSMSBillableReportVisible);
+        self.is_sms_billable_report_visible = ko.observable(isSmsBillableReportVisible);
         self.enterprise_admin_emails = ko.observable(enterpriseAdminEmails);
         self.showActiveAccounts = ko.computed(function () {
             return !self.is_active();

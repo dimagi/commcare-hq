@@ -1626,7 +1626,7 @@ class EnterpriseSettingsTab(UITab):
 
         items.append((_('Manage Enterprise'), enterprise_views))
 
-        if BillingAccount._is_sms_billable_report_visible(self.domain):
+        if BillingAccount.should_show_sms_billable_report(self.domain):
             items.extend(EnterpriseReportDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 

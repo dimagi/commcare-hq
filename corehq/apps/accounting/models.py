@@ -585,11 +585,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
 
-    def _is_sms_billable_report_visible(domain):
+    @staticmethod
+    def should_show_sms_billable_report(domain):
         account = BillingAccount.get_account_by_domain(domain)
-        if account.is_sms_billable_report_visible:
-            return True
-        return False
+        return account.is_sms_billable_report_visible
 
 
 class BillingContactInfo(models.Model):
