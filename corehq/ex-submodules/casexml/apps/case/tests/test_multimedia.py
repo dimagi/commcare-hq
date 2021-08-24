@@ -20,7 +20,6 @@ from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
 

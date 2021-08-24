@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import use_sharded_db, FormProcessorTestUtils
@@ -27,7 +26,7 @@ ALICE_XML = """<?xml version='1.0' ?>
         <n1:instanceID>a588a637-cde0-43ad-a046-4c508102009d</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare ODK, version "2.4.1"(10083). App v19. CommCare Version 2.4. Build 10083, built on: March-12-2013</n2:appVersion>
     </n1:meta>
-</data>"""
+</data>"""  # noqa: E501
 
 EVE_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
@@ -46,7 +45,7 @@ EVE_XML = """<?xml version='1.0' ?>
         <n1:instanceID>b58df19c-efd5-4ecf-9581-65dda8b8787c</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare ODK, version "2.4.1"(10083). App v19. CommCare Version 2.4. Build 10083, built on: March-12-2013</n2:appVersion>
     </n1:meta>
-</data>"""
+</data>"""  # noqa: E501
 
 ALICE_UPDATE_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
@@ -65,7 +64,7 @@ ALICE_UPDATE_XML = """<?xml version='1.0' ?>
         <n1:instanceID>b58df19c-efd5-4ecf-9581-65dda8b8787cXXX</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">CommCare ODK, version "2.4.1"(10083). App v19. CommCare Version 2.4. Build 10083, built on: March-12-2013</n2:appVersion>
     </n1:meta>
-</data>"""
+</data>"""  # noqa: E501
 
 
 ALICE_DOMAIN = 'domain1'
