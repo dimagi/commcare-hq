@@ -96,8 +96,6 @@ def _get_es_query(domain, user_type, user_filters):
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
 
-    print(f'Location id: {location_id}')
-
     if location_id:
         if selected_location_only:
             location_ids = [location_id]

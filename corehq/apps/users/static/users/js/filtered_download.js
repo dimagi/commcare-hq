@@ -39,18 +39,17 @@ hqDefine('users/js/filtered_download', [
             });
         });
 
-        self.countUsers = function () {
-            console.log('Recalculating the users count');
+        self.location_change = function () {
+            self.location_id($('#id_location_id').val());
+        };
 
+        self.countUsers = function () {
             self.count(null);
             var data = {
                 search_string: self.search_string(),
                 domains: self.domains(),
                 user_active_status: self.user_active_status(),
             };
-
-            console.log(self.selected_location_only());
-            console.log(self.location_id());
 
             if (!self.isCrossDomain()) {
                 data = _.extend(data, {
