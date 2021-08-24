@@ -412,7 +412,7 @@ hqDefine("export/js/export_list", [
             return true;
         };
 
-        // Bulk export handling
+        // Bulk action handling
         self.selectAll = function () {
             _.each(self.exports(), function (e) { e.addedToBulk(true); });
         };
@@ -432,6 +432,34 @@ hqDefine("export/js/export_list", [
             })));
 
             return true;
+        };
+
+        self.bulkDeleteList = ko.computed(function () {
+            return _.filter(self.exports(), function (e) {return e.addedToBulk();})
+        });
+
+        self.multipleBulkSelected = ko.computed(function () {
+            if(self.bulkDeleteList().length > 1){
+                return true
+            };
+            return false;
+        });
+
+        self.BulkExportDelete = function (observable, event) {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    $(event.currentTarget).closest('form').submit();
+                }, 250);
+            } else {
+                _.each(_.filter(self.exports(), function (e) {return e.addedToBulk();}),
+                   function (e) { $.ajax({
+                                    method: 'POST',
+                                    url: e.deleteUrl(),
+                                  });
+                   });
+            }
+            location.reload(); //there's probably a better way to do it that I'm not seeing
         };
 
         // HTML elements from filter form - admittedly it's not very knockout-y to manipulate these directly
