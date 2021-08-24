@@ -13,6 +13,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    HttpResponseForbidden,
 )
 from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render

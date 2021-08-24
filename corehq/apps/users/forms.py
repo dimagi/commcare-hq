@@ -1346,10 +1346,9 @@ class UserFilterForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
-    only_selected_location = forms.BooleanField(
+    selected_location_only = forms.BooleanField(
         required=False,
         label=_('Only include mobile workers at the selected location'),
-        initial=False,
     )
     user_active_status = forms.ChoiceField(
         label='Active / Deactivated',
@@ -1377,6 +1376,7 @@ class UserFilterForm(forms.Form):
         if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
+
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
@@ -1426,7 +1426,13 @@ class UserFilterForm(forms.Form):
                     crispy.Field("location_id", data_bind="value: location_id"),
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
-                crispy.Field("only_selected_location", data_bind="value: only_selected_location"),
+                crispy.Div(
+                    crispy.Field(
+                        "selected_location_only",
+                        data_bind="checked: selected_location_only"
+                    ),
+                    data_bind="slideVisible: !isCrossDomain()",
+                ),
                 crispy.Field(
                     "user_active_status",
                     data_bind="value: user_active_status",

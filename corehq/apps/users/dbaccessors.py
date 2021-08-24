@@ -74,7 +74,7 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
-    only_selected_location = user_filters.get('only_selected_location', False)
+    selected_location_only = user_filters.get('selected_location_only', False)
     user_active_status = user_filters.get('user_active_status', None)
 
     if user_active_status is None:
@@ -95,8 +95,11 @@ def _get_es_query(domain, user_type, user_filters):
         query = query.role_id(role_id)
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
+
+    print(f'Location id: {location_id}')
+
     if location_id:
-        if only_selected_location:
+        if selected_location_only:
             location_ids = [location_id]
         else:
             location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
@@ -131,7 +134,10 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
         user_filters: a dict with below structure.
             {'role_id': <Role ID to filter users by>,
              'search_string': <string to search users by username>,
-             'location_id': <Location ID to filter users by>}
+             'location_id': <Location ID to filter users by>,
+             'selected_location_only: <Select only users at specific location, not descendants also>,
+             'user_active_status': <User status (active/inactive) to filter by>
+             }
     kwargs:
         count_only: If True, returns count of search results
     """

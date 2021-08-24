@@ -67,6 +67,7 @@ class LocationSelectWidget(forms.Widget):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
+
         initial_data = [{
             'id': loc.location_id,
             'text': loc.get_path_display(),
@@ -573,7 +574,7 @@ class LocationFilterForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
-    only_selected_location = forms.BooleanField(
+    selected_location_only = forms.BooleanField(
         required=False,
         label=_('Only include selected location'),
         initial=False,
@@ -599,7 +600,7 @@ class LocationFilterForm(forms.Form):
                 _("Filter and Download Locations"),
                 crispy.Field('root_location_id'),
             ),
-            crispy.Field('only_selected_location'),
+            crispy.Field('selected_location_only'),
             crispy.Field('location_active_status'),
             hqcrispy.FormActions(
                 StrictButton(
