@@ -185,6 +185,28 @@ class TestInvoicingMethods(BaseAccountingTest):
         ))
         trial_domain.delete()
 
+    def test_should_not_invoice_paused_plan(self):
+        """
+        Ensure that paused plans do not generate a CustomerInvoice
+        """
+        paused_domain = generator.arbitrary_domain()
+        self.addCleanup(paused_domain.delete)
+        paused_plan = generator.subscribable_plan_version(
+            edition=SoftwarePlanEdition.PAUSED
+        )
+        paused_plan.plan.is_customer_software_plan = True
+        subscription = Subscription.new_domain_subscription(
+            self.account, paused_domain.name, paused_plan,
+            date_start=self.invoice_start,
+
+        )
+        self.assertFalse(should_create_invoice(
+            subscription=subscription,
+            domain=subscription.subscriber.domain,
+            invoice_start=self.invoice_start,
+            invoice_end=self.invoice_end
+        ))
+
     def test_should_not_invoice_without_subscription_charges(self):
         feature_charge_domain = generator.arbitrary_domain()
         subscription = Subscription.new_domain_subscription(
