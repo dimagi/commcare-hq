@@ -477,7 +477,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==5.0.1
+radon==5.1.0
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
