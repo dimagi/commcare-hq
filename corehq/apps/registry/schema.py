@@ -1,5 +1,6 @@
 from django.utils.functional import cached_property
 
+
 class RegistrySchema:
 
     def __init__(self, schema_data):
