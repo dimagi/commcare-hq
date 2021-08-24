@@ -2,6 +2,7 @@ from unittest.mock import patch, Mock
 
 from django.test import SimpleTestCase
 
+from corehq.apps.registry.exceptions import RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -24,17 +25,24 @@ class TestDataRegistryHelper(SimpleTestCase):
         self.assertEqual(case, mockCase)
 
     def test_get_case_type_not_in_registry(self):
-        with self.assertRaises(CaseNotFound):
+        with self.assertRaisesMessage(RegistryAccessException, "'other-type' not available in registry"):
             self.helper.get_case("case1", "other-type")
 
     def test_get_case_not_found(self):
-        with self.assertRaises(CaseNotFound), patch.object(CaseAccessorSQL, 'get_case') as get_case:
-            get_case.side_effect = CaseNotFound
+        with self.assertRaises(CaseNotFound), \
+             patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
+            self.helper.get_case("case1", "a")
+
+    def test_get_case_type_mismatch(self):
+        mockCase = _mock_case("other-type", "domain1")
+        with self.assertRaisesMessage(CaseNotFound, "Case type mismatch"), \
+             patch.object(CaseAccessorSQL, 'get_case', return_value=mockCase):
             self.helper.get_case("case1", "a")
 
     def test_get_case_domain_not_in_registry(self):
         mockCase = _mock_case("a", "other-domain")
-        with self.assertRaises(CaseNotFound), patch.object(CaseAccessorSQL, 'get_case', return_value=mockCase):
+        with self.assertRaisesMessage(RegistryAccessException, "Data not available in registry"), \
+             patch.object(CaseAccessorSQL, 'get_case', return_value=mockCase):
             self.helper.get_case("case1", "a")
 
 

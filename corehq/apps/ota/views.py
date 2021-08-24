@@ -51,7 +51,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.exceptions import RegistryNotFound
+from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -455,7 +455,7 @@ def registry_case_details(request, domain):
         case = DataRegistryHelper(domain, registry).get_case(case_id, case_type)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
-    except CaseNotFound:
+    except (CaseNotFound, RegistryAccessException):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
     return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")
