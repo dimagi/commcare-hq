@@ -2,7 +2,7 @@ from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_da
     compute_consumption_or_default)
 from casexml.apps.stock.tests.mock_consumption import now
 from casexml.apps.stock.tests.base import StockTestBase
-from corehq.form_processor.tests.utils import use_sharded_db
+from corehq.form_processor.tests.utils import sharded
 
 
 class ConsumptionCaseTest(StockTestBase):
@@ -44,6 +44,6 @@ class ConsumptionCaseTest(StockTestBase):
         ))
 
 
-@use_sharded_db
+@sharded
 class ConsumptionCaseTestSQL(ConsumptionCaseTest):
     pass

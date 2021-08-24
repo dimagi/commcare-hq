@@ -8,7 +8,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import use_sharded_db
+from corehq.form_processor.tests.utils import sharded
 
 
 class StockStatusDataSourceTests(TestCase):
@@ -101,6 +101,6 @@ class StockStatusDataSourceTests(TestCase):
         )
 
 
-@use_sharded_db
+@sharded
 class StockStatusDataSourceSQLTests(StockStatusDataSourceTests):
     pass

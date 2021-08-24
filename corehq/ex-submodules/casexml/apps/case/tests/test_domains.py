@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sharded_db, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import sharded, FormProcessorTestUtils
 
 ALICE_XML = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
@@ -88,6 +88,6 @@ class DomainTest(TestCase):
         self.assertEqual(result_alice_update.case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
 
 
-@use_sharded_db
+@sharded
 class DomainTestSQL(DomainTest):
     pass

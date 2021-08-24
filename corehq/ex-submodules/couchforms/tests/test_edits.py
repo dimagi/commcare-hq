@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -382,6 +382,6 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual('edit', xform.history[2].operation)
 
 
-@use_sharded_db
+@sharded
 class EditFormTestSQL(EditFormTest):
     pass

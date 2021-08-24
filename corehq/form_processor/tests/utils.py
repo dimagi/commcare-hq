@@ -207,7 +207,7 @@ def only_run_with_partitioned_database(cls):
     return skip_unless(_sharded_db(cls))
 
 
-def use_sharded_db(cls):
+def sharded(cls):
     return _sharded_db(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 

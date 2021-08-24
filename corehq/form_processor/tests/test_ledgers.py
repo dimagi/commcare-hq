@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sharded_db
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 from corehq.util.test_utils import softer_assert
@@ -210,7 +210,7 @@ class LedgerTests(TestCase):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)
 
 
-@use_sharded_db
+@sharded
 @softer_assert()
 class LedgerTestsSQL(LedgerTests):
     def test_edit_form_that_removes_ledgers(self):

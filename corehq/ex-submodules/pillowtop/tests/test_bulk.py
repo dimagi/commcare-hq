@@ -13,7 +13,7 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    use_sharded_db,
+    sharded,
 )
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
@@ -55,7 +55,7 @@ class BulkTest(SimpleTestCase):
         self.assertEqual([(1, 'e1'), (2, 'e2')], errors)
 
 
-@use_sharded_db
+@sharded
 @es_test
 class TestBulkDocOperations(TestCase):
     @classmethod

@@ -16,7 +16,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_registry_data_source,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.tests.utils import use_sharded_db
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import create_and_save_a_case
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -130,7 +130,7 @@ class RegistryDataSourceTableManagerTest(TestCase):
         return data_source_1, table_manager
 
 
-@use_sharded_db
+@sharded
 class RegistryUcrPillowTest(TestCase):
 
     @classmethod
