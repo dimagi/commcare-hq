@@ -20,10 +20,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (model.get("input") === "daterange") {
                 return "__range__" + value.replace(separator, "__");
             }
-            if (model.get('input') === 'address') {
-                // skip geocoder address
-                return true;
-            }
             if (model.get('input') === 'select') {
                 return value.join(selectDelimiter);
             }
@@ -73,6 +69,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
+            searchForBlank: '.search-for-blank',
+        },
+
+        events: {
+            'change @ui.searchForBlank': 'toggleBlankSearch',
         },
 
         modelEvents: {
@@ -218,6 +219,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.$el.hide();
             }
         },
+
+        toggleBlankSearch: function (e) {
+            // When checking the blank search box for a geocoder field, toggle all its receiver fields
+            var geocoderTopic = this.options.model.get('id');
+            if (this.options.model.get('input') === 'address') {
+                _.each($('.query-input-group'), function (elem) {
+                    var $queryField = $(elem).find('.query-field'),
+                        $searchForBlank = $(elem).find('.search-for-blank'),
+                        receiveExpression = $queryField.data('receive');
+                    if (receiveExpression && receiveExpression.split("-")[0] === geocoderTopic) {
+                        $searchForBlank.prop('checked', $(e.target).prop('checked'));
+                    }
+                });
+            }
+        },
+
     });
 
     var QueryListView = Marionette.CollectionView.extend({
@@ -251,12 +268,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $fields = $(".query-field"),
+            var $inputGroups = $(".query-input-group"),
                 answers = {},
                 model = this.parentModel;
-            $fields.each(function (index) {
-                if (this.value !== '') {
-                    answers[model[index].get('id')] = encodeValue(model[index], $(this).val());
+            $inputGroups.each(function (index) {
+                if (model[index].get('input') === 'address') {
+                    return;  // skip geocoder address
+                }
+                var queryValue = $(this).find('.query-field').val(),
+                    fieldId = model[index].get('id'),
+                    searchForBlank = $(this).find('.search-for-blank').prop('checked'),
+                    queryProvided = !(queryValue === '' || (_.isArray(queryValue) && _.isEmpty(queryValue))),
+                    encodedValue = encodeValue(model[index], queryValue);
+
+                if (searchForBlank && queryProvided) {
+                    answers[fieldId] = selectDelimiter + encodedValue;
+                } else if (queryProvided) {
+                    answers[fieldId] = encodedValue;
+                } else if (searchForBlank) {
+                    answers[fieldId] = "";
                 }
             });
             return answers;
@@ -281,16 +311,27 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = response.models[i].get('value');
+                            value = response.models[i].get('value'),
+                            includeBlank = false;
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
-                        if ($field.attr('multiple')) {
+                        if (value !== null) {
                             value = value.split(selectDelimiter);
+                            if (_.first(value) === "") {
+                                includeBlank = true;
+                                value = _.rest(value);
+                            }
+                            if (!$field.attr('multiple')) {
+                                value = _.isEmpty(value) ? null : value[0];
+                            }
                         }
                         self.collection.models[i].set({
                             itemsetChoices: choices,
                             value: value,
                         });
                         $field.trigger('change.select2');
+
+                        // recheck the check box if needed
+                        $($(".query-input-group")[i]).find('.search-for-blank').prop('checked', includeBlank);
                     }
                 }
                 self.setStickyQueryInputs();
