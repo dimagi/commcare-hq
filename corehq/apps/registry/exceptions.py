@@ -16,3 +16,7 @@ class RegistryAccessException(RegistryException):
     """This exception is raise for data access errors when a domain is requesting data from
     a registry that the domain does have access to"""
     pass
+
+
+class RegistrySchemaException(RegistryException):
+    pass

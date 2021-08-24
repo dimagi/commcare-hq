@@ -1,5 +1,20 @@
 from django.utils.functional import cached_property
 
+REGISTRY_JSON_SCHEMA = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "case_type":{
+        "type": "string",
+        "description": "The case type of the case"
+      }
+    },
+    "required": ["case_type"]
+  }
+}
+
 
 class RegistrySchema:
 

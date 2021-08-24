@@ -10,7 +10,8 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.domain.utils import domain_name_stop_words
 from corehq.apps.registry.exceptions import RegistryAccessDenied
-from corehq.apps.registry.schema import RegistrySchema
+from corehq.apps.registry.schema import RegistrySchema, REGISTRY_JSON_SCHEMA
+from corehq.util.validation import JSONSchemaValidator
 
 
 def slugify_remove_stops(text):
@@ -59,7 +60,7 @@ class DataRegistry(models.Model):
     slug = AutoSlugField(populate_from='name', unique_with='domain', slugify=slugify_remove_stops)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
-    schema = JSONField(null=True, blank=True)
+    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
