@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -8,11 +8,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
-from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import generate_cases
 
 
-@use_sql_backend
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class RegistryCaseDetailsTests(TestCase):
     domain = 'registry-case-details'
 
