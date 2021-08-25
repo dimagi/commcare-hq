@@ -115,7 +115,7 @@ class CommTrackOTATest(XMLTest):
 
     def test_ota_basic(self):
         amounts = [
-            SohReport(section_id='stock', product_id=p._id, amount=i*10)
+            SohReport(section_id='stock', product_id=p._id, amount=i * 10)
             for i, p in enumerate(self.products)
         ]
         form_id, report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
@@ -301,19 +301,19 @@ class CommTrackSubmissionTest(XMLTest):
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
     def test_balance_submit(self):
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
     def test_balance_submit_date(self):
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
     def test_balance_enumerated(self):
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_enumerated(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
@@ -323,7 +323,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        final_amounts = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(final_amounts))
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
@@ -338,7 +338,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts), date_formatter=json_format_date)
 
-        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        final_amounts = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(final_amounts), date_formatter=json_format_date)
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
@@ -352,7 +352,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         """
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
-        final_amounts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        final_amounts = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
 
         self.submit_xml_form(balance_submission(initial_amounts))
         self.products[1].archive()
@@ -375,7 +375,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
                 self.check_product_stock(self.sp, product, amt, 0, section_id)
 
     def test_transfer_dest_only(self):
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
@@ -385,24 +385,24 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        deductions = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        deductions = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_source_only(deductions))
         for product, amt in deductions:
-            self.check_product_stock(self.sp, product, initial-amt, -amt)
+            self.check_product_stock(self.sp, product, initial - amt, -amt)
 
     def test_transfer_both(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        transfers = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        transfers = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_both(transfers))
         for product, amt in transfers:
-            self.check_product_stock(self.sp, product, initial-amt, -amt)
+            self.check_product_stock(self.sp, product, initial - amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
 
     def test_transfer_with_date(self):
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
@@ -412,7 +412,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial_amounts = [(p._id, initial) for p in self.products]
         self.submit_xml_form(balance_submission(initial_amounts))
 
-        receipts = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        receipts = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(receipts_enumerated(receipts))
         for product, amt in receipts:
             self.check_product_stock(self.sp, product, initial + amt, amt)
@@ -420,7 +420,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     def test_balance_first_doc_order(self):
         initial = float(100)
         balance_amounts = [(p._id, initial) for p in self.products]
-        transfers = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        transfers = [(p._id, float(50 - 10 * i)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_first(balance_amounts, transfers))
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial + amt, amt)
@@ -432,7 +432,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(balance_submission(initial_amounts))
 
         # then mark some receipts
-        transfers = [(p._id, float(50 - 10*i + 3)) for i, p in enumerate(self.products)]
+        transfers = [(p._id, float(50 - 10 * i + 3)) for i, p in enumerate(self.products)]
         # then set to 50
         final = float(50)
         balance_amounts = [(p._id, final) for p in self.products]
