@@ -25,11 +25,7 @@ from corehq.form_processor.document_stores import (
     LedgerV1DocumentStore,
     LedgerV2DocumentStore,
 )
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    sharded,
-)
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
 
@@ -108,14 +104,8 @@ def case_form_data():
     try:
         yield form_ids, case_ids
     finally:
-        if should_use_sql_backend('domain'):
-            FormAccessorSQL.hard_delete_forms('domain', form_ids)
-            CaseAccessorSQL.hard_delete_cases('domain', case_ids)
-        else:
-            for case in cases:
-                case.delete()
-            for form in forms:
-                form.delete()
+        FormAccessorSQL.hard_delete_forms('domain', form_ids)
+        CaseAccessorSQL.hard_delete_cases('domain', case_ids)
 
 
 @contextmanager
@@ -159,36 +149,6 @@ def location_data():
         locs = setup_locations_with_structure('domain', location_structure)
 
         yield [loc.location_id for name, loc in locs.items()]
-
-
-@contextmanager
-def stock_data():
-    from corehq.apps.commtrack.models import StockState
-    from corehq.apps.commtrack.tests.util import make_product
-    from corehq.apps.products.models import SQLProduct
-    from casexml.apps.case.mock import CaseFactory
-
-    product = make_product('domain', 'Sample Product 1', 'pp', None)
-    case = CaseFactory('domain').create_case()
-    stock_state = [
-        StockState(
-            section_id=str(i),
-            case_id=case.case_id,
-            product_id=product._id,
-            last_modified_date=datetime.utcnow(),
-            sql_product=SQLProduct.objects.get(product_id=product._id),
-        )
-        for i in range(3)
-    ]
-    for stock in stock_state:
-        stock.save()
-
-    try:
-        yield [stock.pk for stock in stock_state]
-    finally:
-        for stock in stock_state:
-            stock.delete()
-        case.delete()
 
 
 @contextmanager
@@ -252,15 +212,8 @@ def sms_data():
             sms.delete()
 
 
-class DocumentStoreDbTests(TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super().tearDownClass()
-
-
 @sharded
-class DocumentStoreDbTestsSQL(TestCase):
+class DocumentStoreDbTests(TestCase):
     pass
 
 
@@ -280,18 +233,9 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
     (CaseDocumentStore, ('domain',), case_data, '_id'),
     (FormDocumentStore, ('domain',), form_data, '_id'),
     (LocationDocumentStore, ('domain',), location_data, 'location_id'),
-    (LedgerV1DocumentStore, ('domain',), stock_data, '_id'),
+    (LedgerV2DocumentStore, ('domain',), ledger_data, '_id'),
     (SyncLogDocumentStore, (), synclog_data, '_id'),
     (SMSDocumentStore, (), sms_data, '_id'),
 ], DocumentStoreDbTests)
 def test_documet_store(*args):
-    _test_document_store(*args)
-
-
-@generate_cases([
-    (CaseDocumentStore, ('domain',), case_data, '_id'),
-    (FormDocumentStore, ('domain',), form_data, '_id'),
-    (LedgerV2DocumentStore, ('domain',), ledger_data, '_id'),
-], DocumentStoreDbTestsSQL)
-def test_documet_store_sql(*args):
     _test_document_store(*args)
