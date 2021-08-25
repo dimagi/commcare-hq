@@ -143,7 +143,6 @@ class CaseDeduplicationActionTest(TestCase):
         _, cls.action = cls.rule.add_action(
             CaseDeduplicationActionDefinition,
             match_type=CaseDeduplicationMatchTypeChoices.ALL,
-            close_case=False,
             case_properties=["name", "age", "weight"],
         )
 
@@ -195,13 +194,6 @@ class CaseDeduplicationActionTest(TestCase):
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
         """
-
-    def test_close_case_closes_cases(self):
-        """Should we allow this? (probably not)
-        if not, remove it from the base class
-        """
-        # Closing cases could remove them from the duplicate search (i.e. they are no longer duplicates)
-        # Do we remove the case from the duplicate list?
 
     def test_update_case_no_longer_duplicate(self):
         """What happens if the case update deduplicates the case?

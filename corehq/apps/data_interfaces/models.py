@@ -752,9 +752,6 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
     # case properties to update
     properties_to_update = jsonfield.JSONField(default=list)
 
-    # True to close the case, otherwise False
-    close_case = models.BooleanField()
-
     VALUE_TYPE_EXACT = "EXACT"
     VALUE_TYPE_CASE_PROPERTY = "CASE_PROPERTY"
 
@@ -853,8 +850,13 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
 
         # Update / close the case
         properties = cases_to_update[case.case_id]
-        if self.close_case or properties:
-            result = update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
+        try:
+            close_case = self.close_case
+        except AttributeError:
+            close_case = False
+
+        if close_case or properties:
+            result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
                 xmlns=AUTO_UPDATE_XMLNS)
 
             rule.log_submission(result[0].form_id)
@@ -862,7 +864,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
             if properties:
                 num_updates += 1
 
-            if self.close_case:
+            if close_case:
                 num_closes += 1
 
         return CaseRuleActionResult(
@@ -876,6 +878,9 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
 
 
 class UpdateCaseDefinition(BaseUpdateCaseDefinition):
+    # True to close the case, otherwise False
+    close_case = models.BooleanField()
+
     def get_case_updates(self, case):
         cases_to_update = defaultdict(dict)
         self._add_case_and_ancestor_updates(case, cases_to_update)
