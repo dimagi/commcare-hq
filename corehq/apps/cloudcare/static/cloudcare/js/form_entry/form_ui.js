@@ -233,6 +233,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         delete json.tree;
         Container.call(self, json);
         self.blockSubmit = ko.observable(false);
+        self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
         self.submitClass = Const.LABEL_OFFSET + ' ' + Const.CONTROL_WIDTH;
 
@@ -287,7 +288,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
-            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps()) {
+            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps() || !self.hasSubmitAttempted()) {
                 return [];
             }
 
@@ -295,7 +296,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var qs = [];
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
-                if (questions[i].error() != null || questions[i].serverError() != null) {
+                if (questions[i].error() != null || questions[i].serverError() != null
+                            || (questions[i].required() && questions[i].answer() == null)) {
                     qs.push(questions[i]);
                 }
             }
@@ -356,6 +358,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.submitForm = function () {
+            self.hasSubmitAttempted(true);
             $.publish('formplayer.' + Const.SUBMIT, self);
         };
 
