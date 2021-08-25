@@ -382,7 +382,7 @@ def add_enterprise_permissions_domain(request, domain, target_domain):
 
     redirect = reverse("enterprise_permissions", args=[domain])
     if target_domain not in config.account.get_domains():
-        messages.error(request, _("Could not add {}}.").format(target_domain))
+        messages.error(request, _("Could not add {}.").format(target_domain))
         return HttpResponseRedirect(redirect)
 
     if target_domain not in config.domains:
