@@ -1,5 +1,4 @@
 import uuid
-from unittest import mock
 
 from django.test import SimpleTestCase
 
@@ -29,10 +28,11 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         )
 
     def test_set_program(self):
-        program = mock.Mock(spec=Program)
-        program.name = "Program Name"
         program_id = uuid.uuid4().hex
-        program.get_id = program_id
+        program = Program(
+            _id=program_id,
+            name="Program Name"
+        )
 
         self._test_change_messages(
             UserChangeMessage.program_change,
@@ -58,20 +58,22 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         )
 
     def test_set_role(self):
-        role = mock.Mock(spec=UserRole)
-        role.name = "Role Name"
         role_id = uuid.uuid4().hex
-        role.get_qualified_id.return_value = role_id
+        role = UserRole(
+            name="Role Name",
+            couch_id=role_id
+        )
+        role.name = "Role Name"
 
         self._test_change_messages(
             UserChangeMessage.role_change,
             [role],
             {
                 "role": {
-                    "set_role": {"id": role_id, "name": "Role Name"}
+                    "set_role": {"id": role.get_qualified_id(), "name": "Role Name"}
                 }
             },
-            f"Role: Role Name[{role_id}]"
+            f"Role: Role Name[{role.get_qualified_id()}]"
         )
 
     def test_clear_role(self):
@@ -273,10 +275,11 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         )
 
     def test_set_primary_location(self):
-        location = mock.Mock(spec=SQLLocation)
-        location.name = "Location Name"
         location_id = uuid.uuid4().hex
-        location.location_id = location_id
+        location = SQLLocation(
+            name="Location Name",
+            location_id=location_id
+        )
 
         self._test_change_messages(
             UserChangeMessage.primary_location_info,
@@ -313,15 +316,16 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         )
 
     def test_set_assigned_locations(self):
-        location1 = mock.Mock(spec=SQLLocation)
-        location1.name = "Location 1"
         location1_id = uuid.uuid4().hex
-        location1.location_id = location1_id
-
-        location2 = mock.Mock(spec=SQLLocation)
-        location2.name = "Location 2"
+        location1 = SQLLocation(
+            name="Location 1",
+            location_id=location1_id
+        )
         location2_id = uuid.uuid4().hex
-        location2.location_id = location2_id
+        location2 = SQLLocation(
+            name="Location 2",
+            location_id=location2_id
+        )
 
         self._test_change_messages(
             UserChangeMessage.assigned_locations_info,
@@ -350,15 +354,16 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         )
 
     def test_set_groups(self):
-        group1 = mock.Mock(spec=Group)
-        group1.name = "Group 1"
         group1_id = uuid.uuid4().hex
-        group1.get_id = group1_id
-
-        group2 = mock.Mock(spec=Group)
-        group2.name = "Group 2"
+        group1 = Group(
+            _id=group1_id,
+            name="Group 1"
+        )
         group2_id = uuid.uuid4().hex
-        group2.get_id = group2_id
+        group2 = Group(
+            _id=group2_id,
+            name="Group 2"
+        )
 
         self._test_change_messages(
             UserChangeMessage.groups_info,
