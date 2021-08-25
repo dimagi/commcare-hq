@@ -419,7 +419,7 @@ class AutoPayInvoicePaymentHandler(object):
             payment_record.save()
             self._send_payment_receipt(invoice, payment_record)
 
-    def _send_payment_receipt(self, invoice, payment_record_id):
+    def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
         receipt_email_template = 'accounting/email/invoice_receipt.html'
         receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
@@ -433,10 +433,10 @@ class AutoPayInvoicePaymentHandler(object):
                 'invoice_num': invoice.invoice_number,
             }
             send_purchase_receipt.delay(
-                payment_record_id, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record.id, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
-            self._handle_email_failure(payment_record_id)
+            self._handle_email_failure(payment_record.id)
 
     @staticmethod
     def _handle_card_declined(invoice, e):
