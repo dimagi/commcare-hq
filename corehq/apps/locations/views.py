@@ -68,6 +68,7 @@ from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
 from django.http import JsonResponse, HttpResponseBadRequest
 from corehq.apps.locations.dbaccessors import get_filtered_locations_count
+from corehq.apps.users.decorators import require_can_use_filtered_user_download
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +205,7 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
-        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
             bulk_download_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("location_export", args=[self.domain])
@@ -1031,7 +1032,7 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
-        if toggles.FILTERED_LOCATION_DOWNLOAD.enabled(self.domain):
+        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
             next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
             next_url_text = _("Go back to organization download")
         else:
@@ -1091,7 +1092,7 @@ def unassign_users(request, domain):
     return HttpResponseRedirect(request.POST.get('redirect', fallback_url))
 
 
-# @require_can_use_filtered_user_download
+@require_can_use_filtered_user_download
 def count_locations(request, domain):
     form = LocationFilterForm(request.GET, domain=domain)
 
