@@ -254,7 +254,7 @@ MESSAGES = {
     "reset_devices": UserChangeFormatter.simple_formatter(noop("Registered devices reset")),
     "disable_for_days": UserChangeFormatter.simple_formatter(noop("Disabled for {days} days")),
     "disable_with_verification": UserChangeFormatter.simple_formatter(
-        noop('Two factor disabled. Verified by: {verified_by}, verification mode: "{verification_mode}"')
+        noop('Two factor removed. Verified by: {verified_by}, verification mode: "{verification_mode}"')
     ),
     "reset_password": UserChangeFormatter.simple_formatter(noop("Password reset")),
     "activate_user": UserChangeFormatter.simple_formatter(noop('User re-enabled. Reason: "{reason}"')),

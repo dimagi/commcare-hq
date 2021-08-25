@@ -128,7 +128,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
                     }
                 }
             },
-            'Two factor disabled. Verified by: jamesbond@mi6.com, verification mode: "007"'
+            'Two factor removed. Verified by: jamesbond@mi6.com, verification mode: "007"'
         )
 
         self._test_change_messages(
@@ -144,7 +144,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
                 }
             },
             [
-                'Two factor disabled. Verified by: jamesbond@mi6.com, verification mode: "007"',
+                'Two factor removed. Verified by: jamesbond@mi6.com, verification mode: "007"',
                 'Registered devices reset',
             ]
         )
@@ -163,7 +163,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
                 }
             },
             [
-                'Two factor disabled. Verified by: jamesbond@mi6.com, verification mode: "007"',
+                'Two factor removed. Verified by: jamesbond@mi6.com, verification mode: "007"',
                 'Registered devices reset',
                 'Disabled for 3 days'
             ]
