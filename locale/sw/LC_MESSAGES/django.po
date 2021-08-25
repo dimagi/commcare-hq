@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-25 18:15+0000\n"
-"PO-Revision-Date: 2021-07-21 19:11+0000\n"
+"POT-Creation-Date: 2021-08-25 18:24+0000\n"
+"PO-Revision-Date: 2021-08-25 18:17+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -8301,10 +8301,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:154
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:155
 #: corehq/apps/registry/models.py:234
-#, fuzzy
-#| msgid "Date of registration"
 msgid "Data Registry"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:186
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:187
@@ -16655,10 +16653,8 @@ msgid "If restricting signups, a message is required."
 msgstr ""
 
 #: corehq/apps/enterprise/interface.py:31
-#, fuzzy
-#| msgid "Saved for Daily Report"
 msgid "SMS Detailed Report"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/enterprise/interface.py:32
 msgid ""
@@ -16688,16 +16684,12 @@ msgid "Gateway Charge"
 msgstr ""
 
 #: corehq/apps/enterprise/interface.py:56
-#, fuzzy
-#| msgid "Manage Case"
 msgid "Usage Charge"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/interface.py:57
-#, fuzzy
-#| msgid "Postnatal Care"
 msgid "Total Charge"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/enterprise/interface.py:58
 #: corehq/apps/reports/standard/sms.py:532
@@ -16735,72 +16727,43 @@ msgid "Disable Enterprise Permissions"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:32
-#, fuzzy
-#| msgid "Select the controlling project space"
 msgid ""
 "To turn on enterprise permissions, select the controlling project space."
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:44
 msgid "Select the controlling project space"
 msgstr "Manejo de Casos"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:64
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "            Web users in <strong>%(source_domain)s</strong> will also "
-#| "have permissions in the following project spaces.\n"
-#| "          "
+#, python-format
 msgid ""
 "Web users in <strong>%(source_domain)s</strong> will also have permissions "
 "in the following project spaces."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:68
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            Web users in <strong>%(source_domain)s</strong> will also "
-#| "have permissions in the following project spaces.\n"
-#| "          "
 msgid ""
 "Web users in the controlling project space will also have permissions in the "
 "following project spaces."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:78
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "            Web users in <strong>%(source_domain)s</strong> will also "
-#| "have permissions in the following project spaces.\n"
-#| "          "
+#, python-format
 msgid ""
 "Web users in <strong>%(source_domain)s</strong> will <strong>not</strong> "
 "have permissions in the following project spaces."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:82
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            Web users in <strong>%(source_domain)s</strong> will also "
-#| "have permissions in the following project spaces.\n"
-#| "          "
 msgid ""
 "Web users in the controlling project space will <strong>not</strong> have "
 "permissions in the following project spaces."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html:36
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "      No project spaces found.\n"
-#| "    "
 msgid "No project spaces found."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py:76 corehq/apps/enterprise/views.py:77
 #: corehq/tabs/tabclasses.py:1587
@@ -16834,32 +16797,24 @@ msgid "Enterprise permissions have been disabled."
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/enterprise/views.py:385
-#, fuzzy
-#| msgid "Could not add {}}."
 msgid "Could not add {}."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py:394
-#, fuzzy
-#| msgid "Disable Enterprise Permissions"
 msgid "{} is now included in enterprise permissions."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py:407
 msgid "Could not remove {}."
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/enterprise/views.py:415
-#, fuzzy
-#| msgid "Disable Enterprise Permissions"
 msgid "{} is now excluded from enterprise permissions."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py:428
-#, fuzzy
-#| msgid "Please select a role"
 msgid "Please select a project."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py:439
 msgid "Controlling domain set to {}."
@@ -22294,10 +22249,8 @@ msgid "Custom Product Data Fields"
 msgstr ""
 
 #: corehq/apps/linked_domain/filters.py:10
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Project Space Link"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/filters.py:24
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/push_release_content_tab.html:17
@@ -22447,10 +22400,8 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:26
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/manage_downstream_domains_tab.html:25
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Downstream Project Spaces"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:27
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/push_release_content_tab.html:6
@@ -22460,10 +22411,8 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:30
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:38
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Manage Linked Project Space"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:32
 msgid "Add Remote Reports"
@@ -22471,24 +22420,18 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:70
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/manage_downstream_domains_tab.html:19
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Add Downstream Project Space"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html:77
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Project Space:"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:5
 #: corehq/apps/linked_domain/views.py:255 corehq/tabs/tabclasses.py:1993
 #: corehq/tabs/tabclasses.py:2008
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Linked Project Spaces"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:6
 msgid "Create links between upstream and downstream project spaces."
@@ -22529,16 +22472,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:33
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Go To Upstream Project Space"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:44
-#, fuzzy
-#| msgid "Select the controlling project space"
 msgid "Make this an upstream project space"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:46
 msgid ""
@@ -22551,10 +22490,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/get_started.html:57
-#, fuzzy
-#| msgid "CommCare Supply Project Spaces"
 msgid "Link Downstream Project Spaces"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/link_remote_ucr.html:8
 msgid "Report Name"
@@ -22588,16 +22525,12 @@ msgid "Last Updated"
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/manage_downstream_domains_tab.html:48
-#, fuzzy
-#| msgid "Select Link"
 msgid "Remove Link"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/manage_downstream_domains_tab.html:55
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Remove Project Space Link"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/manage_downstream_domains_tab.html:59
 msgid ""
@@ -22624,10 +22557,8 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/pull_release_content_tab.html:16
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/pull_release_content_tab.html:27
-#, fuzzy
-#| msgid "Missing content"
 msgid "Linked Content"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/pull_release_content_tab.html:38
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/pull_release_content_tab.html:45
@@ -22665,10 +22596,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/push_release_content_tab.html:45
-#, fuzzy
-#| msgid "Web-Based Applications"
 msgid "Rebuild Applications"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/tabs/push_release_content_tab.html:50
 msgid "Create and release new build for apps"
@@ -23284,10 +23213,8 @@ msgid "View Location Case"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/location.html:68
-#, fuzzy
-#| msgid "Related Locations"
 msgid "Child Locations"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/location.html:78
 #: corehq/apps/products/views.py:92
@@ -24918,62 +24845,48 @@ msgid "Rejected"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/registry/models.py:216
-#, fuzzy
-#| msgid "Request Initiated."
 msgid "Registry Activated"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registry/models.py:217
-#, fuzzy
-#| msgid "Registered Pregnancies"
 msgid "Registry De-activated"
-msgstr "Crianças (2 - 59 meses)"
+msgstr ""
 
 #: corehq/apps/registry/models.py:218
-#, fuzzy
-#| msgid "Information updated!"
 msgid "Invitation Added"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registry/models.py:219
 msgid "Invitation Revoked"
 msgstr ""
 
 #: corehq/apps/registry/models.py:220
-#, fuzzy
-#| msgid "Information updated!"
 msgid "Invitation Accepted"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registry/models.py:221
 msgid "Invitation Rejected"
 msgstr ""
 
 #: corehq/apps/registry/models.py:222
-#, fuzzy
-#| msgid "Date Created:"
 msgid "Grant created"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/registry/models.py:223
 msgid "Grant removed"
 msgstr ""
 
 #: corehq/apps/registry/models.py:224
-#, fuzzy
-#| msgid "Regimen Changed"
 msgid "Schema Changed"
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/registry/models.py:225
 msgid "Data Accessed"
 msgstr ""
 
 #: corehq/apps/registry/models.py:235
-#, fuzzy
-#| msgid "Conditions"
 msgid "Invitation"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registry/models.py:236
 msgid "Grant"
@@ -25803,10 +25716,8 @@ msgid "Affected User(s)"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py:470
-#, fuzzy
-#| msgid "Edit & View Web Users"
 msgid "Modified by User(s)"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/reports/filters/users.py:473
 msgid "[Web Users]"
@@ -25817,10 +25728,8 @@ msgid "Modified Property"
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py:478
-#, fuzzy
-#| msgid "Select a group"
 msgid "Select Property"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/reports/filters/users.py:493
 msgid "Select Action"
@@ -26741,10 +26650,8 @@ msgid "Profile or User Data"
 msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:59
-#, fuzzy
-#| msgid "User Data Field"
 msgid "User Data"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:64
 msgid "Is Active"
@@ -26759,20 +26666,16 @@ msgid "Phone Numbers"
 msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:67
-#, fuzzy
-#| msgid "Primary location: None"
 msgid "Primary Location (mobile users only)"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:69
 msgid "Two Factor Authentication Disabled"
 msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:75
-#, fuzzy
-#| msgid "Admin User"
 msgid "Affected User"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:76
 msgid "Modified by User"
@@ -30888,16 +30791,12 @@ msgid "Documention link"
 msgstr ""
 
 #: corehq/apps/toggle_ui/utils.py:65
-#, fuzzy
-#| msgid "User Types"
 msgid "Service Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/toggle_ui/utils.py:67
-#, fuzzy
-#| msgid "Has Location User"
 msgid "Has Dimagi User"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py:52
 msgid "Issues found. You should receive an email shortly."
@@ -34262,10 +34161,8 @@ msgid "Select which other roles can assign this role:"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:381
-#, fuzzy
-#| msgid "Create and Edit Reports"
 msgid "Download and Email Reports"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html:389
 msgid "Allow role to download and email report data."
@@ -38039,10 +37936,8 @@ msgid "Forward Data"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py:174
-#, fuzzy
-#| msgid "Forwarding Rule Options"
 msgid "Forwarding set up to {}"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py:215
 msgid "Update Repeater"
@@ -38334,10 +38229,8 @@ msgid "SMS Billing Administration"
 msgstr ""
 
 #: corehq/reports.py:353
-#, fuzzy
-#| msgid "Counseling Details"
 msgid "Manage Billing Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/reports.py:360
 msgid "Domain Stats"
@@ -38469,10 +38362,8 @@ msgid "Pre-release Features"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py:1745
-#, fuzzy
-#| msgid "Application Release Manager"
 msgid "Enterprise Release Management"
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py:1791
 msgid "Internal Subscription Management (Dimagi Only)"
@@ -38487,10 +38378,8 @@ msgid "Data Forwarding Records"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py:1997 corehq/tabs/tabclasses.py:2012
-#, fuzzy
-#| msgid "Add Project Space"
 msgid "Linked Project Space History"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py:2072
 msgid "Manage My Settings"
@@ -41364,2356 +41253,3 @@ msgstr ""
 #: manage.py:137
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Tableau Views"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Default Search Properties"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Changed: "
-#~ msgstr " Total transferidos no mês"
-
-#~ msgid "You don't have permission to set restriction for this application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Search by username"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "View All Web Apps"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Manage Releases"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Manage Releases Permissions"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Filter and Download"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Update DHIS2 DataSet maps"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Send data now"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "UCR Column"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "DHIS2 DataSet map"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "DHIS2 Connection"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Report filter sets Period"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Version*"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Build Number*"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Browse builds"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Click on the appropriate commcare-android-2.X link\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Click on the appropriate commcare-core-2.X link\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Lookup Table Options"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select a lookup table..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Advanced Lookup Table Options"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Outros (negativos / indeterminados) "
-
-#~ msgid "Button Label on Case List"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Button Label for on Search Results"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Copy Multimedia from Another Application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Copy Multimedia"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "No action specified"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Selected Case:"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "              This update may alert %(case_count)s cases. Are you sure "
-#~ "you want to proceed?\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Add new repeat"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "{location} Distance"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Update Related Locations"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "               <strong>Mobile App Access</strong> &mdash; Allows mobile "
-#~ "users access to offline mobile application\n"
-#~ "               "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Lookup Table:"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Version Preview"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Add Lookup Table"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Web Apps Autolaunch"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Include closed cases in search results"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Include Closed:"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Registered Eligible Couples"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Registered Children"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Print Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Marital Status"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of Birth"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Phone no"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Religion household"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Caste household"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Children"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Eligible Couple Details"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Children alive"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Pregnancy Details"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of LMP"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Referral Date"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Antenatal Care"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of ANC"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Immunization Details"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Abortion Details"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Abortion Date"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Abortion Type"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Maternal Death Details"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Delivery Details"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of Discharge"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Type of Delivery"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Place of Birth"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "DetailsOfComplications"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of PNC visit"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Painful urination"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Other Information"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Infant Development Details"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Pregnancy Length"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Vaccination Details"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Due at birth"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Due at 6 weeks"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Due at 10 weeks"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Due at 14 weeks"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Infant Details"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of Referral"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "No Payloads are supplied"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "No data is supplied"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Remote API Connection"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Search Condition"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Display condition"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "ICDS Settings"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Other Configuration"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Password cannot be empty"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Registration Message"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Enter registration SMS"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Welcome to CommCareHQ! Please register here: {0}"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Create Registration Invitation"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Manage Registration Invitations"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Phone Type"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Registered on %(date)s"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Create a Password"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "%(hr_name)s Registration"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Save Fields"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "View-Only Web Users"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Web Users</strong> &mdash; invite new web "
-#~ "users, manage account settings, remove membership\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit & View Mobile Workers"
-#~ msgstr "Outros (negativos / indeterminados) "
-
-#~ msgid "View-Only Mobile Workers"
-#~ msgstr "Outros (negativos / indeterminados) "
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Mobile Workers</strong> &mdash; create new "
-#~ "accounts, manage account settings,deactivate or delete mobile workers. "
-#~ "This permission also allows users to login as any mobile worker in Web "
-#~ "Apps.\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit & View Groups"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Groups</strong> &mdash; manage groups of mobile "
-#~ "workers\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit & View Locations"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "View-Only Locations"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Locations</strong> &mdash; manage locations in "
-#~ "the Organization's Hierarchy\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Allow changing workers at a location."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Edit & View Data"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Data</strong> &mdash; view, export, and edit "
-#~ "form and\n"
-#~ "                  case data, reassign cases\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Access Web Apps"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Web Apps</strong> &mdash; use Web Apps for "
-#~ "online data entry\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View-Only Dropzone"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Dropzone</strong> &mdash; Upload and download "
-#~ "files from the file Dropzone\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Access APIs"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Access APIs</strong> &mdash; use CommCare HQ "
-#~ "APIs to read and update data.\n"
-#~ "                  Specific APIs may require additional permissions.\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit & View Shared Exports"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                    <strong>Shared Exports</strong> &mdash; access and "
-#~ "edit the content and structure of shared exports\n"
-#~ "                  "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View-Only Applications"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Applications</strong> &mdash; modify or view "
-#~ "the structure\n"
-#~ "                  and configuration of all applications.\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View Roles and Permssions"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  <strong>Roles &amp; Permissions</strong> &mdash; view "
-#~ "web user and mobile worker\n"
-#~ "                  roles &amp; permissions (only Admins can edit roles)\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Access All Reports"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Date of service"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Visits"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Date of action"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Save Connections"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Download Location Reassignment Template"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Location Reassignment"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Manage CCZ Hostings"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Manage CCZ Hosting Links"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Manage CCZ Hosting"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "pending"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "in progress"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "failed"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Data Management Requests"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Loading requests..."
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Initiated By"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Started On"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Ended On"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "CCZ File Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Building"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Please select link"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Data Pull"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Select Date Range"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Generate Report"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Invalid date"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Validate"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Email Households "
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Perform Reassignment"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Reassign Households "
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Reassign Other Cases "
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Location Reassignment Request file"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Location Reassignment Request File"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Custom ICDS Data Pull"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                            Hi,\n"
-#~ "                            Could not generate the requested data pull.\n"
-#~ "                            The error has been notified. Please report as "
-#~ "an issue for quicker followup\n"
-#~ "                        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Hi,\n"
-#~ "            Please download the data from {link}.\n"
-#~ "            The data is available only for 24 hours.\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Monthly SMS report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Hi,\n"
-#~ "            Could not generate the monthly SMS report for ICDS.\n"
-#~ "            The error has been notified. Please report as an issue for "
-#~ "quick followup\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Hi,\n"
-#~ "            Please download the sms report for time frame {start_date} to "
-#~ "{end_date} (inclusive) at {link}.\n"
-#~ "            The report is available only for next 24 hours.\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Hi,\n"
-#~ "            Could not generate the custom SMS report for ICDS.\n"
-#~ "            The error has been notified. Please report as an issue for "
-#~ "quick followup\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Custom Data Pull"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Functional Version"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "CCZ Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Recreate"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Custom SMS Usage Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Request Ignored."
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "CCZ Hosting Links"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "CCZ Hosting"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "%s CommCare Files"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "AWCs Daily Status"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "LSs Launched"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Registered Households"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "AWCs Reported functional toilet"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "AWCs Reported Medicine kit"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "AWCs Reported Infantometer"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "AWCs Reported Stadiometer"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "a. Pregnant Women"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "d. 3-6 years children"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Pregnant Women"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Lactating mothers"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Infantometer"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Blocks covered"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Districts covered"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "              We are working hard to restore this service and it will be "
-#~ "back online as soon as possible.\n"
-#~ "              You may continue to use other parts of this site.\n"
-#~ "              "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Service Delivery Dashboard"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "AWC Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Program Summary"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "LS Dashboard"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Poshan Progress Dashboard"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "CAS Data Exports"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Back to Login"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Reset Password - ICDS-CAS Mobile Dashboard"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "ICDS Dashboard Mobile Application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Email Payloads"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Could not find report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Import Template Application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "        Change from %(prev_month)s\n"
-#~ "      "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "High Performing Users"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                    Could not update {} because multi "
-#~ "master flag is in use\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Could not update {} because case claim flag is "
-#~ "not on\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "{} was updated"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Updated {} but could not make and release build: "
-#~ "{}\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Could not update {}: {}\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Karix Settings"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select a project..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Not"
-#~ msgstr "Indicador"
-
-#~ msgid "Gap type"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "        %(p)s Edition\n"
-#~ "      "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Missing message"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "location reassignments"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Download %(plural_noun)s\n"
-#~ "          "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Could not find latest released version of app."
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "              Book a time with us to review your needs and get your "
-#~ "customized\n"
-#~ "              CommCare trial setup.\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "New user information"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Create your first project"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "UCR Report ID"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Refuse to answer"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Food Code"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Please select a visit scheduler form"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Dashboard report {0}"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Facility Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Delivery Status"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Delivery Date"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "% of total"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Last Reported"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Stock On Hand {0}"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Export to:"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Last updated on"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "No delivery status reported"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Stock On Hand"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "SLAB Pilot Program"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Supervisor Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Confirmed"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Eta delayed"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Starter Apps"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Starter App"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Project Documentation"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Please <a href=\"%(login_url)s\">sign in</a>\n"
-#~ "                  or <a href=\"%(register_url)s\">register</a>\n"
-#~ "                  to download an app from Exchange\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Import into"
-#~ msgstr "Indicador"
-
-#~ msgid "Share Conditional Alerts?"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "This is a starter application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "You must agree to our Content Distribution Agreement to publish your "
-#~ "project."
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "CommCare HQ Content Distribution Agreement"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Use current documentation"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "View on exchange"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Check out the <a href=\"%(appstore_url)s\">CommCare Exchange</"
-#~ "a>.\n"
-#~ "          "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "In Exchange?"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Build source"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Download Paths"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "          Download a file containing each unique multimedia path in this "
-#~ "application\n"
-#~ "          and the places where that path is referenced.\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Upload Paths"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "          Fill in the \"New Path\" column and upload.\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Your file has the following errors and may not be used to "
-#~ "update multimedia paths.\n"
-#~ "          "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Your file has the following warnings. Please verify that "
-#~ "these are intentional before proceeding.\n"
-#~ "          "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Please choose an Excel file to import."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Includes all Standard Features."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Includes all Advanced Features."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Stay with Community Plan"
-#~ msgstr "Mortes na Comunidade"
-
-#~ msgid ""
-#~ "\n"
-#~ "              Select FREE CommCare Community Plan\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "              This does not include any paid features.\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Get A Tour"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Enabled Web Apps trial..."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "        Choose How to Get Started With CommCare\n"
-#~ "      "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                Start a Trial\n"
-#~ "              "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                Explore sample CommCare apps or create your own, then\n"
-#~ "                collect data on mobile devices and build reports.\n"
-#~ "              "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Start Trial"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Trial CommCare's Advanced Plan\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Publish apps to mobile devices, collect data, and "
-#~ "create reports\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                Get a personal demo of CommCare's data collection,\n"
-#~ "                service delivery, and reporting solutions.\n"
-#~ "              "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Get Tour"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Product experts available to answer technical "
-#~ "questions\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                  Request demo apps customized to your own project\n"
-#~ "                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                      There will be an additional charge of %(u)s per "
-#~ "month per additional Mobile Worker over this limit.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "stockouts %s; "
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Edit EWS settings"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Filter By Program"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Reporting Rates({}, {})"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Non-Reporting %s%%"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Reporting %s%%"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Reporting Details({}, {})"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Complete %s%%"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Incomplete %s%%"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "%(formatted_percent)s%% (%(raw_number)d) Incomplete Reports in "
-#~ "%(date_range)s"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Summary Reporting Rates"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Completed Report Rates"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Non-Reporting Facilities"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Last Stock Report Received"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Incomplete Reports"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Stock status"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Stockout Duration"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Date of Last Report"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Configure In Charge users"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select In Charge users"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Update EWS Settings"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "PowerBi/Tableau Integration (Preview)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Domain:"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "DB Type:"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "DB Name:"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Is Deletion:"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of Last Attempt:"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Data Source Source"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Provide a unique password for each mobile worker"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Please provide a stronger password"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Delivery Amt"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Cannot Create Menus"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid ""
-#~ "\n"
-#~ "          Remote Error:\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Please select build profile"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Does not include deactivated users."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "CommCare Supply?"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "No 300th form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "View report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select a model to export to a feed"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "MPR Block Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "ASR Block Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Calendar Fixture"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Project Map"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Forward to DHIS2"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Active Project Map"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "          We encourage you to use Feature Previews and provide us "
-#~ "feedback,\n"
-#~ "          however please note that:\n"
-#~ "        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "              Feature Previews are not subject to any warranties on "
-#~ "current\n"
-#~ "              and future availability.\n"
-#~ "            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "      Loading...\n"
-#~ "    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Upload Conditional Alerts"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "conditional alert"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "conditional alerts"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Match"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "all of the"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "any of the"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "following conditions:"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Inquire About Dimagi's Implementation Bundles\n"
-#~ "                        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                    Research and develop a comprehensive "
-#~ "plan for your future digital system.\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Launch a comprehensive pilot system "
-#~ "deployed at test sites.\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Strengthen your initial pilot with extra "
-#~ "capacity building services.\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Further prep for scale with dedicated "
-#~ "capacity building and technology services.\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Go from a pilot through scale with "
-#~ "dedicated capacity building and technology.\n"
-#~ "                                "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                On-Site Scoping Visit\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Application Workflow Design\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Field Testing &amp; Iteration\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Build &amp; Launch App\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Additional Program Capacity Services\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                            (<a href=\"#services-capacity\">See capacity "
-#~ "services</a>)\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                Additional Technology Capacity Services\n"
-#~ "                            "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Included CommCare Software Plan"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Inquire About Dimagi's Capacity Services\n"
-#~ "                        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Program Capacity Services\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Dimagi travels on-site to build capacity, "
-#~ "spending one\n"
-#~ "                        on one time to develop skills with your staff.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        $15,000 per capacity service package.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Worker Performance Monitoring\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Strategic implementation of standard CommCare HQ "
-#~ "reports\n"
-#~ "                    to strengthen supervision and monitoring processes.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Capacity building for organization’s trainers for "
-#~ "future\n"
-#~ "                        scale, including instruction on phone preparation "
-#~ "&amp;\n"
-#~ "                        installation.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Capacity for Technical Support\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Train technical staff about troubleshooting and "
-#~ "issue\n"
-#~ "                        tracking for mobile technology.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Technology Capacity Services\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        $30,000 per capacity service package.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Technology for Outcomes Monitoring\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Create customized, offline Excel reports for "
-#~ "5-10\n"
-#~ "                        outcome indicators. Optimize app to track "
-#~ "indicators\n"
-#~ "                        more effectively.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Apps for Supportive Supervision\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Integrate a mobile application designed for field "
-#~ "based\n"
-#~ "                        supervisors. Use data to provide supportive "
-#~ "supervision\n"
-#~ "                        and monitor quality of FLW service delivery.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        App Refinement by Dimagi\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Dimagi to make modifications to application based "
-#~ "on\n"
-#~ "                        feedback from a deployed application.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Technology for Reminder Messages\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Send SMS reminders directly to beneficiaries or\n"
-#~ "                        staff about notifications or upcoming visits.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Have questions?\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        <a href=\"#contactDimagi\"\n"
-#~ "                           data-toggle=\"modal\"\n"
-#~ "                           class=\"btn btn-success btn-xl\">Get in Touch "
-#~ "With Us</a>\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                            CommCare<br class=\"visible-xs-block\" /> "
-#~ "Global Implementation Services\n"
-#~ "                        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        On site. In person.<br />\n"
-#~ "                        Our team works with your organization directly.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        We help assess your project’s level of maturity\n"
-#~ "                        for a mobile deployment and its targeted "
-#~ "outcome.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        We then build the ideal project roadmap, taking\n"
-#~ "                        into account capacity-building needs.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Request Params"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Executed View"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Total Rows"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Searching the Case Lists"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "custom"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "case_type"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Could not find rules from the following rows: {errors}"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View changes"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid ""
-#~ "\n"
-#~ "                            Add %(export_type_caps)s\n"
-#~ "                        "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Bulk Multimedia Translations"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Export Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "See latest"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Export Cases and Users"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Exported File"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Imported indicators!"
-#~ msgstr "Indicador"
-
-#~ msgid "Update & Validate"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Send Options"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Delete resources on transifex"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "ICDS App Translations"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Data not Entered"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Get a Demo of CommCare"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Get a Demo"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "is a deleted Application."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Restore App"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Problem getting Create Export Form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Manage Groups"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Welcome back to CommCare HQ!"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Displaying %(max_child_cases)s of %(num_children)s "
-#~ "children\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "(Select one and click Add action)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Add action"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Manage Lookup Tables"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Save Organization Levels"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Edit Organization Levels"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Save Keyword"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Parent Case"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "User Data Value"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Day of Reminder"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Delay After Start"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Delay After Start By"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date and Time"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Email Reminders Trial"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Rule is processing: "
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Deleting reminder..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "(Deleted Reminder)"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "New Reminders"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit Reminder"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Welcome to ICDS-CAS"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Value Type"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Please specify a property value."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Case Property Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "after date by"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "before date by"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        <br>Please contact <a href='mailto:{}?"
-#~ "subject={}'>{}</a> to register for an account.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View All Case Types"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "View All Forms"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "in module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Add filter for"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Export SMS"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Dashboard (beta)"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "BETS - Patients: Cash transfer on subsequent drug refill (episode case "
-#~ "type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "BETS - Patients: Cash transfer on successful treatment completion "
-#~ "(episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "BETS - Forward Agency Users"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "BETS - Forward Locations"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Forward eNikshay Patients to Nikshay (episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Forward eNikshay Patient's HIV Test to Nikshay (person case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Forward eNikshay Patient's Follow Ups to Nikshay (test case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Forward eNikshay Private Patients to Nikshay (episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "99DOTS Patient Registration (episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "99DOTS Patient Update (person & episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "99DOTS Unenroll Patient (episode case type)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of Rx. Start"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of MERM Registration"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "% Adherence Reported"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "% Unknown Doses"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Date of last household visit"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Summary of Case Finding"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Date of Diagnosis"
-#~ msgstr "Total Infecções Respiratórios Agudas"
-
-#~ msgid "Date of Treatment Initiation"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Cancelled Records"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Cancelled Records in Last 24 hours"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Record ID"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Person Case"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Treatment Completed"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Regimen changed"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Worker Form Activity"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Cases By Type"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Retreatment"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Negative"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Case Finding"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Update Membership"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Welcome to CommCare!"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Create New Anonymous Mobile Worker"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "All stock data migration"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "XML Source"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Edit XML Source"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Create Anonymous Mobile Worker"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Participant"
-#~ msgstr "Número de participantes no mês"
-
-#~ msgid "Do more with case management."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Welcome to CommCare."
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "CommCare:"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Case Studies"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Publications"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Health"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Malaria"
-#~ msgstr "Total casos malária tratados"
-
-#~ msgid "Nutrition"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Cooperatives"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Extension Programs"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Education"
-#~ msgstr "Total de TDR para Malária Realizados"
-
-#~ msgid "App Creation & Management"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Application Exchange"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Data collection"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "CommCare Supply Solution"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Android gateway setup"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Reporting & Analytics"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Pre-built reports"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Scheduled email reports"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Custom reports access"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Deidentified data"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "User groups"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Organization-based case sharing"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Data synchronization"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Support"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Direct email support"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "1 Business Day + Phone Support"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "CommCare Software Plans"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Application Workflow Design"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Build &amp; Launch Application"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Included Software Plan"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Worker Performance Monitoring"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Capacity to Build Applications"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Technology for Reminder Messages"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Not a developer?<br />Not a problem.\n"
-#~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "View Software Features &amp; Pricing"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Feature Summary"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Pre-Built Reports"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Web-based applications"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Phone Support"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Custom branding"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Toggle Navigation"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Solutions"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Who uses CommCare?"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Data Corrections"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "No Locations set for this user"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Reminder Status:"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Importing Cases..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Schedule a Message"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Scheduled Messages"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Immediate Messages"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "New Conditional Message"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Conditional Messages"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Edit Scheduled Message"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Schedule a Conditional Message"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit Conditional Message"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Type a username"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Indicator"
-#~ msgstr "Indicador"
-
-#~ msgid "New Performance Message"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Delete Performance Message?"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Edit Performance Message (advanced mode)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Tile not found: {}"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Collect census data"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "AWCs Covered"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Please select a property to represent the location."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Sync Date"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Show All Dates"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "You must select a location."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Lactating Mothers"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Lactating Women"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Application is required"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "{} Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Please specify a property for the category."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Configure Report Settings"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select Report Type"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Worker Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Chart Report: {}"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Table Report: {}"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Worker Report: {}"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Map Report: {}"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Unknown Menu"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Select Module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Hide App Preview"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "New Shadow Form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "New Report Module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "This form "
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Label for Registration Form"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Source Module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Parent Module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "New User"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Forward locations to BETS"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Progress Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Latest report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "New App Builder"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Task Detail"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "CommCare Supply Requisition Mode"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Form Action On Case"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Sync Data"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "% Stunting"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Welcome to CommCare HQ"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "AWC Code"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Condition 2"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Condition 3"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Condition 4"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Condition 5"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Payment amount this month (Rs.)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Payment amount last month (Rs.)"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Cash received last month"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Bank Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Payment last month"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Village name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Mother's Age"
-#~ msgstr "Outros (negativos / indeterminados) "
-
-#~ msgid "Caste tribe status"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Lmp Date"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Child 1 Age"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Child 1 Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Child 1 Sex"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Child 2 Age"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Child 2 Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Child 2 Sex"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Child 3 Age"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Child 3 Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Child 3 Sex"
-#~ msgstr "Crianças (2 - 59 meses)"
-
-#~ msgid "Payment amount for the month"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Closed on"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Leave program"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Stock of IFA tablets"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Stock of ZINC tablets"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Registered pregnant women cases closed for the month"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Reporting period incomplete"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Conditions Met Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "System Usage"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Excel Download"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "The xmlns of this form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Parent Module:"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Remove User Case Properties"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Deploy Version"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Add another property"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Advanced App Builder"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Existing Applications"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Phone Number (Optional)"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Welcome Back to ICDS-CAS"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Preview App"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Real Project"
-#~ msgstr " Total transferidos no mês"
-
-#~ msgid "Organization Name*"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "CommCare Supply Project"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Performance Threshold"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Experienced Threshold"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Amplifies Project"
-#~ msgstr " Total transferidos no mês"
-
-#~ msgid "Create New Export"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Bulk Export:"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Sputum Conversion"
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "CommCare training"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Welcome to ICT-RTM"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Menu Filtering"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "    Happy Application Building!\n"
-#~ "    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid ""
-#~ "\n"
-#~ "-The CommCare Team\n"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Manage VCM Migration"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Report Title"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Doc Date:"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Error in display condition!"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Report builder"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Password (create a password)"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "CommCareHQ Registration"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "msg_diarrhoea"
-#~ msgstr "Total Diarreia"
-
-#~ msgid "msg_rdt"
-#~ msgstr "TDR"
-
-#~ msgid "Activating Report Builder"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Try Report Builder For 30 Days"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Report Builder Pricing"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "mc_header_indicator"
-#~ msgstr "Indicador"
-
-#~ msgid "Loadtest Results"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Loadtest Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Ledgers By Location"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Bulk Import"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Sync stock data"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Fix stock data"
-#~ msgstr "Balanço do Stock"
-
-#~ msgid "Deleting..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Software & Services"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "%s%% (%d) Non-Reported (%s)"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "%s%% (%d) Reported (%s)"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "%s%% (%d) Complete Reports in %s"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "New Careplan Module"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Welcome to the App Builder"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Select Case Type..."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Edit Survey"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Scheduled report from CommCare HQ"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Create Form Export: Select Form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Create New Report > Configure Table Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "No more visits"
-#~ msgstr "Visitas Domiciliáres"
-
-#~ msgid "Manage SMS Backend Rates"
-#~ msgstr "Diagnóstico de Casos"

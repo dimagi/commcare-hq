@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-25 18:16+0000\n"
+"POT-Creation-Date: 2021-08-25 18:24+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3571,14 +3571,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:376
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/locations/static/locations/js/location.js:33
 msgid ""
