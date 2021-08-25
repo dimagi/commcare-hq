@@ -253,6 +253,7 @@ hqDefine("linked_domain/js/domain_links", [
             selectableHeaderTitle: gettext("All project spaces"),
             selectedHeaderTitle: gettext("Project spaces to push to"),
             searchItemTitle: gettext("Search project spaces"),
+            options: self.localDownstreamDomains,
         };
 
         self.canPush = ko.computed(function () {
