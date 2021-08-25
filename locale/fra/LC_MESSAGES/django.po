@@ -6899,8 +6899,10 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html:6
 #: corehq/apps/domain/forms.py:2374 corehq/apps/domain/forms.py:2408
 #: corehq/apps/reports/standard/deployments.py:111
+#, fuzzy
+#| msgid "Build Profiles"
 msgid "Build Profile"
-msgstr "Manejo de Casos"
+msgstr "Construire des profiles"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html:9
 msgid "Select a language."
@@ -10218,8 +10220,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py:11
+#, fuzzy
+#| msgid "Empty Case"
 msgid "Empty"
-msgstr "Manejo de Casos"
+msgstr "Dossier vide"
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py:179
 #: corehq/apps/reports/filters/forms.py:419
@@ -11564,8 +11568,10 @@ msgid "Case Metadata"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:31
+#, fuzzy
+#| msgid "Case Type"
 msgid "Case Type:"
-msgstr "Manejo de Casos"
+msgstr "Type de Dossier"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:35
 msgid "Owner ID:"
@@ -11593,8 +11599,10 @@ msgid "Fuzzy"
 msgstr "Flou"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:51
+#, fuzzy
+#| msgid "Remove Special Characters"
 msgid "Remove Characters"
-msgstr "Manejo de Casos"
+msgstr "Supprimer les caractères spéciaux"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:82
 msgid "Add input"
@@ -11647,8 +11655,10 @@ msgid "Properties"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:145
+#, fuzzy
+#| msgid "Invoices"
 msgid "Indices"
-msgstr "Manejo de Casos"
+msgstr "Factures"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:146
 msgid "Score"
@@ -17467,7 +17477,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:44
 msgid "Select the controlling project space"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:64
 #, python-format
@@ -27752,8 +27762,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:31 corehq/reports.py:380
 #: corehq/tabs/tabclasses.py:1566
+#, fuzzy
+#| msgid "Case Management"
 msgid "User Management"
-msgstr "Manejo de Casos"
+msgstr "Gestion des dossiers"
 
 #: corehq/apps/reports/standard/users/reports.py:44
 msgid "History of user updates"
@@ -29146,12 +29158,21 @@ msgstr ""
 "l'application ou du formulaire"
 
 #: corehq/apps/reports/views.py:1857
+#, fuzzy
+#| msgid ""
+#| "Could not detect the application or form for this submission. A common "
+#| "cause is that the form was submitted via App or Form preview"
 msgid "Could not detect the application or form for this submission."
-msgstr "Casos IRA Tratados"
+msgstr ""
+"Impossible de trouver l'application/formulaire pour cette soumission. Une "
+"cause commune est que le formulaire a été envoyé via un aperçu de "
+"l'application ou du formulaire"
 
 #: corehq/apps/reports/views.py:1861
+#, fuzzy
+#| msgid "Could not find the user-case for this form"
 msgid "Could not find user for this submission."
-msgstr "Casos IRA Tratados"
+msgstr "Impossible de trouver le dossier-utilisateur pour ce formulaire"
 
 #: corehq/apps/reports/views.py:1876
 msgid "Could not find the user-case for this form"
@@ -32120,7 +32141,7 @@ msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py:89
 msgid "No issues found with the workbook."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py:95
 msgid "App Translations Discrepancies for {}"
@@ -32579,8 +32600,10 @@ msgid "Action permitted to only users with staff access"
 msgstr ""
 
 #: corehq/apps/translations/templates/blacklist_translations.html:12
+#, fuzzy
+#| msgid "Apply"
 msgid "App"
-msgstr "Casos IRA Tratados"
+msgstr "Appliquer"
 
 #: corehq/apps/translations/templates/blacklist_translations.html:13
 msgid "Module"
