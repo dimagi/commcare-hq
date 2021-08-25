@@ -62,8 +62,6 @@ colorama==0.4.3
     #   sniffer
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-commonmark==0.9.1
-    # via recommonmark
 concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
@@ -196,14 +194,13 @@ dnspython==1.15.0
 docutils==0.16
     # via
     #   -r dev-requirements.in
-    #   recommonmark
     #   sphinx
     #   sphinx-rtd-theme
 dropbox==9.3.0
     # via -r base-requirements.in
-elasticsearch==1.9.0
-    # via -r base-requirements.in
 elasticsearch2==2.5.1
+    # via -r base-requirements.in
+elasticsearch5==5.5.6
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -244,8 +241,6 @@ gitdb==4.0.7
 gitpython==3.1.14
     # via transifex-client
 gnureadline==8.0.0
-    # via -r dev-requirements.in
-graphviz==0.16
     # via -r dev-requirements.in
 greenlet==0.4.17
     # via
@@ -477,12 +472,10 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==5.0.1
+radon==5.1.0
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
-recommonmark==0.7.1
-    # via -r dev-requirements.in
 redis==3.5.3
     # via
     #   -r base-requirements.in
@@ -584,7 +577,6 @@ soupsieve==2.0.1
 sphinx==4.1.2
     # via
     #   -r dev-requirements.in
-    #   recommonmark
     #   sphinx-rtd-theme
 sphinx-rtd-theme==0.5.2
     # via -r dev-requirements.in
@@ -648,8 +640,8 @@ unidecode==1.2.0
 urllib3==1.26.5
     # via
     #   botocore
-    #   elasticsearch
     #   elasticsearch2
+    #   elasticsearch5
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

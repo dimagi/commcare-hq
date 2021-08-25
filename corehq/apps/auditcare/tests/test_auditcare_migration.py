@@ -77,6 +77,7 @@ class TestAuditcareMigrationUtil(TestCase):
         expected_batches = [
             [datetime(2013, 1, 3), datetime(2013, 1, 2)],
             [datetime(2013, 1, 2), datetime(2013, 1, 1)],
+            [datetime(2013, 1, 1), datetime(2012, 12, 31)],
         ]
         self.assertEqual(batches, expected_batches)
 
@@ -209,7 +210,7 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
-        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 2))
+        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 1, 59))
         _assert()
 
         # Re-copying should have no effect
@@ -231,5 +232,5 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.count(), 1)
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
-        copy_events_to_sql(start_time=datetime(2021, 2, 2), end_time=datetime(2021, 1, 1))
+        copy_events_to_sql(start_time=datetime(2021, 2, 2), end_time=datetime(2020, 12, 31))
         _assert()

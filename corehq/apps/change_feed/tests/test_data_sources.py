@@ -25,7 +25,7 @@ from corehq.form_processor.document_stores import (
     LedgerV1DocumentStore,
     LedgerV2DocumentStore,
 )
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
 
@@ -212,7 +212,7 @@ def sms_data():
             sms.delete()
 
 
-@use_sql_backend
+@sharded
 class DocumentStoreDbTests(TestCase):
     pass
 
