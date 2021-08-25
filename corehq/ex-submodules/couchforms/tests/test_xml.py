@@ -3,7 +3,7 @@ import os
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -31,6 +31,6 @@ class XMLElementTest(TestCase, TestFileMixin):
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)
 
 
-@use_sql_backend
+@sharded
 class XMLElementTestSQL(XMLElementTest):
     pass

@@ -77,6 +77,33 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(standard_module_error, errors)
         self.assertIn(advanced_module_error, errors)
 
+    def test_dof_session_endpoint_error(self, *args):
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        m0 = factory.new_basic_module('first', 'case', with_form=False)
+        m0.put_in_root = True
+        m0.session_endpoint_id = "this_is_m0"
+        m1 = factory.new_basic_module('second', 'case', with_form=False)
+        m1.session_endpoint_id = "this_is_m1"
+
+        with patch.object(Application, 'enable_practice_users', return_value=False):    # avoid db
+            errors = app.validate_app()
+
+        self._clean_unique_id(errors)
+        self.assertEqual(len(errors), 3)
+        self.assertIn({
+            'type': 'endpoint to display only forms',
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+        }, errors)
+        self.assertIn({
+            'type': 'no forms or case list',
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+        }, errors)
+        self.assertIn({
+            'type': 'no forms or case list',
+            'module': {'id': 1, 'name': {'en': 'second module'}},
+        }, errors)
+
     def test_parent_cycle_in_app(self, *args):
         cycle_error = {
             'type': 'parent cycle',
