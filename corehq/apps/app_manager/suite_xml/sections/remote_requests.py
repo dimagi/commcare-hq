@@ -39,7 +39,12 @@ from corehq.apps.case_search.models import (
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
-RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
+# The name of the instance where search results are stored
+RESULTS_INSTANCE = 'results'
+
+# The name of the instance where search results are stored when querying a data registry
+REGISTRY_INSTANCE = 'registry'
+
 SESSION_INSTANCE = 'commcaresession'
 
 
