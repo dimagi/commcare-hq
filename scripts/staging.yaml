@@ -54,7 +54,6 @@ branches:
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     #- fr/user-data-jit            # Farid September 2
-    - gh/rebuild-multiselect # Graham Aug 24
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
     - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
@@ -81,4 +80,5 @@ branches:
     - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - mjr/translations_fix  # Matt Aug 24
+    - gh/rebuild-multiselect # Graham Aug 24
 submodules: { }
