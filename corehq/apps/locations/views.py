@@ -997,14 +997,21 @@ def location_export(request, domain):
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
-    breakpoint()
+
     include_consumption = request.GET.get('include_consumption') == 'true'
-    root_location_id = request.GET.get('root_location_id')
     owner_id = request.couch_user.get_id
     download = DownloadBase()
 
+    form = LocationFilterForm(request.GET, domain=domain)
+
+    if form.is_valid():
+        location_filters = form.cleaned_data
+    else:
+        return HttpResponseBadRequest('Location filters invalid')
+
+    root_location_id = location_filters.pop('location_id')
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, owner_id, root_location_id)
+                                         headers_only, owner_id, root_location_id, **location_filters)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 

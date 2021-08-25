@@ -186,16 +186,16 @@ def get_filtered_locations_count(domain, locations_filters):
     """
     Returns the locations count governed by 'locations_filters'
     {
-        'location_id': <The root location from which to start>,
-        'location_active': <Whether the location is active, i.e. True, False>
+        'location_id': <The root location from which to start traversing descendants>,
+        'status_active': <Indicates location status to filter by, ie active True / False>
     }
     """
     filters = {}
-    location_active = locations_filters.get('location_active', None)
+    status_active = locations_filters.get('status_active', None)
     root_location_id = locations_filters.get('location_id', '')
 
-    if location_active is not None:
-        filters['is_archived'] = (not location_active)
+    if status_active is not None:
+        filters['is_archived'] = (not status_active)
 
     if root_location_id == '':
         # Get all domain locations with filters

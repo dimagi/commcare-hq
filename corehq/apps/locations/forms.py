@@ -579,7 +579,7 @@ class LocationFilterForm(forms.Form):
         label=_('Only include selected location'),
         initial=False,
     )
-    location_active = forms.ChoiceField(
+    status_active = forms.ChoiceField(
         label='Active / Archived',
         required=False
     )
@@ -592,7 +592,7 @@ class LocationFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
         )
-        self.fields['location_active'].choices = LOCATION_ACTIVE_STATUS
+        self.fields['status_active'].choices = LOCATION_ACTIVE_STATUS
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
@@ -610,7 +610,7 @@ class LocationFilterForm(forms.Form):
                     crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
                     data_bind="slideVisible: location_id",
                 ),
-                crispy.Field('location_active', data_bind='value: location_active'),
+                crispy.Field('status_active', data_bind='value: status_active'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -622,8 +622,8 @@ class LocationFilterForm(forms.Form):
             ),
         )
 
-    def clean_location_active(self):
-        location_active_status = self.cleaned_data['location_active']
+    def clean_status_active(self):
+        location_active_status = self.cleaned_data['status_active']
 
         if location_active_status == ACTIVE:
             return True
