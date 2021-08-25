@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from mock import mock, patch
 
@@ -1737,36 +1737,26 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
 
 
-class TestUserChangeLogger(TestCase):
+class TestUserChangeLogger(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_name = 'mydomain'
-        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
-        cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
-                                            is_superuser=True)
+        cls.uploading_user = WebUser(username="admin@xyz.com")
         cls.upload_record = UserUploadRecord(
             domain=cls.domain_name,
             user_id=cls.uploading_user.get_id
         )
-        cls.upload_record.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.upload_record.delete()
-        cls.uploading_user.delete(cls.domain_name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_add_change_message_duplicate_slug_entry(self):
-        new_user = CommCareUser()
+        user = CommCareUser()
         user_change_logger = UserChangeLogger(
             domain=self.domain_name,
-            user=new_user,
+            user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
-            upload_record_id=self.upload_record.pk
+            upload_record_id=1
         )
         user_change_logger.add_change_message(UserChangeMessage.password_reset())
 
@@ -1775,10 +1765,6 @@ class TestUserChangeLogger(TestCase):
 
         # no exception raised for new user
         user_change_logger.add_change_message(UserChangeMessage.password_reset())
-
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
-                                   created_by=None, created_via=None)
-        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
 
         user_change_logger = UserChangeLogger(
             domain=self.domain_name,
@@ -1796,10 +1782,10 @@ class TestUserChangeLogger(TestCase):
             user_change_logger.add_change_message(UserChangeMessage.password_reset())
 
     def test_add_info_duplicate_slug_entry(self):
-        new_user = CommCareUser()
+        user = CommCareUser()
         user_change_logger = UserChangeLogger(
             domain=self.domain_name,
-            user=new_user,
+            user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
@@ -1811,10 +1797,6 @@ class TestUserChangeLogger(TestCase):
 
         with self.assertRaisesMessage(UserUploadError, "Double Entry for program"):
             user_change_logger.add_info(UserChangeMessage.program_change(None))
-
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
-                                   created_by=None, created_via=None)
-        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
 
         user_change_logger = UserChangeLogger(
             domain=self.domain_name,
