@@ -4,7 +4,7 @@
 <div id="ko-tabs-pull-content" data-bind="with: $root.pullReleaseContentViewModel">
   <div data-bind="if: domainLink">
     <p>
-      {% blocktrans %}
+      {% blocktrans trimmed %}
         This project space is linked to the upstream project space <a data-bind="attr: {'href': domainLink.upstreamUrl}, text: domainLink.master_domain"></a>.<br/>
         The content below can be synced with the existing content in the upstream project space.<br/>
         <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content with Linked Project Spaces.
@@ -46,12 +46,12 @@
                     </div>
                     <div class="modal-body">
                       <h4>
-                        {% blocktrans %}
+                        {% blocktrans trimmed %}
                           Are you sure you want to overwrite <b data-bind="text: name"></b>?
                         {% endblocktrans %}
                       </h4>
                       <p>
-                        {% blocktrans %}
+                        {% blocktrans trimmed %}
                           This will pull <!-- ko text: name --><!-- /ko --> from the upstream project space <b data-bind="text: $parent.domainLink.master_domain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/>
                           <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content from an upstream project space into a downstream project space.
                         {% endblocktrans %}
