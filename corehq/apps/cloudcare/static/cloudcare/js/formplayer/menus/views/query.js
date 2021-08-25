@@ -13,29 +13,42 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
-    var encodeValue = function (model, value) {
-            if (!value) {
+    var encodeValue = function (model, value, searchForBlank) {
+            if (value && model.get("input") === "daterange") {
+                value = "__range__" + value.replace(separator, "__");
+            } else if (model.get('input') === 'select') {
+                value = value.join(selectDelimiter);
+            }
+
+            var queryProvided = !(value === '' || (_.isArray(value) && _.isEmpty(value)));
+            if (searchForBlank && queryProvided) {
+                return selectDelimiter + value;
+            } else if (queryProvided) {
                 return value;
+            } else if (searchForBlank) {
+                return "";
             }
-            if (model.get("input") === "daterange") {
-                return "__range__" + value.replace(separator, "__");
-            }
-            if (model.get('input') === 'select') {
-                return value.join(selectDelimiter);
-            }
-            return value;
         },
         decodeValue = function (model, value) {
-            if (!value) {
-                return value;
+            if (!_.isString(value)) {
+                return [false, undefined];
             }
-            if (model.get("input") === "daterange") {
-                return value.replace("__range__", "").replace("__", separator);
-            }
+            var values = value.split(selectDelimiter),
+                searchForBlank = _.contains(values, ""),
+                values = _.filter(values, function (val) { return val !== ""; });
+
             if (model.get('input') === 'select') {
-                return value.split(selectDelimiter);
+                value = values;
             }
-            return value;
+            if (values.length === 1) {
+                value = values[0];
+                if (model.get("input") === "daterange") {
+                    value = value.replace("__range__", "").replace("__", separator);
+                }
+            } else {
+                value = undefined;
+            }
+            return [searchForBlank, value];
         };
 
     var QueryView = Marionette.View.extend({
@@ -59,8 +72,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialize: function () {
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
             if (!this.options.model.get('value')) {
-                var stickyValue = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs()[this.options.model.get('id')];
-                this.options.model.set('value', decodeValue(this.options.model, stickyValue));
+                var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+                    stickyValue = allStickyValues[this.options.model.get('id')],
+                    [searchForBlank, value] = decodeValue(this.options.model, stickyValue);
+                this.options.model.set('value', value);
+                this.options.model.set('searchForBlank', searchForBlank);
             }
         },
 
@@ -69,11 +85,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
-            searchForBlank: '.search-for-blank',
-        },
-
-        events: {
-            'change @ui.searchForBlank': 'toggleBlankSearch',
         },
 
         modelEvents: {
@@ -220,21 +231,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
         },
 
-        toggleBlankSearch: function (e) {
-            // When checking the blank search box for a geocoder field, toggle all its receiver fields
-            var geocoderTopic = this.options.model.get('id');
-            if (this.options.model.get('input') === 'address') {
-                _.each($('.query-input-group'), function (elem) {
-                    var $queryField = $(elem).find('.query-field'),
-                        $searchForBlank = $(elem).find('.search-for-blank'),
-                        receiveExpression = $queryField.data('receive');
-                    if (receiveExpression && receiveExpression.split("-")[0] === geocoderTopic) {
-                        $searchForBlank.prop('checked', $(e.target).prop('checked'));
-                    }
-                });
-            }
-        },
-
     });
 
     var QueryListView = Marionette.CollectionView.extend({
@@ -258,11 +254,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
             valueInput: 'input.query-field',
+            searchForBlank: '.search-for-blank',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
             'change @ui.valueInput': 'setStickyQueryInputs',
+            'click @ui.searchForBlank': 'toggleBlankSearch',
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
@@ -278,15 +276,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var queryValue = $(this).find('.query-field').val(),
                     fieldId = model[index].get('id'),
                     searchForBlank = $(this).find('.search-for-blank').prop('checked'),
-                    queryProvided = !(queryValue === '' || (_.isArray(queryValue) && _.isEmpty(queryValue))),
-                    encodedValue = encodeValue(model[index], queryValue);
-
-                if (searchForBlank && queryProvided) {
-                    answers[fieldId] = selectDelimiter + encodedValue;
-                } else if (queryProvided) {
+                    encodedValue = encodeValue(model[index], queryValue, searchForBlank);
+                if (encodedValue !== undefined) {
                     answers[fieldId] = encodedValue;
-                } else if (searchForBlank) {
-                    answers[fieldId] = "";
                 }
             });
             return answers;
@@ -311,15 +303,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
                         var $field = $($fields.get(i)),
-                            value = response.models[i].get('value'),
-                            includeBlank = false;
+                            value = response.models[i].get('value');
                         $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
                         if (value !== null) {
                             value = value.split(selectDelimiter);
-                            if (_.first(value) === "") {
-                                includeBlank = true;
-                                value = _.rest(value);
-                            }
+                            value = _.filter(value, function (val) { return val !== ''; });
                             if (!$field.attr('multiple')) {
                                 value = _.isEmpty(value) ? null : value[0];
                             }
@@ -329,13 +317,28 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             value: value,
                         });
                         $field.trigger('change.select2');
-
-                        // recheck the check box if needed
-                        $($(".query-input-group")[i]).find('.search-for-blank').prop('checked', includeBlank);
                     }
                 }
                 self.setStickyQueryInputs();
             });
+        },
+
+        toggleBlankSearch: function (e) {
+            var self = this,
+                searchForBlank = $(e.target).prop('checked'),
+                fieldId = $(e.target).data('field'),
+                model = self.collection.get(fieldId);
+            model.set('searchForBlank', searchForBlank);
+
+            // When checking the blank search box for a geocoder field, toggle all its receiver fields
+            if (model.get('input') === 'address') {
+                _.each(self.collection.models, function (relatedModel) {
+                    if (relatedModel.get('receive') && relatedModel.get('receive').split("-")[0] === fieldId) {
+                        relatedModel.set('searchForBlank', searchForBlank);
+                    }
+                });
+            }
+            self.setStickyQueryInputs();
         },
 
         clearAction: function () {
