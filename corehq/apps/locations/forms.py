@@ -570,7 +570,7 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class LocationFilterForm(forms.Form):
-    root_location_id = forms.CharField(
+    location_id = forms.CharField(
         label=ugettext_noop("Location"),
         required=False,
     )
@@ -579,37 +579,56 @@ class LocationFilterForm(forms.Form):
         label=_('Only include selected location'),
         initial=False,
     )
-    location_active_status = forms.ChoiceField(
+    location_active = forms.ChoiceField(
         label='Active / Archived',
-        choices=(),
         required=False
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         super().__init__(*args, **kwargs)
-        self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
-        self.fields['location_active_status'].choices = LOCATION_ACTIVE_STATUS
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations")
+        )
+        self.fields['location_active'].choices = LOCATION_ACTIVE_STATUS
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
+        self.helper.form_id = 'locations-filters'
         self.helper.form_action = reverse('location_export', args=[self.domain])
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Locations"),
-                crispy.Field('root_location_id'),
+                crispy.Div(
+                    crispy.Field('location_id', data_bind='value: location_id'),
+                    data_bind='event: {change: location_callback}'
+                ),
+                crispy.Div(
+                    crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
+                ),
+                crispy.Field('location_active', data_bind='value: location_active'),
             ),
-            crispy.Field('selected_location_only'),
-            crispy.Field('location_active_status'),
             hqcrispy.FormActions(
                 StrictButton(
                     _("Download Locations"),
                     type="submit",
                     css_class="btn btn-primary",
-                )
+                    data_bind="html: buttonHTML",
+                ),
             ),
         )
+
+    def clean_location_active(self):
+        location_active_status = self.cleaned_data['location_active']
+
+        if location_active_status == ACTIVE:
+            return True
+        if location_active_status == ARCHIVED:
+            return False
+        return None
 
 
 def to_list(value):

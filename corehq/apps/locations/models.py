@@ -327,8 +327,8 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         locations = self.filter(location_id__in=location_ids, **additional_filters)
         return self.get_queryset_descendants(locations, include_self=True)
 
-    def get_locations_and_children_ids(self, location_ids):
-        return list(self.get_locations_and_children(location_ids).location_ids())
+    def get_locations_and_children_ids(self, location_ids, **additional_filters):
+        return list(self.get_locations_and_children(location_ids, **additional_filters).location_ids())
 
 
 class OnlyUnarchivedLocationManager(LocationManager):

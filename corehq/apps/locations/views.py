@@ -66,6 +66,8 @@ from .permissions import (
 )
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
+from django.http import JsonResponse, HttpResponseBadRequest
+from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +250,7 @@ class FilteredLocationDownload(BaseLocationView):
     def page_context(self):
         return {
             'form': LocationFilterForm(self.request.GET, domain=self.domain),
+            'locations_count_url': reverse('locations_count', args=[self.domain])
         }
 
 
@@ -997,6 +1000,7 @@ def location_export(request, domain):
     root_location_id = request.GET.get('root_location_id')
     owner_id = request.couch_user.get_id
     download = DownloadBase()
+    breakpoint()
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
                                          headers_only, owner_id, root_location_id)
     download.set_task(res)
@@ -1085,3 +1089,22 @@ def unassign_users(request, domain):
                      _("All users have been unassigned from their locations"))
     fallback_url = reverse('users_default', args=[domain])
     return HttpResponseRedirect(request.POST.get('redirect', fallback_url))
+
+
+# @require_can_use_filtered_user_download
+def count_locations(request, domain):
+    form = LocationFilterForm(request.GET, domain=domain)
+
+    if form.is_valid():
+        location_filters = form.cleaned_data
+    else:
+        return HttpResponseBadRequest('Location filters invalid')
+
+    if location_filters.get('selected_location_only'):
+        locations_count = 1
+    else:
+        locations_count = get_filtered_locations_count(domain, location_filters)
+
+    return JsonResponse({
+        'count': locations_count
+    })

@@ -180,3 +180,27 @@ def get_location_ids_with_location_type(domain, location_type_code):
         is_archived=False,
         location_type__code=location_type_code,
     ).values_list('location_id', flat=True)
+
+
+def get_filtered_locations_count(domain, locations_filters):
+    """
+    Returns the locations count governed by 'locations_filters'
+    {
+        'location_id': <The root location from which to start>,
+        'location_active': <Whether the location is active, i.e. True, False>
+    }
+    """
+    filters = {}
+    location_active = locations_filters.get('location_active', None)
+    root_location_id = locations_filters.get('location_id', '')
+
+    if location_active is not None:
+        filters['is_archived'] = (not location_active)
+
+    if root_location_id == '':
+        # Get all domain locations with filters
+        locations = SQLLocation.objects.filter(domain=domain, **filters)
+    else:
+        locations = SQLLocation.objects.get_locations_and_children_ids([root_location_id], **filters)
+
+    return len(locations)
