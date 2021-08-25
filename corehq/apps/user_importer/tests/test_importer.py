@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 
 from mock import mock, patch
 
-from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
