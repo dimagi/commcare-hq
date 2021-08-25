@@ -8,13 +8,13 @@ from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, sharded
 from corehq.sql_db.config import plproxy_config
 
 DOMAIN = 'sharding-test'
 
 
-@use_sql_backend
+@sharded
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
 
@@ -130,7 +130,7 @@ def _mock_databases():
     return databases
 
 
-@use_sql_backend
+@sharded
 @override_settings(DATABASES=_mock_databases())
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
