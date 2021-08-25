@@ -518,8 +518,8 @@ def create_wire_credits_invoice(domain_name,
 def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
     context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
 
-    email_html = render_to_string(template_html, context)
-    email_plaintext = render_to_string(template_plaintext, context)
+    email_html = render_to_string(template_html, context['template_context'])
+    email_plaintext = render_to_string(template_plaintext, context['template_context'])
 
     send_HTML_email(
         subject=_("Payment Received - Thank You!"),

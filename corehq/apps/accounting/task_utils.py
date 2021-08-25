@@ -18,7 +18,7 @@ from corehq.util.view_utils import absolute_reverse
 
 
 def get_context_to_send_autopay_failed_email(invoice_id):
-    invoice = Invoice.objects.get(invoice_id)
+    invoice = Invoice.objects.get(id=invoice_id)
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
@@ -50,7 +50,7 @@ def get_context_to_send_autopay_failed_email(invoice_id):
 
 
 def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context):
-    payment_record = PaymentRecord.objects.get(payment_record_id)
+    payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
     if web_user:
