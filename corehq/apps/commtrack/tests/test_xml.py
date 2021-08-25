@@ -54,6 +54,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import Product
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -90,6 +91,16 @@ class XMLTest(TestCase):
         self.sp = self.loc.linked_supply_point()
         self.users = [util.bootstrap_user(self, **user_def) for user_def in self.user_definitions]
         self.user = self.users[0]
+        self.case_ids = [self.sp.case_id]
+        self.addCleanup(self.delete_ledger_values, self.sp.case_id)
+
+    def delete_ledger_transactions(self, form_id):
+        print("delete_ledger_transactions", form_id, self.case_ids)
+        LedgerAccessorSQL.delete_ledger_transactions_for_form(self.case_ids, form_id)
+
+    def delete_ledger_values(self, case_id):
+        print("delete_ledger_values", case_id)
+        LedgerAccessorSQL.delete_ledger_values(case_id)
 
     def tearDown(self):
         delete_all_users()
@@ -107,7 +118,8 @@ class CommTrackOTATest(XMLTest):
             SohReport(section_id='stock', product_id=p._id, amount=i*10)
             for i, p in enumerate(self.products)
         ]
-        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        form_id, report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        self.addCleanup(self.delete_ledger_transactions, form_id)
         check_xml_line_by_line(
             self,
             balance_ota_block(
@@ -126,7 +138,8 @@ class CommTrackOTATest(XMLTest):
             for section_id in section_ids
             for i, p in enumerate(self.products)
         ]
-        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        form_id, report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        self.addCleanup(self.delete_ledger_transactions, form_id)
         balance_blocks = util.get_ota_balance_xml(self.domain, self.user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
@@ -161,7 +174,8 @@ class CommTrackOTATest(XMLTest):
             SohReport(section_id='stock', product_id=p._id, amount=i * 10)
             for i, p in enumerate(self.products)
         ]
-        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        form_id, report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
+        self.addCleanup(self.delete_ledger_transactions, form_id)
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
@@ -237,6 +251,8 @@ class CommTrackSubmissionTest(XMLTest):
         super(CommTrackSubmissionTest, self).setUp()
         loc2 = make_loc('loc2')
         self.sp2 = loc2.linked_supply_point()
+        self.case_ids.append(self.sp2.case_id)
+        self.addCleanup(self.delete_ledger_values, self.sp2.case_id)
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime,
@@ -259,6 +275,7 @@ class CommTrackSubmissionTest(XMLTest):
                 domain=self.domain.name,
                 **submit_extras
             )
+        self.addCleanup(self.delete_ledger_transactions, instance_id)
         return instance_id
 
     def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
@@ -457,6 +474,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             ),
             domain=self.domain.name,
         )[0]
+        self.addCleanup(self.delete_ledger_transactions, form.form_id)
         instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
@@ -468,6 +486,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             ),
             domain=self.domain.name,
         )[0]
+        self.addCleanup(self.delete_ledger_transactions, form.form_id)
         instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
@@ -481,8 +500,9 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         get processed
         """
         def _assert_no_stock_transactions():
-            self.assertEqual(0, len(self._get_all_ledger_transactions(Q())))
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
 
+        form_id = uuid.uuid4().hex
         _assert_no_stock_transactions()
 
         fpath = os.path.join(os.path.dirname(__file__), 'data', 'xml', 'device_log.xml')
@@ -491,7 +511,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         amounts = [(p._id, 10) for p in self.products]
         product_block = products_xml(amounts)
         form = form.format(
-            form_id=uuid.uuid4().hex,
+            form_id=form_id,
             user_id=self.user._id,
             date=json_format_datetime(datetime.utcnow()),
             sp_id=self.sp.case_id,
@@ -689,7 +709,8 @@ def _report_soh(soh_reports, case_id, domain):
         for report in soh_reports
     ]
     form = submit_case_blocks(balance_blocks, domain)[0]
-    return json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
+    received_on = json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
+    return form.form_id, received_on
 
 
 def _get_ota_balance_blocks(project, user):
