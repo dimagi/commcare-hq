@@ -77,9 +77,13 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self.module.search_config.get_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if self.module.search_config.data_registry:
+            # Disable claim request for data registry
+            kwargs["relevant"] = "false()"
+        else:
+            relevant = self.module.search_config.get_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
