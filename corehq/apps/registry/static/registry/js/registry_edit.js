@@ -153,6 +153,9 @@ hqDefine("registry/js/registry_edit", [
         }
 
         self.grantDomains = ko.observable([]);
+        self.cancelGrantEdit = function () {
+            self.grantDomains([]);
+        };
         self.createGrant = function() {
             self.modalSaving(true);
             actions.createGrant(self.slug, self.grantDomains(), (data) => {

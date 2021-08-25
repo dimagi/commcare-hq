@@ -492,7 +492,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-default" data-dismiss="modal" data-bind="click: $root.cancelGrantEdit">{% trans "Cancel" %}</a>
           <button href="#" class="btn btn-primary" data-bind="click: createGrant, enable: grantDomains().length">
             <i class="fa" data-bind="css: {
               'fa-spin': modalSaving,
