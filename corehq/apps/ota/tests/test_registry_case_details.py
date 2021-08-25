@@ -54,7 +54,7 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        response = self.client.get(reverse('registry_case_details', args=[self.domain]), data=params)
+        response = self.client.get(reverse('registry_case', args=[self.domain]), data=params)
         self.assertEqual(response.status_code, expected_response_code)
         return response.content.decode('utf8')
 

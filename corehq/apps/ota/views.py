@@ -434,7 +434,7 @@ def recovery_measures(request, domain, build_id):
 @location_safe
 @mobile_auth
 @require_GET
-def registry_case_details(request, domain):
+def registry_case(request, domain):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
     registry = request.GET.get("registry")
