@@ -50,7 +50,7 @@ concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   jwcrypto
     #   pyopenssl
