@@ -161,8 +161,8 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         },
         update: function (element, valueAccessor) {
             var properties = valueAccessor();
-            // have to access the observable to get the `update` method to fire on changes
             if (properties.options) {
+                // have to access the observable to get the `update` method to fire on changes to options
                 ko.unwrap(properties.options());
             }
 
