@@ -156,7 +156,7 @@ function _run_tests {
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
             # TODO make it possible to run a subset of python-sharded tests
-            py_test_args+=("--attr=sql_backend")
+            py_test_args+=("--attr=sharded")
             ;;
         python-elasticsearch-v5)
             export ELASTICSEARCH_HOST='elasticsearch5'

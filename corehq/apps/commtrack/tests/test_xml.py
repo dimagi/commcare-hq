@@ -62,7 +62,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     LedgerAccessors,
 )
 from corehq.form_processor.models import LedgerTransaction
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from testapps.test_pillowtop.utils import process_pillow_changes
@@ -228,7 +228,7 @@ class CommTrackOTATest(XMLTest):
         self.domain = Domain.get(self.domain._id)
 
 
-@use_sql_backend
+@sharded
 class CommTrackOTATestSQL(CommTrackOTATest):
     pass
 
@@ -491,7 +491,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertTrue('IllegalCaseId' in instance.problem)
 
 
-@use_sql_backend
+@sharded
 class CommTrackBalanceTransferTestSQL(CommTrackBalanceTransferTest):
     pass
 
@@ -578,7 +578,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         self.assertNotIn(instance_id, case.xform_ids)
 
 
-@use_sql_backend
+@sharded
 class BugSubmissionsTestSQL(BugSubmissionsTest):
     pass
 
@@ -622,7 +622,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
-@use_sql_backend
+@sharded
 class CommTrackSyncTestSQL(CommTrackSyncTest):
     pass
 
@@ -729,7 +729,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         _assert_initial_state()
 
 
-@use_sql_backend
+@sharded
 class CommTrackArchiveSubmissionTestSQL(CommTrackArchiveSubmissionTest):
     pass
 

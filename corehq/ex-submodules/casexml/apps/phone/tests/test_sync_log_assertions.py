@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.phone.models import CaseState, IndexTree, SimplifiedSyncLog
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
 class SyncLogAssertionTest(TestCase):
@@ -55,6 +55,6 @@ class SyncLogAssertionTest(TestCase):
             self.assertIn(dependent_case_state, sync_log.test_only_get_dependent_cases_on_phone())
 
 
-@use_sql_backend
+@sharded
 class SyncLogAssertionTestSQL(SyncLogAssertionTest):
     pass
