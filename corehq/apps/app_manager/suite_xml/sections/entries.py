@@ -13,7 +13,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
@@ -477,6 +476,7 @@ class EntriesHelper(object):
         return datums
 
     def get_data_registry_query_datum(self, datum, module):
+        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
         return FormDatumMeta(
             datum=RemoteRequestQuery(
                 url=absolute_reverse('registry_case', args=[self.app.domain]),
