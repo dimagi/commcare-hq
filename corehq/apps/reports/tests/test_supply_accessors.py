@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseFactory
 from dimagi.utils.parsing import json_format_datetime
@@ -22,11 +21,13 @@ from corehq.apps.reports.analytics.dbaccessors import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
+    run_with_sql_backend,
     sharded,
 )
 from corehq.form_processor.utils import get_simple_form_xml
 
 
+@run_with_sql_backend
 class TestSupplyAccessors(TestCase):
     domain = 'test-supply-accessors'
 
@@ -41,7 +42,6 @@ class TestSupplyAccessors(TestCase):
                                                               case_id='missing', section_id='stock',
                                                               as_of=datetime.utcnow()))
 
-    # @run_with_all_backends
     def test_get_ledger_values_for_case_as_of(self):
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
@@ -108,8 +108,7 @@ class LedgerDBAccessorTest(TestCase):
     def setUpClass(cls):
         super(LedgerDBAccessorTest, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         cls.product_a = make_product(cls.domain, 'A Product', 'prodcode_a')
         cls.product_b = make_product(cls.domain, 'B Product', 'prodcode_b')
 
@@ -118,8 +117,7 @@ class LedgerDBAccessorTest(TestCase):
         cls.product_a.delete()
         cls.product_b.delete()
 
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(LedgerDBAccessorTest, cls).tearDownClass()
 
     def setUp(self):

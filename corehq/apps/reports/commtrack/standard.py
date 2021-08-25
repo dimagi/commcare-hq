@@ -39,7 +39,6 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -280,10 +279,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             'max_rows': 100
         }
 
-        if should_use_sql_backend(self.domain):
-            data = SimplifiedInventoryDataSourceNew(config).get_data()
-        else:
-            data = SimplifiedInventoryDataSource(config).get_data()
+        data = SimplifiedInventoryDataSourceNew(config).get_data()
 
         for loc_name, loc_data in data:
             yield [loc_name] + [
