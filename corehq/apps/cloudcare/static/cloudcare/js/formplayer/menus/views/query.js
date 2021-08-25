@@ -72,8 +72,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
 
-            // If input doesn't have a default value, check to see if there's a sticky value from user's last search
-            if (!this.model.get('value')) {
+            if (this.model.get('value')) {
+                // Use the default value where present instead of the sticky value
+                this.model.set('searchForBlank', false);
+            } else {
+                // Set the value and blank search checkbox from the sticky values if available
                 var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                     stickyValue = allStickyValues[this.model.get('id')],
                     [searchForBlank, value] = decodeValue(this.model, stickyValue);
