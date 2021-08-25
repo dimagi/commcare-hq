@@ -1145,6 +1145,7 @@ class FilteredUserDownload(BaseUserSettingsView):
 
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
+@location_safe
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
     page_title = ugettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
@@ -1329,6 +1330,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 @require_can_edit_commcare_users
 @require_can_use_filtered_user_download
+@location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
