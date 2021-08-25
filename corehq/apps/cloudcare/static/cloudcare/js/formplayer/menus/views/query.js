@@ -69,13 +69,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         initialize: function () {
+            this.parentView = this.options.parentView;
+            this.model = this.options.model;
+
             // If input doesn't have a default value, check to see if there's a sticky value from user's last search
-            if (!this.options.model.get('value')) {
+            if (!this.model.get('value')) {
                 var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
-                    stickyValue = allStickyValues[this.options.model.get('id')],
-                    [searchForBlank, value] = decodeValue(this.options.model, stickyValue);
-                this.options.model.set('value', value);
-                this.options.model.set('searchForBlank', searchForBlank);
+                    stickyValue = allStickyValues[this.model.get('id')],
+                    [searchForBlank, value] = decodeValue(this.model, stickyValue);
+                this.model.set('value', value);
+                this.model.set('searchForBlank', searchForBlank);
             }
         },
 
@@ -84,10 +87,37 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
             queryField: '.query-field',
+            searchForBlank: '.search-for-blank',
+        },
+
+        events: {
+            'change @ui.queryField': 'changeQueryField',
+            'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
         modelEvents: {
             'change': 'render',
+        },
+
+        changeQueryField: function (e) {
+            this.model.set('value', $(e.target).val());
+            this.parentView.setStickyQueryInputs();
+        },
+
+        toggleBlankSearch: function (e) {
+            var self = this,
+                searchForBlank = $(e.target).prop('checked');
+            self.model.set('searchForBlank', searchForBlank);
+
+            // When checking the blank search box for a geocoder field, toggle all its receiver fields
+            if (self.model.get('input') === 'address') {
+                _.each(self.model.collection.models, function (relatedModel) {
+                    if (relatedModel.get('receive') && relatedModel.get('receive').split("-")[0] === self.model.get('id')) {
+                        relatedModel.set('searchForBlank', searchForBlank);
+                    }
+                });
+            }
+            self.parentView.setStickyQueryInputs();
         },
 
         geocoderItemCallback: function (addressTopic) {
@@ -225,7 +255,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     $input.val(newValue).trigger('change');
                 }
             });
-            if (this.options.model.get('hidden') === 'true') {
+            if (this.model.get('hidden') === 'true') {
                 this.$el.hide();
             }
         },
@@ -237,6 +267,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         template: _.template($("#query-view-list-template").html() || ""),
         childView: QueryView,
         childViewContainer: "tbody",
+        childViewOptions: function () { return {parentView: this}; },
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
@@ -253,13 +284,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             submitButton: '#query-submit-button',
             valueDropdown: 'select.query-field',
             valueInput: 'input.query-field',
-            searchForBlank: '.search-for-blank',
         },
 
         events: {
             'change @ui.valueDropdown': 'changeDropdown',
-            'change @ui.valueInput': 'setStickyQueryInputs',
-            'click @ui.searchForBlank': 'toggleBlankSearch',
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
@@ -320,24 +348,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 self.setStickyQueryInputs();
             });
-        },
-
-        toggleBlankSearch: function (e) {
-            var self = this,
-                searchForBlank = $(e.target).prop('checked'),
-                fieldId = $(e.target).data('field'),
-                model = self.collection.get(fieldId);
-            model.set('searchForBlank', searchForBlank);
-
-            // When checking the blank search box for a geocoder field, toggle all its receiver fields
-            if (model.get('input') === 'address') {
-                _.each(self.collection.models, function (relatedModel) {
-                    if (relatedModel.get('receive') && relatedModel.get('receive').split("-")[0] === fieldId) {
-                        relatedModel.set('searchForBlank', searchForBlank);
-                    }
-                });
-            }
-            self.setStickyQueryInputs();
         },
 
         clearAction: function () {

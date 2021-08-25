@@ -68,7 +68,7 @@
 
       <% if (allow_blank_value) { %>
       <label>
-          <input type="checkbox" data-field="<%- id %>" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
+          <input type="checkbox" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
           {% trans "Include results where '<%- text %>' is blank" %}
       </label>
       <% } %>
