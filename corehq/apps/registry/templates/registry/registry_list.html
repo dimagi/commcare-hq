@@ -228,8 +228,8 @@
                 attr: {disabled: formCreateRegistrySent()}
               ">{% trans 'Cancel' %}</a>
               <button type="submit" class="btn btn-primary" data-bind="
-                css: {disabled: formCreateRegistrySent()},
-                attr: {disabled: formCreateRegistrySent()}
+                css: {disabled: formCreateRegistrySent() || !nameValid()},
+                attr: {disabled: formCreateRegistrySent() || !nameValid()}
               ">
                 <i class="fa fa-plus" data-bind="
                    css: {
