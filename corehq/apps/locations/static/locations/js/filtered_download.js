@@ -30,9 +30,8 @@ hqDefine('locations/js/filtered_download', [
             });
         });
 
-        self.location_callback = function () {
-            console.log('location_callback: ' + $('id_location_id').val());
-            self.location_id($('id_location_id').val());
+        self.location_selected = function () {
+            self.location_id($('#id_location_id').val());
         }
 
         self.countLocations = function () {
@@ -47,7 +46,6 @@ hqDefine('locations/js/filtered_download', [
                 url: options.url,
                 data: data,
                 success: function (data) {
-                    console.log('Returned count: ' + data.count);
                     self.count(data.count);
                 },
                 error: function () {

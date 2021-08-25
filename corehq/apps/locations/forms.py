@@ -590,7 +590,7 @@ class LocationFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(
             self.domain,
             id='id_location_id',
-            placeholder=_("All Locations")
+            placeholder=_("All Locations"),
         )
         self.fields['location_active'].choices = LOCATION_ACTIVE_STATUS
 
@@ -604,10 +604,11 @@ class LocationFilterForm(forms.Form):
                 _("Filter and Download Locations"),
                 crispy.Div(
                     crispy.Field('location_id', data_bind='value: location_id'),
-                    data_bind='event: {change: location_callback}'
+                    data_bind='event: {change: location_selected}'
                 ),
                 crispy.Div(
                     crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
+                    data_bind="slideVisible: location_id",
                 ),
                 crispy.Field('location_active', data_bind='value: location_active'),
             ),
