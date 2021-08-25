@@ -5912,8 +5912,10 @@ msgid "Case Lists"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html:115
+#, fuzzy
+#| msgid "Case Detail"
 msgid "Case Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Detalles del Caso"
 
 #: corehq/apps/app_manager/templates/app_manager/download_index.html:40
 msgid "Revoke restriction"
@@ -7017,8 +7019,10 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html:6
 #: corehq/apps/domain/forms.py:2374 corehq/apps/domain/forms.py:2408
 #: corehq/apps/reports/standard/deployments.py:111
+#, fuzzy
+#| msgid "Build Profiles"
 msgid "Build Profile"
-msgstr "Manejo de Casos"
+msgstr "Desarrollar Perfiles"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html:9
 msgid "Select a language."
@@ -7294,8 +7298,10 @@ msgid "Open Condition"
 msgstr "Abrir Condición"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:58
+#, fuzzy
+#| msgid "Case Conditions"
 msgid "Conditions"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Condiciones del Caso"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:69
 msgid "Display the Product Stock for this Supply Point after it is selected"
@@ -10331,8 +10337,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py:11
+#, fuzzy
+#| msgid "Empty Case"
 msgid "Empty"
-msgstr "Manejo de Casos"
+msgstr "Caso Vacío"
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py:179
 #: corehq/apps/reports/filters/forms.py:419
@@ -11687,12 +11695,16 @@ msgid "Search Parameters"
 msgstr "Parámetros de Búsqueda"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:27
+#, fuzzy
+#| msgid "Case Data"
 msgid "Case Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Datos de Caso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:31
+#, fuzzy
+#| msgid "Case Type"
 msgid "Case Type:"
-msgstr "Manejo de Casos"
+msgstr "Tipo de caso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:35
 msgid "Owner ID:"
@@ -11704,12 +11716,16 @@ msgid "Case Properties"
 msgstr "Propiedades del Caso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:47
+#, fuzzy
+#| msgid "case property name"
 msgid "Property name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "nombre de propiedad del caso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:48
+#, fuzzy
+#| msgid "Property"
 msgid "Property value"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Propiedad"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:49
 msgid "Clause"
@@ -11720,8 +11736,10 @@ msgid "Fuzzy"
 msgstr "Difuso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:51
+#, fuzzy
+#| msgid "Remove Special Characters"
 msgid "Remove Characters"
-msgstr "Manejo de Casos"
+msgstr "Remover Caracteres Especiales"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:82
 msgid "Add input"
@@ -11770,12 +11788,16 @@ msgid "Closed"
 msgstr "Cerrado"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:144
+#, fuzzy
+#| msgid "User Properties"
 msgid "Properties"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Propiedades del Usuario"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:145
+#, fuzzy
+#| msgid "Invoices"
 msgid "Indices"
-msgstr "Manejo de Casos"
+msgstr "Facturas"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:146
 msgid "Score"
@@ -12457,8 +12479,10 @@ msgid "Fields"
 msgstr "Campos"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:46
+#, fuzzy
+#| msgid "Profile URL"
 msgid "Profiles"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Perfil URL"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html:7
 msgid "Add a Field"
@@ -13574,8 +13598,10 @@ msgid "Requires System Admin"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html:25
+#, fuzzy
+#| msgid "Add filter"
 msgid "Add Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Agregar filtro"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html:31
 msgid "Select a filter"
@@ -17573,8 +17599,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:27
+#, fuzzy
+#| msgid "Web Apps Permissions"
 msgid "Disable Enterprise Permissions"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "Permisos de Aplicaciones Web"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:32
 msgid ""
@@ -17583,7 +17611,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:44
 msgid "Select the controlling project space"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html:64
 #, python-format
@@ -17645,8 +17673,10 @@ msgid "Enterprise Console"
 msgstr ""
 
 #: corehq/apps/enterprise/views.py:373
+#, fuzzy
+#| msgid "Your project settings have been saved!"
 msgid "Enterprise permissions have been disabled."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "¡Se ha guardado la configuración de su proyecto!"
 
 #: corehq/apps/enterprise/views.py:385
 msgid "Could not add {}."
@@ -17657,8 +17687,10 @@ msgid "{} is now included in enterprise permissions."
 msgstr ""
 
 #: corehq/apps/enterprise/views.py:407
+#, fuzzy
+#| msgid "Could not find form '{}'"
 msgid "Could not remove {}."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "No encontramos el formulario '{}'"
 
 #: corehq/apps/enterprise/views.py:415
 msgid "{} is now excluded from enterprise permissions."
@@ -23944,8 +23976,10 @@ msgid "could not understand coordinates"
 msgstr "no pudo entender las coordinadas"
 
 #: corehq/apps/locations/forms.py:427
+#, fuzzy
+#| msgid "Specify Workers at this Location"
 msgid "Workers at Location"
-msgstr "Casos IRA Tratados"
+msgstr "Especificar Trabajadores en esta Ubicación"
 
 #: corehq/apps/locations/forms.py:453
 msgid "Specify Workers at this Location"
@@ -24599,20 +24633,26 @@ msgstr ""
 "una importación o exportación general."
 
 #: corehq/apps/locations/views.py:1022 corehq/apps/locations/views.py:1040
+#, fuzzy
+#| msgid "Download Organization Structure"
 msgid "Download Organization Structure Status"
-msgstr "Diagnóstico de Casos"
+msgstr "Descargar Estructura de la Organización"
 
 #: corehq/apps/locations/views.py:1032
 msgid "Go back to organization download"
 msgstr ""
 
 #: corehq/apps/locations/views.py:1035
+#, fuzzy
+#| msgid "Organization Structure"
 msgid "Go back to organization structure"
-msgstr "Manejo de Casos"
+msgstr "Estructura de la Organización"
 
 #: corehq/apps/locations/views.py:1041
+#, fuzzy
+#| msgid "Manage Organization Structure"
 msgid "Preparing organization structure download."
-msgstr "Diagnóstico de Casos"
+msgstr "Administrar Estructura de la Organización"
 
 #: corehq/apps/locations/views.py:1042
 #: corehq/apps/userreports/reports/view.py:659
@@ -25975,8 +26015,10 @@ msgid "Accepted"
 msgstr ""
 
 #: corehq/apps/registry/models.py:144
+#, fuzzy
+#| msgid "has selected"
 msgid "Rejected"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr "ha seleccionado"
 
 #: corehq/apps/registry/models.py:216
 msgid "Registry Activated"
@@ -27851,6 +27893,8 @@ msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py:31 corehq/reports.py:380
 #: corehq/tabs/tabclasses.py:1566
+#, fuzzy
+#| msgid "Case Management"
 msgid "User Management"
 msgstr "Manejo de Casos"
 
@@ -29246,12 +29290,21 @@ msgstr ""
 "Formulario."
 
 #: corehq/apps/reports/views.py:1857
+#, fuzzy
+#| msgid ""
+#| "Could not detect the application or form for this submission. A common "
+#| "cause is that the form was submitted via App or Form preview"
 msgid "Could not detect the application or form for this submission."
-msgstr "Casos IRA Tratados"
+msgstr ""
+"No se pudo detectar la aplicación o formulario a ser ingresado. Una causa "
+"común es que el formulario fue ingresado via App o Vista Previa del "
+"Formulario."
 
 #: corehq/apps/reports/views.py:1861
+#, fuzzy
+#| msgid "Could not find the user-case for this form"
 msgid "Could not find user for this submission."
-msgstr "Casos IRA Tratados"
+msgstr "No se pudo encontrar el usuario-caso para este formulario"
 
 #: corehq/apps/reports/views.py:1876
 msgid "Could not find the user-case for this form"
@@ -32211,7 +32264,7 @@ msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py:89
 msgid "No issues found with the workbook."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py:95
 msgid "App Translations Discrepancies for {}"
@@ -32670,8 +32723,10 @@ msgid "Action permitted to only users with staff access"
 msgstr ""
 
 #: corehq/apps/translations/templates/blacklist_translations.html:12
+#, fuzzy
+#| msgid "Apply"
 msgid "App"
-msgstr "Casos IRA Tratados"
+msgstr "Aplicar"
 
 #: corehq/apps/translations/templates/blacklist_translations.html:13
 msgid "Module"
@@ -34872,7 +34927,7 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html:31
 msgid "Security"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html:54
 msgid "User Location"
