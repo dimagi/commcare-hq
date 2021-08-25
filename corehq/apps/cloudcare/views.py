@@ -612,4 +612,6 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         },
         "forceLoginAs": force_login_as,
     })
-    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+    response = HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+    response['Content-Type'] = "application/commcare"
+    return response
