@@ -1,4 +1,3 @@
-import functools
 import logging
 from datetime import datetime
 from unittest.mock import patch
@@ -25,7 +24,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
+from corehq.util.test_utils import unit_testing_only
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
@@ -157,28 +156,8 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_all_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        # run with default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-        ),
-    ],
-    nose_tags={'all_backends': True}
-)
-
 run_with_sql_backend = override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+run_with_all_backends = run_with_sql_backend
 
 
 def _sharded(cls):
@@ -346,7 +325,10 @@ def create_form_for_test(
     )
 
     attachments = attachments or {}
-    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachment_tuples = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
