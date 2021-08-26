@@ -1,9 +1,18 @@
 import re
+from collections import defaultdict
+
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.filter_dsl import (
+    CaseFilterError,
+    build_filter_from_xpath,
+)
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -12,9 +21,14 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
 )
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.filter_dsl import CaseFilterError
+from corehq.apps.es import filters, queries
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_missing,
+    case_property_query,
+    case_property_range_query,
+    flatten_result,
+)
 
 
 class CaseSearchCriteria(object):
@@ -61,29 +75,25 @@ class CaseSearchCriteria(object):
         return search_es
 
     def _assemble_optional_search_params(self):
-        self._validate_multiple_parameter_values()
         self._add_xpath_query()
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
-        self._add_daterange_queries()
         self._add_case_property_queries()
 
-    def _validate_multiple_parameter_values(self):
+    def _validate_multiple_parameter_values(self, key, val):
+        if not isinstance(val, list):
+            return
         disallowed_multiple_value_parameters = [
             CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
             'owner_id',
             CASE_SEARCH_XPATH_QUERY_KEY,
         ]
-
-        for key, val in self.criteria.items():
-            if not isinstance(val, list):
-                continue
-            is_daterange = any([v.startswith('__range__') for v in val])
-            if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
-                raise CaseFilterError(
-                    _("Multiple values are only supported for simple text and range searches"),
-                    key
-                )
+        is_daterange = any([v.startswith('__range__') for v in val])
+        if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
+            raise CaseFilterError(
+                _("Multiple values are only supported for simple text and range searches"),
+                key
+            )
 
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
@@ -101,55 +111,69 @@ class CaseSearchCriteria(object):
             for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
                 self.search_es = self.search_es.blacklist_owner_id(blacklisted_owner_id)
 
-    def _add_daterange_queries(self):
+    def _get_daterange_query(self, key, value):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
         #   used by App manager case-search feature
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
-        drop_keys = []
-        for key, val in self.criteria.items():
-            if not isinstance(val, list) and val.startswith('__range__'):
-                match = pattern.match(val)
-                if match:
-                    [_, _, startdate, enddate] = val.split('__')
-                    drop_keys.append(key)
-                    self.search_es = self.search_es.date_range_case_property_query(
-                        key, gte=startdate, lte=enddate)
-        for key in drop_keys:
-            self.criteria.pop(key)
+        match = pattern.match(value)
+        if match:
+            _, _, startdate, enddate = value.split('__')
+            return case_property_range_query(key, gte=startdate, lte=enddate),
 
     def _add_case_property_queries(self):
-        fuzzies = []
-        for case_type in self.case_types:
-            try:
-                fuzzies += self.config.fuzzy_properties.get(
-                    domain=self.domain, case_type=case_type).properties
-            except FuzzyProperties.DoesNotExist:
-                fuzzies = []
-
         for key, value in self.criteria.items():
-            if (key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE)
-                    or key.startswith('__range__')):
+            if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
                 continue
-            remove_char_regexs = []
-            for case_type in self.case_types:
-                remove_char_regexs += self.config.ignore_patterns.filter(
-                    domain=self.domain,
-                    case_type=case_type,
-                    case_property=key,
-                )
-            for removal_regex in remove_char_regexs:
-                to_remove = re.escape(removal_regex.regex)
-                if isinstance(value, list):
-                    value = [re.sub(to_remove, '', val) for val in value]
+            if isinstance(value, list) and '' in value:
+                value = [v for v in value if v != '']
+                if value:
+                    value = value[0] if len(value) == 1 else value
+                    query = filters.OR(
+                        self._get_query(key, value),
+                        case_property_missing(key),
+                    )
                 else:
-                    value = re.sub(to_remove, '', value)
-
-            if '/' in key:
-                query = '{} = "{}"'.format(key, value)
-                self.search_es = self.search_es.xpath_query(self.domain, query, fuzzy=(key in fuzzies))
+                    query = case_property_missing(key)
             else:
-                self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+                query = self._get_query(key, value)
+            self.search_es = self.search_es.add_query(query, queries.MUST)
+
+    def _get_query(self, key, value):
+        self._validate_multiple_parameter_values(key, value)
+        if not isinstance(value, list) and value.startswith('__range__'):
+            return self._get_daterange_query(key, value)
+
+        value = self._remove_ignored_patterns(key, value)
+        fuzzy = key in self._fuzzy_properties
+        if '/' in key:
+            query = '{} = "{}"'.format(key, value)
+            return build_filter_from_xpath(self.domain, query, fuzzy=fuzzy),
+        else:
+            return case_property_query(key, value, fuzzy=fuzzy)
+
+    def _remove_ignored_patterns(self, case_property, value):
+        for to_remove in self._patterns_to_remove[case_property]:
+            if isinstance(value, list):
+                value = [re.sub(to_remove, '', val) for val in value]
+            else:
+                value = re.sub(to_remove, '', value)
+        return value
+
+    @cached_property
+    def _patterns_to_remove(self):
+        patterns_by_property = defaultdict(list)
+        for pattern in self.config.ignore_patterns.filter(domain=self.domain, case_type__in=self.case_types):
+            patterns_by_property[pattern.case_property].append(re.escape(pattern.regex))
+        return patterns_by_property
+
+    @cached_property
+    def _fuzzy_properties(self):
+        return [
+            prop for properties_config in
+            self.config.fuzzy_properties.filter(domain=self.domain, case_type__in=self.case_types)
+            for prop in properties_config.properties
+        ]
 
 
 def get_related_cases(domain, app_id, case_types, cases):
