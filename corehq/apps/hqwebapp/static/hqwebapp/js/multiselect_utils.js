@@ -55,7 +55,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         elementOrId,
         selectableHeaderTitle,
         selectedHeaderTitle,
-        searchItemTitle
+        searchItemTitle,
     ) {
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
@@ -152,7 +152,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 element,
                 properties.selectableHeaderTitle || gettext("Items"),
                 properties.selectedHeaderTitle || gettext("Selected items"),
-                properties.searchItemTitle || gettext("Search items")
+                properties.searchItemTitle || gettext("Search items"),
             );
             if (properties.options) {
                 // add the `options` binding to the element, valueAccessor() should return an observable
