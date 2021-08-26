@@ -1,9 +1,9 @@
 Plugins
 =======
 
-There are a number of open source plugins which sit on top of the core CommCare functionality that enable a specific set of functionality.  These plugins are built and maintained by the CommCare open source community, thus are not included in any existing CommCare subscriptions on the Dimagi’s SaaS offering of CommCare.  Dimagi does provide explicit support for plugins for some customers under specific agreements.
+There are a number of plugins which sit on top of the core CommCare functionality that enable a specific set of functionality. They are not included in multi-tenant subscriptions when the platform is hosted for external signups.
 
-For self-hosted environments, plugins typically have a higher support burden and require directly reading the code to provide support. A smaller percentage of CommCare’s open source developer community typically has knowledge on any given plugin. If you are enabling plugins in your local environment, please make sure you have sufficient engineering expertise to be able to read direct code-level documentation. Plugins can be managed through the this `admin <UI https://www.commcarehq.org/hq/flags/?__hstc=240960668.9cbe5668b14d773d52583aa6ddd44168.1491228590522.1491493477971.1491498579156.19&__hssc=240960668.47.1491498579156&__hsfp=2069207928>`_.
+When hosting the CommCareHQ, be aware that plugins aren't fully supported by the core committers and generally have a higher support burden and require directly reading the code to provide support. A smaller percentage of CommCare’s open source developer community typically has knowledge on any given plugin. If you are enabling plugins in your local environment, please make sure you have sufficient engineering expertise to be able to read direct code-level documentation. Plugins can be managed through the this `admin <UI https://hq.server.url/hq/flags/>`_.
 
 The CommCare Community of Practice urges all plugin maintainers to follow our best practices for `documentation <(https://commcare-hq.readthedocs.io/documenting.html>`_. Each commit should include a description of the functionality and links to relevant tickets.
 
@@ -30,6 +30,6 @@ To access your plugin:
 - For python views, the ``required_decorator`` is useful.
 - For python tests, the ``flag_enabled`` decorator is useful.
 - In HTML, there's a ``toggle_enabled`` template tag.
-- In JavaScript, the ``hqwebapp/js/Plugins`` modules provides as ``toggleEnabled`` method.
+- In JavaScript, the ``hqwebapp/js/toggles`` modules provides as ``toggleEnabled`` method.
 
 (Note: Plugins were historically called Feature Flags and Toggles)
