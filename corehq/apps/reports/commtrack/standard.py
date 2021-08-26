@@ -18,7 +18,6 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import (
     ReportingStatusDataSource,
     SimplifiedInventoryDataSource,
-    SimplifiedInventoryDataSourceNew,
     StockStatusDataSource,
 )
 from corehq.apps.reports.commtrack.util import (
@@ -279,7 +278,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             'max_rows': 100
         }
 
-        data = SimplifiedInventoryDataSourceNew(config).get_data()
+        data = SimplifiedInventoryDataSource(config).get_data()
 
         for loc_name, loc_data in data:
             yield [loc_name] + [
