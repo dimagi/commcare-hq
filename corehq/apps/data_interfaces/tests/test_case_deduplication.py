@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.data_interfaces.deduplication import (
-    find_duplicate_ids_for_case,
+    find_duplicate_cases,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -97,16 +97,18 @@ class FindingDuplicatesTest(TestCase):
         self._prime_es_index(cases)
 
         # Padme is clearly a duplicate
-        self.assertItemsEqual([cases[0].case_id, cases[1].case_id],
-                              find_duplicate_ids_for_case(self.domain, cases[0], ["name", "dob"]))
+        self.assertItemsEqual([cases[0].case_id, cases[1].case_id], [
+            case.case_id for case in find_duplicate_cases(self.domain, cases[0], ["name", "dob"])
+        ])
 
         # Spoiler alert, Anakin is Vadar!
         self.assertItemsEqual([cases[2].case_id, cases[3].case_id],
-                              find_duplicate_ids_for_case(self.domain, cases[2], ["dob"]))
+                              [case.case_id for case in find_duplicate_cases(self.domain, cases[2], ["dob"])])
 
         # When you go to the dark side, you are no longer the same jedi.
-        self.assertNotIn(cases[3].case_id,
-                         find_duplicate_ids_for_case(self.domain, cases[2], ["name"]))
+        self.assertNotIn(
+            cases[3].case_id, [case.case_id for case in find_duplicate_cases(self.domain, cases[2], ["name"])]
+        )
 
     def test_duplicates_different_case_types(self):
         """Should not return duplicates
@@ -143,7 +145,7 @@ class CaseDeduplicationActionTest(TestCase):
         _, cls.action = cls.rule.add_action(
             CaseDeduplicationActionDefinition,
             match_type=CaseDeduplicationMatchTypeChoices.ALL,
-            case_properties=["name", "age", "weight"],
+            case_properties=["name", "age"],
         )
 
         cls.action.set_properties_to_update([
@@ -160,15 +162,15 @@ class CaseDeduplicationActionTest(TestCase):
         cls.rule.hard_delete()
         super().tearDownClass()
 
-    @patch("corehq.apps.data_interfaces.models.find_duplicate_ids_for_case")
-    def test_updates_a_duplicate(self, duplicate_ids_mock):
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_updates_a_duplicate(self, find_duplicates_mock):
         factory = CaseFactory(self.domain)
         accessor = CaseAccessors(self.domain)
 
-        case_1 = factory.create_case(case_name='first')
-        case_2 = factory.create_case(case_name='second')
+        case_1 = factory.create_case(case_name='name', update={"age": 2})
+        case_2 = factory.create_case(case_name='name', update={"age": 2})
 
-        duplicate_ids_mock.return_value = [case_1.case_id, case_2.case_id]
+        find_duplicates_mock.return_value = [case_1, case_2]
 
         self.rule.run_actions_when_case_matches(case_1)
 

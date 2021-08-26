@@ -28,11 +28,11 @@ from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.deduplication import (
-    find_duplicate_ids_for_case,
+    find_duplicate_cases,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
@@ -46,10 +46,7 @@ from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
 )
-from corehq.messaging.scheduling.models import (
-    AlertSchedule,
-    TimedSchedule,
-)
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
@@ -71,6 +68,7 @@ from corehq.util.test_utils import unit_testing_only
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
 def _try_date_conversion(date_or_string):
@@ -789,7 +787,8 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
 
         self.properties_to_update = result
 
-    def _add_case_and_ancestor_updates(self, case, cases_to_update):
+    def get_case_and_ancestor_updates(self, case):
+        cases_to_update = defaultdict(dict)
 
         def _get_case_property_value(current_case, name):
             result = current_case.resolve_case_property(name)
@@ -831,8 +830,18 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
             if value != _get_case_property_value(case, prop.name):
                 _add_update_property(prop.name, value, case)
 
+        return cases_to_update
+
+    def get_cases_to_update(self):
+        raise NotImplementedError()
+
+
+class UpdateCaseDefinition(BaseUpdateCaseDefinition):
+    # True to close the case, otherwise False
+    close_case = models.BooleanField()
+
     def when_case_matches(self, case, rule):
-        cases_to_update = self.get_case_updates(case)
+        cases_to_update = self.get_case_and_ancestor_updates(case)
 
         num_updates = 0
         num_closes = 0
@@ -873,20 +882,6 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
             num_related_updates=num_related_updates,
         )
 
-    def get_cases_to_update(self):
-        raise NotImplementedError()
-
-
-class UpdateCaseDefinition(BaseUpdateCaseDefinition):
-    # True to close the case, otherwise False
-    close_case = models.BooleanField()
-
-    def get_case_updates(self, case):
-        cases_to_update = defaultdict(dict)
-        self._add_case_and_ancestor_updates(case, cases_to_update)
-        return cases_to_update
-
-
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
@@ -917,21 +912,29 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     case_properties = ArrayField(models.TextField())
     include_closed = models.BooleanField(default=False)
 
-    def get_case_updates(self, case):
-        duplicate_ids = find_duplicate_ids_for_case(
+    def when_case_matches(self, case, rule):
+        duplicate_cases = find_duplicate_cases(
             case.domain, case, self.case_properties, self.include_closed, self.match_type
         )
-        # TODO: Maybe instead here we should fetch the case only with the case properties we need to check
+        case_updates = self._get_case_updates(duplicate_cases)
+        for case_update_batch in chunked(case_updates, 100):
+            result = bulk_update_cases(
+                case.domain,
+                case_update_batch,
+                device_id="CaseDeduplicationActionDefinition-update-cases",
+                xmlns=DEDUPE_XMLNS,
+            )
+            rule.log_submission(result[0].form_id)
+        return CaseRuleActionResult(num_updates=len(case_updates))
 
+    def _get_case_updates(self, duplicate_cases):
         cases_to_update = defaultdict(dict)
-        for duplicate_case in CaseAccessors(case.domain).iter_cases(duplicate_ids):
-            self._add_case_and_ancestor_updates(duplicate_case, cases_to_update)
-        # TODO: This will currently update each case individually, do this in a batch.
+        for duplicate_case in duplicate_cases:
+            cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
+        return [
+            (case_id, case_properties, False) for case_id, case_properties in cases_to_update.items()
+        ]
 
-        # Separate this from the case update process in the parent
-        # class, maybe we should just do this separately even though the
-        # functionality is almost the same
-        return cases_to_update
 
 
 class CaseDuplicate(models.Model):
@@ -1102,7 +1105,10 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
 
     @schedule.setter
     def schedule(self, value):
-        from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+        from corehq.messaging.scheduling.models import (
+            AlertSchedule,
+            TimedSchedule,
+        )
 
         self.alert_schedule = None
         self.timed_schedule = None
