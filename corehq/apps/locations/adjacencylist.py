@@ -158,8 +158,8 @@ class AdjListManager(models.Manager):
     def get_queryset_ancestors(self, queryset, include_self=False):
         return self.get_ancestors(queryset, include_self=include_self)
 
-    def get_queryset_descendants(self, queryset, include_self=False):
-        return self.get_descendants(queryset, include_self=include_self)
+    def get_queryset_descendants(self, queryset, include_self=False, **additional_filters):
+        return self.get_descendants(queryset, include_self=include_self, **additional_filters)
 
     def root_nodes(self):
         return self.all().filter(parent_id__isnull=True)

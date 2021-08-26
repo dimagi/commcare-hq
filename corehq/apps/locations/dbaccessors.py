@@ -185,7 +185,7 @@ def get_location_ids_with_location_type(domain, location_type_code):
 def get_filtered_locations_count(domain, locations_filters):
     """
     Returns the locations count governed by 'locations_filters'
-    {
+    locations_filters: {
         'location_id': <The root location from which to start traversing descendants>,
         'status_active': <Indicates location status to filter by, ie active True / False>
     }

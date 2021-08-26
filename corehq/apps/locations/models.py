@@ -324,8 +324,8 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         The locations can be also be filtered by providing the appropriate
         additional_filters arguments
         """
-        locations = self.filter(location_id__in=location_ids, **additional_filters)
-        return self.get_queryset_descendants(locations, include_self=True)
+        locations = self.filter(location_id__in=location_ids)
+        return self.get_queryset_descendants(locations, include_self=True, **additional_filters)
 
     def get_locations_and_children_ids(self, location_ids, **additional_filters):
         return list(self.get_locations_and_children(location_ids, **additional_filters).location_ids())
