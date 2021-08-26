@@ -350,15 +350,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initGeocoders: function () {
             var self = this;
-            $(".query-field").each(function () {
+            $(".query-field").each(function (i, field) {
+                var model = self.collection.models[i];
                 // Set geocoder receivers to subscribe
-                var receiveExpression = $(this).data().receive;
+                var receiveExpression = $(field).data().receive;
                 if (receiveExpression !== undefined && receiveExpression !== "") {
                     var topic = receiveExpression.split("-")[0];
-                    $.subscribe(topic, updateReceiver($(this)));
+                    $.subscribe(topic, updateReceiver($(field)));
                 }
                 // Set geocoder address publish
-                var addressTopic = $(this).data().address;
+                var addressTopic = $(field).data().address;
                 if (addressTopic !== undefined && addressTopic !== "") {
                     // set this up as mapbox input
                     var inputId = addressTopic + "_mapbox";
@@ -378,6 +379,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     var divEl = $('.mapboxgl-ctrl-geocoder');
                     divEl.css("max-width", "none");
                     divEl.css("width", "100%");
+
+                    if (model.get('value')) {
+                        $(field).find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+                    }
                 }
             });
         },
