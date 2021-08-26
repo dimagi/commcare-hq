@@ -13,7 +13,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
-    HttpResponseForbidden,
 )
 from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
@@ -74,7 +73,6 @@ from corehq.apps.users.dbaccessors import (
     user_exists,
 )
 from corehq.apps.users.decorators import (
-    can_use_filtered_user_download,
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
     require_can_edit_web_users,
@@ -672,10 +670,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
-        if can_use_filtered_user_download(self.domain):
-            bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
-        else:
-            bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
+
         profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
@@ -1144,7 +1140,6 @@ class FilteredUserDownload(BaseUserSettingsView):
         )
 
 
-@method_decorator([require_can_use_filtered_user_download], name='dispatch')
 @location_safe
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
     page_title = ugettext_noop('Filter and Download Mobile Workers')
@@ -1329,7 +1324,6 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 
 @require_can_edit_commcare_users
-@require_can_use_filtered_user_download
 @location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
