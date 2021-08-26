@@ -21,6 +21,7 @@ from corehq.apps.app_manager.xform import XForm
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
@@ -855,7 +856,7 @@ class ApplicationCaseDataSourceHelper(ApplicationDataSourceHelper):
         return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
 
-class RegistryCaseDataSourceHelper(UnmanagedDataSourceHelper):
+class RegistryCaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     def __init__(self, domain, registry_slug, source_type, source_id):
         assert source_type == 'case'
 
@@ -864,27 +865,122 @@ class RegistryCaseDataSourceHelper(UnmanagedDataSourceHelper):
         self.source_type = source_type
         self.source_id = source_id
 
-        owning_domain = self.data_source.registry_helper.registry.domain
+        owning_domain = DataRegistry.objects.get(slug=self.registry_slug).domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
+    # TODO: following are from the ApplicationDataSourceHelper. Refactor.
+    def indicators(self, columns, filters, as_dict=False):
+        """
+        Return a list of indicators to be used in a data source configuration that supports the given columns and
+        indicators.
+        :param columns: A list of objects representing columns in the report.
+            Each object has a "property" and "calculation" key
+        :param filters: A list of filter configuration objects
+        """
+
+        indicators = OrderedDict()
+        for column in columns:
+            # Property is only set if the column exists in report_column_options
+            if column['property']:
+                column_option = self.report_column_options[column['property']]
+                for indicator in column_option.get_indicators(column['calculation']):
+                    # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
+                    # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
+                    # will use a second indicator for the field's numerical value. "column_id" includes the
+                    # indicator's data type, so it is unique per indicator ... except for choice list indicators,
+                    # because they get expanded to one column per choice. The column_id of choice columns will end
+                    # up unique because they will include a slug of the choice value. Here "column_id + type" is
+                    # unique.
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
+
+        for filter_ in filters:
+            # Property is only set if the filter exists in report_column_options
+            if filter_['property']:
+                property_ = self.data_source_properties[filter_['property']]
+                indicator = property_.to_report_filter_indicator(filter_)
+                indicator_key = (indicator['column_id'], indicator['type'])
+                indicators.setdefault(indicator_key, indicator)
+
+        if as_dict:
+            return indicators
+
+        return list(indicators.values())
+
+    def all_possible_indicators(self, required_columns, required_filters):
+        """
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
+        indicators = self.indicators(required_columns, required_filters, as_dict=True)
+
+        for column_option in self.report_column_options.values():
+            for agg in column_option.aggregation_options:
+                for indicator in column_option.get_indicators(agg):
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
+
+        return list(indicators.values())[:MAX_COLUMNS]
+
+    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
+        if is_multiselect_chart_report:
+            base_item_expression = self.base_item_expression(True, multiselect_field)
+        else:
+            base_item_expression = self.base_item_expression(False)
+
+        return dict(
+            display_name=self.data_source_name,
+            referenced_doc_type=self.source_doc_type,
+            configured_filter=self.filter,
+            configured_indicators=indicators,
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,  # slightly changed to remove app data
+            ))
+        )
+
+    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
+        indicators = self.all_possible_indicators(required_columns, required_filters)
+        return self._ds_config_kwargs(indicators)
+
+    def get_datasource_constructor_kwargs(self, columns, filters,
+                                          is_multiselect_chart_report=False, multiselect_field=None):
+        indicators = self.indicators(columns, filters)
+        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
     @property
     @memoized
-    def data_source(self):
-        data_sources = RegistryDataSourceConfiguration.view(
-            'registry_data_sources/view',
-            reduce=False,
-            include_docs=True,
-        )
-        return [
-            row for row in data_sources
-            if (self.registry_slug in row['registry_slug'])
-        ][0]
+    def report_column_options(self):
+        options = OrderedDict()
+        for id_, prop in self.data_source_properties.items():
+            options[id_] = prop.to_report_column_option()
+
+        # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
+        # the options are currently static, after loading the report builder a user can switch to an aggregated
+        # report.
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        options[count_col.get_property()] = count_col
+
+        return options
 
     # TODO: remaining methods in class are also in from ApplicationCaseDataSourceHelper. Refactor.
+    def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
+        assert not is_multiselect_chart_report
+        return {}
+
+    @property
+    def source_doc_type(self):
+        return 'CommCareCase'
+
     @property
     @memoized
-    def data_source_properties(self):  # should it instead act like data_source_properties in UnmanagedDataSourceHelper?
+    def filter(self):
+        return make_case_data_source_filter(self.source_id)
+
+    @property
+    @memoized
+    def data_source_properties(self):
         property_map = {
             'closed': _('Case Closed'),
             'user_id': _('User ID Last Updating Case'),
@@ -991,6 +1087,12 @@ class RegistryCaseDataSourceHelper(UnmanagedDataSourceHelper):
             source=COMPUTED_USER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
+
+    @property
+    @memoized
+    def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        return "{} {} {}".format(self.source_id, self.registry_slug, today)
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
