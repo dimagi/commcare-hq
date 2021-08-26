@@ -326,14 +326,19 @@ def log_user_role_update(domain, user_role, user, by_user, updated_via):
     log_user_change(domain, user, by_user, changed_via=updated_via, change_messages=change_message)
 
 
-def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
+def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_via=None,
                     change_messages=None, fields_changed=None, action=None,
                     domain_required_for_log=True, bulk_upload_record_id=None):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
 
-    :param domain: domain where the update was initiated
+    :param by_domain: domain where the update was initiated
+    :param for_domain: domain for which the update was initiated or the domain whose operations will get
+        effected by this change.
+        From user's perspective,
+        A commcare user is completely owned by the domain
+        A web user's membership that let's it perform operations on a domain is owned by the domain.
     :param couch_user: user being changed
     :param changed_by_user: user making the change or SYSTEM_USER_ID
     :param changed_via: changed via medium i.e API/Web
@@ -351,7 +356,7 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
     change_messages = change_messages or {}
 
     # domain is essential to filter changes done in a domain
-    if not domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
+    if not by_domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
         raise ValueError("missing 'domain' argument'")
 
     # for an update, there should always be fields that have changed or change messages
@@ -359,7 +364,8 @@ def log_user_change(domain, couch_user, changed_by_user, changed_via=None,
         raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
     return UserHistory.objects.create(
-        domain=domain,
+        by_domain=by_domain,
+        for_domain=for_domain,
         user_type=couch_user.doc_type,
         user_id=couch_user.get_id,
         changed_by=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,

@@ -3011,7 +3011,8 @@ class UserHistory(models.Model):
         (UPDATE, _('Update')),
         (DELETE, _('Delete')),
     )
-    domain = models.CharField(max_length=255, null=True)
+    by_domain = models.CharField(max_length=255, null=True)
+    for_domain = models.CharField(max_length=255, null=True)
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
@@ -3039,5 +3040,6 @@ class UserHistory(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['domain']),
+            models.Index(fields=['by_domain']),
+            models.Index(fields=['for_domain']),
         ]
