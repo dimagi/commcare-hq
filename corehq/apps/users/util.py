@@ -314,18 +314,6 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-def log_user_role_update(domain, user_role, user, by_user, updated_via):
-    """
-    :param domain: domain that initiated the change
-    :param user_role: user's new role
-    :param user: couch user that got updated
-    :param by_user: couch user that made the update
-    :param updated_via: web/bulk_importer
-    """
-    change_message = UserChangeMessage.role_change(user_role)
-    log_user_change(domain, user, by_user, changed_via=updated_via, change_messages=change_message)
-
-
 def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_via=None,
                     change_messages=None, fields_changed=None, action=None,
                     domain_required_for_log=True, bulk_upload_record_id=None):
