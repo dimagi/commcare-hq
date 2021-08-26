@@ -30,7 +30,8 @@ class TestLogUserChange(TestCase):
     def test_create(self):
         user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id,
                                                action=UserModelAction.CREATE.value)
-        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.by_domain, self.domain)
+        self.assertEqual(user_history.for_domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
         self.assertIsNotNone(user_history.changed_by)
@@ -48,6 +49,7 @@ class TestLogUserChange(TestCase):
         change_messages = UserChangeMessage.phone_numbers_added(["9999999999"])
         user_history = log_user_change(
             self.domain,
+            self.domain,
             self.commcare_user,
             self.web_user,
             changed_via=USER_CHANGE_VIA_BULK_IMPORTER,
@@ -59,7 +61,8 @@ class TestLogUserChange(TestCase):
             action=UserModelAction.UPDATE
         )
 
-        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.by_domain, self.domain)
+        self.assertEqual(user_history.for_domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertIsNotNone(user_history.user_id)
         self.assertEqual(user_history.user_id, self.commcare_user.get_id)
@@ -84,8 +87,10 @@ class TestLogUserChange(TestCase):
 
         user_to_delete.delete(self.domain, deleted_by=self.web_user, deleted_via=USER_CHANGE_VIA_WEB)
 
-        user_history = UserHistory.objects.get(domain=self.domain, user_id=user_to_delete_id)
-        self.assertEqual(user_history.domain, self.domain)
+        user_history = UserHistory.objects.get(by_domain=self.domain, for_domain=self.domain,
+                                               user_id=user_to_delete_id)
+        self.assertEqual(user_history.by_domain, self.domain)
+        self.assertEqual(user_history.for_domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.web_user.get_id)
         self.assertEqual(user_history.changes, _get_expected_changes_json(user_to_delete))

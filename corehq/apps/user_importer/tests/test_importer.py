@@ -693,7 +693,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )  # deprecated
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
                                                changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.user_id, created_user.get_id)
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -944,7 +945,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # logged under correct domain
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.other_domain.name)
         self.assertEqual(user_history.user_id, commcare_user.get_id)
         self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
@@ -1465,7 +1467,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(
             user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         )
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
         change_messages = UserChangeMessage.invited_to_domain(self.domain.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
