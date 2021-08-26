@@ -38,6 +38,20 @@ from .models import (
 from .permissions import user_can_access_location_id
 from .signals import location_edited
 
+# Reuse in Users - put in more global const file
+SHOW_ALL = _('Show All')
+ONLY_ACTIVE = _('Only Active')
+ONLY_ARCHIVED = _('Only Archived')
+
+ACTIVE = 'active'
+ARCHIVED = 'archived'
+
+LOCATION_ACTIVE_STATUS = [
+    ('', SHOW_ALL),
+    (ACTIVE, ONLY_ACTIVE),
+    (ARCHIVED, ONLY_ARCHIVED)
+]
+
 
 class LocationSelectWidget(forms.Widget):
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
@@ -53,6 +67,7 @@ class LocationSelectWidget(forms.Widget):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
+
         initial_data = [{
             'id': loc.location_id,
             'text': loc.get_path_display(),
@@ -555,33 +570,66 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class LocationFilterForm(forms.Form):
-    root_location_id = forms.CharField(
-        label=ugettext_noop("Root Location"),
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
         required=False,
+    )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include selected location'),
+        initial=False,
+    )
+    status_active = forms.ChoiceField(
+        label='Active / Archived',
+        required=False
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         super().__init__(*args, **kwargs)
-        self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+        )
+        self.fields['status_active'].choices = LOCATION_ACTIVE_STATUS
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
+        self.helper.form_id = 'locations-filters'
         self.helper.form_action = reverse('location_export', args=[self.domain])
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Locations"),
-                crispy.Field('root_location_id'),
+                crispy.Div(
+                    crispy.Field('location_id', data_bind='value: location_id'),
+                    data_bind='event: {change: location_selected}'
+                ),
+                crispy.Div(
+                    crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
+                    data_bind="slideVisible: location_id",
+                ),
+                crispy.Field('status_active', data_bind='value: status_active'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
                     _("Download Locations"),
                     type="submit",
                     css_class="btn btn-primary",
-                )
+                    data_bind="html: buttonHTML",
+                ),
             ),
         )
+
+    def clean_status_active(self):
+        location_active_status = self.cleaned_data['status_active']
+
+        if location_active_status == ACTIVE:
+            return True
+        if location_active_status == ARCHIVED:
+            return False
+        return None
 
 
 def to_list(value):

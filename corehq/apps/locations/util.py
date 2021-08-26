@@ -118,7 +118,7 @@ def get_location_data_model(domain):
 class LocationExporter(object):
 
     def __init__(self, domain, include_consumption=False, root_location_id=None,
-                 headers_only=False, async_task=None):
+                 headers_only=False, async_task=None, **kwargs):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
@@ -129,16 +129,26 @@ class LocationExporter(object):
         self._location_count = None
         self._locations_exported = 0
 
+        additional_filters = {}
+        selected_location_only = kwargs.get('selected_location_only', False)
+
+        if kwargs.get('status_active') != '':
+            additional_filters['is_archived'] = (not kwargs.get('status_active'))
+
         if headers_only:
             self.base_query = SQLLocation.objects.none()
         elif root_location_id:
-            root_location = SQLLocation.objects.get(location_id=root_location_id)
-            self.base_query = SQLLocation.active_objects.get_descendants(
-                Q(domain=self.domain, id=root_location.id)
-            )
+            if selected_location_only:
+                self.base_query = SQLLocation.objects.get(location_id=root_location_id)
+            else:
+                root_location = SQLLocation.objects.get(location_id=root_location_id)
+                self.base_query = SQLLocation.objects.get_descendants(
+                    Q(domain=self.domain, id=root_location.id, **additional_filters)
+                )
         else:
-            self.base_query = SQLLocation.active_objects.filter(
+            self.base_query = SQLLocation.objects.filter(
                 domain=self.domain,
+                **additional_filters,
             )
 
     @property
@@ -278,9 +288,9 @@ class LocationExporter(object):
 
 
 def dump_locations(domain, download_id, include_consumption, headers_only,
-                   owner_id, root_location_id=None, task=None):
+                   owner_id, root_location_id=None, task=None, **kwargs):
     exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
-                                headers_only=headers_only, async_task=task)
+                                headers_only=headers_only, async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()
