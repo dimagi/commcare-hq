@@ -48,6 +48,70 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = undefined;
             }
             return [searchForBlank, value];
+        },
+        geocoderItemCallback = function (addressTopic) {
+            return function (item) {
+                var broadcastObj = Utils.getBroadcastObject(item);
+                $.publish(addressTopic, broadcastObj);
+                return item.place_name;
+            };
+        },
+        geocoderOnClearCallback = function (addressTopic) {
+            return function () {
+                $.publish(addressTopic, Const.NO_ANSWER);
+            };
+        },
+        updateReceiver = function (element) {
+            return function (_event, broadcastObj) {
+                // e.g. format is home-state, home-zipcode, home-us_state||country
+                var receiveExpression = element.data().receive;
+                var receiveField = receiveExpression.split("-")[1];
+                var value = null;
+                if (broadcastObj === undefined || broadcastObj === Const.NO_ANSWER) {
+                    value = Const.NO_ANSWER;
+                } else if (broadcastObj[receiveField]) {
+                    value = broadcastObj[receiveField];
+                } else {
+                    // match home-us_state||country style
+                    var fields = receiveField.split('||');
+                    $.each(fields, function (i, field) {
+                        if (broadcastObj[field] !== undefined) {
+                            value = broadcastObj[field];
+                            return false;
+                        }
+                    });
+                }
+                // lookup DOM element again, in case the element got rerendered
+                var domElement = $('*[data-receive="' + receiveExpression + '"]');
+                if (domElement.is('input')) {
+                    domElement.val(value);
+                    domElement.change();
+                }
+                else {
+                    // Set lookup table option by label
+                    var matchingOption = function (el) {
+                        return el.find("option").filter(function (_) {
+                            return $(this).text().trim() === value;
+                        });
+                    }
+                    var option = matchingOption(domElement);
+                    if (domElement[0].multiple === true) {
+                        var val = option.val();
+                        if (option.length === 1 && domElement.val().indexOf(val) === -1) {
+                            domElement.val(
+                                domElement.val().concat(val)
+                            ).trigger("change");
+                        }
+                    }
+                    else {
+                        if (option.length === 1) {
+                            domElement.val(String(option.index() - 1)).trigger("change");
+                        } else {
+                            domElement.val("-1").trigger('change');
+                        }
+                    }
+                }
+            };
         };
 
     var QueryView = Marionette.View.extend({
@@ -125,107 +189,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 });
             }
             self.parentView.setStickyQueryInputs();
-        },
-
-        geocoderItemCallback: function (addressTopic) {
-            return function (item) {
-                var broadcastObj = Utils.getBroadcastObject(item);
-                $.publish(addressTopic, broadcastObj);
-                return item.place_name;
-            };
-        },
-
-        geocoderOnClearCallback: function (addressTopic) {
-            return function () {
-                $.publish(addressTopic, Const.NO_ANSWER);
-            };
-        },
-
-        updateReceiver: function (element) {
-            return function (_event, broadcastObj) {
-                // e.g. format is home-state, home-zipcode, home-us_state||country
-                var receiveExpression = element.data().receive;
-                var receiveField = receiveExpression.split("-")[1];
-                var value = null;
-                if (broadcastObj === undefined || broadcastObj === Const.NO_ANSWER) {
-                    value = Const.NO_ANSWER;
-                } else if (broadcastObj[receiveField]) {
-                    value = broadcastObj[receiveField];
-                } else {
-                    // match home-us_state||country style
-                    var fields = receiveField.split('||');
-                    $.each(fields, function (i, field) {
-                        if (broadcastObj[field] !== undefined) {
-                            value = broadcastObj[field];
-                            return false;
-                        }
-                    });
-                }
-                // lookup DOM element again, in case the element got rerendered
-                var domElement = $('*[data-receive="' + receiveExpression + '"]');
-                if (domElement.is('input')) {
-                    domElement.val(value);
-                    domElement.change();
-                }
-                else {
-                    // Set lookup table option by label
-                    var matchingOption = function (el) {
-                        return el.find("option").filter(function (_) {
-                            return $(this).text().trim() === value;
-                        });
-                    }
-                    var option = matchingOption(domElement);
-                    if (domElement[0].multiple === true) {
-                        var val = option.val();
-                        if (option.length === 1 && domElement.val().indexOf(val) === -1) {
-                            domElement.val(
-                                domElement.val().concat(val)
-                            ).trigger("change");
-                        }
-                    }
-                    else {
-                        if (option.length === 1) {
-                            domElement.val(String(option.index() - 1)).trigger("change");
-                        } else {
-                            domElement.val("-1").trigger('change');
-                        }
-                    }
-                }
-            };
-        },
-
-        onAttach: function () {
-            var self = this;
-            this.ui.queryField.each(function () {
-                // Set geocoder receivers to subscribe
-                var receiveExpression = $(this).data().receive;
-                if (receiveExpression !== undefined && receiveExpression !== "") {
-                    var topic = receiveExpression.split("-")[0];
-                    $.subscribe(topic, self.updateReceiver($(this)));
-                }
-                // Set geocoder address publish
-                var addressTopic = $(this).data().address;
-                if (addressTopic !== undefined && addressTopic !== "") {
-                    // set this up as mapbox input
-                    var inputId = addressTopic + "_mapbox";
-                    if (!initialPageData.get("has_geocoder_privs")) {
-                        $("#" + inputId).addClass('unsupported alert alert-warning');
-                        $("#" + inputId).text(gettext(
-                            "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
-                        );
-                        return true;
-                    }
-                    Utils.renderMapboxInput(
-                        inputId,
-                        self.geocoderItemCallback(addressTopic),
-                        self.geocoderOnClearCallback(addressTopic),
-                        initialPageData
-                    );
-                    var divEl = $('.mapboxgl-ctrl-geocoder');
-                    divEl.css("max-width", "none");
-                    divEl.css("width", "100%");
-                }
-            });
         },
 
         onRender: function () {
@@ -377,6 +340,45 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             Util.setStickyQueryInputs(this.getAnswers());
         },
+
+        onAttach: function () {
+            this.initGeocoders();
+        },
+
+        initGeocoders: function () {
+            var self = this;
+            $(".query-field").each(function () {
+                // Set geocoder receivers to subscribe
+                var receiveExpression = $(this).data().receive;
+                if (receiveExpression !== undefined && receiveExpression !== "") {
+                    var topic = receiveExpression.split("-")[0];
+                    $.subscribe(topic, updateReceiver($(this)));
+                }
+                // Set geocoder address publish
+                var addressTopic = $(this).data().address;
+                if (addressTopic !== undefined && addressTopic !== "") {
+                    // set this up as mapbox input
+                    var inputId = addressTopic + "_mapbox";
+                    if (!initialPageData.get("has_geocoder_privs")) {
+                        $("#" + inputId).addClass('unsupported alert alert-warning');
+                        $("#" + inputId).text(gettext(
+                            "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                        );
+                        return true;
+                    }
+                    Utils.renderMapboxInput(
+                        inputId,
+                        geocoderItemCallback(addressTopic),
+                        geocoderOnClearCallback(addressTopic),
+                        initialPageData
+                    );
+                    var divEl = $('.mapboxgl-ctrl-geocoder');
+                    divEl.css("max-width", "none");
+                    divEl.css("width", "100%");
+                }
+            });
+        },
+
     });
 
     return function (data) {
