@@ -37,8 +37,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-25 18:24+0000\n"
-"PO-Revision-Date: 2021-08-25 18:17+0000\n"
+"POT-Creation-Date: 2021-08-26 19:35+0000\n"
+"PO-Revision-Date: 2021-08-25 18:25+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -212,8 +212,10 @@ msgid "Anyone"
 msgstr "Qualquer pessoa"
 
 #: corehq/apps/accounting/filters.py:320 corehq/apps/enterprise/interface.py:60
+#, fuzzy
+#| msgid "# Cases Created"
 msgid "Date Created"
-msgstr "Dado criado"
+msgstr "# Casos Criados"
 
 #: corehq/apps/accounting/filters.py:325 corehq/apps/accounting/forms.py:516
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:16
@@ -283,8 +285,10 @@ msgid "Is Customer Billing Account"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py:131
+#, fuzzy
+#| msgid "Subscriptions"
 msgid "Transfer Subscriptions To"
-msgstr "Transferir subscrições para"
+msgstr "Subscrições"
 
 #: corehq/apps/accounting/forms.py:133
 msgid ""
@@ -357,8 +361,10 @@ msgid "Skip invoicing if no feature charges"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py:551
+#, fuzzy
+#| msgid "Subscription Info"
 msgid "Transfer Subscription To"
-msgstr "Transferir subscrição para"
+msgstr "Informação da Subscrição"
 
 #: corehq/apps/accounting/forms.py:566 corehq/apps/accounting/forms.py:886
 msgid "Funding Source"
@@ -13398,8 +13404,10 @@ msgid "New owner's CommCare username"
 msgstr ""
 
 #: corehq/apps/domain/forms.py:228 corehq/apps/domain/views/internal.py:308
+#, fuzzy
+#| msgid "transfer_total"
 msgid "Transfer Project"
-msgstr ""
+msgstr " Total transferidos no mês"
 
 #: corehq/apps/domain/forms.py:266
 msgid "You may not specify a sub area when the project has no specified area"
@@ -21455,8 +21463,10 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html:82
 #: corehq/apps/settings/views.py:569
+#, fuzzy
+#| msgid "Create"
 msgid "Created"
-msgstr ""
+msgstr "Criar"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html:91
 msgid "Activate or De-activate"
@@ -28121,8 +28131,10 @@ msgid "case name"
 msgstr ""
 
 #: corehq/apps/reports/views.py:1418
+#, fuzzy
+#| msgid "Action"
 msgid "section"
-msgstr ""
+msgstr "Ação"
 
 #: corehq/apps/reports/views.py:1419 custom/intrahealth/sqldata.py:1014
 msgid "date"
@@ -39208,8 +39220,10 @@ msgstr ""
 
 #: custom/intrahealth/sqldata.py:299 custom/intrahealth/sqldata.py:696
 #: custom/intrahealth/sqldata.py:1498
+#, fuzzy
+#| msgid "rdt_total"
 msgid "Stock total"
-msgstr ""
+msgstr "Total Testes Realizados"
 
 #: custom/intrahealth/sqldata.py:359
 msgid "LISTE des PPS"
@@ -40554,62 +40568,90 @@ msgid "mc_section_stock_balance"
 msgstr "Balanço do Stock"
 
 #: custom/reports/mc/reports/definitions.py:88
+#, fuzzy
+#| msgid "form/stock/stock_amox_pink"
 msgid "stock_amox_pink"
-msgstr ""
+msgstr "Amoxicilina cor de rosa"
 
 #: custom/reports/mc/reports/definitions.py:89
+#, fuzzy
+#| msgid "form/stock/stock_amox_green"
 msgid "stock_amox_green"
-msgstr ""
+msgstr "Amoxicilina cor de verde"
 
 #: custom/reports/mc/reports/definitions.py:90
+#, fuzzy
+#| msgid "form/stock/stock_ors"
 msgid "stock_ors"
-msgstr ""
+msgstr "Pacotes SRO"
 
 #: custom/reports/mc/reports/definitions.py:91
+#, fuzzy
+#| msgid "form/stock/stock_ra_50"
 msgid "stock_ra_50"
-msgstr ""
+msgstr "Artesuato Rectal (50mg)"
 
 #: custom/reports/mc/reports/definitions.py:92
+#, fuzzy
+#| msgid "form/stock/stock_ra_200"
 msgid "stock_ra_200"
-msgstr ""
+msgstr "Artesuato Rectal (200mg)"
 
 #: custom/reports/mc/reports/definitions.py:93
+#, fuzzy
+#| msgid "form/stock/stock_zinc"
 msgid "stock_zinc"
-msgstr ""
+msgstr "Zinco"
 
 #: custom/reports/mc/reports/definitions.py:94
 #: custom/reports/mc/reports/definitions.py:129
+#, fuzzy
+#| msgid "form/stock/stock_coartem_yellow"
 msgid "stock_coartem_yellow"
-msgstr ""
+msgstr "Coartem Amarelo"
 
 #: custom/reports/mc/reports/definitions.py:95
 #: custom/reports/mc/reports/definitions.py:130
+#, fuzzy
+#| msgid "form/stock/stock_coartem_blue"
 msgid "stock_coartem_blue"
-msgstr ""
+msgstr "Coartem Azul"
 
 #: custom/reports/mc/reports/definitions.py:96
+#, fuzzy
+#| msgid "form/stock/stock_coartem_green"
 msgid "stock_coartem_green"
-msgstr ""
+msgstr "Coartem Verde"
 
 #: custom/reports/mc/reports/definitions.py:97
+#, fuzzy
+#| msgid "form/stock/stock_coartem_brown"
 msgid "stock_coartem_brown"
-msgstr ""
+msgstr "Coartem Castanho"
 
 #: custom/reports/mc/reports/definitions.py:98
+#, fuzzy
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
-msgstr ""
+msgstr "Paracetamol (250mg)"
 
 #: custom/reports/mc/reports/definitions.py:99
+#, fuzzy
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
-msgstr ""
+msgstr "Paracetamol (500mg)"
 
 #: custom/reports/mc/reports/definitions.py:100
+#, fuzzy
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
-msgstr ""
+msgstr "TDR"
 
 #: custom/reports/mc/reports/definitions.py:101
+#, fuzzy
+#| msgid "form/stock/stock_gloves"
 msgid "stock_gloves"
-msgstr ""
+msgstr "Pares de luvas"
 
 #: custom/reports/mc/reports/definitions.py:114
 #: custom/reports/mc/reports/sql.py:253
@@ -40770,48 +40812,76 @@ msgid "Health Facility"
 msgstr ""
 
 #: custom/reports/mc/reports/sql.py:210
+#, fuzzy
+#| msgid "form/stock/stock_ors"
 msgid "form/stock/"
-msgstr ""
+msgstr "Pacotes SRO"
 
 #: custom/reports/mc/reports/sql.py:243
 msgid "mc_report_dist_weekly"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/reports/mc/reports/sql.py:281 custom/reports/mc/reports/sql.py:687
+#, fuzzy
+#| msgid "patients_given_pneumonia_meds"
 msgid "patients_given_pneumonia_meds_num"
 msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a pneumonia"
 
 #: custom/reports/mc/reports/sql.py:289 custom/reports/mc/reports/sql.py:695
+#, fuzzy
+#| msgid "patients_given_pneumonia_meds"
 msgid "patients_given_pneumonia_meds_denom"
 msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a pneumonia"
 
 #: custom/reports/mc/reports/sql.py:301 custom/reports/mc/reports/sql.py:707
+#, fuzzy
+#| msgid "patients_given_diarrhoea_meds"
 msgid "patients_given_diarrhoea_meds_num"
 msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a diarreia"
 
 #: custom/reports/mc/reports/sql.py:309 custom/reports/mc/reports/sql.py:715
+#, fuzzy
+#| msgid "patients_given_diarrhoea_meds"
 msgid "patients_given_diarrhoea_meds_denum"
 msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a diarreia"
 
 #: custom/reports/mc/reports/sql.py:328 custom/reports/mc/reports/sql.py:734
+#, fuzzy
+#| msgid "patients_given_malaria_meds"
 msgid "patients_given_malaria_meds_denum"
 msgstr ""
+"Porcentagem de pacientes observados que foram prescritos medicamentos "
+"correctos para a febre/malária"
 
 #: custom/reports/mc/reports/sql.py:339 custom/reports/mc/reports/sql.py:745
+#, fuzzy
+#| msgid "patients_correctly_referred"
 msgid "patients_correctly_referred_num"
-msgstr ""
+msgstr "Porcentagem de pacientes que foram correctamente transferidos"
 
 #: custom/reports/mc/reports/sql.py:347 custom/reports/mc/reports/sql.py:753
+#, fuzzy
+#| msgid "patients_correctly_referred"
 msgid "patients_correctly_referred_denum"
-msgstr ""
+msgstr "Porcentagem de pacientes que foram correctamente transferidos"
 
 #: custom/reports/mc/reports/sql.py:387
 msgid "mc_report_dist_monthly"
 msgstr "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/reports/mc/reports/sql.py:530
+#, fuzzy
+#| msgid "deaths_mothers"
 msgid "deaths_others"
-msgstr ""
+msgstr "Mortes maternas"
 
 #: custom/reports/mc/reports/sql.py:597
 msgid "form/stock/stock_amox_pink"
@@ -41059,8 +41129,10 @@ msgid "Randomization Date"
 msgstr "Data Aleatoria"
 
 #: custom/succeed/reports/patient_Info.py:93
+#, fuzzy
+#| msgid "diagnosed_ari"
 msgid "Diagnosis"
-msgstr "Diagnóstico"
+msgstr "Total Infecções Respiratórios Agudas"
 
 #: custom/succeed/reports/patient_Info.py:94
 msgid "Age"

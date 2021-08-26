@@ -36,8 +36,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-25 18:24+0000\n"
-"PO-Revision-Date: 2021-08-25 18:16+0000\n"
+"POT-Creation-Date: 2021-08-26 19:35+0000\n"
+"PO-Revision-Date: 2021-08-25 18:25+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -211,8 +211,10 @@ msgid "Anyone"
 msgstr "quiconque"
 
 #: corehq/apps/accounting/filters.py:320 corehq/apps/enterprise/interface.py:60
+#, fuzzy
+#| msgid "Date Started"
 msgid "Date Created"
-msgstr "Date créé"
+msgstr "Date de Début"
 
 #: corehq/apps/accounting/filters.py:325 corehq/apps/accounting/forms.py:516
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:16
@@ -282,8 +284,10 @@ msgid "Is Customer Billing Account"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py:131
+#, fuzzy
+#| msgid "Subscriptions"
 msgid "Transfer Subscriptions To"
-msgstr "Transférer des souscriptions à  "
+msgstr "Inscriptions"
 
 #: corehq/apps/accounting/forms.py:133
 msgid ""
@@ -358,8 +362,10 @@ msgid "Skip invoicing if no feature charges"
 msgstr "Ignorer la facturation si c'est une fonction sans frais"
 
 #: corehq/apps/accounting/forms.py:551
+#, fuzzy
+#| msgid "Change My Subscription"
 msgid "Transfer Subscription To"
-msgstr "Transférer l'inscription à "
+msgstr "Changer ma Souscription"
 
 #: corehq/apps/accounting/forms.py:566 corehq/apps/accounting/forms.py:886
 msgid "Funding Source"
@@ -13858,8 +13864,10 @@ msgid "New owner's CommCare username"
 msgstr "Nouveau utilisateur responsable Commcare"
 
 #: corehq/apps/domain/forms.py:228 corehq/apps/domain/views/internal.py:308
+#, fuzzy
+#| msgid "Change Project"
 msgid "Transfer Project"
-msgstr "Transférer Projet"
+msgstr "Changer de projet"
 
 #: corehq/apps/domain/forms.py:266
 msgid "You may not specify a sub area when the project has no specified area"
@@ -22192,8 +22200,10 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html:82
 #: corehq/apps/settings/views.py:569
+#, fuzzy
+#| msgid "Create"
 msgid "Created"
-msgstr ""
+msgstr "Créer"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html:91
 msgid "Activate or De-activate"
@@ -29077,8 +29087,10 @@ msgid "case name"
 msgstr "nom de dossier"
 
 #: corehq/apps/reports/views.py:1418
+#, fuzzy
+#| msgid "Action"
 msgid "section"
-msgstr "section"
+msgstr "Action"
 
 #: corehq/apps/reports/views.py:1419 custom/intrahealth/sqldata.py:1014
 msgid "date"
@@ -31429,8 +31441,10 @@ msgid "Certificate (Base64)"
 msgstr ""
 
 #: corehq/apps/sso/forms.py:456
+#, fuzzy
+#| msgid "Connection"
 msgid "Token Encryption"
-msgstr ""
+msgstr "Connexion"
 
 #: corehq/apps/sso/forms.py:460
 msgid "Use Token Encryption"
@@ -40465,6 +40479,8 @@ msgstr "PPS"
 
 #: custom/intrahealth/sqldata.py:299 custom/intrahealth/sqldata.py:696
 #: custom/intrahealth/sqldata.py:1498
+#, fuzzy
+#| msgid "Stock Total"
 msgid "Stock total"
 msgstr "Stock Total"
 
@@ -41863,62 +41879,90 @@ msgid "mc_section_stock_balance"
 msgstr "Solde d'inventaire"
 
 #: custom/reports/mc/reports/definitions.py:88
+#, fuzzy
+#| msgid "form/stock/stock_amox_pink"
 msgid "stock_amox_pink"
-msgstr "stock_amox_rose"
+msgstr "formulaire / inventaire / inventaire_amox_pink"
 
 #: custom/reports/mc/reports/definitions.py:89
+#, fuzzy
+#| msgid "form/stock/stock_amox_green"
 msgid "stock_amox_green"
-msgstr "stock_amox_vert"
+msgstr "formulaire / inventaire / inventaire_amox_vert"
 
 #: custom/reports/mc/reports/definitions.py:90
+#, fuzzy
+#| msgid "stock-out"
 msgid "stock_ors"
-msgstr "stock_ors"
+msgstr "rupture de stock"
 
 #: custom/reports/mc/reports/definitions.py:91
+#, fuzzy
+#| msgid "form/stock/stock_ra_50"
 msgid "stock_ra_50"
-msgstr "stock_ra_50"
+msgstr "formulaire / inventaire / inventaire_ra_50"
 
 #: custom/reports/mc/reports/definitions.py:92
+#, fuzzy
+#| msgid "form/stock/stock_ra_200"
 msgid "stock_ra_200"
-msgstr "stock_ra_200"
+msgstr "formulaire / inventaire / inventaire_ra_200"
 
 #: custom/reports/mc/reports/definitions.py:93
+#, fuzzy
+#| msgid "form/stock/stock_zinc"
 msgid "stock_zinc"
-msgstr "stock_zinc"
+msgstr "formulaire / inventaire / inventaire_zinc"
 
 #: custom/reports/mc/reports/definitions.py:94
 #: custom/reports/mc/reports/definitions.py:129
+#, fuzzy
+#| msgid "form/stock/stock_coartem_yellow"
 msgid "stock_coartem_yellow"
-msgstr "stock_coartem_jaune"
+msgstr "formulaire / inventaire / inventaire_coartem_jaune"
 
 #: custom/reports/mc/reports/definitions.py:95
 #: custom/reports/mc/reports/definitions.py:130
+#, fuzzy
+#| msgid "form/stock/stock_coartem_blue"
 msgid "stock_coartem_blue"
-msgstr "stock_coartem_bleu"
+msgstr "formulaire / inventaire / inventaire_coartem_bleu"
 
 #: custom/reports/mc/reports/definitions.py:96
+#, fuzzy
+#| msgid "form/stock/stock_coartem_green"
 msgid "stock_coartem_green"
-msgstr "stock_coartem_vert"
+msgstr "formulaire / inventaire / inventaire_coartem_vert"
 
 #: custom/reports/mc/reports/definitions.py:97
+#, fuzzy
+#| msgid "form/stock/stock_coartem_brown"
 msgid "stock_coartem_brown"
-msgstr "stock_coartem_brun"
+msgstr "formulaire / inventaire / inventaire_coartem_brun"
 
 #: custom/reports/mc/reports/definitions.py:98
+#, fuzzy
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
-msgstr "stock_paracetamol_250"
+msgstr "formulaire / inventaire / inventaire_paracetamol_250"
 
 #: custom/reports/mc/reports/definitions.py:99
+#, fuzzy
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
-msgstr "stock_paracetamol_500"
+msgstr "formulaire / inventaire / inventaire_paracetamol_500"
 
 #: custom/reports/mc/reports/definitions.py:100
+#, fuzzy
+#| msgid "stock-out"
 msgid "stock_rdt"
-msgstr "stock_rdt"
+msgstr "rupture de stock"
 
 #: custom/reports/mc/reports/definitions.py:101
+#, fuzzy
+#| msgid "form/stock/stock_gloves"
 msgid "stock_gloves"
-msgstr "stock_gants"
+msgstr "formulaire / inventaire / inventaire_gants"
 
 #: custom/reports/mc/reports/definitions.py:114
 #: custom/reports/mc/reports/sql.py:253
@@ -42068,48 +42112,66 @@ msgid "Health Facility"
 msgstr "Établissement de santé"
 
 #: custom/reports/mc/reports/sql.py:210
+#, fuzzy
+#| msgid "form/stock/stock_ors"
 msgid "form/stock/"
-msgstr "formulaire/stock/"
+msgstr "formulaire / inventaire / inventaire_ors"
 
 #: custom/reports/mc/reports/sql.py:243
 msgid "mc_report_dist_weekly"
 msgstr "Rapport hebdomadaire de district"
 
 #: custom/reports/mc/reports/sql.py:281 custom/reports/mc/reports/sql.py:687
+#, fuzzy
+#| msgid "patients_given_pneumonia_meds"
 msgid "patients_given_pneumonia_meds_num"
-msgstr "patients_reçu_médic._pneumonie_num"
+msgstr "patients_reçu_médic._pneumonie"
 
 #: custom/reports/mc/reports/sql.py:289 custom/reports/mc/reports/sql.py:695
+#, fuzzy
+#| msgid "patients_given_pneumonia_meds"
 msgid "patients_given_pneumonia_meds_denom"
-msgstr "patients_reçu_médic._pneumonie_denom"
+msgstr "patients_reçu_médic._pneumonie"
 
 #: custom/reports/mc/reports/sql.py:301 custom/reports/mc/reports/sql.py:707
+#, fuzzy
+#| msgid "patients_given_diarrhoea_meds"
 msgid "patients_given_diarrhoea_meds_num"
-msgstr "patients_reçu_médic._diarrhée_num"
+msgstr "patients_reçu_médic._diarrhée"
 
 #: custom/reports/mc/reports/sql.py:309 custom/reports/mc/reports/sql.py:715
+#, fuzzy
+#| msgid "patients_given_diarrhoea_meds"
 msgid "patients_given_diarrhoea_meds_denum"
-msgstr "patients_reçu_médic._diarrhée_denum"
+msgstr "patients_reçu_médic._diarrhée"
 
 #: custom/reports/mc/reports/sql.py:328 custom/reports/mc/reports/sql.py:734
+#, fuzzy
+#| msgid "patients_given_malaria_meds"
 msgid "patients_given_malaria_meds_denum"
-msgstr "patients_reçu_médic._malaria_denum"
+msgstr "patients_reçu_médic._malaria"
 
 #: custom/reports/mc/reports/sql.py:339 custom/reports/mc/reports/sql.py:745
+#, fuzzy
+#| msgid "patients_correctly_referred"
 msgid "patients_correctly_referred_num"
-msgstr "patients_référés_adéquatement_num"
+msgstr "patients_envoyés_vers_spécialiste_adéquatement"
 
 #: custom/reports/mc/reports/sql.py:347 custom/reports/mc/reports/sql.py:753
+#, fuzzy
+#| msgid "patients_correctly_referred"
 msgid "patients_correctly_referred_denum"
-msgstr "patients_référés_adéquatement_denum"
+msgstr "patients_envoyés_vers_spécialiste_adéquatement"
 
 #: custom/reports/mc/reports/sql.py:387
 msgid "mc_report_dist_monthly"
 msgstr "Rapport mensuel de district"
 
 #: custom/reports/mc/reports/sql.py:530
+#, fuzzy
+#| msgid "deaths_mothers"
 msgid "deaths_others"
-msgstr "décès_autres"
+msgstr "décès_mères"
 
 #: custom/reports/mc/reports/sql.py:597
 msgid "form/stock/stock_amox_pink"
@@ -42357,8 +42419,10 @@ msgid "Randomization Date"
 msgstr "Date de randomisation"
 
 #: custom/succeed/reports/patient_Info.py:93
+#, fuzzy
+#| msgid "diagnosed_ari"
 msgid "Diagnosis"
-msgstr "Diagnostic"
+msgstr "diagnostiqué_ari"
 
 #: custom/succeed/reports/patient_Info.py:94
 msgid "Age"
