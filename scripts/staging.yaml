@@ -71,6 +71,7 @@ branches:
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/smart-linking-mvp  # Jenny Aug 9
     - jls/smart-linking-mvp-content-type # Jenny Aug 23
+    - jls/smart-linking-mvp-debug
     - caktus:allowed_values_ui # Jenny Aug 13
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
