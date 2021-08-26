@@ -76,7 +76,7 @@ class AdjListManager(models.Manager):
             .order_by(("" if ascending else "-") + "_depth")
         )
 
-    def get_descendants(self, node, include_self=False):
+    def get_descendants(self, node, include_self=False, **filters):
         """Query node descendants
 
         :param node: A model instance or a QuerySet or Q object querying
@@ -153,13 +153,13 @@ class AdjListManager(models.Manager):
                 )))
             ).filter(_exclude_dups=True).with_cte(xdups)
 
-        return query.order_by(cte.col._cte_ordering)
+        return query.filter(**filters).order_by(cte.col._cte_ordering)
 
     def get_queryset_ancestors(self, queryset, include_self=False):
         return self.get_ancestors(queryset, include_self=include_self)
 
-    def get_queryset_descendants(self, queryset, include_self=False):
-        return self.get_descendants(queryset, include_self=include_self)
+    def get_queryset_descendants(self, queryset, include_self=False, **additional_filters):
+        return self.get_descendants(queryset, include_self=include_self, **additional_filters)
 
     def root_nodes(self):
         return self.all().filter(parent_id__isnull=True)
