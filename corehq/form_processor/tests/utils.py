@@ -219,7 +219,7 @@ def sharded(cls):
 
     Was previously named @use_sql_backend
     """
-    return _sharded(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return _sharded(run_with_sql_backend(cls))
 
 
 def patch_testcase_databases():
