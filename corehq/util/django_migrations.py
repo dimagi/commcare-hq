@@ -145,7 +145,7 @@ def run_management_command_or_exit(command_name, *args, required_commit=None, cu
 
                 commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
 
-                commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
+                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
 
                 commcare-cloud <env> deploy commcare
             """)
