@@ -19,13 +19,13 @@ class UserChangeMessage(object):
         if program:
             change_message = {
                 "program": {
-                    "set_program": {"id": program.get_id, "name": program.name}
+                    SET_PROGRAM: {"id": program.get_id, "name": program.name}
                 }
             }
         else:
             change_message = {
                 "program": {
-                    "clear_program": {}
+                    CLEAR_PROGRAM: {}
                 }
             }
         return change_message
@@ -35,13 +35,13 @@ class UserChangeMessage(object):
         if user_role:
             change_message = {
                 "role": {
-                    "set_role": {"id": user_role.get_qualified_id(), "name": user_role.name}
+                    SET_ROLE: {"id": user_role.get_qualified_id(), "name": user_role.name}
                 }
             }
         else:
             change_message = {
                 "role": {
-                    "clear_role": {}
+                    CLEAR_ROLE: {}
                 }
             }
         return change_message
@@ -50,7 +50,7 @@ class UserChangeMessage(object):
     def domain_removal(domain):
         return {
             "domain": {
-                "remove_from_domain": {"domain": domain}
+                REMOVE_FROM_DOMAIN: {"domain": domain}
             }
         }
 
@@ -58,7 +58,7 @@ class UserChangeMessage(object):
     def two_factor_disabled_with_verification(verified_by, verification_mode, devices_reset, disable_for_days):
         change_message = {
             "two_factor": {
-                "disable_with_verification": {
+                DISABLE_WITH_VERIFICATION: {
                     "verified_by": verified_by,
                     "verification_mode": verification_mode,
                 }
@@ -74,13 +74,13 @@ class UserChangeMessage(object):
     def password_reset():
         return {
             "password": {
-                "reset_password": {}
+                RESET_PASSWORD: {}
             }
         }
 
     @staticmethod
     def status_update(active, reason):
-        slug = "activate_user" if active else "deactivate_user"
+        slug = ACTIVATE_USER if active else DEACTIVATE_USER
         return {
             "status": {
                 slug: {
@@ -93,7 +93,7 @@ class UserChangeMessage(object):
     def phone_numbers_added(phone_numbers):
         return {
             "phone_numbers": {
-                "add_phone_numbers": {
+                ADD_PHONE_NUMBERS: {
                     "phone_numbers": phone_numbers
                 }
             }
@@ -103,7 +103,7 @@ class UserChangeMessage(object):
     def phone_numbers_removed(phone_numbers):
         return {
             "phone_numbers": {
-                "remove_phone_numbers": {
+                REMOVE_PHONE_NUMBERS: {
                     "phone_numbers": phone_numbers
                 }
             }
@@ -114,13 +114,13 @@ class UserChangeMessage(object):
         if profile_id:
             change_message = {
                 "profile": {
-                    "set_profile": {"id": profile_id, "name": profile_name}
+                    SET_PROFILE: {"id": profile_id, "name": profile_name}
                 }
             }
         else:
             change_message = {
                 "profile": {
-                    "clear_profile": {}
+                    CLEAR_PROFILE: {}
                 }
             }
         return change_message
@@ -129,7 +129,7 @@ class UserChangeMessage(object):
     def primary_location_removed():
         return {
             "location": {
-                "clear_primary_location": {}
+                CLEAR_PRIMARY_LOCATION: {}
             }
         }
 
@@ -138,13 +138,13 @@ class UserChangeMessage(object):
         if location:
             change_message = {
                 "location": {
-                    "set_primary_location": {"id": location.location_id, "name": location.name}
+                    SET_PRIMARY_LOCATION: {"id": location.location_id, "name": location.name}
                 }
             }
         else:
             change_message = {
                 "location": {
-                    "clear_primary_location": {}
+                    CLEAR_PRIMARY_LOCATION: {}
                 }
             }
         return change_message
@@ -154,7 +154,7 @@ class UserChangeMessage(object):
         if locations:
             change_message = {
                 "assigned_locations": {
-                    "set_assigned_locations": {
+                    SET_ASSIGNED_LOCATIONS: {
                         "locations": [{'id': loc.location_id, 'name': loc.name} for loc in locations]
                     }
                 }
@@ -162,7 +162,7 @@ class UserChangeMessage(object):
         else:
             change_message = {
                 "assigned_locations": {
-                    "clear_assigned_locations": {}
+                    CLEAR_ASSIGNED_LOCATIONS: {}
                 }
             }
         return change_message
@@ -172,7 +172,7 @@ class UserChangeMessage(object):
         if groups:
             change_message = {
                 "groups": {
-                    "set_groups": {
+                    SET_GROUPS: {
                         "groups": [{'id': group.get_id, 'name': group.name} for group in groups]
                     }
                 }
@@ -180,7 +180,7 @@ class UserChangeMessage(object):
         else:
             change_message = {
                 "groups": {
-                    "clear_groups": {}
+                    CLEAR_GROUPS: {}
                 }
             }
         return change_message
@@ -189,7 +189,7 @@ class UserChangeMessage(object):
     def added_as_web_user(domain):
         return {
             "domain": {
-                "add_as_web_user": {"domain": domain}
+                ADD_AS_WEB_USER: {"domain": domain}
             }
         }
 
@@ -197,7 +197,7 @@ class UserChangeMessage(object):
     def invited_to_domain(domain):
         return {
             "domain_invitation": {
-                "add_domain_invitation": {"domain": domain}
+                ADD_DOMAIN_INVITATION: {"domain": domain}
             }
         }
 
@@ -205,7 +205,7 @@ class UserChangeMessage(object):
     def invitation_revoked_for_domain(domain):
         return {
             "domain_invitation": {
-                "remove_domain_invitation": {"domain": domain}
+                REMOVE_DOMAIN_INVITATION: {"domain": domain}
             }
         }
 
@@ -244,39 +244,65 @@ class UserChangeFormatter(object):
         return _formatter
 
 
+# message slugs
+SET_PROGRAM = 'set_program'
+CLEAR_PROGRAM = 'clear_program'
+SET_ROLE = 'set_role'
+CLEAR_ROLE = 'clear_role'
+REMOVE_FROM_DOMAIN = 'remove_from_domain'
+ADD_AS_WEB_USER = 'add_as_web_user'
+RESET_DEVICES = 'reset_devices'
+DISABLE_FOR_DAYS = 'disable_for_days'
+DISABLE_WITH_VERIFICATION = 'disable_with_verification'
+RESET_PASSWORD = 'reset_password'
+ACTIVATE_USER = 'activate_user'
+DEACTIVATE_USER = 'deactivate_user'
+ADD_PHONE_NUMBERS = 'add_phone_numbers'
+REMOVE_PHONE_NUMBERS = 'remove_phone_numbers'
+SET_PROFILE = 'set_profile'
+CLEAR_PROFILE = 'clear_profile'
+SET_PRIMARY_LOCATION = 'set_primary_location'
+CLEAR_PRIMARY_LOCATION = 'clear_primary_location'
+SET_ASSIGNED_LOCATIONS = 'set_assigned_locations'
+CLEAR_ASSIGNED_LOCATIONS = 'clear_assigned_locations'
+SET_GROUPS = 'set_groups'
+CLEAR_GROUPS = 'clear_groups'
+ADD_DOMAIN_INVITATION = 'add_domain_invitation'
+REMOVE_DOMAIN_INVITATION = 'remove_domain_invitation'
+
 MESSAGES = {
-    "set_program": UserChangeFormatter.simple_formatter(noop("Program: {name}[{id}]")),
-    "clear_program": UserChangeFormatter.simple_formatter(noop("Program: None")),
-    "set_role": UserChangeFormatter.simple_formatter(noop("Role: {name}[{id}]")),
-    "clear_role": UserChangeFormatter.simple_formatter(noop("Role: None")),
-    "remove_from_domain": UserChangeFormatter.simple_formatter(noop("Removed from domain '{domain}'")),
-    "add_as_web_user": UserChangeFormatter.simple_formatter(noop("Added as web user to domain '{domain}'")),
-    "reset_devices": UserChangeFormatter.simple_formatter(noop("Registered devices reset")),
-    "disable_for_days": UserChangeFormatter.simple_formatter(noop("Disabled for {days} days")),
-    "disable_with_verification": UserChangeFormatter.simple_formatter(
+    SET_PROGRAM: UserChangeFormatter.simple_formatter(noop("Program: {name}[{id}]")),
+    CLEAR_PROGRAM: UserChangeFormatter.simple_formatter(noop("Program: None")),
+    SET_ROLE: UserChangeFormatter.simple_formatter(noop("Role: {name}[{id}]")),
+    CLEAR_ROLE: UserChangeFormatter.simple_formatter(noop("Role: None")),
+    REMOVE_FROM_DOMAIN: UserChangeFormatter.simple_formatter(noop("Removed from domain '{domain}'")),
+    ADD_AS_WEB_USER: UserChangeFormatter.simple_formatter(noop("Added as web user to domain '{domain}'")),
+    RESET_DEVICES: UserChangeFormatter.simple_formatter(noop("Registered devices reset")),
+    DISABLE_FOR_DAYS: UserChangeFormatter.simple_formatter(noop("Disabled for {days} days")),
+    DISABLE_WITH_VERIFICATION: UserChangeFormatter.simple_formatter(
         noop('Two factor removed. Verified by: {verified_by}, verification mode: "{verification_mode}"')
     ),
-    "reset_password": UserChangeFormatter.simple_formatter(noop("Password reset")),
-    "activate_user": UserChangeFormatter.simple_formatter(noop('User re-enabled. Reason: "{reason}"')),
-    "deactivate_user": UserChangeFormatter.simple_formatter(noop('User disabled. Reason: "{reason}"')),
-    "add_phone_numbers": UserChangeFormatter.phone_numbers_formatter(
+    RESET_PASSWORD: UserChangeFormatter.simple_formatter(noop("Password reset")),
+    ACTIVATE_USER: UserChangeFormatter.simple_formatter(noop('User re-enabled. Reason: "{reason}"')),
+    DEACTIVATE_USER: UserChangeFormatter.simple_formatter(noop('User disabled. Reason: "{reason}"')),
+    ADD_PHONE_NUMBERS: UserChangeFormatter.phone_numbers_formatter(
         noop('Added phone number(s) {phone_numbers}')
     ),
-    "remove_phone_numbers": UserChangeFormatter.phone_numbers_formatter(
+    REMOVE_PHONE_NUMBERS: UserChangeFormatter.phone_numbers_formatter(
         noop('Removed phone number(s) {phone_numbers}')
     ),
-    "set_profile": UserChangeFormatter.simple_formatter(noop("Profile: {name}[{id}]")),
-    "clear_profile": UserChangeFormatter.simple_formatter(noop("Profile: None")),
-    "set_primary_location": UserChangeFormatter.simple_formatter(noop("Primary location: {name}[{id}]")),
-    "clear_primary_location": UserChangeFormatter.simple_formatter(noop("Primary location: None")),
-    "set_assigned_locations": UserChangeFormatter.assigned_locations_formatter(
+    SET_PROFILE: UserChangeFormatter.simple_formatter(noop("Profile: {name}[{id}]")),
+    CLEAR_PROFILE: UserChangeFormatter.simple_formatter(noop("Profile: None")),
+    SET_PRIMARY_LOCATION: UserChangeFormatter.simple_formatter(noop("Primary location: {name}[{id}]")),
+    CLEAR_PRIMARY_LOCATION: UserChangeFormatter.simple_formatter(noop("Primary location: None")),
+    SET_ASSIGNED_LOCATIONS: UserChangeFormatter.assigned_locations_formatter(
         noop("Assigned locations: {locations_info}")
     ),
-    "clear_assigned_locations": UserChangeFormatter.simple_formatter(noop("Assigned locations: []")),
-    "set_groups": UserChangeFormatter.assigned_groups_formatter(noop("Groups: {groups_info}")),
-    "clear_groups": UserChangeFormatter.simple_formatter(noop("Groups: []")),
-    "add_domain_invitation": UserChangeFormatter.simple_formatter(noop("Invited to domain '{domain}'")),
-    "remove_domain_invitation": UserChangeFormatter.simple_formatter(
+    CLEAR_ASSIGNED_LOCATIONS: UserChangeFormatter.simple_formatter(noop("Assigned locations: []")),
+    SET_GROUPS: UserChangeFormatter.assigned_groups_formatter(noop("Groups: {groups_info}")),
+    CLEAR_GROUPS: UserChangeFormatter.simple_formatter(noop("Groups: []")),
+    ADD_DOMAIN_INVITATION: UserChangeFormatter.simple_formatter(noop("Invited to domain '{domain}'")),
+    REMOVE_DOMAIN_INVITATION: UserChangeFormatter.simple_formatter(
         noop("Invitation revoked for domain '{domain}'")
     )
 }
