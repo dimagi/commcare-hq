@@ -598,3 +598,21 @@ class TestCaseSearchLookups(TestCase):
             msg = f"{criteria} yielded {actual}, not {expected}"
             self.assertItemsEqual(actual, expected, msg=msg)
         config.delete()
+
+    def test_blank_case_search_parent(self):
+        config, _ = CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'foo': 'redbeard'},
+            {'_id': 'c2', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
+            {'_id': 'c3', 'foo': 'blackbeard'},
+            {'_id': 'c4', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c3')}},
+            {'_id': 'c5', 'foo': ''},
+            {'_id': 'c6', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c5')}},
+            {'_id': 'c7'},
+            {'_id': 'c8', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c7')}},
+        ])
+        actual = CaseSearchCriteria(self.domain, ['child'], {
+            'parent/foo': ['', 'blackbeard'],
+        }).search_es.get_ids()
+        self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])
+        config.delete()
