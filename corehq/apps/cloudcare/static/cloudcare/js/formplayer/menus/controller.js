@@ -49,7 +49,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
                         "required. If this persists, please report an issue to CommCareHQ");
-                    FormplayerFrontend.trigger("apps:list");
+                    //FormplayerFrontend.trigger("apps:list");
+                    debugger;
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
