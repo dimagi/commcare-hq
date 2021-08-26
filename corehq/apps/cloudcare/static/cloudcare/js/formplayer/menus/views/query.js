@@ -169,6 +169,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         changeQueryField: function (e) {
             if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
+            } else if (this.model.get('input') === 'address') {
+                this.model.set('value', $(e.target).val());
+                this.parentView.initGeocoders();
             } else {
                 this.model.set('value', $(e.target).val());
             }
@@ -187,6 +190,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         relatedModel.set('searchForBlank', searchForBlank);
                     }
                 });
+                this.parentView.initGeocoders();
             }
             self.parentView.setStickyQueryInputs();
         },
@@ -326,9 +330,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 model.set('value', '');
                 model.set('searchForBlank', false);
             });
+            self.initGeocoders();
             self.setStickyQueryInputs();
-            // clear geocoder input if any
-            $('.mapboxgl-ctrl-geocoder--button').click();
         },
 
         submitAction: function (e) {
