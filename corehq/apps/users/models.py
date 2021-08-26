@@ -1107,7 +1107,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         except User.DoesNotExist:
             pass
         if deleted_by:
-            log_user_change(deleted_by_domain, self, deleted_by,
+            # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+            # Web user is never deleted except in tests so keep for_domain as None
+            for_domain = self.domain if self.is_commcare_user() else None
+            log_user_change(by_domain=deleted_by_domain, for_domain=for_domain,
+                            couch_user=self, changed_by_user=deleted_by,
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
@@ -1545,10 +1549,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             return
         # fallback to self if not created by any user
         created_by = created_by or self
+        # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+        # Web user is not "created" by a domain but invited so keep for_domain as None
+        for_domain = self.domain if self.is_commcare_user() else None
         log_user_change(
-            domain,
-            self,
-            created_by,
+            by_domain=domain,
+            for_domain=for_domain,
+            couch_user=self,
+            changed_by_user=created_by,
             changed_via=created_via,
             action=UserModelAction.CREATE,
             domain_required_for_log=domain_required_for_log,
@@ -1802,9 +1810,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
         if unretired_by:
             log_user_change(
-                unretired_by_domain,
-                self,
-                unretired_by,
+                by_domain=unretired_by_domain,
+                for_domain=self.domain,
+                couch_user=self,
+                changed_by_user=unretired_by,
                 changed_via=unretired_via,
                 action=UserModelAction.CREATE,
             )
@@ -1850,7 +1859,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
         if deleted_by:
-            log_user_change(retired_by_domain, self, deleted_by,
+            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
+                            couch_user=self, changed_by_user=deleted_by,
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 

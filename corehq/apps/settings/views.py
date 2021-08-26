@@ -187,7 +187,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             user.save()
             if is_new_phone_number:
                 log_user_change(
-                    domain=None,
+                    by_domain=None,
+                    for_domain=None,
                     couch_user=user,
                     changed_by_user=user,
                     changed_via=USER_CHANGE_VIA_WEB,
@@ -277,7 +278,8 @@ class MyProjectsList(BaseMyAccountView):
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
                 self.request.couch_user.save()
-                log_user_change(None, couch_user=request.couch_user,
+                # ToDo Migration: Get domain name from change message for old records
+                log_user_change(by_domain=None, for_domain=self.domain_to_remove, couch_user=request.couch_user,
                                 changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
                                 change_messages=UserChangeMessage.domain_removal(self.domain_to_remove),
                                 domain_required_for_log=False,
