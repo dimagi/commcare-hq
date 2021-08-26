@@ -95,11 +95,9 @@ class XMLTest(TestCase):
         self.addCleanup(self.delete_ledger_values, self.sp.case_id)
 
     def delete_ledger_transactions(self, form_id):
-        print("delete_ledger_transactions", form_id, self.case_ids)
         LedgerAccessorSQL.delete_ledger_transactions_for_form(self.case_ids, form_id)
 
     def delete_ledger_values(self, case_id):
-        print("delete_ledger_values", case_id)
         LedgerAccessorSQL.delete_ledger_values(case_id)
 
     def tearDown(self):
