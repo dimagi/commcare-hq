@@ -32,6 +32,7 @@ class RegistryCaseDetailsTests(TestCase):
         CaseAccessorSQL.hard_delete_cases(cls.domain, [cls.case.case_id])
         FormAccessorSQL.hard_delete_forms(cls.domain, xform_ids)
         Domain.get_db().delete_doc(cls.domain_object)  # no need to run the full domain delete
+        super().tearDownClass()
 
     def setUp(self):
         self.client.login(username="user", password="123")
