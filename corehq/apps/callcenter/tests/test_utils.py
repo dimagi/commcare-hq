@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import mock
 
@@ -44,6 +44,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -52,7 +53,7 @@ TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@run_with_sql_backend
 class CallCenterUtilsTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -222,7 +223,7 @@ class CallCenterUtilsTests(TestCase):
         return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(user_id or self.user._id, CASE_TYPE)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@run_with_sql_backend
 class CallCenterUtilsUsercaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -518,6 +519,7 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         )
 
 
+@run_with_sql_backend
 class CallCenterDomainMockTest(TestCase):
 
     _call_center_domain_mock = mock.patch(
