@@ -358,11 +358,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         clearAction: function () {
-            var self = this,
-                fields = $(".query-field");
-            fields.each(function () {
-                this.value = '';
-                $(this).trigger('change.select2');
+            var self = this;
+            _.each(self.collection.models, function (model) {
+                model.set('value', '');
+                model.set('searchForBlank', false);
             });
             self.setStickyQueryInputs();
             // clear geocoder input if any
