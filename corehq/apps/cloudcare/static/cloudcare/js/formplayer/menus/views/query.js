@@ -103,7 +103,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
-            this.model.set('value', $(e.target).val());
+            if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+                this.parentView.changeDropdown(e);
+            } else {
+                this.model.set('value', $(e.target).val());
+            }
             this.parentView.setStickyQueryInputs();
         },
 
@@ -285,12 +289,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         ui: {
             clearButton: '#query-clear-button',
             submitButton: '#query-submit-button',
-            valueDropdown: 'select.query-field',
             valueInput: 'input.query-field',
         },
 
         events: {
-            'change @ui.valueDropdown': 'changeDropdown',
             'click @ui.clearButton': 'clearAction',
             'click @ui.submitButton': 'submitAction',
         },
@@ -334,7 +336,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     if (choices) {
                         var $field = $($fields.get(i)),
                             value = response.models[i].get('value');
-                        $field.select2('close');    // force close dropdown, the set below can interfere with this when clearing selection
+                        if ($field.data('select2')) {
+                            // force close dropdown, the set below can interfere with this when clearing selection
+                            $field.select2('close');
+                        }
                         if (value !== null) {
                             value = value.split(selectDelimiter);
                             value = _.filter(value, function (val) { return val !== ''; });
@@ -349,7 +354,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         $field.trigger('change.select2');
                     }
                 }
-                self.setStickyQueryInputs();
             });
         },
 
