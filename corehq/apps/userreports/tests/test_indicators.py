@@ -23,7 +23,7 @@ from corehq.form_processor.parsers.ledgers.helpers import (
     StockReportHelper,
     StockTransactionHelper,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
@@ -599,6 +599,7 @@ class DueListDateIndicatorTest(SimpleTestCase):
         )
 
 
+@run_with_sql_backend
 class TestGetValuesByProduct(TestCase):
     domain_name = 'test-domain'
     case_id = 'case1'
@@ -676,7 +677,6 @@ class TestGetValuesByProduct(TestCase):
         StockTransaction.objects.all().delete()
         super(TestGetValuesByProduct, self).tearDown()
 
-    @run_with_all_backends
     def test_get_soh_values_by_product(self):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'soh', ['coke', 'surge', 'new_coke']
@@ -685,7 +685,6 @@ class TestGetValuesByProduct(TestCase):
         self.assertEqual(values.get('surge'), 85)
         self.assertEqual(values.get('new_coke'), None)
 
-    @run_with_all_backends
     def test_get_consumption_by_product(self):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'consumption', ['coke', 'surge', 'new_coke']
