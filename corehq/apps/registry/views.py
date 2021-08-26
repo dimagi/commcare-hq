@@ -214,7 +214,7 @@ def manage_invitations(request, domain, registry_slug):
         except ValueError:
             return JsonResponse({"error": _("Unable to process your request")}, status=400)
         return JsonResponse({
-            "message": _("Project Space '{domain}' removed").format(domain=domain)
+            "message": _("Project Space '{domain}' removed").format(domain=invitation_domain)
         })
 
     if action == "add":
