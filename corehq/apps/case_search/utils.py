@@ -165,11 +165,12 @@ class CaseSearchCriteria(object):
             if isinstance(value, list) and '' in value:
                 value = [v for v in value if v != '']
                 if value:
+                    if '/' in key:
+                        missing_filter = build_filter_from_xpath(self.domain, f'{key} = ""')
+                    else:
+                        missing_filter = case_property_missing(key)
                     value = value[0] if len(value) == 1 else value
-                    query = filters.OR(
-                        self._get_query(key, value),
-                        case_property_missing(key),
-                    )
+                    query = filters.OR(self._get_query(key, value), missing_filter)
                 else:
                     query = case_property_missing(key)
             else:
@@ -184,7 +185,7 @@ class CaseSearchCriteria(object):
         value = self._remove_ignored_patterns(key, value)
         fuzzy = key in self._fuzzy_properties
         if '/' in key:
-            query = '{} = "{}"'.format(key, value)
+            query = f'{key} = "{value}"'
             return build_filter_from_xpath(self.domain, query, fuzzy=fuzzy),
         else:
             return case_property_query(key, value, fuzzy=fuzzy)
