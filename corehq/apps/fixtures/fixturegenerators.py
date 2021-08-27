@@ -48,6 +48,32 @@ def item_lists_by_domain(domain):
     return ret
 
 
+def item_lists_by_app(app):
+    LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
+    REPORT_FIXTURE = 'report_fixture'
+    lookup_lists = item_lists_by_domain(app.domain).copy()
+    for item in lookup_lists:
+        item['fixture_type'] = LOOKUP_TABLE_FIXTURE
+
+    report_configs = [
+        report_config
+        for module in app.get_report_modules()
+        for report_config in module.report_configs
+    ]
+    ret = list()
+    for config in report_configs:
+        uri = 'jr://fixture/commcare-reports:%s' % (config.uuid)
+        ret.append({
+            'id': config.uuid,
+            'uri': uri,
+            'path': "/rows/row",
+            'name': config.header.get(app.default_language),
+            'structure': {},
+            'fixture_type': REPORT_FIXTURE,
+        })
+    return lookup_lists + ret
+
+
 class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 

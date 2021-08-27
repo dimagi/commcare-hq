@@ -160,8 +160,6 @@ change_feed
    Infrastructure for propagating changes in primary data stores (couch, postgres) to secondary sources (ElasticSearch).
 cleanup
    Miscellaneous commands for cleaning up data: deleting duplicate mobile users, deleting couch documents for models that have been moved to postgres, etc.
-couch_sql_migration
-   Utiltiy code for migration form and case data from couch to postgres.
 data_analytics
    Internal impact-related metrics.
 data_pipeline_audit
@@ -180,8 +178,6 @@ hqcase
    Utility functions for handling cases, such as the ability to programmatically submit cases.
 mocha
    JavaScript testing framework.
-tzmigration
-   This relates to a timezone migration done in 2015. See `#6341 <https://github.com/dimagi/commcare-hq/pull/6341>`_ if curious.
 
 Limited-Use and Retired Apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

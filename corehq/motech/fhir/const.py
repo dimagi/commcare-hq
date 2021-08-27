@@ -1,6 +1,18 @@
+from django.utils.translation import ugettext_lazy as _
+
+
 FHIR_VERSION_4_0_1 = '4.0.1'
 FHIR_VERSIONS = [
     (FHIR_VERSION_4_0_1, 'R4'),
+]
+
+OWNER_TYPE_GROUP = 'group'
+OWNER_TYPE_LOCATION = 'location'
+OWNER_TYPE_USER = 'user'
+OWNER_TYPE_CHOICES = [
+    (OWNER_TYPE_GROUP, _('Group')),
+    (OWNER_TYPE_LOCATION, _('Location')),
+    (OWNER_TYPE_USER, _('User')),
 ]
 
 # See https://www.hl7.org/fhir/valueset-bundle-type.html
@@ -26,22 +38,16 @@ XMLNS_FHIR = 'http://commcarehq.org/x/fhir/engine-read'
 # case IDs. See https://www.hl7.org/fhir/datatypes.html#Identifier
 SYSTEM_URI_CASE_ID = 'http://commcarehq.org/x/fhir/case-id'
 
-
 FHIR_DATA_TYPE_LIST_OF_STRING = 'fhir_list_of_string'
 FHIR_DATA_TYPES = (
     FHIR_DATA_TYPE_LIST_OF_STRING,
 )
 
-SUPPORTED_FHIR_RESOURCE_TYPES = [
-    'Patient',
+SUPPORTED_FHIR_RESOURCE_TYPES = (
     'DiagnosticReport',
-    'Observation'
-]
-
-
-# The date (and optionally time) when the capability statement was published.
-# The date must change when the business version changes and it must change if
-# the status code changes. In addition, it should change when the substantive
-# content of the capability statement changes
-# https://www.hl7.org/fhir/capabilitystatement-definitions.html#CapabilityStatement.date
-CAPABILITY_STATEMENT_PUBLISHED_DATE = "2021-03-23"
+    'Encounter',
+    'Immunization',
+    'Observation',
+    'Patient',
+    'ServiceRequest',
+)

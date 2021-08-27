@@ -12,7 +12,7 @@ from corehq.apps.commtrack.tests import util
 from corehq.apps.products.models import Product
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 
 
 class SMSTests(TestCase):

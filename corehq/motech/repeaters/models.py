@@ -151,7 +151,8 @@ from .repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from ...util.urlsanitize.urlsanitize import PossibleSSRFAttempt
+from ..repeater_helpers import RepeaterResponse
+from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -464,7 +465,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def allow_retries(self, response):
         """Whether to requeue the repeater when it fails
         """
-        return True
+        # respect the `retry` field of RepeaterResponse
+        return getattr(response, 'retry', True)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -714,6 +716,30 @@ class ReferCaseRepeater(CreateCaseRepeater):
     def get_url(self, repeat_record):
         new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
         return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        """Add custom response handling to allow more nuanced handling of form errors"""
+        response = super().send_request(repeat_record, payload)
+        return self.get_response(response)
+
+    @staticmethod
+    def get_response(response):
+        from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
+        openrosa_response = parse_openrosa_response(response.text)
+        if not openrosa_response:
+            # unable to parse response so just let normal handling take place
+            return response
+
+        if response.status_code == 422:
+            # openrosa v3
+            retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
+            return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
+
+        if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
+            # openrosa v2
+            return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
+
+        return response
 
 
 class ShortFormRepeater(Repeater):
@@ -1121,14 +1147,14 @@ class SQLRepeatRecord(models.Model):
         self.state = RECORD_SUCCESS_STATE
         self.save()
 
-    def add_client_failure_attempt(self, message):
+    def add_client_failure_attempt(self, message, retry=True):
         """
         Retry when ``self.repeater`` is next processed. The remote
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
         self.repeater_stub.reset_next_attempt()
-        self._add_failure_attempt(message, MAX_ATTEMPTS)
+        self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
         """
@@ -1144,8 +1170,8 @@ class SQLRepeatRecord(models.Model):
         self.repeater_stub.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
-    def _add_failure_attempt(self, message, max_attempts):
-        if self.num_attempts < max_attempts:
+    def _add_failure_attempt(self, message, max_attempts, retry=True):
+        if retry and self.num_attempts < max_attempts:
             state = RECORD_FAILURE_STATE
         else:
             state = RECORD_CANCELLED_STATE
@@ -1290,6 +1316,10 @@ def send_request(
             or resp is True
         )
 
+    def allow_retries(response):
+        # respect the `retry` field of RepeaterResponse
+        return getattr(response, 'retry', True)
+
     def later_might_be_better(resp):
         return is_response(resp) and resp.status_code in (
             502,  # Bad Gateway
@@ -1320,7 +1350,8 @@ def send_request(
             if later_might_be_better(response):
                 repeat_record.add_server_failure_attempt(message)
             else:
-                repeat_record.add_client_failure_attempt(message)
+                retry = allow_retries(response)
+                repeat_record.add_client_failure_attempt(message, retry)
     return repeat_record.state in (RECORD_SUCCESS_STATE,
                                    RECORD_CANCELLED_STATE)  # Don't retry
 

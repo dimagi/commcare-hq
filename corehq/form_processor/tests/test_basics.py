@@ -16,11 +16,11 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from corehq.form_processor.utils import get_simple_form_xml
 
@@ -94,7 +94,7 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         self.assertGreater(form.server_modified_on, before)
 
 
-@use_sql_backend
+@sharded
 class FundamentalFormTestsSQL(FundamentalFormTestsCouch):
     pass
 
@@ -295,7 +295,8 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
         case = self.casedb.get_case(child_case_id)
-        self.assertEqual(len(case.indices), 0)
+        self.assertEqual(len(case.indices), 1)
+        self.assertEqual(case.indices[0].referenced_id, '')
 
     def test_invalid_index(self):
         invalid_case_id = uuid.uuid4().hex
@@ -478,7 +479,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         main()
 
 
-@use_sql_backend
+@sharded
 class FundamentalCaseTestsSQL(FundamentalCaseTests):
     def test_long_value_validation(self):
         case_id = uuid.uuid4().hex

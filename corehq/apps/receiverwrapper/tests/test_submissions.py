@@ -16,7 +16,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
@@ -39,7 +39,7 @@ class BaseSubmissionTest(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         super(BaseSubmissionTest, self).tearDown()
 
@@ -258,7 +258,7 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertTrue(notification.called)
 
 
-@use_sql_backend
+@sharded
 class SubmissionTestSQL(SubmissionTest):
 
     @softer_assert()

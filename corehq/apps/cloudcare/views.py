@@ -125,15 +125,6 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = None
-        try:
-            role = user.get_role(domain)
-        except DomainMembershipError:
-            # User has access via domain mirroring
-            pass
-        if role:
-            apps = [app for app in apps
-                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
@@ -222,7 +213,7 @@ class FormplayerMain(View):
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -257,10 +248,6 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
-        role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app.origin_id):
-            raise Http404()
-
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -284,7 +271,7 @@ class FormplayerPreviewSingleApp(View):
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
-            "has_geocoder_privs": domain_has_privilege(domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -303,8 +290,15 @@ class PreviewAppView(TemplateView):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
-            "has_geocoder_privs": domain_has_privilege(request.domain, privileges.GEOCODER),
+            "has_geocoder_privs": has_geocoder_privs(request.domain),
         })
+
+
+def has_geocoder_privs(domain):
+    return (
+        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        and domain_has_privilege(domain, privileges.GEOCODER)
+    )
 
 
 @location_safe

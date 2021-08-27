@@ -23,10 +23,6 @@ def _pop_field(app_doc):
         return DocUpdate(app_doc)
 
 
-def _reverse_noop(app, schema_editor):
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [

@@ -45,7 +45,6 @@ class TestTwoFactorCheck(TestCase):
         )
         self.assertTrue(two_factor_required_bool)
 
-    @flag_enabled('ENTERPRISE_SSO')
     def test_two_factor_check_with_sso_request(self):
         view_func = 'dummy_view_func'
         request = self.request

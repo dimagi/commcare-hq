@@ -7,11 +7,17 @@ from corehq.motech.serializers import serializers
 
 
 def join_strings(value: List[str]) -> str:
-    return ' '.join(value)
+    try:
+        return ' '.join(value)
+    except TypeError:
+        pass
 
 
 def split_string(value: str) -> List[str]:
-    return value.split(' ')
+    try:
+        return value.split(' ')
+    except AttributeError:
+        pass
 
 
 serializers.update({

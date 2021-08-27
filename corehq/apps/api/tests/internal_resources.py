@@ -7,8 +7,8 @@ from .utils import APIResourceTest
 class InternalTestMixin(object):
     def assert_accessible_via_sessions(self, url):
         # api auth should succeed
-        api_url = self._api_url(url, self.username)
-        response = self.client.get(api_url)
+        headers = self._get_api_key_auth_headers()
+        response = self.client.get(url, **headers)
         self.assertEqual(response.status_code, 200)
         # session auth should also succeed since these are used internally over sessions
         self.client.login(username=self.username, password=self.password)

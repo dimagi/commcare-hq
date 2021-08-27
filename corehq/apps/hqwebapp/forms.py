@@ -35,6 +35,19 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = CaptchaField(label=_("Type the letters in the box"))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.ENFORCE_SSO_LOGIN:
+            self.fields['username'].widget = forms.TextInput(attrs={
+                'class': 'form-control',
+                'data-bind': 'textInput: authUsername, onEnterKey: continueOnEnter',
+                'placeholder': _("Enter email address"),
+            })
+            self.fields['password'].widget = forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': _("Enter password"),
+            })
+
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
         return username

@@ -176,7 +176,7 @@ class UserModelTest(TestCase):
         })
 
         definition.delete()
-        web_user.delete(deleted_by=None)
+        web_user.delete(self.domain, deleted_by=None)
 
     @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
     def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):

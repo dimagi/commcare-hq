@@ -11,7 +11,7 @@ from django_prbac.exceptions import PermissionDenied
 from lxml import etree
 from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
@@ -32,7 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     PracticeUserException,
     SuiteValidationError,
-    UserCaseXPathValidationError,
+    UsercaseXPathValidationError,
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
@@ -79,7 +79,7 @@ class ApplicationBaseValidator(object):
                 'module': cve.module,
                 'form': cve.form,
             })
-        except UserCaseXPathValidationError as ucve:
+        except UsercaseXPathValidationError as ucve:
             errors.append({
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
@@ -327,6 +327,7 @@ class ModuleBaseValidator(object):
         This is the real validation logic, to be overridden/augmented by subclasses.
         '''
         errors = []
+        app = self.module.get_app()
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
@@ -336,14 +337,23 @@ class ModuleBaseValidator(object):
             ))
         if self.module.case_list_form.form_id:
             try:
-                form = self.module.get_app().get_form(self.module.case_list_form.form_id)
+                form = app.get_form(self.module.case_list_form.form_id)
             except FormNotFoundException:
                 errors.append({
                     'type': 'case list form missing',
                     'module': self.get_module_info()
                 })
             else:
-                if not form.is_registration_form(self.module.case_type):
+                if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                    if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
+                        errors.append({
+                            'type': 'invalid case list followup form',
+                            'module': self.get_module_info(),
+                            'form': form,
+                        })
+                elif not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'case list form not registration',
                         'module': self.get_module_info(),
@@ -357,6 +367,12 @@ class ModuleBaseValidator(object):
                     'xpath_error': message,
                     'module': self.get_module_info(),
                 })
+
+        if self.module.put_in_root and self.module.session_endpoint_id:
+            errors.append({
+                'type': 'endpoint to display only forms',
+                'module': self.get_module_info(),
+            })
 
         return errors
 
@@ -756,7 +772,7 @@ class FormBaseValidator(object):
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
-            if module.root_module.put_in_root:
+            elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter

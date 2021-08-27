@@ -1,9 +1,11 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
+    'underscore',
     'knockout',
     'jquery-ui/ui/widgets/sortable',
 ], function (
     $,
+    _,
     ko
 ) {
     // Need this due to https://github.com/knockout/knockout/pull/2324
@@ -678,6 +680,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             if (itemSelector) {
                 $(element).sortable("option", "items", itemSelector);
             }
+        },
+    };
+
+    ko.bindingHandlers.onEnterKey = {
+        // calls a function when the enter key is pressed on an input
+        init: function (element, valueAccessor, allBindings, viewModel) {
+            $(element).keypress(function (event) {
+                if (event.key === "Enter" || event.keyCode === 13) {
+                    valueAccessor()();
+                    return false;
+                }
+                return true;
+            });
         },
     };
 

@@ -1,4 +1,3 @@
-import boto3
 from botocore.exceptions import ClientError
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
@@ -36,6 +35,7 @@ class PinpointBackend(SQLSMSBackend):
         return PinpointBackendForm
 
     def send(self, msg, *args, **kwargs):
+        import boto3    # avoid top-level import that breaks docs build
         phone_number = clean_phone_number(msg.phone_number)
         config = self.config
         client = boto3.client(

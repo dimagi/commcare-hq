@@ -61,7 +61,7 @@ class ViewTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(ViewTestCase, cls).tearDownClass()
 

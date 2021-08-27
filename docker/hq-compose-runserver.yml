@@ -7,16 +7,18 @@ services:
       dockerfile: "${DOCKERFILE}"
     environment:
       COMMCAREHQ_BOOTSTRAP: "yes"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+      DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
+      DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
     privileged: true  # allows mount inside container
     command: [runserver]
     links:
       - postgres
       - couch
       - redis
-      - elasticsearch
       - elasticsearch2
+      - elasticsearch5
       - kafka
       - zookeeper
       - minio
@@ -56,15 +58,15 @@ services:
       file: hq-compose-services.yml
       service: redis
 
-  elasticsearch:
-    extends:
-      file: hq-compose-services.yml
-      service: elasticsearch
-
   elasticsearch2:
     extends:
       file: hq-compose-services.yml
       service: elasticsearch2
+
+  elasticsearch5:
+    extends:
+      file: hq-compose-services.yml
+      service: elasticsearch5
 
   zookeeper:
     extends:

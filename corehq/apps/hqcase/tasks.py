@@ -16,7 +16,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -144,7 +143,8 @@ def delete_exploded_case_task(domain, explosion_id):
 
 
 def delete_exploded_cases(domain, explosion_id, task=None):
-    NotAllowed.check(domain)
+    if not explosion_id:
+        raise Exception("explosion_id is falsy, aborting rather than deleting all cases")
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, 0)
     query = (CaseSearchES()

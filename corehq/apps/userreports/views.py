@@ -123,7 +123,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -697,7 +697,7 @@ def _get_form_type(report_type):
     if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
-            return ConfigureTableReportForm
+        return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
 
@@ -736,7 +736,8 @@ class ReportPreview(BaseDomainView):
         if bound_form.is_valid():
             try:
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                with delete_report_config(temp_report) as report_config:
+                    response_data = ConfigurableReportView.report_preview_data(self.domain, report_config)
                 if response_data:
                     return json_response(response_data)
             except BadBuilderConfigError as e:
@@ -1442,16 +1443,6 @@ def choice_list_api(request, domain, report_id, filter_id):
     else:
         # mobile UCR hits this API for invalid filters. Just return no choices.
         return json_response([])
-
-
-def _shared_context(domain):
-    static_reports = list(StaticReportConfiguration.by_domain(domain))
-    static_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
-    return {
-        'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain) + static_reports,
-        'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
-    }
 
 
 class DataSourceSummaryView(BaseUserConfigReportsView):

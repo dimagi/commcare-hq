@@ -101,12 +101,11 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_practice_mode_mobile_workers,
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.util.compression import decompress
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -603,23 +602,28 @@ def import_app(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
-        compressed = request.POST.get('compressed')
+        file = request.FILES.get('source_file')
 
         valid_request = True
         if not name:
             messages.error(request, _("You must submit a name for the application you are importing."))
             valid_request = False
-        if not compressed:
-            messages.error(request, _("You must submit the source data."))
+        if not file:
+            messages.error(request, _("You must upload the app source file."))
+            valid_request = False
+
+        try:
+            if valid_request:
+                source = json.load(file)
+        except json.decoder.JSONDecodeError:
+            messages.error(request, _("The file uploaded is an invalid JSON file"))
             valid_request = False
 
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
-        source = json.loads(source)
         assert(source is not None)
-        app = import_app_util(source, domain, {'name': name})
+        app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
     else:
@@ -1025,13 +1029,3 @@ def pull_master_app(request, domain, app_id):
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def update_linked_whitelist(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    new_whitelist = json.loads(request.POST.get('whitelist'))
-    app.linked_whitelist = new_whitelist
-    app.save()
-    return HttpResponse()

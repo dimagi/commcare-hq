@@ -5,10 +5,6 @@ from copy import deepcopy
 import settingshelper as helper
 from settings import *
 
-# to enable v7 ES tests
-if os.environ.get('ELASTICSEARCH_7_PORT'):
-    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
-
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
@@ -138,19 +134,5 @@ METRICS_PROVIDERS = [
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
-
-# icds version = ab702b37a1  (to force a build)
-if os.path.exists("extensions/icds/custom/icds"):
-    icds_apps = [
-        "custom.icds",
-        "custom.icds_reports"
-    ]
-    for app in icds_apps:
-        if app not in INSTALLED_APPS:
-            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
-
-    if "custom.icds.commcare_extensions" not in COMMCARE_EXTENSIONS:
-        COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")
-        CUSTOM_DB_ROUTING["icds_reports"] = "icds-ucr-citus"
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

@@ -26,6 +26,10 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 
 
+class UnexpectedBackend(Exception):
+    pass
+
+
 class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
@@ -86,7 +90,8 @@ class CaseDocumentStore(DocumentStore):
 class LedgerV2DocumentStore(DocumentStore):
 
     def __init__(self, domain):
-        assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
+        if not should_use_sql_backend(domain):
+            raise UnexpectedBackend("Only SQL backend supported: {}".format(domain))
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
 
@@ -136,7 +141,8 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
 
     def __init__(self, domain):
         from corehq.apps.commtrack.models import StockState
-        assert not should_use_sql_backend(domain), "Only non-SQL backend supported"
+        if should_use_sql_backend(domain):
+            raise UnexpectedBackend("Only non-SQL backend supported: {}".format(domain))
         self.domain = domain
         super(LedgerV1DocumentStore, self).__init__(StockState, model_manager=StockState.include_archived)
 

@@ -20,9 +20,8 @@ def is_simple_dict(d):
 class JsonIndex(jsonobject.JsonObject):
     case_id = jsonobject.StringProperty()
     temporary_id = jsonobject.StringProperty()
-    case_type = jsonobject.StringProperty(name='@case_type', required=True)
-    relationship = jsonobject.StringProperty(name='@relationship', required=True,
-                                             choices=('child', 'extension'))
+    case_type = jsonobject.StringProperty(required=True)
+    relationship = jsonobject.StringProperty(required=True, choices=('child', 'extension'))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,10 +31,10 @@ class JsonIndex(jsonobject.JsonObject):
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
     case_name = jsonobject.StringProperty()
-    case_type = jsonobject.StringProperty(name='@case_type')
+    case_type = jsonobject.StringProperty()
     external_id = jsonobject.StringProperty()
     user_id = jsonobject.StringProperty(required=True)
-    owner_id = jsonobject.StringProperty(name='@owner_id')
+    owner_id = jsonobject.StringProperty()
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex)
     _is_case_creation = False
@@ -81,8 +80,8 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
     # overriding from subclass to mark these required
     case_name = jsonobject.StringProperty(required=True)
-    case_type = jsonobject.StringProperty(name='@case_type', required=True)
-    owner_id = jsonobject.StringProperty(name='@owner_id', required=True)
+    case_type = jsonobject.StringProperty(required=True)
+    owner_id = jsonobject.StringProperty(required=True)
 
     _is_case_creation = True
 
@@ -130,7 +129,7 @@ def _get_bulk_updates(domain, all_data, user):
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
-    existing_ids = [c['@case_id'] for c in all_data if isinstance(c, dict) and '@case_id' in c]
+    existing_ids = [c['case_id'] for c in all_data if isinstance(c, dict) and 'case_id' in c]
     missing = _missing_cases(domain, existing_ids)
     if missing:
         raise UserError(f"The following case IDs were not found: {', '.join(missing)}")
@@ -139,7 +138,7 @@ def _get_bulk_updates(domain, all_data, user):
     errors = []
     for i, data in enumerate(all_data, start=1):
         try:
-            update = _get_case_update(data, user.user_id, data.pop('@case_id', None))
+            update = _get_case_update(data, user.user_id, data.pop('case_id', None))
             updates.append(update)
         except BadValueError as e:
             errors.append(f'Error in row {i}: {e}')

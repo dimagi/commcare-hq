@@ -1,13 +1,11 @@
 from django.test import SimpleTestCase
 from django.utils.safestring import SafeText
-from unittest import skip
 
 from ..models import TempCommCareUser
 
 
-# NOTE: I do not think this class is used, as the constructor throws an exception
-@skip("constructor doesnt work")
-class TestTempUser_UsernameInReport(SimpleTestCase):
+class TestTempUserUsernameInReport(SimpleTestCase):
+
     def test_unknown_user_generates_correct_template(self):
         user = TempCommCareUser('test_domain', 'unknown_user', 'id')
         html = user.username_in_report

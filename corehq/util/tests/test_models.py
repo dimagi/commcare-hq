@@ -97,6 +97,27 @@ class TestForeignValue(TestCase):
         # matching instances indicates LRU cache was used
         self.assertIs(self.log.user_agent_fk, log2.user_agent_fk)
 
+    def test_get_value(self):
+        self.log.user_agent = "Mozilla"
+        self.log.save()
+
+        UserAccessLog.user_agent.get_value.cache_clear()
+        info = UserAccessLog.user_agent.get_value.cache_info()
+        self.assertEqual(info.misses, 0)
+        self.assertEqual(info.hits, 0)
+
+        log = UserAccessLog.objects.get(id=self.log.id)
+        self.assertEqual(log.user_agent, "Mozilla")
+        info = UserAccessLog.user_agent.get_value.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 0)
+
+        log = UserAccessLog.objects.get(id=self.log.id)
+        self.assertEqual(log.user_agent, "Mozilla")
+        info = UserAccessLog.user_agent.get_value.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 1)
+
     def test_foreign_value_duplicate(self):
         ua1 = UserAgent(value="Mozilla")
         ua2 = UserAgent(value="Mozilla")
@@ -107,8 +128,8 @@ class TestForeignValue(TestCase):
         self.log.save()
         self.assertEqual(self.log.user_agent_fk.id, ua1.id)
 
-    def test_lru_cache_disabled(self):
-        with foreign_value_lru_cache_disabled():
+    def test_get_related_lru_cache_disabled(self):
+        with foreign_value_lru_cache_disabled("get_related"):
             self.log.user_agent = "Mozilla"
             log2 = UserAccessLog(user_agent="Mozilla")
             self.assertEqual(self.log.user_agent_fk.id, log2.user_agent_fk.id)
@@ -116,11 +137,24 @@ class TestForeignValue(TestCase):
             # different instances indicates LRU cache was not used
             self.assertIsNot(self.log.user_agent_fk, log2.user_agent_fk)
 
+    def test_get_value_lru_cache_disabled(self):
+        with foreign_value_lru_cache_disabled("get_value"):
+            self.log.user_agent = "Mozilla"
+            self.log.save()
+            log2 = UserAccessLog(user_agent="Mozilla")
+            with self.assertNumQueries(1):
+                self.assertEqual(log2.user_agent, "Mozilla")
+
+            # successive access to the save value hits the DB
+            log2 = UserAccessLog(user_agent="Mozilla")
+            with self.assertNumQueries(1):
+                self.assertEqual(log2.user_agent, "Mozilla")
+
 
 @contextmanager
-def foreign_value_lru_cache_disabled():
+def foreign_value_lru_cache_disabled(cached_func):
     def reset_cached_property():
-        fv_prop.__dict__.pop("get_related", None)
+        fv_prop.__dict__.pop(cached_func, None)
 
     fv_prop = UserAccessLog.user_agent
     reset_cached_property()

@@ -15,7 +15,7 @@ from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
 from corehq.apps.users.util import normalize_username
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache

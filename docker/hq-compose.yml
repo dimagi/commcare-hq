@@ -5,26 +5,40 @@ services:
       context: .
       dockerfile: "${DOCKERFILE}"
     environment:
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 elasticsearch2:6200 minio:9980 kafka:9092"
+      CI: "${CI}"
+      CODECOV_TOKEN: "${CODECOV_TOKEN}"
+      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+      DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
+      DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
       JS_SETUP: "${JS_SETUP}"
+      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
-      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
-      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
-      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      TRAVIS: "${TRAVIS}"
+      TRAVIS_BRANCH: "${TRAVIS_BRANCH}"
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_COMMIT: "${TRAVIS_COMMIT}"
+      TRAVIS_EVENT_TYPE: "${TRAVIS_EVENT_TYPE}"
+      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
+      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
+      TRAVIS_JOB_ID: "${TRAVIS_JOB_ID}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
-      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
+      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      TRAVIS_PULL_REQUEST_BRANCH: "${TRAVIS_PULL_REQUEST_BRANCH}"
+      TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
+      TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
       UCR_CITUS_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
     privileged: true  # allows mount inside container
     links:
       - postgres
       - couch
       - redis
-      - elasticsearch
       - elasticsearch2
+      - elasticsearch5
       - kafka
       - zookeeper
       - minio
@@ -57,7 +71,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: klaemo/couchdb:2.0-dev
+    image: dimagi/couchdb-dev:3.1.1
     command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ulimits:
       # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
@@ -77,24 +91,25 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
-  elasticsearch:
-    image: elasticsearch:7.9.1
-    environment:
-      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    expose:
-      - "9200"
-    volumes:
-      - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
-
   elasticsearch2:
     image: elasticsearch:2.4.6
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
-      - "6200"  # is used in python-elasticsearch-v7 build matrix
+      - "9200"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
       - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+
+  elasticsearch5:
+    image: elasticsearch:5.6.16
+    environment:
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch5:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper

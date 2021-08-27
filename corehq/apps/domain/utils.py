@@ -67,7 +67,7 @@ def get_domains_created_by_user(creating_user):
 def domain_name_stop_words():
     path = os.path.join(os.path.dirname(__file__), 'static', 'domain', 'json')
     with open(os.path.join(path, 'stop_words.yml')) as f:
-        return tuple([word.strip() for word in f.readlines() if word[0] != '#'])
+        return {word.strip() for word in f.readlines() if word[0] != '#'}
 
 
 def get_domain_url_slug(hr_name, max_length=25, separator='-'):

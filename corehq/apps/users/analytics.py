@@ -80,3 +80,8 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
         user_es = user_es.search_string_query(search_string, default_search_fields)
 
     return user_es.start(offset).size(limit).sort('username.exact')
+
+
+def get_role_user_count(domain, role_id):
+    from corehq.apps.es.users import UserES
+    return UserES().is_active().domain(domain).role_id(role_id).count()

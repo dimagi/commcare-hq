@@ -130,7 +130,10 @@ class ProcessorProgressLogger(object):
         print(f"{self.prefix}Processing {total} documents{suffix}: ...", file=self.stream)
 
     def document_skipped(self, doc_dict):
-        print(f"{self.prefix}Skip: {doc_dict['doc_type']} {doc_dict['id']}", file=self.stream)
+        doc_id = doc_dict.get('id')
+        if doc_id is None:
+            doc_id = doc_dict.get('_id')
+        print(f"{self.prefix}Skip: {doc_dict['doc_type']} {doc_id}", file=self.stream)
 
     def document_processed(self, doc_dict, doc_updates):
         pass

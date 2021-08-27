@@ -58,5 +58,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
                 $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
             }
         });
+
     });
 });

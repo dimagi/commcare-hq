@@ -27,7 +27,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
@@ -127,7 +127,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self.user = create_restore_user(self.domain, 'user', '123')
 
     def tearDown(self):
-        self.user._couch_user.delete(deleted_by=None)
+        self.user._couch_user.delete(self.domain, deleted_by=None)
         for lt in self.location_types.values():
             lt.expand_to = None
             lt._expand_from_root = False
@@ -446,7 +446,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     @classmethod
     def tearDownClass(cls):
         cls.loc_fields.delete()
-        cls.user._couch_user.delete(deleted_by=None)
+        cls.user._couch_user.delete(cls.domain, deleted_by=None)
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):

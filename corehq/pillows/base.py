@@ -1,3 +1,6 @@
+from corehq.apps.change_feed.data_sources import SOURCE_COUCH
+from corehq.form_processor.utils import should_use_sql_backend
+
 VALUE_TAG = '#value'
 
 
@@ -53,3 +56,9 @@ def restore_property_dict(report_dict_item):
             restored[k] = v
 
     return restored
+
+
+def is_couch_change_for_sql_domain(change):
+    if not change.metadata or not change.metadata.domain:
+        return False
+    return change.metadata.data_source_type == SOURCE_COUCH and should_use_sql_backend(change.metadata.domain)

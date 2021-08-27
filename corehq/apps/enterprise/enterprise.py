@@ -11,7 +11,7 @@ from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.enterprise.exceptions import EnterpriseReportError
-from corehq.apps.accounting.models import BillingAccount, Subscription
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.calculations import sms_in_last
@@ -19,12 +19,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_all_user_rows,
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, Invitation, UserRole
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.quickcache import quickcache
 
 
@@ -87,9 +87,7 @@ class EnterpriseReport(object):
 
     @memoized
     def domains(self):
-        subscriptions = Subscription.visible_objects.filter(account_id=self.account.id, is_active=True)
-        domain_names = set(s.subscriber.domain for s in subscriptions)
-        return [Domain.get_by_name(name) for name in domain_names]
+        return [Domain.get_by_name(name) for name in self.account.get_domains()]
 
     @property
     def rows(self):

@@ -8,14 +8,14 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -26,7 +26,7 @@ from custom.covid.rules.custom_actions import close_cases_assigned_to_checkin
 from custom.covid.rules.custom_criteria import associated_usercase_closed
 
 
-@use_sql_backend
+@sharded
 class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
     def setUp(self):
         super().setUp()

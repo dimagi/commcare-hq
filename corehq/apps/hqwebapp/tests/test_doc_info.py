@@ -24,12 +24,12 @@ class TestDocInfo(TestCase):
 
     def test_couch_user(self):
         user = CommCareUser.create(self.domain, format_username("lilly", self.domain), "123", None, None)
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         self._test_doc(user.user_id, "CommCareUser")
 
     def test_web_user(self):
         user = WebUser.create(self.domain, "marias@email.com", "123", None, None)
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         self._test_doc(user.user_id, "WebUser")
 
     def test_location(self):

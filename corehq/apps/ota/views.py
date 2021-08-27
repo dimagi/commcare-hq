@@ -8,8 +8,9 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     JsonResponse,
+    HttpResponseNotFound,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -37,8 +38,8 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.filter_dsl import TooManyRelatedCasesError
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.case_search.filter_dsl import CaseFilterError, TooManyRelatedCasesError
+from corehq.apps.case_search.utils import CaseSearchCriteria, get_related_cases
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     mobile_auth,
@@ -49,13 +50,14 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from custom.icds_core.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -92,20 +94,40 @@ def restore(request, domain, app_id=None):
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
+    return app_aware_search(request, domain, None)
+
+
+@location_safe
+@mobile_auth
+@check_domain_migration
+def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+        Daterange can be specified in the format __range__YYYY-MM-DD__YYYY-MM-DD
+        Multiple values can be specified for a param, which will be searched with OR operator
+
     Returns results as a fixture with the same structure as a casedb instance.
+
+
     """
-    criteria = request.GET.dict()
+    criteria = {k: v[0] if len(v) == 1 else v for k, v in request.GET.lists()}
     try:
+        # could be a list or a single string
         case_type = criteria.pop('case_type')
+        case_types = case_type if isinstance(case_type, list) else [case_type]
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
     try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
     except TooManyRelatedCasesError:
         return HttpResponse(_('Search has too many results. Please try a more specific search.'), status=400)
+    except CaseFilterError as e:
+        # This is an app building error, notify so we can track
+        notify_exception(request, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        return HttpResponse(str(e), status=400)
     search_es = case_search_criteria.search_es
 
     try:
@@ -118,6 +140,9 @@ def search(request, domain):
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+    if app_id:
+        cases.extend(get_related_cases(domain, app_id, case_types, cases))
+
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -144,7 +169,7 @@ def claim(request, domain):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
-        claim_case(domain, restore_user.user_id, case_id,
+        claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
@@ -263,10 +288,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         skip_fixtures = False
 
     app = get_app_cached(domain, app_id) if app_id else None
-    if app:
-        error_response = check_authorization(domain, couch_user, app.origin_id)
-        if error_response:
-            return error_response, None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -318,9 +339,6 @@ def heartbeat(request, domain, app_build_id):
 
     info["app_id"] = app_id
     if master_app_id:
-        error_response = check_authorization(domain, request.couch_user, master_app_id)
-        if error_response:
-            return error_response
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 
@@ -411,3 +429,33 @@ def recovery_measures(request, domain, build_id):
     if measures:
         response["recovery_measures"] = measures
     return JsonResponse(response)
+
+
+@location_safe
+@mobile_auth
+@require_GET
+def registry_case(request, domain):
+    case_id = request.GET.get("case_id")
+    case_type = request.GET.get("case_type")
+    registry = request.GET.get("registry")
+
+    missing = [
+        name
+        for name, value in zip(["case_id", "case_type", "registry"], [case_id, case_type, registry])
+        if not value
+    ]
+    if missing:
+        return HttpResponseBadRequest(ngettext(
+            "'{params}' is a required parameter",
+            "'{params}' are required parameters",
+            len(missing)
+        ).format(params="', '".join(missing)))
+
+    try:
+        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type)
+    except RegistryNotFound:
+        return HttpResponseNotFound(f"Registry '{registry}' not found")
+    except (CaseNotFound, RegistryAccessException):
+        return HttpResponseNotFound(f"Case '{case_id}' not found")
+
+    return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")

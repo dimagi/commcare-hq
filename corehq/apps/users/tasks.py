@@ -26,8 +26,7 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -49,21 +48,11 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
     from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
     errors = []
     try:
+        args = [domain, download_id, user_filters, bulk_download_users_async, owner_id]
         if is_web_download:
-            dump_web_users(
-                domain,
-                download_id,
-                bulk_download_users_async,
-                owner_id,
-            )
+            dump_web_users(*args)
         else:
-            dump_users_and_groups(
-                domain,
-                download_id,
-                user_filters,
-                bulk_download_users_async,
-                owner_id,
-            )
+            dump_users_and_groups(*args)
     except GroupNameError as e:
         group_urls = [
             reverse('group_members', args=[domain, group.get_id])
@@ -100,7 +89,6 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
-    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -302,7 +290,7 @@ def remove_unused_custom_fields_from_users_task(domain):
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id)
-    domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
+    domain_membership = user.get_domain_membership(domain, allow_enterprise=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):

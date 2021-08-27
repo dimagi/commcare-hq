@@ -12,7 +12,7 @@ import mock
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -171,7 +171,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete(deleted_by=None)
+        cls.suffolk_user.delete(cls.domain, deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 

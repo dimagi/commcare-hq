@@ -21,7 +21,6 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import Permissions, UserRole, WebUser
 
 from corehq.sql_db.connections import Session
@@ -181,6 +180,27 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    def test_report_preview_data(self):
+        """
+        Test the output of ConfigurableReportView.export_table()
+        """
+        report, view = self._build_report_and_view()
+
+        actual = ConfigurableReportView.report_preview_data(report.domain, report)
+        expected = {
+            "table": [
+                ['report_column_display_fruit', 'report_column_display_percent'],
+                ['apple', '150%']
+            ],
+            "map_config": report.map_config,
+            "chart_configs": report.charts,
+            "aaData": [{
+                "report_column_col_id_fruit": "apple",
+                "report_column_col_id_percent": "150%"
+            }]
+        }
+        self.assertEqual(actual, expected)
+
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
@@ -225,7 +245,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             username = 'editor' if can_edit_reports else 'viewer'
             toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
 
-            user_role = UserRole(
+            # user_role should be deleted along with the domain.
+            user_role = UserRole.create(
                 domain=domain.name,
                 name=rolename,
                 permissions=Permissions(edit_commcare_users=True,
@@ -240,14 +261,12 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                                         view_reports=True
                                         )
             )
-            user_role.save()
-            # user_role should be deleted along with the domain.
 
             web_user = WebUser.create(domain.name, username, '***', None, None)
             web_user.set_role(domain.name, user_role.get_qualified_id())
             web_user.current_domain = domain.name
             web_user.save()
-            self.addCleanup(web_user.delete, deleted_by=None)
+            self.addCleanup(web_user.delete, domain.name, deleted_by=None)
 
             request = HttpRequest()
             request.can_access_all_locations = True

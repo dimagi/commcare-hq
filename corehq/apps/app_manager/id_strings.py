@@ -4,7 +4,7 @@ ROOT = 'root'
 
 
 def _format_to_regex(pattern):
-    """
+    r"""
     convert a format string with %s and %d to a regex
 
     %s => .*
@@ -14,13 +14,13 @@ def _format_to_regex(pattern):
     everything else gets `re.escape`d
 
     >>> import re
-    >>> format = '%shello %%sam %s, you are %d years old.'
-    >>> regex = _format_to_regex(format)
-    >>> print regex
+    >>> format_ = '%shello %%sam %s, you are %d years old.'
+    >>> regex = _format_to_regex(format_)
+    >>> print(regex)
     .*hello\ %sam\ .*\,\ you\ are\ [0-9]+\ years\ old\.
-    >>> bool(re.match(regex, format % ("Oh ", "i am", 6)))
+    >>> bool(re.match(regex, format_ % ("Oh ", "i am", 6)))
     True
-    >>> bool(re.match(regex, format))
+    >>> bool(re.match(regex, format_))
     False
 
     """
@@ -234,9 +234,29 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
+@pattern('case_search.m%d.icon')
+def case_search_icon_locale(module):
+    return "case_search.m{module.id}.icon".format(module=module)
+
+
+@pattern('case_search.m%d.audio')
+def case_search_audio_locale(module):
+    return "case_search.m{module.id}.audio".format(module=module)
+
+
 @pattern('case_search.m%d.again')
 def case_search_again_locale(module):
     return "case_search.m{module.id}.again".format(module=module)
+
+
+@pattern('case_search_again.m%d.again.icon')
+def case_search_again_icon_locale(module):
+    return "case_search.m{module.id}.again.icon".format(module=module)
+
+
+@pattern('case_search.m%d.again.audio')
+def case_search_again_audio_locale(module):
+    return "case_search.m{module.id}.again.audio".format(module=module)
 
 
 @pattern('search_command.m%d')

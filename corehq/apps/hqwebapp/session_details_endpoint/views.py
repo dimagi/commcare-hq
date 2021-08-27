@@ -1,17 +1,18 @@
-import datetime
 import json
 
-from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
-from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
+from corehq.apps.users.models import CouchUser
+from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
-from corehq.toggles import DISABLE_WEB_APPS
+from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -54,25 +55,27 @@ class SessionDetailsView(View):
             raise Http404
 
         domain = data.get('domain')
-        if domain and DISABLE_WEB_APPS.enabled(domain):
+        if domain and toggles.DISABLE_WEB_APPS.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=data.get('domain'))
+        TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=domain)
         session.save()
 
         domains = set()
-        for domain in couch_user.domains:
-            domains.add(domain)
-            mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
-            domains.update(mirror_domains)
+        for member_domain in couch_user.domains:
+            domains.add(member_domain)
+            domains.update(EnterprisePermissions.get_domains(member_domain))
 
+        enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
             'superUser': user.is_superuser,
             'authToken': None,
             'domains': list(domains),
-            'anonymous': False
+            'anonymous': False,
+            'enabled_toggles': list(enabled_toggles),
+            'enabled_previews': list(previews_enabled_for_domain(domain))
         })

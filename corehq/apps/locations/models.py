@@ -72,12 +72,12 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 def stock_level_config_for_domain(domain, commtrack_enabled):
     if not commtrack_enabled:
         return None
-    from corehq.apps.commtrack.models import SQLCommtrackConfig
-    ct_config = SQLCommtrackConfig.for_domain(domain)
-    if ct_config is None or not hasattr(ct_config, 'sqlstocklevelsconfig'):
+    from corehq.apps.commtrack.models import CommtrackConfig
+    ct_config = CommtrackConfig.for_domain(domain)
+    if ct_config is None or not hasattr(ct_config, 'stocklevelsconfig'):
         return None
     else:
-        return ct_config.sqlstocklevelsconfig
+        return ct_config.stocklevelsconfig
 
 
 class LocationType(models.Model):

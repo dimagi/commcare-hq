@@ -21,17 +21,15 @@ from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 
 from corehq import toggles
-from corehq.apps.couch_sql_migration.progress import (
-    couch_sql_migration_in_progress,
-)
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.exceptions import AttachmentNotFound, StockProcessingError
+from corehq.form_processor.exceptions import StockProcessingError
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
     RebuildWithReason,
+    STANDARD_CHARFIELD_LENGTH,
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util import cmp
@@ -53,10 +51,10 @@ def _validate_length(length):
 
 PROPERTY_TYPE_MAPPING = {
     'opened_on': iso8601.parse_date,
-    'name': _validate_length(255),
-    'type': _validate_length(255),
-    'owner_id': _validate_length(255),
-    'external_id': _validate_length(255),
+    'name': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'type': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'owner_id': _validate_length(STANDARD_CHARFIELD_LENGTH),
+    'external_id': _validate_length(STANDARD_CHARFIELD_LENGTH),
 }
 
 
@@ -106,14 +104,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
-        sql_migration_in_progress = couch_sql_migration_in_progress(xformdoc.domain)
-        if case_update.has_referrals() and not sql_migration_in_progress:
+        if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if case_update.version and case_update.version != V2 and not sql_migration_in_progress:
+        if case_update.version and case_update.version != V2:
             raise VersionNotSupported
 
         if not case_update.user_id and xformdoc.user_id:
@@ -190,17 +187,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         for index_update in action.indices:
             if self.case.has_index(index_update.identifier):
-                if not index_update.referenced_id:
-                    # empty ID = delete
-                    index = self.case.get_index(index_update.identifier)
-                    self.case.track_delete(index)
-                else:
-                    # update
-                    index = self.case.get_index(index_update.identifier)
-                    index.referenced_type = index_update.referenced_type
-                    index.referenced_id = index_update.referenced_id
-                    index.relationship = index_update.relationship
-                    self.case.track_update(index)
+                # update
+                index = self.case.get_index(index_update.identifier)
+                index.referenced_type = index_update.referenced_type
+                index.referenced_id = index_update.referenced_id
+                index.relationship = index_update.relationship
+                self.case.track_update(index)
             else:
                 # no id, no index
                 if index_update.referenced_id:

@@ -262,7 +262,7 @@ def _iter_missing_ids(db, min_tries, resume_key, view_name, view_params, repair)
         return [last_result]
 
     args_provider = NoSkipArgsProvider(view_params)
-    return ResumableFunctionIterator(resume_key, data_function, args_provider, item_getter=None)
+    return ResumableFunctionIterator(resume_key, data_function, args_provider)
 
 
 def repair_couch_docs(db, missing, get_doc_ids, min_tries):

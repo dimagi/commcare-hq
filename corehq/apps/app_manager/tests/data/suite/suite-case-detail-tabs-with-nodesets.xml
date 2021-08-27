@@ -99,7 +99,7 @@
         </template>
       </field>
     </detail>
-    <detail nodeset="some/data">
+    <detail nodeset="instance('casedb')/casedb/case[@case_type='show'][index/parent=current()/@case_id][@status='open']">
       <title>
         <text>
           <locale id="m0.case_long.tab.2.title"/>
@@ -144,17 +144,20 @@
           </text>
         </template>
       </field>
-      <field>
-        <header>
-          <text>
-            <locale id="m0.case_long.case_gender_6.header"/>
-          </text>
-        </header>
-        <template>
-          <text>
-            <xpath function="gender"/>
-          </text>
-        </template>
+       <field>
+         <header width="0">
+           <text/>
+         </header>
+         <template width="0">
+            <text>
+              <xpath function="gender"/>
+            </text>
+         </template>
+         <sort direction="ascending" order="1" type="string">
+            <text>
+              <xpath function="gender"/>
+            </text>
+         </sort>
        </field>
     </detail>
     <variables>

@@ -10,7 +10,6 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembership,
-    UserRole,
     WebUser,
 )
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -28,7 +27,6 @@ class TestCaseListReport(TestCase):
         cls.domain = 'case-list-test'
         cls.user = WebUser(username='test@cchq.com', domains=[cls.domain])
         cls.user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='admin')]
-        UserRole.init_domain_with_presets(cls.domain)
         cls.request_factory = RequestFactory()
 
         from corehq.apps.reports.tests.data.case_list_report_data import (
@@ -39,7 +37,7 @@ class TestCaseListReport(TestCase):
         for user in dummy_user_list:
             user_obj = CouchUser.get_by_username(user['username'])
             if user_obj:
-                user_obj.delete('')
+                user_obj.delete(cls.domain, deleted_by=None)
         cls.user_list = []
         for user in dummy_user_list:
             user_obj = CommCareUser.create(**user) if user['doc_type'] == 'CommcareUser'\
@@ -71,7 +69,7 @@ class TestCaseListReport(TestCase):
         ensure_index_deleted(USER_INDEX)
         ensure_index_deleted(CASE_INDEX)
         for user in cls.user_list:
-            user.delete(deleted_by='')
+            user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     @classmethod

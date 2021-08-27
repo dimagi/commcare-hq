@@ -1,3 +1,6 @@
+# WARNING this module looks up cases in Couch, but the domain (crs-remind) has
+# been migrated to SQL, so any cases created or updated after the migration was
+# completed (2021-05-12) will either cause errors or incorrect report output.
 from datetime import timedelta
 import datetime
 from django.utils.translation import ugettext_noop

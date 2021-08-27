@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
+from corehq.apps.userreports.dbaccessors import get_all_registry_data_source_ids, \
+    get_registry_data_sources_modified_since
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    StaticDataSourceConfiguration,
+    StaticDataSourceConfiguration, RegistryDataSourceConfiguration,
 )
+from dimagi.utils.couch.database import iter_docs
 
 
 class DataSourceProvider(metaclass=ABCMeta):
@@ -13,14 +16,12 @@ class DataSourceProvider(metaclass=ABCMeta):
 
     @abstractmethod
     def get_all_data_sources(self):
-        pass
-
-    @abstractmethod
-    def by_domain(self, domain):
+        """Return a list of active data sources"""
         pass
 
     @abstractmethod
     def get_data_sources_modified_since(self, timestamp):
+        """Return a list of active data sources modified since the given timestamp"""
         pass
 
     def get_data_sources(self):
@@ -37,11 +38,6 @@ class DynamicDataSourceProvider(DataSourceProvider):
         return DataSourceConfiguration.view(
             'userreports/active_data_sources', reduce=False, include_docs=True).all()
 
-    def by_domain(self, domain):
-        return DataSourceConfiguration.view(
-            'userreports/active_data_sources', startkey=[domain], endkey=[domain, {}],
-            reduce=False, include_docs=True).all()
-
     def get_data_sources_modified_since(self, timestamp):
         return DataSourceConfiguration.view(
             'userreports/data_sources_by_last_modified',
@@ -52,16 +48,23 @@ class DynamicDataSourceProvider(DataSourceProvider):
         ).all()
 
 
+class RegistryDataSourceProvider(DataSourceProvider):
+
+    def get_all_data_sources(self):
+        active_ids = get_all_registry_data_source_ids(is_active=True)
+        for result in iter_docs(RegistryDataSourceConfiguration.get_db(), active_ids):
+            yield RegistryDataSourceConfiguration.wrap(result)
+
+    def get_data_sources_modified_since(self, timestamp):
+        return get_registry_data_sources_modified_since(timestamp)
+
+
 class StaticDataSourceProvider(DataSourceProvider):
 
     def get_all_data_sources(self):
         return StaticDataSourceConfiguration.all()
 
-    def by_domain(self, domain):
-        return StaticDataSourceConfiguration.by_domain(domain)
-
     def get_data_sources_modified_since(self, timestamp):
-        # todo: support this if we care to.
         return []
 
 
@@ -74,9 +77,5 @@ class MockDataSourceProvider(DataSourceProvider):
     def get_all_data_sources(self):
         return [ds for domain, domain_sources in self.data_sources_by_domain.items() for ds in domain_sources]
 
-    def by_domain(self, domain):
-        return self.data_sources_by_domain.get(domain, [])
-
     def get_data_sources_modified_since(self, timestamp):
-        # todo: support this if we care to.
         return []

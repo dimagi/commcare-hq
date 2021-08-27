@@ -1,24 +1,10 @@
 from django.conf import settings
 
 if settings.ELASTICSEARCH_MAJOR_VERSION == 1:
-    import elasticsearch
-    from elasticsearch.exceptions import AuthorizationException
-    from elasticsearch import (
-        ConnectionError,
-        ConnectionTimeout,
-        Elasticsearch,
-        ElasticsearchException,
-        NotFoundError,
-        SerializationError,
-        ConflictError,
-        TransportError,
-        RequestError,
+    raise RuntimeError(
+        'Elasticsearch version 1 is no longer supported. Please upgrade Elasticsearch. Details: \n'
+        'https://github.com/dimagi/commcare-cloud/blob/master/changelog/0032-upgrade-to-elasticsearch-2.4.6.yml'
     )
-    from elasticsearch.client import (
-        IndicesClient,
-        SnapshotClient,
-    )
-    from elasticsearch.helpers import bulk, scan
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
     import elasticsearch2 as elasticsearch
     from elasticsearch2.exceptions import AuthorizationException
@@ -38,10 +24,10 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         SnapshotClient,
     )
     from elasticsearch2.helpers import bulk, scan
-elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-    import elasticsearch7 as elasticsearch
-    from elasticsearch7.exceptions import AuthorizationException
-    from elasticsearch7 import (
+elif settings.ELASTICSEARCH_MAJOR_VERSION == 5:
+    import elasticsearch5 as elasticsearch
+    from elasticsearch5.exceptions import AuthorizationException
+    from elasticsearch5 import (
         ConnectionError,
         ConflictError,
         ConnectionTimeout,
@@ -52,13 +38,13 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         TransportError,
         RequestError,
     )
-    from elasticsearch7.client import (
+    from elasticsearch5.client import (
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch7.helpers import bulk, scan
+    from elasticsearch5.helpers import bulk, scan
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2 or 7, given {}".format(
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2 or 5, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
 
 

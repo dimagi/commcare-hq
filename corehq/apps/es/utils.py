@@ -1,3 +1,4 @@
+from datetime import timezone, datetime
 from django.conf import settings
 from corehq.util.metrics import metrics_counter
 
@@ -46,3 +47,17 @@ def track_es_report_load(domain, report_slug, owner_count):
             owner_count,
             tags={'report_slug': report_slug, 'domain': domain}
         )
+
+
+def es_format_datetime(val):
+    """
+    Takes a date or datetime object and converts it to a format ES can read
+    (see DATE_FORMATS_ARR). Strings are returned unmodified.
+    """
+    if isinstance(val, str):
+        return val
+    elif isinstance(val, datetime) and val.microsecond and val.tzinfo:
+        # We don't support microsec precision with timezones
+        return val.astimezone(timezone.utc).replace(tzinfo=None).isoformat()
+    else:
+        return val.isoformat()

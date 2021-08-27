@@ -14,7 +14,7 @@ class PasswordLockoutTest(TestCase):
         self.user = WebUser.create(self.domain.name, self.username, self.password, None, None)
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
 
     def test_login_lockout(self):

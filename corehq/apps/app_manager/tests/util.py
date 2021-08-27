@@ -183,6 +183,10 @@ def patch_get_xform_resource_overrides():
     )
 
 
+def patch_validate_xform():
+    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _, __: None)
+
+
 @unit_testing_only
 def delete_all_apps():
     for doc_type in app_doc_types():

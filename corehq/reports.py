@@ -44,16 +44,18 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -347,6 +349,12 @@ SMS_ADMIN_INTERFACES = (
     )),
 )
 
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
+    )),
+)
+
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
@@ -364,5 +372,12 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+    )),
+)
+
+
+USER_MANAGEMENT_REPORTS = (
+    (_("User Management"), (
+        UserHistoryReport,
     )),
 )

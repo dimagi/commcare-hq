@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils import url_helpers
+from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
 log = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def service_provider_help_block(self):
-        help_link = "#"  # todo
+        help_link = get_documentation_url(self.idp)
         help_text = format_html(
             _('<a href="{}">Please read this guide</a> on how to set up '
               'CommCare HQ with Azure AD.<br />You will need the following '
@@ -258,7 +259,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
     )
     is_editable = forms.BooleanField(
-        label=ugettext_lazy("Enterprise Dashboard"),
+        label=ugettext_lazy("Enterprise Console"),
         required=False,
         widget=BootstrapCheckboxInput(
             inline_label=ugettext_lazy(

@@ -41,7 +41,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
 
     def tearDown(self):
         self.teardown_subscriptions()
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         clear_plan_version_cache()
         super().tearDown()

@@ -632,6 +632,11 @@ class ModuleMediaMixin(MediaMixin):
         if hasattr(self, 'case_list') and self.case_list.show:
             media.extend(self.menu_media(self.case_list, lang=lang))
 
+        # Case search and claim menu items
+        if hasattr(self, 'search_config'):
+            media.extend(self.menu_media(self.search_config.search_label, lang=lang))
+            media.extend(self.menu_media(self.search_config.search_again_label, lang=lang))
+
         for name, details, display in self.get_details():
             # Case list lookup - not language-specific
             if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
@@ -666,6 +671,11 @@ class ModuleMediaMixin(MediaMixin):
         # Case list menu item
         if hasattr(self, 'case_list') and self.case_list.show:
             count += self.rename_menu_media(self.case_list, old_path, new_path)
+
+        # Case search and claim menu items
+        if hasattr(self, 'search_config'):
+            count += self.rename_menu_media(self.search_config.search_label, old_path, new_path)
+            count += self.rename_menu_media(self.search_config.search_again_label, old_path, new_path)
 
         for name, details, display in self.get_details():
             # Case list lookup
@@ -825,6 +835,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
         media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
+
+    def get_case_search_label_media(self, module, label, to_language=None):
+        media_kwargs = self.get_media_ref_kwargs(module)
+        media_kwargs.update(to_language=to_language or self.default_language)
+        return self._get_item_media(label, media_kwargs)
 
     def get_case_list_lookup_image(self, module, type='case'):
         if not module:

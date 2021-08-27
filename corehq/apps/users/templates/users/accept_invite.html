@@ -41,7 +41,7 @@
                   {% else %}
                     <p class="lead">
                       {% blocktrans with user.username as username %}
-                        Would you liketo to accept the invitation
+                        Would you like to accept the invitation
                         to join the CommCare HQ {{ invite_type }}
                         <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
                       {% endblocktrans %}
@@ -89,18 +89,40 @@
               <h2>
                 {% blocktrans %}Create Account{% endblocktrans %}
               </h2>
-              <div class="help-block">
-                {% blocktrans %}
-                  To accept this {{ invite_type|lower }} invitation, you must create an account.
-                {% endblocktrans %}
-              </div>
+              {% if is_sso %}
+                <p class="help-block">
+                  {% blocktrans %}
+                    Your email is managed by {{ idp_name }}.
+                    You will be asked to authenticate with Single Sign-On
+                    in the next step.
+                  {% endblocktrans %}
+                </p>
+              {% else %}
+                <p class="help-block">
+                  {% blocktrans with invite_type|lower as invite_type_lower %}
+                    To accept this {{ invite_type_lower }} invitation, you must create an account.
+                  {% endblocktrans %}
+                </p>
+              {% endif %}
               <form name="form" method="post" action="">
+                {% if is_sso %}
+                  <div class="form-group">
+                    <label class="control-label">{% trans "Username" %}</label>
+                    <p class="lead">
+                      {{ invited_user }}
+                    </p>
+                  </div>
+                {% endif %}
                 {% include 'users/partials/register_user_form_fields.html' %}
                 <div class="form-bubble-actions">
                   <button type="submit"
                           class="btn btn-lg btn-primary"
                           data-bind="enable: passwordSufficient">
-                    {% trans "Create Account" %}
+                    {% if is_sso %}
+                      {% trans "Continue to Single Sign-On" %}
+                    {% else %}
+                      {% trans "Create Account" %}
+                    {% endif %}
                   </button>
                 </div>
               </form>

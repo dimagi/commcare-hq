@@ -109,7 +109,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT
 from corehq.util.timezones.fields import TimeZoneField
@@ -2453,11 +2452,6 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
-        app_id = self.cleaned_data.get('app_id')
-        if app_id:
-            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
-                self.add_error('app_id',
-                               _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
         return self.data.getlist('build_profile_id')

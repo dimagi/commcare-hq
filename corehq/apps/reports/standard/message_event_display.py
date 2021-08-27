@@ -24,6 +24,7 @@ from corehq.messaging.scheduling.views import (
     EditConditionalAlertView,
     EditScheduleView,
 )
+from corehq.util.quickcache import quickcache
 
 
 def get_status_display(event, sms=None):
@@ -79,69 +80,99 @@ def get_status_display(event, sms=None):
 
 
 def get_sms_status_display(sms):
+    slug, detail = get_sms_status_display_raw(sms)
+    display = SMS.STATUS_DISPLAY[slug]
+    detail = f" - {detail}" if detail else ""
+    return f"{display}{detail}"
+
+
+def get_sms_status_display_raw(sms):
     if sms.error:
         error = sms.system_error_message
         if error:
             error_message = SMS.ERROR_MESSAGES.get(error, error)
-            return '%s - %s' % (_('Error'), _(error_message))
-        return _('Error')
+            return SMS.STATUS_ERROR, _(error_message)
+        return SMS.STATUS_ERROR, None
     if not sms.processed:
-        return _('Queued')
+        return SMS.STATUS_QUEUED, None
     if sms.direction == INCOMING:
-        return _('Received')
+        return SMS.STATUS_RECEIVED, None
+
+    detail = ""
     if sms.is_status_pending():
-        detail = " " + _("message ID: {id}").format(id=sms.backend_message_id)
-    else:
-        detail = ""
+        detail = _("message ID: {id}").format(id=sms.backend_message_id)
+
     if sms.direction == OUTGOING:
         if sms.workflow == WORKFLOW_FORWARD:
-            return _('Forwarded') + detail
-        return _('Sent') + detail
-    return _('Unknown') + detail
+            return SMS.STATUS_FORWARDED, detail
+        return SMS.STATUS_SENT, detail
+    return SMS.STATUS_UNKNOWN, detail
 
 
-def _get_keyword_display(keyword_id, content_cache):
+def _get_keyword_display_raw(keyword_id):
     from corehq.apps.reminders.views import (
         EditStructuredKeywordView,
         EditNormalKeywordView,
     )
-    if keyword_id in content_cache:
-        return content_cache[keyword_id]
-
     try:
         keyword = Keyword.objects.get(couch_id=keyword_id)
     except Keyword.DoesNotExist:
+        return None, None
+
+    urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
+               else EditNormalKeywordView.urlname)
+    return keyword.description, reverse(urlname, args=[keyword.domain, keyword_id])
+
+
+def _get_keyword_display(keyword_id, content_cache):
+    if keyword_id in content_cache:
+        return content_cache[keyword_id]
+
+    display, url = _get_keyword_display_raw(keyword_id)
+    if not display:
         display = _('(Deleted Keyword)')
     else:
-        urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
-                   else EditNormalKeywordView.urlname)
-        display = format_html('<a target="_blank" href="{}">{}</a>',
-            reverse(urlname, args=[keyword.domain, keyword_id]),
-            keyword.description,
-        )
+        display = format_html('<a target="_blank" href="{}">{}</a>', url, display)
 
     content_cache[keyword_id] = display
     return display
+
+
+def _get_reminder_display_raw(domain, handler_id):
+    try:
+        info = MigratedReminder.objects.get(handler_id=handler_id)
+        if info.rule_id:
+            return _get_case_rule_display_raw(domain, info.rule_id)
+    except MigratedReminder.DoesNotExist:
+        pass
+    return None, None
 
 
 def _get_reminder_display(domain, handler_id, content_cache):
     if handler_id in content_cache:
         return content_cache[handler_id]
 
-    display = None
+    result, url = _get_reminder_display_raw(domain, handler_id)
+    if not result:
+        result = _("(Deleted Conditional Alert)")
+    elif url:
+        result = format_html('<a target="_blank" href="{}">{}</a>', url, result)
 
+    content_cache[handler_id] = result
+    return result
+
+
+def _get_scheduled_broadcast_display_raw(domain, broadcast_id):
     try:
-        info = MigratedReminder.objects.get(handler_id=handler_id)
-        if info.rule_id:
-            display = _get_case_rule_display(domain, info.rule_id, content_cache)
-    except MigratedReminder.DoesNotExist:
-        pass
+        broadcast = ScheduledBroadcast.objects.get(domain=domain, pk=broadcast_id)
+    except ScheduledBroadcast.DoesNotExist:
+        return "-", None
 
-    if not display:
-        display = _("(Deleted Conditional Alert)")
-
-    content_cache[handler_id] = display
-    return display
+    if not broadcast.deleted:
+        return broadcast.name, reverse(EditScheduleView.urlname, args=[
+            domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id
+        ])
+    return None, None
 
 
 def _get_scheduled_broadcast_display(domain, broadcast_id, content_cache):
@@ -149,22 +180,27 @@ def _get_scheduled_broadcast_display(domain, broadcast_id, content_cache):
     if cache_key in content_cache:
         return content_cache[cache_key]
 
-    try:
-        broadcast = ScheduledBroadcast.objects.get(domain=domain, pk=broadcast_id)
-    except ScheduledBroadcast.DoesNotExist:
-        result = '-'
-    else:
-        if broadcast.deleted:
-            result = _("(Deleted Broadcast)")
-        else:
-            result = format_html('<a target="_blank" href="{}">{}</a>',
-                reverse(EditScheduleView.urlname,
-                        args=[domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id]),
-                broadcast.name,
-            )
+    result, url = _get_scheduled_broadcast_display_raw(domain, broadcast_id)
+    if not result:
+        result = _("(Deleted Broadcast)")
+    elif url:
+        result = format_html('<a target="_blank" href="{}">{}</a>', url, result)
 
     content_cache[cache_key] = result
     return result
+
+
+def _get_immediate_broadcast_display_raw(domain, broadcast_id):
+    try:
+        broadcast = ImmediateBroadcast.objects.get(domain=domain, pk=broadcast_id)
+    except ImmediateBroadcast.DoesNotExist:
+        return '-', None
+
+    if not broadcast.deleted:
+        return broadcast.name, reverse(EditScheduleView.urlname, args=[
+            domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id
+        ])
+    return None, None
 
 
 def _get_immediate_broadcast_display(domain, broadcast_id, content_cache):
@@ -172,22 +208,25 @@ def _get_immediate_broadcast_display(domain, broadcast_id, content_cache):
     if cache_key in content_cache:
         return content_cache[cache_key]
 
-    try:
-        broadcast = ImmediateBroadcast.objects.get(domain=domain, pk=broadcast_id)
-    except ImmediateBroadcast.DoesNotExist:
-        result = '-'
-    else:
-        if broadcast.deleted:
-            result = _("(Deleted Broadcast)")
-        else:
-            result = format_html('<a target="_blank" href="{}">{}</a>',
-                reverse(EditScheduleView.urlname,
-                        args=[domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id]),
-                broadcast.name,
-            )
+    result, url = _get_immediate_broadcast_display_raw(domain, broadcast_id)
+    if not result:
+        result = _("(Deleted Broadcast)")
+    elif url:
+        result = format_html('<a target="_blank" href="{}">{}</a>', url, result)
 
     content_cache[cache_key] = result
     return result
+
+
+def _get_case_rule_display_raw(domain, rule_id):
+    try:
+        rule = AutomaticUpdateRule.objects.get(domain=domain, pk=rule_id)
+    except AutomaticUpdateRule.DoesNotExist:
+        return "-", None
+
+    if not rule.deleted:
+        return rule.name, reverse(EditConditionalAlertView.urlname, args=[domain, rule_id])
+    return None, None
 
 
 def _get_case_rule_display(domain, rule_id, content_cache):
@@ -195,20 +234,11 @@ def _get_case_rule_display(domain, rule_id, content_cache):
     if cache_key in content_cache:
         return content_cache[cache_key]
 
-    try:
-        rule = AutomaticUpdateRule.objects.get(domain=domain, pk=rule_id)
-    except AutomaticUpdateRule.DoesNotExist:
-        result = '-'
-    else:
-        if rule.deleted:
-            result = _("(Deleted Conditional Alert)")
-        else:
-            result = format_html('<a target="_blank" href="{}">{}</a>',
-                reverse(EditConditionalAlertView.urlname,
-                        args=[domain, rule_id]),
-                rule.name,
-            )
-
+    result, url = _get_case_rule_display_raw(domain, rule_id)
+    if not result:
+        result = _("(Deleted Conditional Alert)")
+    elif url:
+        result = format_html('<a target="_blank" href="{}">{}</a>', url, result)
     content_cache[cache_key] = result
     return result
 
@@ -236,3 +266,45 @@ def get_event_display(domain, event, content_cache):
 
     content_choices = dict(MessagingEvent.CONTENT_CHOICES)
     return _(content_choices.get(event.content_type, '-'))
+
+
+@quickcache(["domain", "source", "source_id"], timeout=5 * 60)
+def get_source_display(domain, source, source_id):
+    if not source_id:
+        return None
+
+    if source == MessagingEvent.SOURCE_KEYWORD:
+        display, _ = _get_keyword_display_raw(source_id)
+        return display or "deleted-keyword"
+    elif source == MessagingEvent.SOURCE_REMINDER:
+        display, _ = _get_reminder_display_raw(domain, source_id)
+        return display or "deleted-conditional-alert"
+    elif source == MessagingEvent.SOURCE_SCHEDULED_BROADCAST:
+        display, _ = _get_scheduled_broadcast_display_raw(domain, source_id)
+        return display or "deleted-broadcast"
+    elif source == MessagingEvent.SOURCE_IMMEDIATE_BROADCAST:
+        display, _ = _get_immediate_broadcast_display_raw(domain, source_id)
+        return display or "deleted-broadcast"
+    elif source == MessagingEvent.SOURCE_CASE_RULE:
+        display, _ = _get_case_rule_display_raw(domain, source_id)
+        return display or "deleted-conditional-alert"
+
+    return None
+
+
+def get_event_display_api(event):
+    if event.source_id:
+        source_display = get_source_display(event.domain, event.source, event.source_id)
+        if source_display:
+            return source_display
+
+    detail = ""
+    if event.content_type in (
+        MessagingEvent.CONTENT_SMS_SURVEY,
+        MessagingEvent.CONTENT_IVR_SURVEY,
+    ):
+        form_name = event.form_name or "unknown-form"
+        detail = f" ({form_name})"
+
+    type_ = MessagingEvent.CONTENT_TYPE_SLUGS.get(event.content_type, "unknown")
+    return f"{type_}{detail}"

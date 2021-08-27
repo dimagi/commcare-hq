@@ -14,10 +14,6 @@ def get_saml2_config(identity_provider):
             "url": url_helpers.get_saml_acs_url(identity_provider),
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_POST,
         },
-        "singleLogoutService": {
-            "url": url_helpers.get_saml_sls_url(identity_provider),
-            "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
-        },
         "attributeConsumingService": {
             "serviceName": "CommCare HQ",
             "serviceDescription": "SSO for CommCare HQ",

@@ -53,7 +53,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         super(CaseObjectCacheTest, self).tearDown()
 

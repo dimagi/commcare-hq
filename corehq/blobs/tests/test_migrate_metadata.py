@@ -63,13 +63,14 @@ class TestMigrateBackend(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestMigrateBackend, cls).setUpClass()
-        cls.user = mod.CommCareUser(username="testuser", domain="test")
+        cls.domain = "test"
+        cls.user = mod.CommCareUser(username="testuser", domain=cls.domain)
         cls.user.save()
         assert cls.user._id, cls.user
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super(TestMigrateBackend, cls).tearDownClass()
 
     def CaseUploadFileMeta_save(self, obj, key):

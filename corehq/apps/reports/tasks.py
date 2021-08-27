@@ -34,6 +34,7 @@ from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
+    get_form_ids_with_multimedia,
     scroll_case_names,
 )
 
@@ -234,6 +235,24 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
 
 
 @task(serializer='pickle')
+def build_form_multimedia_zipfile(
+        domain,
+        export_id,
+        es_filters,
+        download_id,
+        owner_id,
+):
+    from corehq.apps.export.models import FormExportInstance
+    from corehq.apps.export.export import get_export_query
+    export = FormExportInstance.get(export_id)
+    es_query = get_export_query(export, es_filters)
+    form_ids = get_form_ids_with_multimedia(es_query)
+    _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id,
+                                      build_form_multimedia_zipfile)
+
+
+# ToDo: Remove post build_form_multimedia_zipfile rollout
+@task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
         export_id,
@@ -247,10 +266,14 @@ def build_form_multimedia_zip(
     form_ids = get_form_ids_having_multimedia(
         domain, export.app_id, export.xmlns, datespan, user_types
     )
+    _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, build_form_multimedia_zip)
+
+
+def _generate_form_multimedia_zipfile(domain, export, form_ids, download_id, owner_id, task_name):
     forms_info = _get_form_attachment_info(domain, form_ids, export)
 
     num_forms = len(forms_info)
-    DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
+    DownloadBase.set_progress(task_name, 0, num_forms)
 
     all_case_ids = set.union(*(info['case_ids'] for info in forms_info)) if forms_info else set()
     case_id_to_name = _get_case_names(domain, all_case_ids)
@@ -262,7 +285,7 @@ def build_form_multimedia_zip(
             zip_name = 'multimedia-{}'.format(unidecode(export.name))
             _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
 
-    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+    DownloadBase.set_progress(task_name, num_forms, num_forms)
 
 
 def _get_form_attachment_info(domain, form_ids, export):

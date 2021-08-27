@@ -1,8 +1,6 @@
-import six
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
-from django.test.utils import override_settings
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.tests.util import (
     delete_all_cases,

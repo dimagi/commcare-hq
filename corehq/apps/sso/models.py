@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.urls import reverse
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
@@ -136,6 +137,19 @@ class IdentityProvider(models.Model):
             email_domain__identity_provider=self,
         ).values_list('username', flat=True)
 
+    def get_login_url(self, username=None):
+        """
+        Gets the login endpoint for the IdentityProvider based on the protocol
+        being used. Since we only support SAML2 right now, this redirects to
+        the SAML2 login endpoint.
+        :param username: (string) username to pre-populate IdP login with
+        :return: (String) identity provider login url
+        """
+        return '{}?username={}'.format(
+            reverse('sso_saml_login', args=(self.slug,)),
+            username
+        )
+
     def get_active_projects(self):
         """
         Returns a list of active domains/project spaces for this identity
@@ -188,6 +202,8 @@ class IdentityProvider(models.Model):
         """
         IdentityProvider.does_domain_trust_this_idp.clear(self, domain)
         IdentityProvider.is_domain_an_active_member.clear(self, domain)
+        from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+        is_domain_using_sso.clear(domain)
 
     @staticmethod
     def clear_email_domain_caches(email_domain):
@@ -210,9 +226,18 @@ class IdentityProvider(models.Model):
         for email_domain in all_email_domains_for_idp:
             self.clear_email_domain_caches(email_domain)
 
+    def clear_all_domain_subscriber_caches(self):
+        """
+        Ensure that we clear all domain caches tied to the Subscriptions
+        associated with the BillingAccount owner of this IdentityProvider.
+        """
+        for domain in self.get_active_projects():
+            self.clear_domain_caches(domain)
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.clear_all_email_domain_caches()
+        self.clear_all_domain_subscriber_caches()
 
     def create_trust_with_domain(self, domain, username):
         """
@@ -290,6 +315,21 @@ class IdentityProvider(models.Model):
         if idp is None:
             return True
         return idp.does_domain_trust_this_idp(domain)
+
+    @classmethod
+    def get_required_identity_provider(cls, username):
+        """
+        Gets the Identity Provider for the given username only if that
+        user is required to login or sign up with that Identity Provider.
+        :param username: String
+        :return: IdentityProvider or None
+        """
+        idp = cls.get_active_identity_provider_by_username(username)
+        if idp and not UserExemptFromSingleSignOn.objects.filter(
+            username=username
+        ).exists():
+            return idp
+        return None
 
 
 @receiver(post_save, sender=Subscription)

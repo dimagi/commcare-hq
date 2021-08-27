@@ -22,24 +22,18 @@
             <br>
             <div class="row">
               <div class="checkbox col-sm-4 col-sm-offset-1">
-                <label for="display_properties">
-                  <input type="checkbox" name="display_properties" id="display_properties"/>
+                <label for="columns">
+                  <input type="checkbox" name="columns" id="columns"/>
                   {% trans "Display properties" %}
                 </label><br>
-                <label for="case_list_filter">
-                  <input type="checkbox" name="case_list_filter" id="case_list_filter"/>
+                <label for="filter">
+                  <input type="checkbox" name="filter" id="filter"/>
                   {% trans "Case list filter" %}
                 </label><br>
-                <label for="sort_configuration">
-                  <input type="checkbox" name="sort_configuration" id="sort_configuration"/>
+                <label for="sort_elements">
+                  <input type="checkbox" name="sort_elements" id="sort_elements"/>
                   {% trans "Sort configuration" %}
                 </label><br>
-                {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
-                  <label for="nodeset_sorting">
-                    <input type="checkbox" name="nodeset_sorting" id="nodeset_sorting"/>
-                    {% trans "Nodeset sorting" %}
-                  </label><br>
-                {% endif %}
                 {% if request|toggle_enabled:'CASE_LIST_CUSTOM_VARIABLES' %}
                   <label for="custom_variables">
                     <input type="checkbox" name="custom_variables" id="custom_variables"/>
@@ -47,8 +41,8 @@
                   </label><br>
                 {% endif %}
                 {% if request|toggle_enabled:'CASE_LIST_CUSTOM_XML' %}
-                  <label for="custom_case_list_xml">
-                    <input type="checkbox" name="custom_case_list_xml" id="custom_case_list_xml"/>
+                  <label for="custom_xml">
+                    <input type="checkbox" name="custom_xml" id="custom_xml"/>
                     {% trans "Custom case list XML" %}
                   </label><br>
                 {% endif %}
@@ -62,7 +56,22 @@
                   <label for="print_template">
                     <input type="checkbox" name="print_template" id="print_template"/>
                     {% trans "Print template" %}
-                  </label>
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
+                  {# prefix these with 'search_' to make it easier to filter on the backend #}
+                  <label for="search_properties">
+                    <input type="checkbox" name="search_properties" id="search_properties"/>
+                    {% trans "Search properties" %}
+                  </label><br>
+                  <label for="search_default_properties">
+                    <input type="checkbox" name="search_default_properties" id="search_default_properties"/>
+                    {% trans "Default search filters" %}
+                  </label><br>
+                  <label for="search_claim_options">
+                    <input type="checkbox" name="search_claim_options" id="search_claim_options"/>
+                    {% trans "Search and claim options" %}
+                  </label><br>
                 {% endif %}
             </div>
           </div>

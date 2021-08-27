@@ -105,7 +105,7 @@
                 'error': build_broken
             }">
       <div class="panel-heading">
-        {% if can_manage_releases and request|toggle_enabled:"SUPPORT" %}
+        {% if request|toggle_enabled:"SUPPORT" %}
           <div class="release-trash-container">
             <a href="#"
                class="hide release-remove"
@@ -133,38 +133,29 @@
           <span class="label label-info"
                 data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
 
-          {% if can_manage_releases %}
-            <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
-            <div class="btn-group">
-              <button type="button"
-                      class="btn btn-xs"
-                      data-bind="click: $root.toggleRelease,
-                                             css: {
-                                                'active': is_released(),
-                                                'btn-primary': is_released(),
-                                                'btn-default': !is_released()
-                                             }">
-                {% trans "Released" %}
-              </button>
-              <button type="button"
-                      class="btn btn-xs btn-default"
-                      data-bind="click: $root.toggleRelease,
-                                             css: {
-                                                'active': !is_released(),
-                                                'btn-primary': !is_released(),
-                                                'btn-default': is_released()
-                                             }">
-                {% trans "In Test" %}
-              </button>
-            </div>
-          {% else %}
-            <span class="label label-success" data-bind="visible: is_released()">
-                          {% trans "Released" %}
-                      </span>
-            <span class="label label-primary" data-bind="visible: !is_released()">
-                          {% trans "In Test" %}
-                      </span>
-          {% endif %}
+          <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
+          <div class="btn-group">
+            <button type="button"
+                    class="btn btn-xs"
+                    data-bind="click: $root.toggleRelease,
+                                           css: {
+                                              'active': is_released(),
+                                              'btn-primary': is_released(),
+                                              'btn-default': !is_released()
+                                           }">
+              {% trans "Released" %}
+            </button>
+            <button type="button"
+                    class="btn btn-xs btn-default"
+                    data-bind="click: $root.toggleRelease,
+                                           css: {
+                                              'active': !is_released(),
+                                              'btn-primary': !is_released(),
+                                              'btn-default': is_released()
+                                           }">
+              {% trans "In Test" %}
+            </button>
+          </div>
 
           <!--/ko-->
         </div>

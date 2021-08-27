@@ -40,21 +40,6 @@ def sign(message):
     return signature
 
 
-def send_confirmation_email(invitation):
-    invited_user = invitation.email
-    subject = '%s accepted your invitation to CommCare HQ' % invited_user
-    recipient = WebUser.get_by_user_id(invitation.invited_by).get_email()
-    context = {
-        'invited_user': invited_user,
-    }
-    html_content = render_to_string('domain/email/invite_confirmation.html',
-                                    context)
-    text_content = render_to_string('domain/email/invite_confirmation.txt',
-                                    context)
-    send_html_email_async.delay(subject, recipient, html_content,
-                                text_content=text_content)
-
-
 def get_bulk_upload_form(context=None, context_key="bulk_upload", form_class=BulkUploadForm, app=None):
     context = context or {}
     form_context = context.get(context_key, {})

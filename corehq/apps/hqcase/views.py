@@ -7,11 +7,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
-from corehq.apps.api.decorators import allow_cors
 from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.api.decorators import allow_cors
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.domain.decorators import (
     api_auth,
@@ -22,8 +22,8 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.pillows.case_search import domain_needs_search_index
 from corehq.toggles import CASE_API_V0_6
+from corehq.util.view_utils import reverse
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
@@ -90,7 +90,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
-    if request.method == 'GET' and not case_id and domain_needs_search_index(domain):
+    if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request)
@@ -111,10 +111,13 @@ def _handle_individual_get(request, case_id):
 
 def _handle_list_view(request):
     try:
-        cases = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.GET.dict())
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    return JsonResponse(cases)
+
+    if 'next' in res:
+        res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
+    return JsonResponse(res)
 
 
 def _handle_case_update(request, case_id=None):
@@ -136,15 +139,15 @@ def _handle_case_update(request, case_id=None):
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
-            '@form_id': e.form_id,
+            'form_id': e.form_id,
         }, status=400)
 
     if isinstance(case_or_cases, list):
         return JsonResponse({
-            '@form_id': xform.form_id,
+            'form_id': xform.form_id,
             'cases': [serialize_case(case) for case in case_or_cases],
         })
     return JsonResponse({
-        '@form_id': xform.form_id,
+        'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     })

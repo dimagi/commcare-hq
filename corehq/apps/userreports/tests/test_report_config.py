@@ -131,6 +131,29 @@ class ReportConfigurationTest(SimpleTestCase):
         with self.assertRaises(BadSpecError):
             config.validate()
 
+    def test_constant_date_expression_column(self):
+        """
+        Used to fail at jsonobject.base_properties.AbstractDateProperty.wrap:
+
+            BadValueError: datetime.date(2020, 9, 9) is not a date-formatted string
+        """
+        spec = self.config._doc
+        spec['columns'].append({
+          "type": "expression",
+          "column_id": "month",
+          "display": "month",
+          "transform": {
+            "type": "custom",
+            "custom_type": "month_display"
+          },
+          "expression": {
+            "type": "constant",
+            "constant": "2020-09-09"
+          }
+        })
+        wrapped = ReportConfiguration.wrap(spec)
+        wrapped.validate()
+
 
 class ReportConfigurationDbTest(TestCase):
 

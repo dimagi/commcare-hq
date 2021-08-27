@@ -55,19 +55,16 @@ class RepeaterTestCase(TestCase):
         )
 
     def tearDown(self):
+        if self.repeater.connection_settings_id:
+            ConnectionSettings.objects.filter(
+                pk=self.repeater.connection_settings_id
+            ).delete()
         self.repeater_stub.delete()
         self.repeater.delete()
         super().tearDown()
 
 
 class RepeaterConnectionSettingsTests(RepeaterTestCase):
-
-    def tearDown(self):
-        if self.repeater.connection_settings_id:
-            ConnectionSettings.objects.filter(
-                pk=self.repeater.connection_settings_id
-            ).delete()
-        super().tearDown()
 
     def test_create_connection_settings(self):
         self.assertIsNone(self.repeater.connection_settings_id)
@@ -106,6 +103,29 @@ class RepeaterConnectionSettingsTests(RepeaterTestCase):
         conn = self.repeater.connection_settings
 
         self.assertEqual(conn.plaintext_password, self.repeater.plaintext_password)
+
+
+class TestRepeaterName(RepeaterTestCase):
+
+    def test_migrated_name(self):
+        """
+        When ConnectionSettings are migrated from an old Repeater,
+        ConnectionSettings.name is set to Repeater.url
+        """
+        connection_settings = self.repeater.connection_settings
+        self.assertEqual(connection_settings.name, self.repeater.url)
+        self.assertEqual(self.repeater.name, connection_settings.name)
+
+    def test_repeater_name(self):
+        connection_settings = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='Example Server',
+            url='https://example.com/api/',
+        )
+        self.repeater.connection_settings_id = connection_settings.id
+        self.repeater.save()
+
+        self.assertEqual(self.repeater.name, connection_settings.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):
@@ -371,6 +391,17 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
         self.assertEqual(attempts[-1].traceback, '')
+
+    def test_add_client_failure_attempt_no_retry(self):
+        message = '422: Unprocessable Entity'
+        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+            self.repeat_record.add_client_failure_attempt(message=message, retry=False)
+        self.assertIsNone(self.repeater_stub.last_attempt_at)
+        self.assertIsNone(self.repeater_stub.next_attempt_at)
+        self.assertEqual(self.repeat_record.num_attempts, 1)
+        self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
+        self.assertEqual(self.repeat_record.attempts[0].message, message)
+        self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_payload_exception_attempt(self):
         message = 'ValueError: Schema validation failed'

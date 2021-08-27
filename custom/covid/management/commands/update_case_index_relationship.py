@@ -16,7 +16,7 @@ DEVICE_ID = __name__ + ".update_case_index_relationship"
 
 
 def should_skip(case, traveler_location_id, inactive_location):
-    if len(case.indices) != 1:
+    if len(case.live_indices) != 1:
         return True
     if case.type == 'contact' and case.get_case_property('has_index_case') == 'no':
         return True

@@ -148,10 +148,15 @@ hqDefine("hqwebapp/js/hq.helpers", [
         beforeSend: function (xhr, settings) {
             // Don't pass csrftoken cross domain
             // Ignore HTTP methods that do not require CSRF protection
-            if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
-                var $csrf_token = $("#csrfTokenContainer").val();
-                xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
+                if (!this.crossDomain) {
+                    var $csrf_token = $("#csrfTokenContainer").val();
+                    xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+                }
+                var xsrf_token = $.cookie('XSRF-TOKEN');
+                xhr.setRequestHeader('X-XSRF-TOKEN', xsrf_token);
             }
+            xhr.withCredentials = true;
         },
     });
 

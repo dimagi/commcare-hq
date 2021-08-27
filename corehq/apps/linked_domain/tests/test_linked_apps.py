@@ -7,7 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from mock import patch
 
-from corehq.apps.app_manager.exceptions import AppEditingError
+from corehq.apps.app_manager.exceptions import AppEditingError, AppLinkError
 from corehq.apps.app_manager.models import (
     Application,
     LinkedApplication,
@@ -17,8 +17,8 @@ from corehq.apps.app_manager.models import (
     import_app,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
-    add_xform_resource_overrides,
     ResourceOverride,
+    add_xform_resource_overrides,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -33,16 +33,22 @@ from corehq.apps.hqmedia.models import (
     CommCareImage,
     CommCareMultimedia,
 )
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.applications import get_downstream_app_id
+from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import (
     _convert_app_from_remote_linking_source,
     fetch_remote_media,
 )
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import (
     _get_missing_multimedia,
     convert_app_for_remote_linking,
+)
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_report_config,
 )
 from corehq.util.test_utils import flag_enabled, softer_assert
 
@@ -65,11 +71,9 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.linked_domain_obj = create_domain('domain-2')
         cls.linked_domain = cls.linked_domain_obj.name
         cls.master1 = Application.new_app(cls.domain, "First Master Application")
-        cls.master1.linked_whitelist = [cls.linked_domain]
         cls.master1.save()
 
         cls.master2 = Application.new_app(cls.domain, "Second Master Application")
-        cls.master2.linked_whitelist = [cls.linked_domain]
         cls.master2.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
@@ -132,6 +136,59 @@ class TestLinkedApps(BaseLinkedAppsTest):
         report_map = {'master_report_id': 'mapped_id'}
         linked_app = overwrite_app(self.linked_app, self.master_app_with_report_modules, report_map)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
+
+    def test_linked_reports_updated(self):
+        # add a report on the master app
+        master_report, master_data_source = self._create_report_and_datasource()
+
+        # link report on master app to linked domain
+        link_info = create_linked_ucr(self.domain_link, master_report.get_id)
+
+        updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
+
+        # report config added with the linked report id updated in report config
+        self.assertEqual(updated_app.modules[0].report_configs[0].report_id, link_info.report.get_id)
+
+    def _create_report_and_datasource(self):
+        master_data_source = get_sample_data_source()
+        master_data_source.domain = self.domain
+        master_data_source.save()
+
+        master_report = get_sample_report_config()
+        master_report.config_id = master_data_source.get_id
+        master_report.domain = self.domain
+        master_report.save()
+
+        master_reports_module = self.master1.add_module(ReportModule.new_module('Reports', None))
+        master_reports_module.report_configs = [
+            ReportAppConfig(report_id=master_report.get_id, header={'en': 'CommBugz'}),
+        ]
+        return master_report, master_data_source
+
+    @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
+    def test_linked_reports_updated_for_remote(self, fake_ucr_getter):
+        old_remote_base_url = self.domain_link.remote_base_url
+        self.domain_link.remote_base_url = "http://my/app"
+
+        master_report, master_data_source = self._create_report_and_datasource()
+
+        # Update app before linking report, should throw an error
+        with self.assertRaises(AppLinkError):
+            updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
+
+        # Link report, then pull app
+        fake_ucr_getter.return_value = {
+            "report": master_report,
+            "datasource": master_data_source,
+        }
+        link_info = create_linked_ucr(self.domain_link, master_report.get_id)
+        updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
+
+        # report config added with the linked report id updated in report config
+        self.assertEqual(updated_app.modules[0].report_configs[0].report_id, link_info.report.get_id)
+
+        # reset for other tests
+        self.domain_link.remote_base_url = old_remote_base_url
 
     def test_overwrite_app_update_form_unique_ids(self):
         module = self.master1.add_module(Module.new_module('M1', None))
@@ -379,7 +436,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.domain_link.linked_domain = 'other'
         self.domain_link.save()
-        get_domain_master_link.clear('domain-2')
+        get_upstream_domain_link.clear('domain-2')
 
         def _revert():
             self.domain_link.linked_domain = 'domain-2'
@@ -468,7 +525,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_update_from_specific_build(self, *args):
         master_app = Application.new_app(self.domain, "Master Application")
-        master_app.linked_whitelist = [self.linked_domain]
         master_app.save()
         self.addCleanup(master_app.delete)
 
@@ -632,3 +688,75 @@ class TestLinkedAppsWithShadowForms(TestCase):
         self.addCleanup(linked_app.delete)
         self.addCleanup(domain_link.delete)
         return linked_app
+
+
+class TestGetDownstreamAppId(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetDownstreamAppId, cls).setUpClass()
+        cls.upstream_domain_obj = create_domain('upstream')
+        cls.upstream_domain = cls.upstream_domain_obj.name
+        cls.upstream_domain_obj.save()
+
+        cls.downstream_domain_obj = create_domain('downstream')
+        cls.downstream_domain = cls.downstream_domain_obj.name
+        cls.downstream_domain_obj.save()
+
+        cls.domain_link = DomainLink.link_domains(cls.downstream_domain, cls.upstream_domain)
+        cls.domain_link.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestGetDownstreamAppId, cls).tearDownClass()
+        cls.domain_link.delete()
+        cls.downstream_domain_obj.delete()
+        cls.upstream_domain_obj.delete()
+
+    def setup_linked_app(self, set_family_id=False, set_upstream_app_id=False):
+        original_app = Application.new_app(self.upstream_domain, "Original Application")
+        original_app.save()
+        linked_app = LinkedApplication.new_app(self.downstream_domain, "Linked Application")
+        if set_family_id:
+            linked_app.family_id = original_app._id
+        if set_upstream_app_id:
+            linked_app.upstream_app_id = original_app._id
+        linked_app.save()
+        self.addCleanup(original_app.delete)
+        self.addCleanup(linked_app.delete)
+
+        return original_app, linked_app
+
+    def test_use_family_id_returns_correct_app(self):
+        original_app, linked_app = self.setup_linked_app(set_family_id=True)
+        downstream_app_id = get_downstream_app_id(
+            self.downstream_domain,
+            original_app._id,
+            use_upstream_app_id=False
+        )
+        self.assertEqual(linked_app._id, downstream_app_id)
+
+    def test_use_upstream_app_id_returns_correct_app(self):
+        original_app, linked_app = self.setup_linked_app(set_upstream_app_id=True)
+        downstream_app_id = get_downstream_app_id(
+            self.downstream_domain,
+            original_app._id,
+            use_upstream_app_id=True
+        )
+        self.assertEqual(linked_app._id, downstream_app_id)
+
+    def test_use_family_id_returns_none_if_upstream_app_id_is_set(self):
+        original_app, _ = self.setup_linked_app(set_upstream_app_id=True)
+        downstream_app_id = get_downstream_app_id(
+            self.downstream_domain,
+            original_app._id, use_upstream_app_id=False
+        )
+        self.assertIsNone(downstream_app_id)
+
+    def test_use_upstream_app_id_returns_none_if_family_id_is_set(self):
+        original_app, _ = self.setup_linked_app(set_family_id=True)
+        downstream_app_id = get_downstream_app_id(
+            self.downstream_domain,
+            original_app._id, use_upstream_app_id=True
+        )
+        self.assertIsNone(downstream_app_id)

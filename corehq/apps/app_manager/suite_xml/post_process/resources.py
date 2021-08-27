@@ -6,6 +6,7 @@ from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.sections.resources import FormResourceContributor
 from corehq.apps.app_manager.suite_xml.xml_models import XFormResource
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import time_method
 
 
 class ResourceOverride(models.Model):
@@ -86,6 +87,7 @@ def get_xform_resource_overrides(domain, app_id):
 
 class ResourceOverrideHelper(PostProcessor):
 
+    @time_method()
     def update_suite(self):
         """
         Applies manual overrides of resource ids.

@@ -15,10 +15,13 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import get_simple_wrapped_form
 from corehq.util.doc_processor.couch import resumable_docs_by_type_iterator, CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DocumentProcessorController, BulkDocProcessor, BulkProcessingFailed
+    BaseDocProcessor,
+    BulkDocProcessor,
+    BulkProcessingFailed,
+    DocumentProcessorController,
+    UnhandledDocumentError,
 )
 from corehq.util.doc_processor.sql import resumable_sql_model_iterator
-from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
@@ -112,14 +115,6 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.itr.data_function = data_function
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
         self.assertEqual(chunks, [1, 0, 3, 0])  # max chunk: 3
-
-    def test_iteration_with_retry(self):
-        itr = iter(self.itr)
-        doc = next(itr)
-        self.itr.retry(doc['_id'])
-        self.assertEqual(doc["_id"], "foo-0")
-        self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
-                         self.sorted_keys + ["foo-0"])
 
     def test_iteration_with_domain(self):
         itr_domain1 = self.get_iterator(domain=self.domain1)
@@ -233,14 +228,6 @@ class BaseResumableSqlModelIteratorTest(object):
         self.itr.data_function = data_function
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
         self.assertEqual(chunks, [3, 2, 0])  # max chunk: 3
-
-    def test_iteration_with_retry(self):
-        itr = iter(self.itr)
-        doc = next(itr)
-        self.itr.retry(doc['_id'])
-        self.assertEqual(doc["_id"], self.first_doc_id)
-        self.assertEqual([self.first_doc_id] + [d["_id"] for d in itr],
-                         self.all_doc_ids + [self.first_doc_id])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -471,11 +458,20 @@ class TestCouchDocProcessor(BaseCouchDocProcessorTest):
         self._test_processor(4, list(range(4)))
         self._test_processor(0, [])
 
-    def test_multiple_runs_with_skip(self):
-        with self.assertRaises(TooManyRetries):
-            self._test_processor(3, list(range(3)), skip_docs=['bar-3'])
+    def test_handle_skip(self):
+        doc_processor, processor = self._get_processor(skip_docs=['bar-2'])
+        doc_processor.handle_skip = lambda doc: True
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 3)
+        self.assertEqual(skipped, 1)
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1', 'bar-3'})
 
-        self._test_processor(1, [3])
+    def test_unhandled_skip(self):
+        doc_processor, processor = self._get_processor(skip_docs=['bar-2'])
+        with self.assertRaises(UnhandledDocumentError) as cm:
+            processor.run()
+        self.assertIn('bar-2', str(cm.exception))
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1'})
 
 
 class TestBulkDocProcessor(BaseCouchDocProcessorTest):

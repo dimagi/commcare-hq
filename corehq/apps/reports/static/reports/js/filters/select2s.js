@@ -3,10 +3,12 @@
  */
 hqDefine("reports/js/filters/select2s", [
     'jquery',
+    'underscore',
     'knockout',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
+    _,
     ko
 ) {
     var initSingle = function (el) {

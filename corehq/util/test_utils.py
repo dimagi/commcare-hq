@@ -474,7 +474,7 @@ patch_max_test_time.__test__ = False
 
 
 def patch_foreign_value_caches():
-    """Patch django.test to clear ForeignValue.get_related LRU caches
+    """Patch django.test to clear ForeignValue LRU caches
 
     This complements `django.test.TransactionTestCase` and
     `django.test.TestCase` automatic database cleanup feature. It is
@@ -483,10 +483,10 @@ def patch_foreign_value_caches():
     """
     from corehq.util.models import ForeignValue
 
-    def wrap(get_related, cache_clear=None):
-        @wraps(get_related)
-        def monitored_get_related(self):
-            value = get_related(self)
+    def wrap(cached_prop, cache_clear=None):
+        @wraps(cached_prop)
+        def monitored_getter(self):
+            value = cached_prop(self)
             if cache_clear is None:
                 if self.cache_size:
                     value = wrap(value, value.cache_clear)
@@ -495,12 +495,14 @@ def patch_foreign_value_caches():
             return value
 
         if cache_clear is not None:
-            for name in dir(get_related):
+            # copy 'public' fields of `cached_prop` to `monitored_getter`
+            # e.g. cache_clear, cache_info
+            for name in dir(cached_prop):
                 if not name.startswith("_"):
-                    value = getattr(get_related, name)
-                    setattr(monitored_get_related, name, value)
+                    value = getattr(cached_prop, name)
+                    setattr(monitored_getter, name, value)
 
-        return monitored_get_related
+        return monitored_getter
 
     def post_teardown(self):
         if clear_funcs:
@@ -511,6 +513,7 @@ def patch_foreign_value_caches():
 
     clear_funcs = set()
     ForeignValue.get_related.func = wrap(ForeignValue.get_related.func)
+    ForeignValue.get_value.func = wrap(ForeignValue.get_value.func)
     django_post_teardown = TransactionTestCase._post_teardown
     TransactionTestCase._post_teardown = post_teardown
 
@@ -571,7 +574,7 @@ def _create_case(domain, **kwargs):
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None, user_id=None):
+        drop_signals=True, owner_id=None, user_id=None, index=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -580,6 +583,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
         'case_id': case_id,
         'case_name': case_name,
         'update': case_properties,
+        'index': index,
     }
 
     if case_type:

@@ -35,12 +35,12 @@ class TestAccountConfirmation(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+        from corehq.apps.users.dbaccessors import delete_all_users
         delete_all_users()
         super().tearDownClass()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
 
     def test_confirm_account(self):
 

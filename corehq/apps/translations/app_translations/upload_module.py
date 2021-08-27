@@ -30,7 +30,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = None
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
-        self.search_command_label = None
+        self.search_label = None
         self.search_again_label = None
         self.tab_headers = None
 
@@ -57,9 +57,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         ):
             self._update_details_based_on_position(list_rows, short_details,
                                                    detail_rows, long_details)
-        elif toggles.ICDS.enabled(self.app.domain):
-            self._partial_upload(list_rows, short_details)
-            self._partial_upload(detail_rows, long_details)
         else:
             if len(short_details) != len(list_rows):
                 expected_list = short_details
@@ -91,13 +88,55 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if self.case_list_menu_item_label:
             self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
 
-        if self.search_command_label:
-            self._update_translation(self.search_command_label, self.module.search_config.command_label)
+        if self.search_label:
+            self._update_translation(self.search_label, self.module.search_config.search_label.label)
 
         if self.search_again_label:
-            self._update_translation(self.search_again_label, self.module.search_config.again_label)
+            self._update_translation(self.search_again_label, self.module.search_config.search_again_label.label)
+
+        self._update_case_search_labels(rows)
 
         return self.msgs
+
+    def _update_case_search_labels(self, rows):
+        properties = self.module.search_config.properties
+        displays = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_display']
+        hints = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_hint']
+        if len(displays) != len(hints) or len(displays) != len(properties):
+
+            message = _(
+                'Expected {expected_count} case_search_display and case_search_hint '
+                'properties in  menu {index}, found {actual_label_count} for case_search_display and '
+                '{actual_hint_count} for case_search_hint'
+                'No Case Search config properties for menu {index} were updated.'
+            ).format(
+                expected_count=len(properties),
+                actual_label_count=len(displays),
+                actual_hint_count=len(hints),
+                index=self.module.id + 1,
+            )
+            self.msgs.append((messages.error, message))
+        else:
+            for display_row, prop in itertools.chain(zip(displays, properties)):
+                if display_row.get('case_property') != prop.name:
+                    message = _('A display row for menu {index} has an unexpected case search property "{field}". '
+                                'Case properties must appear in the same order as they do in the bulk '
+                                'app translation download. No translations updated for this row.').format(
+                                    index=self.module.id + 1,
+                                    field=display_row.get('case_property', ""))
+                    self.msgs.append((messages.error, message))
+                    continue
+                self._update_translation(display_row, prop.label)
+            for hint_row, prop in itertools.chain(zip(hints, properties)):
+                if hint_row.get('case_property') != prop.name:
+                    message = _('A hint row for menu {index} has an unexpected case search property "{field}". '
+                                'Case properties must appear in the same order as they do in the bulk '
+                                'app translation download. No translations updated for this row.').format(
+                                    index=self.module.id + 1,
+                                    field=hint_row.get('case_property', ""))
+                    self.msgs.append((messages.error, message))
+                    continue
+                self._update_translation(hint_row, prop.hint)
 
     def _update_report_module_rows(self, rows):
         new_headers = [None for i in self.module.report_configs]
@@ -156,7 +195,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = []
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
-        self.search_command_label = None
+        self.search_label = None
         self.search_again_label = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
@@ -209,8 +248,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self.case_list_menu_item_label = row
 
             # It's a case search label. Don't add it to condensed rows
-            elif row['case_property'] == 'search_command_label':
-                self.search_command_label = row
+            elif row['case_property'] == 'search_label':
+                self.search_label = row
             elif row['case_property'] == 'search_again_label':
                 self.search_again_label = row
 
@@ -256,21 +295,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             ))
 
     def _update_id_mappings(self, rows, detail, langs=None):
-        if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(self.app.domain):
-            for row, mapping in zip(rows, detail.enum):
-                self._update_translation(row, mapping.value)
-        else:
-            # Not all of the id mappings are described.
-            # If we can identify by key, we can proceed.
-            mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
-            if len(detail.enum) != len(mappings_by_prop):
-                self.msgs.append((
-                    messages.error,
-                    _("You must provide all ID mappings for property '{}'").format(detail.field)))
-            else:
-                for row in rows:
-                    if row['id'] in mappings_by_prop:
-                        self._update_translation(row, mappings_by_prop[row['id']].value)
+        for row, mapping in zip(rows, detail.enum):
+            self._update_translation(row, mapping.value)
 
     def _update_detail(self, row, detail):
         self._update_translation(row, detail.header)
@@ -309,32 +335,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                             'app translation download. No translations updated for this row.').format(
                                 index=self.module.id + 1,
                                 field=row.get('case_property', ""))
-                self.msgs.append((messages.error, message))
-                continue
-            self._update_detail(row, detail)
-
-    def _partial_upload(self, rows, details):
-        expected_fields = [detail.field for detail in details]
-        received_fields = [row['id'] for row in rows]
-        expected_field_counter = Counter(expected_fields)
-        received_field_counter = Counter(received_fields)
-        for detail, row in zip_with_gaps(details, rows,
-                                         lambda detail: detail.field,
-                                         lambda row: row['id']):
-            field = row['id']
-            if (
-                received_field_counter[field] > 1 and
-                received_field_counter[field] != expected_field_counter[field]
-            ):
-                message = _(
-                    'There is more than one translation for case property '
-                    '"{field}" for menu {index}, but some translations are '
-                    'missing. Unable to determine which translation(s) to '
-                    'use. Skipping this case property.'
-                ).format(
-                    index=self.module.id + 1,
-                    field=row.get('case_property', '')
-                )
                 self.msgs.append((messages.error, message))
                 continue
             self._update_detail(row, detail)

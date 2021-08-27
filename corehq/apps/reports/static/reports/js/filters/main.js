@@ -1,5 +1,6 @@
 hqDefine("reports/js/filters/main", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/main',
     'reports/js/standard_hq_report',
@@ -16,6 +17,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function (
     $,
+    _,
     ko,
     hqMain,
     standardHQReportModule,

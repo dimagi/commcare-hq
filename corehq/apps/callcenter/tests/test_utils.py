@@ -27,8 +27,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.user_importer.importer import (
-    create_or_update_users_and_groups,
+    create_or_update_commcare_users_and_groups,
 )
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.custom_data_fields.models import (
@@ -67,7 +68,7 @@ class CallCenterUtilsTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(CallCenterUtilsTests, cls).tearDownClass()
 
@@ -85,7 +86,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_full_name(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***', None, None)
-        self.addCleanup(other_user.delete, deleted_by=None)
+        self.addCleanup(other_user.delete, TEST_DOMAIN, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
         sync_call_center_user_case(other_user)
@@ -115,7 +116,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_update_update(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
-        self.addCleanup(other_user.delete, deleted_by=None)
+        self.addCleanup(other_user.delete, self.domain.name, deleted_by=None)
         sync_call_center_user_case(other_user)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
@@ -227,10 +228,10 @@ class CallCenterUtilsTestsSQL(CallCenterUtilsTests):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-class CallCenterUtilsUserCaseTests(TestCase):
+class CallCenterUtilsUsercaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(CallCenterUtilsUserCaseTests, cls).setUpClass()
+        super().setUpClass()
         cls.domain = create_domain(TEST_DOMAIN)
         cls.domain.usercase_enabled = True
         cls.domain.save()
@@ -239,13 +240,13 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
         cls.domain.delete()
-        super(CallCenterUtilsUserCaseTests, cls).tearDownClass()
+        super().tearDownClass()
 
     def test_sync_usercase_custom_user_data_on_create(self):
         """
@@ -368,13 +369,20 @@ class CallCenterUtilsUserCaseTests(TestCase):
     def test_bulk_upload_usercases(self):
         self.user.username = format_username('bushy_top', TEST_DOMAIN)
         self.user.save()
+
+        upload_record = UserUploadRecord.objects.create(
+            domain=self.domain.name,
+            user_id=self.user.get_id
+        )
+        self.addCleanup(upload_record.delete)
+
         user_upload = [{
             'username': self.user.raw_username,
             'user_id': self.user.user_id,
             'name': 'James McNulty',
             'language': None,
             'is_active': 'True',
-            'phone-number': self.user.phone_number,
+            'phone-number': [self.user.phone_number],
             'password': 123,
             'email': None
         }, {
@@ -383,14 +391,15 @@ class CallCenterUtilsUserCaseTests(TestCase):
             'name': 'William Moreland',
             'language': None,
             'is_active': 'True',
-            'phone-number': '23424123',
+            'phone-number': ['23424123'],
             'password': 123,
             'email': None
         }]
-        results = create_or_update_users_and_groups(
+        results = create_or_update_commcare_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
-            None
+            self.user,
+            upload_record_id=upload_record.pk,
         )
         self.assertEqual(results['errors'], [])
 
@@ -400,14 +409,14 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(2, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
-        self.addCleanup(new_user.delete, deleted_by=None)
+        self.addCleanup(new_user.delete, self.domain.name, deleted_by=None)
         new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsUserCaseTestsSQL(CallCenterUtilsUserCaseTests):
+class CallCenterUtilsUsercaseTestsSQL(CallCenterUtilsUsercaseTests):
     pass
 
 

@@ -7,6 +7,7 @@ from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
 
+from corehq.form_processor.document_stores import UnexpectedBackend
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
@@ -207,6 +208,9 @@ def change_from_kafka_message(message):
     except UnknownDocumentStore:
         document_store = None
         notify_error("Unknown document store: {}".format(change_meta.data_source_type))
+    except UnexpectedBackend:
+        document_store = None
+        notify_error("Change from incorrect backend", details=change_meta.to_json())
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

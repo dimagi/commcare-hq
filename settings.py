@@ -21,6 +21,7 @@ VELLUM_DEBUG = None
 
 # For Single Sign On (SSO) Implementations
 SAML2_DEBUG = False
+ENFORCE_SSO_LOGIN = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -245,7 +246,6 @@ HQ_APPS = (
     'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
-    'corehq.apps.couch_sql_migration',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
@@ -265,10 +265,10 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.registry',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
-    'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db.app_config.SqlDbAppConfig',
@@ -388,6 +388,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
+    'custom.cowin',
 
     'custom.ccqa',
 
@@ -439,7 +440,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "hqwebapp/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -571,6 +572,7 @@ CELERY_MAIN_QUEUE = 'celery'
 CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REMINDER_CASE_UPDATE_BULK_QUEUE = 'reminder_rule_queue'  # override in localsettings
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
@@ -741,10 +743,14 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 }
 
 LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
-AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {
+    'COVID_US_ASSOCIATED_USER_CASES': 'custom.covid.rules.custom_criteria.associated_usercase_closed'
+}
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+}
 
 ####### auditcare parameters #######
 AUDIT_ALL_VIEWS = False
@@ -805,6 +811,8 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
+    'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -827,7 +835,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 1
+ELASTICSEARCH_MAJOR_VERSION = 2
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -1028,6 +1036,7 @@ CUSTOM_LANDING_TEMPLATE = {
 
 ES_SETTINGS = None
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
+ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
 ES_XFORM_DISABLE_ALL = False
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1155,6 +1164,8 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
+
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -2018,19 +2029,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'ews-ghana$',
     'mvp-',
 )
-
-# Domains that we want to tag in metrics provider
-METRICS_TAGGED_DOMAINS = {
-    # ("env", "domain"),
-    ("production", "born-on-time-2"),
-    ("production", "hki-nepal-suaahara-2"),
-    ("production", "malawi-fp-study"),
-    ("production", "no-lean-season"),
-    ("production", "rec"),
-    ("production", "isth-production"),
-    ("production", "sauti-1"),
-    ("production", "ndoh-wbot"),
-}
 
 #### Django Compressor Stuff after localsettings overrides ####
 

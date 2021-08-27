@@ -51,7 +51,7 @@ class UsernameFilter(DomainFilter):
         """
         :return: A generator of filters each filtering for at most 500 users.
         """
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_usernames_by_domain
+        from corehq.apps.users.dbaccessors import get_all_usernames_by_domain
         if self.usernames:
             usernames = self.usernames
         else:
@@ -87,7 +87,7 @@ class UserIDFilter(IDFilter):
         self.include_web_users = include_web_users
 
     def get_ids(self, domain_name):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        from corehq.apps.users.dbaccessors import get_all_user_ids_by_domain
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
 
 

@@ -48,7 +48,7 @@ class TestTimeout(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.insecure_domain.name, deleted_by=None)
         cls.insecure_domain.delete()
         cls.secure_domain1.delete()
         cls.secure_domain2.delete()

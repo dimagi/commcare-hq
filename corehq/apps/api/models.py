@@ -199,7 +199,7 @@ class ESCase(DictObject, CaseToXMLMixin):
     @property
     def indices(self):
         from casexml.apps.case.sharedmodels import CommCareCaseIndex
-        return [CommCareCaseIndex.wrap(index) for index in self._data['indices']]
+        return [CommCareCaseIndex.wrap(index) for index in self._data['indices'] if index["referenced_id"]]
 
     def get_index_map(self):
         from corehq.form_processor.abstract_models import get_index_map
@@ -250,7 +250,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         accessor = CaseAccessors(self.domain)
         return {
             index['identifier']: case_to_es_case(accessor.get_case(index['referenced_id']))
-            for index in self.indices
+            for index in self.indices if index['referenced_id']
         }
 
     @property

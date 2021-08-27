@@ -87,7 +87,7 @@ class TestZapierIntegration(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         cls.application.delete()
         cls.domain_object.delete()
         delete_all_repeaters()

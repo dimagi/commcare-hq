@@ -112,6 +112,9 @@ def add_columns(engine, diffs):
 
 
 def apply_index_changes(engine, diffs):
+    """Note that this does not actually create the indexes. Indexes must be created
+    manually by copying the log output.
+    """
     index_diffs = _get_indexes_diffs_to_change(diffs)
     remove_indexes = [index.index for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
     add_indexes = [index.index for index in index_diffs if index.type == DiffTypes.ADD_INDEX]

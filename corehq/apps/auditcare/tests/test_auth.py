@@ -28,7 +28,7 @@ class TestAccessAudit(AuditcareTest):
         # A Couch user is required for logout
         user = WebUser.create('', USERNAME, 'mockmock', None, None)
         user.save()
-        self.addCleanup(lambda: user.delete(None))
+        self.addCleanup(user.delete, '', deleted_by=None)
 
     def login(self, password='mockmock'):
         self.client.post(reverse('login'), {

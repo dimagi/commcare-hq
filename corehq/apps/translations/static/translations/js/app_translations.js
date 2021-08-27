@@ -1,10 +1,12 @@
 hqDefine("translations/js/app_translations", [
     "jquery",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "app_manager/js/widgets",
     "hqwebapp/js/widgets",   // .hqwebapp-select2
 ], function (
     $,
+    _,
     initialPageData,
     appManagerWidgets
 ) {

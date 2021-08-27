@@ -282,40 +282,6 @@
           </form>
         </div>
       {% endif %}
-      {% if not is_linked_app %}
-        {% if linked_domains_enabled %}
-          <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
-            <legend>{% trans 'Linked Project Whitelist' %}</legend>
-            <div class="tab-pane panel-body">
-              <div class="help-block">
-                {% blocktrans %}
-                  Project spaces on this list are able to update linked applications
-                  with new changes to this application. Project spaces are automatically added to
-                  this list when this application is copied as a linked application to that project
-                  space. If you would like to prevent a project from making future updates,
-                  you can remove them from the list here.
-                {% endblocktrans %}
-              </div>
-              <div data-bind="saveButton: saveButton"></div>
-              <table class="table">
-                <thead>
-                <tr class="row">
-                  <th></th>
-                  <th>{% trans "Project Space" %}</th>
-                </tr>
-                </thead>
-                <tbody data-bind="foreach: linkedDomains">
-                <tr class="row">
-                  <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
-                                                      data-bind="click: $root.removeDomain"></i></a></td>
-                  <td class="col-sm-11"><span data-bind="text: $data"></span></td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        {% endif %}
-      {% endif %}
       <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
         <legend>{% trans "Delete Application" %}</legend>
         <div class="panel-body">

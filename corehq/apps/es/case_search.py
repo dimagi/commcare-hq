@@ -55,6 +55,8 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
+        if value == '':
+            return self.add_query(case_property_missing(case_property_name), clause)
         if fuzzy:
             positive_clause = clause != queries.MUST_NOT
             return (
@@ -279,8 +281,8 @@ def external_id(external_id):
     return filters.term('external_id', external_id)
 
 
-def indexed_on(gt=None, gte=None, lt=None, lte=None, eq=None):
-    return filters.date_range('@indexed_on', gt=None, gte=None, lt=None, lte=None, eq=None)
+def indexed_on(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('@indexed_on', gt, gte, lt, lte)
 
 
 def flatten_result(hit, include_score=False):

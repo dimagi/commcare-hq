@@ -20,11 +20,9 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.models import (
     AdvancedForm,
-    AdvancedModule,
     Form,
     FormAction,
     FormActionCondition,
-    Module,
 )
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
@@ -52,7 +50,7 @@ class AppCaseMetadataBuilder(object):
 
     def _add_module_contributions(self):
         for module in self.app.get_modules():
-            if isinstance(module, (Module, AdvancedModule)):
+            if hasattr(module, 'case_details'):
                 self._add_module_contribution(module)
 
     def _add_module_contribution(self, module):
@@ -262,6 +260,7 @@ class FormQuestion(JsonObject):
     required = BooleanProperty()
     comment = StringProperty()
     setvalue = StringProperty()
+    data_source = DictProperty(exclude_if_none=True)
 
     @property
     def icon(self):

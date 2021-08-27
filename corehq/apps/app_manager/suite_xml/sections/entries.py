@@ -28,7 +28,7 @@ from corehq.apps.app_manager.xpath import (
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
-    UserCaseXPath,
+    UsercaseXPath,
     XPath,
     interpolate_xpath,
     session_var,
@@ -96,9 +96,16 @@ class EntriesHelper(object):
         return xpath
 
     @staticmethod
-    def get_nodeset_xpath(case_type, filter_xpath=''):
-        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
-            case_type=case_type,
+    def get_nodeset_xpath(case_type, filter_xpath='', additional_types=None):
+        if additional_types:
+            case_type_filter = " or ".join([
+                "@case_type='{case_type}'".format(case_type=case_type)
+                for case_type in set(additional_types).union({case_type})
+            ])
+        else:
+            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        return "instance('casedb')/casedb/case[{case_type_filter}][@status='open']{filter_xpath}".format(
+            case_type_filter=case_type_filter,
             filter_xpath=filter_xpath,
         )
 
@@ -298,7 +305,7 @@ class EntriesHelper(object):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
-            case = UserCaseXPath().case()
+            case = UsercaseXPath().case()
             datums.append(FormDatumMeta(
                 datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 case_type=USERCASE_TYPE,
@@ -445,7 +452,8 @@ class EntriesHelper(object):
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath)
+                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath,
+                             additional_types=datum['module'].search_config.additional_case_types)
                              + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
@@ -511,7 +519,7 @@ class EntriesHelper(object):
                 )
             ]
         elif auto_select.mode == AUTO_SELECT_USERCASE:
-            case = UserCaseXPath().case()
+            case = UsercaseXPath().case()
             return SessionDatum(
                 id=action.case_session_var,
                 function=case.slash('@case_id')

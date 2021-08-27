@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from django.utils.encoding import force_text
 
+from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import module_offers_search
@@ -29,7 +30,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
             continue
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
-        for module_row in get_module_rows([lang], module):
+        for module_row in get_module_rows([lang], module, app.domain):
             if eligible_for_transifex_only:
                 field_name, field_type, translation = module_row
                 if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
@@ -81,7 +82,7 @@ def get_bulk_app_sheets_by_name(app, lang=None, eligible_for_transifex_only=Fals
         ))
 
         rows[module_sheet_name] = []
-        for module_row in get_module_rows(langs, module):
+        for module_row in get_module_rows(langs, module, app.domain):
             if eligible_for_transifex_only:
                 field_name, field_type, *translations = module_row
                 if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
@@ -166,14 +167,16 @@ def get_question_row(question_label_name_media, sheet_name):
         ['']  # unique_id
     )
 
-def get_module_rows(langs, module):
+
+def get_module_rows(langs, module, domain):
     if isinstance(module, ReportModule):
         return get_module_report_rows(langs, module)
 
     return get_module_case_list_form_rows(langs, module) + \
         get_module_case_list_menu_item_rows(langs, module) + \
-        get_module_search_command_rows(langs, module) + \
-        get_module_detail_rows(langs, module)
+        get_module_search_command_rows(langs, module, domain) + \
+        get_module_detail_rows(langs, module) + \
+        get_case_search_rows(langs, module, domain)
 
 
 def get_module_report_rows(langs, module):
@@ -212,16 +215,31 @@ def get_module_case_list_menu_item_rows(langs, module):
     ]
 
 
-def get_module_search_command_rows(langs, module):
-    if not module_offers_search(module):
+def get_module_search_command_rows(langs, module, domain):
+    if not module_offers_search(module) or not toggles.USH_CASE_CLAIM_UPDATES.enabled(domain):
         return []
 
     return [
-        ('search_command_label', 'list')
-        + tuple(module.search_config.command_label.get(lang, '') for lang in langs),
+        ('search_label', 'list')
+        + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
         ('search_again_label', 'list')
-        + tuple(module.search_config.again_label.get(lang, '') for lang in langs),
+        + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
     ]
+
+
+def get_case_search_rows(langs, module, domain):
+    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        return []
+
+    ret = []
+    for prop in module.search_config.properties:
+        ret.append((
+            (prop.name, "case_search_display") + tuple(prop.label.get(lang, "") for lang in langs)
+        ))
+        ret.append((
+            (prop.name, "case_search_hint") + tuple(prop.hint.get(lang, "") for lang in langs)
+        ))
+    return ret
 
 
 def get_module_detail_rows(langs, module):

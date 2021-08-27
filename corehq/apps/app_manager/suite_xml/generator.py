@@ -15,12 +15,17 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
     EntryInstances,
 )
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
-from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverrideHelper
+from corehq.apps.app_manager.suite_xml.post_process.resources import (
+    ResourceOverrideHelper,
+)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     WorkflowHelper,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     DetailContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.endpoints import (
+    SessionEndpointContributor,
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import (
     EntriesContributor,
@@ -57,16 +62,18 @@ class SuiteGenerator(object):
         self.build_profile_id = build_profile_id
 
     def _add_sections(self, contributors):
+        elements = {}
         for contributor in contributors:
             section = contributor.section_name
-            getattr(self.suite, section).extend(
-                contributor.get_section_elements()
-            )
+            section_elements = contributor.get_section_elements()
+            elements[section] = section_elements
+            getattr(self.suite, section).extend(section_elements)
+        return elements
 
     def generate_suite(self):
         # Note: the order in which things happen in this function matters
 
-        self._add_sections([
+        basic_elements = self._add_sections([
             FormResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
             LocaleResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
             DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
@@ -81,6 +88,7 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
         menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
+        session_endpoints = SessionEndpointContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
             training_menu = LocalizedMenu(id='training-root')
@@ -88,7 +96,7 @@ class SuiteGenerator(object):
         else:
             training_menu = None
 
-        detail_section_elements = DetailContributor(None, self.app, self.modules).get_section_elements()
+        detail_section_elements = basic_elements[DetailContributor.section_name]
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
@@ -99,6 +107,11 @@ class SuiteGenerator(object):
             self.suite.remote_requests.extend(
                 remote_requests.get_module_contributions(module, detail_section_elements)
             )
+
+            if self.app.supports_session_endpoints:
+                self.suite.endpoints.extend(
+                    session_endpoints.get_module_contributions(module)
+                )
 
         if training_menu:
             self.suite.menus.append(training_menu)

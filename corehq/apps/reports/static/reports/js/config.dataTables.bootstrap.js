@@ -1,9 +1,11 @@
 hqDefine("reports/js/config.dataTables.bootstrap", [
     'jquery',
+    'underscore',
     'analytix/js/google',
     'datatables.bootstrap',
 ], function (
     $,
+    _,
     googleAnalytics
 ) {
     var HQReportDataTables = function (options) {
@@ -221,11 +223,6 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 var throttledResize = _.throttle(function () {
                     datatable.fnAdjustColumnSizing();
                 }, 5000);
-
-                $(window).on('resize', throttledResize);
-                $('.dataTables_paginate a').on('click', function () {
-                    datatable.fnAdjustColumnSizing();
-                });
 
                 // This fixes a display bug in some browsers where the pagination
                 // overlaps the footer when resizing from 10 to 100 or 10 to 50 rows

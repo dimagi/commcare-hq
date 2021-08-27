@@ -5,7 +5,7 @@
 {% load i18n %}
 
 {% block page_content %}
-  {% if request|toggle_enabled:"ENTERPRISE_SSO" and has_untrusted_identity_provider %}
+  {% if has_untrusted_identity_provider %}
     <div class="alert alert-setting">
       <p class="lead">
         <i class="fa fa-lock"></i>

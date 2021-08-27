@@ -28,6 +28,8 @@ from two_factor.views import (
 )
 
 from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -52,8 +54,11 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.apps.users.util import log_user_change
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
@@ -177,8 +182,18 @@ class MyAccountSettingsView(BaseMyAccountView):
     def process_add_phone_number(self):
         if self.phone_number_is_valid():
             user = self.request.couch_user
+            is_new_phone_number = self.phone_number not in user.phone_numbers
             user.add_phone_number(self.phone_number)
             user.save()
+            if is_new_phone_number:
+                log_user_change(
+                    domain=None,
+                    couch_user=user,
+                    changed_by_user=user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    message=UserChangeMessage.phone_number_added(self.phone_number),
+                    domain_required_for_log=False,
+                )
             messages.success(self.request, _("Phone number added."))
         else:
             messages.error(self.request, _("Invalid phone number format entered. "
@@ -262,6 +277,11 @@ class MyProjectsList(BaseMyAccountView):
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
                 self.request.couch_user.save()
+                log_user_change(None, couch_user=request.couch_user,
+                                changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
+                                message=UserChangeMessage.domain_removal(self.domain_to_remove),
+                                domain_required_for_log=False,
+                                )
                 messages.success(request, _("You are no longer part of the project %s") % self.domain_to_remove)
             except Exception:
                 messages.error(request, _("There was an error removing you from this project."))
@@ -287,9 +307,18 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
     @property
     def page_context(self):
+        is_using_sso = is_request_using_sso(self.request)
+        idp_name = None
+        if is_using_sso:
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            idp_name = idp.name
         return {
             'form': self.password_change_form,
             'hide_password_feedback': has_custom_clean_password(),
+            'is_using_sso': is_using_sso,
+            'idp_name': idp_name,
         }
 
     @method_decorator(sensitive_post_parameters())
@@ -309,6 +338,19 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        if not is_request_using_sso(self.request):
+            return {}
+
+        idp = IdentityProvider.get_active_identity_provider_by_username(
+            self.request.user.username
+        )
+        return {
+            'is_using_sso': True,
+            'idp_name': idp.name,
+        }
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):

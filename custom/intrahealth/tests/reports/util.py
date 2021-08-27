@@ -197,6 +197,6 @@ class ReportTestCase(TestCase):
             cls.recouvrement_table.drop(connection, checkfirst=True)
             cls.livraison_table.drop(connection, checkfirst=True)
         cls.engine.dispose()
-        cls.web_user.delete(deleted_by=None)
+        cls.web_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(ReportTestCase, cls).tearDownClass()

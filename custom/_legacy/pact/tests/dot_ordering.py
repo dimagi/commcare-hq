@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 import json
 from django.test.utils import override_settings
-from unittest2 import skip
+from unittest import skip
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.shortcuts import create_domain

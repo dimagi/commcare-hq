@@ -133,7 +133,7 @@ def setup_locations_and_types(domain, location_types, stock_tracking_types, loca
 
 
 def restrict_user_by_location(domain, user):
-    role = UserRole(
+    role = UserRole.create(
         domain=domain,
         name='Regional Supervisor',
         permissions=Permissions(edit_commcare_users=True,
@@ -144,7 +144,6 @@ def restrict_user_by_location(domain, user):
                                 view_locations=True,
                                 access_all_locations=False),
     )
-    role.save()
     user.set_role(domain, role.get_qualified_id())
     user.save()
 

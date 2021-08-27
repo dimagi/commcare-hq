@@ -52,7 +52,7 @@ def _code_to_benchmark(domain, app_id, comment, user_id):
 
 @profile_dump('direct_ccz.prof')
 def _profile_and_benchmark(domain, app_id, comment, user_id):
-    _code_to_benchmark(domain, app_id, comment, user_id)
+    return _code_to_benchmark(domain, app_id, comment, user_id)
 
 
 class Timer(object):
