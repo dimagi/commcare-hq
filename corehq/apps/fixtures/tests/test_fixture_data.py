@@ -134,7 +134,7 @@ class FixtureDataTest(TestCase):
         """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(item_dict), encoding='utf-8'))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
+        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, include_docs=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
         fixture, = call_fixture_generator(self.user.to_ota_restore_user())

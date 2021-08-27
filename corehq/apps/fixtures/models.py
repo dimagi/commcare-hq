@@ -348,6 +348,11 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_user(cls, user, include_docs=True):
+        """
+        This method returns all fixture data items owned by the user, their location, or their group.
+
+        :param include_docs: whether to return the fixture data item dicts or just a set of ids
+        """
         group_ids = Group.by_user_id(user.user_id, wrap=False)
         loc_ids = user.sql_location.path if user.sql_location else []
 
@@ -364,7 +369,7 @@ class FixtureDataItem(Document):
                 wrapper=lambda r: r['value'],
             )
         )
-        if wrap:
+        if include_docs:
             results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
 
             # sort the results into those corresponding to real documents
