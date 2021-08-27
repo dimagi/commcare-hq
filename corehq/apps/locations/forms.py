@@ -38,7 +38,6 @@ from .models import (
 from .permissions import user_can_access_location_id
 from .signals import location_edited
 
-# Reuse in Users - put in more global const file
 SHOW_ALL = _('Show All')
 ONLY_ACTIVE = _('Only Active')
 ONLY_ARCHIVED = _('Only Archived')
