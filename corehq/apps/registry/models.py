@@ -97,7 +97,7 @@ class DataRegistry(models.Model):
             self.save()
             self.logger.registry_deactivated(user)
 
-    @property
+    @cached_property
     def wrapped_schema(self):
         return RegistrySchema(self.schema)
 
