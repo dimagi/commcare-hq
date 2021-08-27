@@ -108,9 +108,8 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
             return (None, None)
         if len(tracked_entities) > 1:
             raise MultipleInstancesFound(_(
-                f'Found {len(tracked_entities)} Tracked Entity instances for '
-                f'case trigger info {case_trigger_info}'
-            ))
+                '{n} tracked entity instances were found for case {case}'
+            ).format(n=len(tracked_entities), case=case_trigger_info))
         tei_id = tracked_entities[0]["trackedEntityInstance"]
     return get_tracked_entity_instance_and_etag_by_id(
         requests, tei_id, case_trigger_info
@@ -141,9 +140,9 @@ def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_in
         return response.json(), response.headers["ETag"]
     else:
         raise BadTrackedEntityInstanceID(_(
-            f'The tracked entity instance ID "{tei_id}" of '
-            f'{case_trigger_info} was not found on its DHIS2 server.'
-        ))
+            'The tracked entity instance ID "{id}" of case {case} was not '
+            'found on its DHIS2 server.'
+        ).format(id=tei_id, case=case_trigger_info))
 
 
 def find_tracked_entity_instances(requests, case_trigger_info, case_config):
@@ -234,9 +233,8 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:
         raise Dhis2Exception(_(
-            f'{len(summaries)} tracked entity instances registered from '
-            f'{case_trigger_info}.'
-        ))
+            '{n} tracked entity instances were registered from case {case}.'
+        ).format(n=len(summaries), case=case_trigger_info))
     if case_config["tei_id"] and "case_property" in case_config["tei_id"]:
         case_property = case_config["tei_id"]["case_property"]
         tei_id = summaries[0]["reference"]
@@ -262,9 +260,9 @@ def create_relationships(
     subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
     if not subcase_tei_id:
         raise Dhis2Exception(_(
-            'Unable to create DHIS2 relationship: The subcase is not '
+            'Unable to create DHIS2 relationship: The case {case} is not '
             'registered in DHIS2.'
-        ))
+        ).format(case=subcase_trigger_info))
 
     for rel_config in subcase_config.relationships_to_export:
         supercase = get_supercase(subcase_trigger_info, rel_config)
@@ -283,9 +281,9 @@ def create_relationships(
             # is no CaseConfig for the supercase's case type.
             # Alternatively, registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
-                'Unable to create DHIS2 relationship: The supercase is not '
+                'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
-            ))
+            ).format(case=supercase_info))
         if rel_config.supercase_to_subcase_dhis2_id:
             create_relationship(
                 requests,
