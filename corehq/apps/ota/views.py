@@ -434,8 +434,7 @@ def recovery_measures(request, domain, build_id):
 @location_safe
 @mobile_auth
 @require_GET
-def registry_case(request, domain):
-    app_id = request.GET.get("app_id")
+def registry_case(request, domain, app_id):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
     registry = request.GET.get("registry")
@@ -443,8 +442,8 @@ def registry_case(request, domain):
     missing = [
         name
         for name, value in zip(
-            ["app_id", "case_id", "case_type", "registry"],
-            [app_id, case_id, case_type, registry]
+            ["case_id", "case_type", "registry"],
+            [case_id, case_type, registry]
         )
         if not value
     ]
