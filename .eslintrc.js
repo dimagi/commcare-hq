@@ -23,6 +23,7 @@ module.exports = {
         "requirejs": false,
         "gettext": false,
         "ngettext": false,
+        "interpolate": false,
         "assert": false,
         "sinon": false,
         "$": false,
