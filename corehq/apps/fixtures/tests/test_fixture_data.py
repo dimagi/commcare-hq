@@ -122,6 +122,8 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
+        item_dict = self.data_item.to_json()
+        item_dict['_data_type'] = self.data_item.data_type
         check_xml_line_by_line(self, """
         <district>
             <state_name>Delhi_state</state_name>
@@ -129,7 +131,7 @@ class FixtureDataTest(TestCase):
             <district_name lang="eng">Delhi_in_ENG</district_name>
             <district_id>Delhi_id</district_id>
         </district>
-        """, ElementTree.tostring(self.data_item.to_xml(), encoding='utf-8'))
+        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(item_dict), encoding='utf-8'))
 
     def test_ownership(self):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))

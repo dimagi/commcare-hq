@@ -374,7 +374,7 @@ class FixtureDataItem(Document):
         return SQLLocation.objects.filter(location_id__in=loc_ids)
 
     @classmethod
-    def by_user(cls, user, wrap=True):
+    def by_user(cls, user, include_docs=True):
         group_ids = Group.by_user_id(user.user_id, wrap=False)
         loc_ids = user.sql_location.path if user.sql_location else []
 
@@ -401,7 +401,7 @@ class FixtureDataItem(Document):
 
             for result in results:
                 if result.get('doc'):
-                    docs.append(cls.wrap(result['doc']))
+                    docs.append(result['doc'])
                 elif result.get('error'):
                     assert result['error'] == 'not_found'
                     deleted_fixture_ids.add(result['key'])
