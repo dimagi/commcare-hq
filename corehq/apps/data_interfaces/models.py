@@ -913,19 +913,32 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     include_closed = models.BooleanField(default=False)
 
     def when_case_matches(self, case, rule):
+        domain = case.domain
         duplicate_cases = find_duplicate_cases(
-            case.domain, case, self.case_properties, self.include_closed, self.match_type
+            domain, case, self.case_properties, self.include_closed, self.match_type
         )
+        if len(duplicate_cases) == 1:
+            return
+
+        num_updates = self._update_cases(domain, rule, duplicate_cases)
+
+        CaseDuplicate.bulk_create_duplicate_relationships(self, case, duplicate_cases)
+
+        return CaseRuleActionResult(num_updates=num_updates)
+
+    def _update_cases(self, domain, rule, duplicate_cases):
+        """Updates all the duplicate cases according to the rule
+        """
         case_updates = self._get_case_updates(duplicate_cases)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(
-                case.domain,
+                domain,
                 case_update_batch,
                 device_id="CaseDeduplicationActionDefinition-update-cases",
                 xmlns=DEDUPE_XMLNS,
             )
             rule.log_submission(result[0].form_id)
-        return CaseRuleActionResult(num_updates=len(case_updates))
+        return len(case_updates)
 
     def _get_case_updates(self, duplicate_cases):
         cases_to_update = defaultdict(dict)
@@ -936,11 +949,34 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         ]
 
 
-
 class CaseDuplicate(models.Model):
     case_id = models.CharField(max_length=126, null=True, db_index=True)
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
     potential_duplicates = models.ManyToManyField('self', symmetrical=True)
+
+    @classmethod
+    def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_cases):
+        case_duplicates = cls.objects.bulk_create([
+            cls(case_id=duplicate_case.case_id, action=action) for duplicate_case in duplicate_cases
+        ])
+        initial_case_duplicate = next(
+            duplicate for duplicate in case_duplicates if duplicate.case_id == initial_case.case_id
+        )
+        # Create symmetrical many-to-many relationship between each duplicate in bulk
+        through_models = [
+            through_model for case_duplicate in case_duplicates if case_duplicate.case_id != initial_case.case_id
+            for through_model in (
+                cls.potential_duplicates.through(
+                    from_caseduplicate=initial_case_duplicate,
+                    to_caseduplicate=case_duplicate,
+                ),
+                CaseDuplicate.potential_duplicates.through(
+                    from_caseduplicate=case_duplicate,
+                    to_caseduplicate=initial_case_duplicate,
+                )
+            )
+        ]
+        cls.potential_duplicates.through.objects.bulk_create(through_models)
 
 
 class VisitSchedulerIntegrationHelper(object):

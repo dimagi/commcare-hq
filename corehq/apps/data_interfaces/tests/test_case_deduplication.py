@@ -8,13 +8,12 @@ from mock import patch
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.data_interfaces.deduplication import (
-    find_duplicate_cases,
-)
+from corehq.apps.data_interfaces.deduplication import find_duplicate_cases
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
+    CaseDuplicate,
 )
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -131,6 +130,8 @@ class CaseDeduplicationActionTest(TestCase):
 
         cls.domain = 'case-dedupe-test'
         cls.case_type = 'adult'
+        cls.factory = CaseFactory(cls.domain)
+        cls.accessor = CaseAccessors(cls.domain)
 
         cls.rule = AutomaticUpdateRule.objects.create(
             domain=cls.domain,
@@ -162,27 +163,44 @@ class CaseDeduplicationActionTest(TestCase):
         cls.rule.hard_delete()
         super().tearDownClass()
 
+    def tearDown(self):
+        CaseDuplicate.objects.all().delete()
+
+    def _create_cases(self):
+        case_1 = self.factory.create_case(case_name='name', update={"age": 2})
+        case_2 = self.factory.create_case(case_name='name', update={"age": 2})
+
+        return [case_1, case_2]
+
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_updates_a_duplicate(self, find_duplicates_mock):
-        factory = CaseFactory(self.domain)
-        accessor = CaseAccessors(self.domain)
-
-        case_1 = factory.create_case(case_name='name', update={"age": 2})
-        case_2 = factory.create_case(case_name='name', update={"age": 2})
-
+        case_1, case_2 = self._create_cases()
         find_duplicates_mock.return_value = [case_1, case_2]
 
         self.rule.run_actions_when_case_matches(case_1)
 
-        case_1 = accessor.get_case(case_1.case_id)
-        case_2 = accessor.get_case(case_2.case_id)
+        case_1 = self.accessor.get_case(case_1.case_id)
+        case_2 = self.accessor.get_case(case_2.case_id)
 
         self.assertEqual(case_1.get_case_property('is_potential_duplicate'), 'yes')
         self.assertEqual(case_2.get_case_property('is_potential_duplicate'), 'yes')
 
-    def test_stores_all_duplicates(self):
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_stores_all_duplicates(self, find_duplicates_mock):
         """When it finds duplicates, store them in the CaseDuplicate model
         """
+        case_1, case_2 = self._create_cases()
+        find_duplicates_mock.return_value = [case_1, case_2]
+
+        self.rule.run_actions_when_case_matches(case_1)
+
+        duplicates = list(
+            CaseDuplicate.objects.filter(action=self.action).all()
+        )
+        self.assertItemsEqual([duplicate.case_id for duplicate in duplicates], [case_1.case_id, case_2.case_id])
+
+        self.assertEqual(duplicates[0].potential_duplicates.count(), 1)
+        self.assertEqual(duplicates[0].potential_duplicates.first().case_id, case_1.case_id)
 
     def test_case_no_longer_duplicate(self):
         """When the case is no longer a duplicate, it should be removed from the CaseDuplicate model
