@@ -132,11 +132,8 @@ class LocationExporter(object):
         self._location_count = None
         self._locations_exported = 0
 
-        additional_filters = {}
+        additional_filters = self._extract_additional_filters(**kwargs)
         selected_location_only = kwargs.get('selected_location_only', False)
-
-        if kwargs.get('status_active') != '':
-            additional_filters['is_archived'] = (not kwargs.get('status_active'))
 
         if headers_only:
             self.base_query = SQLLocation.objects.none()
@@ -153,6 +150,12 @@ class LocationExporter(object):
                 domain=self.domain,
                 **additional_filters,
             )
+
+    def _extract_additional_filters(self, **kwargs):
+        additional_filters = {}
+        if kwargs.get('is_archived', None) is not None:
+            additional_filters['is_archived'] = kwargs.get('is_archived')
+        return additional_filters
 
     @property
     @memoized

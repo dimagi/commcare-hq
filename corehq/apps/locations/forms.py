@@ -622,6 +622,11 @@ class LocationFilterForm(forms.Form):
             ),
         )
 
+    def clean_location_id(self):
+        if self.cleaned_data['location_id'] == '':
+            return None
+        return self.cleaned_data['location_id']
+
     def clean_status_active(self):
         location_active_status = self.cleaned_data['status_active']
 
@@ -630,6 +635,21 @@ class LocationFilterForm(forms.Form):
         if location_active_status == ARCHIVED:
             return False
         return None
+
+    def get_filters(self):
+        """
+        This function translates some form inputs to their relevant SQLLocation attributes
+        """
+        filters = {
+            'location_id': self.cleaned_data.get('location_id', None),
+            'selected_location_only': self.cleaned_data.get('selected_location_only', False)
+        }
+        status_active = self.cleaned_data.get('status_active', None)
+
+        if status_active is not None:
+            filters['is_archived'] = (not status_active)
+
+        return filters
 
 
 def to_list(value):

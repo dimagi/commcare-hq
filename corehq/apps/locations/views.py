@@ -1002,7 +1002,7 @@ def location_export(request, domain):
     form = LocationFilterForm(request.GET, domain=domain)
 
     if form.is_valid():
-        location_filters = form.cleaned_data
+        location_filters = form.get_filters()
     else:
         return HttpResponseBadRequest('Location filters invalid')
 
@@ -1103,14 +1103,19 @@ def count_locations(request, domain):
     form = LocationFilterForm(request.GET, domain=domain)
 
     if form.is_valid():
-        location_filters = form.cleaned_data
+        location_filters = form.get_filters()
     else:
         return HttpResponseBadRequest('Location filters invalid')
 
-    if location_filters.get('selected_location_only'):
+    if location_filters.pop('selected_location_only'):
         locations_count = 1
     else:
-        locations_count = get_filtered_locations_count(domain, location_filters)
+        root_location_id = location_filters.pop('location_id')
+        locations_count = get_filtered_locations_count(
+            domain,
+            root_location_id=root_location_id,
+            **location_filters
+        )
 
     return JsonResponse({
         'count': locations_count

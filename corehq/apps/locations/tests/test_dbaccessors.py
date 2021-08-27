@@ -171,20 +171,28 @@ class TestFilteredLocationsCount(TestCase):
     def test_location_filters(self):
         from ..dbaccessors import get_filtered_locations_count
         # can filter by location_id (pseudo root)
-        filters = {'location_id': self.loc1._id}
-        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, filters), 2)
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc1._id,
+            **filters), 2)
 
-        filters = {'location_id': self.loc2._id}
-        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, filters), 1)
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc2._id,
+            **filters), 1)
 
         # can filter by location active status
-        filters = {'status_active': False}
-        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, filters), 0)
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 0)
 
         self.loc2.archive()
-        filters = {'status_active': True, 'location_id': self.loc1._id}
-        count = get_filtered_locations_count(self.ccdomain.name, filters)
-        self.assertEqual(count, 1)
+        filters = {'is_archived': False}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_id=self.loc1._id,
+            **filters), 1)
 
-        filters = {'status_active': False}
-        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, filters), 1)
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 1)
