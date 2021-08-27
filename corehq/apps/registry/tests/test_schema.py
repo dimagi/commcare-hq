@@ -23,4 +23,3 @@ class RegistrySchemaValidationTests(SimpleTestCase):
 def test_schema_validation(self, data, error):
     with assert_raises(None if not error else ValidationError, msg=error):
         JSONSchemaValidator(REGISTRY_JSON_SCHEMA)(data)
-
