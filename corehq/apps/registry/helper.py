@@ -28,7 +28,10 @@ class DataRegistryHelper:
         self.registry.check_ownership(self.current_domain)
         return self.registry.get_participating_domains()
 
-    def get_case(self, case_id, case_type):
+    def log_data_access(self, user, domain, related_object, filters=None):
+        self.registry.logger.data_accessed(user, domain, related_object, filters)
+
+    def get_case(self, case_id, case_type, user, application):
         if case_type not in self.registry.wrapped_schema.case_types:
             raise RegistryAccessException(f"'{case_type}' not available in registry")
 
@@ -39,4 +42,9 @@ class DataRegistryHelper:
 
         if case.domain not in self.visible_domains:
             raise RegistryAccessException("Data not available in registry")
+
+        self.log_data_access(user, case.domain, application, filters={
+            "case_type": case_type,
+            "case_id": case_id
+        })
         return case
