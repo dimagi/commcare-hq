@@ -122,7 +122,7 @@ from corehq.apps.saved_reports.tasks import (
 )
 from corehq.apps.userreports.util import \
     default_language as ucr_default_language
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
+from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
