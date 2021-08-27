@@ -31,7 +31,7 @@ hqDefine('locations/js/filtered_download', [
 
         self.location_selected = function () {
             self.location_id($('#id_location_id').val());
-        }
+        };
 
         self.countLocations = function () {
             self.count(null);
@@ -55,7 +55,7 @@ hqDefine('locations/js/filtered_download', [
 
         self.location_id.subscribe(self.countLocations);
         self.selected_location_only.subscribe(self.countLocations);
-        self.status_active.subscribe(self.countLocations)
+        self.status_active.subscribe(self.countLocations);
 
         return self;
     }
