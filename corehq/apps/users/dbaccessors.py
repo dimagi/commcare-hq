@@ -74,11 +74,12 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
+    # The following two filters applies only to MOBILE_USER_TYPE
     selected_location_only = user_filters.get('selected_location_only', False)
     user_active_status = user_filters.get('user_active_status', None)
 
     if user_active_status is None:
-        # Show all
+        # Show all users in domain - will always be true for WEB_USER_TYPE
         query = UserES().domain(domain).remove_default_filter('active')
     elif user_active_status:
         # Active users filtered by default
@@ -98,6 +99,7 @@ def _get_es_query(domain, user_type, user_filters):
 
     if location_id:
         if selected_location_only:
+            # This block will never execute for WEB_USER_TYPE
             location_ids = [location_id]
         else:
             location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])

@@ -1037,12 +1037,9 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
-        if toggles.FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
-            next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
-            next_url_text = _("Go back to organization download")
-        else:
-            next_url = reverse(LocationsListView.urlname, args=[self.domain])
-            next_url_text = _("Go back to organization structure")
+        next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
+        next_url_text = _("Go back to organization download")
+
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
