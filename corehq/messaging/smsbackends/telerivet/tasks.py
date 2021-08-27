@@ -48,18 +48,7 @@ def process_incoming_message(*args, **kwargs):
             log_call(from_number, "TELERIVET-%s" % kwargs["message_id"], backend=backend)
 
 
-@task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
-def process_message_status(message_id, status, request_secret, **kwargs):
-    backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
-
-    if backend is None:
-        return
-
-    try:
-        sms = SMS.objects.get(couch_id=message_id)
-    except SMS.DoesNotExist:
-        return
-
+def process_message_status(sms: SMS, status: str, **kwargs):
     metadata = {}
 
     if status == DELIVERED:

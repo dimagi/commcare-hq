@@ -18,7 +18,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.web import json_response
 from django.db import transaction
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -60,14 +60,21 @@ def message_status(request, message_id):
     status = request.POST.get('status')
     logger.info(f'Updating Telerivet message status: message_id={message_id}, status={status}')
 
-    process_message_status.delay(
-        message_id,
-        status,
-        request.POST.get('secret', ''),
-        error_message=request.POST.get('error_message', ''),
-    )
+    backend = SQLTelerivetBackend.by_webhook_secret(request.POST.get('secret', ''))
+    if backend is None:
+        return HttpResponseForbidden()
 
-    return HttpResponse()
+    try:
+        sms = SMS.objects.get(couch_id=message_id)
+        process_message_status(
+            sms,
+            status,
+            error_message=request.POST.get('error_message', ''),
+        )
+        return HttpResponse()
+
+    except SMS.DoesNotExist:
+        raise Http404()
 
 
 class TelerivetSetupView(BaseMessagingSectionView):

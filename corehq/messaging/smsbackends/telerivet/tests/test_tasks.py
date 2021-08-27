@@ -30,18 +30,16 @@ class TestProcessMessageStatus(TestCase):
         super(TestProcessMessageStatus, self).tearDown()
 
     def test_status_delivered(self):
-        message_id = self.sms.couch_id
-        process_message_status(message_id, DELIVERED, self.backend.config.webhook_secret)
+        process_message_status(self.sms, DELIVERED)
 
-        sms = SMS.objects.get(couch_id=message_id)
+        sms = SMS.objects.get(couch_id=self.sms.couch_id)
         self.assertTrue('gateway_delivered' in sms.custom_metadata.keys())
 
     def test_error_status(self):
         message_id = self.sms.couch_id
         process_message_status(
-            message_id,
+            self.sms,
             FAILED,
-            self.backend.config.webhook_secret,
             error_message='Somthing went wrong'
         )
 

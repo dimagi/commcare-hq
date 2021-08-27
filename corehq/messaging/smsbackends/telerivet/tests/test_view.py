@@ -60,8 +60,18 @@ class TelerivetViewTestCase(TestCase):
         self.sms.save()
 
         data = {'status': 'delivered', 'secret': self.backend.config.webhook_secret}
-        response = self.client.post(reverse(self.view_path, kwargs={'message_id': '0987654321a'}), data)
+        response = self.client.post(
+            reverse(self.view_path, kwargs={'message_id': f'{self.sms.couch_id}123'}),
+            data
+        )
 
-        self.assertTrue(response.status_code, 200)
-        self.sms.refresh_from_db()
-        self.assertEqual(self.sms.custom_metadata, {})
+        self.assertTrue(response.status_code == 404)
+
+    def test_message_status_with_invalid_secret(self):
+        self.sms.custom_metadata = {}
+        self.sms.save()
+
+        data = {'status': 'delivered', 'secret': 'not a secret'}
+        response = self.client.post(reverse(self.view_path, kwargs={'message_id': self.sms.couch_id}), data)
+
+        self.assertTrue(response.status_code == 403)
