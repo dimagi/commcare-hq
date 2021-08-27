@@ -55,6 +55,20 @@ from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
+# Reuse in Locations - put in more global const file
+SHOW_ALL = _('Show All')
+ONLY_ACTIVE = _('Only Active')
+ONLY_DEACTIVATED = _('Only Deactivated')
+
+ACTIVE = 'active'
+INACTIVE = 'inactive'
+
+USER_ACTIVE_STATUS = [
+    ('', SHOW_ALL),
+    (ACTIVE, ONLY_ACTIVE),
+    (INACTIVE, ONLY_DEACTIVATED)
+]
+
 
 def get_mobile_worker_max_username_length(domain):
     """
@@ -1332,6 +1346,15 @@ class UserFilterForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include mobile workers at the selected location'),
+    )
+    user_active_status = forms.ChoiceField(
+        label='Active / Deactivated',
+        choices=(),
+        required=False
+    )
     columns = forms.ChoiceField(
         required=False,
         label=ugettext_noop("Columns"),
@@ -1352,7 +1375,8 @@ class UserFilterForm(forms.Form):
         if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.objects.get_by_domain(self.domain)
@@ -1364,6 +1388,9 @@ class UserFilterForm(forms.Form):
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
+
+        self.fields['user_active_status'].choices = USER_ACTIVE_STATUS
+
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1389,18 +1416,35 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
+        user_type_title = 'Users'
+
         if self.user_type == MOBILE_USER_TYPE:
+            user_type_title = 'Mobile Workers'
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id", data_bind="value: location_id"),
-                    data_bind="slideVisible: !isCrossDomain()",
+                    crispy.Field(
+                        "location_id",
+                        data_bind="value: location_id",
+                    ),
+                    data_bind="slideVisible: !isCrossDomain(), event: {change: location_change}",
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        "selected_location_only",
+                        data_bind="checked: selected_location_only"
+                    ),
+                    data_bind="slideVisible: !isCrossDomain() && location_id",
+                ),
+                crispy.Field(
+                    "user_active_status",
+                    data_bind="value: user_active_status",
                 ),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Filter and Download Users"),
+                _(f'Filter and Download {user_type_title}'),
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1440,3 +1484,12 @@ class UserFilterForm(forms.Form):
             domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
         return sorted(domains)
+
+    def clean_user_active_status(self):
+        user_active_status = self.cleaned_data['user_active_status']
+
+        if user_active_status == ACTIVE:
+            return True
+        if user_active_status == INACTIVE:
+            return False
+        return None
