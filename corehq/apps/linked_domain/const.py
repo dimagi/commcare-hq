@@ -17,6 +17,7 @@ MODEL_DIALER_SETTINGS = 'dialer_settings'
 MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
+MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -27,7 +28,6 @@ INDIVIDUAL_DATA_MODELS = [
 
 DOMAIN_LEVEL_DATA_MODELS = [
     (MODEL_USER_DATA, ugettext_lazy('Custom User Data Fields')),
-    (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
     (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
     (MODEL_ROLES, ugettext_lazy('User Roles')),
     (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
@@ -43,6 +43,8 @@ FEATURE_FLAG_DATA_MODELS = [
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
+    (MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS, ugettext_lazy('Tableau Server and Visualizations')),
+    (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
 ]
 
 ALL_LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \
@@ -56,4 +58,6 @@ FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_DIALER_SETTINGS: toggles.WIDGET_DIALER,
     MODEL_OTP_SETTINGS: toggles.GAEN_OTP_SERVER,
     MODEL_HMAC_CALLOUT_SETTINGS: toggles.HMAC_CALLOUT,
+    MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: toggles.EMBEDDED_TABLEAU,
+    MODEL_PRODUCT_DATA: toggles.COMMTRACK,
 }

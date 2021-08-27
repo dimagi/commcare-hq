@@ -82,7 +82,7 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -967,6 +967,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def update_metadata(self, data):
         self.user_data.update(data)
+        return True
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
@@ -1069,12 +1070,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
-    @property
-    def user_session_data(self):
+    def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
             SYSTEM_PREFIX,
             COMMCARE_USER_TYPE_KEY,
-            COMMCARE_USER_TYPE_DEMO
+            COMMCARE_USER_TYPE_DEMO,
+            COMMCARE_PROJECT
         )
 
         session_data = self.metadata
@@ -1083,6 +1084,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data.update({
                 COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
             })
+
+        if COMMCARE_PROJECT not in session_data:
+            session_data[COMMCARE_PROJECT] = domain
 
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
@@ -1597,6 +1601,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 
         new_data = {**self.user_data, **data}
+        old_profile_id = self.user_data.get(PROFILE_SLUG)
 
         profile = self.get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
@@ -1606,7 +1611,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for key in profile.fields.keys():
                 new_data.pop(key, None)
 
+        profile_updated = old_profile_id != new_data.get(PROFILE_SLUG)
+        metadata_updated = new_data != self.user_data
         self.user_data = new_data
+        return metadata_updated, profile_updated
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
@@ -1774,7 +1782,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.users.model_log import UserModelAction
 
-        NotAllowed.check(self.domain)
         if not unretired_by and not settings.UNIT_TESTING:
             raise ValueError("Missing unretired_by")
 
@@ -1805,7 +1812,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self, retired_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
 
-        NotAllowed.check(self.domain)
         if not deleted_by and not settings.UNIT_TESTING:
             raise ValueError("Missing deleted_by")
 

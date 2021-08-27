@@ -365,7 +365,7 @@ class Command(BaseCommand):
                 datasource.referenced_doc_type, _get_table_size(datasource)
             )
             for datasource in static_datasources + dynamic_datasources
-        ], key=lambda r: r[-1])
+        ], key=lambda r: r[-1] if r[-1] != 'Table not found' else 0)
 
         self.stdout.write('UCR datasource sizes')
         self._print_table(

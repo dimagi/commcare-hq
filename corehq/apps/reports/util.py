@@ -58,14 +58,6 @@ def user_list(domain):
     return users
 
 
-def get_group(group='', **kwargs):
-    # refrenced in reports/views and create_export_filter below
-    if group:
-        if not isinstance(group, Group):
-            group = Group.get(group)
-    return group
-
-
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                             user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
@@ -258,64 +250,6 @@ def format_datatables_data(text, sort_key, raw=None):
     if raw is not None:
         data['raw'] = raw
     return data
-
-
-def app_export_filter(doc, app_id):
-    if app_id:
-        return (doc['app_id'] == app_id) if 'app_id' in doc else False
-    elif app_id == '':
-        return (not doc['app_id']) if 'app_id' in doc else True
-    else:
-        return True
-
-
-def datespan_export_filter(doc, datespan):
-    if isinstance(datespan, dict):
-        datespan = DateSpan(**datespan)
-    try:
-        received_on = iso_string_to_datetime(doc['received_on']).replace(tzinfo=pytz.utc)
-    except Exception:
-        if settings.DEBUG:
-            raise
-        return False
-
-    if datespan.startdate <= received_on < (datespan.enddate + timedelta(days=1)):
-        return True
-    return False
-
-
-def case_users_filter(doc, users, groups=None):
-    for id_ in (doc.get('owner_id'), doc.get('user_id')):
-        if id_:
-            if id_ in users:
-                return True
-            if groups and id_ in groups:
-                return True
-    else:
-        return False
-
-
-def case_group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return doc.get('owner_id') == group._id or case_users_filter(doc, user_ids)
-    else:
-        return False
-
-
-def users_filter(doc, users):
-    try:
-        return doc['form']['meta']['userID'] in users
-    except KeyError:
-        return False
-
-
-def group_filter(doc, group):
-    if group:
-        user_ids = set(group.get_static_user_ids())
-        return users_filter(doc, user_ids)
-    else:
-        return True
 
 
 def get_possible_reports(domain_name):

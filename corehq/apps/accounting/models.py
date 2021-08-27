@@ -383,6 +383,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False, db_index=True)
+    is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
@@ -583,6 +584,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
+
+    @staticmethod
+    def should_show_sms_billable_report(domain):
+        account = BillingAccount.get_account_by_domain(domain)
+        return account.is_sms_billable_report_visible
 
 
 class BillingContactInfo(models.Model):

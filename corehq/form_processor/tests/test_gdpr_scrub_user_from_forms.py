@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
@@ -80,6 +80,6 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
 
 
-@use_sql_backend
+@sharded
 class GDPRScrubUserFromFormsSqlTests(GDPRScrubUserFromFormsCouchTests):
     pass

@@ -6,7 +6,7 @@ from django.conf import settings
 
 from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 
@@ -168,6 +168,6 @@ class TestMeta(TestCase, TestFileMixin):
         self.assertIsNone(xform.metadata.timeEnd)
 
 
-@use_sql_backend
+@sharded
 class TestMetaSQL(TestMeta):
     pass

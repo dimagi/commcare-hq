@@ -2,10 +2,6 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    CASE_DOC_TYPES,
-    _iter_changes,
-)
 from corehq.apps.sms.tasks import \
     sync_user_phone_numbers as sms_sync_user_phone_numbers
 from corehq.apps.users.models import CommCareUser
@@ -17,6 +13,10 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
+
+from couchforms.models import XFormInstance
+
+from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 
 class Command(BaseCommand):
@@ -57,3 +57,14 @@ class Command(BaseCommand):
             if time.time() > next_event:
                 print("Queued %d cases for domain %s" % (i + 1, domain))
                 next_event = time.time() + 10
+
+
+CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted']
+
+
+def _iter_changes(domain, doc_types):
+    return CouchDomainDocTypeChangeProvider(
+        couch_db=XFormInstance.get_db(),
+        domains=[domain],
+        doc_types=doc_types,
+    ).iter_all_changes()

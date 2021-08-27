@@ -67,7 +67,7 @@ class UserRoleManager(models.Manager):
 
 
 def _uuid_str():
-    return str(uuid.uuid4())
+    return uuid.uuid4().hex
 
 
 class UserRole(models.Model):

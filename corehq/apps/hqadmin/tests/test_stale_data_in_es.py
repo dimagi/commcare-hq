@@ -37,7 +37,6 @@ class ExitEarlyException(Exception):
 @es_test
 class TestStaleDataInESSQL(TestCase):
 
-    use_sql_backend = True
     project_name = 'sql-project'
     case_type = 'patient'
     form_xmlns = None
@@ -88,9 +87,6 @@ class TestStaleDataInESSQL(TestCase):
                 )
 
         form, cases = self._submit_form(self.project.name, new_cases=4)
-        if not self.use_sql_backend:
-            # the couch view is sorted by case_id
-            cases = list(sorted(cases, key=lambda c: c.case_id))
 
         # process first 2 then raise exception
         self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
@@ -292,7 +288,7 @@ class TestStaleDataInESSQL(TestCase):
     def setUpClass(cls):
         delete_all_cases()
         cls.project = Domain.get_or_create_with_name(
-            cls.project_name, is_active=True, use_sql_backend=cls.use_sql_backend)
+            cls.project_name, is_active=True, use_sql_backend=True)
         cls.project.save()
         cls.elasticsearch = get_es_new()
         reset_es_index(XFORM_INDEX_INFO)
@@ -311,12 +307,3 @@ class TestStaleDataInESSQL(TestCase):
         delete_all_cases()
         self._delete_forms_from_es(self.forms_to_delete_from_es)
         self._delete_cases_from_es(self.cases_to_delete_from_es)
-
-
-@es_test
-class TestStaleDataInESCouch(TestStaleDataInESSQL):
-
-    use_sql_backend = False
-    project_name = 'couch-project'
-    case_type = 'COUCH_TYPE_NOT_SUPPORTED'
-    form_xmlns = 'COUCH_XMLNS_NOT_SUPPORTED'

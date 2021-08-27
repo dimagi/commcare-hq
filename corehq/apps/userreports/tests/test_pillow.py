@@ -170,7 +170,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         data_source_2 = self._copy_data_source(data_source_1)
         data_source_2.save()
         self.assertFalse(table_manager.needs_bootstrap())
-        # should call _pull_in_new_and_modified_data_sources
+        # should call _update_modified_data_sources
         table_manager.bootstrap_if_needed()
         self.assertEqual(1, len(table_manager.table_adapters_by_domain))
         self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))

@@ -3,7 +3,7 @@ import datetime
 from django.core.management.base import BaseCommand
 
 import csv
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from lxml import etree
 
 from corehq.apps.app_manager.dbaccessors import get_current_app_doc
@@ -54,7 +54,7 @@ def _get_headers_and_rows(domain, users, app_id):
     rows = []
     for user in users:
         response, timing_context = get_restore_response(
-            domain, user, app_id=app_id,
+            domain, user, app_id=app_id, version="2.0"
         )
         timing_dict = timing_context.to_dict()
         xml_payload = etree.fromstring(b''.join(response.streaming_content))
