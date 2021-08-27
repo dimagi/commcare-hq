@@ -299,33 +299,6 @@ class FixtureDataItem(Document):
         if fields:
             raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
 
-    def to_xml(self):
-        xData = ElementTree.Element(self.data_type.tag)
-        for attribute in self.data_type.item_attributes:
-            try:
-                xData.attrib[attribute] = serialize(self.item_attributes[attribute])
-            except KeyError as e:
-                # This should never occur, buf if it does, the OTA restore on mobile will fail and
-                # this error would have been raised and email-logged.
-                raise FixtureTypeCheckError(
-                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
-                    % (self.data_type.tag, self.get_id)
-                )
-        for field in self.data_type.fields:
-            escaped_field_name = clean_fixture_field_name(field.field_name)
-            if field.field_name not in self.fields:
-                xField = ElementTree.SubElement(xData, escaped_field_name)
-                xField.text = ""
-            else:
-                for field_with_attr in self.fields[field.field_name].field_list:
-                    xField = ElementTree.SubElement(xData, escaped_field_name)
-                    xField.text = serialize(field_with_attr.field_value)
-                    for attribute in field_with_attr.properties:
-                        val = field_with_attr.properties[attribute]
-                        xField.attrib[attribute] = serialize(val)
-
-        return xData
-
     def get_groups(self, wrap=True):
         group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
         if wrap:
