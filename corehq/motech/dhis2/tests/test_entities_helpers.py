@@ -22,10 +22,7 @@ from corehq.motech.dhis2.entities_helpers import (
 )
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    get_case_trigger_info_for_case,
-)
+from corehq.motech.value_source import get_case_trigger_info_for_case
 
 DOMAIN = 'test-domain'
 
