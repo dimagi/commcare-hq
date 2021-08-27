@@ -476,6 +476,10 @@ class EntriesHelper(object):
         return datums
 
     def get_data_registry_query_datum(self, datum, module):
+        """When a data registry is the source of the search results we can't assume that the case
+        the user selected is in the user's casedb so we have to get the data directly from HQ before
+        entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
+        """
         from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
         return FormDatumMeta(
             datum=RemoteRequestQuery(
