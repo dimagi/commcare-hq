@@ -117,22 +117,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var id = model.get('id'),
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
-            if (!initialPageData.get("has_geocoder_privs")) {
-                $("#" + inputId).addClass('unsupported alert alert-warning');
-                $("#" + inputId).text(gettext(
-                    "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+
+            if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
+                if (!initialPageData.get("has_geocoder_privs")) {
+                    $("#" + inputId).addClass('unsupported alert alert-warning');
+                    $("#" + inputId).text(gettext(
+                        "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                    );
+                    return true;
+                }
+                Utils.renderMapboxInput(
+                    inputId,
+                    geocoderItemCallback(id),
+                    geocoderOnClearCallback(id),
+                    initialPageData
                 );
-                return true;
+                var divEl = $field.find('.mapboxgl-ctrl-geocoder');
+                divEl.css("max-width", "none");
+                divEl.css("width", "100%");
             }
-            Utils.renderMapboxInput(
-                inputId,
-                geocoderItemCallback(id),
-                geocoderOnClearCallback(id),
-                initialPageData
-            );
-            var divEl = $field.find('.mapboxgl-ctrl-geocoder');
-            divEl.css("max-width", "none");
-            divEl.css("width", "100%");
 
             if (model.get('value')) {
                 $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
