@@ -112,6 +112,31 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     }
                 }
             };
+        },
+        initMapboxWidget = function (model) {
+            var id = model.get('id'),
+                inputId = id + "_mapbox",
+                $field = $("#" + inputId);
+            if (!initialPageData.get("has_geocoder_privs")) {
+                $("#" + inputId).addClass('unsupported alert alert-warning');
+                $("#" + inputId).text(gettext(
+                    "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
+                );
+                return true;
+            }
+            Utils.renderMapboxInput(
+                inputId,
+                geocoderItemCallback(id),
+                geocoderOnClearCallback(id),
+                initialPageData
+            );
+            var divEl = $field.find('.mapboxgl-ctrl-geocoder');
+            divEl.css("max-width", "none");
+            divEl.css("width", "100%");
+
+            if (model.get('value')) {
+                $field.find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
+            }
         };
 
     var QueryView = Marionette.View.extend({
@@ -171,7 +196,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 this.model.set('value', $(e.target).val());
-                this.parentView.initGeocoders();
+                initMapboxWidget(this.model);
             } else {
                 this.model.set('value', $(e.target).val());
             }
@@ -190,7 +215,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                         relatedModel.set('searchForBlank', searchForBlank);
                     }
                 });
-                this.parentView.initGeocoders();
+                initMapboxWidget(this.model);
             }
             self.parentView.setStickyQueryInputs();
         },
@@ -329,8 +354,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             _.each(self.collection.models, function (model) {
                 model.set('value', '');
                 model.set('searchForBlank', false);
+                if (model.get('input') === 'address') {
+                    initMapboxWidget(model);
+                }
             });
-            self.initGeocoders();
             self.setStickyQueryInputs();
         },
 
@@ -350,39 +377,18 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initGeocoders: function () {
             var self = this;
-            $(".query-field").each(function (i, field) {
-                var model = self.collection.models[i];
-                // Set geocoder receivers to subscribe
-                var receiveExpression = $(field).data().receive;
-                if (receiveExpression !== undefined && receiveExpression !== "") {
-                    var topic = receiveExpression.split("-")[0];
-                    $.subscribe(topic, updateReceiver($(field)));
-                }
-                // Set geocoder address publish
-                var addressTopic = $(field).data().address;
-                if (addressTopic !== undefined && addressTopic !== "") {
-                    // set this up as mapbox input
-                    var inputId = addressTopic + "_mapbox";
-                    if (!initialPageData.get("has_geocoder_privs")) {
-                        $("#" + inputId).addClass('unsupported alert alert-warning');
-                        $("#" + inputId).text(gettext(
-                            "Sorry, this input is not supported because your project doesn't have a Geocoder privilege")
-                        );
-                        return true;
-                    }
-                    Utils.renderMapboxInput(
-                        inputId,
-                        geocoderItemCallback(addressTopic),
-                        geocoderOnClearCallback(addressTopic),
-                        initialPageData
-                    );
-                    var divEl = $('.mapboxgl-ctrl-geocoder');
-                    divEl.css("max-width", "none");
-                    divEl.css("width", "100%");
+            _.each(self.collection.models, function (model, i) {
+                var $field = $($(".query-field")[i]);
 
-                    if (model.get('value')) {
-                        $(field).find('.mapboxgl-ctrl-geocoder--input').val(model.get('value'));
-                    }
+                // Set geocoder receivers to subscribe
+                if (model.get('receive')) {
+                    var topic = model.get('receive').split("-")[0];
+                    $.subscribe(topic, updateReceiver($field));
+                }
+
+                // Set geocoder address publish
+                if (model.get('input') === 'address') {
+                    initMapboxWidget(model);
                 }
             });
         },
