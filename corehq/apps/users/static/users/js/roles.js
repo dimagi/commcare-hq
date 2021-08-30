@@ -360,19 +360,19 @@ hqDefine('users/js/roles',[
             },
         };
         self.roleError = ko.observable("");
-        self.setRoleError = function(form, error) {
+        self.setRoleError = function (form, error) {
             self.roleError(error);
-            $(form).find('.modal-footer').addClass('has-error')
+            $(form).find('.modal-footer').addClass('has-error');
             $(form).find('[type="submit"]').enableButton();
         };
-        self.clearRoleError = function(form) {
+        self.clearRoleError = function (form) {
             self.roleError("");
-            $(form).find('.modal-footer').removeClass('has-error')
-        }
-        self.clearRoleForm = function(_, event) {
+            $(form).find('.modal-footer').removeClass('has-error');
+        };
+        self.clearRoleForm = function (_, event) {
             self.clearRoleError($(event.target).parents('form'));
             self.unsetRoleBeingEdited();
-        }
+        };
         self.submitNewRole = function (form) {
             self.clearRoleError(form);
             $.ajax({
