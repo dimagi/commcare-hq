@@ -1,7 +1,6 @@
 from datetime import datetime
 from unittest.mock import Mock, patch
 from uuid import uuid4
-from django.db import connection
 
 from django.test import SimpleTestCase, TestCase
 
