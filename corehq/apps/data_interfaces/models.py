@@ -917,8 +917,13 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         duplicate_cases = find_duplicate_cases(
             domain, case, self.case_properties, self.include_closed, self.match_type
         )
-        if len(duplicate_cases) == 1:
-            return
+
+        # Delete all CaseDuplicates and potential duplicates with this case_id, we'll recreate them later
+        CaseDuplicate.delete_all_references(action=self, case_id=case.case_id)
+
+        if len(duplicate_cases) == 1:  # There are no duplicates left
+            assert duplicate_cases[0].case_id == case.case_id
+            return CaseRuleActionResult(num_updates=0)
 
         num_updates = self._update_cases(domain, rule, duplicate_cases)
 
@@ -953,6 +958,11 @@ class CaseDuplicate(models.Model):
     case_id = models.CharField(max_length=126, null=True, db_index=True)
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
     potential_duplicates = models.ManyToManyField('self', symmetrical=True)
+
+    @classmethod
+    def delete_all_references(cls, action, case_id):
+        CaseDuplicate.objects.filter(action=action).filter(
+            Q(case_id=case_id) | Q(potential_duplicates__case_id=case_id)).delete()
 
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_cases):

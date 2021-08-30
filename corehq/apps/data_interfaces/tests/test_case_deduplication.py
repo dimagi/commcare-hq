@@ -202,13 +202,34 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(duplicates[0].potential_duplicates.count(), 1)
         self.assertEqual(duplicates[0].potential_duplicates.first().case_id, case_1.case_id)
 
-    def test_case_no_longer_duplicate(self):
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_case_no_longer_duplicate(self, find_duplicates_mock):
         """When the case is no longer a duplicate, it should be removed from the CaseDuplicate model
         """
+        case_1, case_2 = self._create_cases()
 
-    def test_case_already_duplicate(self):
+        find_duplicates_mock.return_value = [case_1, case_2]
+        self.rule.run_actions_when_case_matches(case_1)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+
+        find_duplicates_mock.return_value = [case_1]
+        self.rule.run_actions_when_case_matches(case_1)
+
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 0)
+
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_case_already_duplicate(self, find_duplicates_mock):
         """What happens when a case is already in the list
         """
+        case_1, case_2 = self._create_cases()
+
+        find_duplicates_mock.return_value = [case_1, case_2]
+        self.rule.run_actions_when_case_matches(case_1)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+
+        # No extra case duplicates should be created
+        self.rule.run_actions_when_case_matches(case_1)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
 
     @es_test
     def test_integration_test(self):
