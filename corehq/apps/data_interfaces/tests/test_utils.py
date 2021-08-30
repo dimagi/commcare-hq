@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest.mock import Mock, patch
 from uuid import uuid4
+from django.db import connection
 
 from django.test import SimpleTestCase, TestCase
 
@@ -522,6 +523,7 @@ class TestGetRepeatRecordIDs(TestCase):
         cls.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
+            connection_settings=conn,
         )
         cls.create_repeat_records()
 
