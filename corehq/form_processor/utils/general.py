@@ -35,18 +35,7 @@ def should_use_sql_backend(domain_object_or_name):
         return local_override
 
     if settings.UNIT_TESTING:
-        return _should_use_sql_backend_in_tests(domain_object)
-
-    return domain_object and domain_object.use_sql_backend
-
-
-def _should_use_sql_backend_in_tests(domain_object):
-    """The default return value is False unless the ``TESTS_SHOULD_USE_SQL_BACKEND`` setting
-    has been set or a Domain object with the same name exists."""
-    assert settings.UNIT_TESTING
-    override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
-    if override is not None:
-        return override
+        return True
 
     return domain_object and domain_object.use_sql_backend
 
