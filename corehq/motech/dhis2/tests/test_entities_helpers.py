@@ -83,7 +83,7 @@ class TestDhis2EntitiesHelpers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(DOMAIN, deleted_by=None)
         cls.location.delete()
         cls.domain.delete()
         super().tearDownClass()
