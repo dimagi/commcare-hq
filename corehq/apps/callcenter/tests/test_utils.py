@@ -52,7 +52,7 @@ TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CallCenterUtilsTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -223,11 +223,6 @@ class CallCenterUtilsTests(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsTestsSQL(CallCenterUtilsTests):
-    pass
-
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
 class CallCenterUtilsUsercaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -413,11 +408,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
-
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CallCenterUtilsUsercaseTestsSQL(CallCenterUtilsUsercaseTests):
-    pass
 
 
 class DomainTimezoneTests(SimpleTestCase):
