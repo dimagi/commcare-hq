@@ -14,12 +14,8 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import map_reduce
 
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.reports.analytics.couchaccessors import (
-    get_ledger_values_for_case_as_of,
-)
 from corehq.apps.reports.analytics.dbaccessors import (
     get_aggregated_ledger_values,
     get_wrapped_ledger_values,
@@ -132,45 +128,6 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self):
-        locations = self.locations()
-        # locations at this point will only have location objects
-        # that have supply points associated
-        for loc in locations[:self.config.get('max_rows', 100)]:
-            stock_results = get_ledger_values_for_case_as_of(
-                domain=self.domain,
-                case_id=loc.supply_point_id,
-                section_id=SECTION_TYPE_STOCK,
-                as_of=self.datetime,
-                program_id=self.program_id,
-            )
-            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results.items()})
-
-    def locations(self):
-        if self.active_location:
-            if self.active_location.supply_point_id:
-                locations = [self.active_location]
-            else:
-                locations = []
-
-            locations += list(
-                self.active_location.get_descendants().filter(
-                    is_archived=False,
-                    supply_point_id__isnull=False
-                )
-            )
-        else:
-            locations = SQLLocation.objects.filter(
-                domain=self.domain,
-                is_archived=False,
-                supply_point_id__isnull=False
-            )
-
-        return locations
-
-
-class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
-
-    def get_data(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
         locations = self.locations()
 
@@ -194,8 +151,29 @@ class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
                 )
 
             stock_results = sorted(transactions, key=lambda tx: tx.report_date, reverse=False)
-
             yield (loc.name, {tx.entry_id: tx.updated_balance for tx in stock_results})
+
+    def locations(self):
+        if self.active_location:
+            if self.active_location.supply_point_id:
+                locations = [self.active_location]
+            else:
+                locations = []
+
+            locations += list(
+                self.active_location.get_descendants().filter(
+                    is_archived=False,
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                is_archived=False,
+                supply_point_id__isnull=False
+            )
+
+        return locations
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):

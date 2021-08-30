@@ -18,7 +18,6 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -217,13 +216,7 @@ def bulk_update_cases(domain, case_changes, device_id):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    if should_use_sql_backend(domain):
-        publish_case_saved(case, send_post_save_signal)
-    else:
-        if send_post_save_signal:
-            case.save()
-        else:
-            CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    publish_case_saved(case, send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):
