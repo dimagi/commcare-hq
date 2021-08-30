@@ -50,7 +50,7 @@ class Version2CaseParsingTest(TestCase):
 
     def testParseUpdate(self):
         self._test_parse_create()
-        
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -79,7 +79,7 @@ class Version2CaseParsingTest(TestCase):
 
     def testParseClose(self):
         self._test_parse_create()
-        
+
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_close.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()

@@ -174,7 +174,8 @@ class CaseFactoryTest(TestCase):
         domain = uuid.uuid4().hex
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
-        [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': token_id})
+        [case] = factory.create_or_update_case(CaseStructure(
+            attrs={'create': True}), form_extras={'last_sync_token': token_id})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
@@ -192,6 +193,7 @@ class CaseFactoryTest(TestCase):
         domain = uuid.uuid4().hex
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
-        [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})
+        [case] = factory.create_or_update_case(CaseStructure(
+            attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)
