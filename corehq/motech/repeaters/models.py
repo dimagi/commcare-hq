@@ -208,6 +208,11 @@ class RepeaterStub(models.Model):
 
     objects = RepeaterStubManager()
 
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT
+    )
+
     class Meta:
         indexes = [
             models.Index(fields=['domain']),
