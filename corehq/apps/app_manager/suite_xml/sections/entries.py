@@ -18,7 +18,7 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase
+from corehq.apps.app_manager.util import actions_use_usercase, module_offers_search
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -34,6 +34,7 @@ from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.util.timer import time_method
+from corehq.util.view_utils import absolute_reverse
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
@@ -469,7 +470,33 @@ class EntriesHelper(object):
                 requires_selection=True,
                 action='update_case'
             ))
+
+            if module_offers_search(detail_module) and detail_module.search_config.data_registry:
+                datums.append(self.get_data_registry_query_datum(datum, detail_module))
         return datums
+
+    def get_data_registry_query_datum(self, datum, module):
+        """When a data registry is the source of the search results we can't assume that the case
+        the user selected is in the user's casedb so we have to get the data directly from HQ before
+        entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
+        """
+        from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
+        return FormDatumMeta(
+            datum=RemoteRequestQuery(
+                url=absolute_reverse('registry_case', args=[self.app.domain]),
+                storage_instance=REGISTRY_INSTANCE,
+                template='case',
+                data=[
+                    QueryData(key='case_type', ref=f"'{datum['case_type']}'"),
+                    QueryData(key='case_id', ref=session_var(datum['session_var'])),
+                    QueryData(key='registry', ref=f"'{module.search_config.data_registry}'")
+                ],
+                default_search='true',
+            ),
+            case_type=None,
+            requires_selection=False,
+            action=None
+        )
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
