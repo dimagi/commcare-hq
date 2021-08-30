@@ -309,7 +309,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             var erroredQuestions = self.erroredQuestions();
             for (var i = erroredQuestions.length - 1; i >= 0; i--) {
                 if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)) {
-                    self.currentJumpPoint = erroredQuestions[i];
+                    self.currentJumpPoint = erroredQuestions[0];
                     break;
                 }
                 if (self.currentJumpPoint.entry.entryId === erroredQuestions[i].entry.entryId) {
