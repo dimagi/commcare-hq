@@ -76,13 +76,14 @@ class AdjListManager(models.Manager):
             .order_by(("" if ascending else "-") + "_depth")
         )
 
-    def get_descendants(self, node, include_self=False):
+    def get_descendants(self, node, include_self=False, **filters):
         """Query node descendants
 
         :param node: A model instance or a QuerySet or Q object querying
         the adjacency list model. If a QuerySet, it should query a
         single value with something like `.values('id')`. If Q the
         `include_self` argument will be ignored.
+        `filters` allows for additional filtering of descendants
         :returns: A `QuerySet` instance.
         """
         ordering_col = self.model.ordering_col_attr
@@ -123,7 +124,7 @@ class AdjListManager(models.Manager):
                 all=True,
             )
         cte = With.recursive(make_cte_query)
-        query = cte.queryset().with_cte(cte)
+        query = cte.queryset().with_cte(cte).filter(**filters)
 
         if discard_dups:
             # Remove duplicates when the supplied Queryset or Q object
@@ -158,8 +159,8 @@ class AdjListManager(models.Manager):
     def get_queryset_ancestors(self, queryset, include_self=False):
         return self.get_ancestors(queryset, include_self=include_self)
 
-    def get_queryset_descendants(self, queryset, include_self=False):
-        return self.get_descendants(queryset, include_self=include_self)
+    def get_queryset_descendants(self, queryset, include_self=False, **filters):
+        return self.get_descendants(queryset, include_self=include_self, **filters)
 
     def root_nodes(self):
         return self.all().filter(parent_id__isnull=True)
