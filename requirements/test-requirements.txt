@@ -58,7 +58,7 @@ contextlib2==0.6.0.post1
     # via schema
 coverage==5.5
     # via -r test-requirements.in
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   jwcrypto
     #   pyopenssl
@@ -176,9 +176,9 @@ dnspython==1.15.0
     #   email-validator
 dropbox==9.3.0
     # via -r base-requirements.in
-elasticsearch==1.9.0
-    # via -r base-requirements.in
 elasticsearch2==2.5.1
+    # via -r base-requirements.in
+elasticsearch5==5.5.6
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -394,7 +394,7 @@ qrcode==4.0.4
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-radon==5.0.1
+radon==5.1.0
     # via -r test-requirements.in
 rcssmin==1.0.6
     # via django-compressor
@@ -525,8 +525,8 @@ unidecode==1.2.0
 urllib3==1.26.5
     # via
     #   botocore
-    #   elasticsearch
     #   elasticsearch2
+    #   elasticsearch5
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

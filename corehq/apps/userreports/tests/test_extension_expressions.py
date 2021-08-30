@@ -7,9 +7,10 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
+@run_with_sql_backend
 class IndexedCaseExpressionTest(TestCase):
     def setUp(self):
         super(IndexedCaseExpressionTest, self).setUp()
@@ -22,7 +23,6 @@ class IndexedCaseExpressionTest(TestCase):
         delete_all_cases()
         super(IndexedCaseExpressionTest, self).tearDown()
 
-    @run_with_all_backends
     def test_parent_case_no_index(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
@@ -51,7 +51,6 @@ class IndexedCaseExpressionTest(TestCase):
             parent_id
         )
 
-    @run_with_all_backends
     def test_named_index(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
@@ -82,7 +81,6 @@ class IndexedCaseExpressionTest(TestCase):
             parent_id
         )
 
-    @run_with_all_backends
     def test_multiple_indexes(self):
         parent_id1 = uuid.uuid4().hex
         parent_id2 = uuid.uuid4().hex
@@ -122,7 +120,6 @@ class IndexedCaseExpressionTest(TestCase):
             parent_id2
         )
 
-    @run_with_all_backends
     def test_grandparent_index(self):
         household_id = uuid.uuid4().hex
         parent_id = uuid.uuid4().hex

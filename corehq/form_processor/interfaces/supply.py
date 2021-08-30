@@ -29,6 +29,9 @@ class SupplyInterface(object):
     def get_by_location(self, location):
         return self.supply_point.get_by_location(location)
 
+    def get_supply_point_ids_by_location(self):
+        return self.supply_point.get_supply_point_ids_by_location(self.domain)
+
     def get_closed_and_open_by_location_id_and_domain(self, domain, location_id):
         """
         This also returns closed supply points.

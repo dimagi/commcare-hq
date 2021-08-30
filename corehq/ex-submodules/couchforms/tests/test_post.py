@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -97,6 +97,6 @@ class PostTest(TestCase, PostTestMixin):
         self._test('unicode', any_id_ok=True)
 
 
-@use_sql_backend
+@sharded
 class PostTestSQL(PostTest):
     pass
