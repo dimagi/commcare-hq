@@ -357,7 +357,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected_entry_query = """
         <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/" storage-instance="registry" template="case" default_search="true">
+          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry" template="case" default_search="true">
             <data key="case_type" ref="'case'"/>
             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             <data key="registry" ref="'myregistry'"/>

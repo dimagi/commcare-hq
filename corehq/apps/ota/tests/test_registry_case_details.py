@@ -3,8 +3,10 @@ from django.urls import reverse
 
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.mock import CaseFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
@@ -25,12 +27,16 @@ class RegistryCaseDetailsTests(TestCase):
 
         cls.case = CaseFactory(cls.domain).create_case(case_type="patient")
 
+        cls.app = AppFactory(cls.domain).app
+        cls.app.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(deleted_by_domain=None, deleted_by=None)
         xform_ids = CaseAccessorSQL.get_case_xform_ids(cls.case.case_id)
         CaseAccessorSQL.hard_delete_cases(cls.domain, [cls.case.case_id])
         FormAccessorSQL.hard_delete_forms(cls.domain, xform_ids)
+        cls.app.delete()
         Domain.get_db().delete_doc(cls.domain_object)  # no need to run the full domain delete
         super().tearDownClass()
 
@@ -42,6 +48,12 @@ class RegistryCaseDetailsTests(TestCase):
             "registry": self.registry.slug, "case_id": self.case.case_id, "case_type": "patient",
         }, 200)
         self.assertEqual(CaseDBFixture(self.case).fixture.decode('utf8'), response_content)
+        self.assertEqual(1, RegistryAuditLog.objects.filter(
+            registry=self.registry,
+            action=RegistryAuditLog.ACTION_DATA_ACCESSED,
+            related_object_type=RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+            related_object_id=self.app.get_id
+        ).count())
 
     def test_get_case_details_missing_case(self):
         self._make_request({
@@ -54,9 +66,10 @@ class RegistryCaseDetailsTests(TestCase):
         }, 404)
 
     def _make_request(self, params, expected_response_code):
-        response = self.client.get(reverse('registry_case', args=[self.domain]), data=params)
-        self.assertEqual(response.status_code, expected_response_code)
-        return response.content.decode('utf8')
+        response = self.client.get(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
+        content = response.content
+        self.assertEqual(response.status_code, expected_response_code, content)
+        return content.decode('utf8')
 
 
 @generate_cases([

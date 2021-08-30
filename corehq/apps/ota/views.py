@@ -434,14 +434,17 @@ def recovery_measures(request, domain, build_id):
 @location_safe
 @mobile_auth
 @require_GET
-def registry_case(request, domain):
+def registry_case(request, domain, app_id):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
     registry = request.GET.get("registry")
 
     missing = [
         name
-        for name, value in zip(["case_id", "case_type", "registry"], [case_id, case_type, registry])
+        for name, value in zip(
+            ["case_id", "case_type", "registry"],
+            [case_id, case_type, registry]
+        )
         if not value
     ]
     if missing:
@@ -451,8 +454,9 @@ def registry_case(request, domain):
             len(missing)
         ).format(params="', '".join(missing)))
 
+    app = get_app_cached(domain, app_id)
     try:
-        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type)
+        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):

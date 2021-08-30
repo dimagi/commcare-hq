@@ -483,7 +483,7 @@ class EntriesHelper(object):
         from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
         return FormDatumMeta(
             datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain]),
+                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
                 storage_instance=REGISTRY_INSTANCE,
                 template='case',
                 data=[
