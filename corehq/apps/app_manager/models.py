@@ -79,6 +79,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_app_languages,
+    get_apps_in_domain,
     get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
@@ -2133,6 +2134,7 @@ class CaseSearch(DocumentSchema):
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     blacklisted_owner_ids_expression = StringProperty()
     additional_case_types = ListProperty(str)
+    data_registry = StringProperty()
 
     @property
     def case_session_var(self):
@@ -4573,6 +4575,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4593,6 +4597,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

@@ -1,4 +1,4 @@
-from corehq.form_processor.tests.utils import partitioned
+from corehq.form_processor.tests.utils import sharded
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseAlertScheduleInstance,
@@ -12,7 +12,7 @@ from django.test import TestCase
 import uuid
 
 
-@partitioned
+@sharded
 class SchedulingDBAccessorsTest(TestCase):
 
     domain = 'scheduling-dbaccessors-test'

@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.form_processor.utils import convert_xform_to_json
 from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
 from phonelog.utils import _get_logs
@@ -111,7 +111,7 @@ class DeviceLogTest(TestCase, TestFileMixin):
         submit_form_locally(xml, 'test-domain')
 
 
-@use_sql_backend
+@sharded
 class DeviceLogTestSQL(DeviceLogTest):
     pass
 

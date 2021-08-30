@@ -7,13 +7,13 @@
 
 {% block page_content %}
   <p class="lead">
-    {% blocktrans %}
+    {% blocktrans trimmed %}
       Enterprise Permissions
     {% endblocktrans %}
   </p>
 
   <p class="help-block">
-    {% blocktrans %}
+    {% blocktrans trimmed %}
       Give web users who have access to a controlling project space the same level of access to your other project spaces.
       Such users will neither get email invitations to join these project spaces, nor will they appear as members in those project spaces.
     {% endblocktrans %}
@@ -29,7 +29,7 @@
     </form>
   {% else %}
     <p class="help-block">
-      {% blocktrans %}
+      {% blocktrans trimmed %}
         To turn on enterprise permissions, select the controlling project space.
       {% endblocktrans %}
     </p>
@@ -61,11 +61,11 @@
     <div class="col-sm-6">
       <p class="help-block">
         {% if source_domain %}
-          {% blocktrans %}
+          {% blocktrans trimmed %}
             Web users in <strong>{{ source_domain }}</strong> will also have permissions in the following project spaces.
           {% endblocktrans %}
         {% else %}
-          {% blocktrans %}
+          {% blocktrans trimmed %}
             Web users in the controlling project space will also have permissions in the following project spaces.
           {% endblocktrans %}
         {% endif %}
@@ -75,11 +75,11 @@
     <div class="col-sm-6">
       <p class="help-block">
         {% if source_domain %}
-          {% blocktrans %}
+          {% blocktrans trimmed %}
             Web users in <strong>{{ source_domain }}</strong> will <strong>not</strong> have permissions in the following project spaces.
           {% endblocktrans %}
         {% else %}
-          {% blocktrans %}
+          {% blocktrans trimmed %}
             Web users in the controlling project space will <strong>not</strong> have permissions in the following project spaces.
           {% endblocktrans %}
         {% endif %}

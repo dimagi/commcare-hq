@@ -8,7 +8,6 @@ from itertools import zip_longest
 from corehq.util.argparse_types import date_type
 from couchforms.models import doc_types
 
-from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_case_counts,
     get_es_case_ids,
@@ -24,7 +23,6 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_ids,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import (
     CSVRowFormatter,
     SimpleTableWriter,
@@ -63,11 +61,6 @@ class Command(BaseCommand):
         enddate = options.get('end')
 
         form_doc_types = doc_types()
-
-        if startdate or enddate:
-            if doc_type in CASE_DOC_TYPES or doc_type in form_doc_types:
-                if not should_use_sql_backend(domain):
-                    raise CommandError("Date filtering not supported for Couch domains")
 
         if startdate and enddate and enddate <= startdate:
             raise CommandError("enddate must be after startdate")
