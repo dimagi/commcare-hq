@@ -49,6 +49,7 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 
 
 @es_test
+@run_with_sql_backend
 class CaseSearchTests(ElasticTestMixin, TestCase):
     def setUp(self):
         super(CaseSearchTests, self).setUp()
