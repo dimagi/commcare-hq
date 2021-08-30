@@ -93,6 +93,7 @@ class TestProcessRepeater(TestCase):
         self.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
+            connection_settings=self.connection_settings
         )
         just_now = timezone.now() - timedelta(seconds=10)
         for payload_id in PAYLOAD_IDS:

@@ -50,6 +50,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         cls.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
+            connection_settings=conn,
         )
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
