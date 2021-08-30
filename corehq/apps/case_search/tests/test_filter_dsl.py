@@ -13,11 +13,11 @@ from corehq.apps.case_search.filter_dsl import (
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import generate_cases, trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup
 
 
 @es_test
@@ -356,6 +356,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
+@run_with_sql_backend
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
     maxDiff = None
 

@@ -3,7 +3,7 @@ import os
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -31,6 +31,6 @@ class TestNamespaces(TestCase, TestFileMixin):
         self._assert_xmlns('nothing here either', xform, 'form/lastempty')
 
 
-@use_sql_backend
+@sharded
 class TestNamespacesSQL(TestNamespaces):
     pass

@@ -8,7 +8,6 @@ import mock
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
@@ -16,8 +15,6 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.pillow_utils import rebuild_table
 from pillow_retry.models import PillowError
 
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
     DynamicDataSourceProvider)
@@ -375,6 +372,7 @@ class ChunkedUCRProcessorTest(TestCase):
         bootstrap_if_needed.assert_called_once_with()
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class IndicatorPillowTest(TestCase):
 
     @classmethod
@@ -432,8 +430,7 @@ class IndicatorPillowTest(TestCase):
     def test_rebuild_indicators(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        CommCareCase.get_db().save_doc(sample_doc)
-        self.addCleanup(lambda id: CommCareCase.get_db().delete_doc(id), sample_doc['_id'])
+        _save_sql_case(sample_doc)
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state(expected_indicators)
 
@@ -464,33 +461,6 @@ class IndicatorPillowTest(TestCase):
         sample_doc['domain'] = 'not-this-domain'
         self.pillow.process_change(doc_to_change(sample_doc))
         self.assertEqual(0, self.adapter.get_query_object().count())
-
-    @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_process_doc_from_couch_chunked(self, datetime_mock):
-        pillow = _get_pillow([self.config], processor_chunk_size=100)
-        self._test_process_doc_from_couch(datetime_mock, pillow)
-
-    @mock.patch('corehq.apps.userreports.specs.datetime')
-    def test_process_doc_from_couch(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock, self.pillow)
-
-    def _test_process_doc_from_couch(self, datetime_mock, pillow):
-        datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-
-        # make sure case is in DB
-        case = CommCareCase.wrap(sample_doc)
-        with drop_connected_signals(case_post_save):
-            case.save()
-
-        # send to kafka
-        since = self.pillow.get_change_feed().get_latest_offsets()
-        producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
-
-        # run pillow and check changes
-        pillow.process_changes(since=since, forever=False)
-        self._check_sample_doc_state(expected_indicators)
-        case.delete()
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):

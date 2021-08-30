@@ -1,4 +1,3 @@
-import functools
 import logging
 from datetime import datetime
 from unittest.mock import patch
@@ -25,7 +24,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
+from corehq.util.test_utils import unit_testing_only
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
@@ -157,34 +156,16 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_all_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        # run with default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-        ),
-    ],
-    nose_tags={'all_backends': True}
-)
+run_with_sql_backend = override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+run_with_all_backends = run_with_sql_backend
 
 
-def partitioned(cls):
+def _sharded(cls):
     """
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
     """
-    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
+    return patch_shard_db_transactions(attr(sharded=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
@@ -204,11 +185,20 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(partitioned(cls))
+    return skip_unless(_sharded(cls))
 
 
-def use_sql_backend(cls):
-    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+def sharded(cls):
+    """Tag tests to run with the sharded SQL backend
+
+    This adds a "sharded" attribute to decorated tests indicating that
+    the tests should be run with a sharded database setup. Note that the
+    presence of that attribute does not prevent tests from  also running
+    in the default not-sharded database setup.
+
+    Was previously named @use_sql_backend
+    """
+    return _sharded(run_with_sql_backend(cls))
 
 
 def patch_testcase_databases():
@@ -335,7 +325,10 @@ def create_form_for_test(
     )
 
     attachments = attachments or {}
-    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachment_tuples = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
