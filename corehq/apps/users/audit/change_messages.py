@@ -65,9 +65,9 @@ class UserChangeMessage(object):
             }
         }
         if devices_reset:
-            change_message["two_factor"].update({"reset_devices": {}})
+            change_message["two_factor"].update({RESET_DEVICES: {}})
         if disable_for_days:
-            change_message["two_factor"].update({"disable_for_days": {"days": disable_for_days}})
+            change_message["two_factor"].update({DISABLE_FOR_DAYS: {"days": disable_for_days}})
         return change_message
 
     @staticmethod
