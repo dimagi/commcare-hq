@@ -42,7 +42,12 @@ from corehq.apps.case_search.models import (
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
-RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
+# The name of the instance where search results are stored
+RESULTS_INSTANCE = 'results'
+
+# The name of the instance where search results are stored when querying a data registry
+REGISTRY_INSTANCE = 'registry'
+
 SESSION_INSTANCE = 'commcaresession'
 
 
@@ -81,9 +86,13 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self.get_post_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if self.module.search_config.data_registry:
+            # Disable claim request for data registry
+            kwargs["relevant"] = "false()"
+        else:
+            relevant = self.get_post_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def get_post_relevant(self):

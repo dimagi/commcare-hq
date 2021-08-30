@@ -14,12 +14,8 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import map_reduce
 
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.reports.analytics.couchaccessors import (
-    get_ledger_values_for_case_as_of,
-)
 from corehq.apps.reports.analytics.dbaccessors import (
     get_aggregated_ledger_values,
     get_wrapped_ledger_values,
@@ -132,45 +128,6 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self):
-        locations = self.locations()
-        # locations at this point will only have location objects
-        # that have supply points associated
-        for loc in locations[:self.config.get('max_rows', 100)]:
-            stock_results = get_ledger_values_for_case_as_of(
-                domain=self.domain,
-                case_id=loc.supply_point_id,
-                section_id=SECTION_TYPE_STOCK,
-                as_of=self.datetime,
-                program_id=self.program_id,
-            )
-            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results.items()})
-
-    def locations(self):
-        if self.active_location:
-            if self.active_location.supply_point_id:
-                locations = [self.active_location]
-            else:
-                locations = []
-
-            locations += list(
-                self.active_location.get_descendants().filter(
-                    is_archived=False,
-                    supply_point_id__isnull=False
-                )
-            )
-        else:
-            locations = SQLLocation.objects.filter(
-                domain=self.domain,
-                is_archived=False,
-                supply_point_id__isnull=False
-            )
-
-        return locations
-
-
-class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
-
-    def get_data(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
         locations = self.locations()
 
@@ -194,8 +151,29 @@ class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
                 )
 
             stock_results = sorted(transactions, key=lambda tx: tx.report_date, reverse=False)
-
             yield (loc.name, {tx.entry_id: tx.updated_balance for tx in stock_results})
+
+    def locations(self):
+        if self.active_location:
+            if self.active_location.supply_point_id:
+                locations = [self.active_location]
+            else:
+                locations = []
+
+            locations += list(
+                self.active_location.get_descendants().filter(
+                    is_archived=False,
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                is_archived=False,
+                supply_point_id__isnull=False
+            )
+
+        return locations
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -435,94 +413,3 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
                 rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
                                 ('current_stock', 'consumption', 'months_remaining', 'category')))
             yield rec
-
-
-class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, MultiFormDrilldownMixin):
-    """
-    Config:
-        domain: The domain to report on.
-        location_id: ID of location to get data for. Omit for all locations.
-    """
-
-    @property
-    def converted_start_datetime(self):
-        start_date = self.start_date
-        if isinstance(start_date, str):
-            start_date = parser.parse(start_date)
-        return start_date
-
-    @property
-    def converted_end_datetime(self):
-        end_date = self.end_date
-        if isinstance(end_date, str):
-            end_date = parser.parse(end_date)
-        return end_date
-
-    def get_data(self):
-        # todo: this will probably have to paginate eventually
-        if self.all_relevant_forms:
-            sp_ids = get_relevant_supply_point_ids(
-                self.domain,
-                self.active_location,
-            )
-
-            form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
-            form_xmlnses.append(COMMTRACK_REPORT_XMLNS)
-            spoint_loc_map = {
-                doc['_id']: doc['location_id']
-                for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
-            }
-            locations = _location_map(list(spoint_loc_map.values()))
-
-            for spoint_id, loc_id in spoint_loc_map.items():
-                if loc_id not in locations:
-                    continue  # it's archived, skip
-                loc = locations[loc_id]
-
-                results = StockReport.objects.filter(
-                    stocktransaction__case_id=spoint_id
-                ).filter(
-                    date__gte=self.converted_start_datetime,
-                    date__lte=self.converted_end_datetime
-                ).values_list(
-                    'form_id',
-                    'date'
-                ).distinct()  # not truly distinct due to ordering
-
-                matched = False
-                for form_id, date in results:
-                    try:
-                        if XFormInstance.get(form_id).xmlns in form_xmlnses:
-                            yield {
-                                'parent_name': loc.parent.name if loc.parent else '',
-                                'loc_id': loc.location_id,
-                                'loc_path': loc.path,
-                                'name': loc.name,
-                                'type': loc.location_type.name,
-                                'reporting_status': 'reporting',
-                                'geo': geopoint(loc),
-                                'last_reporting_date': date,
-                            }
-                            matched = True
-                            break
-                    except ResourceNotFound:
-                        logging.error('Stock report for location {} in {} references non-existent form {}'.format(
-                            loc.location_id, loc.domain, form_id
-                        ))
-
-                if not matched:
-                    result = StockReport.objects.filter(
-                        stocktransaction__case_id=spoint_id
-                    ).values_list(
-                        'date'
-                    ).order_by('-date')[:1]
-                    yield {
-                        'parent_name': loc.parent.name if loc.parent else '',
-                        'loc_id': loc.location_id,
-                        'loc_path': loc.path,
-                        'name': loc.name,
-                        'type': loc.location_type.name,
-                        'reporting_status': 'nonreporting',
-                        'geo': geopoint(loc),
-                        'last_reporting_date': result[0][0] if result else ''
-                    }
