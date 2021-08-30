@@ -56,7 +56,13 @@ class Command(BaseCommand):
                 if not batches:
                     print("No batches to process")
                     return
-                batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
+                batched_processes = [
+                    gevent.spawn(
+                        copy_events_to_sql,
+                        *batch,
+                        batch_size=batch_size
+                    ) for batch in batches
+                ]
                 gevent.joinall([*batched_processes])
         except MissingStartTimeError as e:
             message = f"Error in copy_events_to_sql while generating batches\n{e}"
