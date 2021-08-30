@@ -150,7 +150,7 @@ Creating cases can be done with the :code:`CaseFactory`::
 
     def test_my_case_function(self):
         factory = CaseFactory(domain='foo')
-        factory.create_case(
+        case = factory.create_case(
             case_type='my_case_type',
             owner_id='owner1',
             case_name='bar',
@@ -167,15 +167,11 @@ Cleaning up in tests can be done using the :code:`FormProcessorTestUtils1` class
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         # OR
-        FormProcessorTestUtils.delete_all_cases(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_cases(domain=domain)
 
         FormProcessorTestUtils.delete_all_xforms()
         # OR
-        FormProcessorTestUtils.delete_all_xforms(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_xforms(domain=domain)
 
 
 
