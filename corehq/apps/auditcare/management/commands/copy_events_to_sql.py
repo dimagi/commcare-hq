@@ -31,10 +31,17 @@ class Command(BaseCommand):
             choices=[True, False],
             help="Will try to process batches that have been errored"
         )
+        parser.add_argument(
+            '--batch_size',
+            default=1000,
+            type=int,
+            help="Number of documents to query from couch"
+        )
 
     def handle(self, **options):
         workers = options['workers']
         batch_by = options['batch_by']
+        batch_size = options['batch_size']
         util = AuditCareMigrationUtil()
         batches = []
         try:
