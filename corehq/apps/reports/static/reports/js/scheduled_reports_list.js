@@ -81,9 +81,6 @@ hqDefine("reports/js/scheduled_reports_list", [
             return scheduledReportModel(report);
         }));
 
-        self.scheduledReportsCount = _.map(self.scheduledReports(), function (e) {}).length
-
-
         self.items = ko.observableArray();
         self.perPage = ko.observable();
         self.totalItems = ko.observable(self.scheduledReportsCount);

@@ -7,19 +7,21 @@
        data-bind="visible: scheduledReports().length">
   <thead>
     <tr>
-      <th class="col-sm-1">
-        {% trans "Bulk Actions" %}
-        <button type="button"
-                class="btn btn-xs btn-default"
-                data-bind="click: $root.selectAll">
-          {% trans 'All' %}
-        </button>
-        <button type="button"
-                class="btn btn-xs btn-default"
-                data-bind="click: $root.selectNone">
-          {% trans 'None' %}
-        </button>
-      </th>
+      {% if is_owner or is_admin %} <!-- where is is_admin coming from -->
+        <th class="col-sm-1">
+          {% trans "Bulk Actions" %}
+          <button type="button"
+                  class="btn btn-xs btn-default"
+                  data-bind="click: $root.selectAll">
+            {% trans 'All' %}
+          </button>
+          <button type="button"
+                  class="btn btn-xs btn-default"
+                  data-bind="click: $root.selectNone">
+            {% trans 'None' %}
+          </button>
+        </th>
+      {% endif %}
       {% if not is_owner %}
         <th class="col-sm-2">{% trans "Owner" %}</th>
       {% endif %}
@@ -32,13 +34,15 @@
   <tbody data-bind="foreach: items()">
     <tr>
 
-      <td>
-        <div class="checkbox checkbox-table-cell">
-          <label>
-            <input type="checkbox" data-bind="checked: addedToBulk" />
-          </label>
-        </div>
-      </td>
+      {% if is_owner or is_admin %}
+        <td>
+          <div class="checkbox checkbox-table-cell">
+            <label>
+              <input type="checkbox" data-bind="checked: addedToBulk" />
+            </label>
+          </div>
+        </td>
+      {% endif %}
 
       {% if not is_owner %}
         <td data-bind="text:owner_email"></td>

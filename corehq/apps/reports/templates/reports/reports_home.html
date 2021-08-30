@@ -137,12 +137,12 @@
                   <i class="fa fa-spin fa-spinner"></i>
                   {% trans "Loading reports..." %}
                 </div>
-                <div style="display: none" data-bind="if: selectedReportsCount">
+                <div style="display: none" data-bind="visible: selectedReportsCount()">
                   <a class="btn btn-primary" style="margin-bottom: 13px; float: left" data-bind="click: bulkSend">
                     {% trans "Send Selected Reports" %}
                   </a>
                 </div> <!-- DISPLAY: NONE IS A TEMPORARY FIX UNTIL PAGE FETCH WORKS PROPERLY -->
-                <div style="display: none" data-bind="if: selectedReportsCount">
+                <div style="display: none" data-bind="visible: selectedReportsCount()">
                   <a class="btn btn-danger" style="margin-bottom: 13px; margin-left: 8px; float: left" data-bind="click: bulkDelete">
                     {% trans "Delete Selected Reports" %}
                   </a>
