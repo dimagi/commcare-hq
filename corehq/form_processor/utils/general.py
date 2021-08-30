@@ -1,42 +1,12 @@
-import threading
-
 from django.conf import settings
 
 from corehq.toggles import TF_DOES_NOT_USE_SQLITE_BACKEND
 
-_thread_local = threading.local()
-
-
-def get_local_domain_sql_backend_override(domain):
-    try:
-        return _thread_local.use_sql_backend[domain]
-    except (AttributeError, KeyError):
-        return None
-
-
-def set_local_domain_sql_backend_override(domain):
-    use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
-    use_sql_backend_dict[domain] = True
-    _thread_local.use_sql_backend = use_sql_backend_dict
-
-
-def clear_local_domain_sql_backend_override(domain):
-    use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
-    use_sql_backend_dict.pop(domain, None)
-    _thread_local.use_sql_backend = use_sql_backend_dict
-
 
 def should_use_sql_backend(domain_object_or_name):
-    if settings.ENTERPRISE_MODE:
+    if settings.ENTERPRISE_MODE or settings.UNIT_TESTING:
         return True
     domain_name, domain_object = _get_domain_name_and_object(domain_object_or_name)
-    local_override = get_local_domain_sql_backend_override(domain_name)
-    if local_override is not None:
-        return local_override
-
-    if settings.UNIT_TESTING:
-        return True
-
     return domain_object and domain_object.use_sql_backend
 
 
