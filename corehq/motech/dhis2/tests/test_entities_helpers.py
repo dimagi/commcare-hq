@@ -1,28 +1,42 @@
 import datetime
 import doctest
+import json
 from unittest.mock import Mock, call, patch
 from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
+from fakecouch import FakeCouchDb
+
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.models import WebUser
 from corehq.motech.auth import AuthManager
+from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import (
     Dhis2CaseConfig,
     Dhis2EntityConfig,
+    Dhis2FormConfig,
     RelationshipConfig,
 )
 from corehq.motech.dhis2.entities_helpers import (
     create_relationships,
+    get_programs_by_id,
     get_supercase,
     send_dhis2_entities,
     validate_tracked_entity,
 )
+from corehq.motech.dhis2.forms import Dhis2ConfigForm
+from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import get_case_trigger_info_for_case
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_case_trigger_info_for_case,
+    get_form_question_values,
+)
 
 DOMAIN = 'test-domain'
 
@@ -64,77 +78,112 @@ class ValidateTrackedEntityTests(SimpleTestCase):
             validate_tracked_entity(tracked_entity)
 
 
-def set_up_cases(factory, with_dhis2_id=True):
-    child_id = str(uuid4())
-    parent_id = str(uuid4())
-    child, parent = factory.create_or_update_case(
-        CaseStructure(
-            case_id=child_id,
-            attrs={
-                'create': True,
-                'case_type': 'child',
-                'case_name': 'Johnny APPLESEED',
-                'owner_id': 'b0b',
-                'external_id': 'johnny12345' if with_dhis2_id else '',
-                'update': {
-                    'first_name': 'Johnny',
-                    'last_name': 'Appleseed',
-                    'date_of_birth': '2021-08-27',
-                    'dhis2_org_unit_id': 'abcdef12345',
-                },
-            },
-            indices=[CaseIndex(
-                CaseStructure(
-                    case_id=parent_id,
-                    attrs={
-                        'create': True,
-                        'case_type': 'mother',
-                        'case_name': 'Alice APPLESEED',
-                        'owner_id': 'b0b',
-                        'external_id': 'alice123456' if with_dhis2_id else '',
-                        'update': {
-                            'first_name': 'Alice',
-                            'last_name': 'Appleseed',
-                            'dhis2_org_unit_id': 'abcdef12345',
-                        },
-                    },
-                ),
-                relationship='child',
-                related_type='mother',
-                identifier='parent',
-            )],
-        )
-    )
-    return child, parent
-
-
-class TestGetSupercase(TestCase):
+class TestDhis2EntitiesHelpers(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain(DOMAIN)
-        cls.factory = CaseFactory(domain=DOMAIN)
+        cls.domain = create_domain(DOMAIN)
+        location_type = LocationType.objects.create(
+            domain=DOMAIN,
+            name='test_location_type',
+        )
+        cls.location = SQLLocation.objects.create(
+            domain=DOMAIN,
+            name='test location',
+            location_id='test_location',
+            location_type=location_type,
+            latitude='-33.6543',
+            longitude='19.1234',
+            metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
+        )
+        cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest', None, None)
+        cls.user.set_location(DOMAIN, cls.location)
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
+        cls.user.delete(DOMAIN, deleted_by=None)
+        cls.location.delete()
+        cls.domain.delete()
         super().tearDownClass()
 
     def setUp(self):
-        self.child_case, self.parent_case = set_up_cases(self.factory)
+        self.db = Dhis2Repeater.get_db()
+        self.fakedb = FakeCouchDb()
+        Dhis2Repeater.set_db(self.fakedb)
 
-    def test_happy_path(self):
-        rel_config = RelationshipConfig.wrap({
-            'identifier': 'parent',
-            'referenced_type': 'mother',
-            'relationship': 'child',
-        })
+    def tearDown(self):
+        Dhis2Repeater.set_db(self.db)
 
-        value_source_configs = [{'case_property': 'external_id'}]
-        info = get_case_trigger_info_for_case(self.child_case, value_source_configs)
-        parent_case = get_supercase(info, rel_config)
-        self.assertTrue(are_cases_equal(parent_case, self.parent_case))
+    def test_get_programs_by_id(self):
+        program_id = 'test program'
+
+        form = {
+            "domain": DOMAIN,
+            "form": {
+                "@xmlns": "test_xmlns",
+                "event_date": "2017-05-25T21:06:27.012000",
+                "completed_date": "2017-05-25T21:06:27.012000",
+                "event_location": "-33.6543213 19.12344312 abcdefg",
+                "name": "test event",
+                "meta": {
+                    "location": 'test location',
+                    "timeEnd": "2017-05-25T21:06:27.012000",
+                    "timeStart": "2017-05-25T21:06:17.739000",
+                    "userID": self.user.user_id,
+                    "username": self.user.username
+                }
+            },
+            "received_on": "2017-05-26T09:17:23.692083Z",
+        }
+        config = {
+            'form_configs': json.dumps([{
+                'xmlns': 'test_xmlns',
+                'program_id': program_id,
+                'event_status': 'COMPLETED',
+                'event_location': {
+                    'form_question': '/data/event_location'
+                },
+                'completed_date': {
+                    'doc_type': 'FormQuestion',
+                    'form_question': '/data/completed_date',
+                    'external_data_type': DHIS2_DATA_TYPE_DATE
+                },
+                'org_unit_id': {
+                    'doc_type': 'FormUserAncestorLocationField',
+                    'form_user_ancestor_location_field': LOCATION_DHIS_ID
+                },
+                'datavalue_maps': [
+                    {
+                        'data_element_id': 'dhis2_element_id',
+                        'value': {
+                            'doc_type': 'FormQuestion',
+                            'form_question': '/data/name'
+                        }
+                    }
+                ]
+            }])
+        }
+        config_form = Dhis2ConfigForm(data=config)
+        self.assertTrue(config_form.is_valid())
+        data = config_form.cleaned_data
+        repeater = Dhis2Repeater()
+        repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        repeater.save()
+
+        info = CaseTriggerInfo(
+            domain=DOMAIN,
+            case_id=None,
+            owner_id='test_location',
+            form_question_values=get_form_question_values(form),
+        )
+
+        programs = get_programs_by_id(info, repeater.dhis2_config)
+
+        self.assertDictEqual(
+            programs[program_id]['geometry'],
+            {'type': 'Point', 'coordinates': [-33.6543, 19.1234]}
+        )
 
 
 class TestCreateRelationships(TestCase):
@@ -466,6 +515,79 @@ class TestRequests(TestCase):
             )
         ]
         self.post_func.assert_has_calls(calls)
+
+
+def set_up_cases(factory, with_dhis2_id=True):
+    child_id = str(uuid4())
+    parent_id = str(uuid4())
+    child, parent = factory.create_or_update_case(
+        CaseStructure(
+            case_id=child_id,
+            attrs={
+                'create': True,
+                'case_type': 'child',
+                'case_name': 'Johnny APPLESEED',
+                'owner_id': 'b0b',
+                'external_id': 'johnny12345' if with_dhis2_id else '',
+                'update': {
+                    'first_name': 'Johnny',
+                    'last_name': 'Appleseed',
+                    'date_of_birth': '2021-08-27',
+                    'dhis2_org_unit_id': 'abcdef12345',
+                },
+            },
+            indices=[CaseIndex(
+                CaseStructure(
+                    case_id=parent_id,
+                    attrs={
+                        'create': True,
+                        'case_type': 'mother',
+                        'case_name': 'Alice APPLESEED',
+                        'owner_id': 'b0b',
+                        'external_id': 'alice123456' if with_dhis2_id else '',
+                        'update': {
+                            'first_name': 'Alice',
+                            'last_name': 'Appleseed',
+                            'dhis2_org_unit_id': 'abcdef12345',
+                        },
+                    },
+                ),
+                relationship='child',
+                related_type='mother',
+                identifier='parent',
+            )],
+        )
+    )
+    return child, parent
+
+
+class TestGetSupercase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        self.child_case, self.parent_case = set_up_cases(self.factory)
+
+    def test_happy_path(self):
+        rel_config = RelationshipConfig.wrap({
+            'identifier': 'parent',
+            'referenced_type': 'mother',
+            'relationship': 'child',
+        })
+
+        value_source_configs = [{'case_property': 'external_id'}]
+        info = get_case_trigger_info_for_case(self.child_case, value_source_configs)
+        parent_case = get_supercase(info, rel_config)
+        self.assertTrue(are_cases_equal(parent_case, self.parent_case))
 
 
 def test_doctests():

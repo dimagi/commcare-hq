@@ -14,7 +14,7 @@ from datetime import datetime
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
 class Version2CaseParsingTest(TestCase):
@@ -171,7 +171,7 @@ class Version2CaseParsingTest(TestCase):
         check_xml_line_by_line(self, expected_v2_response, v2response)
 
 
-@use_sql_backend
+@sharded
 class Version2CaseParsingTestSQL(Version2CaseParsingTest):
     pass
 

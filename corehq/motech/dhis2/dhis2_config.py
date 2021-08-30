@@ -46,6 +46,7 @@ class Dhis2FormConfig(DocumentSchema):
     })
     completed_date = DictProperty(required=False)
     datavalue_maps = SchemaListProperty(FormDataValueMap)
+    event_location = DictProperty(required=False, default={})
 
     @classmethod
     def wrap(cls, data):
