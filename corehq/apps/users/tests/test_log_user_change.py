@@ -98,13 +98,13 @@ class TestLogUserChange(TestCase):
         self.assertEqual(user_history.change_messages, {})
         self.assertEqual(user_history.action, UserModelAction.DELETE.value)
 
-    def test_domain_less_actions(self):
+    def test_missing_by_domain(self):
         new_user = CommCareUser.create(self.domain, f'test-new@{self.domain}.commcarehq.org', '******',
                                        created_by=self.web_user, created_via=USER_CHANGE_VIA_WEB)
         new_user_id = new_user.get_id
 
         # domain less delete action by non-system user
-        with self.assertRaisesMessage(ValueError, "missing 'domain' argument'"):
+        with self.assertRaisesMessage(ValueError, "missing 'by_domain' argument'"):
             new_user.delete(None, deleted_by=self.web_user, deleted_via=__name__)
 
         # domain less delete action by SYSTEM_USER_ID
@@ -117,6 +117,17 @@ class TestLogUserChange(TestCase):
 
         user_history = UserHistory.objects.get(changed_by=SYSTEM_USER_ID, action=UserModelAction.DELETE.value)
         self.assertEqual(user_history.user_id, new_user_id)
+
+    def test_missing_for_domain(self):
+        with self.assertRaisesMessage(ValueError, "missing 'for_domain' argument'"):
+            log_user_change(
+                by_domain=self.commcare_user.domain,
+                for_domain=None,
+                couch_user=self.commcare_user,
+                changed_by_user=self.web_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                action=UserModelAction.UPDATE,
+            )
 
 
 def _get_expected_changes_json(user):

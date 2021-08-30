@@ -343,9 +343,12 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     fields_changed = fields_changed or {}
     change_messages = change_messages or {}
 
-    # domain is essential to filter changes done in a domain
-    if not by_domain and domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
-        raise ValueError("missing 'domain' argument'")
+    # domains are essential to filter changes done in and by a domain
+    if domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
+        if not by_domain:
+            raise ValueError("missing 'by_domain' argument'")
+        if not for_domain:
+            raise ValueError("missing 'for_domain' argument'")
 
     # for an update, there should always be fields that have changed or change messages
     if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
