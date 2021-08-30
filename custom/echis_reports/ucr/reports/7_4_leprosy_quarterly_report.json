@@ -13,8 +13,6 @@
     "config": {
         "title": "7.4 Leprosy Quarterly Report",
         "aggregation_columns":  [
-          "health_center_id",
-          "health_post_id",
           "quarterly_report_date"
         ],
         "filters":  [
@@ -72,60 +70,6 @@
             "slug": "test_or_real"
           },
           {
-            "comment": null,
-            "datatype": "string",
-            "display": "region",
-            "field": "region",
-            "type": "dynamic_choice_list",
-            "slug": "region"
-          },
-          {
-            "comment": null,
-            "datatype": "string",
-            "display": "Zone",
-            "field": "zone",
-            "type": "dynamic_choice_list",
-            "slug": "zone"
-          },
-          {
-            "comment": null,
-            "datatype": "string",
-            "display": "Woreda",
-            "field": "woreda",
-            "type": "dynamic_choice_list",
-            "slug": "woreda"
-          },
-          {
-            "datatype": "string",
-            "field": "health_center",
-            "type": "dynamic_choice_list",
-            "display": "Health Center",
-            "slug": "health_center"
-          },
-          {
-            "datatype": "string",
-            "field": "health_center_id",
-            "type": "dynamic_choice_list",
-            "display": "Health Center Id(for Mobile)",
-            "slug": "health_center_id"
-          },
-          {
-            "datatype": "string",
-            "field": "health_post",
-            "type": "dynamic_choice_list",
-            "display": "Health Post",
-            "slug": "health_post"
-          },
-          {
-            "type": "pre",
-            "field": "health_post",
-            "slug": "health_post_pre",
-            "datatype": "string",
-            "pre_value": "",
-            "pre_operator": "!=",
-            "display": null
-          },
-          {
             "type": "pre",
             "field": "quarterly_report_date",
             "slug": "quarterly_report_date_pre",
@@ -135,37 +79,7 @@
             "display": null
           }
         ],
-        "columns": [
-          {
-            "field": "health_center_id",
-            "sortable": false,
-            "description": null,
-            "format": "default",
-            "css_class": null,
-            "transform": {},
-            "column_id": "health_center_id",
-            "visible": false,
-            "display": "Health Center Id",
-            "calculate_total": false,
-            "type": "field",
-            "width": null,
-            "aggregation": "simple"
-          },
-          {
-            "field": "health_post_id",
-            "sortable": false,
-            "description": null,
-            "format": "default",
-            "css_class": null,
-            "transform": {},
-            "column_id": "health_post_id",
-            "visible": false,
-            "display": "Health Post Id",
-            "calculate_total": false,
-            "type": "field",
-            "width": null,
-            "aggregation": "simple"
-          },
+        "columns":[
           {
             "field": "quarterly_report_date",
             "sortable": false,
