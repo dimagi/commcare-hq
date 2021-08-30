@@ -28,7 +28,6 @@ ACCESS_LOOKUP = {
     "login_failed": ACCESS_FAILED,
 }
 
-COUCH_QUERY_LIMIT = 1000
 
 IGNORED_DOC_TYPES = {"ModelActionAudit"}
 
