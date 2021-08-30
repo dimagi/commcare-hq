@@ -82,4 +82,5 @@ branches:
     - errorJumpFix # Shubham Aug 25
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ap/add-support-for-batch-size # Amit Aug 30
+    - sk/prevent-duplicate-role-names  # Simon Aug 30
 submodules: { }
