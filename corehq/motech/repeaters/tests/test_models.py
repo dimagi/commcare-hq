@@ -3,6 +3,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 from django.conf import settings
+from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
@@ -30,7 +31,7 @@ from ..models import (
     is_response,
 )
 
-DOMAIN = 'test-domain'
+DOMAIN = 'test-domain-ap'
 
 
 def test_get_all_repeater_types():
@@ -44,14 +45,18 @@ class RepeaterTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
+        url = 'https://www.example.com/api/'
+        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
         self.repeater = FormRepeater(
             domain=DOMAIN,
-            url='https://www.example.com/api/',
+            url=url,
+            connections_settings_id=conn.id
         )
         self.repeater.save()
         self.repeater_stub = RepeaterStub.objects.create(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
+            connection_settings=conn,
         )
 
     def tearDown(self):
@@ -433,3 +438,13 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         with make_repeat_record(self.repeater_stub, RECORD_PENDING_STATE):
             is_migrated = are_repeat_records_migrated(DOMAIN)
         self.assertTrue(is_migrated)
+
+
+class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
+
+    def test_connection_settings_are_accessible(self):
+        self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
+
+    def test_used_connection_setting_cannot_be_deleted(self):
+        with self.assertRaises(ProtectedError):
+            self.sql_repeater.connection_settings.delete()
