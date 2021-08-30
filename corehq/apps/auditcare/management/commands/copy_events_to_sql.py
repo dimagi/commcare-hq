@@ -31,10 +31,17 @@ class Command(BaseCommand):
             choices=[True, False],
             help="Will try to process batches that have been errored"
         )
+        parser.add_argument(
+            '--batch_size',
+            default=1000,
+            type=int,
+            help="Number of documents to query from couch"
+        )
 
     def handle(self, **options):
         workers = options['workers']
         batch_by = options['batch_by']
+        batch_size = options['batch_size']
         util = AuditCareMigrationUtil()
         batches = []
         try:
@@ -49,7 +56,13 @@ class Command(BaseCommand):
                 if not batches:
                     print("No batches to process")
                     return
-                batched_processes = [gevent.spawn(copy_events_to_sql, *batch) for batch in batches]
+                batched_processes = [
+                    gevent.spawn(
+                        copy_events_to_sql,
+                        *batch,
+                        batch_size=batch_size
+                    ) for batch in batches
+                ]
                 gevent.joinall([*batched_processes])
         except MissingStartTimeError as e:
             message = f"Error in copy_events_to_sql while generating batches\n{e}"
