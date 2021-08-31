@@ -574,6 +574,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
+        self.form = function () {
+            var parent = self.parent;
+            while (parent.type && parent.type() !== null) {
+                parent = parent.parent;
+            }
+            return parent;
+        };
+
         self.isValid = function () {
             return self.error() === null && self.serverError() === null;
         };
@@ -621,6 +629,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });
+            self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
         };
     }
