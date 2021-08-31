@@ -10,7 +10,7 @@ from casexml.apps.phone.utils import (
 )
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
-from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
+from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataItem, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.util.metrics import metrics_histogram
@@ -163,7 +163,12 @@ class ItemListsProvider(FixtureProvider):
         item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:
-            item_list_element.append(self.to_xml(item))
+            try:
+                xml = self.to_xml(item)
+            except KeyError:
+                # catch docs missed in prior lazy migrations
+                xml = self.to_xml(FixtureDataItem.wrap(item).to_json())
+            item_list_element.append(xml)
         return fixture_element
 
     def _get_schema_element(self, data_type):
