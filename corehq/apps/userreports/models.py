@@ -635,7 +635,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
 
     @cached_property
     def registry_helper(self):
-        return DataRegistryHelper(self.domain, self.registry_slug)
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
 
     @property
     def data_domains(self):
@@ -884,7 +884,7 @@ class RegistryReportConfiguration(ReportConfiguration):
 
     @cached_property
     def registry_helper(self):
-        return DataRegistryHelper(self.domain, self.registry_slug)
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
 
     @property
     @memoized
