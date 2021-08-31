@@ -60,21 +60,25 @@ def message_status(request, message_id):
     status = request.POST.get('status')
     logger.info(f'Updating Telerivet message status: message_id={message_id}, status={status}')
 
-    backend = SQLTelerivetBackend.by_webhook_secret(request.POST.get('secret', ''))
+    request_secret = request.POST.get('secret', '')
+    backend = None
+    if request_secret:
+        backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
+
     if backend is None:
         return HttpResponseForbidden()
 
     try:
         sms = SMS.objects.get(couch_id=message_id)
+    except SMS.DoesNotExist:
+        raise Http404()
+    else:
         process_message_status(
             sms,
             status,
             error_message=request.POST.get('error_message', ''),
         )
         return HttpResponse()
-
-    except SMS.DoesNotExist:
-        raise Http404()
 
 
 class TelerivetSetupView(BaseMessagingSectionView):
