@@ -215,6 +215,7 @@ class SQLRepeater(models.Model):
             models.Index(fields=['domain']),
             models.Index(fields=['repeater_id']),
         ]
+        db_table = 'repeaters_repeater'
 
     @property
     @memoized
