@@ -83,4 +83,5 @@ branches:
     - ap/add-support-for-batch-size # Amit Aug 30
     - sk/prevent-duplicate-role-names  # Simon Aug 30
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
+    - ce/fixture-restore # Cal Aug 31
 submodules: { }
