@@ -6,9 +6,9 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.elastic import get_es_new, send_to_elasticsearch, ES_META
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 
 
 class ElasticTestMixin(object):
@@ -61,10 +61,18 @@ def es_test(test):
     return attr(es_test=True)(test)
 
 
-def populate_user_index(user_docs):
+def populate_es_index(models, index_name, doc_prep_fn=lambda doc: doc):
+    index_info = ES_META[index_name]
     es = get_es_new()
-    ensure_index_deleted(USER_INDEX)
-    initialize_index_and_mapping(es, USER_INDEX_INFO)
-    for user_doc in user_docs:
-        send_to_elasticsearch('users', user_doc)
-    es.indices.refresh(USER_INDEX)
+    with trap_extra_setup(ConnectionError):
+        initialize_index_and_mapping(es, index_info)
+    for model in models:
+        send_to_elasticsearch(
+            index_name,
+            doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
+        )
+    es.indices.refresh(index_info.index)
+
+
+def populate_user_index(users):
+    populate_es_index(users, 'users')
