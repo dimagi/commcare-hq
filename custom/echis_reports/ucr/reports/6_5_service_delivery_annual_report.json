@@ -12,8 +12,7 @@
     "data_source_table": "static_annual_service_delivery_dS_v1",
     "config": {
       "title": "6.5 Service Delivery Annual Report",
-      "aggregation_columns":[
-        "health_post",
+      "aggregation_columns":[ 
         "annual_report_date"
       ] ,
       "filters":   [
@@ -69,45 +68,7 @@
           "field": "test_or_real",
           "type": "choice_list",
           "slug": "test_or_real"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "region",
-          "field": "region",
-          "type": "dynamic_choice_list",
-          "slug": "region"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Zone",
-          "field": "zone",
-          "type": "dynamic_choice_list",
-          "slug": "zone"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Woreda",
-          "field": "woreda",
-          "type": "dynamic_choice_list",
-          "slug": "woreda"
-        },
-        {
-          "datatype": "string",
-          "field": "health_center",
-          "type": "dynamic_choice_list",
-          "display": "Health Center",
-          "slug": "health_center"
-        },
-        {
-          "datatype": "string",
-          "field": "health_post",
-          "type": "dynamic_choice_list",
-          "display": "Health Post",
-          "slug": "health_post"
-        },
+        } ,
         {
           "type": "pre",
           "field": "is_closed",
@@ -127,21 +88,7 @@
         }
       ],
       "columns":  [
-        {
-          "field": "health_post",
-          "sortable": false,
-          "description": null,
-          "format": "default",
-          "css_class": null,
-          "transform": {},
-          "column_id": "health_post",
-          "visible": true,
-          "display": "Health Post",
-          "calculate_total": false,
-          "type": "field",
-          "width": null,
-          "aggregation": "max"
-        },
+        
         {
           "comment": null,
           "field": "annual_report_date",

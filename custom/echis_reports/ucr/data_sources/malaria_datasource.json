@@ -96,757 +96,7 @@
               },
               "column_id": "report_month_date_for_filter_gregorian"
             },
-            {
-              "type": "expression",
-              "column_id": "region",
-              "datatype": "string",
-              "display_name": "region",
-              "expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id",
-                      "datatype": null
-                    }
-                  },
-                  "type": "boolean_expression",
-                  "comment": null,
-                  "property_value": "-"
-                },
-                "type": "conditional",
-                "expression_if_true": {
-                  "value_expression": {
-                    "value_expression": {
-                      "type": "root_doc",
-                      "expression": {
-                        "type": "property_name",
-                        "property_name": "name",
-                        "datatype": null
-                      }
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "type": "location_parent_id",
-                          "location_id_expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                              "test": {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                  "type": "location_parent_id",
-                                  "location_id_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                      "type": "property_name",
-                                      "property_name": "owner_id",
-                                      "datatype": null
-                                    }
-                                  }
-                                },
-                                "comment": null,
-                                "property_value": ""
-                              },
-                              "expression_if_false": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "type": "property_name",
-                                  "property_name": "owner_id",
-                                  "datatype": null
-                                }
-                              },
-                              "type": "conditional",
-                              "expression_if_true": {
-                                "constant": "-",
-                                "type": "constant"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
-                  }
-                },
-                "expression_if_false": {
-                  "value_expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "name",
-                      "datatype": null
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "Location",
-                  "doc_id_expression": {
-                    "type": "location_parent_id",
-                    "location_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "type": "location_parent_id",
-                          "location_id_expression": {
-                            "test": {
-                              "operator": "eq",
-                              "type": "boolean_expression",
-                              "expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                  "type": "root_doc",
-                                  "expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id",
-                                    "datatype": null
-                                  }
-                                }
-                              },
-                              "comment": null,
-                              "property_value": ""
-                            },
-                            "expression_if_false": {
-                              "type": "root_doc",
-                              "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                              }
-                            },
-                            "type": "conditional",
-                            "expression_if_true": {
-                              "constant": "-",
-                              "type": "constant"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "is_nullable": true,
-              "is_primary_key": false,
-              "create_index": false,
-              "transform": {},
-              "comment": null
-            },
-            {
-              "type": "expression",
-              "column_id": "zone",
-              "datatype": "string",
-              "display_name": "zone",
-              "expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id",
-                      "datatype": null
-                    }
-                  },
-                  "type": "boolean_expression",
-                  "comment": null,
-                  "property_value": "-"
-                },
-                "type": "conditional",
-                "expression_if_true": {
-                  "value_expression": {
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "name",
-                      "datatype": null
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "type": "location_parent_id",
-                          "location_id_expression": {
-                            "test": {
-                              "operator": "eq",
-                              "type": "boolean_expression",
-                              "expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                  "type": "root_doc",
-                                  "expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id",
-                                    "datatype": null
-                                  }
-                                }
-                              },
-                              "comment": null,
-                              "property_value": ""
-                            },
-                            "expression_if_false": {
-                              "type": "root_doc",
-                              "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                              }
-                            },
-                            "type": "conditional",
-                            "expression_if_true": {
-                              "constant": "-",
-                              "type": "constant"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
-                  }
-                },
-                "expression_if_false": {
-                  "value_expression": {
-                    "type": "property_name",
-                    "property_name": "name",
-                    "datatype": null
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "Location",
-                  "doc_id_expression": {
-                    "type": "location_parent_id",
-                    "location_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "test": {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                              "type": "location_parent_id",
-                              "location_id_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "type": "property_name",
-                                  "property_name": "owner_id",
-                                  "datatype": null
-                                }
-                              }
-                            },
-                            "comment": null,
-                            "property_value": ""
-                          },
-                          "expression_if_false": {
-                            "type": "root_doc",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "owner_id",
-                              "datatype": null
-                            }
-                          },
-                          "type": "conditional",
-                          "expression_if_true": {
-                            "constant": "-",
-                            "type": "constant"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "is_nullable": true,
-              "is_primary_key": false,
-              "create_index": false,
-              "transform": {},
-              "comment": null
-            },
-            {
-              "type": "expression",
-              "column_id": "woreda",
-              "datatype": "string",
-              "display_name": "woreda",
-              "expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id",
-                      "datatype": null
-                    }
-                  },
-                  "type": "boolean_expression",
-                  "comment": null,
-                  "property_value": "-"
-                },
-                "type": "conditional",
-                "expression_if_true": {
-                  "value_expression": {
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "name",
-                      "datatype": null
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "test": {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                              "type": "location_parent_id",
-                              "location_id_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "type": "property_name",
-                                  "property_name": "owner_id",
-                                  "datatype": null
-                                }
-                              }
-                            },
-                            "comment": null,
-                            "property_value": ""
-                          },
-                          "expression_if_false": {
-                            "type": "root_doc",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "owner_id",
-                              "datatype": null
-                            }
-                          },
-                          "type": "conditional",
-                          "expression_if_true": {
-                            "constant": "-",
-                            "type": "constant"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
-                  }
-                },
-                "expression_if_false": {
-                  "value_expression": {
-                    "type": "property_name",
-                    "property_name": "name",
-                    "datatype": null
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "Location",
-                  "doc_id_expression": {
-                    "type": "location_parent_id",
-                    "location_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "test": {
-                          "operator": "eq",
-                          "type": "boolean_expression",
-                          "expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                              "type": "root_doc",
-                              "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                              }
-                            }
-                          },
-                          "comment": null,
-                          "property_value": ""
-                        },
-                        "expression_if_false": {
-                          "type": "root_doc",
-                          "expression": {
-                            "type": "property_name",
-                            "property_name": "owner_id",
-                            "datatype": null
-                          }
-                        },
-                        "type": "conditional",
-                        "expression_if_true": {
-                          "constant": "-",
-                          "type": "constant"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "is_nullable": true,
-              "is_primary_key": false,
-              "create_index": false,
-              "transform": {},
-              "comment": null
-            },
-            {
-              "type": "expression",
-              "column_id": "health_center",
-              "datatype": "string",
-              "display_name": "health_center",
-              "expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id",
-                      "datatype": null
-                    }
-                  },
-                  "type": "boolean_expression",
-                  "comment": null,
-                  "property_value": "-"
-                },
-                "type": "conditional",
-                "expression_if_true": {
-                  "value_expression": {
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "name",
-                      "datatype": null
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "type": "location_parent_id",
-                      "location_id_expression": {
-                        "test": {
-                          "operator": "eq",
-                          "type": "boolean_expression",
-                          "expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                              "type": "root_doc",
-                              "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                              }
-                            }
-                          },
-                          "comment": null,
-                          "property_value": ""
-                        },
-                        "expression_if_false": {
-                          "type": "root_doc",
-                          "expression": {
-                            "type": "property_name",
-                            "property_name": "owner_id",
-                            "datatype": null
-                          }
-                        },
-                        "type": "conditional",
-                        "expression_if_true": {
-                          "constant": "-",
-                          "type": "constant"
-                        }
-                      }
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
-                  }
-                },
-                "expression_if_false": {
-                  "value_expression": {
-                    "type": "property_name",
-                    "property_name": "name",
-                    "datatype": null
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "Location",
-                  "doc_id_expression": {
-                    "type": "location_parent_id",
-                    "location_id_expression": {
-                      "test": {
-                        "operator": "eq",
-                        "type": "boolean_expression",
-                        "expression": {
-                          "type": "location_parent_id",
-                          "location_id_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "owner_id",
-                              "datatype": null
-                            }
-                          }
-                        },
-                        "comment": null,
-                        "property_value": ""
-                      },
-                      "expression_if_false": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "owner_id",
-                          "datatype": null
-                        }
-                      },
-                      "type": "conditional",
-                      "expression_if_true": {
-                        "constant": "-",
-                        "type": "constant"
-                      }
-                    }
-                  }
-                }
-              },
-              "is_nullable": true,
-              "is_primary_key": false,
-              "create_index": false,
-              "transform": {},
-              "comment": null
-            },
-            {
-              "type": "expression",
-              "column_id": "health_post",
-              "datatype": "string",
-              "display_name": "health_post",
-              "expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id",
-                      "datatype": null
-                    }
-                  },
-                  "type": "boolean_expression",
-                  "comment": null,
-                  "property_value": "-"
-                },
-                "type": "conditional",
-                "expression_if_true": {
-                  "value_expression": {
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "name",
-                      "datatype": null
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "test": {
-                        "operator": "eq",
-                        "type": "boolean_expression",
-                        "expression": {
-                          "type": "location_parent_id",
-                          "location_id_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "owner_id",
-                              "datatype": null
-                            }
-                          }
-                        },
-                        "comment": null,
-                        "property_value": ""
-                      },
-                      "expression_if_false": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "owner_id",
-                          "datatype": null
-                        }
-                      },
-                      "type": "conditional",
-                      "expression_if_true": {
-                        "constant": "-",
-                        "type": "constant"
-                      }
-                    }
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
-                  }
-                },
-                "expression_if_false": {
-                  "value_expression": {
-                    "type": "property_name",
-                    "property_name": "name",
-                    "datatype": null
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "Location",
-                  "doc_id_expression": {
-                    "test": {
-                      "operator": "eq",
-                      "type": "boolean_expression",
-                      "expression": {
-                        "type": "location_parent_id",
-                        "location_id_expression": {
-                          "type": "root_doc",
-                          "expression": {
-                            "type": "property_name",
-                            "property_name": "owner_id",
-                            "datatype": null
-                          }
-                        }
-                      },
-                      "comment": null,
-                      "property_value": ""
-                    },
-                    "expression_if_false": {
-                      "type": "root_doc",
-                      "expression": {
-                        "type": "property_name",
-                        "property_name": "owner_id",
-                        "datatype": null
-                      }
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                      "constant": "-",
-                      "type": "constant"
-                    }
-                  }
-                }
-              },
-              "is_nullable": true,
-              "is_primary_key": false,
-              "create_index": false,
-              "transform": {},
-              "comment": null
-            },
+          
             {
               "type": "expression",
               "column_id": "health_post_id",
@@ -854,6 +104,7 @@
               "display_name": "health_post_id",
               "expression": {
                 "test": {
+                  "comment": "Check if the case is a child case or not by using owner_id is null",
                   "operator": "eq",
                   "expression": {
                     "type": "root_doc",
@@ -864,7 +115,6 @@
                     }
                   },
                   "type": "boolean_expression",
-                  "comment": null,
                   "property_value": "-"
                 },
                 "type": "conditional",
@@ -879,6 +129,7 @@
                     "related_doc_type": "Location",
                     "doc_id_expression": {
                       "test": {
+                        "comment": "case has owner id bc its partent, check if the owner_id location exists( not deleted), if exists take owner id get the id if not asssign -",
                         "operator": "eq",
                         "type": "boolean_expression",
                         "expression": {
@@ -892,7 +143,6 @@
                             }
                           }
                         },
-                        "comment": null,
                         "property_value": ""
                       },
                       "expression_if_false": {
@@ -913,27 +163,10 @@
                   "type": "related_doc",
                   "related_doc_type": "CommCareCase",
                   "doc_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "array_index",
-                      "array_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "indices",
-                          "datatype": null
-                        }
-                      },
-                      "index_expression": {
-                        "type": "constant",
-                        "constant": 0
-                      }
-                    }
+                    "comment": "get parent case of this child case",
+                    "datatype": "string",
+                    "type": "named",
+                    "name": "parent_case_id"
                   }
                 },
                 "expression_if_false": {
@@ -948,6 +181,7 @@
                   "type": "related_doc",
                   "related_doc_type": "Location",
                   "doc_id_expression": {
+                    "comment": "case is parent , check if the location exists for the owner id, retrun the id of the location if exists",
                     "test": {
                       "operator": "eq",
                       "type": "boolean_expression",
@@ -10057,6 +9291,30 @@
               }
             ]
           },
+          "named_expressions": {
+            "parent_case_id": {
+                "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                },
+                "type": "nested",
+                "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "indices",
+                            "datatype": null
+                        }
+                    },
+                    "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            }},
         "description": "",
         "referenced_doc_type": "CommCareCase",
         "display_name": "Malaria Datasource",
