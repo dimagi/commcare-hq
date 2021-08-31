@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
@@ -8,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.domain.utils import domain_name_stop_words
 from corehq.apps.registry.exceptions import RegistryAccessDenied
+from corehq.apps.registry.schema import RegistrySchema
 
 
 def slugify_remove_stops(text):
@@ -66,6 +69,20 @@ class DataRegistry(models.Model):
     class Meta:
         unique_together = ('domain', 'slug')
 
+    def __repr__(self):
+        return f"DataRegistry(id='{self.id}', domain='{self.domain}', slug='{self.slug}')"
+
+    @classmethod
+    @transaction.atomic
+    def create(cls, user, domain, name):
+        registry = DataRegistry.objects.create(domain=domain, name=name)
+        # creating domain is automatically added to the registry
+        invitation = registry.invitations.create(
+            domain=domain, status=RegistryInvitation.STATUS_ACCEPTED
+        )
+        registry.logger.invitation_added(user, invitation)
+        return registry
+
     @transaction.atomic
     def activate(self, user):
         if not self.is_active:
@@ -80,12 +97,21 @@ class DataRegistry(models.Model):
             self.save()
             self.logger.registry_deactivated(user)
 
+    @cached_property
+    def wrapped_schema(self):
+        return RegistrySchema(self.schema)
+
     def get_granted_domains(self, domain):
         self.check_access(domain)
         return set(
             self.grants.filter(to_domains__contains=[domain])
             .values_list('from_domain', flat=True)
         )
+
+    def get_participating_domains(self):
+        return set(self.invitations.filter(
+            status=RegistryInvitation.STATUS_ACCEPTED,
+        ).values_list('domain', flat=True))
 
     def check_access(self, domain):
         if not self.is_active:
@@ -97,6 +123,10 @@ class DataRegistry(models.Model):
         if invite.status != RegistryInvitation.STATUS_ACCEPTED:
             raise RegistryAccessDenied()
         return True
+
+    def check_ownership(self, domain):
+        if self.domain != domain:
+            raise RegistryAccessDenied()
 
     @cached_property
     def logger(self):
@@ -127,6 +157,10 @@ class RegistryInvitation(models.Model):
     class Meta:
         unique_together = ("registry", "domain")
 
+    def __repr__(self):
+        return (f"RegistryInvitation(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', status='{self.status}')")
+
     @transaction.atomic
     def accept(self, user):
         self.status = self.STATUS_ACCEPTED
@@ -149,6 +183,10 @@ class RegistryGrant(models.Model):
     from_domain = models.CharField(max_length=255)
     to_domains = ArrayField(models.CharField(max_length=255))
 
+    def __repr__(self):
+        return (f"RegistryGrant(registry_id='{self.registry_id}', "
+                f"from_domain='{self.from_domain}', to_domains='{self.to_domains}')")
+
 
 class RegistryPermission(models.Model):
     """This model controls which users in a domain can access the data registry."""
@@ -158,6 +196,10 @@ class RegistryPermission(models.Model):
 
     class Meta:
         unique_together = ('registry', 'domain')
+
+    def __repr__(self):
+        return (f"RegistryPermission(registry_id='{self.registry_id}', "
+                f"domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')")
 
 
 class RegistryAuditLog(models.Model):

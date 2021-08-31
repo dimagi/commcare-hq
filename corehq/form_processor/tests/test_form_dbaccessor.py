@@ -32,7 +32,7 @@ from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    use_sql_backend,
+    sharded,
 )
 from corehq.form_processor.utils import (
     get_simple_form_xml,
@@ -49,7 +49,7 @@ from corehq.util.test_utils import trap_extra_setup
 DOMAIN = 'test-form-accessor'
 
 
-@use_sql_backend
+@sharded
 class FormAccessorTestsSQL(TestCase):
 
     def setUp(self):
@@ -536,7 +536,7 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertEqual(['eight'], errors)
 
 
-@use_sql_backend
+@sharded
 class FormAccessorsTestsSQL(FormAccessorsTests):
     pass
 

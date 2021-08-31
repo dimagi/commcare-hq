@@ -1,7 +1,6 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load tzmigration %}
 
 {% requirejs_main 'domain/js/toggles' %}
 
@@ -167,10 +166,6 @@
         <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
           <td>Using new SQL/scale backend</td>
           <td class="text-center">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
-        </tr>
-        <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
-          <td>Using new correct timezone behavior</td>
-          <td class="text-center">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
         </tr>
         <tr class="{% if use_livequery %}success{% else %}info{% endif %}">
           <td>Using LiveQuery sync algorithm</td>

@@ -25,7 +25,7 @@ from corehq.form_processor.reprocess import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
@@ -98,7 +98,7 @@ class ReprocessXFormErrorsTest(TestCase):
         self.assertTrue(case.actions[2].is_case_index)
 
 
-@use_sql_backend
+@sharded
 class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
     def _validate_case(self, case):
         self.assertEqual(1, len(case.transactions))
@@ -349,7 +349,7 @@ class ReprocessSubmissionStubTests(TestCase):
             self.assertEqual(case.get_rev, signal_case.get_rev)
 
 
-@use_sql_backend
+@sharded
 class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
     def test_reprocess_normal_form(self):
         case_id = uuid.uuid4().hex
@@ -464,12 +464,12 @@ class TestReprocessDuringSubmission(TestCase):
         self.assertEqual(duplicate_form.orig_id, form.form_id)
 
 
-@use_sql_backend
+@sharded
 class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
     pass
 
 
-@use_sql_backend
+@sharded
 class TestTransactionErrors(TransactionTestCase):
     domain = uuid.uuid4().hex
 

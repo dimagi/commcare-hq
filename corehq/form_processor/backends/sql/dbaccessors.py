@@ -32,7 +32,6 @@ from corehq.form_processor.exceptions import (
     LedgerSaveError,
     LedgerValueNotFound,
     MissingFormXml,
-    NotAllowed,
     XFormNotFound,
     XFormSaveError,
 )
@@ -551,7 +550,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -584,7 +582,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with XFormInstanceSQL.get_plproxy_cursor() as cursor:
             cursor.execute(
@@ -1178,7 +1175,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
 
         with CommCareCaseSQL.get_plproxy_cursor() as cursor:
             cursor.execute(

@@ -2,7 +2,6 @@ import json
 import os
 from io import BytesIO
 
-from django.conf import settings
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -16,7 +15,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    run_with_sql_backend,
+    sharded,
 )
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
@@ -25,6 +25,7 @@ from corehq.util.test_utils import TestFileMixin, softer_assert
 from couchforms.exceptions import InvalidSubmissionFileExtensionError
 
 
+@run_with_sql_backend
 class BaseSubmissionTest(TestCase):
     def setUp(self):
         super(BaseSubmissionTest, self).setUp()
@@ -33,8 +34,6 @@ class BaseSubmissionTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
-
-        self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
@@ -58,9 +57,7 @@ class SubmissionTest(BaseSubmissionTest):
     maxDiff = None
 
     def _get_expected_json(self, form_id, xmlns):
-        filename = 'expected_form_{}.json'.format(
-            'sql' if self.use_sql else 'couch'
-        )
+        filename = 'expected_form_sql.json'
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             expected = json.load(f)
@@ -258,7 +255,7 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertTrue(notification.called)
 
 
-@use_sql_backend
+@sharded
 class SubmissionTestSQL(SubmissionTest):
 
     @softer_assert()
@@ -293,7 +290,7 @@ class SubmissionTestSQL(SubmissionTest):
             [("file", b"text file"), ("image", b"other fake image")])
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@run_with_sql_backend
 class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
     file_path = ('data',)

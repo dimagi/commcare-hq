@@ -8,8 +8,9 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     JsonResponse,
+    HttpResponseNotFound,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -49,6 +50,8 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
@@ -166,7 +169,7 @@ def claim(request, domain):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
-        claim_case(domain, restore_user.user_id, case_id,
+        claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
@@ -426,3 +429,37 @@ def recovery_measures(request, domain, build_id):
     if measures:
         response["recovery_measures"] = measures
     return JsonResponse(response)
+
+
+@location_safe
+@mobile_auth
+@require_GET
+def registry_case(request, domain, app_id):
+    case_id = request.GET.get("case_id")
+    case_type = request.GET.get("case_type")
+    registry = request.GET.get("registry")
+
+    missing = [
+        name
+        for name, value in zip(
+            ["case_id", "case_type", "registry"],
+            [case_id, case_type, registry]
+        )
+        if not value
+    ]
+    if missing:
+        return HttpResponseBadRequest(ngettext(
+            "'{params}' is a required parameter",
+            "'{params}' are required parameters",
+            len(missing)
+        ).format(params="', '".join(missing)))
+
+    app = get_app_cached(domain, app_id)
+    try:
+        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
+    except RegistryNotFound:
+        return HttpResponseNotFound(f"Registry '{registry}' not found")
+    except (CaseNotFound, RegistryAccessException):
+        return HttpResponseNotFound(f"Case '{case_id}' not found")
+
+    return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")

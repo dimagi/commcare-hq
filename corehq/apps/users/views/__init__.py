@@ -76,6 +76,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
     require_can_edit_or_view_web_users,
@@ -87,7 +88,6 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
-    UpdateUserPermissionForm,
     UpdateUserRoleForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
@@ -101,7 +101,7 @@ from corehq.apps.users.models import (
     StaticRole,
     WebUser,
     Permissions,
-    SQLUserRole,
+    UserRole,
 )
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
@@ -307,11 +307,12 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': user_domain_membership.location_id,
                 'program_id': user_domain_membership.program_id,
@@ -379,16 +380,6 @@ class EditWebUserView(BaseEditUserView):
         return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
-    def form_user_update_permissions(self):
-        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
-
-    @property
-    def main_context(self):
-        ctx = super(EditWebUserView, self).main_context
-        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
-        return ctx
-
-    @property
     @memoized
     def can_grant_superuser_access(self):
         return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
@@ -454,18 +445,6 @@ class EditWebUserView(BaseEditUserView):
                     )
                 )
 
-        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
-            current_superuser_status = self.editable_user.is_superuser
-            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user,
-                                                                        is_superuser=is_superuser):
-                if current_superuser_status != is_superuser:
-                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB,
-                                    fields_changed={'is_superuser': is_superuser})
-                messages.success(self.request,
-                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -502,7 +481,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            SQLUserRole.objects.get_by_domain(self.domain),
+            UserRole.objects.get_by_domain(self.domain),
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -818,7 +797,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=f"Removed from domain '{domain}'")
+                        message=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -885,14 +864,14 @@ def _update_role_from_view(domain, role_data):
 
     if "_id" in role_data:
         try:
-            role = SQLUserRole.objects.by_couch_id(role_data["_id"])
-        except SQLUserRole.DoesNotExist:
-            role = SQLUserRole()
+            role = UserRole.objects.by_couch_id(role_data["_id"])
+        except UserRole.DoesNotExist:
+            role = UserRole()
         else:
             if role.domain != domain:
                 raise Http404()
     else:
-        role = SQLUserRole()
+        role = UserRole()
 
     role.domain = domain
     role.name = role_data["name"]
@@ -927,8 +906,8 @@ def delete_user_role(request, domain):
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:
-        role = SQLUserRole.objects.by_couch_id(role_data["_id"], domain=domain)
-    except SQLUserRole.DoesNotExist:
+        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+    except UserRole.DoesNotExist:
         return JsonResponse({})
     copy_id = role.couch_id
     role.delete()
@@ -1328,6 +1307,13 @@ def change_password(request, domain, login_id):
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
+            log_user_change(
+                domain=domain,
+                couch_user=commcare_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                message=UserChangeMessage.password_reset()
+            )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
     else:

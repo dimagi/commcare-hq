@@ -66,6 +66,7 @@ from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.bulk_download import get_domains_from_user_filters
 from corehq.apps.users.dbaccessors import (
     get_user_docs_by_username,
@@ -131,6 +132,7 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from .custom_data_fields import UserFieldsView
+from ..utils import log_user_groups_change
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -211,11 +213,6 @@ class EditCommCareUserView(BaseEditUserView):
         return self.editable_user_id == self.couch_user._id
 
     @property
-    def is_delete_allowed(self):
-        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-        return not couch_sql_migration_in_progress(self.domain)
-
-    @property
     @memoized
     def reset_password_form(self):
         return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
@@ -247,7 +244,7 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
-            return CommtrackUserForm(self.request.POST, domain=self.domain)
+            return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
@@ -256,6 +253,7 @@ class EditCommCareUserView(BaseEditUserView):
         assigned_locations = self.editable_user.assigned_location_ids
         return CommtrackUserForm(
             domain=self.domain,
+            request=self.request,
             initial={
                 'primary_location': initial_id,
                 'program_id': program_id,
@@ -276,7 +274,6 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
-            'is_delete_allowed': self.is_delete_allowed,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
@@ -347,8 +344,17 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
+                is_new_phone_number = phone_number not in self.editable_user.phone_numbers
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
+                if is_new_phone_number:
+                    log_user_change(
+                        self.request.domain,
+                        couch_user=self.editable_user,
+                        changed_by_user=self.request.couch_user,
+                        changed_via=USER_CHANGE_VIA_WEB,
+                        message=UserChangeMessage.phone_number_added(phone_number)
+                    )
                 messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
@@ -608,9 +614,13 @@ def update_user_groups(request, domain, couch_user_id):
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
     if form.is_valid():
         user = CommCareUser.get(couch_user_id)
+        old_group_ids = user.get_group_ids()
+        new_group_ids = form.cleaned_data['selected_ids']
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
-        user.set_groups(form.cleaned_data['selected_ids'])
+        user.set_groups(new_group_ids)
+        if old_group_ids != new_group_ids:
+            log_user_groups_change(domain, request, user, new_group_ids)
         messages.success(request, _("User groups updated!"))
     else:
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"

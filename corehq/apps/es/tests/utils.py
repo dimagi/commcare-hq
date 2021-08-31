@@ -15,12 +15,14 @@ class ElasticTestMixin(object):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls._es_instance = get_es_new()
         initialize_index_and_mapping(cls._es_instance, TEST_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(TEST_INDEX_INFO.index)
+        super().tearDownClass()
 
     def validate_query(self, query):
         if 'query' not in query:

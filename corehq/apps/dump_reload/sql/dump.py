@@ -124,7 +124,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
-    FilteredModelIteratorBuilder('users.SQLUserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),

@@ -523,6 +523,20 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
+    @flag_enabled('EMBEDDED_TABLEAU')
+    def test_build_feature_flag_view_models_returns_tableau_server_and_visualizations(self):
+        expected_view_models = [
+            {
+                'type': 'tableau_server_and_visualizations',
+                'name': 'Tableau Server and Visualizations',
+                'detail': None,
+                'last_update': 'Never',
+                'can_update': True
+            }
+        ]
+        view_models = build_feature_flag_view_models(self.domain)
+
+        self.assertEqual(expected_view_models, view_models)
 
 class TestBuildDomainLevelViewModels(SimpleTestCase):
 
@@ -618,6 +632,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_built(self):
         view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, {})
@@ -629,6 +644,7 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
+    @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_ignored(self):
         view_models = build_view_models_from_data_models(
