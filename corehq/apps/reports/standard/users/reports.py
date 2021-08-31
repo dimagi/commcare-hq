@@ -20,7 +20,7 @@ from corehq.apps.reports.filters.users import \
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username
+from corehq.apps.users.util import cached_user_id_to_username, cached_location_id_to_name
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -58,15 +58,15 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         else:
             user_data_label = _("User Data")
         return {
-            "username": _("Username"),
-            "email": _("Email"),
-            "domain": _("Project"),
-            "is_active": _("Is Active"),
-            "language": _("Language"),
-            "phone_numbers": _("Phone Numbers"),
-            "location_id": _("Primary Location (mobile users only)"),
+            "username": _("username"),
+            "email": _("email"),
+            "domain": _("project"),
+            "is_active": _("is active"),
+            "language": _("language"),
+            "phone_numbers": _("phone numbers"),
+            "location_id": _("primary location (mobile users only)"),
             "user_data": user_data_label,
-            "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
+            "two_factor_auth_disabled_until": _("two factor authentication disabled"),
         }
 
     @property
@@ -76,7 +76,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             DataTablesColumn(_("Modified by User")),
             DataTablesColumn(_("Action")),
             DataTablesColumn(_("Via")),
-            DataTablesColumn(_("Change Message")),
             DataTablesColumn(_("Changes")),
             DataTablesColumn(_("Timestamp")),
         ]
@@ -156,7 +155,6 @@ def _user_history_row(record, domain, timezone):
         cached_user_id_to_username(record.changed_by),
         _get_action_display(record.action),
         record.details['changed_via'],
-        record.message,
         _user_history_details_cell(record.details['changes'], domain),
         ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
     ]
@@ -179,15 +177,39 @@ def _user_history_details_cell(changes, domain):
 
     properties = UserHistoryReport.get_primary_properties(domain)
     properties.pop("user_data", None)
-    primary_changes = {
-        properties.get(key, key): value for key, value in changes.items()
-        if key in properties
-    }
-    more_count = len(changes) - len(primary_changes)
+    primary_changes = {}
 
+    for key, value in changes.items():
+        if key in properties:
+            if key == 'commcare_location_id':
+                primary_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
+            if key == 'location_id':
+                primary_changes["location"] = cached_location_id_to_name(value)
+            else:
+                primary_changes[key] = value
+
+    all_changes = {}
+
+    for key, value in changes.items():
+        if key == 'user_data':
+            for key, value in changes['user_data'].items():
+                if key == 'commcare_location_id':
+                    all_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
+                if key == 'location_id':
+                    all_changes["location"] = cached_location_id_to_name(value)
+                else:
+                    all_changes[key] = value
+        if key == 'commcare_location_id':
+            all_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
+        if key == 'location_id':
+            all_changes["location"] = cached_location_id_to_name(value)
+        else:
+            all_changes[key] = value
+
+    more_count = len(all_changes) - len(primary_changes)
     return render_to_string("reports/standard/partials/user_history_changes.html", {
         "primary_changes": _html_list(primary_changes) if primary_changes else None,
-        "all_changes": _html_list(changes, unstyled=False),
+        "all_changes": _html_list(all_changes, unstyled=True) if all_changes else None,
         "more_count": more_count,
     })
 
