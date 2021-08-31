@@ -27,7 +27,10 @@ from corehq.apps.es.case_search import (
     flatten_result,
 )
 from corehq.elastic import get_es_new, SIZE_LIMIT
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    run_with_sql_backend,
+)
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -248,6 +251,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
+@run_with_sql_backend
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):

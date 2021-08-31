@@ -1,7 +1,7 @@
-from corehq.apps.data_interfaces.tests.util import create_case
+from casexml.apps.case.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import sharded, run_with_all_backends
+from corehq.form_processor.tests.utils import sharded, run_with_sql_backend
 from corehq.apps.hqcase.utils import update_case
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     save_alert_schedule_instance,
@@ -35,6 +35,7 @@ from django.test import TestCase
 from mock import patch
 
 
+@run_with_sql_backend
 class BaseScheduleTest(TestCase):
 
     @classmethod
@@ -207,6 +208,7 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
             self.assertEqual(send_patch.call_count, 0)
 
 
+@run_with_sql_backend
 class StopDateCasePropertyTest(TestCase):
 
     @classmethod
@@ -221,7 +223,6 @@ class StopDateCasePropertyTest(TestCase):
         cls.domain_obj.delete()
         super(StopDateCasePropertyTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_condition_reached_when_not_enabled(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -239,7 +240,6 @@ class StopDateCasePropertyTest(TestCase):
             )
             self.assertFalse(instance.additional_deactivation_condition_reached())
 
-    @run_with_all_backends
     def test_condition_reached_when_case_property_not_a_date(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -269,7 +269,6 @@ class StopDateCasePropertyTest(TestCase):
             )
             self.assertFalse(instance.additional_deactivation_condition_reached())
 
-    @run_with_all_backends
     def test_condition_reached_with_domain_timezone(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -299,7 +298,6 @@ class StopDateCasePropertyTest(TestCase):
                 self.assertEqual(instance.additional_deactivation_condition_reached(), expected_result,
                     msg="Failed with %s" % next_event_due)
 
-    @run_with_all_backends
     def test_condition_reached_with_utc_option(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -332,7 +330,6 @@ class StopDateCasePropertyTest(TestCase):
                 self.assertEqual(instance.additional_deactivation_condition_reached(), expected_result,
                     msg="Failed with %s" % next_event_due)
 
-    @run_with_all_backends
     def test_condition_reached_with_timezone_from_timestamp(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,

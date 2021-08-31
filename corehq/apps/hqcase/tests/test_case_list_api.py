@@ -11,7 +11,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq import privileges
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -30,6 +30,7 @@ BAD_GUYS_ID = str(uuid.uuid4())
 
 
 @es_test
+@run_with_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'testcaselistapi'
