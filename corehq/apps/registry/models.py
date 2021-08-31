@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db.models import Q
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
