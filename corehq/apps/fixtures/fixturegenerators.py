@@ -191,7 +191,7 @@ class ItemListsProvider(FixtureProvider):
                 )
         for field in item['_data_type'].fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)
-            if field.field_name not in item['fields']:
+            if field.field_name not in item.get('fields', {}):
                 xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
