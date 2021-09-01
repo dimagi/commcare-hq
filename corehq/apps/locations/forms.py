@@ -53,13 +53,14 @@ LOCATION_ACTIVE_STATUS = [
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None, data_bind=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
         self.query_url = reverse('location_search', args=[self.domain])
+        self.data_bind = data_bind
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):

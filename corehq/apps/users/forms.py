@@ -1376,7 +1376,11 @@ class UserFilterForm(forms.Form):
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
 
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            data_bind="value: location_id"
+        )
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.objects.get_by_domain(self.domain)
@@ -1424,10 +1428,12 @@ class UserFilterForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         "location_id",
-                        data_bind="value: location_id",
                     ),
                     data_bind="slideVisible: !isCrossDomain(), event: {change: location_change}",
                 ),
+                crispy.HTML('''
+                    this is the location_id: <span data-bind="text: location_id"></span>
+                '''),
                 crispy.Div(
                     crispy.Field(
                         "selected_location_only",
