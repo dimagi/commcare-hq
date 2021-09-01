@@ -31,14 +31,13 @@ from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 @serial_task("{location_type.domain}-{location_type.pk}",
              default_retry_delay=30, max_retries=3)
-def sync_administrative_status(location_type, sync_supply_points=True):
+def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
-    if sync_supply_points:
-        for location in SQLLocation.objects.filter(location_type=location_type):
-            # Saving the location should be sufficient for it to pick up the
-            # new supply point.  We'll need to save it anyways to store the new
-            # supply_point_id.
-            location.save()
+    for location in SQLLocation.objects.filter(location_type=location_type):
+        # Saving the location should be sufficient for it to pick up the
+        # new supply point.  We'll need to save it anyways to store the new
+        # supply_point_id.
+        location.save()
 
 
 @serial_task("{domain}", default_retry_delay=30, max_retries=3)
