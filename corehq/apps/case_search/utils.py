@@ -266,7 +266,7 @@ def get_related_case_results(domain, cases, paths):
                 indices = [case.get_index(identifier) for case in current_cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
                 results = CaseSearchES().domain(domain).case_ids(related_case_ids).run().hits
-                current_cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+                current_cases = [CommCareCase.wrap(flatten_result(result, is_related_case=True)) for result in results]
                 results_cache[fragment] = current_cases
 
     results = []
@@ -297,4 +297,4 @@ def get_child_case_results(domain, parent_cases, case_types):
     parent_case_ids = {c.case_id for c in parent_cases}
     query = CaseSearchES().domain(domain).case_type(case_types).get_child_cases(parent_case_ids, "parent")
     results = query.run().hits
-    return [CommCareCase.wrap(flatten_result(result)) for result in results]
+    return [CommCareCase.wrap(flatten_result(result, is_related_case=True)) for result in results]

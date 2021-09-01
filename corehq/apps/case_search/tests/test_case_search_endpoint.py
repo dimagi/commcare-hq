@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.case_search.const import IS_RELATED_CASE
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
@@ -81,6 +82,13 @@ class TestCaseSearchEndpoint(TestCase):
     def test_app_aware_related_cases(self):
         with mock.patch('corehq.apps.case_search.utils.get_app_cached', new=lambda _, __: self.factory.app):
             res = get_case_search_results(self.domain, {'case_type': 'person'}, 'fake_app_id')
-        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane", "Villanueva"], [
-            case.name for case in res
+        self.assertItemsEqual([
+            (case.name, case.get_case_property(IS_RELATED_CASE)) for case in res
+        ], [
+            ("Jane", None),
+            ("Xiomara", None),
+            ("Alba", None),
+            ("Rogelio", None),
+            ("Jane", None),
+            ("Villanueva", "true"),
         ])
