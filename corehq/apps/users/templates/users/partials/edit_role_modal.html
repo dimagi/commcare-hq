@@ -394,7 +394,7 @@
           </div>
         </div>
 
-        <div class="modal-footer">
+        <div class="modal-footer" data-bind="css: {'has-error': $root.roleError }">
           {% if can_edit_roles %}
             <button type="button"
                     class="btn btn-default"
