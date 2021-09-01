@@ -317,7 +317,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)
 
-    def get_locations_and_children(self, location_ids, **filters):
+    def get_locations_and_children(self, location_ids):
         """
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
@@ -325,7 +325,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         filters arguments
         """
         locations = self.filter(location_id__in=location_ids)
-        return self.get_queryset_descendants(locations, include_self=True).filter(**filters)
+        return self.get_queryset_descendants(locations, include_self=True)
 
     def get_locations_and_children_ids(self, location_ids, **filters):
         return list(self.get_locations_and_children(location_ids, **filters).location_ids())
