@@ -8,11 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.commtrack.models import (
-    close_supply_point_case,
-    sync_supply_point,
-)
-from corehq.apps.es.users import UserES
+from corehq.apps.commtrack.models import close_supply_point_case
 from corehq.apps.locations.bulk_management import (
     LocationUploadResult,
     new_locations_import,
@@ -22,8 +18,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import LOCATIONS_IN_UCR
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
@@ -38,39 +33,6 @@ def sync_administrative_status(location_type):
         # new supply point.  We'll need to save it anyways to store the new
         # supply_point_id.
         location.save()
-
-
-@serial_task("{domain}", default_retry_delay=30, max_retries=3)
-def sync_supply_points(location_type):
-    for location in SQLLocation.objects.filter(location_type=location_type):
-        sync_supply_point(location)
-        location.save()
-
-
-def _get_users_by_loc_id(location_type):
-    """Find any existing users previously assigned to this type"""
-    loc_ids = SQLLocation.objects.filter(location_type=location_type).location_ids()
-    user_ids = list(UserES()
-                    .domain(location_type.domain)
-                    .show_inactive()
-                    .term('user_location_id', list(loc_ids))
-                    .values_list('_id', flat=True))
-    return {
-        user_doc['user_location_id']: CommCareUser.wrap(user_doc)
-        for user_doc in iter_docs(CommCareUser.get_db(), user_ids)
-        if 'user_location_id' in user_doc
-    }
-
-
-def _get_unique_username(domain, base, suffix=0, tries_left=3):
-    if tries_left == 0:
-        raise AssertionError("Username {} on domain {} exists in multiple variations, "
-                             "what's up with that?".format(base, domain))
-    with_suffix = "{}{}".format(base, suffix) if suffix else base
-    username = format_username(with_suffix, domain)
-    if not CommCareUser.username_exists(username):
-        return username
-    return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
 
 
 @task(serializer='pickle')
