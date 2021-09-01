@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-26 19:36+0000\n"
+"POT-Creation-Date: 2021-09-01 19:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -124,7 +124,7 @@ msgid "Your trial request has been received!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:82
 #: corehq/apps/locations/static/locations/js/location_types.js:365
 msgid "You have unsaved changes."
 msgstr ""
@@ -3186,7 +3186,7 @@ msgid ""
 "it gets fixed as soon as possible."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:65
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:67
 msgid "Error saving, please try again."
 msgstr ""
 
@@ -3496,6 +3496,78 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/register_new_user.js:33
 msgid "Choose a time for your CommCare trial setup"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:11
+msgid "An unknown error occurred. Please try again or report an issue."
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:22
+msgid "Opt in successful"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:31
+msgid "Opt out successful"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:4
+msgid "%(count)s Invitation Accepted"
+msgid_plural "%(count)s Invitations Accepted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:11
+msgid "%(count)s Invitation Pending"
+msgid_plural "%(count)s Invitations Pending"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:18
+msgid "%(count)s Invitation Rejected"
+msgid_plural "%(count)s Invitations Rejected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:25
+msgid "%(count)s Project Space Participating"
+msgid_plural "%(count)s Project Spaces Participating"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:32
+msgid "Rejected"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:34
+msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:36
+msgid "Pending"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:41
+msgid "fa-ban"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:43
+msgid "fa-clock-o"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:45
+msgid "fa-check-circle-o"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:50
+msgid "label-warning-light"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:52
+msgid "label-success-light"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:54
+msgid "label-info-light"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
