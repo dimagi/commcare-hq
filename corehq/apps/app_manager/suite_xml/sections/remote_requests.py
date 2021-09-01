@@ -27,12 +27,24 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath, interpolate_xpath
-from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.app_manager.xpath import (
+    CaseTypeXpath,
+    InstanceXpath,
+    interpolate_xpath,
+)
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+)
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
-RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
+# The name of the instance where search results are stored
+RESULTS_INSTANCE = 'results'
+
+# The name of the instance where search results are stored when querying a data registry
+REGISTRY_INSTANCE = 'registry'
+
 SESSION_INSTANCE = 'commcaresession'
 
 
@@ -70,9 +82,13 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self.module.search_config.get_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if self.module.search_config.data_registry:
+            # Disable claim request for data registry
+            kwargs["relevant"] = "false()"
+        else:
+            relevant = self.module.search_config.get_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
@@ -91,7 +107,7 @@ class RemoteRequestFactory(object):
         ]
 
         xpaths = {QuerySessionXPath(self.module.search_config.case_session_var).instance()}
-        xpaths.update(datum.ref for datum in self._get_remote_request_query_datums())
+        xpaths.update(datum.ref for datum in self._remote_request_query_datums)
         xpaths.add(self.module.search_config.get_relevant())
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
@@ -128,7 +144,7 @@ class RemoteRequestFactory(object):
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=RESULTS_INSTANCE,
                 template='case',
-                data=self._get_remote_request_query_datums(),
+                data=self._remote_request_query_datums,
                 prompts=self._build_query_prompts(),
                 default_search=self.module.search_config.default_search,
             )
@@ -159,33 +175,33 @@ class RemoteRequestFactory(object):
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
         )]
 
-    def _get_remote_request_query_datums(self):
-        default_query_datums = [
-            QueryData(
-                key='case_type',
-                ref="'{}'".format(self.module.case_type)
-            ),
+    @cached_property
+    def _remote_request_query_datums(self):
+        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
+        datums = [
+            QueryData(key='case_type', ref=f"'{case_type}'")
+            for case_type in [self.module.case_type] + list(additional_types)
         ]
-        additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
-        for type in additional_types:
-            default_query_datums.append(
-                QueryData(
-                    key='case_type',
-                    ref="'{}'".format(type)
-                )
-            )
-        extra_query_datums = [
-            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+
+        datums.extend(
+            QueryData(key=c.property, ref=c.defaultValue)
             for c in self.module.search_config.default_properties
-        ]
+        )
         if self.module.search_config.blacklisted_owner_ids_expression:
-            extra_query_datums.append(
+            datums.append(
                 QueryData(
                     key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-                    ref="{}".format(self.module.search_config.blacklisted_owner_ids_expression)
+                    ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        return default_query_datums + extra_query_datums
+        if self.module.search_config.data_registry:
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_REGISTRY_ID_KEY,
+                    ref=self.module.search_config.data_registry,
+                )
+            )
+        return datums
 
     def _build_query_prompts(self):
         prompts = []

@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -133,7 +133,10 @@ def update_tracked_entity_instance(
         )
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(case_trigger_info, case_config)
+    enrollments_with_new_events = get_enrollments(
+        case_trigger_info,
+        case_config,
+    )
     if enrollments_with_new_events:
         tracked_entity["enrollments"] = update_enrollments(
             tracked_entity, enrollments_with_new_events
@@ -190,6 +193,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
         "attributes": [],
     }
+
     for attr_id, value_source_config in case_config.attributes.items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
@@ -287,6 +291,8 @@ def get_enrollments(case_trigger_info, case_config):
             "status": program["status"],
             "events": program["events"],
         }
+        if program.get("geometry"):
+            enrollment["geometry"] = program["geometry"]
         if program.get("enrollmentDate"):
             enrollment["enrollmentDate"] = program["enrollmentDate"]
         if program.get("incidentDate"):
@@ -306,6 +312,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
@@ -374,3 +381,23 @@ def validate_tracked_entity(tracked_entity):
         Schema(get_tracked_entity_schema()).validate(tracked_entity)
     except SchemaError as err:
         raise ConfigurationError from err
+
+
+def get_tracked_entity_type(requests, entity_type_id):
+    endpoint = f"/api/trackedEntityTypes/{entity_type_id}"
+    response = requests.get(endpoint, raise_for_status=True)
+    return response.json()
+
+
+def get_geo_json(form_config, case_trigger_info):
+    coordinate_dict = _get_coordinate(form_config, case_trigger_info)
+    if coordinate_dict.get('coordinate'):
+        point = coordinate_dict['coordinate']
+        return {
+            'type': 'Point',
+            'coordinates': [
+                point['latitude'],
+                point['longitude']
+            ]
+        }
+    return {}

@@ -8,7 +8,7 @@ from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 
 
 class CaseDbCacheCouchOnlyTest(TestCase):
@@ -112,7 +112,7 @@ class CaseDbCacheTest(TestCase):
             self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
 
-@use_sql_backend
+@sharded
 class CaseDbCacheTestSQL(CaseDbCacheTest):
     pass
 

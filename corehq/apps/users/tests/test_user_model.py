@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    run_with_all_backends,
+    run_with_sql_backend,
 )
 from corehq.form_processor.utils import (
     TestFormMetadata,
@@ -25,6 +25,7 @@ from corehq.util.test_utils import softer_assert
 from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
+@run_with_sql_backend
 class UserModelTest(TestCase):
 
     def setUp(self):
@@ -60,7 +61,6 @@ class UserModelTest(TestCase):
             created_via=None,
         )
 
-    @run_with_all_backends
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)

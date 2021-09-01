@@ -44,7 +44,8 @@ class Command(BaseCommand):
             logger.info("✓ User {} exists".format(couch_user.username))
         else:
             password = self.get_password_from_user()
-            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__)
+            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__,
+                                        domain_required_for_log=False)
             logger.info("→ User {} created".format(couch_user.username))
 
         is_superuser_changed = not couch_user.is_superuser
