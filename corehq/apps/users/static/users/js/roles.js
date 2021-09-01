@@ -364,15 +364,15 @@ hqDefine('users/js/roles',[
             self.roleError(error);
             $(form).find('[type="submit"]').enableButton();
         };
-        self.clearRoleError = function (form) {
+        self.clearRoleError = function () {
             self.roleError("");
         };
-        self.clearRoleForm = function (unused, event) {
-            self.clearRoleError($(event.target).parents('form'));
+        self.clearRoleForm = function () {
+            self.clearRoleError();
             self.unsetRoleBeingEdited();
         };
         self.submitNewRole = function (form) {
-            self.clearRoleError(form);
+            self.clearRoleError();
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,
