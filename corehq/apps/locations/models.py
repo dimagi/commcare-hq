@@ -321,8 +321,6 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         """
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
-        The locations can be also be filtered by providing the appropriate
-        filters arguments
         """
         locations = self.filter(location_id__in=location_ids)
         return self.get_queryset_descendants(locations, include_self=True)
