@@ -14,6 +14,8 @@ CASE_SEARCH_MAX_RESULTS = 500
 
 # Added to each case response when case searches are performed
 RELEVANCE_SCORE = "commcare_search_score"
+# Added to secondary results in case search to filter them out of the case list
+IS_RELATED_CASE = "commcare_is_related_case"
 
 # Added to each case on the index for debugging when a case was added to ES
 INDEXED_ON = '@indexed_on'
