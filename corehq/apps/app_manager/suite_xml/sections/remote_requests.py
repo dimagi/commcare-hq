@@ -166,7 +166,7 @@ class RemoteRequestFactory(object):
                     additional_types, instance_name=RESULTS_INSTANCE)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
-        nodeset += "[not(commcare_related_case=true())]"
+        nodeset += "[not(commcare_is_related_case=true())]"
 
         return [SessionDatum(
             id=self.module.search_config.case_session_var,
