@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 from mock import patch
@@ -8,6 +8,8 @@ from mock import patch
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.data_interfaces.deduplication import find_duplicate_cases
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -21,6 +23,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
+from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_test_case, trap_extra_setup
 
@@ -165,6 +168,8 @@ class CaseDeduplicationActionTest(TestCase):
 
     def tearDown(self):
         CaseDuplicate.objects.all().delete()
+        FormProcessorTestUtils.delete_all_cases()
+        super().tearDown()
 
     def _create_cases(self):
         case_1 = self.factory.create_case(case_name='name', update={"age": 2})
@@ -248,3 +253,54 @@ class CaseDeduplicationActionTest(TestCase):
         no longer a duplicate, Case B should be removed from the list of
         duplicates.
         """
+
+
+@override_settings(RUN_UNKNOWN_USER_PILLOW=False)
+@override_settings(RUN_FORM_META_PILLOW=False)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class DeduplicationPillowTest(TestCase):
+
+    def setUp(self):
+        self.domain = 'naboo'
+        self.case_type = 'people'
+        self.factory = CaseFactory(self.domain)
+        self.pillow = get_xform_pillow(skip_ucr=True)
+        CaseDuplicate.objects.all().delete()
+        self.rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, self.action = self.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["case_name", "age"],
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_finds_duplicate(self, find_duplicate_cases_mock):
+        kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+
+        case1 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
+        case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
+        find_duplicate_cases_mock.return_value = [case1, case2]
+
+        self.pillow.process_changes(since=kafka_sec, forever=False)
+
+        self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
+        self._assert_case_duplicate_pair(case2.case_id, [case1.case_id])
+        self.assertEqual(CaseDuplicate.objects.count(), 2)
+
+    def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
+        potential_duplicates = list(
+            CaseDuplicate.objects.get(case_id=case_id_to_check)
+            .potential_duplicates.values_list('case_id', flat=True)
+        )
+        self.assertItemsEqual(potential_duplicates, expected_duplicates)

@@ -298,6 +298,7 @@ class AutomaticUpdateRule(models.Model):
             'update_case_definition',
             'custom_action_definition',
             'create_schedule_instance_definition',
+            'case_deduplication_action_definition',
         ))
 
     def run_rule(self, case, now):
@@ -911,6 +912,28 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     match_type = models.CharField(choices=CaseDeduplicationMatchTypeChoices.CHOICES, max_length=5)
     case_properties = ArrayField(models.TextField())
     include_closed = models.BooleanField(default=False)
+
+    def properties_fit_definition(self, case_properties):
+        """Given a list of case properties, returns whether these will be pertinent in
+        finding duplicate cases.
+
+        Used when deciding whether to run the action from the pillow.
+
+        """
+
+        definition_properties = set(self.case_properties)
+        case_properties = set(case_properties)
+
+        all_match = (
+            self.match_type == CaseDeduplicationMatchTypeChoices.ALL
+            and case_properties.issuperset(definition_properties)
+        )
+
+        any_match = (
+            self.match_type == CaseDeduplicationMatchTypeChoices.ANY
+            and case_properties.issubset(definition_properties))
+
+        return all_match or any_match
 
     def when_case_matches(self, case, rule):
         domain = case.domain
