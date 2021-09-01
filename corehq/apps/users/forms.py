@@ -1351,7 +1351,7 @@ class UserFilterForm(forms.Form):
         label=_('Only include mobile workers at the selected location'),
     )
     user_active_status = forms.ChoiceField(
-        label='Active / Deactivated',
+        label=_('Active / Deactivated'),
         choices=(),
         required=False
     )
@@ -1416,10 +1416,10 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
-        user_type_title = 'Users'
+        user_type_title = _('Users')
 
         if self.user_type == MOBILE_USER_TYPE:
-            user_type_title = 'Mobile Workers'
+            user_type_title = _('Mobile Workers')
             fields += [
                 crispy.Div(
                     crispy.Field(
@@ -1444,7 +1444,7 @@ class UserFilterForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _(f'Filter and Download {user_type_title}'),
+                _('Filter and Download {user_type_title}').format(user_type_title=user_type_title),
                 *fields,
             ),
             hqcrispy.FormActions(

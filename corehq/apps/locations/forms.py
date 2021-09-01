@@ -579,7 +579,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     status_active = forms.ChoiceField(
-        label='Active / Archived',
+        label=_('Active / Archived'),
         required=False
     )
 
