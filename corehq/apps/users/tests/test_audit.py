@@ -119,7 +119,7 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
         verification_mode = "007"
         self._test_change_messages(
             UserChangeMessage.two_factor_disabled_with_verification,
-            [verified_by, verification_mode, False, None],
+            [verified_by, verification_mode, None],
             {
                 "two_factor": {
                     "disable_with_verification": {
@@ -133,38 +133,18 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
 
         self._test_change_messages(
             UserChangeMessage.two_factor_disabled_with_verification,
-            [verified_by, verification_mode, True, None],
-            {
-                "two_factor": {
-                    "reset_devices": {},
-                    "disable_with_verification": {
-                        "verified_by": verified_by,
-                        "verification_mode": verification_mode
-                    }
-                }
-            },
-            [
-                'Two factor removed. Verified by: jamesbond@mi6.com, verification mode: "007"',
-                'Registered devices reset',
-            ]
-        )
-
-        self._test_change_messages(
-            UserChangeMessage.two_factor_disabled_with_verification,
-            [verified_by, verification_mode, True, 3],
+            [verified_by, verification_mode, 3],
             {
                 "two_factor": {
                     "disable_with_verification": {
                         "verified_by": verified_by,
                         "verification_mode": verification_mode
                     },
-                    "reset_devices": {},
                     "disable_for_days": {"days": 3}
                 }
             },
             [
                 'Two factor removed. Verified by: jamesbond@mi6.com, verification mode: "007"',
-                'Registered devices reset',
                 'Disabled for 3 days'
             ]
         )

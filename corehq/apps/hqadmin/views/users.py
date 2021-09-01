@@ -483,13 +483,11 @@ class DisableTwoFactorView(FormView):
 
     def form_valid(self, form):
         from django_otp import devices_for_user
-        devices_reset = False
 
         username = form.cleaned_data['username']
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
-            devices_reset = True
 
         couch_user = CouchUser.from_django_user(user)
         disable_for_days = form.cleaned_data['disable_for_days']
@@ -501,7 +499,7 @@ class DisableTwoFactorView(FormView):
         verification = form.cleaned_data['verification_mode']
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         change_messages = UserChangeMessage.two_factor_disabled_with_verification(
-            verified_by, verification, devices_reset, disable_for_days)
+            verified_by, verification, disable_for_days)
         log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
