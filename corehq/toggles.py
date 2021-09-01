@@ -2105,3 +2105,10 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",
 )
+
+DO_NOT_REPUBLISH_DOCS = StaticToggle(
+    'do_not_republish_docs',
+    'Prevents automatic attempts to repair stale ES docs in this domain',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)

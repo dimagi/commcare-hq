@@ -41,7 +41,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.app._id = '123'
         self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
-        self.app.new_form(0, "Untitled Form", None)
+        self.form = self.app.new_form(0, "Untitled Form", None)
+        self.form.requires = 'case'
         self.module.case_type = 'case'
 
         # chosen xpath just used to reference more instances - not considered valid to use in apps
@@ -348,6 +349,31 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_search_data_registry(self, *args):
+        self.module.search_config.data_registry = "myregistry"
+        suite = self.app.create_suite()
+
+        expected_entry_query = """
+        <partial>
+          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry" template="case" default_search="true">
+            <data key="case_type" ref="'case'"/>
+            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            <data key="registry" ref="'myregistry'"/>
+          </query>
+        </partial>"""
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query")
+
+        # assert post is disabled
+        self.assertXmlHasXpath(suite, "./remote-request[1]/post[@relevant='false()']")
+
+        expected_data = """
+        <partial>
+          <data key="commcare_registry" ref="myregistry"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
 
     def test_prompt_hint(self, *args):
         self.module.search_config.properties[0].hint = {'en': 'Search against name'}

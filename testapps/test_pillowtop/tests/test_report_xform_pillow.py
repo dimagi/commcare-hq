@@ -5,7 +5,7 @@ from corehq.apps.es import FormES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.reportxform import ReportFormReindexerFactory
@@ -17,6 +17,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 DOMAIN = 'report-xform-pillowtest-domain'
 
 
+@run_with_sql_backend
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
 @es_test
 class ReportXformPillowTest(TestCase):
@@ -34,7 +35,6 @@ class ReportXformPillowTest(TestCase):
         ensure_index_deleted(REPORT_XFORM_INDEX_INFO.index)
         super(ReportXformPillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_xform_pillow(self):
         form, metadata = self._create_form_and_sync_to_es(DOMAIN)
 
@@ -47,7 +47,6 @@ class ReportXformPillowTest(TestCase):
         self.assertEqual('XFormInstance', form_doc['doc_type'])
         self.assertEqual(form.form_id, form_doc['_id'])
 
-    @run_with_all_backends
     def test_unsupported_domain(self):
         form, metadata = self._create_form_and_sync_to_es('unsupported-domain')
 
@@ -65,6 +64,7 @@ class ReportXformPillowTest(TestCase):
         return form, metadata
 
 
+@run_with_sql_backend
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
 class ReportXformReindexerTest(TestCase):
 
@@ -80,7 +80,6 @@ class ReportXformReindexerTest(TestCase):
         ensure_index_deleted(REPORT_XFORM_INDEX_INFO.index)
         super(ReportXformReindexerTest, self).tearDown()
 
-    @run_with_all_backends
     def test_report_xform_reindexer(self):
         forms_included = set()
         for i in range(3):

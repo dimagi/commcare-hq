@@ -5,7 +5,7 @@
   <div data-bind="if: domain_links().length">
     <h3>{% trans "Manage Downstream Project Spaces" %}</h3>
     <p>
-      {% blocktrans %}
+      {% blocktrans trimmed %}
         This project space is an upstream project space for the project spaces listed below.<br/>
         <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about Linked Project Spaces.
       {% endblocktrans %}
@@ -56,12 +56,12 @@
                     </div>
                     <div class="modal-body">
                       <h4>
-                        {% blocktrans %}
+                        {% blocktrans trimmed %}
                           Are you sure you want to remove the downstream link to <b data-bind="text: linked_domain"></b>?
                         {% endblocktrans %}
                       </h4>
                       <p>
-                        {% blocktrans %}
+                        {% blocktrans trimmed %}
                           <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about what happens when downstream project space links are removed.
                         {% endblocktrans %}
                       </p>
