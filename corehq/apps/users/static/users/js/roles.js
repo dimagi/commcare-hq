@@ -367,7 +367,7 @@ hqDefine('users/js/roles',[
         self.clearRoleError = function (form) {
             self.roleError("");
         };
-        self.clearRoleForm = function (_, event) {
+        self.clearRoleForm = function (unused, event) {
             self.clearRoleError($(event.target).parents('form'));
             self.unsetRoleBeingEdited();
         };
