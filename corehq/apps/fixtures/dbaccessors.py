@@ -57,7 +57,7 @@ def delete_fixture_items_for_data_type(domain, data_type_id):
     ])
 
 
-def iter_fixture_items_for_data_type(domain, data_type_id):
+def iter_fixture_items_for_data_type(domain, data_type_id, wrap=True):
     from corehq.apps.fixtures.models import FixtureDataItem
     for row in paginate_view(
             FixtureDataItem.get_db(),
@@ -68,7 +68,10 @@ def iter_fixture_items_for_data_type(domain, data_type_id):
             reduce=False,
             include_docs=True
     ):
-        yield FixtureDataItem.wrap(row['doc'])
+        if wrap:
+            yield FixtureDataItem.wrap(row['doc'])
+        else:
+            yield row['doc']
 
 
 def count_fixture_items(domain, data_type_id):
