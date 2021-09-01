@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from requests.exceptions import RequestException
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.quickcache import quickcache
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -113,6 +114,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
             )
 
     @classmethod
+    @quickcache(['webhook_secret'])
     def by_webhook_secret(cls, webhook_secret):
         # This isn't ideal right now, but this table has so few records
         # that it shouldn't be a performance problem. Longer term, we'll
@@ -121,11 +123,11 @@ class SQLTelerivetBackend(SQLSMSBackend):
         result = cls.active_objects.filter(
             hq_api_id=cls.get_api_id()
         )
-        result_by_webhook = {
-            backend.config.webhook_secret: backend
-            for backend in result
-        }
-        return result_by_webhook.get(webhook_secret)
+
+        for backend in result:
+            if backend.config.webhook_secret == webhook_secret:
+                return backend
+        return None
 
 
 class IncomingRequest(models.Model):
