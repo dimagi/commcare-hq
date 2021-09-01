@@ -83,4 +83,7 @@ branches:
     - sk/prevent-duplicate-role-names  # Simon Aug 30
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - ce/fixture-restore # Cal Aug 31
+    - rc/audit-log-ux+mk/user-history/structured-messages-v2 # MK Sep 1
+    - mk/user-history/structured-messages-v2 # MK Sep 1
+    - mk/user-history/add-for-domain # MK Sep 1
 submodules: { }
