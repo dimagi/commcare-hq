@@ -17,13 +17,15 @@ otherwise:
 """
 from django.test import TestCase
 
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from ..models import SQLLocation
 from .util import setup_locations_and_types
 
 
+@run_with_sql_backend
 class TestChangeStatus(TestCase):
     domain = 'test-change-administrative'
     location_type_names = ['state', 'county', 'city']
@@ -87,8 +89,9 @@ class TestChangeStatus(TestCase):
 
         # Now that it's administrative, it shouldn't have one
         # The case should still exist, but be closed
+        cases = CaseAccessors(self.domain)
         self.assertHasNoSupplyPoint(self.boston)
-        self.assertTrue(SupplyPointCase.get(supply_point_id).closed)
+        self.assertTrue(cases.get_case(supply_point_id).closed)
 
         self.city_type.administrative = False
         self.city_type.save()
@@ -96,4 +99,4 @@ class TestChangeStatus(TestCase):
         # The same supply point case should be reopened
         self.assertHasSupplyPoint(self.boston)
         self.assertEqual(self.boston.supply_point_id, supply_point_id)
-        self.assertFalse(SupplyPointCase.get(supply_point_id).closed)
+        self.assertFalse(cases.get_case(supply_point_id).closed)
