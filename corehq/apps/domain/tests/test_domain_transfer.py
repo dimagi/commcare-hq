@@ -111,7 +111,8 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertTrue(self.transfer.to_user.is_member_of(self.domain))
 
         user_history = UserHistory.objects.get(user_id=self.transfer.from_user.get_id)
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
         self.assertEqual(user_history.changed_by, self.user.get_id)
         self.assertEqual(user_history.user_id, self.transfer.from_user.get_id)
         self.assertEqual(user_history.change_messages,
