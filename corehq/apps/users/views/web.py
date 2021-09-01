@@ -153,7 +153,7 @@ class UserInvitationView(object):
                         _('You have been added to the "{}" project space.').format(self.domain)
                     )
                     authenticated = authenticate(username=form.cleaned_data["email"],
-                                                 password=form.cleaned_data["password"])
+                                                 password=form.cleaned_data["password"], request=request)
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
                     track_workflow(request.POST['email'],

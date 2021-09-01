@@ -209,24 +209,24 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             self.existing_user.save()
 
         if is_update_successful and (props_updated or role_updated or metadata_updated):
-            messages = []
+            change_messages = {}
             profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
             if role_updated:
-                messages.append(UserChangeMessage.role_change(user_new_role))
+                change_messages.update(UserChangeMessage.role_change(user_new_role))
             if metadata_updated:
                 props_updated['user_data'] = self.existing_user.user_data
             if profile_updated:
                 profile_name = None
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
-                messages.append(UserChangeMessage.profile_info(profile_name))
+                change_messages.update(UserChangeMessage.profile_info(profile_id, profile_name))
             log_user_change(
                 self.request.domain,
                 couch_user=self.existing_user,
                 changed_by_user=self.request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
                 fields_changed=props_updated,
-                message=". ".join(messages)
+                change_messages=change_messages
             )
         return is_update_successful
 
@@ -245,19 +245,6 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if current_role:
             self.initial['role'] = current_role
-
-
-class UpdateUserPermissionForm(forms.Form):
-    superuser = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
-
-    def update_user_permission(self, couch_user=None, editable_user=None, is_superuser=None):
-        is_update_successful = False
-        if editable_user and couch_user.is_superuser:
-            editable_user.is_superuser = is_superuser
-            editable_user.save()
-            is_update_successful = True
-
-        return is_update_successful
 
 
 class BaseUserInfoForm(forms.Form):
@@ -1066,19 +1053,18 @@ class CommtrackUserForm(forms.Form):
             location_ids = location_updates['location_ids']
             user_change_logger.add_changes({'assigned_location_ids': location_ids})
             if location_ids:
-                location_names = list(SQLLocation.objects.filter(location_id__in=location_ids).values_list(
-                    'name', flat=True))
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_assigned_locations_info(location_names)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
             user_change_logger.add_changes({'location_id': location_id})
             if location_id:
-                primary_location_name = SQLLocation.objects.get(location_id=location_id).name
+                primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.commcare_user_primary_location_info(primary_location_name)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
 
         if program_id is not None:
@@ -1097,16 +1083,13 @@ class CommtrackUserForm(forms.Form):
         if 'location_ids' in location_updates:
             location_ids = location_updates['location_ids']
             if location_ids:
-                locations_info = ", ".join([
-                    f"{location.name}[{location.location_id}]"
-                    for location in SQLLocation.objects.filter(location_id__in=location_ids)
-                ])
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info(locations_info)
+                    UserChangeMessage.assigned_locations_info(locations)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_assigned_locations_info([])
+                    UserChangeMessage.assigned_locations_info([])
                 )
 
         if 'location_id' in location_updates:
@@ -1114,11 +1097,11 @@ class CommtrackUserForm(forms.Form):
             if location_id:
                 primary_location = SQLLocation.objects.get(location_id=location_id)
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(primary_location)
+                    UserChangeMessage.primary_location_info(primary_location)
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.web_user_primary_location_info(None)
+                    UserChangeMessage.primary_location_info(None)
                 )
 
         if program_id is not None:

@@ -49,10 +49,7 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import (
-    convert_xform_to_json,
-    should_use_sql_backend,
-)
+from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -71,7 +68,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         return HttpTooManyRequests()
 
     metric_tags = {
-        'backend': 'sql' if should_use_sql_backend(domain) else 'couch',
+        'backend': 'sql',
         'domain': domain
     }
 

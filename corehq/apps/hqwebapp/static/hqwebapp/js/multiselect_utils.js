@@ -142,34 +142,38 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     /*
      * A custom binding for setting multiselect properties in knockout content.
-     * This binding does not handle dynamic properties, but could be extended to do so.
-     * For a list of available options, see http://loudev.com/ under Options
+     * The only dynamic part of this binding are the options
+     * For a list of configurable properties, see http://loudev.com/ under Options
      */
-    ko.bindingHandlers.multiselect = {
+    ko.bindingHandlers.multiselectProperties = {
         init: function (element, valueAccessor) {
-            var options = valueAccessor();
+            var properties = valueAccessor();
             multiselect_utils.createFullMultiselectWidget(
                 element,
-                options.selectableHeaderTitle || gettext("Items"),
-                options.selectedHeaderTitle || gettext("Selected items"),
-                options.searchItemTitle || gettext("Search items")
+                properties.selectableHeaderTitle || gettext("Items"),
+                properties.selectedHeaderTitle || gettext("Selected items"),
+                properties.searchItemTitle || gettext("Search items")
             );
-        },
-    };
-
-    /*
-    * A custom binding for dynamically updating select options when using the multiselect binding
-    * Replace the `options` binding with `multiselectOptions`, and the binding will take care of the rest
-    */
-    ko.bindingHandlers.multiselectOptions = {
-        init: function (element, valueAccessor) {
-            // add the `options` binding to the element, valueAccessor() should return an observable
-            ko.applyBindingsToNode(element, {options: valueAccessor()});
+            if (properties.options) {
+                // add the `options` binding to the element, valueAccessor() should return an observable
+                ko.applyBindingsToNode(element, {options: properties.options});
+            }
         },
         update: function (element, valueAccessor) {
-            // have to access the observable to get the `update` method to fire on changes
-            ko.unwrap(valueAccessor());
-            $(element).multiSelect('refresh');
+            var properties = valueAccessor();
+            if (properties.options) {
+                // have to access the observable to get the `update` method to fire on changes to options
+                ko.unwrap(properties.options());
+            }
+
+            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
+            $(element).multiSelect('destroy');
+            multiselect_utils.createFullMultiselectWidget(
+                element,
+                properties.selectableHeaderTitle || gettext("Items"),
+                properties.selectedHeaderTitle || gettext("Selected items"),
+                properties.searchItemTitle || gettext("Search items")
+            );
         },
     };
 
