@@ -164,17 +164,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
 
-            if (this.model.get('value')) {
-                // Use the default value where present instead of the sticky value
-                this.model.set('searchForBlank', false);
-            } else {
-                // Set the value and blank search checkbox from the sticky values if available
-                var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
-                    stickyValue = allStickyValues[this.model.get('id')],
-                    [searchForBlank, value] = decodeValue(this.model, stickyValue);
+            var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+                stickyValue = allStickyValues[this.model.get('id')],
+                [searchForBlank, value] = decodeValue(this.model, stickyValue);
+            if (value & !this.model.get('value')) {
+                // Set the value and blank search checkbox from the sticky
+                // values if available and no default is present
                 this.model.set('value', value);
-                this.model.set('searchForBlank', searchForBlank);
             }
+            this.model.set('searchForBlank', searchForBlank);
         },
 
         ui: {
