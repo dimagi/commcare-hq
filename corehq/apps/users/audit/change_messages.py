@@ -55,7 +55,7 @@ class UserChangeMessage(object):
         }
 
     @staticmethod
-    def two_factor_disabled_with_verification(verified_by, verification_mode, devices_reset, disable_for_days):
+    def two_factor_disabled_with_verification(verified_by, verification_mode, disable_for_days):
         change_message = {
             "two_factor": {
                 DISABLE_WITH_VERIFICATION: {
@@ -64,8 +64,6 @@ class UserChangeMessage(object):
                 }
             }
         }
-        if devices_reset:
-            change_message["two_factor"].update({RESET_DEVICES: {}})
         if disable_for_days:
             change_message["two_factor"].update({DISABLE_FOR_DAYS: {"days": disable_for_days}})
         return change_message
@@ -251,7 +249,6 @@ SET_ROLE = 'set_role'
 CLEAR_ROLE = 'clear_role'
 REMOVE_FROM_DOMAIN = 'remove_from_domain'
 ADD_AS_WEB_USER = 'add_as_web_user'
-RESET_DEVICES = 'reset_devices'
 DISABLE_FOR_DAYS = 'disable_for_days'
 DISABLE_WITH_VERIFICATION = 'disable_with_verification'
 RESET_PASSWORD = 'reset_password'
@@ -277,7 +274,6 @@ MESSAGES = {
     CLEAR_ROLE: UserChangeFormatter.simple_formatter(noop("Role: None")),
     REMOVE_FROM_DOMAIN: UserChangeFormatter.simple_formatter(noop("Removed from domain '{domain}'")),
     ADD_AS_WEB_USER: UserChangeFormatter.simple_formatter(noop("Added as web user to domain '{domain}'")),
-    RESET_DEVICES: UserChangeFormatter.simple_formatter(noop("Registered devices reset")),
     DISABLE_FOR_DAYS: UserChangeFormatter.simple_formatter(noop("Disabled for {days} days")),
     DISABLE_WITH_VERIFICATION: UserChangeFormatter.simple_formatter(
         noop('Two factor removed. Verified by: {verified_by}, verification mode: "{verification_mode}"')
