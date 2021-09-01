@@ -54,11 +54,12 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         needing to click "See More".
         """
         if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-            user_data_label = _("Profile or User Data")
+            user_data_label = _("profile or user data")
         else:
-            user_data_label = _("User Data")
+            user_data_label = _("user data")
         return {
             "username": _("username"),
+            "role_id": _("role"),
             "email": _("email"),
             "domain": _("project"),
             "is_active": _("is active"),
