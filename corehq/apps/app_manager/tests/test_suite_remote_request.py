@@ -220,7 +220,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+            "instance('{}')/{}/case[@case_type='{}'][{}][not(commcare_related_case=true())]".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
@@ -237,12 +237,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]".format(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}][{}]".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
                 another_case_type,
-                self.module.search_config.search_filter
+                self.module.search_config.search_filter,
+                "not(commcare_related_case=true())",
             ),
             suite.xpath(ref_path)[0]
         )
