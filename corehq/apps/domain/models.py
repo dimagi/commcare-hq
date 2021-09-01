@@ -48,7 +48,6 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
@@ -726,8 +725,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self._rev:
             if domain_or_deleted_domain_exists(self.name):
                 raise NameUnavailableException(self.name)
-            # mark any new domain as timezone migration complete
-            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save

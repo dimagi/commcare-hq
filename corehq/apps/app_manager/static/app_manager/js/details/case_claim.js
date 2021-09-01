@@ -168,7 +168,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
-        'searchAdditionalRelevant',
+        'searchAdditionalRelevant', 'dataRegistry',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -223,6 +223,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
+                data_registry: self.dataRegistry(),
                 search_label: self.searchLabel(),
                 search_label_image:
                     $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,

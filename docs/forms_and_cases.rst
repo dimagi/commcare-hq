@@ -127,17 +127,6 @@ For more details see:
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 
 
-Branching
----------
-In special cases code may need to be branched into SQL and Couch versions.
- This can be accomplished using the :code:`should_use_sql_backend(domain)` function.::
-
-    if should_use_sql_backend(domain_name):
-        # do SQL specifc stuff here
-    else:
-        # do couch stuff here
-
-
 Unit Tests
 ----------
 In most cases tests that use form / cases/ ledgers should be run on both backends as follows::
