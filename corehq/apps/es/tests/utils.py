@@ -84,7 +84,8 @@ def populate_user_index(users):
 def case_search_es_setup(domain, case_blocks):
     """Submits caseblocks, creating the cases, then sends them to ES"""
     from corehq.apps.hqcase.utils import submit_case_blocks
-    _, cases = submit_case_blocks([cb.as_text() for cb in case_blocks], domain=domain)
+    xform, cases = submit_case_blocks([cb.as_text() for cb in case_blocks], domain=domain)
+    assert not xform.is_error, xform
     order = {cb.case_id: index for index, cb in enumerate(case_blocks)}
     # send cases to ES in the same order they were passed in
     cases = sorted(cases, key=lambda case: order[case.case_id])
