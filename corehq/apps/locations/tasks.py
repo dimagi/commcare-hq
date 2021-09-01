@@ -9,7 +9,6 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from corehq.apps.commtrack.models import (
-    StockState,
     close_supply_point_case,
     sync_supply_point,
 )
@@ -40,23 +39,6 @@ def sync_administrative_status(location_type, sync_supply_points=True):
             # new supply point.  We'll need to save it anyways to store the new
             # supply_point_id.
             location.save()
-    if location_type.administrative:
-        _hide_stock_states(location_type)
-    else:
-        _unhide_stock_states(location_type)
-
-
-def _hide_stock_states(location_type):
-    (StockState.objects
-     .filter(sql_location__location_type=location_type)
-     .update(sql_location=None))
-
-
-def _unhide_stock_states(location_type):
-    for location in SQLLocation.objects.filter(location_type=location_type):
-        (StockState.objects
-         .filter(case_id=location.supply_point_id)
-         .update(sql_location=location))
 
 
 @serial_task("{domain}", default_retry_delay=30, max_retries=3)
