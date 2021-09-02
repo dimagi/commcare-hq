@@ -626,7 +626,7 @@ class ConfigureReport(ReportBuilderView):
         return form_class(
             self.domain,
             self._get_report_name(),
-            self.app._id,
+            self.app._id if self.app else None,
             self.source_type,
             self.source_id,
             self.existing_report,
