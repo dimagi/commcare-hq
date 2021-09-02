@@ -1,18 +1,16 @@
 {% load i18n %}
 
 <p>
-  {% blocktrans %}
-    Dear {{ owning_domain }} administrator,
-  {% endblocktrans %}
+  {% blocktrans %}Dear {{ owning_domain }} administrator,{% endblocktrans %}
 </p>
 
 <p>
 {% if invitation.status == 'accepted' %}
-  {% blocktrans %}
+  {% blocktrans trimmed %}
     The '{{ domain }}' project space has opted in to the '{{ registry_name }}' CommCare data registry.
   {% endblocktrans %}
 {% else %}
-  {% blocktrans %}
+  {% blocktrans trimmed %}
     The '{{ domain }}' project space has opted out of the '{{ registry_name }}' CommCare data registry.
   {% endblocktrans %}
 {% endif %}
@@ -26,7 +24,7 @@
 </p>
 
 <p>
-  {% blocktrans %}
+  {% blocktrans trimmed %}
     Best regards, <br />
     The CommCare HQ Team  <br />
     www.commcarehq.org

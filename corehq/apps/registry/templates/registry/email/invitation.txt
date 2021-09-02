@@ -1,20 +1,14 @@
 {% load i18n %}
-{% blocktrans %}
-Dear {{ domain }} administrator,
-{% endblocktrans %}
+{% blocktrans %}Dear {{ domain }} administrator,{% endblocktrans %}
 
-{% blocktrans %}
+{% blocktrans trimmed %}
 The '{{ domain }}' project space has been invited to participate in the '{{ registry_name }}' CommCare data registry by
 the '{{ owning_domain }}' project space.
 {% endblocktrans %}
 
-{% blocktrans %}
-You can opt in or out of the registry by following this link: {{ registry_url }}
-{% endblocktrans %}
+{% blocktrans %}You can opt in or out of the registry by following this link: {{ registry_url }}{% endblocktrans %}
 
-{% blocktrans %}
-Thank you for using CommCare.
+{% blocktrans %}Thank you for using CommCare.
 Best regards,
 The CommCare HQ Team
-www.commcarehq.org
-{% endblocktrans %}
+www.commcarehq.org{% endblocktrans %}

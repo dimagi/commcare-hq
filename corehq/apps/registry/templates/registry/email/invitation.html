@@ -1,13 +1,11 @@
 {% load i18n %}
 
 <p>
-  {% blocktrans %}
-    Dear {{ domain }} administrator,
-  {% endblocktrans %}
+  {% blocktrans %}Dear {{ domain }} administrator,{% endblocktrans %}
 </p>
 
 <p>
-  {% blocktrans %}
+  {% blocktrans trimmed %}
     The '{{ domain }}' project space has been invited to participate in the '{{ registry_name }}' CommCare data registry by
     the '{{ owning_domain }}' project space.
   {% endblocktrans %}
@@ -21,7 +19,7 @@
 </p>
 
 <p>
-  {% blocktrans %}
+  {% blocktrans trimmed %}
     Best regards, <br />
     The CommCare HQ Team  <br />
     www.commcarehq.org
