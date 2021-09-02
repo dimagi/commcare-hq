@@ -1309,6 +1309,15 @@ class UserFilterForm(forms.Form):
         ('all', ugettext_noop('All')),
         (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
     )
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+    USER_ACTIVE_STATUS = [
+        ('show_all', _('Show All')),
+        (ACTIVE, _('Only Active')),
+        (INACTIVE, _('Only Deactivated'))
+    ]
+
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
         label=ugettext_lazy('Name or Username'),
@@ -1318,6 +1327,16 @@ class UserFilterForm(forms.Form):
     location_id = forms.CharField(
         label=ugettext_noop("Location"),
         required=False,
+    )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include mobile workers at the selected location'),
+    )
+    user_active_status = forms.ChoiceField(
+        label=_('Active / Deactivated'),
+        choices=USER_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=USER_ACTIVE_STATUS, attrs={'ko_value': 'user_active_status'}),
     )
     columns = forms.ChoiceField(
         required=False,
@@ -1339,7 +1358,16 @@ class UserFilterForm(forms.Form):
         if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+        )
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
+
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.objects.get_by_domain(self.domain)
@@ -1351,6 +1379,7 @@ class UserFilterForm(forms.Form):
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
+
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1376,18 +1405,32 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
+        user_type_title = _('Users')
+
         if self.user_type == MOBILE_USER_TYPE:
+            user_type_title = _('Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id", data_bind="value: location_id"),
-                    data_bind="slideVisible: !isCrossDomain()",
+                    crispy.Field(
+                        "location_id",
+                        data_bind="value: location_id",
+                    ),
+                    data_bind="slideVisible: !isCrossDomain(), event: {change: location_change}",
                 ),
+                crispy.Div(
+                    crispy.Field(
+                        "selected_location_only",
+                        data_bind="checked: selected_location_only"
+                    ),
+                    data_bind="slideVisible: !isCrossDomain() && location_id",
+                ),
+                crispy.Field("user_active_status",),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Filter and Download Users"),
+                _('Filter and Download {user_type_title}').format(user_type_title=user_type_title),
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1427,3 +1470,12 @@ class UserFilterForm(forms.Form):
             domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
         return sorted(domains)
+
+    def clean_user_active_status(self):
+        user_active_status = self.cleaned_data['user_active_status']
+
+        if user_active_status == self.ACTIVE:
+            return True
+        if user_active_status == self.INACTIVE:
+            return False
+        return None
