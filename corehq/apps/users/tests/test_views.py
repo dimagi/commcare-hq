@@ -114,29 +114,37 @@ class TestUpdateRoleFromView(TestCase):
 
     def test_create_role(self):
         role_data = self.BASE_JSON.copy()
-        role_data["name"] = "role1"
+        role_data["name"] = "role2"
         role_data["assignable_by"] = [self.role.couch_id]
         role = _update_role_from_view(self.domain, role_data)
-        self.assertEqual(role.name, "role1")
+        self.assertEqual(role.name, "role2")
         self.assertEqual(role.default_landing_page, "webapps")
         self.assertFalse(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [self.role.couch_id])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
+        return role
+
+    def test_create_role_duplicate_name(self):
+        role_data = self.BASE_JSON.copy()
+        role_data["name"] = "role1"
+        with self.assertRaises(ValueError):
+            _update_role_from_view(self.domain, role_data)
 
     def test_update_role(self):
-        self.test_create_role()
+        role = self.test_create_role()
 
         role_data = self.BASE_JSON.copy()
-        role_data["name"] = "role2"
+        role_data["_id"] = role.get_id
+        role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
         role_data["permissions"] = Permissions(edit_reports=True, view_report_list=["report1"]).to_json()
-        role = _update_role_from_view(self.domain, role_data)
-        self.assertEqual(role.name, "role2")
-        self.assertIsNone(role.default_landing_page)
-        self.assertTrue(role.is_non_admin_editable)
-        self.assertEqual(role.assignable_by, [])
-        self.assertEqual(role.permissions.to_json(), role_data['permissions'])
+        updated_role = _update_role_from_view(self.domain, role_data)
+        self.assertEqual(updated_role.name, "role1")
+        self.assertIsNone(updated_role.default_landing_page)
+        self.assertTrue(updated_role.is_non_admin_editable)
+        self.assertEqual(updated_role.assignable_by, [])
+        self.assertEqual(updated_role.permissions.to_json(), role_data['permissions'])
 
     def test_landing_page_validation(self):
         role_data = self.BASE_JSON.copy()
