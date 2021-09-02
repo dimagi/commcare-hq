@@ -84,4 +84,5 @@ branches:
     - ce/fixture-restore # Cal Aug 31
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/add-for-domain # MK Sep 1
+    - mk/user-history/track-api-updates+mk/user-history/add-for-domain # MK Sep 2
 submodules: { }
