@@ -1109,7 +1109,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         except User.DoesNotExist:
             pass
         if deleted_by:
-            log_user_change(deleted_by_domain, self, deleted_by,
+            # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+            # Web user is never deleted except in tests so keep for_domain as None
+            for_domain = self.domain if self.is_commcare_user() else None
+            log_user_change(by_domain=deleted_by_domain, for_domain=for_domain,
+                            couch_user=self, changed_by_user=deleted_by,
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
@@ -1547,10 +1551,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             return
         # fallback to self if not created by any user
         created_by = created_by or self
+        # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
+        # Web user is not "created" by a domain but invited so keep for_domain as None
+        for_domain = self.domain if self.is_commcare_user() else None
         log_user_change(
-            domain,
-            self,
-            created_by,
+            by_domain=domain,
+            for_domain=for_domain,
+            couch_user=self,
+            changed_by_user=created_by,
             changed_via=created_via,
             action=UserModelAction.CREATE,
             domain_required_for_log=domain_required_for_log,
@@ -1803,9 +1811,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
         if unretired_by:
             log_user_change(
-                unretired_by_domain,
-                self,
-                unretired_by,
+                by_domain=unretired_by_domain,
+                for_domain=self.domain,
+                couch_user=self,
+                changed_by_user=unretired_by,
                 changed_via=unretired_via,
                 action=UserModelAction.CREATE,
             )
@@ -1850,7 +1859,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
         if deleted_by:
-            log_user_change(retired_by_domain, self, deleted_by,
+            log_user_change(by_domain=retired_by_domain, for_domain=self.domain,
+                            couch_user=self, changed_by_user=deleted_by,
                             changed_via=deleted_via, action=UserModelAction.DELETE)
         self.save()
 
@@ -3012,23 +3022,35 @@ class UserHistory(models.Model):
         (UPDATE, _('Update')),
         (DELETE, _('Delete')),
     )
-    domain = models.CharField(max_length=255, null=True)
+    by_domain = models.CharField(max_length=255, null=True)
+    for_domain = models.CharField(max_length=255, null=True)
     user_type = models.CharField(max_length=255)  # CommCareUser / WebUser
     user_id = models.CharField(max_length=128)
     changed_by = models.CharField(max_length=128)
+    # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
+    # JSON structured replacement for the deprecated text message field
+    change_messages = JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
-
+    # ToDo: remove post migration/reset of existing records
     """
     dict with keys:
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
     details = JSONField(default=dict)
+    # ToDo: remove blank=true post migration/reset of existing records since it will always be present
+    # same as the deprecated details.changed_via
+    # one of the USER_CHANGE_VIA_* constants
+    changed_via = models.CharField(max_length=255, blank=True)
+    # same as the deprecated details.changes
+    # a dict of CouchUser attributes that changed and their new values
+    changes = JSONField(default=dict)
 
     class Meta:
         indexes = [
-            models.Index(fields=['domain']),
+            models.Index(fields=['by_domain']),
+            models.Index(fields=['for_domain']),
         ]

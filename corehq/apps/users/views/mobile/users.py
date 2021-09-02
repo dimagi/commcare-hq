@@ -349,11 +349,12 @@ class EditCommCareUserView(BaseEditUserView):
                 self.editable_user.save(spawn_task=True)
                 if is_new_phone_number:
                     log_user_change(
-                        self.request.domain,
+                        by_domain=self.request.domain,
+                        for_domain=self.editable_user.domain,
                         couch_user=self.editable_user,
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.phone_number_added(phone_number)
+                        change_messages=UserChangeMessage.phone_numbers_added([phone_number])
                     )
                 messages.success(request, _("Phone number added."))
             else:
@@ -850,7 +851,8 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    log_user_change(request.domain, user, request.couch_user,
+    log_user_change(by_domain=request.domain, for_domain=user.domain,
+                    couch_user=user, changed_by_user=request.couch_user,
                     changed_via=USER_CHANGE_VIA_WEB, fields_changed={'is_active': user.is_active})
     return JsonResponse({
         'success': True,
