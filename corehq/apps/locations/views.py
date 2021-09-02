@@ -1104,6 +1104,11 @@ def count_locations(request, domain):
     else:
         return HttpResponseBadRequest('Location filters invalid')
 
+    # Handle user location restriction
+    if not location_filters['location_id']:
+        domain_membership = request.couch_user.get_domain_membership(domain)
+        location_filters['location_id'] = domain_membership.location_id
+
     if location_filters.pop('selected_location_only'):
         locations_count = 1
     else:
