@@ -13,9 +13,9 @@
     "config": {
       "title": "6.5 Service Delivery Annual Report",
       "aggregation_columns":[ 
-        "health_post" 
-      ]  ,
-      "filters":  [
+        "annual_report_date"
+      ] ,
+      "filters":   [
         {
           "datatype": "string",
           "choice_provider": {
@@ -46,10 +46,10 @@
           "compare_as_string": false,
           "datatype": "date",
           "required": false,
-          "slug": "annual_report_date",
-          "field": "annual_report_date",
+          "slug": "annual_date",
+          "field": "annual_date",
           "type": "date",
-          "display": "Report Month (for mobile)"
+          "display": "Annual Date(for mobile)"
         },
         {
           "display": "Test or Real",
@@ -68,45 +68,7 @@
           "field": "test_or_real",
           "type": "choice_list",
           "slug": "test_or_real"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "region",
-          "field": "region",
-          "type": "dynamic_choice_list",
-          "slug": "region"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Zone",
-          "field": "zone",
-          "type": "dynamic_choice_list",
-          "slug": "zone"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Woreda",
-          "field": "woreda",
-          "type": "dynamic_choice_list",
-          "slug": "woreda"
-        },
-        {
-          "datatype": "string",
-          "field": "health_center",
-          "type": "dynamic_choice_list",
-          "display": "Health Center",
-          "slug": "health_center"
-        },
-        {
-          "datatype": "string",
-          "field": "health_post",
-          "type": "dynamic_choice_list",
-          "display": "Health Post",
-          "slug": "health_post"
-        },
+        } ,
         {
           "type": "pre",
           "field": "is_closed",
@@ -126,22 +88,22 @@
         }
       ],
       "columns":  [
-       
+        
         {
           "comment": null,
-          "field": "health_post",
+          "field": "annual_report_date",
           "description": null,
           "format": "default",
           "css_class": null,
           "width": null,
           "aggregation": "simple",
-          "column_id": "health_post",
+          "column_id": "annual_report_date",
           "visible": true,
           "transform": {},
           "calculate_total": false,
           "type": "field",
-          "display": "Health Post"
-        } ,
+          "display": "Annual Report Date"
+        },
         {
           "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
           "field": "FP_CYP_1",
