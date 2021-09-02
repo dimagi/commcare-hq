@@ -518,7 +518,7 @@ class TestCaseSearchLookups(TestCase):
         # d1 > c1
         # Search for case type 'c'
         # - initial results c1, c2
-        # - related lookups (parent, parent/parent) yield c1, a1, a1
+        # - related lookups (parent, parent/parent) yield a1, c1, a1
         # - child lookups yield c2, d1
         # - (future) extension lookups yield d1
         cases = [
@@ -540,7 +540,8 @@ class TestCaseSearchLookups(TestCase):
         cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
         self.assertEqual({case.case_id for case in cases}, {'c1', 'c2'})
 
-        with patch("corehq.apps.case_search.utils.get_related_case_relationships", return_value={"parent", "parent/parent"}), \
+        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
+                   return_value={"parent", "parent/parent"}), \
              patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
             cases = get_related_cases(self.domain, None, {"c"}, cases)
