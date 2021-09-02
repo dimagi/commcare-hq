@@ -87,7 +87,8 @@ def case_search_es_setup(domain, case_blocks):
     xform, cases = submit_case_blocks([cb.as_text() for cb in case_blocks], domain=domain)
     assert not xform.is_error, xform
     order = {cb.case_id: index for index, cb in enumerate(case_blocks)}
-    # send cases to ES in the same order they were passed in
+    # send cases to ES in the same order they were passed in so `indexed_on`
+    # order is predictable for TestCaseListAPI.test_pagination and others
     cases = sorted(cases, key=lambda case: order[case.case_id])
     populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
 
