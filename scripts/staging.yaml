@@ -61,7 +61,6 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
-    - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
@@ -74,13 +73,15 @@ branches:
     - caktus:allowed_values_ui # Jenny Aug 13
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
-    - rc/audit-log-ux # Robert Aug 22
     - es/blank-case-search  # Ethan Aug 23
     - erroredQuestionMessagingFix # Shubham Aug 24
     - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - errorJumpFix # Shubham Aug 25
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - ap/add-support-for-batch-size # Amit Aug 30
     - sk/prevent-duplicate-role-names  # Simon Aug 30
+    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
+    - ce/fixture-restore # Cal Aug 31
+    - mk/user-history/structured-messages-v2 # MK Sep 1
+    - mk/user-history/add-for-domain # MK Sep 1
 submodules: { }

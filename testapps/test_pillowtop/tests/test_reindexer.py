@@ -1,6 +1,5 @@
 import uuid
 
-from django.conf import settings
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 import mock
@@ -69,7 +68,7 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        index_id = 'sql-case'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_case_is_in_es(case)
@@ -100,7 +99,7 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        index_id = 'sql-form'
         reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)
