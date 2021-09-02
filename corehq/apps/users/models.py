@@ -1542,7 +1542,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
-    def log_user_create(self, domain, created_by, created_via, domain_required_for_log=True):
+    def log_user_create(self, domain, created_by, created_via, by_domain_required_for_log=True):
         from corehq.apps.users.model_log import UserModelAction
 
         if settings.UNIT_TESTING and created_by is None and created_via is None:
@@ -1551,7 +1551,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         created_by = created_by or self
         # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
         # Web user is not "created" by a domain but invited so keep for_domain as None
-        for_domain = self.domain if self.is_commcare_user() else None
+        if self.is_commcare_user():
+            for_domain = self.domain
+            for_domain_required_for_log = True
+        else:
+            for_domain = None
+            for_domain_required_for_log = False
         log_user_change(
             by_domain=domain,
             for_domain=for_domain,
@@ -1559,7 +1564,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             changed_by_user=created_by,
             changed_via=created_via,
             action=UserModelAction.CREATE,
-            domain_required_for_log=domain_required_for_log,
+            by_domain_required_for_log=by_domain_required_for_log,
+            for_domain_required_for_log=for_domain_required_for_log
         )
 
 
@@ -2333,13 +2339,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               metadata=None, domain_required_for_log=True, **kwargs):
+               metadata=None, by_domain_required_for_log=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
-        web_user.log_user_create(domain, created_by, created_via, domain_required_for_log=domain_required_for_log)
+        web_user.log_user_create(domain, created_by, created_via,
+                                 by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
     def is_commcare_user(self):

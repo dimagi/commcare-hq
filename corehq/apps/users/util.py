@@ -316,7 +316,8 @@ def _last_sync_needs_update(last_sync, sync_datetime):
 
 def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_via=None,
                     change_messages=None, fields_changed=None, action=None,
-                    domain_required_for_log=True, bulk_upload_record_id=None):
+                    by_domain_required_for_log=True, for_domain_required_for_log=True,
+                    bulk_upload_record_id=None):
     """
     Log changes done to a user.
     For a new user or a deleted user, log only specific fields.
@@ -333,7 +334,8 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     :param change_messages: Optional dict of change messages
     :param fields_changed: dict of user fields that have changed with their current value
     :param action: action on the user
-    :param domain_required_for_log: set to False to allow domain less log for specific changes
+    :param by_domain_required_for_log: set to False to allow domain less log for specific changes
+    :param for_domain_required_for_log: set to False to allow domain less log for specific changes
     :param bulk_upload_record_id: ID of bulk upload record if changed via bulk upload
     """
     from corehq.apps.users.models import UserHistory
@@ -344,11 +346,10 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     change_messages = change_messages or {}
 
     # domains are essential to filter changes done in and by a domain
-    if domain_required_for_log and changed_by_user != SYSTEM_USER_ID:
-        if not by_domain:
-            raise ValueError("missing 'by_domain' argument'")
-        if not for_domain:
-            raise ValueError("missing 'for_domain' argument'")
+    if by_domain_required_for_log and changed_by_user != SYSTEM_USER_ID and not by_domain:
+        raise ValueError("missing 'by_domain' argument'")
+    if for_domain_required_for_log and not for_domain:
+        raise ValueError("missing 'for_domain' argument'")
 
     # for an update, there should always be fields that have changed or change messages
     if action == UserModelAction.UPDATE and not fields_changed and not change_messages:

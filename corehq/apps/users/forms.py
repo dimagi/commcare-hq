@@ -180,7 +180,8 @@ class BaseUpdateUserForm(forms.Form):
                     changed_by_user=self.request.couch_user,
                     changed_via=USER_CHANGE_VIA_WEB,
                     fields_changed=props_updated,
-                    domain_required_for_log=bool(self.domain),
+                    by_domain_required_for_log=bool(self.domain),
+                    for_domain_required_for_log=bool(self.domain)
                 )
         return is_update_successful, props_updated
 
