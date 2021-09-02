@@ -1231,11 +1231,12 @@ def delete_phone_number(request, domain, couch_user_id):
 
     user.delete_phone_number(phone_number)
     log_user_change(
-        domain=request.domain,
+        by_domain=request.domain,
+        for_domain=user.domain,
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=UserChangeMessage.phone_number_removed(phone_number)
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
     )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
