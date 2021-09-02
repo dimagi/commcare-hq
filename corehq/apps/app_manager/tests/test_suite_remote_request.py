@@ -27,6 +27,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
@@ -220,11 +221,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}'][{}]".format(
+            "instance('{}')/{}/case[@case_type='{}'][{}]{}".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
-                search_filter
+                search_filter,
+                EXCLUDE_RELATED_CASES_FILTER
             ),
             suite.xpath(ref_path)[0]
         )
@@ -237,12 +239,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]".format(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]{}".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
                 another_case_type,
-                self.module.search_config.search_filter
+                self.module.search_config.search_filter,
+                EXCLUDE_RELATED_CASES_FILTER
             ),
             suite.xpath(ref_path)[0]
         )
