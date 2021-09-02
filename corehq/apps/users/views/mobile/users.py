@@ -73,7 +73,6 @@ from corehq.apps.users.dbaccessors import (
     user_exists,
 )
 from corehq.apps.users.decorators import (
-    can_use_filtered_user_download,
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
     require_can_edit_web_users,
@@ -671,10 +670,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
-        if can_use_filtered_user_download(self.domain):
-            bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
-        else:
-            bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
+
         profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
@@ -1129,7 +1126,6 @@ class DownloadUsersStatusView(BaseUserSettingsView):
 
 
 class FilteredUserDownload(BaseUserSettingsView):
-    page_title = ugettext_noop('Filter and Download Users')
 
     def get(self, request, domain, *args, **kwargs):
         form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=self.user_type)
@@ -1144,8 +1140,9 @@ class FilteredUserDownload(BaseUserSettingsView):
         )
 
 
-@method_decorator([require_can_use_filtered_user_download], name='dispatch')
+@location_safe
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
+    page_title = ugettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
@@ -1157,6 +1154,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
+    page_title = ugettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
@@ -1326,7 +1324,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 
 @require_can_edit_commcare_users
-@require_can_use_filtered_user_download
+@location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
@@ -1348,10 +1346,16 @@ def _count_users(request, domain, user_type):
         count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
+
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
+
+    # Handle user location restriction
+    if not user_filters['location_id']:
+        domain_membership = request.couch_user.get_domain_membership(domain)
+        user_filters['location_id'] = domain_membership.location_id
 
     user_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
