@@ -6,7 +6,6 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
-
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -23,7 +22,7 @@ from corehq.apps.custom_data_fields.edit_entity import (
 )
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
@@ -37,19 +36,6 @@ from .models import (
 )
 from .permissions import user_can_access_location_id
 from .signals import location_edited
-
-SHOW_ALL = _('Show All')
-ONLY_ACTIVE = _('Only Active')
-ONLY_ARCHIVED = _('Only Archived')
-
-ACTIVE = 'active'
-ARCHIVED = 'archived'
-
-LOCATION_ACTIVE_STATUS = [
-    ('', SHOW_ALL),
-    (ACTIVE, ONLY_ACTIVE),
-    (ARCHIVED, ONLY_ARCHIVED)
-]
 
 
 class LocationSelectWidget(forms.Widget):
@@ -569,6 +555,16 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class LocationFilterForm(forms.Form):
+    ACTIVE = 'active'
+    ARCHIVED = 'archived'
+    SHOW_ALL = 'show_all'
+
+    LOCATION_ACTIVE_STATUS = (
+        (SHOW_ALL, _('Show All')),
+        (ACTIVE, _('Only Active')),
+        (ARCHIVED, _('Only Archived'))
+    )
+
     location_id = forms.CharField(
         label=ugettext_noop("Location"),
         required=False,
@@ -578,9 +574,11 @@ class LocationFilterForm(forms.Form):
         label=_('Only include selected location'),
         initial=False,
     )
-    status_active = forms.ChoiceField(
+    location_status_active = forms.ChoiceField(
         label=_('Active / Archived'),
-        required=False
+        choices=LOCATION_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -591,7 +589,9 @@ class LocationFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
         )
-        self.fields['status_active'].choices = LOCATION_ACTIVE_STATUS
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
@@ -609,7 +609,7 @@ class LocationFilterForm(forms.Form):
                     crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
                     data_bind="slideVisible: location_id",
                 ),
-                crispy.Field('status_active', data_bind='value: status_active'),
+                crispy.Field('location_status_active',),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -626,12 +626,12 @@ class LocationFilterForm(forms.Form):
             return None
         return self.cleaned_data['location_id']
 
-    def clean_status_active(self):
-        location_active_status = self.cleaned_data['status_active']
+    def clean_location_status_active(self):
+        location_active_status = self.cleaned_data['location_status_active']
 
-        if location_active_status == ACTIVE:
+        if location_active_status == self.ACTIVE:
             return True
-        if location_active_status == ARCHIVED:
+        if location_active_status == self.ARCHIVED:
             return False
         return None
 
@@ -643,10 +643,10 @@ class LocationFilterForm(forms.Form):
             'location_id': self.cleaned_data.get('location_id', None),
             'selected_location_only': self.cleaned_data.get('selected_location_only', False)
         }
-        status_active = self.cleaned_data.get('status_active', None)
+        location_status_active = self.cleaned_data.get('location_status_active', None)
 
-        if status_active is not None:
-            filters['is_archived'] = (not status_active)
+        if location_status_active is not None:
+            filters['is_archived'] = (not location_status_active)
 
         return filters
 

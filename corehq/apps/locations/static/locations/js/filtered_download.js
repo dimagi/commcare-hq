@@ -4,6 +4,7 @@ hqDefine('locations/js/filtered_download', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'locations/js/widgets',     // location search
+    'hqwebapp/js/components.ko',    // select toggle widget
     'hqwebapp/js/knockout_bindings.ko', // slideVisible binding
 ], function (
     $,
@@ -16,7 +17,7 @@ hqDefine('locations/js/filtered_download', [
 
         self.location_id = ko.observable();
         self.selected_location_only = ko.observable();
-        self.status_active = ko.observable();
+        self.location_status_active = ko.observable();
 
         self.count = ko.observable(null);
         self.buttonHTML = ko.computed(function () {
@@ -38,7 +39,7 @@ hqDefine('locations/js/filtered_download', [
             var data = {
                 location_id: self.location_id(),
                 selected_location_only: self.selected_location_only(),
-                status_active: self.status_active(),
+                location_status_active: self.location_status_active(),
             };
 
             $.get({
@@ -55,7 +56,7 @@ hqDefine('locations/js/filtered_download', [
 
         self.location_id.subscribe(self.countLocations);
         self.selected_location_only.subscribe(self.countLocations);
-        self.status_active.subscribe(self.countLocations);
+        self.location_status_active.subscribe(self.countLocations);
 
         return self;
     }

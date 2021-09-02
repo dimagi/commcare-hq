@@ -55,20 +55,6 @@ from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
-# Reuse in Locations - put in more global const file
-SHOW_ALL = _('Show All')
-ONLY_ACTIVE = _('Only Active')
-ONLY_DEACTIVATED = _('Only Deactivated')
-
-ACTIVE = 'active'
-INACTIVE = 'inactive'
-
-USER_ACTIVE_STATUS = [
-    ('', SHOW_ALL),
-    (ACTIVE, ONLY_ACTIVE),
-    (INACTIVE, ONLY_DEACTIVATED)
-]
-
 
 def get_mobile_worker_max_username_length(domain):
     """
@@ -1336,6 +1322,15 @@ class UserFilterForm(forms.Form):
         ('all', ugettext_noop('All')),
         (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
     )
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+    USER_ACTIVE_STATUS = [
+        ('show_all', _('Show All')),
+        (ACTIVE, _('Only Active')),
+        (INACTIVE, _('Only Deactivated'))
+    ]
+
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
         label=ugettext_lazy('Name or Username'),
@@ -1352,8 +1347,9 @@ class UserFilterForm(forms.Form):
     )
     user_active_status = forms.ChoiceField(
         label=_('Active / Deactivated'),
-        choices=(),
-        required=False
+        choices=USER_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=USER_ACTIVE_STATUS, attrs={'ko_value': 'user_active_status'}),
     )
     columns = forms.ChoiceField(
         required=False,
@@ -1376,7 +1372,15 @@ class UserFilterForm(forms.Form):
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
 
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+        )
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
+
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.objects.get_by_domain(self.domain)
@@ -1388,8 +1392,6 @@ class UserFilterForm(forms.Form):
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
-
-        self.fields['user_active_status'].choices = USER_ACTIVE_STATUS
 
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
@@ -1435,10 +1437,7 @@ class UserFilterForm(forms.Form):
                     ),
                     data_bind="slideVisible: !isCrossDomain() && location_id",
                 ),
-                crispy.Field(
-                    "user_active_status",
-                    data_bind="value: user_active_status",
-                ),
+                crispy.Field("user_active_status",),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
@@ -1488,8 +1487,8 @@ class UserFilterForm(forms.Form):
     def clean_user_active_status(self):
         user_active_status = self.cleaned_data['user_active_status']
 
-        if user_active_status == ACTIVE:
+        if user_active_status == self.ACTIVE:
             return True
-        if user_active_status == INACTIVE:
+        if user_active_status == self.INACTIVE:
             return False
         return None
