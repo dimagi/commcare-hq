@@ -60,6 +60,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_forms,
 )
 from corehq.apps.sms.util import strip_plus
+from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -220,16 +221,31 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         for key, value in bundle.data.items():
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
+                    old_phone_numbers = set(bundle.obj.phone_numbers)
+                    new_phone_numbers = set()
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
                         formatted_phone_number = strip_plus(phone_number)
-                        if user_change_logger and formatted_phone_number not in bundle.obj.phone_numbers:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(formatted_phone_number))
+                        new_phone_numbers.add(formatted_phone_number)
                         bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
                             bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
+
+                    if user_change_logger:
+                        (numbers_added, numbers_removed) = find_differences_in_list(
+                            target=list(new_phone_numbers),
+                            source=list(old_phone_numbers)
+                        )
+
+                        for number_removed in numbers_removed:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_removed(number_removed)
+                            )
+                        for number_added in numbers_added:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_added(number_added)
+                            )
                 elif key == 'groups':
                     group_ids = bundle.data.get("groups", [])
                     groups_updated = bundle.obj.set_groups(group_ids)
@@ -364,16 +380,31 @@ class WebUserResource(v0_1.WebUserResource):
                 continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
+                    old_phone_numbers = set(bundle.obj.phone_numbers)
+                    new_phone_numbers = set()
                     bundle.obj.phone_numbers = []
                     for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
                         formatted_phone_number = strip_plus(phone_number)
-                        if user_change_logger and formatted_phone_number not in bundle.obj.phone_numbers:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(formatted_phone_number))
+                        new_phone_numbers.add(formatted_phone_number)
                         bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
                             bundle.obj.set_default_phone_number(formatted_phone_number)
                         should_save = True
+
+                    if user_change_logger:
+                        (numbers_added, numbers_removed) = find_differences_in_list(
+                            target=list(new_phone_numbers),
+                            source=list(old_phone_numbers)
+                        )
+
+                        for number_removed in numbers_removed:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_removed(number_removed)
+                            )
+                        for number_added in numbers_added:
+                            user_change_logger.add_change_message(
+                                UserChangeMessage.phone_number_added(number_added)
+                            )
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
                     if user_change_logger and getattr(bundle.obj, key) != lowercase_value:

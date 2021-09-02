@@ -170,7 +170,7 @@ class TestCommCareUserResource(APIResourceTest):
     def test_update(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
         group = Group({"name": "test"})
         group.save()
 
@@ -232,7 +232,8 @@ class TestCommCareUserResource(APIResourceTest):
                 }
             }
         )
-        self.assertEqual(user_history.message, f"Added phone number 50253311399. Added phone number 50253314588. "
+        self.assertEqual(user_history.message, "Removed phone number 50253311398. "
+                                               "Added phone number 50253311399. Added phone number 50253314588. "
                                                f"Groups: {group.name}[{group.get_id}]. "
                                                "Password reset")
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
@@ -465,6 +466,8 @@ class TestWebUserResource(APIResourceTest):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234",
                               created_by=None, created_via=None)
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user.add_phone_number("9799999999")
+        user.save()
         user_json = deepcopy(self.default_user_json)
         user_json["phone_numbers"] = ["9999999999", "9899999999"]
         user_json.pop('username')
@@ -512,7 +515,9 @@ class TestWebUserResource(APIResourceTest):
                 'first_name': 'Joe'
             }
         )
-        self.assertEqual(user_history.message, "Added phone number 9999999999. Added phone number 9899999999")
+        self.assertTrue("Removed phone number 9799999999" in user_history.message)
+        self.assertTrue("Added phone number 9999999999" in user_history.message)
+        self.assertTrue("Added phone number 9899999999" in user_history.message)
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
 
     def _delete_user(self, username):
