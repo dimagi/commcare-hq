@@ -93,7 +93,7 @@
         <div class="registry-form-container">
           {% if registry.description %}<p class="text-muted">{{ registry.description }}</p>{% endif %}
           <p>
-            {% blocktrans with owning_domain=registry.domain %}
+            {% blocktrans trimmed with owning_domain=registry.domain %}
             This registry is managed by the '{{ owning_domain }}' project space.
             {% endblocktrans %}
           </p>
@@ -206,9 +206,7 @@
             </div>
             <div data-bind="ifnot: invitations().length">
               <p>
-                {% blocktrans %}
-                  No Project Spaces have been invited.
-                {% endblocktrans %}
+                {% blocktrans %}No Project Spaces have been invited.{% endblocktrans %}
               </p>
             </div>
             <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
@@ -269,9 +267,7 @@
             </div>
             <div data-bind="ifnot: grants().length">
               <p>
-                {% blocktrans %}
-                  No grants have been created.
-                {% endblocktrans %}
+                {% blocktrans %}No grants have been created.{% endblocktrans %}
               </p>
             </div>
             <table class="table table-striped table-hover mt-3" data-bind="visible: grants().length">
@@ -334,14 +330,14 @@
         </div>
         <div class="modal-body">
           <div class='alert alert-warning'>
-            {% blocktrans %}
+            {% blocktrans trimmed %}
               Removing a Project Space will completely remove their access to this registry.
             {% endblocktrans %}
           </div>
-          <p>{% blocktrans %}
-            Are you sure you want to remove this project space
-          {% endblocktrans %}
-          :<mark data-bind="text: domain"></mark>?</p>
+          <p>
+            {% blocktrans %}Are you sure you want to remove this project space{% endblocktrans %}
+            :<mark data-bind="text: domain"></mark>?
+          </p>
         </div>
         <div class="modal-footer">
           <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
@@ -367,14 +363,14 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-info" data-bind="visible: availableInviteDomains().length">
-            {% blocktrans %}
+            {% blocktrans trimmed %}
             Inviting project spaces to participate in the registry allows them to opt in or out.
               Until an invitation has been accepted the project space will not be able to use the
               registry.
             {% endblocktrans %}
           </div>
           <div class="alert alert-info" data-bind="visible: !availableInviteDomains().length">
-            {% blocktrans %}
+            {% blocktrans trimmed %}
               There are no more project spaces that can be invited to this registry.
               All the project spaces associated with this account have already been invited.
             {% endblocktrans %}
@@ -419,12 +415,12 @@
         </div>
         <div class="modal-body">
           <div class='alert alert-info'>
-            {% blocktrans %}
+            {% blocktrans trimmed %}
             Only cases with these case types will be accessible through the registry.
             {% endblocktrans %}
           </div>
           <div class='alert alert-warning'>
-            {% blocktrans %}
+            {% blocktrans trimmed %}
             Adding or removing case types may impact usages of the
               registry such as Configurable Reports and Case Search
             {% endblocktrans %}
@@ -464,19 +460,19 @@
         <div class="modal-body">
           <div class="alert alert-info">
             <p>
-              {% blocktrans %}
+              {% blocktrans trimmed %}
               You are granting access to data from this project space ({{ domain }}).
               {% endblocktrans %}
             </p>
             <p data-bind="visible: availableGrantDomains().length">
-              {% blocktrans %}
+              {% blocktrans trimmed %}
               Granting another project space access will allow users in that project space to view your data via this data registry.
               Authorized users will only be able to view case data for the case types configured in the registry.
               {% endblocktrans %}
             </p>
           </div>
           <div class="alert alert-info" data-bind="visible: !availableGrantDomains().length">
-            {% blocktrans %}
+            {% blocktrans trimmed %}
               All the project spaces associated with this registry have already been granted access.
             {% endblocktrans %}
           </div>
@@ -514,7 +510,7 @@
           <h4 class="modal-title">{% trans "Remove Grant" %}</h4>
         </div>
         <div class="modal-body">
-          {% blocktrans %}
+          {% blocktrans trimmed %}
             Are you sure you want to remove the grant from {{ domain }} to
           {% endblocktrans %}
           <mark data-bind="text: to_domains.join(', ')"></mark>
@@ -555,14 +551,12 @@
             <div class="modal-body">
               <p class="alert alert-warning">
                 <i class="fa fa-exclamation-triangle"></i>
-                {% blocktrans %}
+                {% blocktrans trimmed %}
                   It is important you read the entire message below thoroughly before completing this action.
                 {% endblocktrans %}
               </p>
               <p>
-                {% blocktrans %}
-                  Are you sure you want to permanently delete
-                {% endblocktrans %}
+                {% blocktrans %}Are you sure you want to permanently delete{% endblocktrans %}
                 <strong data-bind="text: name"></strong>?
               </p>
               <p>{% trans "This action:" %}</p>
@@ -570,19 +564,19 @@
                 <li>
                   {% blocktrans %}Will delete the registry.{% endblocktrans %}
                 </li>
-                <li>{% blocktrans %}
+                <li>{% blocktrans trimmed %}
                   Will delete <strong>all</strong> of the associated configuration including Reports.
                 {% endblocktrans %}</li>
                 <li>{% trans "Is permanent." %}</li>
               </ul>
               <p>
-                {% blocktrans %}
+                {% blocktrans trimmed %}
                 If you ever want to use the registry configuration again in the future,
                   we suggest that you use the <strong>Deactivate</strong> option instead.
                 {% endblocktrans %}
               </p>
               <p>
-                {% blocktrans %}
+                {% blocktrans trimmed %}
                   If even after reading this you decide that you really want
                   to delete this registry, type <strong data-bind="text:name"></strong> into the box below.
                 {% endblocktrans %}
