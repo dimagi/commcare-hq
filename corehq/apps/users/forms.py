@@ -171,13 +171,17 @@ class BaseUpdateUserForm(forms.Form):
         if is_update_successful and save:
             self.existing_user.save()
             if props_updated:
+                # This form is used either by a web user to edit their info where there is no domain or
+                # to edit a web/commcare user on a domain, so by_ and for_domain would be the same domain
                 log_user_change(
-                    self.domain if self.domain else None,
+                    by_domain=self.request.domain if self.domain else None,
+                    for_domain=self.request.domain if self.domain else None,
                     couch_user=self.existing_user,
                     changed_by_user=self.request.couch_user,
                     changed_via=USER_CHANGE_VIA_WEB,
                     fields_changed=props_updated,
-                    domain_required_for_log=bool(self.domain),
+                    by_domain_required_for_log=bool(self.domain),
+                    for_domain_required_for_log=bool(self.domain)
                 )
         return is_update_successful, props_updated
 
@@ -220,8 +224,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 if profile_id:
                     profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
                 change_messages.update(UserChangeMessage.profile_info(profile_id, profile_name))
+            # this form is used to edit a web/commcare user on a domain so set domain for both by_ and for_domain
             log_user_change(
-                self.request.domain,
+                by_domain=self.request.domain,
+                for_domain=self.domain,
                 couch_user=self.existing_user,
                 changed_by_user=self.request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
@@ -982,7 +988,8 @@ class CommtrackUserForm(forms.Form):
     def save(self, user):
         # todo: Avoid multiple user.save
         user_change_logger = UserChangeLogger(
-            self.domain,
+            upload_domain=self.domain,
+            user_domain=self.domain,
             user=user,
             is_new_user=False,
             changed_by_user=self.request.couch_user,
