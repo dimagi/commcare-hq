@@ -554,7 +554,8 @@ class TestCaseSearchLookups(TestCase):
         results = get_related_case_results(self.domain, cases, paths)
         result_ids = Counter([result['_id'] for result in results])
         self.assertEqual(ids, set(result_ids))
-        self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
+        if result_ids:
+            self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
 
     def test_multiple_case_types(self):
         cases = [
