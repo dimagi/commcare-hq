@@ -673,7 +673,6 @@ class ListRolesView(BaseRoleAccessView):
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
         }
 
-
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
@@ -685,7 +684,7 @@ def paginate_enterprise_users(request, domain):
     # Get linked mobile users
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
-        UserES().domains(domains).mobile_users().sort('username.exact')
+        UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
         .filter(
             queries.nested(
                 'user_data_es',
@@ -698,7 +697,7 @@ def paginate_enterprise_users(request, domain):
     for hit in mobile_result.hits:
         login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
-
+    loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
     users = []
     allowed_domains = set(domains) - {domain}
     for web_user in web_users:
@@ -706,7 +705,8 @@ def paginate_enterprise_users(request, domain):
         users.append({
             **_format_enterprise_user(domain, web_user),
             'otherDomains': other_domains,
-            'loginAsUserCount': len(mobile_users[web_user.username]),
+            'loginAsUserCount': loginAsUserCount,
+            'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
             profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
@@ -715,6 +715,7 @@ def paginate_enterprise_users(request, domain):
                 'profile': profile.name if profile else None,
                 'otherDomains': [mobile_user.domain] if domain != mobile_user.domain else [],
                 'loginAsUser': web_user.username,
+                'is_active': mobile_user.is_active,
             })
 
     return JsonResponse({
