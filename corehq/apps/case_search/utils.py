@@ -221,8 +221,9 @@ def get_related_cases(domain, app_id, case_types, cases):
     if child_case_types:
         results.extend(get_child_case_results(domain, cases, child_case_types))
 
+    initial_case_ids = {case.case_id for case in cases}
     return list({
-        case.case_id: case for case in results
+        case.case_id: case for case in results if case.case_id not in initial_case_ids
     }.values())
 
 

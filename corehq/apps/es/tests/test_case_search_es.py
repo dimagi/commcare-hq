@@ -546,6 +546,7 @@ class TestCaseSearchLookups(TestCase):
             cases = get_related_cases(self.domain, None, {"c"}, cases)
 
         case_ids = Counter([case.case_id for case in cases])
+        self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
     def _assert_related_case_ids(self, cases, paths, ids):
