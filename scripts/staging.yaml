@@ -73,7 +73,6 @@ branches:
     - caktus:allowed_values_ui # Jenny Aug 13
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
     - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
-    - rc/audit-log-ux # Robert Aug 22
     - es/blank-case-search  # Ethan Aug 23
     - erroredQuestionMessagingFix # Shubham Aug 24
     - mk/user-history/track-api-updates # MK Aug 24
@@ -83,7 +82,6 @@ branches:
     - sk/prevent-duplicate-role-names  # Simon Aug 30
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - ce/fixture-restore # Cal Aug 31
-    - rc/audit-log-ux+mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/add-for-domain # MK Sep 1
 submodules: { }
