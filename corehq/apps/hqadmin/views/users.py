@@ -110,7 +110,8 @@ class SuperuserManagement(UserAdministration):
                     log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
                                     changed_by_user=self.request.couch_user,
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    domain_required_for_log=False)
+                                    by_domain_required_for_log=False,
+                                    for_domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -406,7 +407,8 @@ class DisableUserView(FormView):
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
                         fields_changed={'is_active': self.user.is_active},
-                        domain_required_for_log=False)
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -503,7 +505,8 @@ class DisableTwoFactorView(FormView):
         log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
                         changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
-                        domain_required_for_log=False)
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
