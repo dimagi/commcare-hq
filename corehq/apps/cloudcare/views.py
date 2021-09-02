@@ -172,9 +172,12 @@ class FormplayerMain(View):
     def get(self, request, domain):
         option = request.GET.get('option')
         if option == 'apps':
-            return self.get_option_apps(request, domain)
+            response = self.get_option_apps(request, domain)
         else:
-            return self.get_main(request, domain)
+            response = self.get_main(request, domain)
+        if (request.GET.get("endpoint")):
+            response['Content-Type'] = "text/html;commcare=yes"
+        return response
 
     def get_option_apps(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
@@ -612,4 +615,6 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         },
         "forceLoginAs": force_login_as,
     })
-    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+    url = reverse(FormplayerMain.urlname, args=[domain])
+    response = HttpResponseRedirect(f"{url}?endpoint=1#{cloudcare_state}")
+    return response
