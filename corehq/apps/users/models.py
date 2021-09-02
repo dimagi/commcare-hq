@@ -1111,10 +1111,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if deleted_by:
             # Commcare user is owned by the domain it belongs to so use self.domain for for_domain
             # Web user is never deleted except in tests so keep for_domain as None
-            for_domain = self.domain if self.is_commcare_user() else None
+            if self.is_commcare_user():
+                for_domain = self.domain
+                for_domain_required_for_log = True
+            else:
+                for_domain = None
+                for_domain_required_for_log = False
             log_user_change(by_domain=deleted_by_domain, for_domain=for_domain,
                             couch_user=self, changed_by_user=deleted_by,
-                            changed_via=deleted_via, action=UserModelAction.DELETE)
+                            changed_via=deleted_via, action=UserModelAction.DELETE,
+                            for_domain_required_for_log=for_domain_required_for_log)
         super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
