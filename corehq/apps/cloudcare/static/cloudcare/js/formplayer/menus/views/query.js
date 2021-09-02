@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             var values = value.split(selectDelimiter),
                 searchForBlank = _.contains(values, ""),
-                values = _.filter(values, function (val) { return val !== ""; });
+                values = _.without(values, "");
 
             if (model.get('input') === 'select') {
                 value = values;
@@ -206,7 +206,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         toggleBlankSearch: function (e) {
             var self = this,
-                searchForBlank = $(e.target).prop('checked');
+                searchForBlank = $(e.currentTarget).prop('checked');
             self.model.set('searchForBlank', searchForBlank);
 
             // When checking the blank search box for a geocoder field, toggle all its receiver fields
