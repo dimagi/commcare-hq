@@ -10,6 +10,7 @@ from six.moves.urllib.request import urlopen
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
+from corehq.messaging.smsbackends.http.sms_sending import verify_sms_url
 
 from .forms import HttpBackendForm
 
@@ -64,6 +65,8 @@ class SQLHttpBackend(SQLSMSBackend):
 
         params[config.message_param] = self._encode_http_message(msg.text)
         params[config.number_param] = phone_number
+
+        verify_sms_url(config.url, msg, backend=self)
 
         url_params = urlencode(params)
         try:
