@@ -44,7 +44,8 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
     @staticmethod
     def _get_user_change_logger(bundle):
         return UserChangeLogger(
-            domain=bundle.request.domain,
+            upload_domain=bundle.request.domain,
+            user_domain=bundle.request.domain,
             user=bundle.obj,
             is_new_user=False,
             changed_by_user=bundle.request.couch_user,
