@@ -219,7 +219,7 @@ class TestCommCareUserResource(APIResourceTest):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=user._id)
         self.assertDictEqual(
-            user_history.details['changes'],
+            user_history.changes,
             {
                 'email': 'tlast@example.org',
                 'language': 'pol',
@@ -232,11 +232,29 @@ class TestCommCareUserResource(APIResourceTest):
                 }
             }
         )
-        self.assertEqual(user_history.message, "Removed phone number 50253311398. "
-                                               "Added phone number 50253311399. Added phone number 50253314588. "
-                                               f"Groups: {group.name}[{group.get_id}]. "
-                                               "Password reset")
-        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
+        self.assertEqual(
+            set(user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers']),
+            {'50253311399', '50253314588'}
+        )
+        self.assertEqual(
+            set(user_history.change_messages['phone_numbers']['remove_phone_numbers']['phone_numbers']),
+            {'50253311398'}
+        )
+        self.assertEqual(
+            user_history.change_messages['groups'],
+            {
+                'set_groups': {
+                    'groups': [
+                        {'id': group.get_id, 'name': group.name}
+                    ]
+                }
+            }
+        )
+        self.assertEqual(
+            user_history.change_messages['password'],
+            {'reset_password': {}}
+        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
     def test_update_profile_conflict(self):
 
@@ -508,17 +526,22 @@ class TestWebUserResource(APIResourceTest):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=user._id)
         self.assertDictEqual(
-            user_history.details['changes'],
+            user_history.changes,
             {
                 'email': 'admin@example.com',
                 'last_name': 'Admin',
                 'first_name': 'Joe'
             }
         )
-        self.assertTrue("Removed phone number 9799999999" in user_history.message)
-        self.assertTrue("Added phone number 9999999999" in user_history.message)
-        self.assertTrue("Added phone number 9899999999" in user_history.message)
-        self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
+        self.assertEqual(
+            set(user_history.change_messages['phone_numbers']['add_phone_numbers']['phone_numbers']),
+            {'9999999999', '9899999999'}
+        )
+        self.assertEqual(
+            set(user_history.change_messages['phone_numbers']['remove_phone_numbers']['phone_numbers']),
+            {'9799999999'}
+        )
+        self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
     def _delete_user(self, username):
         user = WebUser.get_by_username(username)
