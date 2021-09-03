@@ -1235,6 +1235,14 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        by_domain=request.domain,
+        for_domain=user.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
