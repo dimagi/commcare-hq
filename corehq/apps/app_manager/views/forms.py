@@ -814,7 +814,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
                 'name': trans(m.name, langs),
                 'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
             }
-            for m in {mod.unique_id: mod for mod in modules}.values()
+            for m in {mod.unique_id: mod for mod in modules if not mod.put_in_root}.values()
         ], key=lambda link: link['name'])
 
     if isinstance(form, AdvancedForm):
