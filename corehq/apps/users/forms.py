@@ -1485,5 +1485,7 @@ class UserFilterForm(forms.Form):
         # Handle user location restriction
         if not location_id:
             domain_membership = self.couch_user.get_domain_membership(self.domain)
-            location_id = domain_membership.location_id
+            # Superusers may no have domain_membership
+            if domain_membership and domain_membership.location_id:
+                location_id = domain_membership.location_id
         return location_id

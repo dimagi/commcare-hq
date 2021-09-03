@@ -644,7 +644,9 @@ class LocationFilterForm(forms.Form):
         # Handle user location restriction
         if location_id is None:
             domain_membership = self.user.get_domain_membership(self.domain)
-            location_id = domain_membership.location_id
+            # Superusers may no have domain_membership
+            if domain_membership and domain_membership.location_id:
+                location_id = domain_membership.location_id
 
         filters = {
             'location_id': location_id,
