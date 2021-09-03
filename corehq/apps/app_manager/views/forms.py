@@ -852,20 +852,30 @@ def _get_form_link_context(module, langs):
     linkable_items = []
     for candidate_module in module.get_app().get_modules():
         case_type_match = candidate_module.case_type == module.case_type
-        if not candidate_module.put_in_root:    # display-only forms menus don't have a "screen" to navigate to
+        # Menus can be linked automatically if they're a top-level menu (no parent)
+        # or their parent menu's case type matches the current menu's parent's case type.
+        # Menus that use display-only forms can't be linked at all, since they don't have a
+        # dedicated screen to navigate to. All other menus can be linked manually.
+        if not candidate_module.put_in_root:
+            is_top_level = candidate_module.root_module_id is None
+            is_child_match = (
+                not is_top_level
+                and module.root_module_id is not None
+                and module.root_module.case_type == candidate_module.root_module.case_type
+            )
             linkable_items.append({
                 'unique_id': candidate_module.unique_id,
                 'name': _module_name(candidate_module),
-                'auto_link': candidate_module.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
+                'auto_link': is_top_level or is_child_match,
             })
         for candidate_form in candidate_module.get_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
-            in_parent_module = candidate_module.module_unique_id == module.root_module_id
+            is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
                 'name': _form_name(candidate_form),
-                'auto_link': case_type_match or in_parent_module,
+                'auto_link': case_type_match or is_parent,
             })
 
     return {
