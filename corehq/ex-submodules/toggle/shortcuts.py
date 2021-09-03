@@ -1,9 +1,11 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from memoized import memoized
 
 from .models import Toggle
 
 
+@memoized
 def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
