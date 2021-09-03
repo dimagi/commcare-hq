@@ -24,7 +24,7 @@ from corehq.apps.app_manager.xpath import session_var
 class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_workflow')
 
-    def test_basic(self, *args):
+    def test_basic_form(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
@@ -33,7 +33,36 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         m0f0.form_links = [
             FormLink(xpath="(today() - dob) &lt; 7", form_id=m1f0.unique_id)
         ]
-        self.assertXmlPartialEqual(self.get_xml('form_link_basic'), factory.app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(self.get_xml('form_link_basic_form'), factory.app.create_suite(), "./entry[1]")
+
+    def test_registration_module(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('m0', 'frog')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="(today() - dob) &lt; 7", module_unique_id=m0.unique_id)
+        ]
+        self.assertXmlPartialEqual(
+            self.get_xml('form_link_registration_module'),
+            factory.app.create_suite(),
+            "./entry[1]"
+        )
+
+    def test_followup_module(self, *args):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('m0', 'frog')
+
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [
+            FormLink(xpath="(today() - dob) &lt; 7", module_unique_id=m0.unique_id)
+        ]
+        factory.form_requires_case(m0f0)
+        self.assertXmlPartialEqual(
+            self.get_xml('form_link_followup_module'),
+            factory.app.create_suite(),
+            "./entry[1]"
+        )
 
     def test_with_case_management_both_update(self, *args):
         factory = AppFactory(build_version='2.9.0')
