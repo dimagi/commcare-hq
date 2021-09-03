@@ -787,35 +787,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
     if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        def qualified_form_name(form, auto_link):
-            module_name = trans(form.get_module().name, langs)
-            form_name = trans(form.name, langs)
-            return "{} > {}".format(module_name, form_name)
-
-        modules = [m for m in all_modules if m.case_type == module.case_type]
-        if getattr(module, 'root_module_id', None) and module.root_module not in modules:
-            modules.append(module.root_module)
-        auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
-
-        def linkable_form(candidate_form):
-            auto_link = candidate_form in auto_linkable_forms
-            return {
-                'unique_id': candidate_form.unique_id,
-                'name': qualified_form_name(candidate_form, auto_link),
-                'auto_link': auto_link
-            }
-
-        context['linkable_forms'] = sorted([
-            linkable_form(candidate_form) for candidate_module in all_modules
-            for candidate_form in candidate_module.get_forms()
-        ] + [
-            {
-                'unique_id': m.unique_id,
-                'name': trans(m.name, langs),
-                'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
-            }
-            for m in {mod.unique_id: mod for mod in modules if not mod.put_in_root}.values()
-        ], key=lambda link: link['name'])
+        context.update(_get_form_link_context(module, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -866,6 +838,41 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
     context.update({'case_config_options': case_config_options})
     return "app_manager/form_view.html", context
+
+
+def _get_form_link_context(module, langs):
+    def qualified_form_name(form, auto_link):
+        module_name = trans(form.get_module().name, langs)
+        form_name = trans(form.name, langs)
+        return "{} > {}".format(module_name, form_name)
+
+    all_modules = module.get_app().get_modules()
+    modules = [m for m in all_modules if m.case_type == module.case_type]
+    if getattr(module, 'root_module_id', None) and module.root_module not in modules:
+        modules.append(module.root_module)
+    auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
+
+    def linkable_form(candidate_form):
+        auto_link = candidate_form in auto_linkable_forms
+        return {
+            'unique_id': candidate_form.unique_id,
+            'name': qualified_form_name(candidate_form, auto_link),
+            'auto_link': auto_link
+        }
+
+    return {
+        'linkable_forms': sorted([
+            linkable_form(candidate_form) for candidate_module in all_modules
+            for candidate_form in candidate_module.get_forms()
+        ] + [
+            {
+                'unique_id': m.unique_id,
+                'name': trans(m.name, langs),
+                'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
+            }
+            for m in {mod.unique_id: mod for mod in modules if not mod.put_in_root}.values()
+        ], key=lambda link: link['name']),
+    }
 
 
 @require_can_edit_apps
