@@ -205,9 +205,11 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(serializer='pickle', queue='background_queue', bind=True)
-def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
-    schema_cls.generate_schema_from_builds(
+@task(queue='background_queue', bind=True)
+def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier):
+    from .views.utils import GenerateSchemaFromAllBuildsView
+    export_cls = GenerateSchemaFromAllBuildsView.export_cls(export_type)
+    export_cls.generate_schema_from_builds(
         domain,
         app_id,
         identifier,
