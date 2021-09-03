@@ -47,6 +47,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
 from corehq.util.dates import unix_time
@@ -643,7 +644,7 @@ def track_periodic_data():
 
 
 def _email_is_valid(email):
-    if not email:
+    if not email or _is_suspicious_email(email):
         return False
 
     try:
@@ -653,6 +654,19 @@ def _email_is_valid(email):
         return False
 
     return True
+
+
+# These domains provide disposable email addresses which attract scammers
+# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
+# if a Guard Duty alert is triggered for a domain not seen below, please add it
+SUSPICIOUS_DOMAINS = [
+    'mailna.me',
+    'mozej.com'
+]
+
+
+def _is_suspicious_email(email):
+    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
@@ -751,11 +765,9 @@ def get_ab_test_properties(user):
 def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
-        affected_users = WebUser.view(
-            'users/web_users_by_domain', reduce=False, key=domain, include_docs=True
-        ).all()
-
-        for web_user in affected_users:
+        for row in get_all_user_rows(domain, include_web_users=True,
+                                     include_mobile_users=False, include_docs=True):
+            web_user = WebUser.wrap(row['doc'])
             properties = get_subscription_properties_by_user(web_user)
             update_subscription_properties_by_user.delay(web_user.get_id, properties)
 

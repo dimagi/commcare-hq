@@ -17,7 +17,7 @@ from corehq.apps.data_interfaces.utils import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import (
     FormRepeater,
-    RepeaterStub,
+    SQLRepeater,
     RepeatRecord,
     SQLRepeatRecord,
 )
@@ -519,9 +519,10 @@ class TestGetRepeatRecordIDs(TestCase):
             include_app_id_param=False,
         )
         cls.repeater.save()
-        cls.repeater_stub = RepeaterStub.objects.create(
+        cls.sql_repeater = SQLRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
+            connection_settings=conn,
         )
         cls.create_repeat_records()
 
@@ -529,7 +530,7 @@ class TestGetRepeatRecordIDs(TestCase):
     def tearDownClass(cls):
         for record in cls.couch_records + cls.sql_records:
             record.delete()
-        cls.repeater_stub.delete()
+        cls.sql_repeater.delete()
         cls.repeater.delete()
         super().tearDownClass()
 
@@ -553,7 +554,7 @@ class TestGetRepeatRecordIDs(TestCase):
                 domain=DOMAIN,
                 couch_id=couch_record._id,
                 payload_id=cls.instance_id,
-                repeater_stub=cls.repeater_stub,
+                repeater=cls.sql_repeater,
                 registered_at=now,
             ))
 

@@ -1,0 +1,20 @@
+{% load i18n %}
+
+{% blocktrans %}Dear {{ owning_domain }} administrator,{% endblocktrans %}
+
+{% if invitation.status == 'accepted' %}
+{% blocktrans trimmed %}
+The '{{ domain }}' project space has opted in to the '{{ registry_name }}' CommCare data registry.
+{% endblocktrans %}
+{% else %}
+{% blocktrans trimmed %}
+The '{{ domain }}' project space has opted out of the '{{ registry_name }}' CommCare data registry.
+{% endblocktrans %}
+{% endif %}
+
+{% blocktrans %}You can manage the data registry at the following link: {{ registry_url }}{% endblocktrans %}
+
+{% blocktrans %}Thank you for using CommCare.
+Best regards,
+The CommCare HQ Team
+www.commcarehq.org{% endblocktrans %}

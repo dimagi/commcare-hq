@@ -1,3 +1,4 @@
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -13,7 +14,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
-from corehq.apps.accounting.models import Invoice, Subscription
+from corehq.apps.accounting.models import Invoice, Subscription, BillingAccount
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
     domain_is_on_trial,
@@ -1625,6 +1626,10 @@ class EnterpriseSettingsTab(UITab):
 
         items.append((_('Manage Enterprise'), enterprise_views))
 
+        if BillingAccount.should_show_sms_billable_report(self.domain):
+            items.extend(EnterpriseReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
+
         return items
 
 
@@ -1681,6 +1686,7 @@ class ProjectSettingsTab(UITab):
         '/a/{domain}/motech/',
         '/a/{domain}/dhis2/',
         '/a/{domain}/openmrs/',
+        '/a/{domain}/registries/',
     )
 
     _is_viewable = False
@@ -1991,6 +1997,17 @@ def _get_feature_flag_items(domain):
         feature_flag_items.append({
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
+    if toggles.DATA_REGISTRY.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Data Registries'),
+            'url': reverse('data_registries', args=[domain]),
+            'subpages': [
+                {
+                    'title': _("Manage Registry"),
+                    'urlname': "manage_registry",
+                },
+            ],
         })
     return feature_flag_items
 
