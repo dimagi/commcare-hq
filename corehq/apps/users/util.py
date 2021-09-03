@@ -4,7 +4,7 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -107,31 +107,6 @@ def username_to_user_id(username):
         return None
 
     return user._id
-
-
-def cached_location_id_to_name(location_id):
-    if not location_id:
-        return None
-
-    key = 'location_id_username_cache_{id}'.format(id=location_id)
-    ret = cache.get(key)
-    if ret:
-        return ret
-    else:
-        ret = location_id_to_name(location_id)
-        cache.set(key, ret)
-        return ret
-
-
-def location_id_to_name(location_id):
-    from corehq.apps.locations.models import SQLLocation
-    if not location_id:
-        return None
-    try:
-        location_object = SQLLocation.objects.get(location_id=location_id)
-    except ObjectDoesNotExist:
-        return None
-    return location_object.name
 
 
 def user_id_to_username(user_id, use_name_if_available=False):

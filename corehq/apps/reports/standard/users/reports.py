@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
+from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -20,7 +21,7 @@ from corehq.apps.reports.filters.users import \
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
 from corehq.apps.users.models import UserHistory
-from corehq.apps.users.util import cached_user_id_to_username, cached_location_id_to_name
+from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 
@@ -150,6 +151,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         for record in records:
             yield _user_history_row(record, self.domain, self.timezone)
 
+    @classmethod
+    @memoized
+    def get_location_name(self, location_id):
+        from corehq.apps.locations.models import SQLLocation
+        if not location_id:
+            return None
+        try:
+            location_object = SQLLocation.objects.get(location_id=location_id)
+        except ObjectDoesNotExist:
+            return None
+        return location_object.display_name
+
 
 def _user_history_row(record, domain, timezone):
     return [
@@ -183,21 +196,21 @@ def _user_history_details_cell(changes, domain):
     primary_changes = {}
     all_changes = {}
 
-    def set_change_key_val(key, dict):
+    def set_changes_key_val(dict):
         if key == 'commcare_location_id':
-            dict[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
+            dict[_("primary location (mobile users only)")] = UserHistoryReport.get_location_name(value)
         if key == 'location_id':
-            dict["location"] = cached_location_id_to_name(value)
+            dict[_("location")] = UserHistoryReport.get_location_name(value)
         else:
-            dict[key] = value
+            dict[_(key)] = value
 
     for key, value in changes.items():
         if key in properties:
-            set_change_key_val(key, primary_changes)
-            set_change_key_val(key, all_changes)
+            set_changes_key_val(primary_changes)
+            set_changes_key_val(all_changes)
         if key == 'user_data':
             for key, value in changes['user_data'].items():
-                set_change_key_val(key, all_changes)
+                set_changes_key_val(all_changes)
 
     more_count = len(all_changes) - len(primary_changes)
     return render_to_string("reports/standard/partials/user_history_changes.html", {
