@@ -206,7 +206,7 @@ def _user_history_details_cell(changes, domain):
     more_count = len(all_changes) - len(primary_changes)
     return render_to_string("reports/standard/partials/user_history_changes.html", {
         "primary_changes": _html_list(primary_changes) if primary_changes else None,
-        "all_changes": _html_list(all_changes, unstyled=True) if all_changes else None,
+        "all_changes": _html_list(all_changes) if all_changes else None,
         "more_count": more_count,
     })
 
