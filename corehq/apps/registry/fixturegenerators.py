@@ -1,7 +1,64 @@
 from lxml.builder import E
 
+from casexml.apps.phone.fixtures import FixtureProvider
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.models import DataRegistry
+
+
+class RegistryFixtureProvider(FixtureProvider):
+    """Output fixtures for data registries"""
+    id = "registry"
+
+    def __call__(self, restore_state):
+        if not _should_sync(restore_state):
+            return []
+
+        apps = _get_apps(restore_state)
+        registry_slugs = {
+            module.search_config.data_registry
+            for app in apps
+            for module in app.get_modules()
+            if module.search_config.data_registry
+        }
+        if not registry_slugs:
+            return []
+
+        # TODO: apply user level permissions
+        available_registries = {
+            registry.slug: registry
+            for registry in DataRegistry.objects.visible_to_domain(restore_state.domain)
+        }
+        needed_registries = [
+            available_registries[slug] for slug in registry_slugs
+            if slug in available_registries
+        ]
+
+        fixtures = [_get_registry_list_fixture(needed_registries)]
+        for registry in needed_registries:
+            fixtures.append(_get_registry_domains_fixture(restore_state.domain, registry))
+
+        return fixtures
+
+
+registry_fixture_generator = RegistryFixtureProvider()
+
+
+def _should_sync(restore_state):
+    return toggles.DATA_REGISTRY.enabled(restore_state.domain)
+
+
+def _get_apps(restore_state):
+    app_aware_sync_app = restore_state.params.app
+
+    if app_aware_sync_app:
+        apps = [app_aware_sync_app]
+    else:
+        apps = get_apps_in_domain(restore_state.domain, include_remote=False)
+
+    return apps
 
 
 def _get_registry_list_fixture(registries):
@@ -20,6 +77,7 @@ def _get_registry_domains_fixture(current_domain, registry):
         E.domains(*domains),
         id=f'registry:domains:{registry.slug}'
     )
+
 
 def _get_registry_element(registry):
     return E.registry(
