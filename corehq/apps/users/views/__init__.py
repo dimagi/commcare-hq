@@ -875,7 +875,7 @@ def _update_role_from_view(domain, role_data):
 
     name = role_data["name"]
     if not role.id:
-        if UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
             raise ValueError(_("A role with the same name already exists"))
 
     role.domain = domain
