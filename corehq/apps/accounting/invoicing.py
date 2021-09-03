@@ -101,7 +101,9 @@ class DomainInvoiceFactory(object):
                 & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
-            date_start__lte=self.date_end
+            date_start__lte=self.date_end,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -366,8 +368,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
-                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
@@ -431,6 +433,8 @@ class CustomerAccountInvoiceFactory(object):
 
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if subscription.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+        return False
     if not domain_exists(domain) and deleted_domain_exists(domain):
         # domain has been deleted, ignore
         return False

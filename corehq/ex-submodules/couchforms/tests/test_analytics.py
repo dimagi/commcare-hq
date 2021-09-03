@@ -23,7 +23,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -31,6 +31,7 @@ from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_ex
 
 
 @es_test
+@run_with_sql_backend
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
 
@@ -124,6 +125,7 @@ TEST_ES_META = {
 }
 
 
+@run_with_sql_backend
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 

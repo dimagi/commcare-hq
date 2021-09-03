@@ -210,14 +210,13 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
         NavigationEventAudit(event_date=datetime(2021, 2, 1, 4), path="just/a/checkpoint").save()
-        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 1, 59))
+        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 1, 59), batch_size=10)
         _assert()
 
         # Re-copying should have no effect
-        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 2))
+        copy_events_to_sql(start_time=datetime(2021, 2, 1, 5), end_time=datetime(2021, 2, 1, 2), batch_size=10)
         _assert()
 
-    @patch('corehq.apps.auditcare.couch_to_sql.COUCH_QUERY_LIMIT', 2)
     def test_copy_with_small_couch_query_limit(self):
         def _assert():
             self.assertEqual(NavigationEventAudit.objects.count(), 4)
@@ -232,5 +231,5 @@ class TestCopyEventsToSQL(AuditcareTest):
             self.assertEqual(AccessAudit.objects.count(), 1)
             self.assertEqual(AccessAudit.objects.first().path, "/a/delmar/login/")
 
-        copy_events_to_sql(start_time=datetime(2021, 2, 2), end_time=datetime(2020, 12, 31))
+        copy_events_to_sql(start_time=datetime(2021, 2, 2), end_time=datetime(2020, 12, 31), batch_size=2)
         _assert()

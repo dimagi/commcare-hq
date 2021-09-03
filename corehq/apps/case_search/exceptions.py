@@ -4,3 +4,7 @@ class CaseSearchException(Exception):
 
 class CaseSearchNotEnabledException(CaseSearchException):
     pass
+
+
+class CaseSearchUserError(CaseSearchException):
+    pass

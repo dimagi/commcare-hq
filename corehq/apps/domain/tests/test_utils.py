@@ -1,6 +1,8 @@
 import json
 from unittest.mock import MagicMock
 
+from contextlib import contextmanager
+
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import Application
@@ -63,3 +65,16 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
         # exception would be raised here if there is an issue
         serialized_items = json.dumps(items)
         self.assertTrue(serialized_items)
+
+@contextmanager
+def test_domain(name="domain", skip_full_delete=False):
+    """Context manager for use in tests"""
+    from corehq.apps.domain.shortcuts import create_domain
+    domain = create_domain(name)
+    try:
+        yield domain
+    finally:
+        if skip_full_delete:
+            Domain.get_db().delete_doc(domain.get_id)
+        else:
+            domain.delete()

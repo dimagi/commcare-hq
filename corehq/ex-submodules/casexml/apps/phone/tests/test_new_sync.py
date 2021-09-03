@@ -17,7 +17,7 @@ from casexml.apps.phone.tests.utils import (
 from casexml.apps.phone.utils import MockDevice
 
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
@@ -112,6 +112,6 @@ class TestNewSyncSpecifics(TestCase):
         ], form_extras={'last_sync_token': sync_log._id})
 
 
-@use_sql_backend
+@sharded
 class TestNewSyncSpecificsSQL(TestNewSyncSpecifics):
     pass

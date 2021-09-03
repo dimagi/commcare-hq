@@ -12,9 +12,9 @@
     "data_source_table": "static_quarterly_service_delivery_dS_v1",
     "config": {
       "title": "6.4 Service Delivery Quarterly Report",
-      "aggregation_columns": [ 
-        "health_post" 
-      ] ,
+      "aggregation_columns":[
+        "quarterly_report_date"
+      ],
       "filters": [
         {
           "datatype": "string",
@@ -36,8 +36,8 @@
           "datatype": "string",
           "type": "dynamic_choice_list",
           "required": false,
-          "slug": "quarterly_report_date_for_filter_gregorian",
-          "field": "quarterly_report_date_for_filter_gregorian",
+          "slug": "quarterly_report_date",
+          "field": "quarterly_report_date",
           "ancestor_expression": {},
           "choice_provider": {},
           "display": "Quarterly Report Date"
@@ -46,10 +46,10 @@
           "compare_as_string": false,
           "datatype": "date",
           "required": false,
-          "slug": "quarterly_report_date",
-          "field": "quarterly_report_date",
+          "slug": "quarterly_date",
+          "field": "quarterly_date",
           "type": "date",
-          "display": "Report Month (for mobile)"
+          "display": "Date(for mobile)"
         },
         {
           "display": "Test or Real",
@@ -68,45 +68,7 @@
           "field": "test_or_real",
           "type": "choice_list",
           "slug": "test_or_real"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "region",
-          "field": "region",
-          "type": "dynamic_choice_list",
-          "slug": "region"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Zone",
-          "field": "zone",
-          "type": "dynamic_choice_list",
-          "slug": "zone"
-        },
-        {
-          "comment": null,
-          "datatype": "string",
-          "display": "Woreda",
-          "field": "woreda",
-          "type": "dynamic_choice_list",
-          "slug": "woreda"
-        },
-        {
-          "datatype": "string",
-          "field": "health_center",
-          "type": "dynamic_choice_list",
-          "display": "Health Center",
-          "slug": "health_center"
-        },
-        {
-          "datatype": "string",
-          "field": "health_post",
-          "type": "dynamic_choice_list",
-          "display": "Health Post",
-          "slug": "health_post"
-        },
+        } ,
         {
           "type": "pre",
           "field": "is_closed",
@@ -117,31 +79,31 @@
         },
         {
           "type": "pre",
-          "field": "health_post",
+          "field": "health_post_id",
           "slug": "health_post_pre",
           "datatype": "string",
           "pre_value": "",
           "pre_operator": "!=",
           "display": null
         }
-      ] ,
-      "columns":[
-         
+      ],
+      "columns": [
+       
         {
-          "comment": null,
-          "field": "health_post",
+          "field": "quarterly_report_date",
+          "sortable": false,
           "description": null,
           "format": "default",
           "css_class": null,
-          "width": null,
-          "aggregation": "simple",
-          "column_id": "health_post",
-          "visible": true,
           "transform": {},
+          "column_id": "quarterly_report_date",
+          "visible": true,
+          "display": "Quarter",
           "calculate_total": false,
           "type": "field",
-          "display": "Health Post"
-        } ,
+          "width": null,
+          "aggregation": "simple"
+        },
         {
           "comment": "HSEH_ES_ALTR:Proportion of households with access to any type of latrine facilities",
           "field": "HSEH_ES_ALTR",
@@ -173,7 +135,7 @@
           "display": "ES_ILTR.1:Number of HHs with improved latrinein the reporting period"
         },
         {
-          "comment": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period",
+          "comment": "ES_ULTR.1:Number of HHs with unimproved latrine the reporting period",
           "field": "ES_ULTR_1",
           "description": "ES_ULTR.1:Number of HHs with unimproved latrinein the reporting period",
           "format": "default",
@@ -232,7 +194,7 @@
           "type": "field",
           "display": "COS_MHH.New.1: Number of Newly graduated model households during the reporting period"
         }
-      ]  
+      ] 
     }
   }
   

@@ -55,7 +55,7 @@ concurrent-log-handler==0.9.12
     # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
-cryptography==3.4.7
+cryptography==3.4.8
     # via jwcrypto
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -176,9 +176,9 @@ docutils==0.16
     #   sphinx-rtd-theme
 dropbox==9.3.0
     # via -r base-requirements.in
-elasticsearch==1.9.0
-    # via -r base-requirements.in
 elasticsearch2==2.5.1
+    # via -r base-requirements.in
+elasticsearch5==5.5.6
     # via -r base-requirements.in
 email_validator==1.1.2
     # via -r base-requirements.in
@@ -281,7 +281,7 @@ mdit-py-plugins==0.2.8
     # via myst-parser
 mock==2.0.0
     # via -r base-requirements.in
-myst-parser==0.15.1
+myst-parser==0.15.2
     # via -r docs-requirements.in
 oauthlib==3.1.0
     # via
@@ -519,8 +519,8 @@ unidecode==1.2.0
 urllib3==1.26.5
     # via
     #   botocore
-    #   elasticsearch
     #   elasticsearch2
+    #   elasticsearch5
     #   py-kissmetrics
     #   requests
     #   sentry-sdk

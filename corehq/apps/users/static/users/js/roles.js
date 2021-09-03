@@ -323,7 +323,7 @@ hqDefine('users/js/roles',[
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
         };
-        self.unsetRoleBeingEdited = function () {
+        self.unsetRoleBeingEdited = function (_, event) {
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
@@ -359,8 +359,20 @@ hqDefine('users/js/roles',[
                 };
             },
         };
-        self.submitNewRole = function () {
-            // moved saveOptions inline
+        self.roleError = ko.observable("");
+        self.setRoleError = function (form, error) {
+            self.roleError(error);
+            $(form).find('[type="submit"]').enableButton();
+        };
+        self.clearRoleError = function () {
+            self.roleError("");
+        };
+        self.clearRoleForm = function () {
+            self.clearRoleError();
+            self.unsetRoleBeingEdited();
+        };
+        self.submitNewRole = function (form) {
+            self.clearRoleError();
             $.ajax({
                 method: 'POST',
                 url: o.saveUrl,
@@ -371,7 +383,11 @@ hqDefine('users/js/roles',[
                     self.unsetRoleBeingEdited();
                 },
                 error: function (response) {
-                    alertUser.alert_user(response.responseJSON.message, 'danger');
+                    var message = gettext("An error occurred, please try again.");
+                    if (response.responseJSON && response.responseJSON.message) {
+                        message = response.responseJSON.message;
+                    }
+                    self.setRoleError(form, message);
                 }
             });
         };

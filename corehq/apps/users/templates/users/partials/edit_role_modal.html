@@ -267,7 +267,15 @@
                 {% trans "Login-As Default User" %}
               </label>
               <div class="col-sm-8 controls">
-                <div class="form-check">
+                {# Placeholder disabled checkbox when not using limited login as #}
+                <div class="form-check" data-bind="visible: permissions.login_as_all_users() || !permissions.limited_login_as()">
+                  <input type="checkbox" disabled="disabled" data-bind="checked: permissions.login_as_all_users()" />
+                  <label for="default-login-as-checkbox">
+                    {% trans "Allow the user to login as the default user in Web Apps." %}
+                  </label>
+                </div>
+                {# Real checkbox #}
+                <div class="form-check" data-bind="visible: !permissions.login_as_all_users() && permissions.limited_login_as()">
                   <input type="checkbox"
                          id="default-login-as-checkbox"
                          data-bind="checked: permissions.access_default_login_as_user,
@@ -386,17 +394,18 @@
           </div>
         </div>
 
-        <div class="modal-footer">
+        <div class="modal-footer" data-bind="css: {'has-error': $root.roleError }">
           {% if can_edit_roles %}
             <button type="button"
                     class="btn btn-default"
-                    data-bind="click: $root.unsetRoleBeingEdited">
+                    data-bind="click: $root.clearRoleForm">
               {% trans "Cancel" %}
             </button>
             <button type="submit"
                     class="btn btn-primary disable-on-submit">
               {% trans "Save" %}
             </button>
+            <span class='help-block' data-bind="text: $root.roleError"></span>
           {% else %}
             <button type="button"
                     class="btn btn-default"
