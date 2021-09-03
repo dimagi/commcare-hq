@@ -62,6 +62,16 @@ def _get_apps(restore_state):
 
 
 def _get_registry_list_fixture(registries):
+    """
+    <fixture id="registry:list">
+       <registry_list>
+           <registry slug="slug1" owner="owning_domain" active="true|false">
+               <name></name>
+               <description></description>
+           </registry>
+       </registry_list>
+    </fixture>
+    """
     registry_elements = [
         _get_registry_element(registry) for registry in registries
     ]
@@ -72,6 +82,14 @@ def _get_registry_list_fixture(registries):
 
 
 def _get_registry_domains_fixture(current_domain, registry):
+    """
+    <fixture id="registry:domains:slug1">
+       <domains>
+           <domain name="domain1">My Domain</domain>
+           <domain name="domain2">domain2</domain>
+       </domains>
+    </fixture>
+    """
     domains = _get_registry_domains(current_domain, registry)
     return E.fixture(
         E.domains(*domains),
