@@ -697,10 +697,10 @@ def paginate_enterprise_users(request, domain):
     for hit in mobile_result.hits:
         login_as_user = {data['key']: data['value'] for data in hit['user_data_es']}.get('login_as_user')
         mobile_users[login_as_user].append(CommCareUser.wrap(hit))
-    loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
     users = []
     allowed_domains = set(domains) - {domain}
     for web_user in web_users:
+        loginAsUserCount = len(list(filter(lambda m: m['is_active'], mobile_users[web_user.username])))
         other_domains = [m.domain for m in web_user.domain_memberships if m.domain in allowed_domains]
         users.append({
             **_format_enterprise_user(domain, web_user),

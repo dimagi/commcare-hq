@@ -23,6 +23,7 @@ hqDefine("users/js/enterprise_users", [
             profile: null,
             loginAsUser: null,
             loginAsUserCount: 0,
+            inactiveMobileCount: 0,
         });
 
         // Only varies for mobile users
@@ -31,19 +32,35 @@ hqDefine("users/js/enterprise_users", [
         // Only relevant for web users
         self.expanded = ko.observable(false);
 
+        self.showInactive = ko.observable(false);
+
         return self;
     };
 
     var enterpriseUsersList = function (options) {
+
         var self = webUsersList(options);
+
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
-                if (user.loginAsUser === webUser.username) {
-                    user.visible(webUser.expanded());
+                console.log(user);
+                self.showHideDeactivated(webUser);
+                if (user.loginAsUser === webUser.username && user.is_active) {
+                    user.visible(webUser.expanded() && !self.showDeactivated());
                 }
             });
         };
+
+        self.showDeactivated = ko.observable(false);
+
+        self.showHideDeactivated = function (webUser) {
+            _.each(self.users(), function (user) {
+                if (user.loginAsUser === webUser.username && !user.is_active) {
+                    user.visible(webUser.expanded() && self.showDeactivated());
+                }
+            });
+        }
 
         return self;
     };
