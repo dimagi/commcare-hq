@@ -8,8 +8,11 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.registry.fixturegenerators import _get_registry_list_fixture, _get_registry_domains_fixture, \
+from corehq.apps.registry.fixtures import (
+    _get_registry_list_fixture,
+    _get_registry_domains_fixture,
     registry_fixture_generator
+)
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
 from corehq.util.test_utils import flag_enabled
