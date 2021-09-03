@@ -3,8 +3,6 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
 from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -14,7 +12,7 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    run_with_all_backends,
+    run_with_sql_backend,
 )
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -25,6 +23,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 @es_test
+@run_with_sql_backend
 class CasePillowTest(TestCase):
     domain = 'case-pillowtest-domain'
 
@@ -51,7 +50,6 @@ class CasePillowTest(TestCase):
         PillowError.objects.all().delete()
         super(CasePillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 
@@ -63,21 +61,6 @@ class CasePillowTest(TestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
-    def test_case_pillow_couch_to_sql(self):
-        self.process_case_changes.__enter__()
-        case_id = uuid.uuid4().hex
-        case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = create_and_save_a_case(self.domain, case_id, case_name)
-        self.assertTrue(hasattr(case, "_rev"))  # make sure it's a couch case
-
-        set_local_domain_sql_backend_override(self.domain)
-        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
-
-        self.process_case_changes.__exit__(None, None, None)
-        results = CaseES().run()
-        self.assertEqual(0, results.total)
-
-    @run_with_all_backends
     def test_case_pillow_error_in_case_es(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='case-pillow').count())
         with patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True), \
@@ -97,7 +80,6 @@ class CasePillowTest(TestCase):
 
         self.assertEqual(1, PillowError.objects.filter(pillow='case-pillow').count())
 
-    @run_with_all_backends
     def test_case_soft_deletion(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 

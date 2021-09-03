@@ -8,7 +8,7 @@ from nose.tools import nottest
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import softer_assert
 
 
@@ -179,7 +179,7 @@ class IndexTreeTest(BaseSyncTest, metaclass=TestSequenceMeta):
         self.device.post_changes(case_structures)
 
 
-@use_sql_backend
+@sharded
 class IndexTreeTestSQL(IndexTreeTest):
     pass
 
@@ -188,6 +188,6 @@ class LiveQueryIndexTreeTest(IndexTreeTest):
     restore_options = {'case_sync': LIVEQUERY}
 
 
-@use_sql_backend
+@sharded
 class LiveQueryIndexTreeTestSQL(LiveQueryIndexTreeTest):
     pass

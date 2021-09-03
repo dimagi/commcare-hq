@@ -1098,7 +1098,8 @@ class ConfigureNewReportBase(forms.Form):
                     for property_name, value in self._get_data_source_configuration_kwargs().items():
                         setattr(data_source, property_name, value)
                     data_source.save()
-                    tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update')
+                    now = datetime.datetime.utcnow()
+                    tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update', trigger_time=now)
 
     def create_report(self):
         """

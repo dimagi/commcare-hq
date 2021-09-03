@@ -114,6 +114,7 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
@@ -201,6 +202,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'shadow_parent': _get_shadow_parent(app, module),
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
+        'data_registries': [
+            (registry.slug, registry.name) for registry in
+            DataRegistry.objects.accessible_to_domain(app.domain)
+        ],
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -231,6 +236,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'data_registry': module.search_config.data_registry,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1209,6 +1215,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 auto_launch=bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
+                data_registry=search_properties.get('data_registry', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[

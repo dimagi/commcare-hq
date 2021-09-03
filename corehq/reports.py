@@ -67,7 +67,6 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
@@ -127,11 +126,6 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        if not should_use_sql_backend(project):
-            supply_reports = supply_reports + (
-                commtrack.ReportingRatesReport,
-                commtrack.ReportingStatusMapReport,
-            )
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 

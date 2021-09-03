@@ -1,20 +1,17 @@
 import uuid
 from collections import namedtuple
 
-from django.conf import settings
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.document_stores import LedgerV1DocumentStore
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend, sharded
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 from corehq.util.test_utils import softer_assert
@@ -23,6 +20,7 @@ DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
 
+@run_with_sql_backend
 class LedgerTests(TestCase):
 
     @classmethod
@@ -38,8 +36,6 @@ class LedgerTests(TestCase):
         cls.product_b.delete()
         cls.product_c.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
         super(LedgerTests, cls).tearDownClass()
 
     def setUp(self):
@@ -171,13 +167,12 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(100)
         case = CaseAccessors(DOMAIN).get_case(self.case.case_id)
         self.assertEqual("1", case.dynamic_case_properties()['a'])
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
-            self.assertEqual(2, len(transactions))
-            self.assertTrue(transactions[0].is_form_transaction)
-            # ordering not guaranteed since they have the same date
-            self.assertTrue(transactions[1].is_form_transaction)
-            self.assertTrue(transactions[1].is_ledger_transaction)
+        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        self.assertEqual(2, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        # ordering not guaranteed since they have the same date
+        self.assertTrue(transactions[1].is_form_transaction)
+        self.assertTrue(transactions[1].is_ledger_transaction)
 
         self._assert_transactions([
             self._expected_val(100, 100),
@@ -210,7 +205,7 @@ class LedgerTests(TestCase):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)
 
 
-@use_sql_backend
+@sharded
 @softer_assert()
 class LedgerTestsSQL(LedgerTests):
     def test_edit_form_that_removes_ledgers(self):
@@ -280,67 +275,3 @@ class LedgerTestsSQL(LedgerTests):
         self.assertTrue(transactions[1].is_ledger_transaction)
 
         self._assert_transactions([self._expected_val(50, 50)])
-
-
-class TestLedgerDocumentStore(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestLedgerDocumentStore, cls).setUpClass()
-        cls.product_a = make_product(DOMAIN, 'A Product', uuid.uuid4().hex)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.product_a.delete()
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
-        super(TestLedgerDocumentStore, cls).tearDownClass()
-
-    def setUp(self):
-        super(TestLedgerDocumentStore, self).setUp()
-        self.interface = FormProcessorInterface(domain=DOMAIN)
-        self.factory = CaseFactory(domain=DOMAIN)
-        self.case = self.factory.create_case()
-
-    def test_get_document(self):
-        from corehq.apps.commtrack.tests.util import get_single_balance_block
-        block = get_single_balance_block(self.case.case_id, self.product_a._id, 100)
-        submit_case_blocks(block, DOMAIN)
-
-        from corehq.apps.commtrack.models import StockState
-        stock_states = StockState.include_archived.all()
-        self.assertEqual(1, len(stock_states))
-        state = stock_states[0]
-        store = LedgerV1DocumentStore(DOMAIN)
-        doc = store.get_document(state.id)
-        self.assertEqual(int(doc['_id']), state.id)
-        self.assertEqual(doc['case_id'], state.case_id)
-
-    def test_get_document_archived(self):
-        from corehq.apps.commtrack.tests.util import get_single_balance_block
-        from corehq.apps.commtrack.models import StockState
-        from corehq.apps.products.models import SQLProduct
-
-        block = get_single_balance_block(self.case.case_id, self.product_a._id, 100)
-        submit_case_blocks(block, DOMAIN)
-
-        stock_states = StockState.include_archived.all()
-        self.assertEqual(1, len(stock_states))
-
-        def toggle_product_archive():
-            sql_product = SQLProduct.objects.get(code=self.product_a.code)
-            sql_product.is_archived = not sql_product.is_archived
-            sql_product.save()
-
-        toggle_product_archive()
-        self.addCleanup(toggle_product_archive)
-
-        self.assertTrue(SQLProduct.objects.get(code=self.product_a.code).is_archived)
-
-        state = stock_states[0]
-        store = LedgerV1DocumentStore(DOMAIN)
-        doc = store.get_document(state.id)
-        self.assertEqual(int(doc['_id']), state.id)
-        self.assertEqual(doc['case_id'], state.case_id)
-

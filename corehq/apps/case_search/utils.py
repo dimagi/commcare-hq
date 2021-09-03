@@ -1,9 +1,18 @@
 import re
+
 from django.utils.translation import ugettext as _
 
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.filter_dsl import (
+    CaseFilterError,
+    TooManyRelatedCasesError,
+)
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -13,8 +22,41 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
 )
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.filter_dsl import CaseFilterError
+
+
+def get_case_search_results(domain, criteria, app_id=None):
+    try:
+        # could be a list or a single string
+        case_type = criteria.pop('case_type')
+        case_types = case_type if isinstance(case_type, list) else [case_type]
+    except KeyError:
+        raise CaseSearchUserError(_('Search request must specify case type'))
+
+    try:
+        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
+    except TooManyRelatedCasesError:
+        raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
+    except CaseFilterError as e:
+        # This is an app building error, notify so we can track
+        notify_exception(None, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        raise CaseSearchUserError(str(e))
+    search_es = case_search_criteria.search_es
+
+    try:
+        hits = search_es.run().raw_hits
+    except Exception as e:
+        notify_exception(None, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        raise
+
+    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+    if app_id:
+        cases.extend(get_related_cases(domain, app_id, case_types, cases))
+    return cases
 
 
 class CaseSearchCriteria(object):
@@ -179,7 +221,10 @@ def get_related_cases(domain, app_id, case_types, cases):
     if child_case_types:
         results.extend(get_child_case_results(domain, cases, child_case_types))
 
-    return results
+    initial_case_ids = {case.case_id for case in cases}
+    return list({
+        case.case_id: case for case in results if case.case_id not in initial_case_ids
+    }.values())
 
 
 def get_related_case_relationships(app, case_type):
@@ -221,7 +266,8 @@ def get_related_case_results(domain, cases, paths):
                 indices = [case.get_index(identifier) for case in current_cases]
                 related_case_ids = {i.referenced_id for i in indices if i}
                 results = CaseSearchES().domain(domain).case_ids(related_case_ids).run().hits
-                current_cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+                current_cases = [CommCareCase.wrap(flatten_result(result, is_related_case=True))
+                                 for result in results]
                 results_cache[fragment] = current_cases
 
     results = []
@@ -252,4 +298,4 @@ def get_child_case_results(domain, parent_cases, case_types):
     parent_case_ids = {c.case_id for c in parent_cases}
     query = CaseSearchES().domain(domain).case_type(case_types).get_child_cases(parent_case_ids, "parent")
     results = query.run().hits
-    return [CommCareCase.wrap(flatten_result(result)) for result in results]
+    return [CommCareCase.wrap(flatten_result(result, is_related_case=True)) for result in results]
