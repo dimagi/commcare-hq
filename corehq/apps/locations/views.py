@@ -988,8 +988,6 @@ def location_importer_job_poll(request, domain, download_id):
 @location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
-    if not request.can_access_all_locations and not headers_only:
-        return no_permissions(request)
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
