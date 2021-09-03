@@ -104,7 +104,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     email_requests.delete()
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
