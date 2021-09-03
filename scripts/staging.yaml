@@ -82,4 +82,6 @@ branches:
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/add-for-domain # MK Sep 1
     - mk/user-history/track-api-updates+mk/user-history/add-for-domain # MK Sep 2
+    - gh/remove-pickles-from-accounting # Graham Sep 3
+    - gh/remove-pickles-from-export # Graham Sep 3
 submodules: { }
