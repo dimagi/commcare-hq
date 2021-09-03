@@ -247,7 +247,7 @@ class FilteredLocationDownload(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'form': LocationFilterForm(self.request.GET, domain=self.domain),
+            'form': LocationFilterForm(self.request.GET, domain=self.domain, user=self.request.couch_user),
             'locations_count_url': reverse('locations_count', args=[self.domain])
         }
 
@@ -997,7 +997,7 @@ def location_export(request, domain):
     owner_id = request.couch_user.get_id
     download = DownloadBase()
 
-    form = LocationFilterForm(request.GET, domain=domain)
+    form = LocationFilterForm(request.GET, domain=domain, user=request.couch_user)
 
     if form.is_valid():
         location_filters = form.get_filters()
@@ -1095,17 +1095,12 @@ def unassign_users(request, domain):
 @require_can_edit_or_view_locations
 @location_safe
 def count_locations(request, domain):
-    form = LocationFilterForm(request.GET, domain=domain)
+    form = LocationFilterForm(request.GET, domain=domain, user=request.couch_user)
 
     if form.is_valid():
         location_filters = form.get_filters()
     else:
         return HttpResponseBadRequest('Location filters invalid')
-
-    # Handle user location restriction
-    if not location_filters['location_id']:
-        domain_membership = request.couch_user.get_domain_membership(domain)
-        location_filters['location_id'] = domain_membership.location_id
 
     if location_filters.pop('selected_location_only'):
         locations_count = 1

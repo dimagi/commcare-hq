@@ -1352,11 +1352,6 @@ def _count_users(request, domain, user_type):
     else:
         return HttpResponseBadRequest("Invalid Request")
 
-    # Handle user location restriction
-    if not user_filters['location_id']:
-        domain_membership = request.couch_user.get_domain_membership(domain)
-        user_filters['location_id'] = domain_membership.location_id
-
     user_count = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:

@@ -583,6 +583,7 @@ class LocationFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
+        self.user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(
             self.domain,
@@ -639,8 +640,14 @@ class LocationFilterForm(forms.Form):
         """
         This function translates some form inputs to their relevant SQLLocation attributes
         """
+        location_id = self.cleaned_data.get('location_id', None)
+        # Handle user location restriction
+        if location_id is None:
+            domain_membership = self.user.get_domain_membership(self.domain)
+            location_id = domain_membership.location_id
+
         filters = {
-            'location_id': self.cleaned_data.get('location_id', None),
+            'location_id': location_id,
             'selected_location_only': self.cleaned_data.get('selected_location_only', False)
         }
         location_status_active = self.cleaned_data.get('location_status_active', None)

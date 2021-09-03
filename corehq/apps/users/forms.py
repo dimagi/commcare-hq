@@ -1492,3 +1492,11 @@ class UserFilterForm(forms.Form):
         if user_active_status == self.INACTIVE:
             return False
         return None
+
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        # Handle user location restriction
+        if not location_id:
+            domain_membership = self.couch_user.get_domain_membership(self.domain)
+            location_id = domain_membership.location_id
+        return location_id
