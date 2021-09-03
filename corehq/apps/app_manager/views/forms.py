@@ -841,37 +841,39 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
 
 def _get_form_link_context(module, langs):
-    def qualified_form_name(form, auto_link):
-        module_name = trans(form.get_module().name, langs)
+    def _module_name(module):
+        return trans(module.name, langs)
+
+    def _form_name(form):
+        module_name = _module_name(form.get_module())
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
+    # Forms can be linked automatically if their module is the same case type as this module,
+    # or if they belong to this module's parent module. All other forms can be linked manually.
     all_modules = module.get_app().get_modules()
     modules = [m for m in all_modules if m.case_type == module.case_type]
     if getattr(module, 'root_module_id', None) and module.root_module not in modules:
         modules.append(module.root_module)
     auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
 
-    def linkable_form(candidate_form):
-        auto_link = candidate_form in auto_linkable_forms
-        return {
-            'unique_id': candidate_form.unique_id,
-            'name': qualified_form_name(candidate_form, auto_link),
-            'auto_link': auto_link
-        }
+    linkable_items = []
+    for candidate_module in all_modules:
+        if not candidate_module.put_in_root:    # display-only forms menus don't have a "screen" to navigate to
+            linkable_items.append({
+                'unique_id': candidate_module.unique_id,
+                'name': _module_name(candidate_module),
+                'auto_link': candidate_module.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
+            })
+        for candidate_form in candidate_module.get_forms():
+            linkable_items.append({
+                'unique_id': candidate_form.unique_id,
+                'name': _form_name(candidate_form),
+                'auto_link': candidate_form in auto_linkable_forms,
+            })
 
     return {
-        'linkable_forms': sorted([
-            linkable_form(candidate_form) for candidate_module in all_modules
-            for candidate_form in candidate_module.get_forms()
-        ] + [
-            {
-                'unique_id': m.unique_id,
-                'name': trans(m.name, langs),
-                'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
-            }
-            for m in {mod.unique_id: mod for mod in modules if not mod.put_in_root}.values()
-        ], key=lambda link: link['name']),
+        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
     }
 
 
