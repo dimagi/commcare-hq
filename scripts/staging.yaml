@@ -76,7 +76,6 @@ branches:
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - errorJumpFix # Shubham Aug 25
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - sk/prevent-duplicate-role-names  # Simon Aug 30
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/add-for-domain # MK Sep 1
