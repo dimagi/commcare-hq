@@ -70,7 +70,7 @@ branches:
     - jls/smart-linking-mvp  # Jenny Aug 9
     - caktus:allowed_values_ui # Jenny Aug 13
     - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - es/blank-case-search  # Ethan Aug 23
+#    - es/blank-case-search  # Ethan Aug 23
     - erroredQuestionMessagingFix # Shubham Aug 24
     - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
