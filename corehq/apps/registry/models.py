@@ -1,9 +1,6 @@
-from datetime import datetime
-
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
-from django.db.models import Q
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
