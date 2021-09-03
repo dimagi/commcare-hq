@@ -790,8 +790,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         def qualified_form_name(form, auto_link):
             module_name = trans(form.get_module().name, langs)
             form_name = trans(form.name, langs)
-            star = '* ' if auto_link else '  '
-            return "{}{} -> {}".format(star, module_name, form_name)
+            return "{} > {}".format(module_name, form_name)
 
         modules = [m for m in all_modules if m.case_type == module.case_type]
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:
@@ -812,11 +811,11 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ] + [
             {
                 'unique_id': m.unique_id,
-                'name': trans(m.name, langs),   # TODO add star, I guess
+                'name': trans(m.name, langs),
                 'auto_link': m.case_type == module.case_type,   # TODO: which menus need manual linking? some child menus probably
             }
             for m in modules    # TODO this is a list, with duplicates
-        ], key=lambda link: link['name'])   # TODO: sorting not working?
+        ], key=lambda link: link['name'])
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
