@@ -49,8 +49,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             return [searchForBlank, value];
         },
-        geocoderItemCallback = function (addressTopic) {
+        geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
+                model.set('value', item.place_name);
+                initMapboxWidget(model);
                 var broadcastObj = Utils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
@@ -128,7 +130,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 Utils.renderMapboxInput(
                     inputId,
-                    geocoderItemCallback(id),
+                    geocoderItemCallback(id, model),
                     geocoderOnClearCallback(id),
                     initialPageData
                 );
@@ -167,7 +169,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, value] = decodeValue(this.model, stickyValue);
-            if (value & !this.model.get('value')) {
+            if (value && !this.model.get('value')) {
                 // Set the value and blank search checkbox from the sticky
                 // values if available and no default is present
                 this.model.set('value', value);
@@ -196,10 +198,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
-                this.model.set('value', $(e.target).val());
-                initMapboxWidget(this.model);
+                // geocoderItemCallback sets the value on the model
             } else {
-                this.model.set('value', $(e.target).val());
+                this.model.set('value', $(e.currentTarget).val());
             }
             this.parentView.setStickyQueryInputs();
         },
