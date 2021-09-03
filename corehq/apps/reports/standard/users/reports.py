@@ -183,25 +183,21 @@ def _user_history_details_cell(changes, domain):
     primary_changes = {}
     all_changes = {}
 
+    def set_change_key_val(key, dict):
+        if key == 'commcare_location_id':
+            dict[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
+        if key == 'location_id':
+            dict["location"] = cached_location_id_to_name(value)
+        else:
+            dict[key] = value
+
     for key, value in changes.items():
         if key in properties:
-            if key == 'commcare_location_id':
-                primary_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
-                all_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
-            if key == 'location_id':
-                primary_changes["location"] = cached_location_id_to_name(value)
-                all_changes["location"] = cached_location_id_to_name(value)
-            else:
-                primary_changes[key] = value
-                all_changes[key] = value
+            set_change_key_val(key, primary_changes)
+            set_change_key_val(key, all_changes)
         if key == 'user_data':
             for key, value in changes['user_data'].items():
-                if key == 'commcare_location_id':
-                    all_changes[_("primary location (mobile users only)")] = cached_location_id_to_name(value)
-                if key == 'location_id':
-                    all_changes["location"] = cached_location_id_to_name(value)
-                else:
-                    all_changes[key] = value
+                set_change_key_val(key, all_changes)
 
     more_count = len(all_changes) - len(primary_changes)
     return render_to_string("reports/standard/partials/user_history_changes.html", {
