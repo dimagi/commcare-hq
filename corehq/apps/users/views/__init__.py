@@ -873,8 +873,13 @@ def _update_role_from_view(domain, role_data):
     else:
         role = UserRole()
 
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
+
     role.domain = domain
-    role.name = role_data["name"]
+    role.name = name
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
