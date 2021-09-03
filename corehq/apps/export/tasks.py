@@ -39,9 +39,9 @@ from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 logger = logging.getLogger('export_migration')
 
 
-@task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
+@task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username,
-                                  filters, download_id, owner_id,
+                                  es_filters, download_id, owner_id,
                                   filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
@@ -63,7 +63,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
-            filters,
+            es_filters,
             temp_path,
             # We don't have a great way to calculate progress if it's a bulk download,
             # so only track the progress for single instance exports.
