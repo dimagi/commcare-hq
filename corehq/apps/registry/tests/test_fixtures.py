@@ -47,6 +47,7 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
         cls.restore_user._couch_user.delete(None, None)
         cls.restore_user_domain_1._couch_user.delete(None, None)
         Domain.get_db().delete_doc(cls.domain_obj.get_id)
+        super().tearDownClass()
 
     def test_fixture_provider_flag_disabled(self):
         fixtures = call_fixture_generator(
