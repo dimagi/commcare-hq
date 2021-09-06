@@ -58,7 +58,7 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
-        self.upstreamLink = data.master_link ? DomainLink(data.master_link) : null;
+        self.upstreamLink = data.upstream_link ? DomainLink(data.upstream_link) : null;
 
         // setup getting started view model
         var gettingStartedData = {
@@ -79,7 +79,7 @@ hqDefine("linked_domain/js/domain_links", [
         if (self.upstreamLink) {
             pullContentData = {
                 parent: self,
-                linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
+                linkedDataViewModels: _.map(data.view_models_to_pull, LinkedDataViewModel),
                 domainLink: self.upstreamLink,
             };
             self.pullContentViewModel = PullContentViewModel(pullContentData);

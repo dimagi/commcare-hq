@@ -24,7 +24,7 @@
                                  selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
                                  searchItemTitle: '{% trans_html_attr "Search content" %}',
                             }">
-            {% for model in view_data.master_model_status %}
+            {% for model in view_data.view_models_to_push %}
               <option value="{% html_attr model %}">{{ model.name }}</option>
             {% endfor %}
           </select>
