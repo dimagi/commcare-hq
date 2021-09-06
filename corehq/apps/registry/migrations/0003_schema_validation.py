@@ -10,7 +10,7 @@ from corehq.apps.registry.schema import REGISTRY_JSON_SCHEMA
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('registry', '0001_initial'),
+        ('registry', '0002_registry_slug_globally_unique'),
     ]
 
     operations = [
