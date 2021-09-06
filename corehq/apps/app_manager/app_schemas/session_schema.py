@@ -14,7 +14,7 @@ def get_session_schema(form):
     datums = EntriesHelper(app).get_datums_meta_for_form_generic(form)
     datums = [
         d for d in datums
-        if not d.is_new_case_id and d.case_type and d.requires_selection
+        if d.requires_selection and d.case_type and not d.is_new_case_id
     ]
     if len(datums):
         session_var = datums[-1].datum.id
