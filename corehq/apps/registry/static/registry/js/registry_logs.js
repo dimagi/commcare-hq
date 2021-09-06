@@ -18,6 +18,12 @@ hqDefine("registry/js/registry_logs", [
 
     const allDatesText = gettext("Show All Dates"),
         allDomainsText = gettext("All Project Spaces");
+
+    let LogEntryModel = function(data) {
+        let self = data;
+        self.hrDate = moment(self.date).format("D MMM YYYY HH:mm:ss");
+        return self;
+    }
     let AuditLogModel = function (registrySlug, projectSpaces) {
         const self = {
             loaded: ko.observable(false),
@@ -59,7 +65,7 @@ hqDefine("registry/js/registry_logs", [
             }
             self.currentPage(page);
             actions.loadLogs(registrySlug, requestData, (data) => {
-                self.logs(data.logs);
+                self.logs(data.logs.map(LogEntryModel));
                 self.total(data.total);
                 self.loaded(true);
             }).always(() => {
