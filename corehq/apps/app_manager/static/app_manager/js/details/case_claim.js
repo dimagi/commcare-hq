@@ -194,8 +194,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             'additionalRegistryQueries': {
                 create: function(options) {
                     return additionalQueryModel(options.data, saveButton);
-                }
-            }
+                },
+            },
         };
         var self = ko.mapping.fromJS(options, mapping);
 
@@ -275,11 +275,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_filter: self.searchFilter(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
                 additional_registry_queries: self.additionalRegistryQueries().map((query) => {
-                   return {
-                       instance_name: query.instanceName(),
-                       case_type_xpath: query.caseTypeXpath(),
-                       case_id_xpath: query.caseTypeXpath(),
-                   };
+                    return {
+                        instance_name: query.instanceName(),
+                        case_type_xpath: query.caseTypeXpath(),
+                        case_id_xpath: query.caseTypeXpath(),
+                    };
                 }),
             };
         };
