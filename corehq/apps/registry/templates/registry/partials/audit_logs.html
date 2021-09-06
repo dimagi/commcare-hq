@@ -31,7 +31,11 @@
       </div>
       {% endif %}
       <div class="col-md-3 {% if is_owner %}col-md-offset-3{% else %}col-md-offset-6{% endif %}">
-          <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs">
+          <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs, disable: loading">
+            <i class="fa" data-bind="css: {
+              'fa-spin': loading,
+              'fa-refresh': loading
+            }"></i>
             {% trans "Filter" %}
           </button>
       </div>
