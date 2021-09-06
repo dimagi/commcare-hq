@@ -148,23 +148,6 @@
             <!-- /ko -->
           </div>
           {% endif %}
-          {% if request|toggle_enabled:'DATA_REGISTRY' %}
-          <div class="form-group">
-              <label for="data-registry" class="{% css_label_class %} control-label">
-                  {% trans "Data Registry" %}
-                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
-                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
-              </label>
-              <div class="{% css_field_class %}">
-                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
-                      <option value/>
-                      {% for value, name in data_registries %}
-                          <option value="{{ value }}">{{ name }}</option>
-                      {% endfor %}
-                  </select>
-              </div>
-          </div>
-          {% endif %}
           <div class="form-group" data-bind="slideVisible: !autoLaunch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
@@ -248,6 +231,23 @@
               </p>
             </div>
           </div>
+          {% if request|toggle_enabled:'DATA_REGISTRY' %}
+          <div class="form-group">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Data Registry" %}
+                  <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
+                        data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
+                      <option value/>
+                      {% for value, name in data_registries %}
+                          <option value="{{ value }}">{{ name }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
