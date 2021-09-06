@@ -20,6 +20,7 @@
              data-bind="value: dateRange"/>
         </div>
       </div>
+      {% if is_owner %}
       <div class="col-md-3">
         <div class="form-group">
           <label for="logs-project-space">{% trans "Project Space" %}</label>
@@ -28,7 +29,8 @@
           "></select>
         </div>
       </div>
-      <div class="col-md-3 col-md-offset-3">
+      {% endif %}
+      <div class="col-md-3 {% if is_owner %}col-md-offset-3{% else %}col-md-offset-6{% endif %}">
           <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs">
             {% trans "Filter" %}
           </button>
