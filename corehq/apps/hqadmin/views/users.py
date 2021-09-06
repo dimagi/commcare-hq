@@ -65,6 +65,7 @@ from corehq.util.timer import TimingContext
 class UserAdministration(BaseAdminSectionView):
     section_name = ugettext_lazy("User Administration")
 
+
 class SuperuserManagement(UserAdministration):
     urlname = 'superuser_management'
     page_title = _("Grant or revoke superuser access")
@@ -106,9 +107,11 @@ class SuperuserManagement(UserAdministration):
                 if fields_changed:
                     user.save()
                     couch_user = CouchUser.from_django_user(user)
-                    log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                                    changed_by_user=self.request.couch_user,
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    domain_required_for_log=False)
+                                    by_domain_required_for_log=False,
+                                    for_domain_required_for_log=False)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -400,10 +403,12 @@ class DisableUserView(FormView):
         reason = form.cleaned_data['reason']
         change_messages.update(UserChangeMessage.status_update(self.user.is_active, reason))
         couch_user = CouchUser.from_django_user(self.user)
-        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
                         fields_changed={'is_active': self.user.is_active},
-                        domain_required_for_log=False)
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -497,9 +502,11 @@ class DisableTwoFactorView(FormView):
         verified_by = form.cleaned_data['via_who'] or self.request.user.username
         change_messages = UserChangeMessage.two_factor_disabled_with_verification(
             verified_by, verification, disable_for_days)
-        log_user_change(None, couch_user, changed_by_user=self.request.couch_user,
+        log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                        changed_by_user=self.request.couch_user,
                         changed_via=USER_CHANGE_VIA_WEB, change_messages=change_messages,
-                        domain_required_for_log=False)
+                        by_domain_required_for_log=False,
+                        for_domain_required_for_log=False)
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
