@@ -33,6 +33,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
@@ -489,7 +490,7 @@ class EntriesHelper(object):
                 data=[
                     QueryData(key='case_type', ref=f"'{datum['case_type']}'"),
                     QueryData(key='case_id', ref=session_var(datum['session_var'])),
-                    QueryData(key='registry', ref=f"'{module.search_config.data_registry}'")
+                    QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
                 ],
                 default_search='true',
             ),
