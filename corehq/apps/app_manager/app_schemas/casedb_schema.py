@@ -14,6 +14,52 @@ def get_casedb_schema(form):
     This lists all case types and their properties for the given app.
     """
     app = form.get_app()
+
+    subsets = []
+    if not form.get_module().search_config.data_registry:
+        subsets.extend(_get_case_schema(app, form))
+
+    if is_usercase_in_use(app.domain):
+        subsets.append({
+            "id": USERCASE_TYPE,
+            "name": "user",
+            "key": "@case_type",
+            "structure": {p: {} for p in get_usercase_properties(app)[USERCASE_TYPE]},
+        })
+
+    return {
+        "id": "casedb",
+        "uri": "jr://instance/casedb",
+        "name": "case",
+        "path": "/casedb/case",
+        "structure": {},
+        "subsets": subsets,
+    }
+
+
+def get_registry_schema(form):
+    """Get registry database schema definition for vellum to display as an external data source.
+
+    This lists all case types and their properties for the given app.
+    """
+    app = form.get_app()
+    data_registry = form.get_module().search_config.data_registry
+
+    subsets = []
+    if data_registry:
+        subsets.extend(_get_case_schema(app, form, hashtag='#registry_case/'))
+
+    return {
+        "id": "registry",
+        "uri": "jr://instance/remote",
+        "name": "registry_case",
+        "path": "/results/case",
+        "structure": {},
+        "subsets": subsets,
+    }
+
+
+def _get_case_schema(app, form, hashtag='#case/'):
     base_case_type = form.get_module().case_type if form.requires_case() else None
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
     related = builder.get_parent_type_map(None)
@@ -40,32 +86,15 @@ def get_casedb_schema(form):
     else:
         generations = []
 
-    subsets = [{
+    return [{
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
         "structure": {
             p: {"description": descriptions_dict.get(t, {}).get(p, '')}
             for t in ctypes for p in map[t]},
         "related": {"parent": {
-            "hashtag": "#case/" + generation_names[i + 1],
+            "hashtag": hashtag + generation_names[i + 1],
             "subset": generation_names[i + 1],
             "key": "@case_id",
         }} if i < len(generations) - 1 else None,
     } for i, ctypes in enumerate(generations)]
-
-    if is_usercase_in_use(app.domain):
-        subsets.append({
-            "id": USERCASE_TYPE,
-            "name": "user",
-            "key": "@case_type",
-            "structure": {p: {} for p in get_usercase_properties(app)[USERCASE_TYPE]},
-        })
-
-    return {
-        "id": "casedb",
-        "uri": "jr://instance/casedb",
-        "name": "case",
-        "path": "/casedb/case",
-        "structure": {},
-        "subsets": subsets,
-    }
