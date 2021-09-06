@@ -211,15 +211,12 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             case_trigger_infos,
             resource_types_by_case_type,
         )
-        self.assertEqual(resource, {
-            'id': self.parent_case_id,
-            'name': [
-                {'text': 'Ted'},
-                {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
-                {'given': ['Unabomber']},
-            ],
-            'resourceType': 'Patient',
-        })
+        self.assertIn({'text': 'Ted'}, resource['name'])
+        self.assertIn(
+            {'given': ['Theodore', 'John'], 'family': 'Kaczynski'},
+            resource['name'],
+        )
+        self.assertIn({'given': ['Unabomber']}, resource['name'])
 
 
 @run_with_sql_backend
