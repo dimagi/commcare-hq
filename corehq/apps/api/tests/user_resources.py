@@ -232,10 +232,11 @@ class TestCommCareUserResource(APIResourceTest):
                 }
             }
         )
-        self.assertEqual(user_history.message, "Removed phone number 50253311398. "
-                                               "Added phone number 50253311399. Added phone number 50253314588. "
-                                               f"Groups: {group.name}[{group.get_id}]. "
-                                               "Password reset")
+        self.assertTrue("Removed phone number 50253311398" in user_history.message)
+        self.assertTrue("Added phone number 50253311399" in user_history.message)
+        self.assertTrue("Added phone number 50253314588" in user_history.message)
+        self.assertTrue(f"Groups: {group.name}[{group.get_id}]" in user_history.message)
+        self.assertTrue("Password reset" in user_history.message)
         self.assertEqual(user_history.details['changed_via'], USER_CHANGE_VIA_API)
 
     def test_update_profile_conflict(self):
