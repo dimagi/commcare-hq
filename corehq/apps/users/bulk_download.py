@@ -404,7 +404,6 @@ def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
         groups.update(group_memoizer.groups)
 
     DownloadBase.set_progress(task, 0, users_groups_count)
-
     user_headers, user_rows = parse_mobile_users(
         domain,
         user_filters,
