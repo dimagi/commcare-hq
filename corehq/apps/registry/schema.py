@@ -19,7 +19,7 @@ REGISTRY_JSON_SCHEMA = {
 class RegistrySchema:
 
     def __init__(self, schema_data):
-        self.schema_data = schema_data
+        self.schema_data = schema_data or []
 
     @cached_property
     def case_types(self):

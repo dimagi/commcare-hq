@@ -138,12 +138,6 @@ class DataRegistry(models.Model):
         if self.domain != domain:
             raise RegistryAccessDenied()
 
-    @property
-    def case_types(self):
-        return [
-            item["case_type"] for item in self.schema
-        ] if self.schema else []
-
     @cached_property
     def logger(self):
         return RegistryAuditHelper(self)
