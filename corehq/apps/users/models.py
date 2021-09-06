@@ -1901,6 +1901,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
+        """
+        :returns: True if groups were updated
+        """
         from corehq.apps.groups.models import Group
         desired = set(group_ids)
         current = set(self.get_group_ids())

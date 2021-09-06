@@ -46,7 +46,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
         return UserChangeLogger(
             domain=bundle.request.domain,
             user=bundle.obj,
-            is_new_user=False,
+            is_new_user=False,  # only used for tracking updates, creation already tracked by model's create method
             changed_by_user=bundle.request.couch_user,
             changed_via=USER_CHANGE_VIA_API,
             upload_record_id=None
