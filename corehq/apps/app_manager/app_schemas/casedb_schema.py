@@ -17,7 +17,7 @@ def get_casedb_schema(form):
 
     subsets = []
     if not form.get_module().search_config.data_registry:
-        subsets.extend(_get_case_schema(app, form))
+        subsets.extend(_get_case_schema_subsets(app, form))
 
     if is_usercase_in_use(app.domain):
         subsets.append({
@@ -47,7 +47,7 @@ def get_registry_schema(form):
 
     subsets = []
     if data_registry:
-        subsets.extend(_get_case_schema(app, form, hashtag='#registry_case/'))
+        subsets.extend(_get_case_schema_subsets(app, form, hashtag='#registry_case/'))
 
     return {
         "id": "registry",
@@ -59,7 +59,7 @@ def get_registry_schema(form):
     }
 
 
-def _get_case_schema(app, form, hashtag='#case/'):
+def _get_case_schema_subsets(app, form, hashtag='#case/'):
     base_case_type = form.get_module().case_type if form.requires_case() else None
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
     related = builder.get_parent_type_map(None)
