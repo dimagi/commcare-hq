@@ -301,6 +301,27 @@ class SchemaTest(SimpleTestCase):
                 },
             })
 
+    def test_get_session_schema_for_simple_module_with_case_from_registry(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        module.search_config.data_registry = "my-registry"
+        self.factory.form_requires_case(form)
+        schema = get_session_schema(form)
+        self.assertDictEqual(schema["structure"], {
+            "data": {
+                "merge": True,
+                "structure": {
+                    "case_id": {
+                        "reference": {
+                            "hashtag": "#registry_case",
+                            "source": "registry",
+                            "subset": "case",
+                            "key": "@case_id",
+                        },
+                    },
+                },
+            },
+        })
+
     def test_get_casedb_schema_with_form_from_registry(self):
         village = self.add_form("village")
         module = village.get_module()
