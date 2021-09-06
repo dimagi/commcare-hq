@@ -1083,6 +1083,7 @@ class CommcareUserUploadJobPollView(UserUploadJobPollView):
 
 
 @require_can_edit_or_view_commcare_users
+@location_safe
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
@@ -1092,6 +1093,7 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
     return render(request, template, context)
 
 
+@location_safe
 class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
     page_title = ugettext_noop('Download Users Status')
@@ -1367,6 +1369,7 @@ def _count_users(request, domain, user_type):
 
 
 @require_can_edit_or_view_commcare_users
+@location_safe
 def download_commcare_users(request, domain):
     return download_users(request, domain, user_type=MOBILE_USER_TYPE)
 
