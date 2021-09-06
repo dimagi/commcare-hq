@@ -373,7 +373,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected_data = """
         <partial>
-          <data key="commcare_registry" ref="myregistry"/>
+          <data key="commcare_registry" ref="'myregistry'"/>
         </partial>
         """
         self.assertXmlPartialEqual(expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
