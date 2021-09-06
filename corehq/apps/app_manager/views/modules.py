@@ -195,6 +195,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     Get context items that are used by both basic and advanced modules.
     '''
     item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    case_types = set(module.search_config.additional_case_types) | {module.case_type}
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -205,6 +206,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'data_registries': [
             (registry.slug, registry.name) for registry in
             DataRegistry.objects.accessible_to_domain(app.domain)
+            if set(registry.wrapped_schema.case_types) & case_types
         ],
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
