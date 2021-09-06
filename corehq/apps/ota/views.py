@@ -46,7 +46,7 @@ from corehq.apps.domain.decorators import (
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, location_safe_bypass
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -89,14 +89,14 @@ def restore(request, domain, app_id=None):
     return response
 
 
-@location_safe
+@location_safe_bypass
 @mobile_auth
 @check_domain_migration
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
-@location_safe
+@location_safe_bypass
 @mobile_auth
 @check_domain_migration
 def app_aware_search(request, domain, app_id):
@@ -116,7 +116,7 @@ def app_aware_search(request, domain, app_id):
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-@location_safe
+@location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
@@ -400,7 +400,7 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
-@location_safe
+@location_safe_bypass
 @mobile_auth
 @require_GET
 def registry_case(request, domain, app_id):
