@@ -260,7 +260,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
-                    if user_change_logger:
+                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
                         user_change_logger.add_changes({key: lowercase_value})
                     setattr(bundle.obj, key, lowercase_value)
                     should_save = True
@@ -280,14 +280,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
                 elif key == 'user_data':
                     try:
+                        original_user_data = bundle.obj.metadata.copy()
                         bundle.obj.update_metadata(value)
-                        if user_change_logger:
+                        # check changes post update to account for any changes in update_metadata
+                        if user_change_logger and original_user_data != bundle.obj.user_data:
                             user_change_logger.add_changes({'user_data': bundle.obj.user_data})
                     except ValueError as e:
                         raise BadRequest(str(e))
                 else:
                     # first_name, last_name, language
-                    if user_change_logger:
+                    if user_change_logger and getattr(bundle.obj, key) != value:
                         user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
@@ -415,7 +417,7 @@ class WebUserResource(v0_1.WebUserResource):
                     if user_change_logger:
                         # we do call setattr for keys that are not really attributes i.e is_admin & permissions
                         # track only once that are attributes
-                        if hasattr(bundle.obj, key):
+                        if hasattr(bundle.obj, key) and getattr(bundle.obj, key) != value:
                             # first_name, last_name
                             user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
