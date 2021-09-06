@@ -164,13 +164,15 @@ class DataRegistryAuditViewHelper:
         self.is_owner = domain == self.registry.domain
         self.filter_kwargs = {}
 
-    def filter(self, domain, start_date, end_date):
+    def filter(self, domain, start_date, end_date, action):
         if domain:
             self.filter_kwargs["domain"] = domain
         if start_date:
             self.filter_kwargs["date__gte"] = start_date
         if end_date:
             self.filter_kwargs["date__lte"] = datetime.combine(end_date, datetime.max.time())
+        if action:
+            self.filter_kwargs["action"] = action
 
     @property
     def query(self):
@@ -184,3 +186,11 @@ class DataRegistryAuditViewHelper:
 
     def get_total(self):
         return self.query.count()
+
+    @staticmethod
+    def action_options(is_owner):
+        options = RegistryAuditLog.ACTION_CHOICES if is_owner else RegistryAuditLog.NON_OWNER_ACTION_CHOICES
+        return [
+            {"id": option[0], "text": option[1]}
+            for option in options
+        ]

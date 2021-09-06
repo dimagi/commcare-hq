@@ -17,14 +17,15 @@ hqDefine("registry/js/registry_logs", [
     ko.components.register('pagination', pagination);
 
     const allDatesText = gettext("Show All Dates"),
-        allDomainsText = gettext("All Project Spaces");
+        allDomainsText = gettext("All Project Spaces"),
+        allActionsText = gettext("All Actions");
 
     let LogEntryModel = function(data) {
         let self = data;
         self.hrDate = moment(self.date).format("D MMM YYYY HH:mm:ss");
         return self;
     }
-    let AuditLogModel = function (registrySlug, projectSpaces) {
+    let AuditLogModel = function (registrySlug, projectSpaces, actionTypes) {
         const self = {
             loaded: ko.observable(false),
             total: ko.observable(),
@@ -35,6 +36,8 @@ hqDefine("registry/js/registry_logs", [
             projectSpaces: [allDomainsText].concat(projectSpaces),
             selectedProjectSpace: ko.observable(allDomainsText),
             currentPage: ko.observable(),
+            actionTypes: [allActionsText].concat(actionTypes),
+            selectedAction: ko.observable(allActionsText),
         };
 
         self.load = function () {
@@ -62,6 +65,9 @@ hqDefine("registry/js/registry_logs", [
             }
             if (self.selectedProjectSpace() && self.selectedProjectSpace() !== allDomainsText) {
                 requestData.domain = self.selectedProjectSpace();
+            }
+            if (self.selectedAction() && self.selectedAction() != allActionsText) {
+                requestData.action = self.selectedAction();
             }
             self.currentPage(page);
             actions.loadLogs(registrySlug, requestData, (data) => {

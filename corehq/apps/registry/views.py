@@ -120,6 +120,7 @@ def manage_registry(request, domain, registry_slug):
         "available_case_types": list(get_data_dict_case_types(registry.domain)),
         "available_domains": available_domains,
         "invited_domains": [invitation.domain for invitation in all_invitations],
+        "log_action_types": DataRegistryAuditViewHelper.action_options(is_owner),
         "current_page": {
             "title": _("Manage Registry"),
             "page_name": _("Manage Registry"),
@@ -367,8 +368,9 @@ def registry_audit_logs(request, domain, registry_slug):
         return JsonResponse({"error": "Invalid date parameter"})
 
     domain = request.GET.get('domain') or None
+    action = request.GET.get('action') or None
 
-    helper.filter(domain, start_date, end_date)
+    helper.filter(domain, start_date, end_date, action)
 
     return JsonResponse({
         "total": helper.get_total(),

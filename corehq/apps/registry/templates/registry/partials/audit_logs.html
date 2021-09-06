@@ -30,7 +30,15 @@
         </div>
       </div>
       {% endif %}
-      <div class="col-md-3 {% if is_owner %}col-md-offset-3{% else %}col-md-offset-6{% endif %}">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="logs-action">{% trans "Action" %}</label>
+          <select class="form-control" name="logs-action" data-bind="
+            select2: actionTypes, value: selectedAction
+          "></select>
+        </div>
+      </div>
+      <div class="col-md-3 {% if not is_owner %}col-md-offset-3{% endif %}">
           <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs, disable: loading">
             <i class="fa" data-bind="css: {
               'fa-spin': loading,
