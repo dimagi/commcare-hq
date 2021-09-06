@@ -136,7 +136,8 @@ class LocationExporter(object):
             self.base_query = SQLLocation.objects.none()
         elif root_location_id:
             if selected_location_only:
-                self.base_query = SQLLocation.objects.get(location_id=root_location_id)
+                # Use filter so base_query is a LocationQuerySet
+                self.base_query = SQLLocation.objects.filter(location_id=root_location_id)
             else:
                 root_location = SQLLocation.objects.get(location_id=root_location_id)
                 self.base_query = SQLLocation.objects.get_descendants(
