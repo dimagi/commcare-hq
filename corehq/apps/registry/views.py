@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from datetime import datetime
 
 from django.contrib import messages
 from django.db.models import Q
@@ -14,9 +15,10 @@ from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect, use_daterangepicker
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
 from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 @domain_admin_required
@@ -85,6 +87,7 @@ def _registry_list_context(domain, registry):
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
 @use_multiselect
+@use_daterangepicker
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
 
@@ -356,7 +359,24 @@ def registry_audit_logs(request, domain, registry_slug):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
+
+    try:
+        start_date = _get_date_param(request, 'startDate')
+        end_date = _get_date_param(request, 'endDate')
+    except ValueError:
+        return JsonResponse({"error": "Invalid date parameter"})
+
+    domain = request.GET.get('domain') or None
+
+    helper.filter(domain, start_date, end_date)
+
     return JsonResponse({
         "total": helper.get_total(),
         "logs": helper.get_logs(skip, limit)
     })
+
+
+def _get_date_param(request, param_name):
+    param = request.GET.get(param_name) or None
+    if param:
+        return datetime.strptime(param, ISO_DATE_FORMAT)

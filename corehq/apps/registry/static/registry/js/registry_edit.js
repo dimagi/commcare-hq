@@ -215,7 +215,7 @@ hqDefine("registry/js/registry_edit", [
             }
         };
 
-        self.auditLogs = auditLogs.model(self.slug);
+        self.auditLogs = auditLogs.model(self.slug, invitedDomains);
         $('[href="#audit-logs"]').on('shown.bs.tab', function () {
             self.auditLogs.load();
         });

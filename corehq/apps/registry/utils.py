@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
@@ -160,16 +162,25 @@ class DataRegistryAuditViewHelper:
         self.domain = domain
         self.registry = _get_registry_or_404(domain, registry_slug)
         self.is_owner = domain == self.registry.domain
+        self.filter_kwargs = {}
+
+    def filter(self, domain, start_date, end_date):
+        if domain:
+            self.filter_kwargs["domain"] = domain
+        if start_date:
+            self.filter_kwargs["date__gte"] = start_date
+        if end_date:
+            self.filter_kwargs["date__lte"] = datetime.combine(end_date, datetime.max.time())
 
     @property
-    def base_query(self):
+    def query(self):
         query = self.registry.audit_logs.select_related("user")
         if not self.is_owner:
-            query = query.filter(domain=self.domain)
-        return query
+            self.filter_kwargs["domain"] = self.domain
+        return query.filter(**self.filter_kwargs)
 
     def get_logs(self, skip, limit):
-        return [log.to_json() for log in self.base_query[skip:skip + limit]]
+        return [log.to_json() for log in self.query[skip:skip + limit]]
 
     def get_total(self):
-        return self.base_query.count()
+        return self.query.count()
