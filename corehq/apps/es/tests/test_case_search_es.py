@@ -1,4 +1,5 @@
 import uuid
+from collections import Counter
 
 from datetime import date
 from django.test.testcases import SimpleTestCase
@@ -17,7 +18,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
     get_related_case_relationships,
-    get_related_case_results,
+    get_related_case_results, get_related_cases,
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
@@ -27,7 +28,10 @@ from corehq.apps.es.case_search import (
     flatten_result,
 )
 from corehq.elastic import get_es_new, SIZE_LIMIT
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    run_with_sql_backend,
+)
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -248,6 +252,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
 
 @es_test
+@run_with_sql_backend
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):
@@ -505,9 +510,52 @@ class TestCaseSearchLookups(TestCase):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
+    def test_get_related_case_results_duplicates(self):
+        """Test that `get_related_cases` does not include any cases that are in the initial
+        set or are duplicates of others already found."""
+
+        # d1 :> c2 > c1 > a1
+        # d1 > c1
+        # Search for case type 'c'
+        # - initial results c1, c2
+        # - related lookups (parent, parent/parent) yield a1, c1, a1
+        # - child lookups yield c2, d1
+        # - (future) extension lookups yield d1
+        cases = [
+            {'_id': 'a1', 'case_type': 'a'},
+            {'_id': 'c1', 'case_type': 'c', 'index': {
+                'parent': ('a', 'a1'),
+            }},
+            {'_id': 'c2', 'case_type': 'c', 'index': {
+                'parent': ('c', 'c1'),
+            }},
+            {'_id': 'd1', 'case_type': 'd', 'index': {
+                'parent': ('c', 'c1'),
+                'host': ('c', 'c2'),
+            }},
+        ]
+        self._bootstrap_cases_in_es_for_domain(self.domain, cases)
+
+        hits = CaseSearchES().domain(self.domain).case_type("c").run().hits
+        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+        self.assertEqual({case.case_id for case in cases}, {'c1', 'c2'})
+
+        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
+                   return_value={"parent", "parent/parent"}), \
+             patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
+             patch("corehq.apps.case_search.utils.get_app_cached"):
+            cases = get_related_cases(self.domain, None, {"c"}, cases)
+
+        case_ids = Counter([case.case_id for case in cases])
+        self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
+        self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
+
     def _assert_related_case_ids(self, cases, paths, ids):
         results = get_related_case_results(self.domain, cases, paths)
-        self.assertEqual(ids, {result['_id'] for result in results})
+        result_ids = Counter([result['_id'] for result in results])
+        self.assertEqual(ids, set(result_ids))
+        if result_ids:
+            self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
 
     def test_multiple_case_types(self):
         cases = [

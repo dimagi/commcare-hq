@@ -18,6 +18,7 @@ from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
+    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
@@ -285,7 +286,7 @@ def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('@indexed_on', gt, gte, lt, lte)
 
 
-def flatten_result(hit, include_score=False):
+def flatten_result(hit, include_score=False, is_related_case=False):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
@@ -299,6 +300,8 @@ def flatten_result(hit, include_score=False):
 
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
+    if is_related_case:
+        result[IS_RELATED_CASE] = "true"
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])
     for case_property in case_properties:
         key = case_property.get('key')

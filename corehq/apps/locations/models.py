@@ -178,7 +178,8 @@ class LocationType(models.Model):
     def sync_administrative_status(self, sync_supply_points=True):
         from .tasks import sync_administrative_status
         if self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            if sync_supply_points:
+                sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
     def __str__(self):

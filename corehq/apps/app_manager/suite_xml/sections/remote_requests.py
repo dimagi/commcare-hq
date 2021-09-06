@@ -32,6 +32,7 @@ from corehq.apps.app_manager.xpath import (
     InstanceXpath,
     interpolate_xpath,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
@@ -39,7 +40,12 @@ from corehq.apps.case_search.models import (
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
-RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
+# The name of the instance where search results are stored
+RESULTS_INSTANCE = 'results'
+
+# The name of the instance where search results are stored when querying a data registry
+REGISTRY_INSTANCE = 'registry'
+
 SESSION_INSTANCE = 'commcaresession'
 
 
@@ -77,9 +83,13 @@ class RemoteRequestFactory(object):
                 ),
             ],
         }
-        relevant = self.module.search_config.get_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if self.module.search_config.data_registry:
+            # Disable claim request for data registry
+            kwargs["relevant"] = "false()"
+        else:
+            relevant = self.module.search_config.get_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def _build_command(self):
@@ -157,6 +167,7 @@ class RemoteRequestFactory(object):
                     additional_types, instance_name=RESULTS_INSTANCE)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+        nodeset += EXCLUDE_RELATED_CASES_FILTER
 
         return [SessionDatum(
             id=self.module.search_config.case_session_var,
