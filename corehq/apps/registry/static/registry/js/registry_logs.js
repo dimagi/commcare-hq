@@ -12,7 +12,7 @@ hqDefine("registry/js/registry_logs", [
     initialPageData,
     alertUser,
     actions,
-    pagination,
+    pagination
 ) {
     ko.components.register('pagination', pagination);
 
@@ -20,11 +20,11 @@ hqDefine("registry/js/registry_logs", [
         allDomainsText = gettext("All Project Spaces"),
         allActionsText = gettext("All Actions");
 
-    let LogEntryModel = function(data) {
+    let LogEntryModel = function (data) {
         let self = data;
         self.hrDate = moment(self.date).format("D MMM YYYY HH:mm:ss");
         return self;
-    }
+    };
     let AuditLogModel = function (registrySlug, projectSpaces, actionTypes) {
         const self = {
             loaded: ko.observable(false),
@@ -49,7 +49,7 @@ hqDefine("registry/js/registry_logs", [
 
         self.filterLogs = function () {
             self.goToPage(1);
-        }
+        };
 
         self.goToPage = function (page) {
             self.loading(true);
@@ -66,7 +66,7 @@ hqDefine("registry/js/registry_logs", [
             if (self.selectedProjectSpace() && self.selectedProjectSpace() !== allDomainsText) {
                 requestData.domain = self.selectedProjectSpace();
             }
-            if (self.selectedAction() && self.selectedAction() != allActionsText) {
+            if (self.selectedAction() && self.selectedAction() !== allActionsText) {
                 requestData.action = self.selectedAction();
             }
             self.currentPage(page);
@@ -88,6 +88,6 @@ hqDefine("registry/js/registry_logs", [
         });
     });
     return {
-        model: AuditLogModel
-    }
+        model: AuditLogModel,
+    };
 });

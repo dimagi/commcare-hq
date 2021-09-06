@@ -106,7 +106,7 @@ hqDefine("registry/js/registry_actions", [
         return manageRelatedModels('manage_grants', registrySlug, data, onSuccess);
     };
 
-    let loadLogs = function(registrySlug, data, onSuccess) {
+    let loadLogs = function (registrySlug, data, onSuccess) {
         return $.get({
             url: initialPageData.reverse('registry_audit_logs', registrySlug),
             data: data,
@@ -115,7 +115,7 @@ hqDefine("registry/js/registry_actions", [
             },
             error: handleError,
         });
-    }
+    };
 
     return {
         acceptInvitation: accept,
