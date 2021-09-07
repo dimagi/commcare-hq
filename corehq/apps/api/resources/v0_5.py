@@ -238,13 +238,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             source=list(old_phone_numbers)
                         )
 
-                        for number_removed in numbers_removed:
+                        if numbers_removed:
                             user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_removed(number_removed)
+                                UserChangeMessage.phone_numbers_removed(numbers_removed)
                             )
-                        for number_added in numbers_added:
+                        if numbers_added:
                             user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(number_added)
+                                UserChangeMessage.phone_numbers_added(numbers_added)
                             )
                 elif key == 'groups':
                     group_ids = bundle.data.get("groups", [])
@@ -399,13 +399,13 @@ class WebUserResource(v0_1.WebUserResource):
                             source=list(old_phone_numbers)
                         )
 
-                        for number_removed in numbers_removed:
+                        if numbers_removed:
                             user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_removed(number_removed)
+                                UserChangeMessage.phone_numbers_removed(numbers_removed)
                             )
-                        for number_added in numbers_added:
+                        if numbers_added:
                             user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(number_added)
+                                UserChangeMessage.phone_numbers_added(numbers_added)
                             )
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
