@@ -406,12 +406,12 @@ def recovery_measures(request, domain, build_id):
 def registry_case(request, domain, app_id):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
-    registry = request.GET.get("registry")
+    registry = request.GET.get("commcare_registry")
 
     missing = [
         name
         for name, value in zip(
-            ["case_id", "case_type", "registry"],
+            ["case_id", "case_type", "commcare_registry"],
             [case_id, case_type, registry]
         )
         if not value
