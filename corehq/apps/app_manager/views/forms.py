@@ -851,7 +851,6 @@ def _get_form_link_context(module, langs):
 
     linkable_items = []
     for candidate_module in module.get_app().get_modules():
-        case_type_match = candidate_module.case_type == module.case_type
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
@@ -871,6 +870,7 @@ def _get_form_link_context(module, langs):
         for candidate_form in candidate_module.get_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
+            case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
