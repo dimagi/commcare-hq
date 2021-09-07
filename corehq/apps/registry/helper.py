@@ -1,3 +1,5 @@
+import itertools
+
 from django.utils.functional import cached_property
 
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
@@ -81,8 +83,12 @@ def _get_case_ancestors(case):
     indices = case.live_indices
     while indices:
         case_ids = list({index.referenced_id for index in indices})
-        indices = CaseAccessorSQL.get_all_indices(case.domain, case_ids)
-        parents = CaseAccessorSQL.get_cases(case_ids, prefetched_indices=indices)
-        ancestors.extend(parents)
+        prefetched_indices = CaseAccessorSQL.get_all_indices(case.domain, case_ids)
+        live_parents = [
+            case for case in CaseAccessorSQL.get_cases(case_ids, prefetched_indices=prefetched_indices)
+            if not (case.closed or case.deleted)
+        ]
+        ancestors.extend(live_parents)
+        indices = list(itertools.chain.from_iterable(parent.live_indices for parent in live_parents))
 
     return ancestors

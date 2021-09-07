@@ -80,8 +80,10 @@ class TestGetCaseHierarchy(TestCase):
 
         cls.host_case_id = 'springfield'
         cls.grand_parent_case_id = 'mona'
+        cls.grand_parent_case_id_closed = 'abraham'
         cls.parent_case_id = 'homer'
         cls.child_case_id = 'bart'
+        cls.child_case_id_closed = 'dog'
         cls.extension_case_id = 'beer'
         host_case = CaseStructure(
             case_id=cls.host_case_id,
@@ -92,11 +94,17 @@ class TestGetCaseHierarchy(TestCase):
             attrs={'create': True, 'case_type': 'grandparent'},
         )
 
+        grand_parent_case_closed = CaseStructure(
+            case_id=cls.grand_parent_case_id_closed,
+            attrs={'create': True, 'case_type': 'grandparent', 'close': True},
+        )
+
         parent_case = CaseStructure(
             case_id=cls.parent_case_id,
             attrs={'create': True, 'case_type': 'parent'},
             indices=[
-                CaseIndex(grand_parent_case, identifier='parent'),
+                CaseIndex(grand_parent_case, identifier='mother'),
+                CaseIndex(grand_parent_case_closed, identifier='father'),
                 CaseIndex(host_case, identifier='host', relationship='extension'),
             ],
         )
@@ -104,23 +112,23 @@ class TestGetCaseHierarchy(TestCase):
         child_case = CaseStructure(
             case_id=cls.child_case_id,
             attrs={'create': True, 'case_type': 'child'},
-            indices=[CaseIndex(
-                parent_case,
-                identifier='parent',
-            )],
+            indices=[CaseIndex(parent_case, identifier='parent')],
+        )
+
+        child_case_closed = CaseStructure(
+            case_id=cls.child_case_id_closed,
+            attrs={'create': True, 'case_type': 'dog', 'close': True},
+            indices=[CaseIndex(parent_case, identifier='parent')],
+            walk_related=False
         )
 
         extension_case = CaseStructure(
             case_id=cls.extension_case_id,
             attrs={'create': True, 'case_type': 'extension'},
-            indices=[CaseIndex(
-                parent_case,
-                identifier='host',
-                relationship='extension',
-            )],
+            indices=[CaseIndex(parent_case, identifier='host', relationship='extension')],
             walk_related=False
         )
-        cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case, extension_case])
+        cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case, child_case_closed, extension_case])
 
     @classmethod
     def tearDownClass(cls):
