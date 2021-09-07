@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.exceptions import RegistryAccessException
-from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.helper import DataRegistryHelper, _get_case_descendants, _get_case_ancestors
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.schema import RegistrySchemaBuilder
 from corehq.apps.registry.tests.utils import create_registry_for_test
@@ -135,6 +135,30 @@ class TestGetCaseHierarchy(TestCase):
         self.assertEqual({case.case_id for case in cases}, {
             self.host_case_id, self.grand_parent_case_id, self.parent_case_id,
             self.child_case_id, self.extension_case_id
+        })
+
+    def test_get_ancestors_extension(self):
+        cases = _get_case_ancestors(CaseAccessorSQL.get_case(self.extension_case_id))
+        self.assertEqual({case.case_id for case in cases}, {
+            self.host_case_id, self.grand_parent_case_id, self.parent_case_id,
+        })
+
+    def test_get_ancestors_child(self):
+        cases = _get_case_ancestors(CaseAccessorSQL.get_case(self.child_case_id))
+        self.assertEqual({case.case_id for case in cases}, {
+            self.host_case_id, self.grand_parent_case_id, self.parent_case_id,
+        })
+
+    def test_get_descendants_parent(self):
+        cases = _get_case_descendants(CaseAccessorSQL.get_case(self.grand_parent_case_id))
+        self.assertEqual({case.case_id for case in cases}, {
+            self.parent_case_id, self.child_case_id, self.extension_case_id
+        })
+
+    def test_get_descendants_host(self):
+        cases = _get_case_descendants(CaseAccessorSQL.get_case(self.host_case_id))
+        self.assertEqual({case.case_id for case in cases}, {
+            self.parent_case_id, self.child_case_id, self.extension_case_id
         })
 
 

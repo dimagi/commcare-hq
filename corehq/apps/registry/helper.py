@@ -58,10 +58,10 @@ class DataRegistryHelper:
         self.pre_access_check(case.type)
         self.access_check(case)
 
-        return _get_ancestors(case) + [case] + _get_descendants(case)
+        return _get_case_ancestors(case) + [case] + _get_case_descendants(case)
 
 
-def _get_descendants(case):
+def _get_case_descendants(case):
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
     descendants = []
     seen = set()
@@ -74,7 +74,7 @@ def _get_descendants(case):
     return descendants
 
 
-def _get_ancestors(case):
+def _get_case_ancestors(case):
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
     ancestors = []
