@@ -305,6 +305,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'is_superuser': is_superuser,
             'view_data': {
                 'is_downstream_domain': bool(master_link),
                 'upstream_domains': upstream_domain_urls,
