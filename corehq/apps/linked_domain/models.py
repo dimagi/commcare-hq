@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _
 
 import jsonobject
 
-from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 
@@ -94,11 +93,6 @@ class DomainLink(models.Model):
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
-        if not domain_exists(linked_domain):
-            raise DomainLinkError(
-                _(f"The domain {linked_domain} does not exist. Make sure the name is correct and this domain "
-                  "hasn't been deleted.")
-            )
         existing_links = cls.all_objects.filter(linked_domain=linked_domain)
         active_links_with_other_domains = [
             domain_link for domain_link in existing_links

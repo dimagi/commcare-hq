@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from django.test import TestCase
 
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -8,28 +6,9 @@ from corehq.apps.linked_domain.models import DomainLink
 
 class LinkedDomainTests(TestCase):
 
-    def setUp(self):
-        self.domain_exists_patcher = patch('corehq.apps.linked_domain.models.domain_exists')
-        self.mock_domain_exists = self.domain_exists_patcher.start()
-        self.mock_domain_exists.return_value = True
-
     def tearDown(self):
         DomainLink.all_objects.all().delete()
-        self.domain_exists_patcher.stop()
         super(LinkedDomainTests, self).tearDown()
-
-    def test_non_existent_domain_raises_exception(self):
-        self.mock_domain_exists.return_value = False
-
-        with self.assertRaises(DomainLinkError):
-            DomainLink.link_domains('downstream', 'upstream')
-
-    def test_existent_domain_does_not_raise_exception(self):
-        # defaults to true
-        try:
-            DomainLink.link_domains('downstream', 'upstream')
-        except DomainLinkError:
-            self.fail("link_domains() should not raise a DomainLinkError exception.")
 
     def test_linking_existing(self):
         link = DomainLink.link_domains('linked', 'master')
