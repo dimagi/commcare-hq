@@ -397,7 +397,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="duplicate" template="case" default_search="true">
             <data key="case_type" ref="{base_xpath}/potential_duplicate_case_type"/>
             <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
-            <data key="registry" ref="'myregistry'"/>
+            <data key="commcare_registry" ref="'myregistry'"/>
           </query>
         </partial>"""
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
