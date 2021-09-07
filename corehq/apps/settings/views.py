@@ -16,7 +16,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 import qrcode
 from memoized import memoized
 from two_factor.models import PhoneDevice
-from two_factor.utils import default_device
+from two_factor.utils import default_device, backup_phones
 from two_factor.views import (
     BackupTokensView,
     DisableView,
@@ -56,6 +56,7 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import HQApiKey
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -64,6 +65,20 @@ from corehq.mobile_flags import (
     MULTIPLE_APPS_UNLIMITED,
 )
 from corehq.util.quickcache import quickcache
+
+
+def _user_can_use_phone(user):
+    if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+        return False
+
+    domains = (Domain.get_by_name(domain) for domain in user.domains)
+
+    # The reason we iterate through domains, rather than fetch them all at once (there is a view to do so)
+    # is due to concerns about scale. Most users belong to one or a few domains, so iteration isn't expensive.
+    # For users that DO belong to many domains, I'm working off the assumption that most of them are for
+    # enterprise domains, which have turned on messaging for most of their domains -- so we likely will
+    # short-circuit after only a few domains
+    return any(domain.granted_messaging_access for domain in domains)
 
 
 @login_and_domain_required
@@ -339,18 +354,25 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
         # this is only here to add the login_required decorator
         return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    def page_context(self):
-        if not is_request_using_sso(self.request):
-            return {}
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        idp = IdentityProvider.get_active_identity_provider_by_username(
-            self.request.user.username
-        )
-        return {
-            'is_using_sso': True,
-            'idp_name': idp.name,
-        }
+        if is_request_using_sso(self.request):
+            idp = IdentityProvider.get_active_identity_provider_by_username(
+                self.request.user.username
+            )
+            context.update({
+                'is_using_sso': True,
+                'idp_name': idp.name,
+            })
+        elif context.get('default_device'):
+            # Default device means the user has 2FA already enabled
+            has_existing_backup_phones = bool(context.get('backup_phones'))
+            context.update({
+                'allow_phone': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+            })
+
+        return context
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
@@ -375,7 +397,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('user', self.request.couch_user)
+            kwargs.setdefault('allow_phone', _user_can_use_phone(self.request.couch_user))
 
         return kwargs
 
@@ -450,7 +472,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        has_backup_phones = bool(backup_phones(self.request.user))
+        if not (has_backup_phones or _user_can_use_phone(request.couch_user)):
+            # NOTE: this behavior could be seen as un-intuitive. If a domain is not authorized to use phone/sms,
+            # we are still allowing full functionality if they have an existing backup phone. The primary reason
+            # is so that a user can delete a backup number if needed. The ability to add in a new number is still
+            # enabled just to prevent confusion -- it is expected to be an edge case.
+            raise Http404
+
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
     def done(self, form_list, **kwargs):
