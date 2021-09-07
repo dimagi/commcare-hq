@@ -1363,6 +1363,7 @@ class UserFilterForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
+            data_bind="value: location_id",
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
@@ -1411,11 +1412,8 @@ class UserFilterForm(forms.Form):
             user_type_title = _('Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field(
-                        "location_id",
-                        data_bind="value: location_id",
-                    ),
-                    data_bind="slideVisible: !isCrossDomain(), event: {change: location_change}",
+                    crispy.Field("location_id",),
+                    data_bind="slideVisible: !isCrossDomain()",
                 ),
                 crispy.Div(
                     crispy.Field(

@@ -39,13 +39,14 @@ from .signals import location_edited
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None, data_bind=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
         self.query_url = reverse('location_search', args=[self.domain])
+        self.data_bind = data_bind
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -66,6 +67,7 @@ class LocationSelectWidget(forms.Widget):
             'multiselect': self.multiselect,
             'placeholder': self.placeholder,
             'initial_data': initial_data,
+            'data_bind': self.data_bind,
             'attrs': self.build_attrs(self.attrs, attrs),
         })
 
@@ -589,6 +591,7 @@ class LocationFilterForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
+            data_bind='value: location_id',
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
@@ -602,10 +605,7 @@ class LocationFilterForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Locations"),
-                crispy.Div(
-                    crispy.Field('location_id', data_bind='value: location_id'),
-                    data_bind='event: {change: location_selected}'
-                ),
+                crispy.Field('location_id',),
                 crispy.Div(
                     crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
                     data_bind="slideVisible: location_id",

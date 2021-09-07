@@ -30,10 +30,6 @@ hqDefine('locations/js/filtered_download', [
             });
         });
 
-        self.location_selected = function () {
-            self.location_id($('#id_location_id').val());
-        };
-
         self.countLocations = function () {
             self.count(null);
             var data = {
