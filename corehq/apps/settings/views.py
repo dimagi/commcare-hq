@@ -287,7 +287,7 @@ class MyProjectsList(BaseMyAccountView):
     def post(self, request, *args, **kwargs):
         if self.request.couch_user.is_domain_admin(self.domain_to_remove):
             messages.error(request, _("Unable remove membership because you are the admin of %s")
-                                    % self.domain_to_remove)
+                % self.domain_to_remove)
         else:
             try:
                 self.request.couch_user.delete_domain_membership(self.domain_to_remove, create_record=True)
