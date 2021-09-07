@@ -52,16 +52,7 @@ class RegistryCaseDetailsTests(TestCase):
             )],
         )
 
-        extension_case = CaseStructure(
-            case_id=cls.extension_case_id,
-            attrs={'create': True, 'case_type': 'appendage'},
-            indices=[CaseIndex(
-                parent_case,
-                identifier='parent',
-                relationship='extension',
-            )],
-        )
-        cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case, extension_case])
+        cls.cases = CaseFactory(cls.domain).create_or_update_cases([child_case])
 
         cls.app = AppFactory(cls.domain).app
         cls.app.save()
