@@ -425,7 +425,7 @@ def registry_case(request, domain, app_id):
 
     app = get_app_cached(domain, app_id)
     try:
-        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
+        case = DataRegistryHelper(domain, registry_slug=registry).get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):

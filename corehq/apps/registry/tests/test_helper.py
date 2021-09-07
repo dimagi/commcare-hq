@@ -15,8 +15,7 @@ class TestDataRegistryHelper(SimpleTestCase):
             schema=[{"case_type": "a"}]
         )
         self.registry.get_granted_domains = _mock_get_granted_domain
-        self.helper = DataRegistryHelper("domain1", "registry_slug")
-        self.helper.__dict__["registry"] = self.registry  # prime cached property
+        self.helper = DataRegistryHelper("domain1", registry=self.registry)
 
         self.log_data_access_patch = patch.object(self.helper, "log_data_access")
         self.log_data_access = self.log_data_access_patch.start()
