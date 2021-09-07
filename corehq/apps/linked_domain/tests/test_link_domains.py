@@ -11,6 +11,7 @@ class LinkedDomainTests(TestCase):
     def setUp(self):
         self.domain_exists_patcher = patch('corehq.apps.linked_domain.models.domain_exists')
         self.mock_domain_exists = self.domain_exists_patcher.start()
+        self.mock_domain_exists.return_value = True
 
     def tearDown(self):
         DomainLink.all_objects.all().delete()
@@ -24,7 +25,7 @@ class LinkedDomainTests(TestCase):
             DomainLink.link_domains('downstream', 'upstream')
 
     def test_existent_domain_does_not_raise_exception(self):
-        self.mock_domain_exists.return_value = True
+        # defaults to true
         try:
             DomainLink.link_domains('downstream', 'upstream')
         except DomainLinkError:
