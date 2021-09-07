@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 
 import jsonobject
 
+from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 
@@ -93,6 +94,11 @@ class DomainLink(models.Model):
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
+        if not domain_exists(linked_domain):
+            raise DomainLinkError(
+                _(f"The domain {linked_domain} does not exist. Make sure the name is correct and this domain "
+                  "hasn't been deleted.")
+            )
         existing_links = cls.all_objects.filter(linked_domain=linked_domain)
         active_links_with_other_domains = [
             domain_link for domain_link in existing_links
@@ -101,7 +107,8 @@ class DomainLink(models.Model):
         if active_links_with_other_domains:
             already_linked_domain = active_links_with_other_domains[0].master_domain
             raise DomainLinkError(
-                _(f'{linked_domain} is already a downstream project space of {already_linked_domain}.')
+                _(f'{linked_domain} is already a downstream project space of {already_linked_domain}.\n'
+                  'You must remove the existing link before creating this new link.')
             )
 
         deleted_existing_links = [
