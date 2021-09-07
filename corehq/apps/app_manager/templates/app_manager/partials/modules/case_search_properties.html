@@ -253,7 +253,7 @@
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
                         data-content="{% trans_html_attr "Load additional data into forms in this module by performing extra queries against the data registry." %}">
               </label>
-              <div class="col-sm-9">
+              <div class="{% css_field_class %}">
                   <table class="table table-condensed">
                     <thead data-bind="visible: additionalRegistryQueries().length > 0">
                     <tr>
