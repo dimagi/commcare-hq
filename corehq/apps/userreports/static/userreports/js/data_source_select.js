@@ -10,6 +10,7 @@ hqDefine("userreports/js/data_source_select", function () {
                 'form': gettext('Form'),
                 'data_source': gettext('Data Source'),
             },
+            registrySlug: ko.observable(""),
         };
         $("#report-builder-form").koApplyBindings(dataSourceSelector);
         $('#js-next-data-source').click(function () {

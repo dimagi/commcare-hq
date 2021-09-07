@@ -15,6 +15,7 @@ from couchforms.analytics import get_exports_by_form
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -27,7 +28,8 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 
-ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
+ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source',
+                                                                         'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
@@ -94,6 +96,7 @@ class ApplicationDataSourceUIHelper(object):
                                                        initial=source_choices[0][0])
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
+        self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.Select(), required=False)
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -131,6 +134,9 @@ class ApplicationDataSourceUIHelper(object):
             for app_data in self.all_sources.values():
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
+        self.registry_slug_field.choices = sorted(
+            [(registry.slug, registry.name) for registry in DataRegistry.objects.accessible_to_domain(domain)]
+        )
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
@@ -141,16 +147,19 @@ class ApplicationDataSourceUIHelper(object):
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value}
         '''}
+        self.registry_slug_field.widget.attrs = {'data-bind': 'value: registrySlug'}
 
     def get_fields(self):
         fields = collections.OrderedDict()
         fields['source_type'] = self.source_type_field
         fields['application'] = self.application_field
         fields['source'] = self.source_field
+        fields['registry_slug'] = self.registry_slug_field
         return fields
 
     def get_app_source(self, data_dict):
-        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'])
+        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
+                                     data_dict['registry_slug'])
 
 
 def get_app_sources(domain):

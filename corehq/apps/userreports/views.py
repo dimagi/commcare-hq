@@ -437,6 +437,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
+                'registry_slug': app_source.registry_slug,
             }
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -472,6 +473,7 @@ class ConfigureReport(ReportBuilderView):
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:  # TODO: modify for existing registry report
+            self.registry_slug = None
             self.source_type = get_source_type_from_report_config(self.existing_report)
             if self.source_type != DATA_SOURCE_TYPE_RAW:
                 self.source_id = self.existing_report.config.meta.build.source_id
@@ -485,7 +487,7 @@ class ConfigureReport(ReportBuilderView):
             self.app_id = self.request.GET.get('application', None)
             if self.registry_slug:
                 self.source_type = 'case'
-                self.source_id = self.request.GET['case_type']
+                self.source_id = self.request.GET.get('case_type', None)  # TODO: fix not named case_type probably source?
                 self.app = None  # TODO: drop the need for this data anyways?
             else:
                 self.app = Application.get(self.app_id)

@@ -949,6 +949,7 @@ class DataSourceForm(forms.Form):
                 "option."),
             "application": _("Which application should the data come from?"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
+            "registry_slug": _("Select the data registry containing the data you wish to access in the report")
         }
         self.fields.update(report_source_fields)
 
