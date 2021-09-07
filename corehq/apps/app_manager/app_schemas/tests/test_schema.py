@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 from mock import MagicMock, patch
 
 from corehq.apps.app_manager import util as util
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
@@ -300,6 +300,69 @@ class SchemaTest(SimpleTestCase):
                     "phone_number": {},
                 },
             })
+
+    def test_get_session_schema_for_simple_module_with_case_from_registry(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        module.search_config.data_registry = "my-registry"
+        self.factory.form_requires_case(form)
+        schema = get_session_schema(form)
+        self.assertDictEqual(schema["structure"], {
+            "data": {
+                "merge": True,
+                "structure": {
+                    "case_id": {
+                        "reference": {
+                            "hashtag": "#registry_case",
+                            "source": "registry",
+                            "subset": "case",
+                            "key": "@case_id",
+                        },
+                    },
+                },
+            },
+        })
+
+    def test_get_casedb_schema_with_form_from_registry(self):
+        village = self.add_form("village")
+        module = village.get_module()
+        module.search_config.data_registry = "my-registry"
+        self.factory.form_requires_case(
+            village,
+            case_type=self.factory.app.get_module(0).case_type,
+            update={'foo': '/data/question1'}
+        )
+        schema = get_casedb_schema(village)
+        self.assertEqual(len(schema["subsets"]), 0, schema["subsets"])
+
+    def test_get_registry_schema_with_form_from_registry(self):
+        village = self.add_form("village")
+        module = village.get_module()
+        module.search_config.data_registry = "my-registry"
+        self.factory.form_requires_case(
+            village,
+            case_type=self.factory.app.get_module(0).case_type,
+            update={'foo': '/data/question1'}
+        )
+
+        schema = get_registry_schema(village)
+        self.assert_has_kv_pairs(schema, {
+            "id": "registry",
+            "uri": "jr://instance/remote",
+            "name": "registry_case",
+            "path": "/results/case",
+            "structure": {},
+        })
+
+        self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
+        self.assert_has_kv_pairs(schema["subsets"][0], {
+            'id': 'case',
+            'name': 'village',
+            'structure': {
+                'case_name': {"description": ""},
+                'foo': {"description": ""},
+            },
+            'related': None,
+        })
 
     # -- helpers --
 

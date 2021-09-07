@@ -45,7 +45,7 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details(self):
         response_content = self._make_request({
-            "registry": self.registry.slug, "case_id": self.case.case_id, "case_type": "patient",
+            "commcare_registry": self.registry.slug, "case_id": self.case.case_id, "case_type": "patient",
         }, 200)
         self.assertEqual(CaseDBFixture(self.case).fixture.decode('utf8'), response_content)
         self.assertEqual(1, RegistryAuditLog.objects.filter(
@@ -57,12 +57,12 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details_missing_case(self):
         self._make_request({
-            "registry": self.registry.slug, "case_id": "missing", "case_type": "patient",
+            "commcare_registry": self.registry.slug, "case_id": "missing", "case_type": "patient",
         }, 404)
 
     def test_get_case_details_missing_registry(self):
         self._make_request({
-            "registry": "not-a-registry", "case_id": self.case.case_id, "case_type": "patient",
+            "commcare_registry": "not-a-registry", "case_id": self.case.case_id, "case_type": "patient",
         }, 404)
 
     def _make_request(self, params, expected_response_code):
@@ -73,9 +73,9 @@ class RegistryCaseDetailsTests(TestCase):
 
 
 @generate_cases([
-    ({}, "'case_id', 'case_type', 'registry' are required parameters"),
-    ({"case_id": "a"}, "'case_type', 'registry' are required parameters"),
-    ({"case_id": "a", "case_type": "b"}, "'registry' is a required parameter"),
+    ({}, "'case_id', 'case_type', 'commcare_registry' are required parameters"),
+    ({"case_id": "a"}, "'case_type', 'commcare_registry' are required parameters"),
+    ({"case_id": "a", "case_type": "b"}, "'commcare_registry' is a required parameter"),
 ], RegistryCaseDetailsTests)
 def test_required_params(self, params, message):
     content = self._make_request(params, 400)

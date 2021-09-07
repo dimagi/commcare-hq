@@ -200,7 +200,7 @@ class RemoteRequestFactory(object):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
-                    ref=self.module.search_config.data_registry,
+                    ref=f"'{self.module.search_config.data_registry}'",
                 )
             )
         return datums
