@@ -298,6 +298,7 @@ hqDefine("export/js/export_list", [
 
         // Loading/error handling UI
         self.loadingErrorMessage = ko.observable('');
+        self.isNotBulkDeleting = ko.observable(true);
         self.isLoadingPanel = ko.observable(true);
         self.isLoadingPage = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -452,6 +453,12 @@ hqDefine("export/js/export_list", [
 
         self.BulkExportDelete = function (observable, event) {
             count = self.bulkExportDownloadCount;
+            //probably a better fix for this
+            for(let i = 0; i < self.panels().length; i++){
+                panel = self.panels()[i];
+                panel.isLoadingPanel(true);
+                panel.isNotBulkDeleting(false);
+            }
             bulkDelete = function () {
                 selected = _.filter(self.exports(), function (e) {return e.addedToBulk();});
                 deleteArray = [];
