@@ -239,6 +239,8 @@ class CommCareUserImporter(BaseUserImporter):
                              for code in location_codes]
                 self.logger.add_info(
                     UserChangeMessage.assigned_locations_info(locations))
+            else:
+                self.logger.add_info(UserChangeMessage.assigned_locations_info([]))
 
         # log this after assigned locations are updated, which can re-set primary location
         if self.user.location_id != user_current_primary_location_id:
@@ -249,6 +251,8 @@ class CommCareUserImporter(BaseUserImporter):
                         self.user.get_sql_location(self.user_domain)
                     )
                 )
+            else:
+                self.logger.add_info(UserChangeMessage.primary_location_removed())
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(

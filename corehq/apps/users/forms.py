@@ -1064,6 +1064,10 @@ class CommtrackUserForm(forms.Form):
                 user_change_logger.add_info(
                     UserChangeMessage.assigned_locations_info(locations)
                 )
+            else:
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info([])
+                )
 
         if 'location_id' in location_updates:
             location_id = location_updates['location_id']
@@ -1073,6 +1077,8 @@ class CommtrackUserForm(forms.Form):
                 user_change_logger.add_info(
                     UserChangeMessage.primary_location_info(primary_location)
                 )
+            else:
+                user_change_logger.add_info(UserChangeMessage.primary_location_removed())
 
         if program_id is not None:
             self._log_program_changes(user_change_logger, program_id)
