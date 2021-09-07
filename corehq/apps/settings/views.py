@@ -372,6 +372,13 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
         # this is only here to add the login_required decorator
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        if step == 'method':
+            kwargs.setdefault('user', self.request.couch_user)
+
+        return kwargs
+
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'

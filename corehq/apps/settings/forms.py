@@ -28,6 +28,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
 from corehq.apps.users.models import CouchUser, HQApiKey
+from corehq.apps.domain.models import Domain
 
 
 class HQPasswordChangeForm(PasswordChangeForm):
@@ -140,9 +141,9 @@ class HQDeviceValidationForm(DeviceValidationForm):
 
 class HQTwoFactorMethodForm(MethodForm):
 
-    def __init__(self, **kwargs):
-        super(HQTwoFactorMethodForm, self).__init__(**kwargs)
-        if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+    def __init__(self, *, user, **kwargs):
+        super().__init__(**kwargs)
+        if not self._user_can_use_phone(user):
             # Block people from setting up the phone method as their default
             phone_methods = [method for method, _ in get_available_phone_methods()]
             self.fields['method'].choices = [
@@ -175,6 +176,21 @@ class HQTwoFactorMethodForm(MethodForm):
                 ),
             )
         )
+
+    # TODO: This functionality probably should be moved to the view (TwoFactorSetupView)
+    # That way we can just pass in a flag about whether or not phone method are allowed.
+    # Because this logic may be used elsewhere, we really shouldn't be importing a form elsewhere
+    # to get access to that logic.
+    # It also makes testing this form much easier
+    @staticmethod
+    def _user_can_use_phone(user):
+        if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+            return False
+
+        domains = (Domain.get_by_name(domain) for domain in user.domains)
+
+        # This assumes that the user will always be a web user -- I'm not sure that's a valid assumption
+        return any(domain.granted_messaging_access for domain in domains)
 
 
 class HQTOTPDeviceForm(TOTPDeviceForm):
