@@ -53,3 +53,12 @@ class DataRegistryHelper:
             "case_id": case_id
         })
         return case
+
+    def get_case_hierarchy(self, case):
+        from corehq.apps.reports.view_helpers import get_case_hierarchy
+        self.pre_access_check(case.type)
+        self.access_check(case)
+        return [
+            c for c in get_case_hierarchy(case, {})['case_list']
+            if not c.closed
+        ]
