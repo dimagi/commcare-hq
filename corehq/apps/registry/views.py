@@ -18,6 +18,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_multiselect, use_daterangepicker
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
 from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
@@ -121,6 +123,7 @@ def manage_registry(request, domain, registry_slug):
         "available_domains": available_domains,
         "invited_domains": [invitation.domain for invitation in all_invitations],
         "log_action_types": DataRegistryAuditViewHelper.action_options(is_owner),
+        "user_timezone": get_timezone_for_user(request.couch_user, domain),
         "current_page": {
             "title": _("Manage Registry"),
             "page_name": _("Manage Registry"),
@@ -367,14 +370,19 @@ def registry_audit_logs(request, domain, registry_slug):
     except ValueError:
         return JsonResponse({"error": "Invalid date parameter"})
 
-    domain = request.GET.get('domain') or None
+    domain_param = request.GET.get('domain') or None
     action = request.GET.get('action') or None
 
-    helper.filter(domain, start_date, end_date, action)
+    helper.filter(domain_param, start_date, end_date, action)
+
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    logs = helper.get_logs(skip, limit)
+    for log in logs:
+        log['date'] = ServerTime(log['date']).user_time(timezone).done().isoformat()
 
     return JsonResponse({
         "total": helper.get_total(),
-        "logs": helper.get_logs(skip, limit)
+        "logs": logs
     })
 
 

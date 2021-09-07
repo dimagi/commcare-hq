@@ -1,10 +1,8 @@
-from datetime import datetime
-
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
-from django.db.models import Q
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -309,7 +307,7 @@ class RegistryAuditLog(models.Model):
     def to_json(self):
         return {
             "registry_slug": self.registry.slug,
-            "date": self.date.isoformat(),
+            "date": self.date,
             "action": self.action,
             "action_display": self.get_action_display(),
             "domain": self.domain,
