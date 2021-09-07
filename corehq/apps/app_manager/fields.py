@@ -28,8 +28,9 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 
-ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source',
-                                                                         'registry_slug'])
+ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
+RegistryDataSource = collections.namedtuple('RegistryDataSource', ['application', 'source_type', 'source',
+                                                                   'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
@@ -137,7 +138,6 @@ class ApplicationDataSourceUIHelper(object):
         self.registry_slug_field.choices = sorted(
             [(registry.slug, registry.name) for registry in DataRegistry.objects.accessible_to_domain(domain)]
         )
-
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
         self.application_field.widget.attrs = {'data-bind': 'value: application'}
@@ -158,8 +158,10 @@ class ApplicationDataSourceUIHelper(object):
         return fields
 
     def get_app_source(self, data_dict):
-        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
-                                     data_dict['registry_slug'])
+        if data_dict['registry_slug'] != '':
+            return RegistryDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
+                                      data_dict['registry_slug'])
+        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'])
 
 
 def get_app_sources(domain):

@@ -437,8 +437,9 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
-                'registry_slug': app_source.registry_slug,
             }
+            if 'registry_slug' in app_source._fields:
+                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
