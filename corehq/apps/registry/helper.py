@@ -55,16 +55,23 @@ class DataRegistryHelper:
         return case
 
     def get_case_hierarchy(self, case):
-        from corehq.apps.reports.view_helpers import get_case_hierarchy as get_descendant_cases
         self.pre_access_check(case.type)
         self.access_check(case)
 
-        ancestors = _get_ancestors(case)
-        descendants = [
-            c for c in get_descendant_cases(case, {})['case_list']
-            if not c.closed
-        ]
-        return ancestors + descendants
+        return _get_ancestors(case) + [case] + _get_descendants(case)
+
+
+def _get_descendants(case):
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    descendants = []
+    seen = set()
+    case_ids = {case.case_id}
+    while case_ids:
+        seen.update(case_ids)
+        new_cases = CaseAccessorSQL.get_reverse_indexed_cases(case.domain, list(case_ids), is_closed=False)
+        case_ids = {case.case_id for case in new_cases} - seen
+        descendants.extend(new_cases)
+    return descendants
 
 
 def _get_ancestors(case):
