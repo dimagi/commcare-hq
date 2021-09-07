@@ -514,7 +514,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         suite = self.app.create_suite()
         expected = """
@@ -533,7 +532,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_hidden(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].hidden = True
         suite = self.app.create_suite()
         expected = """
@@ -552,7 +550,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver_itemset(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
@@ -663,6 +660,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt default="3" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_allow_blank_value(self, *args):
+        self.module.search_config.properties[0].allow_blank_value = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" allow_blank_value="true">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
