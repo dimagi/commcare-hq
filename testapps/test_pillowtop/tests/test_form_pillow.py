@@ -10,11 +10,9 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     change_meta_from_kafka_message,
 )
-from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
@@ -48,15 +46,6 @@ class FormPillowTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
-
-    def test_xform_pillow_couch(self):
-        form = self._make_form()
-        kafka_seq = self._get_kafka_seq()
-        producer.send_change(topics.FORM, doc_to_change(form.to_json()).metadata)
-        self.assertFalse(self.app.has_submissions)
-
-        self.pillow.process_changes(since=kafka_seq, forever=False)
-        self.assertTrue(Application.get(self.app._id).has_submissions)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_pillow_sql(self):
