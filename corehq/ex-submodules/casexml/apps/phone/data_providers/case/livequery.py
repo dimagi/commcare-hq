@@ -258,8 +258,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     open_ids = set(owned_ids)
     while next_ids:
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
-        with timing_context("get_related_indices({} cases, {} seen)".format(
-            len(next_ids), len(exclude))):
+        with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
             related = accessor.get_related_indices(list(next_ids), exclude)
             if not related:
                 break
@@ -282,8 +281,8 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         # available case with live extension -> live
         for case_id in open_ids:
             if (case_id not in live_ids
-                and not is_extension(case_id)
-                and has_live_extension(case_id)):
+                    and not is_extension(case_id)
+                    and has_live_extension(case_id)):
                 enliven(case_id)
 
         debug('live: %r', live_ids)
