@@ -424,11 +424,13 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     app = get_app_cached(domain, app_id)
+    helper = DataRegistryHelper(domain, registry)
     try:
-        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
+        case = helper.get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
-    return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")
+    cases = helper.get_case_hierarchy(case)
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
