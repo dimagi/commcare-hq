@@ -8,18 +8,19 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled
 
 from ..fixtures import location_fixture_generator
 from .util import make_loc
 
 
-@flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-class LocationGroupTest(TestCase):
+@run_with_sql_backend
+class LocationGroupBase(TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        super(LocationGroupTest, cls).setUpClass()
+    def setUpClass(cls, set_location=True):
+        super().setUpClass()
         cls.domain = create_domain('locations-test')
         cls.domain.convert_to_commtrack()
         bootstrap_location_types(cls.domain.name)
@@ -34,7 +35,8 @@ class LocationGroupTest(TestCase):
             first_name='Bob',
             last_name='Builder',
         )
-        cls.user.set_location(cls.loc)
+        if set_location:
+            cls.user.set_location(cls.loc)
 
         cls.test_state = make_loc(
             'teststate',
@@ -57,7 +59,10 @@ class LocationGroupTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        super(LocationGroupTest, cls).tearDownClass()
+        super().tearDownClass()
+
+
+class LocationGroupTest(LocationGroupBase):
 
     def test_group_name(self):
         # just location name for top level
@@ -158,14 +163,20 @@ class LocationGroupTest(TestCase):
             self.loc.sql_location.case_sharing_group_object().metadata
         )
 
+
+@flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+class UnsetLocationGroupTest(LocationGroupBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass(set_location=False)
+
     @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
     def test_location_fixture_generator_no_user_location(self):
         """
         Ensures that a user without a location will still receive an empty fixture
         """
-        self.user.unset_location()
-        self.addCleanup(self.user.set_location, self.loc)
-
+        assert self.user.location is None
         fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
         self.assertEqual(len(fixture), 1)
         self.assertEqual(len(fixture[0].findall('.//state')), 0)
@@ -175,7 +186,6 @@ class LocationGroupTest(TestCase):
         Ensures that a domain that doesn't use locations doesn't send an empty
         location fixture
         """
-        self.user.unset_location()
-        self.addCleanup(self.user.set_location, self.loc)
+        assert self.user.location is None
         fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
         self.assertEqual(len(fixture), 0)
