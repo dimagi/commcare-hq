@@ -66,7 +66,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             "is_active": _("is active"),
             "language": _("language"),
             "phone_numbers": _("phone numbers"),
-            "location_id": _("primary location (mobile users only)"),
+            "location_id": _("location"),
+            "commcare_location_id": _("location"),
             "user_data": user_data_label,
             "two_factor_auth_disabled_until": _("two factor authentication disabled"),
         }
@@ -149,11 +150,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield _user_history_row(record, self.domain, self.timezone)
+            yield self._user_history_row(record, self.domain, self.timezone)
 
-    @classmethod
     @memoized
-    def get_location_name(self, location_id):
+    def _get_location_name(self, location_id):
         from corehq.apps.locations.models import SQLLocation
         if not location_id:
             return None
@@ -163,60 +163,52 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             return None
         return location_object.display_name
 
+    def _user_history_row(self, record, domain, timezone):
+        return [
+            cached_user_id_to_username(record.user_id),
+            cached_user_id_to_username(record.changed_by),
+            _get_action_display(record.action),
+            record.details['changed_via'],
+            record.message,
+            self._user_history_details_cell(record.details['changes'], domain),
+            ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
+        ]
 
-def _user_history_row(record, domain, timezone):
-    return [
-        cached_user_id_to_username(record.user_id),
-        cached_user_id_to_username(record.changed_by),
-        _get_action_display(record.action),
-        record.details['changed_via'],
-        record.message,
-        _user_history_details_cell(record.details['changes'], domain),
-        ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
-    ]
+    def _user_history_details_cell(self, changes, domain):
+        def _html_list(changes, unstyled=True):
+            items = []
+            for key, value in changes.items():
+                if isinstance(value, dict):
+                    value = _html_list(value, unstyled=unstyled)
+                elif isinstance(value, list):
+                    value = format_html(", ".join(value))
+                else:
+                    value = format_html(str(value))
+                items.append("<li>{}: {}</li>".format(key, value))
 
+            class_attr = "class='list-unstyled'" if unstyled else ""
+            return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
 
-def _user_history_details_cell(changes, domain):
-    def _html_list(changes, unstyled=True):
-        items = []
+        properties = UserHistoryReport.get_primary_properties(domain)
+        properties.pop("user_data", None)
+        primary_changes = {}
+        all_changes = {}
+
         for key, value in changes.items():
-            if isinstance(value, dict):
-                value = _html_list(value, unstyled=unstyled)
-            elif isinstance(value, list):
-                value = format_html(", ".join(value))
-            else:
-                value = format_html(str(value))
-            items.append("<li>{}: {}</li>".format(key, value))
+            if key in properties:
+                if key in ('commcare_location_id', 'location_id'):
+                    value = self._get_location_name(value)
+                primary_changes[properties[key]] = value
+                all_changes[properties[key]] = value
+            if key == 'user_data':
+                for key, value in changes['user_data'].items():
+                    all_changes[key] = value
 
-        class_attr = "class='list-unstyled'" if unstyled else ""
-        return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
-
-    properties = UserHistoryReport.get_primary_properties(domain)
-    properties.pop("user_data", None)
-    primary_changes = {}
-    all_changes = {}
-
-    def set_changes_key_val(dict):
-        if key == 'commcare_location_id':
-            dict[_("primary location (mobile users only)")] = UserHistoryReport.get_location_name(value)
-        if key == 'location_id':
-            dict[_("location")] = UserHistoryReport.get_location_name(value)
-        else:
-            dict[_(key)] = value
-
-    for key, value in changes.items():
-        if key in properties:
-            set_changes_key_val(primary_changes)
-            set_changes_key_val(all_changes)
-        if key == 'user_data':
-            for key, value in changes['user_data'].items():
-                set_changes_key_val(all_changes)
-
-    more_count = len(all_changes) - len(primary_changes)
-    return render_to_string("reports/standard/partials/user_history_changes.html", {
-        "primary_changes": _html_list(primary_changes) if primary_changes else None,
-        "all_changes": _html_list(all_changes) if all_changes else None,
-        "more_count": more_count,
+        more_count = len(all_changes) - len(primary_changes)
+        return render_to_string("reports/standard/partials/user_history_changes.html", {
+            "primary_changes": _html_list(primary_changes) if primary_changes else None,
+            "all_changes": _html_list(all_changes) if all_changes else None,
+            "more_count": more_count,
     })
 
 
