@@ -56,18 +56,7 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        if value == '':
-            return self.add_query(case_property_missing(case_property_name), clause)
-        if fuzzy:
-            positive_clause = clause != queries.MUST_NOT
-            return (
-                # fuzzy match
-                self.add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # non-fuzzy match. added to improve the score of exact matches
-                .add_query(case_property_text_query(case_property_name, value),
-                            queries.SHOULD if positive_clause else clause))
-        else:
-            return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
+        return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
@@ -89,13 +78,6 @@ class CaseSearchES(CaseES):
             case_property_range_query(case_property_name, gt, gte, lt, lte),
             clause
         )
-
-    def date_range_case_property_query(self, case_property_name, gt=None,
-                                       gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the date range criteria.
-        """
-        return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
@@ -153,6 +135,22 @@ def case_property_filter(case_property_name, value):
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
+
+
+def case_property_query(case_property_name, value, fuzzy=False):
+    """
+    Search for all cases where case property with name `case_property_name`` has text value `value`
+    """
+    if value == '':
+        return case_property_missing(case_property_name)
+    if fuzzy:
+        return filters.OR(
+            # fuzzy match
+            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
+            # non-fuzzy match. added to improve the score of exact matches
+            case_property_text_query(case_property_name, value),
+        )
+    return exact_case_property_text_query(case_property_name, value)
 
 
 def exact_case_property_text_query(case_property_name, value):

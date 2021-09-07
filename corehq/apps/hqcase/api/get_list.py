@@ -28,12 +28,6 @@ def _to_int(val, param_name):
         raise UserError(f"'{val}' is not a valid value for '{param_name}'")
 
 
-def _get_custom_property_filter(case_property, val):
-    if val == "":
-        return case_search.case_property_missing(case_property)
-    return case_search.exact_case_property_text_query(case_property, val)
-
-
 def _make_date_filter(date_filter):
     filter_fn = make_date_filter(date_filter)
 
@@ -62,7 +56,7 @@ SIMPLE_FILTERS = {
 # Compound filters take the form `prefix.qualifier=value`
 # These filter functions are called with qualifier and value
 COMPOUND_FILTERS = {
-    'property': _get_custom_property_filter,
+    'property': case_search.case_property_query,
     'last_modified': _make_date_filter(case_es.modified_range),
     'server_last_modified': _make_date_filter(case_es.server_modified_range),
     'date_opened': _make_date_filter(case_es.opened_range),
