@@ -39,7 +39,7 @@ hqDefine('users/js/filtered_download', [
             });
         });
 
-         self.countUsers = function () {
+        self.countUsers = function () {
             self.count(null);
             var data = {
                 search_string: self.search_string(),
