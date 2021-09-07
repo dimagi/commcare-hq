@@ -472,10 +472,10 @@ class EntriesHelper(object):
             ))
 
             if module_offers_search(detail_module) and detail_module.search_config.data_registry:
-                datums.extend(self.get_data_registry_query_datum(datum, detail_module))
+                datums.extend(self.get_data_registry_query_datums(datum, detail_module))
         return datums
 
-    def get_data_registry_query_datum(self, datum, module):
+    def get_data_registry_query_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
