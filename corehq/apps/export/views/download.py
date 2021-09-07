@@ -49,7 +49,7 @@ from corehq.apps.export.forms import (
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
 )
-from corehq.apps.export.models import ExportInstance, FormExportInstance
+from corehq.apps.export.models import FormExportInstance
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
@@ -67,7 +67,6 @@ from corehq.apps.reports.tasks import build_form_multimedia_zipfile
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
-from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.toggles import PAGINATED_EXPORTS
 
 
@@ -478,17 +477,9 @@ def has_multimedia(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     export_object = FormExportInstance.get(request.GET.get('export_id'))
-    if isinstance(export_object, ExportInstance):
-        has_multimedia = export_object.has_multimedia
-    else:
-        has_multimedia = forms_have_multimedia(
-            domain,
-            export_object.app_id,
-            getattr(export_object, 'xmlns', '')
-        )
     return json_response({
         'success': True,
-        'hasMultimedia': has_multimedia,
+        'hasMultimedia': export_object.has_multimedia,
     })
 
 

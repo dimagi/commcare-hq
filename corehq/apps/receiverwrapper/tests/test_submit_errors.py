@@ -39,6 +39,7 @@ def tmpfile(mode='w', *args, **kwargs):
     return (os.fdopen(fd, mode), path)
 
 
+@sharded
 class SubmissionErrorTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -279,10 +280,6 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             lock.release()
         self.assertEqual(response.status_code, 423)
 
-
-@sharded
-class SubmissionErrorTestSQL(SubmissionErrorTest):
-
     def test_error_publishing_to_kafka(self):
         sql_patch = patch(
             'corehq.form_processor.backends.sql.processor.FormProcessorSQL.publish_changes_to_kafka',
@@ -305,6 +302,7 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         error = ConnectionClosedError(endpoint_url='url')
         with self.assertRaises(ConnectionClosedError), patch.object(get_blob_db(), 'put', side_effect=error):
             self._submit('form_with_case.xml')
+        self.client.exc_info = None  # clear error to prevent it from being raised on next request
 
         stubs = UnfinishedSubmissionStub.objects.filter(
             domain=self.domain, saved=False, xform_id=FORM_WITH_CASE_ID
