@@ -838,6 +838,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(query.filter(case_id=case_id, domain=domain))
 
     @staticmethod
+    def get_all_indices(domain, case_ids):
+        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
+            'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+            [domain, case_ids])
+        )
+
+    @staticmethod
     def get_reverse_indices(domain, case_id):
         indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
             'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
@@ -899,10 +906,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
         cases_by_id = {case.case_id: case for case in cases}
         if cases_by_id:
-            indices = list(CommCareCaseIndexSQL.objects.plproxy_raw(
-                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-                [domain, list(cases_by_id)])
-            )
+            indices = CaseAccessorSQL.get_all_indices(domain, list(cases_by_id))
             _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
 

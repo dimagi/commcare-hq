@@ -77,16 +77,12 @@ def _get_descendants(case):
 def _get_ancestors(case):
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 
-    def _get_parent_index(child):
-        index = child.get_index('parent')
-        if index and not index.is_deleted:
-            return index
-
     ancestors = []
-    index = _get_parent_index(case)
-    while index:
-        parent = CaseAccessorSQL.get_case(index.referenced_id)
-        index = _get_parent_index(parent)
-        ancestors.append(parent)
+    indices = case.live_indices
+    while indices:
+        case_ids = list({index.referenced_id for index in indices})
+        indices = CaseAccessorSQL.get_all_indices(case.domain, case_ids)
+        parents = CaseAccessorSQL.get_cases(case_ids, prefetched_indices=indices)
+        ancestors.extend(parents)
 
     return ancestors

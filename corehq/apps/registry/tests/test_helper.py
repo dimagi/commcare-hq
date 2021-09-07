@@ -133,7 +133,7 @@ class TestGetCaseHierarchy(TestCase):
     def test_get_case_hierarchy(self):
         cases = self.helper.get_case_hierarchy(CaseAccessorSQL.get_case(self.parent_case_id))
         self.assertEqual({case.case_id for case in cases}, {
-            self.grand_parent_case_id, self.parent_case_id,
+            self.host_case_id, self.grand_parent_case_id, self.parent_case_id,
             self.child_case_id, self.extension_case_id
         })
 
