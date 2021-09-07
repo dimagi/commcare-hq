@@ -78,7 +78,7 @@ branches:
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/add-for-domain # MK Sep 1
-#    - mk/user-history/track-api-updates+mk/user-history/add-for-domain # MK Sep 2
+    - mk/user-history/track-api-updates+mk/user-history/add-for-domain+mk/user-history/track-ui-number-removal # MK Sep 2
     - gh/remove-pickles-from-accounting # Graham Sep 3
     - gh/remove-pickles-from-export # Graham Sep 3
 submodules: { }
