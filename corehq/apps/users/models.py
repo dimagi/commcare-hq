@@ -144,6 +144,8 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
+    'manage_data_registry': 'manage_data_registry_list',
+    'view_data_registry_contents': 'view_data_registry_contents_list',
 }
 
 
@@ -190,6 +192,11 @@ class Permissions(DocumentSchema):
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
+
+    manage_data_registry = BooleanProperty(default=False)
+    manage_data_registry_list = StringListProperty(default=[])
+    view_data_registry_contents = BooleanProperty(default=False)
+    view_data_registry_contents_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
