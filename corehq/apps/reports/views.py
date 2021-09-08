@@ -228,8 +228,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
-    default_scheduled_report_length = 10
-
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -276,10 +274,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
         for report in scheduled_reports:
             self._adjust_report_day_and_time(report)
         return sorted(scheduled_reports, key=self._report_sort_key())
-
-    @property
-    def show_all_scheduled_reports(self):
-        return self.request.GET.get('show_all_scheduled_reports', False)
 
     @property
     def others_scheduled_reports(self):
@@ -329,13 +323,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     def page_context(self):
         user = self.request.couch_user
         others_scheduled_reports = self.others_scheduled_reports
-        if self.show_all_scheduled_reports:
-            num_unlisted_scheduled_reports = 0
-        else:
-            cur_len = len(others_scheduled_reports)
-            num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
-            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
-                                                                     cur_len)]
 
         class OthersScheduledReportWrapper(ReportNotification):
             @property
@@ -353,6 +340,14 @@ class MySavedReportsView(BaseProjectReportSectionView):
             self.report_details(r) for r in self.scheduled_reports
         ]
 
+        if self.request.GET.get('page'):
+            print("request is coming through")
+            return json_response({
+                'something': 4,
+            })
+        else:
+            print("pageload request")
+
         return {
             'couch_user': user,
             'user_email': user.get_email(),
@@ -360,7 +355,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'configs': self.good_configs,
             'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
-            'extra_reports': num_unlisted_scheduled_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -370,7 +364,15 @@ class MySavedReportsView(BaseProjectReportSectionView):
             }
         }
 
-    def report_details(self, report, user_email=None, context_secret=None):
+    def get_page(self, page=1, limit=5):
+        scheduled_reports = [
+            self.report_details(r) for r in self.scheduled_reports[limit * (page - 1):limit * page]
+        ]
+
+        return scheduled_reports, len(self.schedulred_reports)
+
+    @staticmethod
+    def report_details(report, user_email=None, context_secret=None):
         details = {
             'id': report.get_id,
             'addedToBulk': report.addedToBulk,
@@ -379,13 +381,9 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'recipient_emails': report.recipient_emails,
             'config_ids': report.config_ids,
             'send_to_owner': report.send_to_owner,
-            'attach_excel': report.attach_excel,
-            'language': report.language,
-            'email_subject': report.email_subject,
             'hour': report.hour,
             'minute': report.minute,
             'day': report.day,
-            'interval': report.interval,
             'uuid': report.uuid,
             'start_date': report.start_date,
 
@@ -395,9 +393,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'is_editable': report.is_editable,
             'owner_email': report.owner_email,
             'day_name': report.day_name,
-            'recipients_by_language': report.recipients_by_language,
 
-            #for some reason can't import 'all_recipient_emails': report.all_recipient_emails,
             #urls
             'editUrl': reverse(ScheduledReportsView.urlname, args=(report.domain, report.get_id)),
             'viewUrl': reverse(view_scheduled_report, args=(report.domain, report.get_id)),
@@ -406,12 +402,34 @@ class MySavedReportsView(BaseProjectReportSectionView):
         }
 
         #only for others_scheduled_reports
-        #why did I do this again
         if user_email and context_secret:
             details['unsubscribeUrl'] = reverse(ReportNotificationUnsubscribeView.urlname,
                                                 args=(report.get_id, user_email, context_secret))
 
         return details
+
+
+@login_and_domain_required
+@require_GET
+@location_safe
+def page_context(request, domain):
+
+    #currently cant instantiate MySavedReportsView - need to pass in domain as an arg(?) how?
+    #print("made it to page_context")
+    #view = MySavedReportsView()
+
+    nothing = MySavedReportsView(domain)
+    print(nothing)
+
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 5))
+
+    (reports, total) = nothing.get_page(page, limit)
+
+    return JsonResponse({
+        'reports': reports,
+        'total': total,
+    })
 
 
 def should_update_export(last_accessed):
