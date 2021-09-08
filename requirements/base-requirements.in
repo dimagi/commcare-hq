@@ -54,7 +54,7 @@ gevent==1.4.0
 ghdiff==0.4
 greenlet==0.4.17
 gunicorn
-hiredis==1.1.0
+hiredis==2.0.0
 httpagentparser~=1.7
 iso8601==0.1.13
 Jinja2~=2.11.3
