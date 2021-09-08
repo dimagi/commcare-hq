@@ -251,18 +251,21 @@ class RegistryAuditLog(models.Model):
     ACTION_SCHEMA_CHANGED = "schema"
     ACTION_DATA_ACCESSED = "data_accessed"
 
+    NON_OWNER_ACTION_CHOICES = (
+        (ACTION_INVITATION_ACCEPTED, _("Invitation Accepted")),
+        (ACTION_INVITATION_REJECTED, _("Invitation Rejected")),
+        (ACTION_GRANT_ADDED, _("Grant created")),
+        (ACTION_GRANT_REMOVED, _("Grant removed")),
+        (ACTION_DATA_ACCESSED, _("Data Accessed")),
+    )
+
     ACTION_CHOICES = (
         (ACTION_ACTIVATED, _("Registry Activated")),
         (ACTION_DEACTIVATED, _("Registry De-activated")),
         (ACTION_INVITATION_ADDED, _("Invitation Added")),
         (ACTION_INVITATION_REMOVED, _("Invitation Revoked")),
-        (ACTION_INVITATION_ACCEPTED, _("Invitation Accepted")),
-        (ACTION_INVITATION_REJECTED, _("Invitation Rejected")),
-        (ACTION_GRANT_ADDED, _("Grant created")),
-        (ACTION_GRANT_REMOVED, _("Grant removed")),
         (ACTION_SCHEMA_CHANGED, _("Schema Changed")),
-        (ACTION_DATA_ACCESSED, _("Data Accessed")),
-    )
+    ) + NON_OWNER_ACTION_CHOICES
 
     RELATED_OBJECT_REGISTRY = "registry"
     RELATED_OBJECT_INVITATION = "invitation"
@@ -295,6 +298,16 @@ class RegistryAuditLog(models.Model):
                 name="registryauditlog_rel_obj_idx"
             ),
         ]
+
+    def to_json(self):
+        return {
+            "registry_slug": self.registry.slug,
+            "date": self.date,
+            "action": self.action,
+            "action_display": self.get_action_display(),
+            "domain": self.domain,
+            "user": self.user.username,
+        }
 
 
 class RegistryAuditHelper:
