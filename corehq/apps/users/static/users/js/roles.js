@@ -380,7 +380,7 @@ hqDefine('users/js/roles',[
                     data.viewRegistryContentsPermission.specific)
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific)
+                data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific, 'path')
                 return data;
             },
         };
