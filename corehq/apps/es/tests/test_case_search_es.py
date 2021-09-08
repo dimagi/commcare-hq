@@ -622,7 +622,7 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
             {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
         ]
-        config = self._create_case_search_config()
+        self._create_case_search_config()
         self._assert_query_runs_correctly(
             self.domain,
             cases,
