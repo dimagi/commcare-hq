@@ -22,7 +22,7 @@ babel==2.8.0
     #   sphinx
 backcall==0.2.0
     # via ipython
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
     # via
@@ -202,7 +202,7 @@ elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
-email_validator==1.1.2
+email_validator==1.1.3
     # via -r base-requirements.in
 et-xmlfile==1.0.1
     # via openpyxl
@@ -228,11 +228,8 @@ gevent==1.4.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-    #   gipc
     #   git-build-branch
 ghdiff==0.4
-    # via -r base-requirements.in
-gipc==1.1.0
     # via -r base-requirements.in
 git-build-branch==0.1.10
     # via -r dev-requirements.in
@@ -249,7 +246,7 @@ greenlet==0.4.17
     #   gevent
 gunicorn==20.0.4
     # via -r base-requirements.in
-hiredis==1.1.0
+hiredis==2.0.0
     # via -r base-requirements.in
 httpagentparser==1.9.0
     # via -r base-requirements.in
@@ -364,7 +361,7 @@ phonenumberslite==8.12.10
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==8.2.0
+pillow==8.3.2
     # via
     #   -r base-requirements.in
     #   django-simple-captcha
@@ -401,7 +398,7 @@ pycodestyle==2.7.0
     # via flake8
 pycparser==2.20
     # via cffi
-pycryptodome==3.9.9
+pycryptodome==3.10.1
     # via -r base-requirements.in
 pyflakes==2.3.1
     # via flake8

@@ -64,23 +64,21 @@ branches:
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
-    - sr/memoized-toggle # Sravan July 26
+    #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - sk/data-registry-view  # Simon July 29
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/smart-linking-mvp  # Jenny Aug 9
-    - jls/smart-linking-mvp-content-type # Jenny Aug 23
     - caktus:allowed_values_ui # Jenny Aug 13
-    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
-    - rc/audit-log-ux # Robert Aug 22
-    - es/blank-case-search  # Ethan Aug 23
-    - erroredQuestionMessagingFix # Shubham Aug 24
     - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
-    - errorJumpFix # Shubham Aug 25
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - sk/prevent-duplicate-role-names  # Simon Aug 30
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
-    - ce/fixture-restore # Cal Aug 31
+    - mk/user-history/structured-messages-v2 # MK Sep 1
+    - mk/user-history/add-for-domain # MK Sep 1
+    - mk/user-history/track-api-updates+mk/user-history/add-for-domain+mk/user-history/track-ui-number-removal # MK Sep 2
+    - gh/remove-pickles-from-accounting # Graham Sep 3
+    - gh/remove-pickles-from-export # Graham Sep 3
+    - jls/form-links-modules # Jenny Sept 7
+    - sk/data-registry-permissions  # SK Sept 8
+    - gh/erm/v1-cleanup # Graham Sept 8
 submodules: { }

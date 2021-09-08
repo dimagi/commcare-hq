@@ -11,8 +11,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
+@run_with_sql_backend
 class OtaRestoreBugTest(TestCase):
 
     def setUp(self):
@@ -56,5 +58,5 @@ class OtaRestoreBugTest(TestCase):
             params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string().decode('utf-8')
-        self.assertTrue(good_case._id in payload)
-        self.assertFalse(bad_case._id in payload)
+        self.assertIn(good_case.case_id, payload)
+        self.assertNotIn(bad_case.case_id, payload)

@@ -8,11 +8,13 @@ def get_session_schema(form):
     """
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = form.get_app()
+    module = form.get_module()
+    data_registry = module.search_config.data_registry
     structure = {}
     datums = EntriesHelper(app).get_datums_meta_for_form_generic(form)
     datums = [
         d for d in datums
-        if not d.is_new_case_id and d.case_type and d.requires_selection
+        if d.requires_selection and d.case_type and not d.is_new_case_id
     ]
     if len(datums):
         session_var = datums[-1].datum.id
@@ -21,8 +23,8 @@ def get_session_schema(form):
             "structure": {
                 session_var: {
                     "reference": {
-                        "hashtag": "#case",
-                        "source": "casedb",
+                        "hashtag": '#registry_case' if data_registry else "#case",
+                        "source": "registry" if data_registry else "casedb",
                         "subset": "case",
                         "key": "@case_id",
                     },

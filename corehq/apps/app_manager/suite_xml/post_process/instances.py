@@ -126,6 +126,7 @@ INSTANCE_KWARGS_BY_ID = {
     'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
+    'registry': dict(id='registry', src='jr://instance/remote'),
 }
 
 

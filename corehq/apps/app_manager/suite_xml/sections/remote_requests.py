@@ -32,6 +32,7 @@ from corehq.apps.app_manager.xpath import (
     InstanceXpath,
     interpolate_xpath,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
@@ -166,6 +167,7 @@ class RemoteRequestFactory(object):
                     additional_types, instance_name=RESULTS_INSTANCE)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
+        nodeset += EXCLUDE_RELATED_CASES_FILTER
 
         return [SessionDatum(
             id=self.module.search_config.case_session_var,
@@ -198,7 +200,7 @@ class RemoteRequestFactory(object):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
-                    ref=self.module.search_config.data_registry,
+                    ref=f"'{self.module.search_config.data_registry}'",
                 )
             )
         return datums
@@ -239,6 +241,8 @@ class RemoteRequestFactory(object):
                     value_ref=prop.itemset.value,
                     sort_ref=prop.itemset.sort,
                 )
+            if prop.allow_blank_value:
+                kwargs['allow_blank_value'] = prop.allow_blank_value
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.api.resources import v0_5
@@ -18,10 +17,13 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from .utils import APIResourceTest
 
 
+@run_with_sql_backend
 class TestSimpleReportConfigurationResource(APIResourceTest):
     resource = v0_5.SimpleReportConfigurationResource
     api_name = "v0.5"
@@ -148,6 +150,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
 
 
+@run_with_sql_backend
 class TestConfigurableReportDataResource(APIResourceTest):
     resource = v0_5.ConfigurableReportDataResource
     api_name = "v0.5"
@@ -191,7 +194,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
-            cls.cases.append(CommCareCase.get(id))
+            cls.cases.append(CaseAccessors(cls.domain.name).get_case(id))
 
         cls.report_columns = [
             {

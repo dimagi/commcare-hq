@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.userreports import tasks
@@ -28,6 +27,8 @@ from corehq.apps.userreports.reports.specs import (
 )
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 
 
@@ -83,6 +84,7 @@ class TestFieldColumn(SimpleTestCase):
             }, is_static=False)
 
 
+@run_with_sql_backend
 class ChoiceListColumnDbTest(TestCase):
 
     def test_column_uniqueness_when_truncated(self):
@@ -123,6 +125,7 @@ class ChoiceListColumnDbTest(TestCase):
         self.assertEqual(1, q.count())
 
 
+@run_with_sql_backend
 class ArrayTypeColumnDbTest(TestCase):
 
     def test_array_type_column(self):
@@ -162,6 +165,7 @@ class ArrayTypeColumnDbTest(TestCase):
         self.assertEqual(qs.first().referral_health_problem, ['bleeding', 'convulsions'])
 
 
+@run_with_sql_backend
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
@@ -175,9 +179,7 @@ class TestExpandedColumn(TestCase):
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
-        case = CommCareCase.get(id)
-        self.addCleanup(case.delete)
-        return case
+        return CaseAccessors(self.domain).get_case(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
         """
