@@ -205,12 +205,14 @@ class MyAccountSettingsView(BaseMyAccountView):
     def process_delete_phone_number(self):
         self.request.couch_user.delete_phone_number(self.phone_number)
         log_user_change(
-            domain=None,
+            by_domain=None,
+            for_domain=None,
             couch_user=self.request.couch_user,
             changed_by_user=self.request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
             change_messages=UserChangeMessage.phone_numbers_removed([self.phone_number]),
-            domain_required_for_log=False,
+            by_domain_required_for_log=False,
+            for_domain_required_for_log=False,
         )
         messages.success(self.request, _("Phone number deleted."))
         return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
