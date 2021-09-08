@@ -326,7 +326,7 @@ def create_registry(request, domain):
         messages.error(request, _("Registry 'case types' is required"))
         return redirect("data_registries", domain=domain)
 
-    if DataRegistry.objects.filter(name=name).exists():
+    if DataRegistry.objects.filter(domain=domain, name=name).exists():
         messages.error(request, _("Registry 'name' must be unique"))
         return redirect("data_registries", domain=domain)
 
