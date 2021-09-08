@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -57,6 +58,7 @@ from corehq.messaging.scheduling.view_helpers import (
     upload_conditional_alert_workbook,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
@@ -374,7 +376,7 @@ class BroadcastListView(BaseMessagingSectionView):
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date=json.dumps(broadcast.start_date, cls=CommCareJSONEncoder)
         )
 
         return JsonResponse({
@@ -478,7 +480,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
                 refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
-                    start_date=broadcast.start_date)
+                    start_date=json.dumps(broadcast.start_date, cls=CommCareJSONEncoder))
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 

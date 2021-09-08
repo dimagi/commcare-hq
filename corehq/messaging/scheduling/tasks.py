@@ -1,39 +1,44 @@
+from datetime import datetime
+
+from django.conf import settings
+
 from celery.task import task
+
+from dimagi.utils.couch import CriticalSection
+
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
-    AlertSchedule,
     TimedSchedule,
-)
-from corehq.messaging.scheduling.scheduling_partitioned.models import (
-    AlertScheduleInstance,
-    TimedScheduleInstance,
-    CaseAlertScheduleInstance,
-    CaseTimedScheduleInstance,
-    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
-    delete_timed_schedule_instance,
-    get_alert_schedule_instances_for_schedule,
-    get_timed_schedule_instances_for_schedule,
-    get_alert_schedule_instance,
-    save_alert_schedule_instance,
-    get_timed_schedule_instance,
-    save_timed_schedule_instance,
-    get_case_alert_schedule_instances_for_schedule,
-    get_case_timed_schedule_instances_for_schedule,
-    get_case_schedule_instance,
-    save_case_schedule_instance,
-    delete_case_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
-    delete_timed_schedule_instances_for_schedule,
+    delete_case_schedule_instance,
     delete_schedule_instances_by_case_id,
+    delete_timed_schedule_instance,
+    delete_timed_schedule_instances_for_schedule,
+    get_alert_schedule_instance,
+    get_alert_schedule_instances_for_schedule,
+    get_case_alert_schedule_instances_for_schedule,
+    get_case_schedule_instance,
+    get_case_timed_schedule_instances_for_schedule,
+    get_timed_schedule_instance,
+    get_timed_schedule_instances_for_schedule,
+    save_alert_schedule_instance,
+    save_case_schedule_instance,
+    save_timed_schedule_instance,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+    CaseAlertScheduleInstance,
+    CaseScheduleInstanceMixin,
+    CaseTimedScheduleInstance,
+    TimedScheduleInstance,
 )
 from corehq.util.celery_utils import no_result_task
-from datetime import datetime
-from dimagi.utils.couch import CriticalSection
-from django.conf import settings
+from corehq.util.dates import iso_string_to_date
 
 
 class ScheduleInstanceRefresher(object):
@@ -302,14 +307,15 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
         ).refresh()
 
 
-@task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
-def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+def refresh_timed_schedule_instances(schedule_id, recipients, iso_string_start_date=None):
     """
     :param schedule_id: the TimedSchedule schedule_id
-    :param start_date: the date to start the TimedSchedule
+    :param iso_string_start_date: the date to start the TimedSchedule formatted as an iso string for json
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
+    start_date = iso_string_to_date(iso_string_start_date) if iso_string_start_date else None
     with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
         schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
         TimedScheduleInstanceRefresher(
