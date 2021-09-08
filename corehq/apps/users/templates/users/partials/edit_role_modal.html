@@ -162,7 +162,8 @@
               <div class="form-group">
                 <label class="col-sm-4 control-label" data-bind="text: text"></label>
                 <div class="col-sm-8 controls">
-                  <select class="form-control" id="registries" data-bind="
+                  <select class="form-control" data-bind="
+                    attr: { 'id': id },
                     options: options,
                     optionsText: 'text',
                     optionsValue: 'value',
