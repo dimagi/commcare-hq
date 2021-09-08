@@ -69,7 +69,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
+    get_auto_filter_configurations, AdditionalRegistryQuery,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -239,6 +239,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
+            'additional_registry_queries': module.search_config.additional_registry_queries,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1209,6 +1210,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                             "Please fix the errors in xpath expression {xpath} in Search and Claim Options. "
                             "The error is {err}".format(xpath=xpath, err=message)
                         )
+            additional_registry_queries = [
+                AdditionalRegistryQuery.wrap(query)
+                for query in search_properties.get('additional_registry_queries', [])
+            ]
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
@@ -1219,13 +1224,14 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 auto_launch=bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
-                data_registry=search_properties.get('data_registry', ""),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
-                ]
+                ],
+                data_registry=search_properties.get('data_registry', ""),
+                additional_registry_queries=additional_registry_queries,
             )
 
     resp = {}

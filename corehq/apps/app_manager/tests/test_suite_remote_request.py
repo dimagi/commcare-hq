@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Itemset,
     Module,
+    AdditionalRegistryQuery,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -377,6 +378,30 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_search_data_registry_additional_registry_query(self, *args):
+        self.module.search_config.data_registry = "myregistry"
+        base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
+        self.module.search_config.additional_registry_queries = [
+            AdditionalRegistryQuery(
+                instance_name="duplicate",
+                case_type_xpath=f"{base_xpath}/potential_duplicate_case_type",
+                case_id_xpath=f"{base_xpath}/potential_duplicate_case_id"
+            )
+        ]
+        suite = self.app.create_suite()
+
+        expected_entry_query = f"""
+        <partial>
+          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="duplicate" template="case" default_search="true">
+            <data key="case_type" ref="{base_xpath}/potential_duplicate_case_type"/>
+            <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
+            <data key="commcare_registry" ref="'myregistry'"/>
+          </query>
+        </partial>"""
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
+
 
     def test_prompt_hint(self, *args):
         self.module.search_config.properties[0].hint = {'en': 'Search against name'}

@@ -473,31 +473,47 @@ class EntriesHelper(object):
             ))
 
             if module_offers_search(detail_module) and detail_module.search_config.data_registry:
-                datums.append(self.get_data_registry_query_datum(datum, detail_module))
+                datums.extend(self.get_data_registry_query_datums(datum, detail_module))
         return datums
 
-    def get_data_registry_query_datum(self, datum, module):
+    def get_data_registry_query_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
         from corehq.apps.app_manager.suite_xml.sections.remote_requests import REGISTRY_INSTANCE
-        return FormDatumMeta(
-            datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
-                storage_instance=REGISTRY_INSTANCE,
-                template='case',
-                data=[
-                    QueryData(key='case_type', ref=f"'{datum['case_type']}'"),
-                    QueryData(key='case_id', ref=session_var(datum['session_var'])),
-                    QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
-                ],
-                default_search='true',
-            ),
-            case_type=None,
-            requires_selection=False,
-            action=None
-        )
+
+        def _registry_query(instance_name, case_type_xpath, case_id_xpath):
+            return FormDatumMeta(
+                datum=RemoteRequestQuery(
+                    url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                    storage_instance=instance_name,
+                    template='case',
+                    data=[
+                        QueryData(key='case_type', ref=case_type_xpath),
+                        QueryData(key='case_id', ref=case_id_xpath),
+                        QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
+                    ],
+                    default_search='true',
+                ),
+                case_type=None,
+                requires_selection=False,
+                action=None
+            )
+
+        datums = [_registry_query(
+            instance_name=REGISTRY_INSTANCE,
+            case_type_xpath=f"'{datum['case_type']}'",
+            case_id_xpath=session_var(datum['session_var'])
+        )]
+
+        for query in module.search_config.additional_registry_queries:
+            datums.append(_registry_query(
+                instance_name=query.instance_name,
+                case_type_xpath=query.case_type_xpath,
+                case_id_xpath=query.case_id_xpath
+            ))
+        return datums
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
