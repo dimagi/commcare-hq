@@ -1,9 +1,11 @@
+from datetime import datetime
+
 from django.db import transaction
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 
 from corehq import toggles
-from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
+from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryAuditLog
 from corehq.apps.registry.signals import (
     data_registry_activated,
     data_registry_deactivated,
@@ -155,6 +157,45 @@ class DataRegistryCrudHelper:
         # TODO: figure out what to do here
         self.registry.delete()
         data_registry_deleted.send(sender=DataRegistry, registry=self.registry)
+
+
+class DataRegistryAuditViewHelper:
+    def __init__(self, domain, registry_slug):
+        self.domain = domain
+        self.registry = _get_registry_or_404(domain, registry_slug)
+        self.is_owner = domain == self.registry.domain
+        self.filter_kwargs = {}
+
+    def filter(self, domain, start_date, end_date, action):
+        if domain:
+            self.filter_kwargs["domain"] = domain
+        if start_date:
+            self.filter_kwargs["date__gte"] = start_date
+        if end_date:
+            self.filter_kwargs["date__lte"] = datetime.combine(end_date, datetime.max.time())
+        if action:
+            self.filter_kwargs["action"] = action
+
+    @property
+    def query(self):
+        query = self.registry.audit_logs.select_related("user")
+        if not self.is_owner:
+            self.filter_kwargs["domain"] = self.domain
+        return query.filter(**self.filter_kwargs)
+
+    def get_logs(self, skip, limit):
+        return [log.to_json() for log in self.query[skip:skip + limit]]
+
+    def get_total(self):
+        return self.query.count()
+
+    @staticmethod
+    def action_options(is_owner):
+        options = RegistryAuditLog.ACTION_CHOICES if is_owner else RegistryAuditLog.NON_OWNER_ACTION_CHOICES
+        return [
+            {"id": option[0], "text": option[1]}
+            for option in options
+        ]
 
 
 def get_data_registry_dropdown_options(domain, required_case_types=None):
