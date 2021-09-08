@@ -184,10 +184,7 @@ gevent==1.4.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-    #   gipc
 ghdiff==0.4
-    # via -r base-requirements.in
-gipc==1.1.0
     # via -r base-requirements.in
 greenlet==0.4.17
     # via
