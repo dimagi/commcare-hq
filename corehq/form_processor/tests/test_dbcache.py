@@ -2,7 +2,6 @@ import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
@@ -11,36 +10,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import sharded
 
 
-class CaseDbCacheCouchOnlyTest(TestCase):
-
-    def setUp(self):
-        super(CaseDbCacheCouchOnlyTest, self).setUp()
-        self.interface = FormProcessorInterface()
-
-    def testDocTypeCheck(self):
-        id = uuid.uuid4().hex
-        CommCareCase.get_db().save_doc({
-            "_id": id,
-            "doc_type": "AintNoCasesHere"
-        })
-        doc_back = CommCareCase.get_db().get(id)
-        self.assertEqual("AintNoCasesHere", doc_back['doc_type'])
-
-        cache = CaseDbCacheCouch()
-        try:
-            cache.get(id)
-            self.fail('doc type security check failed to raise exception')
-        except IllegalCaseId:
-            pass
-
-    def test_nowrap(self):
-        case_ids = _make_some_cases(1)
-        cache = self.interface.casedb_cache(wrap=False)
-        case = cache.get(case_ids[0])
-        self.assertTrue(isinstance(case, dict))
-        self.assertFalse(isinstance(case, CommCareCase))
-
-
+@sharded
 class CaseDbCacheTest(TestCase):
     """
     Tests the functionality of the CaseDbCache object
@@ -110,11 +80,6 @@ class CaseDbCacheTest(TestCase):
         for i, id in enumerate(case_ids):
             case = cache.get(id)
             self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
-
-
-@sharded
-class CaseDbCacheTestSQL(CaseDbCacheTest):
-    pass
 
 
 class CaseDbCacheNoDbTest(SimpleTestCase):
