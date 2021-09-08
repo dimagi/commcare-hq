@@ -117,7 +117,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
     };
 
     FormWorkflow.Form = function (form) {
-        this.name = form.name;
+        this.name = (form.auto_link ? "* " : "") + form.name;
         this.uniqueId = form.unique_id;
         this.autoLink = form.auto_link;
     };
