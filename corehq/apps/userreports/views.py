@@ -486,14 +486,13 @@ class ConfigureReport(ReportBuilderView):
         else:
             self.registry_slug = self.request.GET.get('registry_slug', None)
             self.app_id = self.request.GET.get('application', None)
+            self.source_id = self.request.GET['source']
             if self.registry_slug:
                 self.source_type = 'case'
-                self.source_id = self.request.GET.get('case_type', None)  # TODO: fix not named case_type probably source?
                 self.app = None  # TODO: drop the need for this data anyways?
             else:
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
-                self.source_id = self.request.GET['source']
 
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
