@@ -377,7 +377,7 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_data_registry_contents = data.viewRegistryContentsPermission.all;
                 data.permissions.view_data_registry_contents_list = unWrapItemList(
-                    data.viewRegistryContentsPermission.specific)
+                    data.viewRegistryContentsPermission.specific);
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific, 'path');
