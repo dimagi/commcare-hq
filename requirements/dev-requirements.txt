@@ -228,11 +228,8 @@ gevent==1.4.0
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
-    #   gipc
     #   git-build-branch
 ghdiff==0.4
-    # via -r base-requirements.in
-gipc==1.1.0
     # via -r base-requirements.in
 git-build-branch==0.1.10
     # via -r dev-requirements.in
