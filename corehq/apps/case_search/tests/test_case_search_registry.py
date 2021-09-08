@@ -5,6 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.utils import RegistryCaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -44,13 +45,14 @@ class TestCaseSearchRegistry(TestCase):
         ])
         self.domain_3 = "janes-addiction"
         self.setup_domain(self.domain_3, [
+            ("Jane", {}),
             ("Perry", {"family": "Farrell"}),
             ("Dave", {"family": "Navarro"}),
             ("Stephen", {"family": "Perkins"}),
             ("Chris", {"family": "Chaney"}),
         ])
 
-        create_registry_for_test(
+        self.registry_slug = create_registry_for_test(
             self.user,
             self.domain_1,
             invitations=[
@@ -63,7 +65,7 @@ class TestCaseSearchRegistry(TestCase):
                 Grant(self.domain_3, []),
             ],
             name="reg1",
-        )
+        ).slug
 
     def setup_domain(self, domain, cases):
         CaseSearchConfig.objects.create(pk=domain, enabled=True)
@@ -80,5 +82,25 @@ class TestCaseSearchRegistry(TestCase):
     def tearDown(self):
         case_search_es_teardown()
 
-    def test(self):
-        print("running")
+    def test_query_multiple_domains(self):
+        results = RegistryCaseSearchCriteria(self.domain_1, ['person'], {
+            "name": "Jane",
+        }, self.registry_slug).search_es.values_list("name", "domain")
+        self.assertItemsEqual([
+            ("Jane", self.domain_1),
+            ("Jane", self.domain_1),
+            ("Jane", self.domain_2),
+        ], results)
+
+    def test_invalid_registry(self):
+        pass
+
+    def test_case_type_not_in_registry(self):
+        pass
+
+    def test_includes_project_property(self):
+        # TODO insert 'commcare_project'
+        pass
+
+    def test_related_cases_included(self):
+        pass

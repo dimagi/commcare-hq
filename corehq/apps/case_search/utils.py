@@ -31,6 +31,7 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     flatten_result,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 
 
 def get_case_search_results(domain, criteria, app_id=None):
@@ -212,6 +213,22 @@ class CaseSearchCriteria(object):
             self.config.fuzzy_properties.filter(domain=self.domain, case_type__in=self.case_types)
             for prop in properties_config.properties
         ]
+
+
+class RegistryCaseSearchCriteria(CaseSearchCriteria):
+    def __init__(self, domain, case_types, criteria, registry_slug):
+        self._registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+        self._domains = self._registry_helper.visible_domains
+        super().__init__(domain, case_types, criteria)
+
+    def _get_initial_search_es(self):
+        search_es = (CaseSearchES()
+                     .domain(self._domains)
+                     .case_type(self.case_types)
+                     .is_closed(False)
+                     .size(CASE_SEARCH_MAX_RESULTS)
+                     .set_sorting_block(['_score', '_doc']))
+        return search_es
 
 
 def get_related_cases(domain, app_id, case_types, cases):
