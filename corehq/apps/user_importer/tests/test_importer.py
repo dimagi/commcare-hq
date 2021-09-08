@@ -235,7 +235,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # deassign all locations
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[], user_id=self.user._id)],
+            [self._get_spec(location_code=[], user_id=self.user._id, delete_keys=['password'])],
             [],
             self.uploading_user,
             self.upload_record.pk,
@@ -250,8 +250,10 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(action=UserModelAction.UPDATE.value,
                                                user_id=self.user.get_id,
                                                changed_by=self.uploading_user.get_id)
-        # no message for any location change
-        self.assertFalse("location" in user_history.change_messages)
+        change_messages = {}
+        change_messages.update(UserChangeMessage.assigned_locations_info([]))
+        change_messages.update(UserChangeMessage.primary_location_removed())
+        self.assertEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.changes['assigned_location_ids'], [])
         self.assertEqual(user_history.changes['location_id'], None)
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
