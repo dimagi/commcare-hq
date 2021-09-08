@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('registry', '0002_registry_slug_globally_unique'),
+        ('registry', '0003_schema_validation'),
     ]
 
     operations = [
