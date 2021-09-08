@@ -1,6 +1,8 @@
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.timer import TimingContext
 
 
 class DataRegistryHelper:
@@ -63,3 +65,19 @@ class DataRegistryHelper:
             "case_id": case_id
         })
         return case
+
+    def get_case_hierarchy(self, case):
+        from casexml.apps.phone.data_providers.case.livequery import (
+            get_live_case_ids_and_indices, PrefetchIndexCaseAccessor
+        )
+
+        self.pre_access_check(case.type)
+        self.access_check(case)
+
+        # using livequery to get related cases matches the semantics of case claim
+        case_ids, indices = get_live_case_ids_and_indices(case.domain, [case.case_id], TimingContext())
+        accessor = PrefetchIndexCaseAccessor(CaseAccessors(case.domain), indices)
+        case_ids.remove(case.case_id)
+        cases = accessor.get_cases(list(case_ids))
+
+        return [case] + cases

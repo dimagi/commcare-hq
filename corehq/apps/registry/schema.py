@@ -26,3 +26,11 @@ class RegistrySchema:
         return [
             case["case_type"] for case in self.schema_data
         ]
+
+
+class RegistrySchemaBuilder:
+    def __init__(self, case_types):
+        self.case_types = case_types
+
+    def build(self):
+        return [{"case_type": type_} for type_ in self.case_types]
