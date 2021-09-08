@@ -386,6 +386,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def name(self):
         return self.connection_settings.name
 
+    @property
+    def is_paused(self):
+        return self.paused
+
     @classmethod
     def available_for_domain(cls, domain):
         """Returns whether this repeater can be used by a particular domain
