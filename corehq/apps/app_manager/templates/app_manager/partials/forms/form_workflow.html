@@ -87,10 +87,7 @@
         <div class="help-block" data-bind="visible: !formLink.autoLink()">
           {% trans "This form requires manual linking." %}
         </div>
-        <div class="help-block" data-bind="visible: formLink.autoLink()">
-          {% trans "This form doesn't require manual linking." %}
-        </div>
-        <div class="help-block" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
+        <div class="help-block" data-bind="visible: formLink.autoLink() && formLink.allowManualLinking() && !formLink.manualDatums()">
           <span data-bind="click: enableManualDatums" class="btn btn-default btn-xs">
             {% trans "Enable manual linking" %}
           </span>
