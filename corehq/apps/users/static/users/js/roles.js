@@ -26,13 +26,13 @@ hqDefine('users/js/roles',[
             accessAllText: gettext("Access All"),
             accessSelectedText: gettext("Access Selected"),
             listHeading: gettext("Select which items the role can access:"),
-        })
+        });
         const [none, all, selected] = ["none", "all", "selected"];
         const selectOptions = [
             {text: text.accessNoneText, value: none},
             {text: text.accessAllText, value: all},
             {text: text.accessSelectedText, value: selected},
-        ]
+        ];
         let self = {
             id: id,
             text: text.permissionText,
@@ -41,7 +41,7 @@ hqDefine('users/js/roles',[
             selection: ko.observable(),
             all: permissionModel.all,
             specific: permissionModel.specific,
-        }
+        };
         self.showItems = ko.pureComputed(() =>{
             return self.selection() === selected;
         });
@@ -349,8 +349,8 @@ hqDefine('users/js/roles',[
                             permissionText: gettext("View Registry Data"),
                             listHeading: gettext("Select which registries the role access:"),
                         }
-                    )
-                ]
+                    ),
+                ];
 
                 return self;
             },
@@ -361,7 +361,7 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                const unWrapItemList = function (items, item_attr='slug') {
+                const unWrapItemList = function (items, item_attr = 'slug') {
                     return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
                         return item.value;
                     }), function (item) {
@@ -380,7 +380,7 @@ hqDefine('users/js/roles',[
                     data.viewRegistryContentsPermission.specific)
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific, 'path')
+                data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific, 'path');
                 return data;
             },
         };
