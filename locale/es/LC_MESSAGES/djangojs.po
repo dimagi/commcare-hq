@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
+# Dimagi Dev <devops@dimagi.com>, 2021
 # Gladys Teos <info@enestranslations.com>, 2021
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-26 19:36+0000\n"
+"POT-Creation-Date: 2021-09-08 19:05+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2021\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -129,7 +129,7 @@ msgid "Your trial request has been received!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:82
 #: corehq/apps/locations/static/locations/js/location_types.js:365
 msgid "You have unsaved changes."
 msgstr "Tiene cambios sin guardar."
@@ -195,37 +195,37 @@ msgstr ""
 "Ocurrió un error al actualizar las propiedades de su formulario. Por favor "
 "actualice la página e intente de nuevo "
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:116
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
 msgid "Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:117
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
 msgid "Mobile UCR Report"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
 msgid "Select a Report..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:126
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
 msgid "Lookup Table Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:127
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
 msgid "Select a Lookup Table..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
 msgid "Advanced Lookup Table Options"
 msgstr ""
 
@@ -681,27 +681,27 @@ msgstr "Eliminar"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:107
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:114
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:119
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:120
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:165
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:170
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -2843,19 +2843,19 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:331
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:333
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:333
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:335
 msgid "Submit"
 msgstr "Ingresar"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:394
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:397
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:396
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:399
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2949,13 +2949,13 @@ msgstr ""
 msgid "Page <%-num%>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:166
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:127
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:194
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:236
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
 msgid "Clear"
 msgstr "Borrar"
@@ -3335,7 +3335,7 @@ msgstr ""
 "Danny está bastante triste de que usted haya encontrado este problema. Él se "
 "está asegurando de que esté arreglado tan pronto como sea posible."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:65
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:67
 msgid "Error saving, please try again."
 msgstr ""
 
@@ -3348,6 +3348,7 @@ msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
+#: corehq/apps/registry/static/registry/js/registry_logs.js:19
 #: corehq/apps/reports/static/reports/js/filters/main.js:76
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
@@ -3537,7 +3538,7 @@ msgid "Error updating."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:183
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:335
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:334
 msgid "Report successfully linked."
 msgstr ""
 
@@ -3545,8 +3546,8 @@ msgstr ""
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:191
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:206
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:273
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:339
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:344
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:338
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:343
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3564,13 +3565,13 @@ msgstr ""
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:371
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:370
 msgid ""
 "Unable to link project spaces. <%- error %>\n"
 "You must remove the existing link before creating this new link."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:376
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:375
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3651,6 +3652,86 @@ msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
 
 #: corehq/apps/registration/static/registration/js/register_new_user.js:33
 msgid "Choose a time for your CommCare trial setup"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:11
+msgid "An unknown error occurred. Please try again or report an issue."
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:22
+msgid "Opt in successful"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_actions.js:31
+msgid "Opt out successful"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js:20
+msgid "All Project Spaces"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js:21
+msgid "All Actions"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:4
+msgid "%(count)s Invitation Accepted"
+msgid_plural "%(count)s Invitations Accepted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:11
+msgid "%(count)s Invitation Pending"
+msgid_plural "%(count)s Invitations Pending"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:18
+msgid "%(count)s Invitation Rejected"
+msgid_plural "%(count)s Invitations Rejected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:25
+msgid "%(count)s Project Space Participating"
+msgid_plural "%(count)s Project Spaces Participating"
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:32
+msgid "Rejected"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:34
+msgid "Accepted"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:36
+msgid "Pending"
+msgstr "Pendientes"
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:41
+msgid "fa-ban"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:43
+msgid "fa-clock-o"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:45
+msgid "fa-check-circle-o"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:50
+msgid "label-warning-light"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:52
+msgid "label-success-light"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_text.js:54
+msgid "label-info-light"
 msgstr ""
 
 #: corehq/apps/reminders/static/reminders/js/keywords_list.js:9
@@ -4298,6 +4379,14 @@ msgstr "Eliminar Rol:"
 #: corehq/apps/users/static/users/js/roles.js:334
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:386
+#, fuzzy
+#| msgid "An error occurred emailing you report. Please try again."
+msgid "An error occurred, please try again."
+msgstr ""
+"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
+"intente de nuevo."
 
 #: corehq/apps/users/static/users/js/roles_and_permissions.js:30
 msgid "View Only"

@@ -128,10 +128,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.motech.models import RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
-    RepeaterStub,
+    SQLRepeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -974,18 +974,24 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            RepeaterStub.objects.filter(domain=domain_name),
+            SQLRepeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
     def test_repeaters_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            stub = RepeaterStub.objects.create(
+            conn = ConnectionSettings.objects.create(
+                domain=domain_name,
+                name='To Be Deleted',
+                url="http://localhost/api/"
+            )
+            repeater = SQLRepeater.objects.create(
                 domain=domain_name,
                 repeater_id=str(uuid.uuid4()),
+                connection_settings=conn
             )
-            record = stub.repeat_records.create(
+            record = repeater.repeat_records.create(
                 domain=domain_name,
                 payload_id=str(uuid.uuid4()),
                 registered_at=datetime.utcnow(),

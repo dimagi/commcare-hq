@@ -873,8 +873,13 @@ def _update_role_from_view(domain, role_data):
     else:
         role = UserRole()
 
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
+
     role.domain = domain
-    role.name = role_data["name"]
+    role.name = name
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
@@ -1229,6 +1234,13 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        domain=request.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        message=UserChangeMessage.phone_number_removed(phone_number)
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)

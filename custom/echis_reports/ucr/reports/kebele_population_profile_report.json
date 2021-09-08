@@ -13,22 +13,7 @@
    "config":{
    "description":"", 
    "title":"Kebele Population Profile Report",
-   "filters":[
-      {
-         "comment":null,
-         "datatype":"string",
-         "type":"dynamic_choice_list",
-         "show_all":true,
-         "slug":"gote_name",
-         "field":"gote_name",
-         "ancestor_expression":{
-
-         },
-         "choice_provider":{
-
-         },
-         "display":"Gote Name"
-      },
+   "filters":[       
       {
          "datatype":"string",
          "type":"dynamic_choice_list",
@@ -52,32 +37,15 @@
 
    ],
    "aggregation_columns":[
-      "health_post_id",
-      "health_post_name"
+      "health_post_id"
+      
    ],
  
    "sort_expression":[
 
    ],
    "columns":[
-      {
-         "comment":null,
-         "field":"health_post_name",
-         "sortable":false,
-         "description":null,
-         "format":"default",
-         "css_class":null,
-         "visible":true,
-         "aggregation":"simple",
-         "column_id":"health_post_name",
-         "width":null,
-         "transform":{
-
-         },
-         "calculate_total":false,
-         "type":"field",
-         "display":"Health Post Name"
-      },
+      
       {
          "comment":null,
          "field":"health_post_id",
