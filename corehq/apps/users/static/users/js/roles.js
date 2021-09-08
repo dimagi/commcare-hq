@@ -4,6 +4,72 @@ hqDefine('users/js/roles',[
     'knockout',
     'hqwebapp/js/alert_user',
 ], function ($, _, ko, alertUser) {
+    let selectPermissionModel = function (id, permissionModel, text) {
+        /*
+        Function to build the view model for permissions that aren't simple booleans. The data is
+        modelled as a boolean and a list. If the boolean is 'true' the user has access to all items.
+        If the boolean is 'false' the user only has access to items selected in the list.
+
+        This view model gives the user the ability to select 'none', 'all' or 'only selected'.
+
+        Parameters:
+          id: unique permission ID
+          permissionModel: object the following keys:
+            all: observable boolean
+            specific: observable array of items which can be selected. Each item is expected
+                to have at least 'name', 'slug' and 'value' fields.
+          text: Text to display to the user. (see text defaults below)
+         */
+        text = _.defaults(text, {
+            permissionText: 'Change me',
+            accessNoneText: gettext("No Access"),
+            accessAllText: gettext("Access All"),
+            accessSelectedText: gettext("Access Selected"),
+            listHeading: gettext("Select which items the role can access:"),
+        })
+        const [none, all, selected] = ["none", "all", "selected"];
+        const selectOptions = [
+            {text: text.accessNoneText, value: none},
+            {text: text.accessAllText, value: all},
+            {text: text.accessSelectedText, value: selected},
+        ]
+        let self = {
+            id: id,
+            text: text.permissionText,
+            listHeading: text.listHeading,
+            options: selectOptions,
+            selection: ko.observable(),
+            all: permissionModel.all,
+            specific: permissionModel.specific,
+        }
+        self.showItems = ko.pureComputed(() =>{
+            return self.selection() === selected;
+        });
+
+        // set value of selection based on initial data
+        if (self.all()) {
+            self.selection(all);
+        } else if (_.find(permissionModel.specific(), item => item.value())) {
+            self.selection(selected)
+        } else {
+            self.selection(none);
+        }
+
+        self.selection.subscribe(() => {
+            // update permission data based on selection
+            if (self.selection() === all) {
+                self.all(true);
+                self.specific().forEach(item => item.value(false));
+                return;
+            }
+            self.all(false);
+            if (self.selection() === none) {
+                self.specific().forEach(item => item.value(false));
+            }
+        });
+        return self;
+    };
+
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -28,7 +94,6 @@ hqDefine('users/js/roles',[
 
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
-                    initial: data.permissions.manage_data_registry_list,
                     specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
                             name: registry.name,
@@ -40,7 +105,6 @@ hqDefine('users/js/roles',[
 
                 data.viewRegistryContentsPermission = {
                     all: data.permissions.view_data_registry_contents,
-                    initial: data.permissions.view_data_registry_contents_list,
                     specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
                             name: registry.name,
@@ -269,60 +333,22 @@ hqDefine('users/js/roles',[
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
 
-                let selectPermission = function (id, text, permissionModel, listHeading,
-                                                 accessNoneText, accessAllText, accessSelectedText) {
-                    const [none, all, selected] = ["none", "all", "selected"];
-                    const selectOptions = [
-                        {text: accessNoneText || gettext("No Access"), value: none},
-                        {text: accessAllText || gettext("Access All"), value: all},
-                        {text: accessSelectedText || gettext("Access Selected"), value: selected},
-                    ]
-                    let self = {
-                        id: id,
-                        text: text,
-                        listHeading: listHeading || gettext("Select which items the role can access:"),
-                        options: selectOptions,
-                        selection: ko.observable(),
-                        all: permissionModel.all,
-                        specific: permissionModel.specific,
-                    }
-                    self.showItems = ko.pureComputed(() =>{
-                        return self.selection() === selected;
-                    });
-                    if (self.all()) {
-                        self.selection(all);
-                    } else if (permissionModel.initial().length > 0) {
-                        self.selection(selected)
-                    } else {
-                        self.selection(none);
-                    }
-
-                    self.selection.subscribe(() => {
-                        if (self.selection() === all) {
-                            self.all(true);
-                            self.specific().forEach(item => item.value(false));
-                            return;
-                        }
-                        self.all(false);
-                        if (self.selection() === none) {
-                            self.specific().forEach(item => item.value(false));
-                        }
-                    });
-                    return self;
-                }
-
                 self.registryPermissions = [
-                    selectPermission(
+                    selectPermissionModel(
                         'manage_registries',
-                        gettext("Manage Registries"),
                         self.manageRegistryPermission,
-                        gettext("Select which registries the role can manage:"),
+                        {
+                            permissionText: gettext("Manage Registries"),
+                            listHeading: gettext("Select which registries the role can manage:"),
+                        }
                     ),
-                    selectPermission(
+                    selectPermissionModel(
                         'view_registry_contents',
-                        gettext("View Registry Data"),
                         self.viewRegistryContentsPermission,
-                        gettext("Select which registries the role access:"),
+                        {
+                            permissionText: gettext("View Registry Data"),
+                            listHeading: gettext("Select which registries the role access:"),
+                        }
                     )
                 ]
 
