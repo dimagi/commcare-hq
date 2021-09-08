@@ -9,7 +9,8 @@
 {% block page_content %}
   {% initial_page_data 'configs' configs %}
   {% registerurl 'add_report_config' domain %}
-  {% registerurl 'saved_reports' domain %}
+  {% registerurl 'reports_home' domain %} <!-- is this actually used anymore -->
+  {% registerurl 'page_context' domain %}
   {% initial_page_data 'scheduled_reports' scheduled_reports %}
   {% initial_page_data 'others_scheduled_reports' others_scheduled_reports %}
   {% initial_page_data 'extra_reports' extra_reports %}

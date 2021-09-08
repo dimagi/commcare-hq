@@ -29,7 +29,9 @@ hqDefine("reports/js/saved_reports_main", [
             user_email: initialPageData.get('user_email'),
             is_owner: true,
             urls: {
-                getPage: initialPageData.reverse("saved_reports"),
+                //getPage: initialPageData.reverse("saved_reports"),
+                getPage: initialPageData.reverse("page_context"),
+                getPagePage: initialPageData.reverse("reports_home"),
             }
         }));
 
@@ -40,7 +42,8 @@ hqDefine("reports/js/saved_reports_main", [
             user_email: initialPageData.get('user_email'),
             is_owner: false,
             urls: {
-                getPage: initialPageData.reverse("saved_reports"),
+                getPage: initialPageData.reverse("page_context"),
+                getPagePage: initialPageData.reverse("reports_home"),
             }
         }));
 

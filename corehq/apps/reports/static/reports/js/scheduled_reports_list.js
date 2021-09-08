@@ -1,8 +1,7 @@
 /*
 
-
     ScheduledReportModel - model representing a single row on the list / a single report filter file
-    ScheduledReportListModel - model representing the whole page (list, modals, buttons)
+    ScheduledReportListModel - model representing the whole page (list of reports, actions)
 
 */
 
@@ -48,42 +47,48 @@ hqDefine("reports/js/scheduled_reports_list", [
 
         self.urls = options.urls;
 
-        self.pageLoaded = ko.observable(false); //temp solution to hide unloaded page view
+        self.pageLoaded = ko.observable(false); //temp(?) solution to hide unloaded page view
 
         self.scheduledReports = ko.observableArray([]);
-        self.extraReports = ko.observableArray([]);
-
-        /*
-        self.goToPagePage = function (page) {
-            self.pageLoaded(false);
-            $.ajax({
-                method: 'GET',
-                url: self.urls.getPage,
-                data: {
-                    "nothing": "nothing",
-                },
-                success: function (stuff) {
-                    self.pageLoaded(true);
-                    console.log("it's working?")
-                },
-                error: function () {
-                    console.log("failed lol");
-                },
-            });
-        };
-        */
+        self.extra_reports = options.extra_reports;
+        self.items = ko.observableArray(); //the sliced list
+        self.perPage = ko.observable();
+        //self.totalItems = ko.observable();
 
         self.scheduledReports(ko.utils.arrayMap(options.scheduled_reports, function (report) {
             return scheduledReportModel(report, options.is_owner, options.is_admin);
         }));
 
-        self.extraReports(ko.utils.arrayMap(options.extra_reports, function (report) {
-            return scheduledReportModel(report);
-        }));
+        self.goToPage = function(page) {
+            self.pageLoaded(false);
+            self.items(self.scheduledReports.slice(self.perPage() * (page - 1), self.perPage() * page));
+            self.pageLoaded(true);
+            //self.getScheduledReportsPage(page);
+        }
 
-        self.items = ko.observableArray();
-        self.perPage = ko.observable();
-        self.totalItems = ko.observable(self.scheduledReportsCount);
+        //eventually should slice list on server side - does it matter performance-wise?
+        self.getScheduledReportsPage = function (page) {
+            //self.pageLoaded(false);
+            $.ajax({
+                method: 'GET',
+                url: self.urls.getPage,
+                data: {
+                    'page': page,
+                    'limit': self.perPage(),
+                    //'myReports': is owner or not,
+                },
+                success: function (data) {
+                    //self.pageLoaded(true);
+                    console.log("it's working?");
+                    console.log(data.exports);
+                },
+                error: function () {
+                    console.log("failed lol");
+                },
+            });
+        }
+
+        self.totalItems = ko.observable(self.scheduledReports().length);
 
         self.selectAll = function () {
             _.each(self.scheduledReports(), function (e) { e.addedToBulk(true); });
@@ -96,12 +101,6 @@ hqDefine("reports/js/scheduled_reports_list", [
         self.selectedReportsCount = ko.computed(function () {
             return _.filter(self.scheduledReports(), function (e) { return e.addedToBulk(); }).length;
         });
-
-        //replace w proper pagefetch ajax function
-        self.goToPage = function(page) {
-            self.items(self.scheduledReports.slice(self.perPage() * (page - 1), self.perPage() * page));
-            self.pageLoaded(true);
-        }
 
         self.bulkSend = function(){
             sendList = _.filter(self.scheduledReports(), function (e) {return e.addedToBulk()});
@@ -122,6 +121,7 @@ hqDefine("reports/js/scheduled_reports_list", [
         }
 
         self.bulkDelete = function(){
+            self.pageLoaded(false);
             deleteList = _.filter(self.scheduledReports(), function (e) {return e.addedToBulk()});
             ids = []
             for (let i = 0; i < deleteList.length; i++) {
@@ -141,7 +141,6 @@ hqDefine("reports/js/scheduled_reports_list", [
 
         self.onPaginationLoad = function () {
             self.goToPage(1);
-            //self.goToPagePage(1);
         };
 
         return self;

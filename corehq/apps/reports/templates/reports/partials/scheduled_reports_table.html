@@ -31,7 +31,7 @@
       <th class="col-sm-4">{% trans "Actions" %}</th>
     </tr>
   </thead>
-  <tbody data-bind="foreach: items()">
+  <tbody data-bind="foreach: items">
     <tr>
 
       {% if is_owner or is_admin %}
@@ -179,9 +179,10 @@
   </tbody>
 </table>
 
-<!-- what are extra_reports? -->
-{% if not is_owner and extra_reports %}
-  <a href="?show_all_scheduled_reports=true">
-    {% trans "...and" %} {{ extra_reports }} {% trans "more" %}
-  </a>
+{% if not is_owner %}
+  <div data-bind="if: extra_reports">
+    <a href="?show_all_scheduled_reports=true">
+      {% trans "...and" %} {{ extra_reports }} {% trans "more" %}
+    </a>
+  </div>
 {% endif %}
