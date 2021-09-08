@@ -29,7 +29,7 @@ hqDefine('users/js/roles',[
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
                     initial: data.permissions.manage_data_registry_list,
-                    specific: ko.utils.arrayMap(root.registryOptions, function (registry) {
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
                             name: registry.name,
                             slug: registry.slug,
@@ -41,7 +41,7 @@ hqDefine('users/js/roles',[
                 data.viewRegistryContentsPermission = {
                     all: data.permissions.view_data_registry_contents,
                     initial: data.permissions.view_data_registry_contents_list,
-                    specific: ko.utils.arrayMap(root.registryOptions, function (registry) {
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
                         return {
                             name: registry.name,
                             slug: registry.slug,
@@ -378,7 +378,7 @@ hqDefine('users/js/roles',[
         self.reportOptions = o.reportOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
-        self.registryOptions = [{"name": "a", "slug": "a"}, {"name": "B", "slug": "b"}];
+        self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.getReportObject = function (path) {
             var i;

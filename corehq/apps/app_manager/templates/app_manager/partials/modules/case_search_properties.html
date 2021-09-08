@@ -241,8 +241,8 @@
               <div class="{% css_field_class %}">
                   <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
                       <option value/>
-                      {% for value, name in data_registries %}
-                          <option value="{{ value }}">{{ name }}</option>
+                      {% for registry in data_registries %}
+                          <option value="{{ registry.slug }}">{{ registry.name }}</option>
                       {% endfor %}
                   </select>
               </div>

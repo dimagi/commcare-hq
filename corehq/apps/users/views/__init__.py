@@ -9,6 +9,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -670,7 +671,8 @@ class ListRolesView(BaseRoleAccessView):
             'web_apps_privilege': self.web_apps_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
 
