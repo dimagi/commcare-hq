@@ -39,11 +39,16 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
             self.workflow(FormWorkflow.Values.ERROR);
         }
 
-        var formIds = _.pluck(self.forms,  'uniqueId');
+        var uniqueIds = _.pluck(self.forms,  'uniqueId');
         self.formLinks = ko.observableArray(_.map(_.filter(options.formLinks, function (link) {
-            return _.contains(formIds, link.form_id);
+            return _.intersection(uniqueIds, [link.form_id, link.module_unique_id]).length;
         }), function (link) {
-            return new FormWorkflow.FormLink(link.xpath, link.form_id, self, link.datums);
+            return new FormWorkflow.FormLink(
+                link.xpath,
+                link.form_id || link.module_unique_id,
+                self,
+                link.datums
+            );
         }));
     };
 
