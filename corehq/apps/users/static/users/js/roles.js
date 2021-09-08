@@ -335,12 +335,33 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
-                    return report.value;
-                }), function (report) {
-                    return report.path;
-                });
-                data.permissions.view_reports = data.reportPermissions.all;
+                const unWrapParameterizedPermission = function (permission, item_attr='slug') {
+                    const selected = ko.utils.arrayMap(ko.utils.arrayFilter(permission.specific, function (item) {
+                        return item.value;
+                    }), function (item) {
+                        return item[item_attr];
+                    });
+                    return [
+                        permission.all,
+                        selected
+                    ]
+                };
+
+                [
+                    data.permissions.view_reports,
+                    data.permissions.view_report_list
+                ] = unWrapParameterizedPermission(data.reportPermissions, 'path');
+
+                [
+                    data.permissions.manage_data_registry,
+                    data.permissions.manage_data_registry_list
+                ] = unWrapParameterizedPermission(data.manageRegistryPermission);
+
+                [
+                    data.permissions.view_data_registry_contents,
+                    data.permissions.view_data_registry_contents_list
+                ] = unWrapParameterizedPermission(data.viewRegistryContentsPermission);
+
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
                     return role.value;
