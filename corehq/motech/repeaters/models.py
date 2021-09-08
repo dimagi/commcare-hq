@@ -71,6 +71,7 @@ from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -90,6 +91,10 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringListProperty,
     StringProperty,
+)
+from dimagi.utils.couch.migration import (
+    SyncCouchToSQLMixin,
+    SyncSQLToCouchMixin,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -252,6 +257,80 @@ class SQLRepeater(models.Model):
             self.last_attempt_at = None
             self.next_attempt_at = None
             self.save()
+
+
+class SQLCaseRepeater(SyncSQLToCouchMixin, SQLRepeater):
+    """
+    Record that cases should be repeated to a new url
+
+    """
+
+    payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
+
+    version = models.CharField(
+        max_length=10,
+        choices=list(zip(LEGAL_VERSIONS, LEGAL_VERSIONS)),
+        default=V2,
+    )
+    white_listed_case_types = ArrayField(
+        models.CharField(max_length=128, default=list)
+    )
+    black_listed_users = ArrayField(
+        models.CharField(max_length=128, default=list)
+    )
+    # users who caseblock submissions should be ignored
+    friendly_name = _("Forward Cases")
+
+    format = models.CharField(max_length=16)
+
+    class Meta:
+        db_table = 'repeaters_caserepeater'
+
+    def allowed_to_forward(self, payload):
+        return self._allowed_case_type(payload) and self._allowed_user(payload)
+
+    def _allowed_case_type(self, payload):
+        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
+
+    def _allowed_user(self, payload):
+        return self.payload_user_id(payload) not in self.black_listed_users
+
+    def payload_user_id(self, payload):
+        # get the user_id who submitted the payload, note, it's not the owner_id
+        return payload.actions[-1].user_id
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
+
+    def _migration_sync_to_couch(self, couch_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(couch_object, field_name, value)
+        setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
+        setattr(couch_object, 'paused', self.is_paused)
+        couch_object.save(sync_to_sql=False)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "version",
+            "format",
+            "white_listed_case_types",
+            "black_listed_users",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CaseRepeater
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
