@@ -64,7 +64,7 @@ class DataRegistryHelper:
         self.pre_access_check(case.type)
         self.access_check(case)
 
-        # using livequery to get related cases matches the semantics case claim
+        # using livequery to get related cases matches the semantics of case claim
         case_ids, indices = get_live_case_ids_and_indices(case.domain, [case.case_id], TimingContext())
         accessor = PrefetchIndexCaseAccessor(CaseAccessors(case.domain), indices)
         case_ids.remove(case.case_id)
