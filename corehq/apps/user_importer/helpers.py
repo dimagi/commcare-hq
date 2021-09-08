@@ -27,7 +27,7 @@ class UserChangeLogger(object):
     """
 
     def __init__(self, upload_domain, user_domain, user, is_new_user, changed_by_user, changed_via,
-                 upload_record_id):
+                 upload_record_id, user_domain_required_for_log=True):
         self.upload_domain = upload_domain
         self.user_domain = user_domain
         self.user = user
@@ -35,6 +35,7 @@ class UserChangeLogger(object):
         self.changed_by_user = changed_by_user
         self.changed_via = changed_via
         self.upload_record_id = upload_record_id
+        self.user_domain_required_for_log = user_domain_required_for_log
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
@@ -101,6 +102,7 @@ class UserChangeLogger(object):
                 action=action,
                 fields_changed=fields_changed,
                 bulk_upload_record_id=self.upload_record_id,
+                for_domain_required_for_log=self.user_domain_required_for_log,
             )
 
 
