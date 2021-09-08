@@ -795,7 +795,8 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        log_user_change(request.domain, couch_user=user,
+        # web user's membership is bound to the domain, so log as a change for that domain
+        log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
                         change_messages=UserChangeMessage.domain_removal(domain))
         if record:
@@ -1313,7 +1314,8 @@ def change_password(request, domain, login_id):
         if form.is_valid():
             form.save()
             log_user_change(
-                domain=domain,
+                by_domain=domain,
+                for_domain=commcare_user.domain,
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
