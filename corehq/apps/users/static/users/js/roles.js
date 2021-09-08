@@ -26,6 +26,30 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.manageRegistryPermission = {
+                    all: data.permissions.manage_data_registry,
+                    initial: data.permissions.manage_data_registry_list,
+                    specific: ko.utils.arrayMap(root.registryOptions, function (registry) {
+                        return {
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.manage_data_registry_list.indexOf(registry.slug) !== -1,
+                        };
+                    }),
+                };
+
+                data.viewRegistryContentsPermission = {
+                    all: data.permissions.view_data_registry_contents,
+                    initial: data.permissions.view_data_registry_contents_list,
+                    specific: ko.utils.arrayMap(root.registryOptions, function (registry) {
+                        return {
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.view_data_registry_contents_list.indexOf(registry.slug) !== -1,
+                        };
+                    }),
+                };
+
                 data.manageRoleAssignments = {
                     all: data.is_non_admin_editable,
                     specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
@@ -245,6 +269,63 @@ hqDefine('users/js/roles',[
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
 
+                let selectPermission = function (id, text, permissionModel, listHeading,
+                                                 accessNoneText, accessAllText, accessSelectedText) {
+                    const [none, all, selected] = ["none", "all", "selected"];
+                    const selectOptions = [
+                        {text: accessNoneText || gettext("No Access"), value: none},
+                        {text: accessAllText || gettext("Access All"), value: all},
+                        {text: accessSelectedText || gettext("Access Selected"), value: selected},
+                    ]
+                    let self = {
+                        id: id,
+                        text: text,
+                        listHeading: listHeading || gettext("Select which items the role can access:"),
+                        options: selectOptions,
+                        selection: ko.observable(),
+                        all: permissionModel.all,
+                        specific: permissionModel.specific,
+                    }
+                    self.showItems = ko.pureComputed(() =>{
+                        return self.selection() === selected;
+                    });
+                    if (self.all()) {
+                        self.selection(all);
+                    } else if (permissionModel.initial().length > 0) {
+                        self.selection(selected)
+                    } else {
+                        self.selection(none);
+                    }
+
+                    self.selection.subscribe(() => {
+                        if (self.selection() === all) {
+                            self.all(true);
+                            self.specific().forEach(item => item.value(false));
+                            return;
+                        }
+                        self.all(false);
+                        if (self.selection() === none) {
+                            self.specific().forEach(item => item.value(false));
+                        }
+                    });
+                    return self;
+                }
+
+                self.registryPermissions = [
+                    selectPermission(
+                        'manage_registries',
+                        gettext("Manage Registries"),
+                        self.manageRegistryPermission,
+                        gettext("Select which registries the role can manage:"),
+                    ),
+                    selectPermission(
+                        'view_registry_contents',
+                        gettext("View Registry Data"),
+                        self.viewRegistryContentsPermission,
+                        gettext("Select which registries the role access:"),
+                    )
+                ]
+
                 return self;
             },
             unwrap: function (self) {
@@ -276,6 +357,7 @@ hqDefine('users/js/roles',[
         self.reportOptions = o.reportOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
+        self.registryOptions = [{"name": "a", "slug": "a"}, {"name": "B", "slug": "b"}];
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.getReportObject = function (path) {
             var i;
