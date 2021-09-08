@@ -22,7 +22,7 @@ babel==2.8.0
     #   sphinx
 backcall==0.2.0
     # via ipython
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
     # via

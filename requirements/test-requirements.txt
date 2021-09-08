@@ -16,7 +16,7 @@ attrs==18.2.0
     #   jsonschema
 babel==2.8.0
     # via django-phonenumber-field
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
     # via -r test-requirements.in
 billiard==3.5.0.4
     # via
