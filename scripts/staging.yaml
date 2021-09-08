@@ -79,5 +79,5 @@ branches:
     - gh/remove-pickles-from-accounting # Graham Sep 3
     - gh/remove-pickles-from-export # Graham Sep 3
     - jls/form-links-modules # Jenny Sept 7
-    - sk/registry-name-unique-per-domain # SK Sept 8
+    - sk/data-registry-permissions  # SK Sept 8
 submodules: { }
