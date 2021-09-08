@@ -424,7 +424,7 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     app = get_app_cached(domain, app_id)
-    helper = DataRegistryHelper(domain, registry)
+    helper = DataRegistryHelper(domain, registry_slug=registry)
     try:
         case = helper.get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:

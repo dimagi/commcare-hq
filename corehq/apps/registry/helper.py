@@ -1,5 +1,3 @@
-from django.utils.functional import cached_property
-
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
 from corehq.form_processor.exceptions import CaseNotFound
@@ -8,18 +6,30 @@ from corehq.util.timer import TimingContext
 
 
 class DataRegistryHelper:
-    def __init__(self, current_domain, registry_slug):
+    def __init__(self, current_domain, registry_slug=None, registry=None):
         self.current_domain = current_domain
-        self.registry_slug = registry_slug
+        assert any([registry_slug, registry])
 
-    @cached_property
+        if registry and registry_slug:
+            assert registry.slug == registry_slug
+
+        if registry:
+            self._registry = registry
+            self.registry_slug = registry.slug
+        else:
+            self.registry_slug = registry_slug
+            self._registry = None
+
+    @property
     def registry(self):
-        try:
-            return DataRegistry.objects.accessible_to_domain(
-                self.current_domain, self.registry_slug
-            ).get()
-        except DataRegistry.DoesNotExist:
-            raise RegistryNotFound(self.registry_slug)
+        if not self._registry:
+            try:
+                self._registry = DataRegistry.objects.accessible_to_domain(
+                    self.current_domain, self.registry_slug
+                ).get()
+            except DataRegistry.DoesNotExist:
+                raise RegistryNotFound(self.registry_slug)
+        return self._registry
 
     @property
     def visible_domains(self):

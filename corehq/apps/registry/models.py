@@ -1,17 +1,16 @@
-from datetime import datetime
-
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
-from django.db.models import Q
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.domain.utils import domain_name_stop_words
 from corehq.apps.registry.exceptions import RegistryAccessDenied
-from corehq.apps.registry.schema import RegistrySchema
+from corehq.apps.registry.schema import RegistrySchema, REGISTRY_JSON_SCHEMA
+from corehq.util.validation import JSONSchemaValidator
 
 
 def slugify_remove_stops(text):
@@ -73,7 +72,7 @@ class DataRegistry(models.Model):
     is_active = models.BooleanField(default=True)
 
     # [{"case_type": "X"}, {"case_type": "Y"}]
-    schema = JSONField(null=True, blank=True)
+    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -136,12 +135,6 @@ class DataRegistry(models.Model):
     def check_ownership(self, domain):
         if self.domain != domain:
             raise RegistryAccessDenied()
-
-    @property
-    def case_types(self):
-        return [
-            item["case_type"] for item in self.schema
-        ] if self.schema else []
 
     @cached_property
     def logger(self):
