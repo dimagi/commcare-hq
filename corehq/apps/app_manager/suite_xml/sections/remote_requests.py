@@ -200,7 +200,7 @@ class RemoteRequestFactory(object):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
-                    ref=self.module.search_config.data_registry,
+                    ref=f"'{self.module.search_config.data_registry}'",
                 )
             )
         return datums
@@ -241,6 +241,8 @@ class RemoteRequestFactory(object):
                     value_ref=prop.itemset.value,
                     sort_ref=prop.itemset.sort,
                 )
+            if prop.allow_blank_value:
+                kwargs['allow_blank_value'] = prop.allow_blank_value
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

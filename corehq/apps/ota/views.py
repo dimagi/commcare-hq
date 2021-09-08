@@ -406,12 +406,12 @@ def recovery_measures(request, domain, build_id):
 def registry_case(request, domain, app_id):
     case_id = request.GET.get("case_id")
     case_type = request.GET.get("case_type")
-    registry = request.GET.get("registry")
+    registry = request.GET.get("commcare_registry")
 
     missing = [
         name
         for name, value in zip(
-            ["case_id", "case_type", "registry"],
+            ["case_id", "case_type", "commcare_registry"],
             [case_id, case_type, registry]
         )
         if not value
@@ -424,11 +424,13 @@ def registry_case(request, domain, app_id):
         ).format(params="', '".join(missing)))
 
     app = get_app_cached(domain, app_id)
+    helper = DataRegistryHelper(domain, registry_slug=registry)
     try:
-        case = DataRegistryHelper(domain, registry).get_case(case_id, case_type, request.user, app)
+        case = helper.get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:
         return HttpResponseNotFound(f"Registry '{registry}' not found")
     except (CaseNotFound, RegistryAccessException):
         return HttpResponseNotFound(f"Case '{case_id}' not found")
 
-    return HttpResponse(CaseDBFixture(case).fixture, content_type="text/xml; charset=utf-8")
+    cases = helper.get_case_hierarchy(case)
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")

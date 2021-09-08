@@ -1,4 +1,3 @@
-import json
 import uuid
 
 from django.http import HttpRequest
@@ -7,7 +6,6 @@ from django.test import TestCase
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
@@ -22,7 +20,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -42,7 +40,7 @@ class ConfigurableReportTestMixin(object):
         ).as_xml()
         with drop_connected_signals(case_post_save):
             post_case_blocks([case_block], {'domain': cls.domain})
-        return CommCareCase.get(id)
+        return CaseAccessors(cls.domain).get_case(id)
 
     @classmethod
     def _delete_everything(cls):

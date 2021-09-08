@@ -114,7 +114,7 @@ def manage_registry(request, domain, registry_slug):
             "description": registry.description or '',
             "slug": registry.slug,
             "is_active": registry.is_active,
-            "schema": registry.case_types,
+            "schema": registry.wrapped_schema.case_types,
             "invitations": [invitation.to_json() for invitation in invitations if invitation.domain != domain],
             "domain_invitation": domain_invitation,
             "grants": [grant.to_json() for grant in grants]

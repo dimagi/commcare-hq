@@ -4,6 +4,7 @@ from django.db import transaction
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 
+from corehq import toggles
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryAuditLog
 from corehq.apps.registry.signals import (
     data_registry_activated,
@@ -74,6 +75,7 @@ class DataRegistryCrudHelper:
         if created:
             self.registry.logger.invitation_added(self.user, invitation)
             data_registry_invitation_created.send(sender=DataRegistry, registry=self.registry, invitation=invitation)
+            toggles.DATA_REGISTRY.set(domain, True, namespace=toggles.NAMESPACE_DOMAIN)
         return invitation, created
 
     @transaction.atomic
