@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_repeaters_by_domain
 from datetime import timedelta
 from uuid import uuid4
 
@@ -23,15 +24,17 @@ from ..const import (
     RECORD_SUCCESS_STATE,
 )
 from ..models import (
+    CaseRepeater,
     FormRepeater,
     SQLRepeater,
+    SQLCaseRepeater,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
     is_response,
 )
 
-DOMAIN = 'test-domain-ap'
+DOMAIN = 'test-domain'
 
 
 def test_get_all_repeater_types():
@@ -39,6 +42,48 @@ def test_get_all_repeater_types():
     for cls in settings.REPEATER_CLASSES:
         name = cls.split('.')[-1]
         assert_in(name, types)
+
+
+class TestSQLCaseRepeater(TestCase):
+    def setUp(self):
+        self.url = "http://example.com"
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=self.url, url=self.url)
+        return super().setUp()
+
+    def tearDown(self):
+        delete_all_repeaters()
+        return super().tearDown()
+
+    def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
+        self.assertEqual(sql_repeater.domain, couch_repeater.domain)
+        self.assertEqual(sql_repeater.couch_id, couch_repeater._id)
+        self.assertEqual(sql_repeater.is_paused, couch_repeater.paused)
+        self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
+        self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
+        self.assertEqual(sql_repeater.connection_settings.id, couch_repeater.connection_settings_id)
+
+    def test_repeaters_are_synced_to_sql(self):
+        couch_repeater = CaseRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id,
+            format='case_json'
+        )
+        couch_repeater.save()
+        sql_repeater = SQLCaseRepeater.objects.first()
+        self._assert_same_repeater_objects(sql_repeater, couch_repeater)
+
+    def test_repeaters_are_synced_to_couch(self):
+        repeater_domain = 'repeater-domain'
+        sql_repeater = SQLCaseRepeater.objects.create(
+            domain=repeater_domain,
+            connection_settings=self.conn,
+            format='case_json',
+            white_listed_case_types=['case'],
+            black_listed_users=[]
+        )
+        couch_repeaters = get_repeaters_by_domain(repeater_domain)
+        self.assertEqual(len(couch_repeaters), 1)
+        self._assert_same_repeater_objects(sql_repeater, couch_repeaters[0])
 
 
 class RepeaterTestCase(TestCase):
