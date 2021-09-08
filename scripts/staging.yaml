@@ -80,4 +80,5 @@ branches:
     - gh/remove-pickles-from-export # Graham Sep 3
     - jls/form-links-modules # Jenny Sept 7
     - sk/data-registry-permissions  # SK Sept 8
+    - gh/erm/v1-cleanup # Graham Sept 8
 submodules: { }
