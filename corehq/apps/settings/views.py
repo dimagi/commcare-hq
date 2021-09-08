@@ -207,7 +207,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             couch_user=self.request.couch_user,
             changed_by_user=self.request.couch_user,
             changed_via=USER_CHANGE_VIA_WEB,
-            message=UserChangeMessage.phone_number_removed(self.phone_number),
+            change_messages=UserChangeMessage.phone_numbers_removed([self.phone_number]),
             domain_required_for_log=False,
         )
         messages.success(self.request, _("Phone number deleted."))
