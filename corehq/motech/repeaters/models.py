@@ -716,7 +716,7 @@ class FormRepeater(Repeater):
         return headers
 
 
-class CaseRepeater(Repeater):
+class CaseRepeater(SyncCouchToSQLMixin, Repeater):
     """
     Record that cases should be repeated to a new url
 
@@ -759,6 +759,22 @@ class CaseRepeater(Repeater):
             "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
         })
         return headers
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "version",
+            'is_paused',
+            "connection_settings",
+            "format",
+            "white_listed_case_types",
+            "black_listed_users",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCaseRepeater
 
 
 class CreateCaseRepeater(CaseRepeater):
