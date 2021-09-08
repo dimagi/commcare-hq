@@ -361,39 +361,26 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                const unWrapParameterizedPermission = function (permission, item_attr='slug') {
-                    const selected = ko.utils.arrayMap(ko.utils.arrayFilter(permission.specific, function (item) {
+                const unWrapItemList = function (items, item_attr='slug') {
+                    return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
                         return item.value;
                     }), function (item) {
                         return item[item_attr];
                     });
-                    return [
-                        permission.all,
-                        selected
-                    ]
                 };
 
-                [
-                    data.permissions.view_reports,
-                    data.permissions.view_report_list
-                ] = unWrapParameterizedPermission(data.reportPermissions, 'path');
+                data.permissions.view_reports = data.reportPermissions.all;
+                data.permissions.view_report_list = unWrapItemList(data.reportPermissions.specific, 'path');
 
-                [
-                    data.permissions.manage_data_registry,
-                    data.permissions.manage_data_registry_list
-                ] = unWrapParameterizedPermission(data.manageRegistryPermission);
+                data.permissions.manage_data_registry = data.manageRegistryPermission.all;
+                data.permissions.manage_data_registry_list = unWrapItemList(data.manageRegistryPermission.specific);
 
-                [
-                    data.permissions.view_data_registry_contents,
-                    data.permissions.view_data_registry_contents_list
-                ] = unWrapParameterizedPermission(data.viewRegistryContentsPermission);
+                data.permissions.view_data_registry_contents = data.viewRegistryContentsPermission.all;
+                data.permissions.view_data_registry_contents_list = unWrapItemList(
+                    data.viewRegistryContentsPermission.specific)
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
-                    return role.value;
-                }), function (role) {
-                    return role.path;
-                });
+                data.assignable_by = unWrapItemList(data.manageRoleAssignments.specific)
                 return data;
             },
         };
