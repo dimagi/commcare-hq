@@ -293,7 +293,7 @@ psycopg2==2.8.6
     # via -r base-requirements.in
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
-pycco==0.5.1
+pycco==0.6.0
     # via -r base-requirements.in
 pycparser==2.20
     # via cffi

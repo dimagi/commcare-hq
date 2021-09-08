@@ -392,7 +392,7 @@ ptyprocess==0.6.0
     # via pexpect
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
-pycco==0.5.1
+pycco==0.6.0
     # via -r base-requirements.in
 pycodestyle==2.7.0
     # via flake8
