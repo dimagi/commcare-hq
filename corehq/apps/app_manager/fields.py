@@ -147,7 +147,10 @@ class ApplicationDataSourceUIHelper(object):
             optionsText: function(item){return item.text},
             optionsValue: function(item){return item.value}
         '''}
-        self.registry_slug_field.widget.attrs = {'data-bind': 'value: registrySlug'}
+        self.registry_slug_field.widget.attrs = {'data-bind': '''
+            disable: sourceType() != 'case',
+            value: registrySlug
+        '''}
 
     def get_fields(self):
         fields = collections.OrderedDict()
