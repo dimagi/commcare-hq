@@ -204,7 +204,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'case_types': {m.case_type for m in app.modules if m.case_type},
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'data_registries': [
-            (registry.slug, registry.name) for registry in
+            (registry.slug, f"{registry.name} ({registry.domain})") for registry in
             DataRegistry.objects.accessible_to_domain(app.domain)
             if set(registry.wrapped_schema.case_types) & case_types
         ],
