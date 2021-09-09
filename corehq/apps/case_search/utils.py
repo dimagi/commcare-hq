@@ -69,14 +69,14 @@ def get_case_search_results(domain, criteria, app_id=None):
     return cases
 
 
-class CaseSearchCriteria(object):
-    """Compiles the case search object for the view
-    """
+class BaseCaseSearchCriteria:
+    """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, criteria):
-        self.domain = domain
+    def __init__(self, domain, case_types, criteria, query_domains):
+        self.request_domain = domain
         self.case_types = case_types
         self.criteria = criteria
+        self.query_domains = query_domains
 
         self.config = self._get_config()
         self.search_es = self._get_initial_search_es()
@@ -88,7 +88,7 @@ class CaseSearchCriteria(object):
             config = (CaseSearchConfig.objects
                       .prefetch_related('fuzzy_properties')
                       .prefetch_related('ignore_patterns')
-                      .get(domain=self.domain))
+                      .get(domain=self.request_domain))
         except CaseSearchConfig.DoesNotExist as e:
             from corehq.util.soft_assert import soft_assert
             _soft_assert = soft_assert(
@@ -97,15 +97,15 @@ class CaseSearchCriteria(object):
             )
             _soft_assert(
                 False,
-                "Someone in domain: {} tried accessing case search without a config".format(self.domain),
+                "Someone in domain: {} tried accessing case search without a config".format(self.request_domain),
                 e
             )
-            config = CaseSearchConfig(domain=self.domain)
+            config = CaseSearchConfig(domain=self.request_domain)
         return config
 
     def _get_initial_search_es(self):
         search_es = (CaseSearchES()
-                     .domain(self.domain)
+                     .domain(self.query_domains)
                      .case_type(self.case_types)
                      .is_closed(False)
                      .size(CASE_SEARCH_MAX_RESULTS)
@@ -136,7 +136,7 @@ class CaseSearchCriteria(object):
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
         if query:
-            self.search_es = self.search_es.xpath_query(self.domain, query)
+            self.search_es = self.search_es.xpath_query(self.query_domains, query)
 
     def _add_owner_id(self):
         owner_id = self.criteria.pop('owner_id', False)
@@ -167,7 +167,7 @@ class CaseSearchCriteria(object):
                 value = [v for v in value if v != '']
                 if value:
                     if '/' in key:
-                        missing_filter = build_filter_from_xpath(self.domain, f'{key} = ""')
+                        missing_filter = build_filter_from_xpath(self.query_domains, f'{key} = ""')
                     else:
                         missing_filter = case_property_missing(key)
                     value = value[0] if len(value) == 1 else value
@@ -187,7 +187,7 @@ class CaseSearchCriteria(object):
         fuzzy = key in self._fuzzy_properties
         if '/' in key:
             query = f'{key} = "{value}"'
-            return build_filter_from_xpath(self.domain, query, fuzzy=fuzzy),
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy),
         else:
             return case_property_query(key, value, fuzzy=fuzzy)
 
@@ -202,7 +202,10 @@ class CaseSearchCriteria(object):
     @cached_property
     def _patterns_to_remove(self):
         patterns_by_property = defaultdict(list)
-        for pattern in self.config.ignore_patterns.filter(domain=self.domain, case_type__in=self.case_types):
+        for pattern in self.config.ignore_patterns.filter(
+                domain=self.request_domain,
+                case_type__in=self.case_types,
+        ):
             patterns_by_property[pattern.case_property].append(re.escape(pattern.regex))
         return patterns_by_property
 
@@ -210,25 +213,26 @@ class CaseSearchCriteria(object):
     def _fuzzy_properties(self):
         return [
             prop for properties_config in
-            self.config.fuzzy_properties.filter(domain=self.domain, case_type__in=self.case_types)
+            self.config.fuzzy_properties.filter(domain=self.request_domain,
+                                                case_type__in=self.case_types)
             for prop in properties_config.properties
         ]
 
 
-class RegistryCaseSearchCriteria(CaseSearchCriteria):
+class CaseSearchCriteria(BaseCaseSearchCriteria):
+    """Normal case search query builder - single domain"""
+
+    def __init__(self, domain, case_types, criteria):
+        super().__init__(domain, case_types, criteria, query_domains=[domain])
+
+
+class RegistryCaseSearchCriteria(BaseCaseSearchCriteria):
+    """Registry case search query builder - multiple domains"""
+
     def __init__(self, domain, case_types, criteria, registry_slug):
         self._registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        self._domains = self._registry_helper.visible_domains
-        super().__init__(domain, case_types, criteria)
-
-    def _get_initial_search_es(self):
-        search_es = (CaseSearchES()
-                     .domain(self._domains)
-                     .case_type(self.case_types)
-                     .is_closed(False)
-                     .size(CASE_SEARCH_MAX_RESULTS)
-                     .set_sorting_block(['_score', '_doc']))
-        return search_es
+        domains = self._registry_helper.visible_domains
+        super().__init__(domain, case_types, criteria, query_domains=domains)
 
 
 def get_related_cases(domain, app_id, case_types, cases):
