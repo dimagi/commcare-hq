@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.phone.tests.utils import call_fixture_generator, create_restore_user
+from corehq.apps.app_manager.models import CaseSearchProperty
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
@@ -36,6 +37,7 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
         )
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module("patient", "patient")
+        module1.search_config.properties = [CaseSearchProperty()]
         module1.search_config.data_registry = cls.registry.slug
 
         factory.new_report_module("reports")
