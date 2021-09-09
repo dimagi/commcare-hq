@@ -214,7 +214,9 @@ idna==2.10
     #   email-validator
     #   requests
 importlib-metadata==3.4.0
-    # via jsonschema
+    # via
+    #   jsonschema
+    #   kombu
 intervaltree==3.1.0
     # via ddtrace
 ipython==7.16.1
@@ -255,7 +257,7 @@ jwcrypto==0.8
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
-kombu==4.2.2.post1
+kombu==4.6.11
     # via
     #   -r base-requirements.in
     #   celery
