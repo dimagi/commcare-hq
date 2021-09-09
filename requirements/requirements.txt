@@ -270,7 +270,7 @@ openpyxl==3.0.6
     #   commcaretranslationchecker
 pbr==5.5.0
     # via mock
-phonenumberslite==8.12.10
+phonenumberslite==8.12.31
     # via -r base-requirements.in
 pillow==8.3.2
     # via

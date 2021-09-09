@@ -301,7 +301,7 @@ pbr==5.5.0
     # via mock
 pep517==0.10.0
     # via pip-tools
-phonenumberslite==8.12.10
+phonenumberslite==8.12.31
     # via -r base-requirements.in
 pillow==8.3.2
     # via
