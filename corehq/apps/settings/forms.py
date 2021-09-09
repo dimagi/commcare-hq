@@ -139,9 +139,9 @@ class HQDeviceValidationForm(DeviceValidationForm):
 
 class HQTwoFactorMethodForm(MethodForm):
 
-    def __init__(self, *, allow_phone, **kwargs):
+    def __init__(self, *, allow_phone_2fa, **kwargs):
         super().__init__(**kwargs)
-        if not allow_phone:
+        if not allow_phone_2fa:
             # Block people from setting up the phone method as their default
             phone_methods = [method for method, _ in get_available_phone_methods()]
             self.fields['method'].choices = [

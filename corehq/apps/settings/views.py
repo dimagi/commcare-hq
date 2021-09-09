@@ -362,7 +362,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
             # Default device means the user has 2FA already enabled
             has_existing_backup_phones = bool(context.get('backup_phones'))
             context.update({
-                'allow_phone': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+                'allow_phone_2fa': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
             })
 
         return context
@@ -390,7 +390,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('allow_phone', _user_can_use_phone(self.request.couch_user))
+            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
 
         return kwargs
 

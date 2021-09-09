@@ -40,19 +40,19 @@ class TwoFactorProfileView_Context_Tests(SimpleTestCase):
         user = self._create_user(two_factor_enabled=True, belongs_to_messaging_domain=True)
         view = self._create_view_for_user(user)
         context = view.get_context_data()
-        self.assertFalse(context.get('allow_phone'))
+        self.assertFalse(context['allow_phone_2fa'])
 
     def test_phone_methods_display_when_user_belongs_to_messaging_domain(self):
         user = self._create_user(two_factor_enabled=True, belongs_to_messaging_domain=True)
         view = self._create_view_for_user(user)
         context = view.get_context_data()
-        self.assertTrue(context.get('allow_phone'))
+        self.assertTrue(context['allow_phone_2fa'])
 
     def test_phone_methods_do_not_display_when_user_does_not_belong_to_messaging_domain(self):
         user = self._create_user(two_factor_enabled=True, belongs_to_messaging_domain=False)
         view = self._create_view_for_user(user)
         context = view.get_context_data()
-        self.assertFalse(context.get('allow_phone'))
+        self.assertFalse(context['allow_phone_2fa'])
 
     def test_phone_methods_display_when_user_has_previous_backup_phones(self):
         user = self._create_user(
@@ -61,7 +61,7 @@ class TwoFactorProfileView_Context_Tests(SimpleTestCase):
             has_backup_phones=True)
         view = self._create_view_for_user(user)
         context = view.get_context_data()
-        self.assertTrue(context.get('allow_phone'))
+        self.assertTrue(context['allow_phone_2fa'])
 
     def setUp(self):
         self.factory = RequestFactory()
@@ -98,17 +98,17 @@ class TwoFactorSetupView_FormKwargs_Tests(SimpleTestCase):
     def test_phone_methods_are_prohibited_when_settings_are_disabled(self):
         user = self._create_user(belongs_to_messaging_domain=True)
         view = self._create_view_for_user(user)
-        self.assertFalse(view.get_form_kwargs(step='method').get('allow_phone'))
+        self.assertFalse(view.get_form_kwargs(step='method')['allow_phone_2fa'])
 
     def test_phone_methods_are_allowed_when_user_belongs_to_messaging_domain(self):
         user = self._create_user(belongs_to_messaging_domain=True)
         view = self._create_view_for_user(user)
-        self.assertTrue(view.get_form_kwargs(step='method').get('allow_phone'))
+        self.assertTrue(view.get_form_kwargs(step='method')['allow_phone_2fa'])
 
     def test_phone_methods_are_prohibited_when_user_does_not_belongs_to_messaging_domain(self):
         user = self._create_user(belongs_to_messaging_domain=False)
         view = self._create_view_for_user(user)
-        self.assertFalse(view.get_form_kwargs(step='method').get('allow_phone'))
+        self.assertFalse(view.get_form_kwargs(step='method')['allow_phone_2fa'])
 
     def setUp(self):
         self.factory = RequestFactory()
