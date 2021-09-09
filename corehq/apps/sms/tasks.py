@@ -364,7 +364,7 @@ class OutboundDailyCounter(object):
         return True
 
 
-@no_result_task(serializer='pickle', queue="sms_queue", acks_late=True)
+@no_result_task(queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -488,7 +488,7 @@ def store_billable(self, msg):
             self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -565,7 +565,7 @@ def _sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
     if not settings.USE_PHONE_ENTRIES:
