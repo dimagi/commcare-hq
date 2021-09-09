@@ -21,7 +21,7 @@ class RegistryFixtureProvider(FixtureProvider):
             module.search_config.data_registry
             for app in apps
             for module in app.get_modules()
-            if module.search_config.data_registry
+            if hasattr(module, 'search_config') and module.search_config.data_registry
         }
         if not registry_slugs:
             return []

@@ -37,6 +37,9 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module("patient", "patient")
         module1.search_config.data_registry = cls.registry.slug
+
+        factory.new_report_module("reports")
+
         cls.app = factory.app
         cls.app.save()
 
