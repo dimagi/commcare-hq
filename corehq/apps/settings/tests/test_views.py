@@ -53,7 +53,7 @@ class TestMyAccountSettingsView(TestCase):
         )
 
         user_history_log = UserHistory.objects.get(user_id=self.couch_user.get_id)
-        self.assertEqual(user_history_log.message, UserChangeMessage.phone_number_removed(phone_number))
+        self.assertEqual(user_history_log.message, UserChangeMessage.phone_numbers_removed([phone_number]))
         self.assertEqual(user_history_log.changed_by, self.couch_user.get_id)
         self.assertIsNone(user_history_log.domain)
         self.assertEqual(user_history_log.details['changed_via'], USER_CHANGE_VIA_WEB)

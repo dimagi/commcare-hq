@@ -797,7 +797,7 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         log_user_change(request.domain, couch_user=user,
                         changed_by_user=request.couch_user, changed_via=USER_CHANGE_VIA_WEB,
-                        message=UserChangeMessage.domain_removal(domain))
+                        change_messages=UserChangeMessage.domain_removal(domain))
         if record:
             message = _('You have successfully removed {username} from your '
                         'project space. <a href="{url}" class="post-link">Undo</a>')
@@ -1239,7 +1239,7 @@ def delete_phone_number(request, domain, couch_user_id):
         couch_user=user,
         changed_by_user=request.couch_user,
         changed_via=USER_CHANGE_VIA_WEB,
-        message=UserChangeMessage.phone_number_removed(phone_number)
+        change_messages=UserChangeMessage.phone_numbers_removed([phone_number])
     )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
@@ -1324,7 +1324,7 @@ def change_password(request, domain, login_id):
                 couch_user=commcare_user,
                 changed_by_user=request.couch_user,
                 changed_via=USER_CHANGE_VIA_WEB,
-                message=UserChangeMessage.password_reset()
+                change_messages=UserChangeMessage.password_reset()
             )
             json_dump['status'] = 'OK'
             form = SetUserPasswordForm(request.project, login_id, user='')
