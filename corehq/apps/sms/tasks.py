@@ -457,14 +457,15 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk])
 
 
-@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=60 * 60,
+@no_result_task(queue='background_queue', default_retry_delay=60 * 60,
                 max_retries=23, bind=True)
-def store_billable(self, msg):
+def store_billable(self, msg_couch_id):
     """
     Creates billable in db that contains price of the message
     default_retry_delay/max_retries are set based on twilio support numbers:
     Most messages will have a price within 2 hours of delivery, all within 24 hours max
     """
+    msg = SMS.objects.get(couch_id=msg_couch_id)
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
