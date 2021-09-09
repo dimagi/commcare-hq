@@ -56,7 +56,6 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import HQApiKey
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
