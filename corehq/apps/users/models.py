@@ -1554,6 +1554,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             domain_required_for_log=domain_required_for_log,
         )
 
+    def belongs_to_messaging_domain(self):
+        domains = (Domain.get_by_name(domain) for domain in self.domains)
+
+        # The reason we iterate through domains, rather than fetch them all at once (there is a view to do so)
+        # is due to concerns about scale. Most users belong to one or a few domains, so iteration isn't expensive.
+        # For users that DO belong to many domains, I'm working off the assumption that most of them are for
+        # enterprise domains, which have turned on messaging for most of their domains -- so we likely will
+        # short-circuit after only a few domains
+        return any(domain.granted_messaging_access for domain in domains)
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
