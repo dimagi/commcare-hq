@@ -1737,8 +1737,8 @@ class ProjectSettingsTab(UITab):
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
-        feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin and has_project_access:
+        feature_flag_items = _get_feature_flag_items(self.domain, self.couch_user)
+        if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         release_management_items = _get_release_management_items(self.couch_user, self.domain)
@@ -1974,22 +1974,28 @@ def _get_integration_section(domain):
     return integration
 
 
-def _get_feature_flag_items(domain):
+def _get_feature_flag_items(domain, couch_user):
+    user_is_admin = couch_user.is_domain_admin(domain)
+
     from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
-    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+    if user_is_admin and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
         })
-    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
+    if user_is_admin and toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
     # show ERM version of linked projects if domain has privilege
-    if toggles.LINKED_DOMAINS.enabled(domain) and not domain_has_privilege(domain, RELEASE_MANAGEMENT):
+    can_access_linked_domains = (
+        user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
+        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    )
+    if can_access_linked_domains:
         feature_flag_items.append({
             'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
@@ -1998,7 +2004,9 @@ def _get_feature_flag_items(domain):
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
-    if toggles.DATA_REGISTRY.enabled(domain):
+
+    from corehq.apps.registry.utils import user_can_manage_some_registries
+    if toggles.DATA_REGISTRY.enabled(domain) and user_can_manage_some_registries(couch_user, domain):
         feature_flag_items.append({
             'title': _('Data Registries'),
             'url': reverse('data_registries', args=[domain]),
