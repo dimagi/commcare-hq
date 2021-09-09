@@ -501,17 +501,7 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
-                default_retry_delay=5 * 60, max_retries=10, bind=True)
-def sync_case_phone_number(self, case):
-    try:
-        clear_case_caches(case)
-        _sync_case_phone_number(case)
-    except Exception as e:
-        self.retry(exc=e)
-
-
-def _sync_case_phone_number(contact_case):
+def sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
     with CriticalSection([contact_case.phone_sync_key], timeout=5 * 60):
