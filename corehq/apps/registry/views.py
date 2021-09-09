@@ -13,17 +13,17 @@ from django.views.decorators.http import require_POST, require_GET
 from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.data_dictionary.util import get_data_dict_case_types
-from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_multiselect, use_daterangepicker
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
-from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper
+from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper, \
+    manage_some_registries_required, manage_all_registries_required, user_can_manage_all_registries
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
 def data_registries(request, domain):
@@ -85,7 +85,7 @@ def _registry_list_context(domain, registry):
     return context
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_GET
 @toggles.DATA_REGISTRY.required_decorator()
 @use_multiselect
@@ -143,7 +143,7 @@ def manage_registry(request, domain, registry_slug):
     return render(request, "registry/registry_edit.html", context)
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def accept_registry_invitation(request, domain):
     registry_slug = request.POST.get('registry_slug')
@@ -152,7 +152,7 @@ def accept_registry_invitation(request, domain):
     return JsonResponse({"invitation": invitation.to_json()})
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def reject_registry_invitation(request, domain):
     registry_slug = request.POST.get('registry_slug')
@@ -161,7 +161,7 @@ def reject_registry_invitation(request, domain):
     return JsonResponse({"invitation": invitation.to_json()})
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def edit_registry_attr(request, domain, registry_slug, attr):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -194,7 +194,7 @@ def edit_registry_attr(request, domain, registry_slug, attr):
     return JsonResponse({attr: value})
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def manage_invitations(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -250,7 +250,7 @@ def manage_invitations(request, domain, registry_slug):
         })
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def manage_grants(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -300,7 +300,7 @@ def manage_grants(request, domain, registry_slug):
         })
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_POST
 def delete_registry(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
@@ -318,7 +318,7 @@ def delete_registry(request, domain, registry_slug):
     return redirect("data_registries", domain=domain)
 
 
-@domain_admin_required
+@manage_all_registries_required
 @require_POST
 def create_registry(request, domain):
     name = request.POST.get("name")
@@ -345,7 +345,7 @@ def create_registry(request, domain):
     return redirect("manage_registry", domain=domain, registry_slug=registry.slug)
 
 
-@domain_admin_required
+@manage_all_registries_required
 @require_POST
 def validate_registry_name(request, domain):
     name = request.POST.get("name")
@@ -356,7 +356,7 @@ def validate_registry_name(request, domain):
     return JsonResponse({"result": not exists})
 
 
-@domain_admin_required
+@manage_some_registries_required
 @require_GET
 def registry_audit_logs(request, domain, registry_slug):
     helper = DataRegistryAuditViewHelper(domain, registry_slug)

@@ -18,6 +18,7 @@ from corehq.apps.registry.signals import (
     data_registry_grant_removed,
     data_registry_deleted,
 )
+from corehq.apps.users.decorators import require_permission_raw
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -25,6 +26,19 @@ def _get_registry_or_404(domain, registry_slug):
         return DataRegistry.objects.visible_to_domain(domain).get(slug=registry_slug)
     except DataRegistry.DoesNotExist:
         raise Http404
+
+
+def user_can_manage_some_registries(couch_user, domain):
+    permissions = couch_user.get_role(domain).permissions
+    return permissions.manage_data_registry or bool(permissions.manage_data_registry_list)
+
+
+def user_can_manage_all_registries(couch_user, domain):
+    return couch_user.can_manage_data_registry(domain)
+
+
+manage_some_registries_required = require_permission_raw(user_can_manage_some_registries)
+manage_all_registries_required = require_permission_raw(user_can_manage_all_registries)
 
 
 class DataRegistryCrudHelper:
