@@ -175,8 +175,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         ]
 
     def _user_history_details_cell(self, changes, domain):
-        def _html_list(changes, unstyled=True):
+        def _html_list(changes=None, unstyled=True):
             items = []
+            if changes is None:
+                return None
             for key, value in changes.items():
                 if isinstance(value, dict):
                     value = _html_list(value, unstyled=unstyled)
@@ -201,13 +203,12 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
             if key == 'user_data':
-                for key, value in changes['user_data'].items():
-                    all_changes[key] = value
+                all_changes.update(changes['user_data'])
 
         more_count = len(all_changes) - len(primary_changes)
         return render_to_string("reports/standard/partials/user_history_changes.html", {
-            "primary_changes": _html_list(primary_changes) if primary_changes else None,
-            "all_changes": _html_list(all_changes) if all_changes else None,
+            "primary_changes": _html_list(primary_changes),
+            "all_changes": _html_list(all_changes),
             "more_count": more_count,
     })
 
