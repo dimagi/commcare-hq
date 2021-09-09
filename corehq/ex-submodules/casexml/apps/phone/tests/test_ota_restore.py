@@ -1,24 +1,33 @@
-from django.test import TestCase
 import os
-from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
-from casexml.apps.phone.utils import get_restore_config
-from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
-    delete_all_xforms
-from casexml.apps.phone.restore import CachedResponse
 from datetime import date
-from casexml.apps.phone import xml
-from casexml.apps.phone.tests import const
-from casexml.apps.phone.tests.utils import create_restore_user
+
+from django.test import TestCase
+
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
 from casexml.apps.case import const as case_const
+from casexml.apps.case.tests.util import (
+    check_xml_line_by_line,
+    delete_all_cases,
+    delete_all_sync_logs,
+    delete_all_xforms,
+)
+from casexml.apps.phone import xml
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
+from casexml.apps.phone.restore import CachedResponse
+from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
-from corehq.apps.users.util import normalize_username
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.users.dbaccessors import delete_all_users
+from casexml.apps.phone.tests.utils import (
+    create_restore_user,
+    deprecated_generate_restore_payload,
+)
+from casexml.apps.phone.utils import get_restore_config
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.util import normalize_username
+from corehq.util.test_utils import TestFileMixin
 
 
 def get_registration_xml(restore_user):
