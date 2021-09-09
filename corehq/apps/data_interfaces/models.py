@@ -982,6 +982,9 @@ class CaseDuplicate(models.Model):
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
     potential_duplicates = models.ManyToManyField('self', symmetrical=True)
 
+    def __str__(self):
+        return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
+
     @classmethod
     def delete_all_references(cls, action, case_id):
         CaseDuplicate.objects.filter(action=action).filter(

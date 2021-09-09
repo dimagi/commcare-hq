@@ -1,5 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 
@@ -13,11 +14,19 @@ def find_duplicate_cases(domain, case, case_properties, include_closed=False, ma
         es = es.is_closed(False)
 
     clause = queries.MUST if match_type == "ALL" else queries.SHOULD
+    _case_json = None
 
     for case_property_name in case_properties:
+        if case_property_name in SPECIAL_CASE_PROPERTIES_MAP:
+            if _case_json is None:
+                _case_json = case.to_json()
+            case_property_value = SPECIAL_CASE_PROPERTIES_MAP[case_property_name].value_getter(_case_json)
+        else:
+            case_property_value = case.get_case_property(case_property_name)
+
         es = es.case_property_query(
             case_property_name,
-            case.get_case_property(case_property_name) or '',
+            case_property_value or '',
             clause
         )
     return [CommCareCase.wrap(flatten_result(hit)) for hit in es.run().hits]
