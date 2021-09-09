@@ -75,10 +75,9 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
             registry_fixture_generator, self.restore_user, project=self.domain_obj
         )
         self.assertEqual(1, len(fixtures))
-        expected_list_fixture = f"""
+        expected_list_fixture = """
         <fixture id="registry:list">
-           <registry_list>
-           </registry_list>
+           <registry_list></registry_list>
         </fixture>"""
         self.assertXmlEqual(expected_list_fixture, ElementTree.tostring(fixtures[0], encoding='utf-8'))
 

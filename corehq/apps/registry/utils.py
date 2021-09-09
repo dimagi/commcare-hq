@@ -45,8 +45,8 @@ class RegistryPermissionCheck:
 
     def can_view_registry_data(self, slug):
         return (
-            self._permissions.view_data_registry_contents or
-            slug in self._permissions.view_data_registry_contents_list
+            self._permissions.view_data_registry_contents
+            or slug in self._permissions.view_data_registry_contents_list
         )
 
     @staticmethod
