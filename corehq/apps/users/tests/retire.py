@@ -73,7 +73,8 @@ class RetireUserTestCase(TestCase):
         self.commcare_user.retire(self.domain, deleted_by=self.other_user, deleted_via=deleted_via)
         user_history = UserHistory.objects.get(user_id=self.commcare_user.get_id,
                                                action=UserModelAction.DELETE.value)
-        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.by_domain, self.domain)
+        self.assertEqual(user_history.for_domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
         self.assertEqual(user_history.changed_via, deleted_via)
@@ -119,7 +120,8 @@ class RetireUserTestCase(TestCase):
             user_id=self.commcare_user.get_id,
             action=UserModelAction.CREATE.value
         )
-        self.assertEqual(user_history.domain, self.domain)
+        self.assertEqual(user_history.by_domain, self.domain)
+        self.assertEqual(user_history.for_domain, self.domain)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
         self.assertEqual(user_history.changed_via, "Test")
