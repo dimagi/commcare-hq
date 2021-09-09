@@ -196,3 +196,11 @@ class DataRegistryAuditViewHelper:
             {"id": option[0], "text": option[1]}
             for option in options
         ]
+
+
+def get_data_registry_dropdown_options(domain, required_case_types=None):
+    return [
+        {"slug": registry.slug, "name": registry.name}
+        for registry in DataRegistry.objects.visible_to_domain(domain)
+        if not required_case_types or set(registry.wrapped_schema.case_types) & required_case_types
+    ]
