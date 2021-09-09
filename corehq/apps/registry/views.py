@@ -36,7 +36,7 @@ def data_registries(request, domain):
 
     context = {
         'domain': domain,
-        'allow_create': user_can_manage_all_registries(request, domain),
+        'allow_create': user_can_manage_all_registries(request.couch_user, domain),
         'owned_registries': owned,
         'invited_registries': invited,
         'available_case_types': list(get_data_dict_case_types(domain)),
