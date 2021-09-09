@@ -11,7 +11,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.data_interfaces.pillow import CaseDeduplicationPillow
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
@@ -230,7 +230,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
     if settings.RUN_DEDUPLICATION_PILLOW:
-        processors.append(CaseDeduplicationPillow())
+        processors.append(CaseDeduplicationProcessor())
 
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(

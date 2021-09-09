@@ -64,22 +64,20 @@ class CaseRuleCriteriaTest(TestCase):
 @es_test
 class FindingDuplicatesTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
+        super().setUp()
 
-        cls.es = get_es_new()
+        self.es = get_es_new()
         with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
+            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
 
-        cls.domain = 'naboo'
-        cls.factory = CaseFactory(cls.domain)
+        self.domain = 'naboo'
+        self.factory = CaseFactory(self.domain)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
-        super().tearDownClass()
+        super().tearDown()
 
     def _prime_es_index(self, cases):
         for case in cases:
@@ -87,14 +85,14 @@ class FindingDuplicatesTest(TestCase):
         self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
     def test_find_simple_duplicates(self):
-        cases = []
-        for (case_name, dob) in [
-            ("Padme Amidala", "1901-05-01"),
-            ("Padme Amidala", "1901-05-01"),
-            ("Anakin Skywalker", "1977-03-25"),
-            ("Darth Vadar", "1977-03-25"),
-        ]:
-            cases.append(self.factory.create_case(case_name=case_name, update={'dob': dob}))
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
 
         self._prime_es_index(cases)
 
@@ -115,14 +113,81 @@ class FindingDuplicatesTest(TestCase):
     def test_duplicates_different_case_types(self):
         """Should not return duplicates
         """
+        cases = [
+            self.factory.create_case(case_name=case_name, case_type=case_type, update={'dob': dob})
+            for (case_name, dob, case_type) in [
+                ("Padme Amidala", "1901-05-01", "Ashla"),
+                ("Padme Amidala", "1901-05-01", "Light"),
+                ("Anakin Skywalker", "1977-03-25", "Dark"),
+                ("Darth Vadar", "1977-03-25", "Dark"),
+            ]
+        ]
+
+        self._prime_es_index(cases)
+
+        # Padme cases are of different case types
+        self.assertNotIn(
+            cases[1].case_id,
+            [case.case_id for case in find_duplicate_cases(self.domain, cases[0], ["name", "dob"])]
+        )
+
+        # Anakin / Vadar are still the same
+        self.assertIn(
+            cases[3].case_id, [case.case_id for case in find_duplicate_cases(self.domain, cases[2], ["dob"])]
+        )
 
     def test_find_closed_duplicates(self):
         """closed duplicates should or shouldn't be found based on input
         """
 
-    def test_find_duplicates_or_rule(self):
+        cases = [
+            self.factory.create_case(case_name=case_name, close=closed, update={'dob': dob})
+            for (case_name, dob, closed) in [
+                ("Padme Amidala", "1901-05-01", False),
+                ("Padme Amidala", "1901-05-01", True),
+                ("Anakin Skywalker", "1977-03-25", False),
+                ("Darth Vadar", "1977-03-25", True),
+            ]
+        ]
+
+        self._prime_es_index(cases)
+
+        # Even though the Padme case is closed, it should still be flagged as a duplicate
+        self.assertItemsEqual([cases[0].case_id, cases[1].case_id], [
+            case.case_id
+            for case in find_duplicate_cases(self.domain, cases[0], ["name", "dob"], include_closed=True)
+        ])
+
+        # The Vadar case is closed, so shouldn't be returned
+        self.assertItemsEqual([cases[2].case_id], [
+            case.case_id for case in find_duplicate_cases(self.domain, cases[2], ["dob"], include_closed=False)
+        ])
+
+    def test_find_duplicates_any_rule(self):
         """find duplicates where any case properties match
         """
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-01"),
+                ("Padme Amidala", "1901-05-02"),
+                ("Padme Naberrie", "1901-05-01"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        self._prime_es_index(cases)
+
+        self.assertItemsEqual([cases[0].case_id, cases[1].case_id, cases[2].case_id, cases[3].case_id], [
+            case.case_id
+            for case in find_duplicate_cases(self.domain, cases[0], ["name", "dob"], match_type="ANY")
+        ])
+
+        self.assertItemsEqual([cases[4].case_id, cases[5].case_id], [
+            case.case_id
+            for case in find_duplicate_cases(self.domain, cases[4], ["name", "dob"], match_type="ANY")
+        ])
 
 
 class CaseDeduplicationActionTest(TestCase):
@@ -199,13 +264,26 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.rule.run_actions_when_case_matches(case_1)
 
-        duplicates = list(
-            CaseDuplicate.objects.filter(action=self.action).all()
-        )
+        duplicates = list(CaseDuplicate.objects.filter(action=self.action).all())
         self.assertItemsEqual([duplicate.case_id for duplicate in duplicates], [case_1.case_id, case_2.case_id])
 
         self.assertEqual(duplicates[0].potential_duplicates.count(), 1)
         self.assertEqual(duplicates[0].potential_duplicates.first().case_id, case_1.case_id)
+
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_stores_all_duplicates_pillow_behind(self, find_duplicates_mock):
+        """If the case search pillow doesn't contain the case we're searching for, we
+        should still be able to store all updates
+
+        """
+
+        case_1, case_2 = self._create_cases()
+        find_duplicates_mock.return_value = [case_2]
+
+        self.rule.run_actions_when_case_matches(case_1)
+
+        duplicates = list(CaseDuplicate.objects.filter(action=self.action).all())
+        self.assertItemsEqual([duplicate.case_id for duplicate in duplicates], [case_1.case_id, case_2.case_id])
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
@@ -260,29 +338,31 @@ class CaseDeduplicationActionTest(TestCase):
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class DeduplicationPillowTest(TestCase):
 
-    def setUp(self):
-        self.domain = 'naboo'
-        self.case_type = 'people'
-        self.factory = CaseFactory(self.domain)
-        self.pillow = get_xform_pillow(skip_ucr=True)
-        CaseDuplicate.objects.all().delete()
-        self.rule = AutomaticUpdateRule.objects.create(
-            domain=self.domain,
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = 'naboo'
+        cls.case_type = 'people'
+        cls.factory = CaseFactory(cls.domain)
+        cls.pillow = get_xform_pillow(skip_ucr=True)
+
+        cls.rule = AutomaticUpdateRule.objects.create(
+            domain=cls.domain,
             name='test',
-            case_type=self.case_type,
+            case_type=cls.case_type,
             active=True,
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
-        _, self.action = self.rule.add_action(
+        _, cls.action = cls.rule.add_action(
             CaseDeduplicationActionDefinition,
             match_type=CaseDeduplicationMatchTypeChoices.ALL,
             case_properties=["case_name", "age"],
         )
-
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        AutomaticUpdateRule.clear_caches(cls.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_finds_duplicate(self, find_duplicate_cases_mock):
@@ -292,6 +372,7 @@ class DeduplicationPillowTest(TestCase):
         case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
         find_duplicate_cases_mock.return_value = [case1, case2]
 
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
         self.pillow.process_changes(since=kafka_sec, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
@@ -300,7 +381,7 @@ class DeduplicationPillowTest(TestCase):
 
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
         potential_duplicates = list(
-            CaseDuplicate.objects.get(case_id=case_id_to_check)
-            .potential_duplicates.values_list('case_id', flat=True)
+            CaseDuplicate.objects.get(case_id=case_id_to_check).potential_duplicates.values_list(
+                'case_id', flat=True)
         )
         self.assertItemsEqual(potential_duplicates, expected_duplicates)

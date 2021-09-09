@@ -27,9 +27,7 @@ from dimagi.utils.modules import to_function
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
-from corehq.apps.data_interfaces.deduplication import (
-    find_duplicate_cases,
-)
+from corehq.apps.data_interfaces.deduplication import find_duplicate_cases
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
@@ -931,7 +929,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
         any_match = (
             self.match_type == CaseDeduplicationMatchTypeChoices.ANY
-            and case_properties.issubset(definition_properties))
+            and len(case_properties - definition_properties) < len(case_properties)
+        )
 
         return all_match or any_match
 
@@ -940,12 +939,18 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         duplicate_cases = find_duplicate_cases(
             domain, case, self.case_properties, self.include_closed, self.match_type
         )
-
         # Delete all CaseDuplicates and potential duplicates with this case_id, we'll recreate them later
         CaseDuplicate.delete_all_references(action=self, case_id=case.case_id)
 
+        case_present = any(
+            duplicate_case.case_id for duplicate_case in duplicate_cases if case.case_id == duplicate_case.case_id
+        )
+        if not case_present:
+            # This can happen if the case being searched isn't in the case search index
+            # (e.g. if this is a case create, and the pillows are racing each other.)
+            duplicate_cases.append(case)
+
         if len(duplicate_cases) == 1:  # There are no duplicates left
-            assert duplicate_cases[0].case_id == case.case_id
             return CaseRuleActionResult(num_updates=0)
 
         num_updates = self._update_cases(domain, rule, duplicate_cases)

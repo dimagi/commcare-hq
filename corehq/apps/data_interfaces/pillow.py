@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from casexml.apps.case.xform import get_case_updates
-from pillowtop.processors import BulkPillowProcessor
+from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-class CaseDeduplicationPillow(BulkPillowProcessor):
+class CaseDeduplicationProcessor(PillowProcessor):
     """Runs Case Deduplication actions whenever a user submits a form
 
     Reads from:
@@ -19,10 +19,6 @@ class CaseDeduplicationPillow(BulkPillowProcessor):
     - Postgres (marking cases as duplicate)
     - Cases (through case updates)
     """
-
-    def process_changes_chunk(self, changes_chunk):
-        for item in changes_chunk:
-            self.process_change(item)
 
     def process_change(self, change):
         domain = change.metadata.domain
@@ -38,8 +34,11 @@ class CaseDeduplicationPillow(BulkPillowProcessor):
         return AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
     def _process_case_update(self, domain, case_update):
-        changed_properties = set(case_update.get_update_action().raw_block.keys())
-        changed_properties.update(set(case_update.get_create_action().raw_block.keys()))
+        changed_properties = set()
+        if case_update.get_create_action() is not None:
+            changed_properties.update(set(case_update.get_create_action().raw_block.keys()))
+        if case_update.get_update_action() is not None:
+            changed_properties.update(set(case_update.get_update_action().raw_block.keys()))
 
         for rule in self._get_rules(domain):
             for action in rule.memoized_actions:
