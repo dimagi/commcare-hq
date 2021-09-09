@@ -115,10 +115,18 @@ class Command(BaseCommand):
             default=False,
             help="to be used to skip assertions in change message creation, useful for manual updates",
         )
+        parser.add_argument(
+            '--only-pending',
+            action='store_true',
+            dest='only_pending',
+            default=False,
+            help="to iterate only logs that are pending to be migrated"
+        )
 
     def handle(self, **options):
         save = options['save']
         skip_assertions = options['skip_assertions']
+        only_pending = options['only_pending']
         if save and skip_assertions:
             raise CommandError("It is not recommended to have save with assertions skipped")
         wb = Workbook()
@@ -129,6 +137,9 @@ class Command(BaseCommand):
         )
 
         records = UserHistory.objects
+        if only_pending:
+            # filter on the new column that is expected to be blank for not migrated records only
+            records = records.filter(changed_via='')
 
         for user_history in records.all():
             try:
