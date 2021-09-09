@@ -62,13 +62,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
-    "IntraHealthFormFluffPillow": {
-        "advertised_name": "IntraHealthFormFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.IntraHealthFormFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.IntraHealthFormFluffPillow",
-        "name": "IntraHealthFormFluffPillow"
-    },
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
