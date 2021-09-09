@@ -62,6 +62,15 @@ def test_refer_case_payload_generator_no_previous_transfer():
     _test_refer_case_payload_generator({}, _get_referral_props("1", "source_domain"))
 
 
+def test_refer_case_payload_generator_previous_transfer_prior_to_history():
+    initial_props = {
+        "cchq_referral_source_domain": "a",
+        "cchq_referral_source_case_id": "2",
+    }
+    expected_history_props = _get_referral_props("_unknown_ 2 1", "_unknown_ a source_domain")
+    _test_refer_case_payload_generator(initial_props, expected_history_props)
+
+
 def test_refer_case_payload_generator_one_previous_transfer():
     _test_refer_case_payload_generator(
         _get_referral_props("a", "domainA"),

@@ -372,9 +372,17 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         case.case_json['cchq_referral_source_case_id'] = original_case_id
 
         domain_history = original_case_json.get('cchq_referral_domain_history', '').split()
-        case.case_json['cchq_referral_domain_history'] = ' '.join(domain_history + [self.repeater.domain])
-
         id_history = original_case_json.get('cchq_referral_case_id_history', '').split()
+
+        if 'cchq_referral_source_domain' in original_case_json and not domain_history:
+            # bootstrap for cases that have already been transferred at least once prior to
+            # addition of the history properties
+            previous_source_domain = original_case_json.get('cchq_referral_source_domain')
+            previous_source_case_id = original_case_json.get('cchq_referral_source_case_id')
+            domain_history.append(f"_unknown_ {previous_source_domain}")
+            id_history.append(f"_unknown_ {previous_source_case_id}")
+
+        case.case_json['cchq_referral_domain_history'] = ' '.join(domain_history + [self.repeater.domain])
         case.case_json['cchq_referral_case_id_history'] = ' '.join(id_history + [original_case_id])
 
     def submission_username(self):
