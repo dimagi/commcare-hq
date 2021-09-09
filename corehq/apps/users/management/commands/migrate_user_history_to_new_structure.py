@@ -637,6 +637,47 @@ def create_change_messages(user_history, skip_assertions):
     if messages_not_converted:
         raise Exception(f"Could not covert messages {messages_not_converted}")
 
+    # skipped the following during dry run because too noisy and would possibly not keep it
+    # re-render messages with change messages and flag any discrepancies with old set of messages
+    # rendered_messages = list(get_messages(change_messages))
+    # parsed_rendered_messages = []
+    # for rendered_message in rendered_messages:
+    #     # parse any messages that have changed now
+    #     if user_history.user_type == "CommCareUser":
+    #         if "Primary location: " in rendered_message:
+    #             # parse new "Primary location: Name[ID]" to old "Primary location: Name"
+    #             parsed_rendered_messages.append(rendered_message.split("[")[0])
+    #         elif "Assigned locations: " in rendered_message:
+    #             # parse new "Assigned locations: ['Name[ID]', 'Name[ID]']"
+    #             # to old "Assigned locations: ['Name', 'Name']"
+    #             # the order changes here to this needs a manual confirmation on warning
+    #             location_names = []
+    #             locations_regex = re.compile(r'Assigned locations: \[(.*)]')
+    #             # split by ", " that has a ' or a " before it
+    #             # we should get a list of Name[ID]
+    #             locations_info = re.split(r"(?<=['\"]), ", locations_regex.match(rendered_message).groups()[0])
+    #             for location_info in locations_info:
+    #                 location_name, location_id = NAME_WITH_ID_REGEX.match(location_info.strip("'")).groups()
+    #                 location_names.append(location_name)
+    #             parsed_rendered_messages.append(f'Assigned locations: {location_names}')
+    #         elif "Profile: " in rendered_message:
+    #             # parse new "CommCare Profile: Name[ID]" to old "CommCare Profile: Name"
+    #             profile_name = rendered_message.split(": ")[1].split('[')[0]
+    #             parsed_rendered_messages.append(f'CommCare Profile: {profile_name}')
+    #         else:
+    #             parsed_rendered_messages.append(rendered_message)
+    #     else:
+    #         parsed_rendered_messages.append(rendered_message)
+    #
+    # # check all re-rendered messages are present in old messages
+    # for rendered_message in parsed_rendered_messages:
+    #     if rendered_message not in messages:
+    #         print(f"Re-rendered extra:{user_history.pk} {rendered_message} in {user_history.message}")
+    # # vice versa
+    # for message in messages:
+    #     if message not in parsed_rendered_messages:
+    #         print(f"Re-rendered missed:{user_history.pk} {message} in {parsed_rendered_messages}")
+
     return change_messages
 
 
