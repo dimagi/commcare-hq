@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _, ngettext
@@ -16,8 +16,14 @@ from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_multiselect, use_daterangepicker
 from corehq.apps.registry.models import DataRegistry, RegistryInvitation
-from corehq.apps.registry.utils import _get_registry_or_404, DataRegistryCrudHelper, DataRegistryAuditViewHelper, \
-    manage_some_registries_required, manage_all_registries_required, user_can_manage_all_registries
+from corehq.apps.registry.utils import (
+    _get_registry_or_404,
+    DataRegistryCrudHelper,
+    DataRegistryAuditViewHelper,
+    manage_some_registries_required,
+    manage_all_registries_required,
+    RegistryPermissionCheck,
+)
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -28,7 +34,10 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 @toggles.DATA_REGISTRY.required_decorator()
 def data_registries(request, domain):
     owned, invited = [], []
+    permission_check = RegistryPermissionCheck(domain, request.couch_user)
     for registry in DataRegistry.objects.visible_to_domain(domain):
+        if not permission_check.can_manage_registry(registry.slug):
+            continue
         if registry.domain == domain:
             owned.append(_registry_list_context(domain, registry))
         else:
@@ -36,7 +45,7 @@ def data_registries(request, domain):
 
     context = {
         'domain': domain,
-        'allow_create': user_can_manage_all_registries(request.couch_user, domain),
+        'allow_create': permission_check.can_manage_all,
         'owned_registries': owned,
         'invited_registries': invited,
         'available_case_types': list(get_data_dict_case_types(domain)),
@@ -93,6 +102,8 @@ def _registry_list_context(domain, registry):
 @use_daterangepicker
 def manage_registry(request, domain, registry_slug):
     registry = _get_registry_or_404(domain, registry_slug)
+    if not RegistryPermissionCheck(domain, request.couch_user).can_manage_registry(registry.slug):
+        return HttpResponseForbidden()
 
     is_owner = registry.domain == domain
     all_invitations = list(registry.invitations.all())
@@ -149,6 +160,9 @@ def manage_registry(request, domain, registry_slug):
 def accept_registry_invitation(request, domain):
     registry_slug = request.POST.get('registry_slug')
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
     invitation = helper.accept_invitation(domain)
     return JsonResponse({"invitation": invitation.to_json()})
 
@@ -158,6 +172,9 @@ def accept_registry_invitation(request, domain):
 def reject_registry_invitation(request, domain):
     registry_slug = request.POST.get('registry_slug')
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
     invitation = helper.reject_invitation(domain)
     return JsonResponse({"invitation": invitation.to_json()})
 
@@ -166,6 +183,8 @@ def reject_registry_invitation(request, domain):
 @require_POST
 def edit_registry_attr(request, domain, registry_slug, attr):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
 
     if helper.registry.domain != domain:
         return JsonResponse({"error": _("Action not permitted")}, status=403)
@@ -199,6 +218,9 @@ def edit_registry_attr(request, domain, registry_slug, attr):
 @require_POST
 def manage_invitations(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
     if helper.registry.domain != domain:
         return JsonResponse({"error": _("Action not permitted")}, status=403)
 
@@ -255,6 +277,8 @@ def manage_invitations(request, domain, registry_slug):
 @require_POST
 def manage_grants(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
 
     action = request.POST.get("action")
     if action not in ("add", "remove"):
@@ -286,7 +310,7 @@ def manage_grants(request, domain, registry_slug):
         try:
             grant, created = helper.get_or_create_grant(domain, to_domains)
         except ValueError as e:
-            return JsonResponse({"error": str(e)})
+            return JsonResponse({"error": str(e)}, status=400)
 
         if created:
             return JsonResponse({
@@ -305,6 +329,9 @@ def manage_grants(request, domain, registry_slug):
 @require_POST
 def delete_registry(request, domain, registry_slug):
     helper = DataRegistryCrudHelper(domain, registry_slug, request.user)
+    if not helper.check_permission(request.couch_user):
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
     if helper.registry.domain != domain:
         messages.error(
             request,
@@ -361,6 +388,10 @@ def validate_registry_name(request, domain):
 @require_GET
 def registry_audit_logs(request, domain, registry_slug):
     helper = DataRegistryAuditViewHelper(domain, registry_slug)
+
+    if not RegistryPermissionCheck(domain, request.couch_user).can_manage_registry(registry_slug):
+        return JsonResponse({"error": "Permission denied"}, status=403)
+
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)

@@ -2005,8 +2005,9 @@ def _get_feature_flag_items(domain, couch_user):
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
 
-    from corehq.apps.registry.utils import user_can_manage_some_registries
-    if toggles.DATA_REGISTRY.enabled(domain) and user_can_manage_some_registries(couch_user, domain):
+    from corehq.apps.registry.utils import RegistryPermissionCheck
+    permission_check = RegistryPermissionCheck(domain, couch_user)
+    if toggles.DATA_REGISTRY.enabled(domain) and permission_check.can_manage_some:
         feature_flag_items.append({
             'title': _('Data Registries'),
             'url': reverse('data_registries', args=[domain]),

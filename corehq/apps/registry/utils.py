@@ -28,23 +28,40 @@ def _get_registry_or_404(domain, registry_slug):
         raise Http404
 
 
-def user_can_manage_some_registries(couch_user, domain):
-    permissions = couch_user.get_role(domain).permissions
-    return permissions.manage_data_registry or bool(permissions.manage_data_registry_list)
+class RegistryPermissionCheck:
+    def __init__(self, domain, couch_user):
+        self.domain = domain
+        self.couch_user = couch_user
+        permissions = couch_user.get_role(domain).permissions
+        self.manageable_slugs = set(permissions.manage_data_registry_list)
+
+        self.can_manage_all = permissions.manage_data_registry
+        self.can_manage_some = self.can_manage_all or bool(self.manageable_slugs)
+
+    def can_manage_registry(self, slug):
+        return self.can_manage_all or slug in self.manageable_slugs
+
+    @staticmethod
+    def user_can_manage_some(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_some
+
+    @staticmethod
+    def user_can_manage_all(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_all
 
 
-def user_can_manage_all_registries(couch_user, domain):
-    return couch_user.can_manage_data_registry(domain)
-
-
-manage_some_registries_required = require_permission_raw(user_can_manage_some_registries)
-manage_all_registries_required = require_permission_raw(user_can_manage_all_registries)
+manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
+manage_all_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_all)
 
 
 class DataRegistryCrudHelper:
     def __init__(self, domain, registry_slug, request_user):
+        self.domain = domain
         self.registry = _get_registry_or_404(domain, registry_slug)
         self.user = request_user
+
+    def check_permission(self, couch_user):
+        return RegistryPermissionCheck(self.domain, couch_user).can_manage_registry(self.registry.slug)
 
     def set_attr(self, attr, value):
         setattr(self.registry, attr, value)
