@@ -35,14 +35,6 @@ from corehq.form_processor.exceptions import (
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
-from couchforms.dbaccessors import (
-    get_forms_by_type,
-    get_deleted_form_ids_for_user,
-    get_form_ids_for_user,
-    get_forms_by_id,
-    get_form_ids_by_type,
-    iter_form_ids_by_xmlns,
-)
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -68,15 +60,15 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
-        return get_forms_by_id(form_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        return get_form_ids_by_type(domain, type_)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
-        return get_forms_by_type(domain, type_, recent_first, limit)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -110,11 +102,11 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
-        return get_deleted_form_ids_for_user(user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
-        return get_form_ids_for_user(domain, user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def set_archived_state(form, archive, user_id):
@@ -149,7 +141,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        return iter_form_ids_by_xmlns(domain, xmlns)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
