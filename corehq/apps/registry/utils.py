@@ -34,14 +34,20 @@ class RegistryPermissionCheck:
         self.domain = domain
         self.couch_user = couch_user
         role = couch_user.get_role(domain, allow_enterprise=True)
-        permissions = role.permissions if role else Permissions()
-        self.manageable_slugs = set(permissions.manage_data_registry_list)
+        self._permissions = role.permissions if role else Permissions()
+        self.manageable_slugs = set(self._permissions.manage_data_registry_list)
 
-        self.can_manage_all = permissions.manage_data_registry
+        self.can_manage_all = self._permissions.manage_data_registry
         self.can_manage_some = self.can_manage_all or bool(self.manageable_slugs)
 
     def can_manage_registry(self, slug):
         return self.can_manage_all or slug in self.manageable_slugs
+
+    def can_view_registry_data(self, slug):
+        return (
+            self._permissions.view_data_registry_contents or
+            slug in self._permissions.view_data_registry_contents_list
+        )
 
     @staticmethod
     def user_can_manage_some(couch_user, domain):

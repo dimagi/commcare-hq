@@ -9,6 +9,7 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
     HttpResponseNotFound,
+    HttpResponseForbidden,
 )
 from django.utils.translation import ugettext as _, ngettext
 from django.views.decorators.csrf import csrf_exempt
@@ -423,8 +424,11 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
-    app = get_app_cached(domain, app_id)
     helper = DataRegistryHelper(domain, registry_slug=registry)
+    if not helper.check_access(request.couch_user):
+        return HttpResponseForbidden()
+
+    app = get_app_cached(domain, app_id)
     try:
         case = helper.get_case(case_id, case_type, request.user, app)
     except RegistryNotFound:

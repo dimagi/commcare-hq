@@ -21,16 +21,36 @@ class TestRegistryPermissions(SimpleTestCase):
 ], TestRegistryPermissions)
 def test_manage_registry_permission(self, allow, can_manage_all, can_manage_some, can_manage_specific):
     domain = "domain"
+    mock_user = _mock_user(domain, "manage_data_registry", allow)
+    checker = RegistryPermissionCheck(domain, mock_user)
+    eq(checker.can_manage_all, can_manage_all)
+    eq(checker.can_manage_some, can_manage_some)
+    eq(checker.can_manage_registry("test_reg"), can_manage_specific)
+
+
+@generate_cases([
+    (None, False),
+    ((), False),
+    (PermissionInfo.ALLOW_ALL, True),
+    (("test_reg",), True),
+    (("other",), False, ),
+], TestRegistryPermissions)
+def test_view_registry_permission(self, allow, can_view_data):
+    domain = "domain"
+    mock_user = _mock_user(domain, "view_data_registry_contents", allow)
+    checker = RegistryPermissionCheck(domain, mock_user)
+    eq(checker.can_view_registry_data("test_reg"), can_view_data)
+
+
+def _mock_user(domain, permission_name, permission_allow):
     membership = DomainMembership(domain=domain)
 
-    permissions = [PermissionInfo("manage_data_registry", allow)] if allow is not None else []
+    permissions = []
+    if permission_allow is not None:
+        permissions = [PermissionInfo(permission_name, permission_allow)]
     mock_role = Mock(permissions=Permissions.from_permission_list(permissions))
     # prime membership.role memoize cache (avoids DB lookup)
     setattr(membership, '_role_cache', {(): mock_role})
 
-    user = WebUser(domain_memberships=[membership])
+    return WebUser(domain_memberships=[membership])
 
-    checker = RegistryPermissionCheck(domain, user)
-    eq(checker.can_manage_all, can_manage_all)
-    eq(checker.can_manage_some, can_manage_some)
-    eq(checker.can_manage_registry("test_reg"), can_manage_specific)
