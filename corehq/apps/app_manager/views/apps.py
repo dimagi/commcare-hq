@@ -309,7 +309,7 @@ def get_app_view_context(request, app):
                 brief for brief in app.get_master_app_briefs() if brief.id in upstream_versions_by_id
             ]
         except RemoteRequestError:
-            messages.error(request, "Unable to reach remote master server. Please try again later.")
+            messages.error(request, "Unable to reach remote upstream server. Please try again later.")
             upstream_versions_by_id = {}
             upstream_briefs = []
         upstream_brief = {}
