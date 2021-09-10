@@ -76,28 +76,20 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False):
+    def __init__(self, enable_raw=False):
         self.all_sources = {}
-        self.enable_cases = enable_cases
-        self.enable_forms = enable_forms
         self.enable_raw = enable_raw
-        source_choices = []
-        if enable_cases:
-            source_choices.append((DATA_SOURCE_TYPE_CASE, _("Case")))
-        if enable_forms:
-            source_choices.append((DATA_SOURCE_TYPE_FORM, _("Form")))
+        source_choices = [
+            (DATA_SOURCE_TYPE_CASE, _("Case")),
+            (DATA_SOURCE_TYPE_FORM, _("Form"))
+        ]
         if enable_raw:
             source_choices.append((DATA_SOURCE_TYPE_RAW, _("Data Source")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        if len(source_choices) > 1:
-            self.source_type_field = forms.ChoiceField(label=_('Forms or Cases'),
-                                                       choices=source_choices,
-                                                       widget=forms.Select(choices=source_choices))
-        else:
-            self.source_type_field = forms.ChoiceField(choices=source_choices,
-                                                       widget=forms.HiddenInput(),
-                                                       initial=source_choices[0][0])
+        self.source_type_field = forms.ChoiceField(label=_('Forms or Cases'),
+                                                   choices=source_choices,
+                                                   widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
         self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
@@ -115,16 +107,14 @@ class ApplicationDataSourceUIHelper(object):
             # it's weird/annoying that you have to manually sync these
             field.widget.choices.extend(choices)
 
-        if self.enable_cases:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
-            )
-        if self.enable_forms:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
-            )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
+        )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
+        )
         if self.enable_raw:
             available_data_sources = get_datasources_for_domain(domain, include_static=True,
                                                                 include_aggregate=AGGREGATE_UCRS.enabled(domain))
