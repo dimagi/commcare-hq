@@ -1007,10 +1007,10 @@ def drop_usercase(request, domain, app_id):
 
 
 @require_can_edit_apps
-def pull_master_app(request, domain, app_id):
+def pull_upstream_app(request, domain, app_id):
     master_app_id = request.POST.get('master_app_id')
     if not master_app_id:
-        messages.error(request, _("Please select a master app."))
+        messages.error(request, _("Please select an upstream app."))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
     async_update = request.POST.get('notify') == 'on'
