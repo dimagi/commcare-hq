@@ -58,7 +58,7 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLinksViewModel = function (data) {
         var self = {};
-        self.upstreamLink = data.master_link ? DomainLink(data.master_link) : null;
+        self.upstreamLink = data.upstream_link ? DomainLink(data.upstream_link) : null;
 
         // setup getting started view model
         var gettingStartedData = {
@@ -75,14 +75,14 @@ hqDefine("linked_domain/js/domain_links", [
         self.addDownstreamDomainViewModel = AddDownstreamDomainViewModel(addDownstreamDomainData);
 
         // can only pull content if a link with an upstream domain exists
-        var pullReleaseContentData = null;
+        var pullContentData = null;
         if (self.upstreamLink) {
-            pullReleaseContentData = {
+            pullContentData = {
                 parent: self,
-                linkedDataViewModels: _.map(data.model_status, LinkedDataViewModel),
+                linkedDataViewModels: _.map(data.view_models_to_pull, LinkedDataViewModel),
                 domainLink: self.upstreamLink,
             };
-            self.pullReleaseContentViewModel = PullReleaseContentViewModel(pullReleaseContentData);
+            self.pullContentViewModel = PullContentViewModel(pullContentData);
         }
 
         // General data
@@ -278,9 +278,8 @@ hqDefine("linked_domain/js/domain_links", [
         return self;
     };
 
-    var PullReleaseContentViewModel = function (data) {
+    var PullContentViewModel = function (data) {
         var self = {};
-        // Pull Content Tab
         self.parent = data.parent;
         self.linkedDataViewModels = data.linkedDataViewModels;
         self.domainLink = data.domainLink;

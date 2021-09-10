@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from django.db import transaction
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 
-from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant
+from corehq import toggles
+from corehq.apps.registry.models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryAuditLog
 from corehq.apps.registry.signals import (
     data_registry_activated,
     data_registry_deactivated,
@@ -15,6 +18,8 @@ from corehq.apps.registry.signals import (
     data_registry_grant_removed,
     data_registry_deleted,
 )
+from corehq.apps.users.decorators import require_permission_raw
+from corehq.apps.users.models import Permissions
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -24,10 +29,47 @@ def _get_registry_or_404(domain, registry_slug):
         raise Http404
 
 
+class RegistryPermissionCheck:
+    def __init__(self, domain, couch_user):
+        self.domain = domain
+        self.couch_user = couch_user
+        role = couch_user.get_role(domain, allow_enterprise=True)
+        self._permissions = role.permissions if role else Permissions()
+        self.manageable_slugs = set(self._permissions.manage_data_registry_list)
+
+        self.can_manage_all = self._permissions.manage_data_registry
+        self.can_manage_some = self.can_manage_all or bool(self.manageable_slugs)
+
+    def can_manage_registry(self, slug):
+        return self.can_manage_all or slug in self.manageable_slugs
+
+    def can_view_registry_data(self, slug):
+        return (
+            self._permissions.view_data_registry_contents
+            or slug in self._permissions.view_data_registry_contents_list
+        )
+
+    @staticmethod
+    def user_can_manage_some(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_some
+
+    @staticmethod
+    def user_can_manage_all(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_all
+
+
+manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
+manage_all_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_all)
+
+
 class DataRegistryCrudHelper:
     def __init__(self, domain, registry_slug, request_user):
+        self.domain = domain
         self.registry = _get_registry_or_404(domain, registry_slug)
         self.user = request_user
+
+    def check_permission(self, couch_user):
+        return RegistryPermissionCheck(self.domain, couch_user).can_manage_registry(self.registry.slug)
 
     def set_attr(self, attr, value):
         setattr(self.registry, attr, value)
@@ -72,6 +114,7 @@ class DataRegistryCrudHelper:
         if created:
             self.registry.logger.invitation_added(self.user, invitation)
             data_registry_invitation_created.send(sender=DataRegistry, registry=self.registry, invitation=invitation)
+            toggles.DATA_REGISTRY.set(domain, True, namespace=toggles.NAMESPACE_DOMAIN)
         return invitation, created
 
     @transaction.atomic
@@ -153,3 +196,50 @@ class DataRegistryCrudHelper:
         # TODO: figure out what to do here
         self.registry.delete()
         data_registry_deleted.send(sender=DataRegistry, registry=self.registry)
+
+
+class DataRegistryAuditViewHelper:
+    def __init__(self, domain, registry_slug):
+        self.domain = domain
+        self.registry = _get_registry_or_404(domain, registry_slug)
+        self.is_owner = domain == self.registry.domain
+        self.filter_kwargs = {}
+
+    def filter(self, domain, start_date, end_date, action):
+        if domain:
+            self.filter_kwargs["domain"] = domain
+        if start_date:
+            self.filter_kwargs["date__gte"] = start_date
+        if end_date:
+            self.filter_kwargs["date__lte"] = datetime.combine(end_date, datetime.max.time())
+        if action:
+            self.filter_kwargs["action"] = action
+
+    @property
+    def query(self):
+        query = self.registry.audit_logs.select_related("user")
+        if not self.is_owner:
+            self.filter_kwargs["domain"] = self.domain
+        return query.filter(**self.filter_kwargs)
+
+    def get_logs(self, skip, limit):
+        return [log.to_json() for log in self.query[skip:skip + limit]]
+
+    def get_total(self):
+        return self.query.count()
+
+    @staticmethod
+    def action_options(is_owner):
+        options = RegistryAuditLog.ACTION_CHOICES if is_owner else RegistryAuditLog.NON_OWNER_ACTION_CHOICES
+        return [
+            {"id": option[0], "text": option[1]}
+            for option in options
+        ]
+
+
+def get_data_registry_dropdown_options(domain, required_case_types=None):
+    return [
+        {"slug": registry.slug, "name": registry.name}
+        for registry in DataRegistry.objects.visible_to_domain(domain)
+        if not required_case_types or set(registry.wrapped_schema.case_types) & required_case_types
+    ]

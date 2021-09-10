@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Itemset,
     Module,
+    AdditionalRegistryQuery,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -363,20 +364,51 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry" template="case" default_search="true">
             <data key="case_type" ref="'case'"/>
             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
-            <data key="registry" ref="'myregistry'"/>
+            <data key="commcare_registry" ref="'myregistry'"/>
           </query>
         </partial>"""
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query")
+
+        # assert that session instance is added to the entry
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
 
         # assert post is disabled
         self.assertXmlHasXpath(suite, "./remote-request[1]/post[@relevant='false()']")
 
         expected_data = """
         <partial>
-          <data key="commcare_registry" ref="myregistry"/>
+          <data key="commcare_registry" ref="'myregistry'"/>
         </partial>
         """
         self.assertXmlPartialEqual(expected_data, suite, "./remote-request[1]/session/query/data[@key='commcare_registry']")
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_search_data_registry_additional_registry_query(self, *args):
+        self.module.search_config.data_registry = "myregistry"
+        base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
+        self.module.search_config.additional_registry_queries = [
+            AdditionalRegistryQuery(
+                instance_name="duplicate",
+                case_type_xpath=f"{base_xpath}/potential_duplicate_case_type",
+                case_id_xpath=f"{base_xpath}/potential_duplicate_case_id"
+            )
+        ]
+        suite = self.app.create_suite()
+
+        expected_entry_query = f"""
+        <partial>
+          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="duplicate" template="case" default_search="true">
+            <data key="case_type" ref="{base_xpath}/potential_duplicate_case_type"/>
+            <data key="case_id" ref="{base_xpath}/potential_duplicate_case_id"/>
+            <data key="commcare_registry" ref="'myregistry'"/>
+          </query>
+        </partial>"""
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
+
+        # assert that session and registry instances are added to the entry
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
+
 
     def test_prompt_hint(self, *args):
         self.module.search_config.properties[0].hint = {'en': 'Search against name'}
@@ -514,7 +546,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         suite = self.app.create_suite()
         expected = """
@@ -533,7 +564,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_hidden(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].hidden = True
         suite = self.app.create_suite()
         expected = """
@@ -552,7 +582,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_address_receiver_itemset(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].receiver_expression = 'home-street'
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
@@ -663,6 +692,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt default="3" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_allow_blank_value(self, *args):
+        self.module.search_config.properties[0].allow_blank_value = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" allow_blank_value="true">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

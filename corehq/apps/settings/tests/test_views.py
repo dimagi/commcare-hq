@@ -1,18 +1,24 @@
-from django.http.response import Http404, HttpResponse
-from django.test import SimpleTestCase, override_settings
 from unittest.mock import Mock, patch
 
+from django.http.response import Http404, HttpResponse
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.client import RequestFactory
+from django.urls import reverse
+
+from two_factor.views import PhoneSetupView, ProfileView, SetupView
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.models import UserHistory, WebUser
+from corehq.const import USER_CHANGE_VIA_WEB
 
 from .. import views
 from ..views import (
     EnableMobilePrivilegesView,
+    TwoFactorPhoneSetupView,
     TwoFactorProfileView,
     TwoFactorSetupView,
-    TwoFactorPhoneSetupView,
 )
-
-from two_factor.views import ProfileView, SetupView, PhoneSetupView
 
 
 class EnableMobilePrivilegesViewTests(SimpleTestCase):
@@ -180,3 +186,35 @@ class TwoFactorPhoneSetupViewTests(SimpleTestCase):
         request.user = request.couch_user = user
         view = TwoFactorPhoneSetupView.as_view()
         return view(request)
+
+
+class TestMyAccountSettingsView(TestCase):
+    domain_name = 'test'
+
+    def setUp(self):
+        super().setUp()
+        self.domain = create_domain(self.domain_name)
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        self.couch_user.add_domain_membership(self.domain_name, is_admin=True)
+        self.couch_user.save()
+
+        self.url = reverse('my_account_settings')
+        self.client.login(username='test', password='foobar')
+
+    def tearDown(self):
+        self.couch_user.delete(self.domain_name, deleted_by=None)
+        self.domain.delete()
+        super().tearDown()
+
+    def test_process_delete_phone_number(self):
+        phone_number = "9999999999"
+        self.client.post(
+            self.url,
+            {"form_type": "delete-phone-number", "phone_number": phone_number}
+        )
+
+        user_history_log = UserHistory.objects.get(user_id=self.couch_user.get_id)
+        self.assertEqual(user_history_log.message, UserChangeMessage.phone_number_removed(phone_number))
+        self.assertEqual(user_history_log.changed_by, self.couch_user.get_id)
+        self.assertIsNone(user_history_log.domain)
+        self.assertEqual(user_history_log.details['changed_via'], USER_CHANGE_VIA_WEB)

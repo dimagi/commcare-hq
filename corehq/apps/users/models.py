@@ -27,8 +27,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-
-from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -65,8 +63,8 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
     tag_cases_as_deleted_and_remove_indices,
@@ -81,7 +79,6 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
 )
-from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -89,11 +86,16 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.dates import get_timestamp
+from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_role import (  # noqa
-    UserRole, SQLPermission, RolePermission, RoleAssignableBy, StaticRole,
+    RoleAssignableBy,
+    RolePermission,
+    SQLPermission,
+    StaticRole,
+    UserRole,
 )
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -142,6 +144,8 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
+    'manage_data_registry': 'manage_data_registry_list',
+    'view_data_registry_contents': 'view_data_registry_contents_list',
 }
 
 
@@ -188,6 +192,11 @@ class Permissions(DocumentSchema):
     login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
+
+    manage_data_registry = BooleanProperty(default=False)
+    manage_data_registry_list = StringListProperty(default=[])
+    view_data_registry_contents = BooleanProperty(default=False)
+    view_data_registry_contents_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -1909,6 +1918,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
+        """
+        :returns: True if groups were updated
+        """
         from corehq.apps.groups.models import Group
         desired = set(group_ids)
         current = set(self.get_group_ids())
@@ -1923,6 +1935,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
 
         Group.bulk_save(touched)
+        return bool(touched)
 
     def get_time_zone(self):
         if self.memoized_usercase:

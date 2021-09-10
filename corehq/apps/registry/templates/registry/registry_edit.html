@@ -23,11 +23,13 @@
 {% initial_page_data "availableCaseTypes" available_case_types %}
 {% initial_page_data "availableDomains" available_domains %}
 {% initial_page_data "invitedDomains" invited_domains %}
+{% initial_page_data "logActionTypes" log_action_types %}
 {% registerurl "edit_registry_attr" domain '---' '---' %}
 {% registerurl "manage_invitations" domain '---' %}
 {% registerurl "manage_grants" domain '---' %}
 {% registerurl "accept_registry_invitation" domain %}
 {% registerurl "reject_registry_invitation" domain %}
+{% registerurl "registry_audit_logs" domain '---' %}
 <div id="edit-registry" class="registry-inlines">
   <div class="row">
     <div class="col-sm-6 col-md-4">
@@ -182,6 +184,11 @@
             {% trans "Grants" %}
             </a>
           </li>
+          <li role="presentation">
+            <a href="#audit-logs" aria-controls="audit-logs" role="tab" data-toggle="tab">
+            {% trans "Audit Logs" %}
+            </a>
+          </li>
           {% if is_owner %}
           <li role="presentation">
             <a href="#actions" aria-controls="actions" role="tab" data-toggle="tab">
@@ -293,6 +300,12 @@
               </tbody>
             </table>
           </div>  <!-- end grants tab -->
+
+          <div class="tab-pane" role="tabpanel" id="audit-logs">
+            <div class="panel-body">
+              {% include "registry/partials/audit_logs.html" %}
+            </div>
+          </div> <!-- end audit-logs tab -->
 
           {% if is_owner %}
           <div class="tab-pane" role="tabpanel" id="actions">

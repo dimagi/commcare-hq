@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-01 19:08+0000\n"
+"POT-Creation-Date: 2021-09-08 19:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -186,37 +186,37 @@ msgid ""
 "page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:116
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
 msgid "Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:117
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
 msgid "Mobile UCR Report"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
 msgid "Select a Report..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:126
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
 msgid "Lookup Table Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:127
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
 msgid "Select a Lookup Table..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
 msgid "Advanced Lookup Table Options"
 msgstr ""
 
@@ -667,24 +667,24 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:107
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:114
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:119
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:120
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:165
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:170
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2706,19 +2706,19 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:331
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:333
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:333
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:335
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:394
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:397
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:396
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js:399
 msgid "This answer is outside the allowed range."
 msgstr ""
 
@@ -2807,13 +2807,13 @@ msgstr ""
 msgid "Page <%-num%>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:166
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:127
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:194
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:236
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:65
 msgid "Clear"
 msgstr ""
@@ -3199,6 +3199,7 @@ msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:70
+#: corehq/apps/registry/static/registry/js/registry_logs.js:19
 #: corehq/apps/reports/static/reports/js/filters/main.js:76
 msgid "Show All Dates"
 msgstr ""
@@ -3384,7 +3385,7 @@ msgid "Error updating."
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:183
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:335
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:334
 msgid "Report successfully linked."
 msgstr ""
 
@@ -3392,8 +3393,8 @@ msgstr ""
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:191
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:206
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:273
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:339
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:344
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:338
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:343
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3411,13 +3412,13 @@ msgstr ""
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:371
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:370
 msgid ""
 "Unable to link project spaces. <%- error %>\n"
 "You must remove the existing link before creating this new link."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:376
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:375
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3508,6 +3509,14 @@ msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js:31
 msgid "Opt out successful"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js:20
+msgid "All Project Spaces"
+msgstr ""
+
+#: corehq/apps/registry/static/registry/js/registry_logs.js:21
+msgid "All Actions"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js:4
@@ -4173,6 +4182,10 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:334
 msgid "Are you sure you want to delete the role <%- role %>?"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:386
+msgid "An error occurred, please try again."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles_and_permissions.js:30
