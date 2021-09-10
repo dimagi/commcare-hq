@@ -143,11 +143,7 @@ def update_case_property(request, domain):
                 errors.append(error)
 
     if errors:
-        if len(errors) == 1:
-            message = errors[0]
-        else:
-            message = mark_safe("<ul>" + "".join(["<li>{}</li>".format(format_html(e)) for e in errors]) + "</ul>")
-        return JsonResponse({"status": "failed", "message": message}, status=400)
+        return JsonResponse({"status": "failed", "messages": errors}, status=400)
     else:
         return JsonResponse({"status": "success"})
 
