@@ -61,7 +61,12 @@ class ApplicationDataSourceUIHelper(object):
             $("#FORM").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
-                sourcesMap: {{ sources_map|JSON }}
+                sourcesMap: {{ sources_map|JSON }},
+                labelMap: {
+                    'case': gettext('Case'),
+                    'form': gettext('Form'),
+                    'data_source': gettext('Data Source'),
+                },
             });
         });
 
