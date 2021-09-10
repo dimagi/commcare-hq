@@ -46,7 +46,12 @@ def get_case_search_results(domain, criteria, app_id=None):
     except KeyError:
         raise CaseSearchUserError(_('Search request must specify case type'))
 
-    case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
+    registry_slug = criteria.pop('registry_slug', None)
+    if registry_slug:
+        case_search_criteria = CaseSearchCriteria.from_registry(domain, case_types, criteria, registry_slug)
+    else:
+        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
+
     try:
         search_es = case_search_criteria.search_es
     except TooManyRelatedCasesError:
@@ -73,14 +78,26 @@ def get_case_search_results(domain, criteria, app_id=None):
     return cases
 
 
-class BaseCaseSearchCriteria:
+class CaseSearchCriteria:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, criteria, query_domains):
+    @classmethod
+    def from_registry(cls, domain, case_types, criteria, registry_slug):
+        try:
+            helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+            for case_type in case_types:
+                helper.pre_access_check(case_type)
+        except (RegistryNotFound, RegistryAccessException):
+            query_domains = [domain]
+        else:
+            query_domains = helper.visible_domains
+        return cls(domain, case_types, criteria, query_domains)
+
+    def __init__(self, domain, case_types, criteria, query_domains=None):
         self.request_domain = domain
         self.case_types = case_types
         self.criteria = criteria
-        self.query_domains = query_domains
+        self.query_domains = [domain] if query_domains is None else query_domains
 
     @cached_property
     def config(self):
@@ -216,33 +233,6 @@ class BaseCaseSearchCriteria:
                                                 case_type__in=self.case_types)
             for prop in properties_config.properties
         ]
-
-
-class CaseSearchCriteria(BaseCaseSearchCriteria):
-    """Normal case search query builder - single domain"""
-
-    def __init__(self, domain, case_types, criteria):
-        super().__init__(domain, case_types, criteria, query_domains=[domain])
-
-
-class RegistryCaseSearchCriteria(BaseCaseSearchCriteria):
-    """Registry case search query builder - multiple domains"""
-
-    def __init__(self, domain, case_types, criteria, registry_slug):
-        try:
-            registry_helper = self._get_registry_helper(domain, case_types, registry_slug)
-        except (RegistryNotFound, RegistryAccessException):
-            # If there's a problem with the registry, fall back to normal case search
-            domains = [domain]
-        else:
-            domains = registry_helper.visible_domains
-        super().__init__(domain, case_types, criteria, query_domains=domains)
-
-    def _get_registry_helper(self, domain, case_types, registry_slug):
-        helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        for case_type in case_types:
-            helper.pre_access_check(case_type)
-        return helper
 
 
 def get_related_cases(domain, app_id, case_types, cases):

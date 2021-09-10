@@ -5,7 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.utils import RegistryCaseSearchCriteria
+from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -115,7 +115,7 @@ class TestCaseSearchRegistry(TestCase):
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria, registry_slug):
-        search = RegistryCaseSearchCriteria(domain, case_types, criteria, registry_slug)
+        search = CaseSearchCriteria.from_registry(domain, case_types, criteria, registry_slug)
         return search.search_es.values_list("name", "domain")
 
     def test_query_all_domains_in_registry(self):
