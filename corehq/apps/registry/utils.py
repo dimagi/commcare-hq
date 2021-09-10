@@ -18,6 +18,8 @@ from corehq.apps.registry.signals import (
     data_registry_grant_removed,
     data_registry_deleted,
 )
+from corehq.apps.users.decorators import require_permission_raw
+from corehq.apps.users.models import Permissions
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -27,10 +29,41 @@ def _get_registry_or_404(domain, registry_slug):
         raise Http404
 
 
+class RegistryPermissionCheck:
+    def __init__(self, domain, couch_user):
+        self.domain = domain
+        self.couch_user = couch_user
+        role = couch_user.get_role(domain, allow_enterprise=True)
+        permissions = role.permissions if role else Permissions()
+        self.manageable_slugs = set(permissions.manage_data_registry_list)
+
+        self.can_manage_all = permissions.manage_data_registry
+        self.can_manage_some = self.can_manage_all or bool(self.manageable_slugs)
+
+    def can_manage_registry(self, slug):
+        return self.can_manage_all or slug in self.manageable_slugs
+
+    @staticmethod
+    def user_can_manage_some(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_some
+
+    @staticmethod
+    def user_can_manage_all(couch_user, domain):
+        return RegistryPermissionCheck(domain, couch_user).can_manage_all
+
+
+manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
+manage_all_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_all)
+
+
 class DataRegistryCrudHelper:
     def __init__(self, domain, registry_slug, request_user):
+        self.domain = domain
         self.registry = _get_registry_or_404(domain, registry_slug)
         self.user = request_user
+
+    def check_permission(self, couch_user):
+        return RegistryPermissionCheck(self.domain, couch_user).can_manage_registry(self.registry.slug)
 
     def set_attr(self, attr, value):
         setattr(self.registry, attr, value)
