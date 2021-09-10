@@ -31,7 +31,7 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     flatten_result,
 )
-from corehq.apps.registry.exceptions import RegistryNotFound
+from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
@@ -231,13 +231,20 @@ class RegistryCaseSearchCriteria(BaseCaseSearchCriteria):
     """Registry case search query builder - multiple domains"""
 
     def __init__(self, domain, case_types, criteria, registry_slug):
-        self._registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
         try:
-            domains = self._registry_helper.visible_domains
-        except RegistryNotFound:
-            # This is a valid use-case, don't fail hard
+            registry_helper = self._get_registry_helper(domain, case_types, registry_slug)
+        except (RegistryNotFound, RegistryAccessException):
+            # If there's a problem with the registry, fall back to normal case search
             domains = [domain]
+        else:
+            domains = registry_helper.visible_domains
         super().__init__(domain, case_types, criteria, query_domains=domains)
+
+    def _get_registry_helper(self, domain, case_types, registry_slug):
+        helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+        for case_type in case_types:
+            helper.pre_access_check(case_type)
+        return helper
 
 
 def get_related_cases(domain, app_id, case_types, cases):

@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.utils import RegistryCaseSearchCriteria
@@ -30,6 +30,25 @@ def case(name, type_, properties):
     )
 
 
+def parent_and_child_cases(parent_name, child_name):
+    parent_id = str(uuid.uuid4())
+    return [
+        CaseBlock(
+            case_id=parent_id,
+            case_type='creator',
+            case_name=parent_name,
+            create=True,
+        ),
+        CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='creative_work',
+            case_name=child_name,
+            create=True,
+            index={'parent': IndexAttrs('team', parent_id, 'child')},
+        )
+    ]
+
+
 @es_test
 @run_with_sql_backend
 class TestCaseSearchRegistry(TestCase):
@@ -45,7 +64,10 @@ class TestCaseSearchRegistry(TestCase):
             case("Alba", 'person', {"family": "Villanueva"}),
             case("Rogelio", 'person', {"family": "de la Vega"}),
             case("Jane", 'person', {"family": "Ramos"}),
-        ])
+        ] + parent_and_child_cases(
+            "Jennie Snyder Urman",
+            "Jane the Virgin",
+        ))
         cls.domain_2 = "jane-eyre"
         cls.setup_domain(cls.domain_2, [
             case("Jane", 'person', {"family": "Eyre"}),
@@ -53,7 +75,10 @@ class TestCaseSearchRegistry(TestCase):
             case("John", 'person', {"family": "Reed"}),
             case("Eliza", 'person', {"family": "Reed"}),
             case("Georgiana", 'person', {"family": "Reed"}),
-        ])
+        ] + parent_and_child_cases(
+            "Charlotte Brontë",
+            "Jane Eyre",
+        ))
         cls.domain_3 = "janes-addiction"
         cls.setup_domain(cls.domain_3, [
             case("Jane", 'person', {"family": "Villanueva"}),
@@ -76,6 +101,7 @@ class TestCaseSearchRegistry(TestCase):
                 Grant(cls.domain_3, [cls.domain_1]),
             ],
             name="reg1",
+            case_types=["person", "creative_work"]
         ).slug
 
     @classmethod
@@ -141,7 +167,12 @@ class TestCaseSearchRegistry(TestCase):
         ], results)
 
     def test_case_type_not_in_registry(self):
-        pass
+        # "creator" case types aren't in the registry, so only return the current domain cases
+        results = (RegistryCaseSearchCriteria(self.domain_1, ['creator'], {}, self.registry_slug)
+                   .search_es.values_list("name", "domain"))
+        self.assertItemsEqual([
+            ("Jennie Snyder Urman", self.domain_1),
+        ], results)
 
     def test_includes_project_property(self):
         # TODO insert 'commcare_project'
