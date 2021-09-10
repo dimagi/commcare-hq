@@ -287,8 +287,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     Abstract interface to a data source in report builder.
 
-    A data source could be an (app, form), (app, case_type) pair (see ApplicationDataSourceHelper),
-    or it can be a real UCR data source (see UnmanagedDataSourceHelper)
+    A data source could be an (app, form), (app, case_type), or (registry, case_type) pair (see
+    ManagedReportBuilderDataSourceHelper), or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
     @property
     @abstractmethod
@@ -351,102 +351,8 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
 class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
     """Abstract class that represents the interface required for building managed
     data sources
-    """
 
-    @property
-    def uses_managed_data_source(self):
-        return True
-
-    @abstractmethod
-    def indicators(self, columns, filters, as_dict=False):
-        """Override if `uses_managed_data_source` is False
-
-        Return a list of indicators to be used in a data source configuration that supports the given columns and
-        indicators.
-        :param columns: A list of objects representing columns in the report.
-            Each object has a "property" and "calculation" key
-        :param filters: A list of filter configuration objects
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_datasource_constructor_kwargs(self, columns, filters, is_multiselect_chart_report=False, multiselect_field=None):
-        """Override if `uses_managed_data_source` is False"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_temp_datasource_constructor_kwargs(self, required_columns, required_filters):
-        """Override if `uses_managed_data_source` is False"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def all_possible_indicators(self, required_columns, required_filters):
-        """
-        Override if `uses_managed_data_source` is False
-
-        Will generate a set of possible indicators for the datasource making sure to include the
-        provided columns and filters
-        """
-        raise NotImplementedError
-
-
-class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
-    """
-    A ReportBuilderDataSourceInterface that encapsulates an existing data source.
-    """
-
-    def __init__(self, domain, app, source_type, source_id):
-        assert source_type == 'data_source'
-        self.domain = domain
-        self.app = app
-        self.source_type = source_type
-        # source_id is the ID of a UCR data source
-        self.data_source_id = source_id
-
-    @property
-    def uses_managed_data_source(self):
-        return False
-
-    @property
-    @memoized
-    def data_source(self):
-        return get_datasource_config_infer_type(self.data_source_id, self.domain)[0]
-
-    @property
-    def data_source_properties(self):
-        def _data_source_property_from_ucr_column(column):
-            # note: using column ID as the display text is a bummer but we don't have a a better
-            # way to easily access a readable name for these yet
-            return DataSourceProperty(
-                type=PROPERTY_TYPE_RAW,
-                id=column.id,
-                text=column.id,
-                source=(column.id, column.datatype),
-                data_types=[column.datatype],
-            )
-
-        properties = OrderedDict()
-        for column in self.data_source.get_columns():
-            properties[column.id] = _data_source_property_from_ucr_column(column)
-        return properties
-
-    @property
-    def report_column_options(self):
-        options = OrderedDict()
-        for id_, prop in self.data_source_properties.items():
-            options[id_] = prop.to_report_column_option()
-
-        return options
-
-
-class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
-    """
-    A ReportBuilderDataSourceInterface that encapsulates an (app, form) or (app, case_type) or
-    (registry, case_type) pair.
-    It also provides convenience methods for creating the underlying UCR data source associated
-    with the data.
-
-    When configuring a report, one can use ApplicationDataSourceHelper to determine some
+    When configuring a report, one can use ManagedReportBuilderDataSourceHelper to determine some
     of the properties of the required report data source, such as:
         - referenced doc type
         - filter
@@ -462,6 +368,10 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
 
         # case type or form ID
         self.source_id = source_id
+
+    @property
+    def uses_managed_data_source(self):
+        return True
 
     @property
     @abstractmethod
@@ -587,7 +497,56 @@ class ApplicationDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
-class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
+class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
+    """
+    A ReportBuilderDataSourceInterface that encapsulates an existing data source.
+    """
+
+    def __init__(self, domain, app, source_type, source_id):
+        assert source_type == 'data_source'
+        self.domain = domain
+        self.app = app
+        self.source_type = source_type
+        # source_id is the ID of a UCR data source
+        self.data_source_id = source_id
+
+    @property
+    def uses_managed_data_source(self):
+        return False
+
+    @property
+    @memoized
+    def data_source(self):
+        return get_datasource_config_infer_type(self.data_source_id, self.domain)[0]
+
+    @property
+    def data_source_properties(self):
+        def _data_source_property_from_ucr_column(column):
+            # note: using column ID as the display text is a bummer but we don't have a a better
+            # way to easily access a readable name for these yet
+            return DataSourceProperty(
+                type=PROPERTY_TYPE_RAW,
+                id=column.id,
+                text=column.id,
+                source=(column.id, column.datatype),
+                data_types=[column.datatype],
+            )
+
+        properties = OrderedDict()
+        for column in self.data_source.get_columns():
+            properties[column.id] = _data_source_property_from_ucr_column(column)
+        return properties
+
+    @property
+    def report_column_options(self):
+        options = OrderedDict()
+        for id_, prop in self.data_source_properties.items():
+            options[id_] = prop.to_report_column_option()
+
+        return options
+
+
+class ApplicationFormDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     def __init__(self, domain, app, source_type, source_id):
         assert source_type == 'form'
         self.domain = domain
@@ -729,7 +688,7 @@ class ApplicationFormDataSourceHelper(ApplicationDataSourceHelper):
         return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
 
 
-class CaseDataSourceHelper(ApplicationDataSourceHelper):
+class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     """
     A ReportBuilderDataSourceInterface specifically for when source_type = 'case'.
     """
@@ -1096,7 +1055,7 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _configured_columns(self):
         """
-        To be used by ApplicationDataSourceHelper.indicators()
+        To be used by ManagedReportBuilderDataSourceHelper.indicators()
         """
         configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")
