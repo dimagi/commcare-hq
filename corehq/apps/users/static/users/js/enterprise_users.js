@@ -62,16 +62,14 @@ hqDefine("users/js/enterprise_users", [
                     user.expanded(false);
                     if (self.showDeactivated()) {
                         user.visible(user.inactiveMobileCount > 0);
-                    }
-                    else {
+                    } else {
                         user.visible(true);
                     }
-                }
-                else {
+                } else {
                     user.visible(false);
                 }
             });
-        }
+        };
 
         self.showDeactivated.subscribe(function () {
             self.showHideDeactivated();
