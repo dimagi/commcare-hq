@@ -1010,24 +1010,24 @@ def drop_usercase(request, domain, app_id):
 
 @require_can_edit_apps
 def pull_upstream_app(request, domain, app_id):
-    master_app_id = request.POST.get('master_app_id')
-    if not master_app_id:
+    upstream_app_id = request.POST.get('upstream_app_id')
+    if not upstream_app_id:
         messages.error(request, _("Please select an upstream app."))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify_task.delay(domain, app_id, master_app_id,
+        update_linked_app_and_notify_task.delay(domain, app_id, upstream_app_id,
                                                 request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
         app = get_current_app(domain, app_id)
         try:
-            update_linked_app(app, master_app_id, request.couch_user.get_id)
+            update_linked_app(app, upstream_app_id, request.couch_user.get_id)
         except AppLinkError as e:
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
+    track_workflow(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

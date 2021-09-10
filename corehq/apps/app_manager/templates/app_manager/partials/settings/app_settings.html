@@ -221,7 +221,7 @@
                 {% if multiple_upstreams %}
                   <div class="form-group">
                     <div class="{% css_field_class %}">
-                      <select name="master_app_id" class="form-control hqwebapp-select2"
+                      <select name="upstream_app_id" class="form-control hqwebapp-select2"
                               data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
                         <option value="">{% trans "Select an upstream app to pull" %}</option>
                         {% for brief in upstream_briefs %}
@@ -232,7 +232,7 @@
                     </div>
                   </div>
                 {% else %}
-                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+                  <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
                 {% endif %}
                 <div class="form-group">
                   <div class="{% css_field_class %}">
