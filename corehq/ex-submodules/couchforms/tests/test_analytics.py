@@ -163,7 +163,7 @@ class CouchformsESAnalyticsTest(TestCase):
         with trap_extra_setup(ConnectionError):
             cls.elasticsearch = get_es_new()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now-cls._60_days)]
+            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now - cls._60_days)]
 
         cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 
