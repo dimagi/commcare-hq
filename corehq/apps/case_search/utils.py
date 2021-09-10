@@ -23,7 +23,7 @@ from corehq.apps.case_search.models import (
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
 )
-from corehq.apps.es import filters, queries
+from corehq.apps.es import filters, queries, case_search
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
@@ -31,7 +31,10 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     flatten_result,
 )
-from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
+from corehq.apps.registry.exceptions import (
+    RegistryAccessException,
+    RegistryNotFound,
+)
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
@@ -78,7 +81,6 @@ class BaseCaseSearchCriteria:
         self.case_types = case_types
         self.criteria = criteria
         self.query_domains = query_domains
-        self._search_es = self._get_initial_search_es()
 
     @cached_property
     def config(self):
@@ -103,23 +105,37 @@ class BaseCaseSearchCriteria:
 
     @cached_property
     def search_es(self):
-        self._assemble_optional_search_params()
-        return self._search_es
-
-    def _get_initial_search_es(self):
-        search_es = (CaseSearchES()
-                     .domain(self.query_domains)
-                     .case_type(self.case_types)
-                     .is_closed(False)
-                     .size(CASE_SEARCH_MAX_RESULTS)
-                     .set_sorting_block(['_score', '_doc']))
+        search_es = self._get_initial_search_es()
+        for key, value in self.criteria.items():
+            filter_, is_query = self._get_filter(key, value)
+            if filter_:
+                if is_query:
+                    search_es = search_es.add_query(filter_, queries.MUST)
+                else:
+                    search_es = search_es.filter(filter_)
         return search_es
 
-    def _assemble_optional_search_params(self):
-        self._add_xpath_query()
-        self._add_owner_id()
-        self._add_blacklisted_owner_ids()
-        self._add_case_property_queries()
+    def _get_initial_search_es(self):
+        return (CaseSearchES()
+                .domain(self.query_domains)
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(CASE_SEARCH_MAX_RESULTS)
+                .set_sorting_block(['_score', '_doc']))
+
+    def _get_filter(self, key, value):
+        if key == CASE_SEARCH_XPATH_QUERY_KEY:
+            if value:
+                return build_filter_from_xpath(self.query_domains, value), False
+        elif key == 'owner_id':
+            if value:
+                return case_search.owner(value), False
+        elif key == CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY:
+            if value:
+                return case_search.blacklist_owner_id(value.split(' ')), False
+        elif key not in UNSEARCHABLE_KEYS and not key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
+            return self._get_case_property_query(key, value), True
+        return None, None
 
     def _validate_multiple_parameter_values(self, key, val):
         if not isinstance(val, list):
@@ -136,22 +152,6 @@ class BaseCaseSearchCriteria:
                 key
             )
 
-    def _add_xpath_query(self):
-        query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
-        if query:
-            self._search_es = self._search_es.xpath_query(self.query_domains, query)
-
-    def _add_owner_id(self):
-        owner_id = self.criteria.pop('owner_id', False)
-        if owner_id:
-            self._search_es = self._search_es.owner(owner_id)
-
-    def _add_blacklisted_owner_ids(self):
-        blacklisted_owner_ids = self.criteria.pop(CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, None)
-        if blacklisted_owner_ids is not None:
-            for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
-                self._search_es = self._search_es.blacklist_owner_id(blacklisted_owner_id)
-
     def _get_daterange_query(self, key, value):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
@@ -162,24 +162,20 @@ class BaseCaseSearchCriteria:
             _, _, startdate, enddate = value.split('__')
             return case_property_range_query(key, gte=startdate, lte=enddate),
 
-    def _add_case_property_queries(self):
-        for key, value in self.criteria.items():
-            if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
-                continue
-            if isinstance(value, list) and '' in value:
-                value = [v for v in value if v != '']
-                if value:
-                    if '/' in key:
-                        missing_filter = build_filter_from_xpath(self.query_domains, f'{key} = ""')
-                    else:
-                        missing_filter = case_property_missing(key)
-                    value = value[0] if len(value) == 1 else value
-                    query = filters.OR(self._get_query(key, value), missing_filter)
+    def _get_case_property_query(self, key, value):
+        if isinstance(value, list) and '' in value:
+            value = [v for v in value if v != '']
+            if value:
+                if '/' in key:
+                    missing_filter = build_filter_from_xpath(self.query_domains, f'{key} = ""')
                 else:
-                    query = case_property_missing(key)
+                    missing_filter = case_property_missing(key)
+                value = value[0] if len(value) == 1 else value
+                return filters.OR(self._get_query(key, value), missing_filter)
             else:
-                query = self._get_query(key, value)
-            self._search_es = self._search_es.add_query(query, queries.MUST)
+                return case_property_missing(key)
+        else:
+            return self._get_query(key, value)
 
     def _get_query(self, key, value):
         self._validate_multiple_parameter_values(key, value)
