@@ -1,5 +1,3 @@
-const { isError } = require("underscore");
-
 /**
  * This file controls the UI for the enterprise users page.
  * This page is based on the main "Current Users" panel on
@@ -29,7 +27,7 @@ hqDefine("users/js/enterprise_users", [
         });
 
         // Only varies for mobile users
-        self.visible = ko.observable(self.loginAsUser === null);
+        self.visible = ko.observable(!self.loginAsUser);
 
         // Only relevant for web users
         self.expanded = ko.observable(false);
