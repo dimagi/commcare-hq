@@ -28,9 +28,8 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 
-ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
-RegistryDataSource = collections.namedtuple('RegistryDataSource', ['application', 'source_type', 'source',
-                                                                   'registry_slug'])
+DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source',
+                                                   'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
@@ -161,10 +160,8 @@ class ApplicationDataSourceUIHelper(object):
         return fields
 
     def get_app_source(self, data_dict):
-        if data_dict['registry_slug'] != '':
-            return RegistryDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
-                                      data_dict['registry_slug'])
-        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'])
+        return DataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
+                          data_dict['registry_slug'])
 
 
 def get_app_sources(domain):
