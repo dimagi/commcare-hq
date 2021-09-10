@@ -121,9 +121,8 @@ class TestIndices(TestCase):
         indices = self.johnny_case.indices
         self.assertEqual(len(indices), 1)
 
-        index = indices[0]
         case_accessor = CaseAccessors(DOMAIN)
-        case = case_accessor.get_case(index.referenced_id)
+        case = case_accessor.get_case(indices[0].referenced_id)
         self.assertTrue(are_cases_equal(case, self.elizabeth_case))
 
 
