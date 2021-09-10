@@ -39,19 +39,21 @@ from .signals import location_edited
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None, data_bind=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
         self.query_url = reverse('location_search', args=[self.domain])
+        self.data_bind = data_bind
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
+
         initial_data = [{
             'id': loc.location_id,
             'text': loc.get_path_display(),
@@ -65,6 +67,7 @@ class LocationSelectWidget(forms.Widget):
             'multiselect': self.multiselect,
             'placeholder': self.placeholder,
             'initial_data': initial_data,
+            'data_bind': self.data_bind,
             'attrs': self.build_attrs(self.attrs, attrs),
         })
 
@@ -588,7 +591,7 @@ class LocationFilterForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
-            attrs={'data_bind': 'value: location_id'},
+            data_bind='value: location_id',
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
