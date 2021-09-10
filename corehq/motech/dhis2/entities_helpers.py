@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any, Dict, List
 
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from requests import HTTPError
@@ -305,18 +306,15 @@ def create_relationships(
 
 
 def get_supercase(case_trigger_info, relationship_config):
-
-    def matches_config(idx):
-        return (
-            idx.identifier == relationship_config.identifier
-            and idx.referenced_type == relationship_config.referenced_type
-            and idx.relationship == relationship_config.relationship
-        )
-
     case_accessor = CaseAccessors(case_trigger_info.domain)
     case = case_accessor.get_case(case_trigger_info.case_id)
     for index in case.live_indices:
-        if matches_config(index):
+        index_matches_config = (
+            index.identifier == relationship_config.identifier
+            and index.referenced_type == relationship_config.referenced_type
+            and index.relationship == relationship_config.relationship
+        )
+        if index_matches_config:
             return case_accessor.get_case(index.referenced_id)
 
 
@@ -338,10 +336,11 @@ def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
     response = requests.post(endpoint, json=relationship, raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
+        from corehq.motech.views import MotechLogListView
         raise Dhis2Exception(_(
             'DHIS2 created {n} relationships. Errors from DHIS2 can be found '
-            'in Remote API Logs.'
-        ).format(n=num_imported))
+            'in Remote API Logs: {url}'
+        ).format(n=num_imported, url=reverse(MotechLogListView.urlname)))
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):
