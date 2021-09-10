@@ -88,7 +88,9 @@ from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-    SHOW_IDS_IN_REPORT_BUILDER)
+    SHOW_IDS_IN_REPORT_BUILDER,
+    DATA_REGISTRY
+)
 
 
 STATIC_CASE_PROPS = [
@@ -935,7 +937,8 @@ class DataSourceForm(forms.Form):
 
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper(
-            enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain)
+            enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
+            enable_registry=DATA_REGISTRY.enabled(self.domain)
 
         )
         self.app_source_helper.source_type_field.label = _('Forms or Cases')

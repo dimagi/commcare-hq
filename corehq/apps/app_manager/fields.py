@@ -72,7 +72,7 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False):
+    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False, enable_registry=False):
         self.all_sources = {}
         self.enable_cases = enable_cases
         self.enable_forms = enable_forms
@@ -96,7 +96,10 @@ class ApplicationDataSourceUIHelper(object):
                                                        initial=source_choices[0][0])
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
-        self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.Select(), required=False)
+        self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
+                                                     required=False)
+        if enable_registry:
+            self.registry_slug_field.widget = forms.Select()
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
