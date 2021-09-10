@@ -131,6 +131,15 @@ class TestCaseSearchRegistry(TestCase):
             ("Jane", self.domain_3),
         ], results)
 
+    def test_invalid_registry_can_access_own_cases(self):
+        results = RegistryCaseSearchCriteria(self.domain_1, ['person'], {
+            "name": "Jane",
+        }, "fake-registry").search_es.values_list("name", "domain")
+        self.assertItemsEqual([
+            ("Jane", self.domain_1),
+            ("Jane", self.domain_1),
+        ], results)
+
     def test_case_type_not_in_registry(self):
         pass
 

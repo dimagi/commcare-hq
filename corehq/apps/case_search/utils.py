@@ -31,6 +31,7 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     flatten_result,
 )
+from corehq.apps.registry.exceptions import RegistryNotFound
 from corehq.apps.registry.helper import DataRegistryHelper
 
 
@@ -231,7 +232,11 @@ class RegistryCaseSearchCriteria(BaseCaseSearchCriteria):
 
     def __init__(self, domain, case_types, criteria, registry_slug):
         self._registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-        domains = self._registry_helper.visible_domains
+        try:
+            domains = self._registry_helper.visible_domains
+        except RegistryNotFound:
+            # This is a valid use-case, don't fail hard
+            domains = [domain]
         super().__init__(domain, case_types, criteria, query_domains=domains)
 
 
