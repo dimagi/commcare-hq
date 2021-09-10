@@ -255,13 +255,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     group_ids = bundle.data.get("groups", [])
                     groups_updated = bundle.obj.set_groups(group_ids)
                     if user_change_logger and groups_updated:
-                        groups_info = []
+                        groups = []
                         if group_ids:
-                            groups_info = ", ".join(
-                                f"{group['name']}[{group['_id']}]"
-                                for group in get_docs(Group.get_db(), group_ids)
-                            )
-                        user_change_logger.add_info(UserChangeMessage.groups_info(groups_info))
+                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
+                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
                     should_save = True
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
