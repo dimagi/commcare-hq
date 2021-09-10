@@ -114,11 +114,18 @@ class TestCaseSearchRegistry(TestCase):
         case_search_es_teardown()
         super().tearDownClass()
 
+    def _run_query(self, domain, case_types, criteria, registry_slug):
+        search = RegistryCaseSearchCriteria(domain, case_types, criteria, registry_slug)
+        return search.search_es.values_list("name", "domain")
+
     def test_query_all_domains_in_registry(self):
         # Domain 1 has access to all three domains
-        results = RegistryCaseSearchCriteria(self.domain_1, ['person'], {
-            "name": "Jane",
-        }, self.registry_slug).search_es.values_list("name", "domain")
+        results = self._run_query(
+            self.domain_1,
+            ['person'],
+            {"name": "Jane"},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jane", self.domain_1),
             ("Jane", self.domain_1),
@@ -127,9 +134,12 @@ class TestCaseSearchRegistry(TestCase):
         ], results)
 
     def test_case_property_query(self):
-        results = RegistryCaseSearchCriteria(self.domain_1, ['person'], {
-            "family": "Villanueva",
-        }, self.registry_slug).search_es.values_list("name", "domain")
+        results = self._run_query(
+            self.domain_1,
+            ['person'],
+            {"family": "Villanueva"},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jane", self.domain_1),
             ("Xiomara", self.domain_1),
@@ -139,9 +149,12 @@ class TestCaseSearchRegistry(TestCase):
 
     def test_subset_of_domains_accessible(self):
         # Domain 2 has access only to domains 1 and itself
-        results = RegistryCaseSearchCriteria(self.domain_2, ['person'], {
-            "name": "Jane",
-        }, self.registry_slug).search_es.values_list("name", "domain")
+        results = self._run_query(
+            self.domain_2,
+            ['person'],
+            {"name": "Jane"},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jane", self.domain_1),
             ("Jane", self.domain_1),
@@ -150,17 +163,23 @@ class TestCaseSearchRegistry(TestCase):
 
     def test_in_registry_but_no_grants(self):
         # Domain 3 has access only to its own cases
-        results = RegistryCaseSearchCriteria(self.domain_3, ['person'], {
-            "name": "Jane",
-        }, self.registry_slug).search_es.values_list("name", "domain")
+        results = self._run_query(
+            self.domain_3,
+            ['person'],
+            {"name": "Jane"},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jane", self.domain_3),
         ], results)
 
     def test_invalid_registry_can_access_own_cases(self):
-        results = RegistryCaseSearchCriteria(self.domain_1, ['person'], {
-            "name": "Jane",
-        }, "fake-registry").search_es.values_list("name", "domain")
+        results = self._run_query(
+            self.domain_1,
+            ['person'],
+            {"name": "Jane"},
+            "fake-registry",
+        )
         self.assertItemsEqual([
             ("Jane", self.domain_1),
             ("Jane", self.domain_1),
@@ -168,8 +187,12 @@ class TestCaseSearchRegistry(TestCase):
 
     def test_case_type_not_in_registry(self):
         # "creator" case types aren't in the registry, so only return the current domain cases
-        results = (RegistryCaseSearchCriteria(self.domain_1, ['creator'], {}, self.registry_slug)
-                   .search_es.values_list("name", "domain"))
+        results = self._run_query(
+            self.domain_1,
+            ['creator'],
+            {},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jennie Snyder Urman", self.domain_1),
         ], results)
@@ -178,9 +201,12 @@ class TestCaseSearchRegistry(TestCase):
         # "creative_work" case types are in the registry, but not their parents - "creator"
         # domain 1 can access a domain 2 case even while referencing an inaccessible case type property
         # TODO is this the correct behavior?  Same question for xpath queries
-        results = (RegistryCaseSearchCriteria(self.domain_1, ['creative_work'], {
-            "parent/name": "Charlotte Brontë"
-        }, self.registry_slug).search_es.values_list("name", "domain"))
+        results = self._run_query(
+            self.domain_1,
+            ['creative_work'],
+            {"parent/name": "Charlotte Brontë"},
+            self.registry_slug,
+        )
         self.assertItemsEqual([
             ("Jane Eyre", self.domain_2),
         ], results)
