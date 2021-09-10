@@ -9,6 +9,8 @@ from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
@@ -141,7 +143,11 @@ def update_case_property(request, domain):
                 errors.append(error)
 
     if errors:
-        return JsonResponse({"status": "failed", "errors": errors}, status=400)
+        if len(errors) == 1:
+            message = errors[0]
+        else:
+            message = mark_safe("<ul>" + "".join(["<li>{}</li>".format(format_html(e)) for e in errors]) + "</ul>")
+        return JsonResponse({"status": "failed", "message": message}, status=400)
     else:
         return JsonResponse({"status": "success"})
 
