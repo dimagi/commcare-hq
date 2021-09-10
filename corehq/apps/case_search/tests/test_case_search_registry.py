@@ -174,6 +174,17 @@ class TestCaseSearchRegistry(TestCase):
             ("Jennie Snyder Urman", self.domain_1),
         ], results)
 
+    def test_access_related_case_type_not_in_registry(self):
+        # "creative_work" case types are in the registry, but not their parents - "creator"
+        # domain 1 can access a domain 2 case even while referencing an inaccessible case type property
+        # TODO is this the correct behavior?  Same question for xpath queries
+        results = (RegistryCaseSearchCriteria(self.domain_1, ['creative_work'], {
+            "parent/name": "Charlotte Brontë"
+        }, self.registry_slug).search_es.values_list("name", "domain"))
+        self.assertItemsEqual([
+            ("Jane Eyre", self.domain_2),
+        ], results)
+
     def test_includes_project_property(self):
         # TODO insert 'commcare_project'
         pass
