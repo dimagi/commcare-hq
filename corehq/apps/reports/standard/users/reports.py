@@ -67,7 +67,6 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             "language": _("language"),
             "phone_numbers": _("phone numbers"),
             "location_id": _("location"),
-            "commcare_location_id": _("location"),
             "user_data": user_data_label,
             "two_factor_auth_disabled_until": _("two factor authentication disabled"),
         }
@@ -198,7 +197,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
         for key, value in changes.items():
             if key in properties:
-                if key in ('commcare_location_id', 'location_id'):
+                if key == 'location_id':
                     value = self._get_location_name(value)
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
