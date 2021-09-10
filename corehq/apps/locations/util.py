@@ -141,8 +141,8 @@ class LocationExporter(object):
             else:
                 root_location = SQLLocation.objects.get(location_id=root_location_id)
                 self.base_query = SQLLocation.objects.get_descendants(
-                    Q(domain=self.domain, id=root_location.id, **additional_filters)
-                )
+                    Q(domain=self.domain, id=root_location.id)
+                ).filter(**additional_filters)
         else:
             self.base_query = SQLLocation.objects.filter(
                 domain=self.domain,
@@ -151,7 +151,7 @@ class LocationExporter(object):
 
     def _extract_additional_filters(self, **kwargs):
         additional_filters = {}
-        if kwargs.get('is_archived', None) is not None:
+        if 'is_archived' in kwargs:
             additional_filters['is_archived'] = kwargs.get('is_archived')
         return additional_filters
 
