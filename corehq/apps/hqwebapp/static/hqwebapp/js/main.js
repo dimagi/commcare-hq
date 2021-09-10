@@ -215,7 +215,7 @@ hqDefine('hqwebapp/js/main', [
                         options.error = function (data) {
                             that.nextState = null;
                             that.setState('retry');
-                            var customError = "";
+                            var customError = data.responseText;
                             if (data.responseJSON) {
                                 if (data.responseJSON.message) {
                                     customError = data.responseJSON.message;
@@ -231,7 +231,6 @@ hqDefine('hqwebapp/js/main', [
                                     }
                                 }
                             }
-                            customError ||= data.responseText;
                             if (customError.indexOf('<head>') > -1) {
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;

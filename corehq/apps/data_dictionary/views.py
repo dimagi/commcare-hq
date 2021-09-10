@@ -9,8 +9,6 @@ from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
