@@ -218,15 +218,15 @@
                 {% endif %}
               </p>
               <div class="form-horizontal">
-                {% if multiple_masters %}
+                {% if multiple_upstreams %}
                   <div class="form-group">
                     <div class="{% css_field_class %}">
                       <select name="master_app_id" class="form-control hqwebapp-select2"
                               data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
-                        <option value="">{% trans "Select a master app to pull" %}</option>
-                        {% for brief in master_briefs %}
+                        <option value="">{% trans "Select an upstream app to pull" %}</option>
+                        {% for brief in upstream_briefs %}
                           {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in master_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
                         {% endfor %}
                       </select>
                     </div>

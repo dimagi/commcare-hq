@@ -304,20 +304,22 @@ def get_app_view_context(request, app):
     })
     if is_linked_app(app):
         try:
-            master_versions_by_id = app.get_latest_master_releases_versions()
-            master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
+            upstream_versions_by_id = app.get_latest_master_releases_versions()
+            upstream_briefs = [
+                brief for brief in app.get_master_app_briefs() if brief.id in upstream_versions_by_id
+            ]
         except RemoteRequestError:
             messages.error(request, "Unable to reach remote master server. Please try again later.")
-            master_versions_by_id = {}
-            master_briefs = []
+            upstream_versions_by_id = {}
+            upstream_briefs = []
         upstream_brief = {}
-        for b in master_briefs:
+        for b in upstream_briefs:
             if b.id == app.upstream_app_id:
                 upstream_brief = b
         context.update({
-            'master_briefs': master_briefs,
-            'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
+            'upstream_briefs': upstream_briefs,
+            'upstream_versions_by_id': upstream_versions_by_id,
+            'multiple_upstreams': app.enable_multi_master and len(upstream_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
@@ -458,7 +460,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
     # Linked apps can only be created from released versions
     error = None
     if from_domain == to_domain:
-        error = _("You may not create a linked app in the same domain as its master app.")
+        error = _("You cannot create a linked app in the same project space as the upstream app.")
     elif build_id:
         from_app = Application.get(build_id)
         if not from_app.is_released:
