@@ -167,6 +167,7 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    'corehq.middleware.flag_cbc_middleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
