@@ -323,24 +323,25 @@ def get_app_view_context(request, app):
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
-            'upstream_url_template': _get_upstream_url(app, request.couch_user, master_app_id='---'),
+            'upstream_url_template': _get_upstream_url(app, request.couch_user, upstream_app_id='---'),
         })
     return context
 
 
-def _get_upstream_url(app, request_user, master_app_id=None):
-    """Get the upstream url if the user has access"""
-    if (
-            app.domain_link and (
-                request_user.is_superuser or (
-                    not app.domain_link.is_remote
-                    and request_user.is_member_of(app.domain_link.master_domain)
-                )
-            )
-    ):
-        if master_app_id is None:
-            master_app_id = app.upstream_app_id
-        url = reverse('view_app', args=[app.domain_link.master_domain, master_app_id])
+def _get_upstream_url(app, user, upstream_app_id=None):
+    """
+    Get the upstream url if the user has access
+    :param user: couch_user from a request
+    """
+    if app.domain_link:
+        return None
+
+    is_member_of_local_domain = user.is_member_of(app.domain_link.master_domain) and not app.domain_link.is_remote
+    user_has_access = is_member_of_local_domain or user.is_superuser
+
+    if user_has_access:
+        upstream_app_id = upstream_app_id or app.upstream_app_id
+        url = reverse('view_app', args=[app.domain_link.master_domain, upstream_app_id])
         if app.domain_link.is_remote:
             url = '{}{}'.format(app.domain_link.remote_base_url, url)
         return url
