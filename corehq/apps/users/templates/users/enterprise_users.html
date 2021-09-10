@@ -59,12 +59,12 @@
               <i class="clickable fa" data-bind="
                 click: $root.toggleLoginAsUsers,
                 css: {'fa-plus-square': !expanded(), 'fa-minus-square': expanded()},
-                visible: loginAsUserCount > 0,
+                visible: !$root.showDeactivated() ? loginAsUserCount > 0 : inactiveMobileCount > 0,
               "></i>
               <i class="fa fa-link" data-bind="visible: loginAsUser" style="margin-left: 15px;"></i>
               <span data-bind="attr: {style: (loginAsUserCount || loginAsUser ? 'margin-left: 1px' : 'margin-left: 15px;')}, text: username"></span>
-              <span class="label label-success" data-bind="text: loginAsUserCount, visible: loginAsUserCount > 0, "></span>
-              <span class="label label-success" data-bind="text: inactiveMobileCount, visible: inactiveMobileCount > 0,"></span>
+              <span class="label label-success" data-bind="text: loginAsUserCount, visible: !$root.showDeactivated() && loginAsUserCount > 0, "></span>
+              <span class="label label-warning" data-bind="text: inactiveMobileCount, visible: $root.showDeactivated() && inactiveMobileCount > 0,"></span>
             </td>
             <td data-bind="text: name">
             </td>

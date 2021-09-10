@@ -1,3 +1,5 @@
+const { isError } = require("underscore");
+
 /**
  * This file controls the UI for the enterprise users page.
  * This page is based on the main "Current Users" panel on
@@ -27,12 +29,11 @@ hqDefine("users/js/enterprise_users", [
         });
 
         // Only varies for mobile users
-        self.visible = ko.observable(!self.loginAsUser);
+        self.visible = ko.observable(self.loginAsUser === null);
 
         // Only relevant for web users
         self.expanded = ko.observable(false);
 
-        self.showInactive = ko.observable(false);
 
         return self;
     };
@@ -44,23 +45,39 @@ hqDefine("users/js/enterprise_users", [
         self.toggleLoginAsUsers = function (webUser) {
             webUser.expanded(!webUser.expanded());
             _.each(self.users(), function (user) {
-                console.log(user);
-                self.showHideDeactivated(webUser);
-                if (user.loginAsUser === webUser.username && user.is_active) {
-                    user.visible(webUser.expanded() && !self.showDeactivated());
+                if (user.loginAsUser === webUser.username) {
+                    if (!self.showDeactivated()) {
+                        user.visible(webUser.expanded() && user.is_active);
+                    }
+                    if (self.showDeactivated()) {
+                        user.visible(webUser.expanded() && !user.is_active);
+                    }
                 }
             });
         };
 
         self.showDeactivated = ko.observable(false);
 
-        self.showHideDeactivated = function (webUser) {
+        self.showHideDeactivated = function () {
             _.each(self.users(), function (user) {
-                if (user.loginAsUser === webUser.username && !user.is_active) {
-                    user.visible(webUser.expanded() && self.showDeactivated());
+                if (!user.loginAsUser) {
+                    user.expanded(false);
+                    if (self.showDeactivated()) {
+                        user.visible(user.inactiveMobileCount > 0);
+                    }
+                    else {
+                        user.visible(true);
+                    }
+                }
+                else {
+                    user.visible(false);
                 }
             });
         }
+
+        self.showDeactivated.subscribe(function () {
+            self.showHideDeactivated();
+        });
 
         return self;
     };
