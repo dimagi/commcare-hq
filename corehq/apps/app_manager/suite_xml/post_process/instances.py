@@ -44,6 +44,9 @@ class EntryInstances(PostProcessor):
             detail_ids.add(datum.detail_persistent)
             xpaths.add(datum.nodeset)
             xpaths.add(datum.function)
+        for query in entry.queries:
+            xpaths.update({data.ref for data in query.data})
+
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id

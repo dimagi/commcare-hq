@@ -369,6 +369,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>"""
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query")
 
+        # assert that session instance is added to the entry
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
+
         # assert post is disabled
         self.assertXmlHasXpath(suite, "./remote-request[1]/post[@relevant='false()']")
 
@@ -401,6 +404,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
           </query>
         </partial>"""
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
+
+        # assert that session and registry instances are added to the entry
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
+        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
 
 
     def test_prompt_hint(self, *args):
