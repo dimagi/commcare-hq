@@ -336,3 +336,18 @@ def get_view_func(view_fn, view_kwargs):
         return view_fn.view_class
 
     return view_fn
+
+
+def flag_cbc_middleware(get_response):
+
+    def middleware(request):
+        cipher_suite = request.META.get('HTTP_X_AMZN_TLS_CIPHER_SUITE')
+
+        response = get_response(request)
+
+        if cipher_suite:
+            response['x-amzn-tls-cipher-suite'] = cipher_suite
+
+        return response
+
+    return middleware
