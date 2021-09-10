@@ -188,9 +188,8 @@ def get_filtered_locations_count(domain, root_location_id=None, **locations_filt
     'root_location_id'.
     """
     if root_location_id is None:
-        # Get all domain locations with filters applied
-        locations = SQLLocation.objects.filter(domain=domain, **locations_filters)
+        queryset = SQLLocation.objects.filter(domain=domain)
     else:
-        locations = SQLLocation.objects.get_locations_and_children_ids([root_location_id], **locations_filters)
+        queryset = SQLLocation.objects.get_locations_and_children([root_location_id])
 
-    return len(locations)
+    return queryset.filter(**locations_filters).count()
