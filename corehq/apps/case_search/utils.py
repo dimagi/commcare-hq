@@ -43,8 +43,9 @@ def get_case_search_results(domain, criteria, app_id=None):
     except KeyError:
         raise CaseSearchUserError(_('Search request must specify case type'))
 
+    case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
     try:
-        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
+        search_es = case_search_criteria.search_es
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
@@ -53,7 +54,6 @@ def get_case_search_results(domain, criteria, app_id=None):
             exception_type=type(e),
         ))
         raise CaseSearchUserError(str(e))
-    search_es = case_search_criteria.search_es
 
     try:
         hits = search_es.run().raw_hits
@@ -78,13 +78,10 @@ class BaseCaseSearchCriteria:
         self.case_types = case_types
         self.criteria = criteria
         self.query_domains = query_domains
+        self._search_es = self._get_initial_search_es()
 
-        self.config = self._get_config()
-        self.search_es = self._get_initial_search_es()
-
-        self._assemble_optional_search_params()
-
-    def _get_config(self):
+    @cached_property
+    def config(self):
         try:
             config = (CaseSearchConfig.objects
                       .prefetch_related('fuzzy_properties')
@@ -103,6 +100,11 @@ class BaseCaseSearchCriteria:
             )
             config = CaseSearchConfig(domain=self.request_domain)
         return config
+
+    @cached_property
+    def search_es(self):
+        self._assemble_optional_search_params()
+        return self._search_es
 
     def _get_initial_search_es(self):
         search_es = (CaseSearchES()
@@ -137,18 +139,18 @@ class BaseCaseSearchCriteria:
     def _add_xpath_query(self):
         query = self.criteria.pop(CASE_SEARCH_XPATH_QUERY_KEY, None)
         if query:
-            self.search_es = self.search_es.xpath_query(self.query_domains, query)
+            self._search_es = self._search_es.xpath_query(self.query_domains, query)
 
     def _add_owner_id(self):
         owner_id = self.criteria.pop('owner_id', False)
         if owner_id:
-            self.search_es = self.search_es.owner(owner_id)
+            self._search_es = self._search_es.owner(owner_id)
 
     def _add_blacklisted_owner_ids(self):
         blacklisted_owner_ids = self.criteria.pop(CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, None)
         if blacklisted_owner_ids is not None:
             for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
-                self.search_es = self.search_es.blacklist_owner_id(blacklisted_owner_id)
+                self._search_es = self._search_es.blacklist_owner_id(blacklisted_owner_id)
 
     def _get_daterange_query(self, key, value):
         # Add query for specially formatted daterange param
@@ -177,7 +179,7 @@ class BaseCaseSearchCriteria:
                     query = case_property_missing(key)
             else:
                 query = self._get_query(key, value)
-            self.search_es = self.search_es.add_query(query, queries.MUST)
+            self._search_es = self._search_es.add_query(query, queries.MUST)
 
     def _get_query(self, key, value):
         self._validate_multiple_parameter_values(key, value)
