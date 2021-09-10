@@ -15,6 +15,7 @@ from couchforms.analytics import get_exports_by_form
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -85,7 +86,7 @@ class ApplicationDataSourceUIHelper(object):
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
         if len(source_choices) > 1:
-            self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
+            self.source_type_field = forms.ChoiceField(label=_('Forms or Cases'),
                                                        choices=source_choices,
                                                        widget=forms.Select(choices=source_choices))
         else:
@@ -94,6 +95,7 @@ class ApplicationDataSourceUIHelper(object):
                                                        initial=source_choices[0][0])
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
+        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -148,6 +150,20 @@ class ApplicationDataSourceUIHelper(object):
         fields['application'] = self.application_field
         fields['source'] = self.source_field
         return fields
+
+    def get_crispy_fields(self):
+        help_texts = {
+            "source_type": _(
+                "<strong>Form</strong>: Display data from form submissions.<br/>"
+                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
+                "option."),
+            "application": _("Which application should the data come from?"),
+            "source": _("Choose the case type or form from which to retrieve data for this report."),
+        }
+        return [
+            hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
+            for name, help_text in help_texts.items()
+        ]
 
     def get_app_source(self, data_dict):
         return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'])

@@ -260,8 +260,7 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         super(ConfigurableDataSourceFromAppForm, self).__init__(*args, **kwargs)
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.bootstrap(domain)
-        report_source_fields = self.app_source_helper.get_fields()
-        self.fields.update(report_source_fields)
+        self.fields.update(self.app_source_helper.get_fields())
         self.helper = FormHelper()
         self.helper.form_id = "data-source-config"
 
