@@ -9,12 +9,13 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.urls import reverse
 from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
 from sentry_sdk import add_breadcrumb
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
@@ -342,6 +343,13 @@ def flag_cbc_middleware(get_response):
 
     def middleware(request):
         cipher_suite = request.META.get('HTTP_X_AMZN_TLS_CIPHER_SUITE')
+        print(toggles.REJECT_REQUESTS_USING_CBC_CIPHER_SUTIES.enabled_for_request(request))
+        if toggles.REJECT_REQUESTS_USING_CBC_CIPHER_SUTIES.enabled_for_request(request):
+            print("What's up?")
+            if cipher_suite in ('ECDHE-ECDSA-AES128-SHA256', 'ECDHE-RSA-AES128-SHA256', 'ECDHE-ECDSA-AES256-SHA384', 'ECDHE-RSA-AES256-SHA384'):
+                response = HttpResponseBadRequest()
+                response['x-amzn-tls-cipher-suite'] = cipher_suite
+                return response
 
         response = get_response(request)
 
