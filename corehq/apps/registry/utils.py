@@ -32,7 +32,7 @@ class RegistryPermissionCheck:
     def __init__(self, domain, couch_user):
         self.domain = domain
         self.couch_user = couch_user
-        permissions = couch_user.get_role(domain).permissions
+        permissions = couch_user.get_role(domain, allow_enterprise=True).permissions
         self.manageable_slugs = set(permissions.manage_data_registry_list)
 
         self.can_manage_all = permissions.manage_data_registry
