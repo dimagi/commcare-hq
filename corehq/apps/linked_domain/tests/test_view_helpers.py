@@ -37,7 +37,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_superuser_view_models,
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
-    get_fixtures,
+    get_upstream_and_downstream_fixtures,
     get_keywords,
     get_reports,
 )
@@ -216,26 +216,28 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_linked_keywords, actual_linked_keywords)
 
     def test_get_fixtures_for_upstream_domain(self):
-        expected_original_fixtures = [self.original_fixture._id]
-        expected_linked_fixtures = []
+        expected_upstream_fixtures = [self.original_fixture._id]
+        expected_downstream_fixtures = []
 
-        original_fixtures, linked_fixtures = get_fixtures(self.upstream_domain, None)
-        actual_original_fixtures = [fixture._id for fixture in original_fixtures.values()]
-        actual_linked_fixtures = [fixture._id for fixture in linked_fixtures.values()]
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
+        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
 
-        self.assertEqual(expected_original_fixtures, actual_original_fixtures)
-        self.assertEqual(expected_linked_fixtures, actual_linked_fixtures)
+        self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
+        self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
-        expected_original_fixtures = []
-        expected_linked_fixtures = [self.original_fixture._id]
+        expected_upstream_fixtures = []
+        expected_downstream_fixtures = [self.original_fixture._id]
 
-        original_fixtures, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        actual_original_fixtures = [fixture._id for fixture in original_fixtures.values()]
-        actual_linked_fixtures = [fixture._id for fixture in linked_fixtures.values()]
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
+            self.downstream_domain, self.domain_link
+        )
+        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
 
-        self.assertEqual(expected_original_fixtures, actual_original_fixtures)
-        self.assertEqual(expected_linked_fixtures, actual_linked_fixtures)
+        self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
+        self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
 
 class TestBuildIndividualViewModels(TestCase):
@@ -680,8 +682,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_length, len(view_models))
 
     def test_fixture_view_models_are_built(self):
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, linked_fixtures, {}, {})
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, downstream_fixtures, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -742,20 +744,20 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
     def test_already_synced_fixture_view_models_are_built(self):
         self._create_sync_event(MODEL_FIXTURE, FixtureLinkDetail(tag=self.original_fixture.tag).to_json())
 
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
-                                                                  linked_fixtures, {}, {}, pytz.UTC)
+                                                                  downstream_fixtures, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_fixtures_are_popped(self):
         self._create_sync_event(MODEL_FIXTURE, FixtureLinkDetail(tag=self.original_fixture.tag).to_json())
 
-        _, linked_fixtures = get_fixtures(self.downstream_domain, self.domain_link)
-        self.assertTrue(1, len(linked_fixtures))
-        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, linked_fixtures,
-                                                    {}, {}, pytz.UTC)
-        self.assertEqual(0, len(linked_fixtures))
+        _, downstream_fixtures = get_upstream_and_downstream_fixtures(self.downstream_domain, self.domain_link)
+        self.assertTrue(1, len(downstream_fixtures))
+        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {},
+                                                    downstream_fixtures, {}, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_fixtures))
 
     def test_already_synced_report_view_models_are_built(self):
         self._create_sync_event(MODEL_REPORT, ReportLinkDetail(report_id=self.linked_report.get_id).to_json())

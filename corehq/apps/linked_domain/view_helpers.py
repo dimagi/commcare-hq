@@ -60,10 +60,15 @@ def get_upstream_and_downstream_apps(domain):
     return upstream_list, downstream_list
 
 
-def get_fixtures(domain, master_link):
-    master_list = get_fixtures_for_domain(domain)
-    linked_list = get_fixtures_for_domain(master_link.master_domain) if master_link else {}
-    return master_list, linked_list
+def get_upstream_and_downstream_fixtures(domain, upstream_link):
+    """
+    Return 2 lists of fixtures
+    The upstream_list contains fixtures that originated in the specified domain
+    The downstream_list contains fixtures that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = get_fixtures_for_domain(domain)
+    downstream_list = get_fixtures_for_domain(upstream_link.master_domain) if upstream_link else {}
+    return upstream_list, downstream_list
 
 
 def get_fixtures_for_domain(domain):

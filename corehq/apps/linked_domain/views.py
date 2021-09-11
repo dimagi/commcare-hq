@@ -87,7 +87,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_pullable_view_models_from_data_models,
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
-    get_fixtures,
+    get_upstream_and_downstream_fixtures,
     get_keywords,
     get_reports,
 )
@@ -269,19 +269,20 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         upstream_link = get_upstream_domain_link(self.domain)
         linked_domains = [build_domain_link_view_model(link, timezone) for link in get_linked_domains(self.domain)]
         upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.domain)
-        master_fixtures, linked_fixtures = get_fixtures(self.domain, upstream_link)
+        upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
         master_reports, linked_reports = get_reports(self.domain)
         master_keywords, linked_keywords = get_keywords(self.domain)
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, upstream_link, downstream_apps, linked_fixtures, linked_reports, linked_keywords,
+            self.domain, upstream_link, downstream_apps, downstream_fixtures, linked_reports, linked_keywords,
             timezone, is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, upstream_apps, master_fixtures, master_reports, master_keywords, is_superuser=is_superuser
+            self.domain, upstream_apps, upstream_fixtures, master_reports, master_keywords,
+            is_superuser=is_superuser
         )
 
         account = BillingAccount.get_account_by_domain(self.request.domain)
