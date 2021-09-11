@@ -76,16 +76,21 @@ def get_fixtures_for_domain(domain):
     return {f.tag: f for f in fixtures if f.is_global}
 
 
-def get_reports(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_reports(domain):
+    """
+    Return 2 lists of reports
+    The upstream_list contains reports that originated in the specified domain
+    The downstream_list contains reports that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     reports = get_report_configs_for_domain(domain)
     for report in reports:
         if report.report_meta.master_id:
-            linked_list[report.get_id] = report
+            downstream_list[report.get_id] = report
         else:
-            master_list[report.get_id] = report
-    return master_list, linked_list
+            upstream_list[report.get_id] = report
+    return upstream_list, downstream_list
 
 
 def get_keywords(domain):

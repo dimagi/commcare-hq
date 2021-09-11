@@ -39,7 +39,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_apps,
     get_upstream_and_downstream_fixtures,
     get_keywords,
-    get_reports,
+    get_upstream_and_downstream_reports,
 )
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -172,26 +172,26 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_app_names, actual_downstream_app_names)
 
     def test_get_reports_for_upstream_domain(self):
-        expected_original_reports = [self.original_report._id]
-        expected_linked_reports = []
+        expected_upstream_reports = [self.original_report._id]
+        expected_downstream_reports = []
 
-        original_reports, linked_reports = get_reports(self.upstream_domain)
-        actual_original_reports = [report._id for report in original_reports.values()]
-        actual_linked_reports = [report._id for report in linked_reports.values()]
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.upstream_domain)
+        actual_upstream_reports = [report._id for report in upstream_reports.values()]
+        actual_downstream_reports = [report._id for report in downstream_reports.values()]
 
-        self.assertEqual(expected_original_reports, actual_original_reports)
-        self.assertEqual(expected_linked_reports, actual_linked_reports)
+        self.assertEqual(expected_upstream_reports, actual_upstream_reports)
+        self.assertEqual(expected_downstream_reports, actual_downstream_reports)
 
     def test_get_reports_for_downstream_domain(self):
-        expected_original_reports = []
-        expected_linked_reports = [self.linked_report._id]
+        expected_upstream_reports = []
+        expected_downstream_reports = [self.linked_report._id]
 
-        original_reports, linked_reports = get_reports(self.downstream_domain)
-        actual_original_reports = [report._id for report in original_reports.values()]
-        actual_linked_reports = [report._id for report in linked_reports.values()]
+        upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        actual_upstream_reports = [report._id for report in upstream_reports.values()]
+        actual_downstream_reports = [report._id for report in downstream_reports.values()]
 
-        self.assertEqual(expected_original_reports, actual_original_reports)
-        self.assertEqual(expected_linked_reports, actual_linked_reports)
+        self.assertEqual(expected_upstream_reports, actual_upstream_reports)
+        self.assertEqual(expected_downstream_reports, actual_downstream_reports)
 
     def test_get_keywords_for_upstream_domain(self):
         expected_original_keywords = [str(self.original_keyword.id)]
@@ -688,8 +688,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_length, len(view_models))
 
     def test_report_view_models_are_built(self):
-        _, linked_reports = get_reports(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, linked_reports, {})
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, downstream_reports, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -762,20 +762,20 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
     def test_already_synced_report_view_models_are_built(self):
         self._create_sync_event(MODEL_REPORT, ReportLinkDetail(report_id=self.linked_report.get_id).to_json())
 
-        _, linked_reports = get_reports(self.downstream_domain)
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  linked_reports, {}, pytz.UTC)
+                                                                  downstream_reports, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_reports_are_popped(self):
         self._create_sync_event(MODEL_REPORT, ReportLinkDetail(report_id=self.linked_report.get_id).to_json())
 
-        _, linked_reports = get_reports(self.downstream_domain)
-        self.assertTrue(1, len(linked_reports))
+        _, downstream_reports = get_upstream_and_downstream_reports(self.downstream_domain)
+        self.assertTrue(1, len(downstream_reports))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                    linked_reports, {}, pytz.UTC)
-        self.assertEqual(0, len(linked_reports))
+                                                    downstream_reports, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_reports))
 
     def test_already_synced_keyword_view_models_are_built(self):
         self._create_sync_event(MODEL_KEYWORD, KeywordLinkDetail(keyword_id=str(self.linked_keyword.id)).to_json())
