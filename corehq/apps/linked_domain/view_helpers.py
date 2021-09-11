@@ -43,16 +43,21 @@ def build_domain_link_view_model(link, timezone):
     }
 
 
-def get_apps(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_apps(domain):
+    """
+    Return 2 lists of app_briefs
+    The upstream_list contains apps that originated in the specified domain
+    The downstream_list contains apps that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     briefs = get_brief_apps_in_domain(domain, include_remote=False)
     for brief in briefs:
         if is_linked_app(brief):
-            linked_list[brief._id] = brief
+            downstream_list[brief._id] = brief
         else:
-            master_list[brief._id] = brief
-    return master_list, linked_list
+            upstream_list[brief._id] = brief
+    return upstream_list, downstream_list
 
 
 def get_fixtures(domain, master_link):

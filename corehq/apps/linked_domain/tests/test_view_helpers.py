@@ -36,7 +36,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_report_view_model,
     build_superuser_view_models,
     build_view_models_from_data_models,
-    get_apps,
+    get_upstream_and_downstream_apps,
     get_fixtures,
     get_keywords,
     get_reports,
@@ -153,7 +153,7 @@ class TestGetDataModels(BaseLinkedDomainTest):
         expected_upstream_app_names = [self.original_app._id]
         expected_downstream_app_names = []
 
-        upstream_apps, downstream_apps = get_apps(self.upstream_domain)
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.upstream_domain)
         actual_upstream_app_names = [app._id for app in upstream_apps.values()]
         actual_downstream_app_names = [app._id for app in downstream_apps.values()]
 
@@ -161,15 +161,15 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_app_names, actual_downstream_app_names)
 
     def test_get_apps_for_downstream_domain(self):
-        expected_original_app_names = []
-        expected_linked_app_names = [self.linked_app._id]
+        expected_upstream_app_names = []
+        expected_downstream_app_names = [self.linked_app._id]
 
-        original_apps, linked_apps = get_apps(self.downstream_domain)
-        actual_original_app_names = [app._id for app in original_apps.values()]
-        actual_linked_app_names = [app._id for app in linked_apps.values()]
+        upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        actual_upstream_app_names = [app._id for app in upstream_apps.values()]
+        actual_downstream_app_names = [app._id for app in downstream_apps.values()]
 
-        self.assertEqual(expected_original_app_names, actual_original_app_names)
-        self.assertEqual(expected_linked_app_names, actual_linked_app_names)
+        self.assertEqual(expected_upstream_app_names, actual_upstream_app_names)
+        self.assertEqual(expected_downstream_app_names, actual_downstream_app_names)
 
     def test_get_reports_for_upstream_domain(self):
         expected_original_reports = [self.original_report._id]
@@ -674,8 +674,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_length, len(view_models))
 
     def test_app_view_models_are_built(self):
-        _, linked_apps = get_apps(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, linked_apps, {}, {}, {})
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, downstream_apps, {}, {}, {})
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -724,20 +724,20 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
     def test_already_synced_app_view_models_are_built(self):
         self._create_sync_event(MODEL_APP, AppLinkDetail(app_id=self.linked_app._id).to_json())
 
-        _, linked_apps = get_apps(self.downstream_domain)
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link,
-                                                                  linked_apps, {}, {}, {}, pytz.UTC)
+                                                                  downstream_apps, {}, {}, {}, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_apps_are_popped(self):
         self._create_sync_event(MODEL_APP, AppLinkDetail(app_id=self.linked_app._id).to_json())
 
-        _, linked_apps = get_apps(self.downstream_domain)
-        self.assertTrue(1, len(linked_apps))
-        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, linked_apps, {}, {},
-                                                    {}, pytz.UTC)
-        self.assertEqual(0, len(linked_apps))
+        _, downstream_apps = get_upstream_and_downstream_apps(self.downstream_domain)
+        self.assertTrue(1, len(downstream_apps))
+        build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, downstream_apps, {},
+                                                    {}, {}, pytz.UTC)
+        self.assertEqual(0, len(downstream_apps))
 
     def test_already_synced_fixture_view_models_are_built(self):
         self._create_sync_event(MODEL_FIXTURE, FixtureLinkDetail(tag=self.original_fixture.tag).to_json())
