@@ -5,7 +5,10 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.case_search.utils import (
+    CaseSearchCriteria,
+    get_case_search_results,
+)
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -211,9 +214,22 @@ class TestCaseSearchRegistry(TestCase):
             ("Jane Eyre", self.domain_2),
         ], results)
 
+    # get_case_search_results tests below:
+
     def test_includes_project_property(self):
-        # TODO insert 'commcare_project'
-        pass
+        results = get_case_search_results(
+            self.domain_1,
+            {"case_type": ["person"], "name": "Jane", "registry_slug": self.registry_slug},
+        )
+        self.assertItemsEqual([
+            ("Jane", self.domain_1, self.domain_1),
+            ("Jane", self.domain_1, self.domain_1),
+            ("Jane", self.domain_2, self.domain_2),
+            ("Jane", self.domain_3, self.domain_3),
+        ], [
+            (case.name, case.domain, case.get_case_property('commcare_project'))
+            for case in results
+        ])
 
     def test_related_cases_included(self):
         pass

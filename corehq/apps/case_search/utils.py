@@ -9,7 +9,10 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.const import (
+    CASE_SEARCH_MAX_RESULTS,
+    COMMCARE_PROJECT,
+)
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
@@ -23,7 +26,7 @@ from corehq.apps.case_search.models import (
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
 )
-from corehq.apps.es import filters, queries, case_search
+from corehq.apps.es import case_search, filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
@@ -71,11 +74,20 @@ def get_case_search_results(domain, criteria, app_id=None):
         ))
         raise
 
+    hits = (flatten_result(hit, include_score=True) for hit in hits)
+
+    if registry_slug:
+        hits = (transform_registry_search_result(hit) for hit in hits)
+
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
+    cases = [CommCareCase.wrap(hit) for hit in hits]
     if app_id:
         cases.extend(get_related_cases(domain, app_id, case_types, cases))
     return cases
+
+
+def transform_registry_search_result(case_dict):
+    return {**case_dict, **{COMMCARE_PROJECT: case_dict['domain']}}
 
 
 class CaseSearchCriteria:
