@@ -88,7 +88,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
     get_upstream_and_downstream_fixtures,
-    get_keywords,
+    get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -271,17 +271,17 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         upstream_apps, downstream_apps = get_upstream_and_downstream_apps(self.domain)
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
         upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
-        master_keywords, linked_keywords = get_keywords(self.domain)
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports, linked_keywords,
-            timezone, is_superuser=is_superuser
+            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
+            downstream_keywords, timezone, is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, upstream_apps, upstream_fixtures, upstream_reports, master_keywords,
+            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
             is_superuser=is_superuser
         )
 

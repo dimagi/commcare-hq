@@ -38,7 +38,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
     get_upstream_and_downstream_fixtures,
-    get_keywords,
+    get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
 )
 from corehq.apps.sms.models import Keyword
@@ -194,26 +194,26 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_reports, actual_downstream_reports)
 
     def test_get_keywords_for_upstream_domain(self):
-        expected_original_keywords = [str(self.original_keyword.id)]
-        expected_linked_keywords = []
+        expected_upstream_keywords = [str(self.original_keyword.id)]
+        expected_downstream_keywords = []
 
-        original_keywords, linked_keywords = get_keywords(self.upstream_domain)
-        actual_original_keywords = [str(keyword.id) for keyword in original_keywords.values()]
-        actual_linked_keywords = [str(keyword.id) for keyword in linked_keywords.values()]
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.upstream_domain)
+        actual_upstream_keywords = [str(keyword.id) for keyword in upstream_keywords.values()]
+        actual_downstream_keywords = [str(keyword.id) for keyword in downstream_keywords.values()]
 
-        self.assertEqual(expected_original_keywords, actual_original_keywords)
-        self.assertEqual(expected_linked_keywords, actual_linked_keywords)
+        self.assertEqual(expected_upstream_keywords, actual_upstream_keywords)
+        self.assertEqual(expected_downstream_keywords, actual_downstream_keywords)
 
     def test_get_keywords_for_downstream_domain(self):
-        expected_original_keywords = []
-        expected_linked_keywords = [str(self.linked_keyword.id)]
+        expected_upstream_keywords = []
+        expected_downstream_keywords = [str(self.linked_keyword.id)]
 
-        original_keywords, linked_keywords = get_keywords(self.downstream_domain)
-        actual_original_keywords = [str(keyword.id) for keyword in original_keywords.values()]
-        actual_linked_keywords = [str(keyword.id) for keyword in linked_keywords.values()]
+        upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        actual_upstream_keywords = [str(keyword.id) for keyword in upstream_keywords.values()]
+        actual_downstream_keywords = [str(keyword.id) for keyword in downstream_keywords.values()]
 
-        self.assertEqual(expected_original_keywords, actual_original_keywords)
-        self.assertEqual(expected_linked_keywords, actual_linked_keywords)
+        self.assertEqual(expected_upstream_keywords, actual_upstream_keywords)
+        self.assertEqual(expected_downstream_keywords, actual_downstream_keywords)
 
     def test_get_fixtures_for_upstream_domain(self):
         expected_upstream_fixtures = [self.original_fixture._id]
@@ -694,8 +694,8 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_length, len(view_models))
 
     def test_keyword_view_models_are_built(self):
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, linked_keywords)
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        view_models = build_view_models_from_data_models(self.downstream_domain, {}, {}, {}, downstream_keywords)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
@@ -780,21 +780,21 @@ class TestBuildPullableViewModels(BaseLinkedDomainTest):
     def test_already_synced_keyword_view_models_are_built(self):
         self._create_sync_event(MODEL_KEYWORD, KeywordLinkDetail(keyword_id=str(self.linked_keyword.id)).to_json())
 
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        self.assertTrue(1, len(linked_keywords))
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        self.assertTrue(1, len(downstream_keywords))
         view_models = build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {},
-                                                                  {}, linked_keywords, pytz.UTC)
+                                                                  {}, downstream_keywords, pytz.UTC)
         expected_length = len(DOMAIN_LEVEL_DATA_MODELS) + 1
         self.assertEqual(expected_length, len(view_models))
 
     def test_linked_keywords_are_popped(self):
         self._create_sync_event(MODEL_KEYWORD, KeywordLinkDetail(keyword_id=str(self.linked_keyword.id)).to_json())
 
-        _, linked_keywords = get_keywords(self.downstream_domain)
-        self.assertTrue(1, len(linked_keywords))
+        _, downstream_keywords = get_upstream_and_downstream_keywords(self.downstream_domain)
+        self.assertTrue(1, len(downstream_keywords))
         build_pullable_view_models_from_data_models(self.downstream_domain, self.domain_link, {}, {}, {},
-                                                    linked_keywords, pytz.UTC)
-        self.assertEqual(0, len(linked_keywords))
+                                                    downstream_keywords, pytz.UTC)
+        self.assertEqual(0, len(downstream_keywords))
 
     def _create_sync_event(self, model_type, model_detail=None):
         sync_event = DomainLinkHistory(

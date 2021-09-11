@@ -93,16 +93,21 @@ def get_upstream_and_downstream_reports(domain):
     return upstream_list, downstream_list
 
 
-def get_keywords(domain):
-    master_list = {}
-    linked_list = {}
+def get_upstream_and_downstream_keywords(domain):
+    """
+    Return 2 lists of keywords
+    The upstream_list contains keywords that originated in the specified domain
+    The downstream_list contains keywords that have been pulled from a domain upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
     keywords = Keyword.objects.filter(domain=domain)
     for keyword in keywords:
         if keyword.upstream_id:
-            linked_list[str(keyword.id)] = keyword
+            downstream_list[str(keyword.id)] = keyword
         else:
-            master_list[str(keyword.id)] = keyword
-    return master_list, linked_list
+            upstream_list[str(keyword.id)] = keyword
+    return upstream_list, downstream_list
 
 
 def build_app_view_model(app, last_update=None):
