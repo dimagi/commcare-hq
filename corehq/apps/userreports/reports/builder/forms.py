@@ -21,6 +21,7 @@ from corehq.apps.app_manager.xform import XForm
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
@@ -840,7 +841,12 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         assert source_type == 'case'
         self.registry_slug = registry_slug
         super().__init__(domain, source_type, source_id)
-        owning_domain = DataRegistry.objects.get(slug=self.registry_slug).domain
+
+        registry = DataRegistry.objects.get(slug=self.registry_slug)
+        assert domain in registry.visible_domains()
+        DataRegistryHelper(self.domain, registry=registry).pre_access_check(source_type)
+
+        owning_domain = registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
@@ -858,7 +864,7 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
 
 
 def get_data_source_interface(domain, app, source_type, source_id, registry_slug):
-    if registry_slug is not None:  # TODO: refactor
+    if registry_slug is not None and source_type == DATA_SOURCE_TYPE_CASE:
         return RegistryCaseDataSourceHelper(domain, registry_slug, source_type, source_id)
     if source_type in APP_DATA_SOURCE_TYPE_VALUES:
         helper = {
