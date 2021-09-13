@@ -9,6 +9,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -88,7 +89,6 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
-    UpdateUserPermissionForm,
     UpdateUserRoleForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
@@ -381,16 +381,6 @@ class EditWebUserView(BaseEditUserView):
         return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
-    def form_user_update_permissions(self):
-        return UpdateUserPermissionForm(auto_id=False, initial={'superuser': self.editable_user.is_superuser})
-
-    @property
-    def main_context(self):
-        ctx = super(EditWebUserView, self).main_context
-        ctx.update({'form_user_update_permissions': self.form_user_update_permissions})
-        return ctx
-
-    @property
     @memoized
     def can_grant_superuser_access(self):
         return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
@@ -456,18 +446,6 @@ class EditWebUserView(BaseEditUserView):
                     )
                 )
 
-        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
-            is_superuser = 'superuser' in self.request.POST and self.request.POST['superuser'] == 'on'
-            current_superuser_status = self.editable_user.is_superuser
-            if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
-                                                                        editable_user=self.editable_user,
-                                                                        is_superuser=is_superuser):
-                if current_superuser_status != is_superuser:
-                    log_user_change(self.domain, self.editable_user, changed_by_user=self.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB,
-                                    fields_changed={'is_superuser': is_superuser})
-                messages.success(self.request,
-                                 _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
 
 
@@ -693,7 +671,8 @@ class ListRolesView(BaseRoleAccessView):
             'web_apps_privilege': self.web_apps_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
 
 
@@ -896,8 +875,13 @@ def _update_role_from_view(domain, role_data):
     else:
         role = UserRole()
 
+    name = role_data["name"]
+    if not role.id:
+        if name.lower() == 'admin' or UserRole.objects.filter(domain=domain, name__iexact=name).exists():
+            raise ValueError(_("A role with the same name already exists"))
+
     role.domain = domain
-    role.name = role_data["name"]
+    role.name = name
     role.default_landing_page = landing_page
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
@@ -1252,6 +1236,13 @@ def delete_phone_number(request, domain, couch_user_id):
         raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
+    log_user_change(
+        domain=request.domain,
+        couch_user=user,
+        changed_by_user=request.couch_user,
+        changed_via=USER_CHANGE_VIA_WEB,
+        message=UserChangeMessage.phone_number_removed(phone_number)
+    )
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)

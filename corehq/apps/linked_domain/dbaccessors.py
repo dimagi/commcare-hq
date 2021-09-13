@@ -16,7 +16,7 @@ from corehq.util.quickcache import quickcache
 @quickcache(['domain'], timeout=60 * 60)
 def get_upstream_domain_link(domain):
     """
-    :returns: ``DomainLink`` object linking this domain to it's master
+    :returns: ``DomainLink`` object linking this domain to its upstream
     or None if no link exists
     """
     return DomainLink.objects.filter(linked_domain=domain).first()

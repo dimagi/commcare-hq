@@ -15,7 +15,6 @@
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "path" request.path %}
-  {% initial_page_data "is_delete_allowed" is_delete_allowed %}
   {% initial_page_data "metadata" couch_user.metadata %}
   {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">

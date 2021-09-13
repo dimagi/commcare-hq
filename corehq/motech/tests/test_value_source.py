@@ -13,7 +13,7 @@ from corehq.form_processor.tests.utils import (
     create_case,
     create_case_with_index,
     delete_all_xforms_and_cases,
-    use_sql_backend,
+    sharded,
 )
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -425,7 +425,7 @@ class AsValueSourceTests(SimpleTestCase):
         self.assertEqual(value_source.test_value, "10")
 
 
-@use_sql_backend
+@sharded
 class TestSubcaseValueSourceSetExternalValue(TestCase):
 
     domain = 'lincoln-montana'
@@ -523,7 +523,7 @@ class TestSubcaseValueSourceSetExternalValue(TestCase):
         self.assertIn({'given': ['Unabomber']}, name)
 
 
-@use_sql_backend
+@sharded
 class TestSupercaseValueSourceSetExternalValue(TestCase):
 
     domain = 'quarantinewhile'
