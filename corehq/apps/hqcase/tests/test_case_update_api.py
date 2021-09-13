@@ -18,12 +18,13 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
 )
-from corehq.util.test_utils import flag_enabled, privilege_enabled
+from corehq.util.test_utils import disable_quickcache, flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
 
 
 @sharded
+@disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 class TestCaseAPI(TestCase):
