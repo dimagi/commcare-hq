@@ -25,6 +25,7 @@ from dimagi.utils.web import json_request, json_response
 from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
@@ -561,6 +562,10 @@ def app_exchange(request, domain):
             continue
         results.reverse()
         first = results[0]
+
+        required_privileges = str(obj.required_privileges or '').split()
+        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
+            continue
 
         def _version_text(result):
             if result['_id'] == first['_id']:

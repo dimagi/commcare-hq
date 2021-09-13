@@ -5904,6 +5904,7 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
+    required_privileges = models.TextField(null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
