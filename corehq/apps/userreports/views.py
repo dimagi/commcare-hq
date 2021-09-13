@@ -73,6 +73,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
+    DATA_SOURCE_TYPE_CASE,
 )
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -485,7 +486,7 @@ class ConfigureReport(ReportBuilderView):
             self.registry_slug = self.request.GET.get('registry_slug', None)
             self.app_id = self.request.GET.get('application', None)
             if self.registry_slug:
-                self.source_type = 'case'
+                self.source_type = DATA_SOURCE_TYPE_CASE
                 self.source_id = self.request.GET['case_type']
                 self.app = None
             else:
