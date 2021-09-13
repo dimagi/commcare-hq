@@ -1,8 +1,6 @@
 import uuid
-from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
 import os
-from django.test.utils import override_settings
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
@@ -16,7 +14,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -29,21 +27,7 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-class CaseBugTestCouchOnly(TestCase):
-
-    def test_conflicting_ids(self):
-        """
-        If a form and a case share an ID it's a conflict
-        """
-        conflict_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
-            case_id=conflict_id,
-            create=True,
-        ).as_text()
-        with self.assertRaises(BulkSaveError):
-            submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
-
-
+@sharded
 class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing
@@ -194,11 +178,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
-@use_sql_backend
-class CaseBugTestSQL(CaseBugTest):
-    pass
-
-
+@sharded
 class TestCaseHierarchy(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -360,15 +340,11 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('t1', case2.type)
 
 
-@use_sql_backend
-class TestCaseHierarchySQL(TestCaseHierarchy):
-    pass
-
-
 def _get_case_url_blank(case_id):
     return ""
 
 
+@sharded
 class TestCaseHierarchyContext(TestCase):
     def setUp(self):
         self.factory = CaseFactory()
@@ -422,8 +398,3 @@ class TestCaseHierarchyContext(TestCase):
         accessors = CaseAccessors(self.parent.domain)
         self.parent = accessors.get_case(self.parent.case_id)
         self.child = accessors.get_case(self.child.case_id)
-
-
-@use_sql_backend
-class TestCaseHierarchyContextSQL(TestCaseHierarchyContext):
-    pass

@@ -1,0 +1,76 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% initial_page_data 'daterangepicker-show-clear' 'true'%}
+{# This partial template is designed to be used with the 'registry_logs' Knockout model #}
+<div id="registry_audit_logs" data-bind="using: auditLogs">
+  <div data-bind="hidden: loaded">
+    <div class="hq-loading">
+      <i class="fa fa-spin fa-spinner"></i>
+      <h6>{% trans "Loading ..." %}</h6>
+    </div>
+  </div>
+  <div data-bind="visible: loaded">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="logs-daterange">{% trans "Date range" %}</label>
+          <input type="text"
+             class="form-control report-filter-datespan-filter"
+             name="logs-daterange"
+             data-bind="value: dateRange"/>
+        </div>
+      </div>
+      {% if is_owner %}
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="logs-project-space">{% trans "Project Space" %}</label>
+          <select class="form-control" name="logs-project-space" data-bind="
+            select2: projectSpaces, value: selectedProjectSpace
+          "></select>
+        </div>
+      </div>
+      {% endif %}
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="logs-action">{% trans "Action" %}</label>
+          <select class="form-control" name="logs-action" data-bind="
+            select2: actionTypes, value: selectedAction
+          "></select>
+        </div>
+      </div>
+      <div class="col-md-3 {% if not is_owner %}col-md-offset-3{% endif %}">
+          <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs, disable: loading">
+            <i class="fa" data-bind="css: {
+              'fa-spin': loading,
+              'fa-refresh': loading
+            }"></i>
+            {% trans "Filter" %}
+          </button>
+      </div>
+    </div>
+    <table class="table table-striped table-hover mt-3">
+      <thead>
+        <tr>
+          <th class="col-sm-2">{% trans "Date" %} <small>({{ user_timezone }})</small></th>
+          <th class="col-sm-2">{% trans "Project Space" %}</th>
+          <th class="col-sm-2">{% trans "User" %}</th>
+          <th class="col-sm-2">{% trans "Action" %}</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: logs">
+        <tr>
+          <td data-bind="text: hrDate"></td>
+          <td data-bind="text: domain"></td>
+          <td data-bind="text: user"></td>
+          <td data-bind="text: action_display"></td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination
+                params="goToPage: goToPage,
+                        slug: 'registry-audit-logs',
+                        perPage: perPage,
+                        showSpinner: loading,
+                        totalItems: total"></pagination>
+  </div>
+</div>

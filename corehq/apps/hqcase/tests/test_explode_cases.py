@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -20,10 +20,11 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     LedgerAccessors,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import flag_enabled
 
 
+@run_with_sql_backend
 class ExplodeCasesDbTest(TestCase):
 
     @classmethod
@@ -50,7 +51,6 @@ class ExplodeCasesDbTest(TestCase):
         cls.domain.delete()
         super(ExplodeCasesDbTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_simple(self):
         caseblock = CaseBlock.deprecated_init(
             create=True,
@@ -69,7 +69,6 @@ class ExplodeCasesDbTest(TestCase):
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
     def test_skip_usercase(self):
         caseblock = CaseBlock.deprecated_init(
             create=True,
@@ -88,7 +87,6 @@ class ExplodeCasesDbTest(TestCase):
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'
@@ -129,6 +127,7 @@ class ExplodeCasesDbTest(TestCase):
             self.assertTrue(child.indices[0].referenced_id in parent_cases)
 
 
+@run_with_sql_backend
 class ExplodeExtensionsDBTest(BaseSyncTest):
 
     def setUp(self):
@@ -214,7 +213,7 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
 
 
 @flag_enabled('NON_COMMTRACK_LEDGERS')
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@run_with_sql_backend
 class ExplodeLedgersTest(BaseSyncTest):
     def setUp(self):
         super(ExplodeLedgersTest, self).setUp()

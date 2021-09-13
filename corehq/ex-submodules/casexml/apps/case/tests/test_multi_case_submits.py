@@ -1,11 +1,12 @@
 from django.test import TestCase
 import os
-from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
+@run_with_sql_backend
 class MultiCaseTest(TestCase):
 
     def setUp(self):
@@ -43,4 +44,4 @@ class MultiCaseTest(TestCase):
         for case in cases:
             ids = CaseAccessors().get_case_xform_ids(case.case_id)
             self.assertEqual(1, len(ids))
-            self.assertEqual(form._id, ids[0])
+            self.assertEqual(form.form_id, ids[0])

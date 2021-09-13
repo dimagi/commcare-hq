@@ -12,10 +12,8 @@ from corehq.apps.case_search.xpath_functions import (
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_property_missing,
+    case_property_query,
     case_property_range_query,
-    case_property_text_query,
-    exact_case_property_text_query,
     reverse_index_case_query,
 )
 
@@ -184,13 +182,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             # This is a leaf node
             case_property_name = serialize(node.left)
             value = _unwrap_function(node.right)
-
-            if value == '':
-                q = case_property_missing(case_property_name)
-            elif fuzzy:
-                q = case_property_text_query(case_property_name, value, fuzziness='AUTO')
-            else:
-                q = exact_case_property_text_query(case_property_name, value)
+            q = case_property_query(case_property_name, value, fuzzy=fuzzy)
 
             if node.op == '!=':
                 return filters.NOT(q)

@@ -20,7 +20,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
 )
 from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
@@ -190,6 +190,8 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
+        if form.requires_case() and form.get_module().search_config.data_registry:
+            data.append(get_registry_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest(

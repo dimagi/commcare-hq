@@ -56,36 +56,6 @@ class TestEnterpriseSMSBillablesReport(TestCase):
 
         self.assertEqual(len(results), 2)
 
-    def test_sms_billables_show_billables_true(self):
-        self.create_smsbillable(datetime(2021, 7, 12), True)
-        self.create_smsbillable(datetime(2021, 7, 1), True)
-        self.create_smsbillable(datetime(2021, 7, 5), False)
-
-        report = self.create_interface(
-            date_sent_startdate='2021-06-30',
-            date_sent_enddate='2021-07-30',
-            show_billables='valid'
-        )
-
-        results = report.get_all_rows
-
-        self.assertEqual(len(results), 2)
-
-    def test_sms_billables_show_billables_false(self):
-        self.create_smsbillable(datetime(2021, 7, 12), True)
-        self.create_smsbillable(datetime(2021, 7, 1), True)
-        self.create_smsbillable(datetime(2021, 7, 5), False)
-
-        report = self.create_interface(
-            date_sent_startdate='2021-06-30',
-            date_sent_enddate='2021-07-30',
-            show_billables='invalid'
-        )
-
-        results = report.get_all_rows
-
-        self.assertEqual(len(results), 1)
-
     def test_sms_billables_has_gateway_fee(self):
         gateway_fee = Decimal('8.9')
         self.create_smsbillable(datetime(2021, 7, 12), True, None)

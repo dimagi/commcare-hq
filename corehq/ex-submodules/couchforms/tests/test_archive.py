@@ -11,7 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin
 from couchforms.models import UnfinishedArchiveStub
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
@@ -428,7 +428,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, restore_counter)
 
 
-@use_sql_backend
+@sharded
 class TestFormArchivingSQL(TestFormArchiving):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

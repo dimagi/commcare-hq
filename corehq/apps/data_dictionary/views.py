@@ -148,7 +148,7 @@ def update_case_property(request, domain):
                 errors.append(error)
 
     if errors:
-        return JsonResponse({"status": "failed", "errors": errors}, status=400)
+        return JsonResponse({"status": "failed", "messages": errors}, status=400)
     else:
         return JsonResponse({"status": "success"})
 

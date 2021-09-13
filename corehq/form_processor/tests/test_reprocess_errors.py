@@ -25,7 +25,7 @@ from corehq.form_processor.reprocess import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
@@ -33,6 +33,7 @@ from couchforms.models import UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 
 
+@sharded
 class ReprocessXFormErrorsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -93,14 +94,6 @@ class ReprocessXFormErrorsTest(TestCase):
         self._validate_case(case)
 
     def _validate_case(self, case):
-        self.assertEqual(3, len(case.actions))
-        self.assertTrue(case.actions[0].is_case_create)
-        self.assertTrue(case.actions[2].is_case_index)
-
-
-@use_sql_backend
-class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
-    def _validate_case(self, case):
         self.assertEqual(1, len(case.transactions))
         self.assertTrue(case.transactions[0].is_form_transaction)
         self.assertTrue(case.transactions[0].is_case_create)
@@ -108,6 +101,7 @@ class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
         self.assertFalse(case.transactions[0].revoked)
 
 
+@sharded
 class ReprocessSubmissionStubTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -348,9 +342,6 @@ class ReprocessSubmissionStubTests(TestCase):
             self.assertEqual(case.case_id, signal_case.case_id)
             self.assertEqual(case.get_rev, signal_case.get_rev)
 
-
-@use_sql_backend
-class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
     def test_reprocess_normal_form(self):
         case_id = uuid.uuid4().hex
         form, cases = submit_case_blocks(
@@ -367,6 +358,7 @@ class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
         self.assertEqual([trans.form_id for trans in transactions], [form.form_id])
 
 
+@sharded
 class TestReprocessDuringSubmission(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -464,12 +456,7 @@ class TestReprocessDuringSubmission(TestCase):
         self.assertEqual(duplicate_form.orig_id, form.form_id)
 
 
-@use_sql_backend
-class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
-    pass
-
-
-@use_sql_backend
+@sharded
 class TestTransactionErrors(TransactionTestCase):
     domain = uuid.uuid4().hex
 
