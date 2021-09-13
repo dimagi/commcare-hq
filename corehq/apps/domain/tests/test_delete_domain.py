@@ -904,7 +904,8 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         user_history = UserHistory.objects.last()
-        self.assertEqual(user_history.domain, None)
+        self.assertEqual(user_history.by_domain, None)
+        self.assertEqual(user_history.for_domain, self.domain.name)
         self.assertEqual(user_history.changed_by, SYSTEM_USER_ID)
         self.assertEqual(user_history.user_id, web_user.get_id)
         self.assertEqual(user_history.change_messages, UserChangeMessage.domain_removal(self.domain.name))
