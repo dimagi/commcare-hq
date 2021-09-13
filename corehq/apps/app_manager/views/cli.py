@@ -98,10 +98,10 @@ def direct_ccz(request, domain):
     lang, langs = get_langs(request, app)
 
     with metrics_histogram_timer('commcare.app_build.live_preview', timing_buckets=(1, 10, 30, 60, 120, 240)):
-        return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
+        return get_direct_ccz(domain, app, langs, version, include_multimedia, visit_scheduler_enabled)
 
 
-def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
+def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
     if not app.copy_of:
         errors = app.validate_app()
     else:
