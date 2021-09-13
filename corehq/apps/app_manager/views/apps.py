@@ -593,12 +593,24 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
+        if not _valid_exchange_record_exists_helper(from_app_id, records):
+            messages.error(request, _("Invalid application id requested for exchange import"))
+            return render(request, template, context)
+
         app_copy = import_app_util(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)
+
+
+def _valid_exchange_record_exists_helper(app_id, records):
+    for record in records:
+        for version in record["versions"]:
+            if version["id"] == app_id:
+                return True
+    return False
 
 
 @require_can_edit_apps
