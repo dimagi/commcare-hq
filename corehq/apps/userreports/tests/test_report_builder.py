@@ -189,8 +189,6 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         registry_prop = builder.data_source_properties['registry_property']
         self.assertEqual('registry_property', registry_prop.get_id())
         self.assertEqual('registry property', registry_prop.get_text())
-        case_type_for_registry.delete()
-        registry.delete()
 
 
 class DataSourceReferenceTest(ReportBuilderDBTest):
