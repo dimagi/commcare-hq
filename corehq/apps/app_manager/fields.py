@@ -15,7 +15,7 @@ from couchforms.analytics import get_exports_by_form
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
-from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -103,9 +103,8 @@ class ApplicationDataSourceUIHelper(object):
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
-        self.application_field.choices = sorted(
-            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
-            key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
+        self.application_field.choices = sort_tuple_field_choices_by_name(
+            [(app_id, source['name']) for app_id, source in self.all_sources.items()]
         )
         self.source_field.choices = []
 
@@ -137,8 +136,8 @@ class ApplicationDataSourceUIHelper(object):
             for app_data in self.all_sources.values():
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
-        self.registry_slug_field.choices = sorted(
-            [(registry.slug, registry.name) for registry in DataRegistry.objects.accessible_to_domain(domain)]
+        self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
+            [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
         )
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
@@ -182,6 +181,10 @@ def get_app_sources(domain):
         }
         for app in apps
     }
+
+
+def sort_tuple_field_choices_by_name(tuple_lists):
+    return sorted(tuple_lists, key=lambda id_name_tuple: (id_name_tuple[1] or '').lower())
 
 
 class ApplicationDataRMIHelper(object):
