@@ -79,4 +79,6 @@ branches:
     - gh/remove-pickles-from-export # Graham Sep 3
     - jls/form-links-modules # Jenny Sept 7
     - dmr/cbc-tools  # Danny Sept 10
+    - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
+    - gh/erm/remove-master-in-ui # Graham Sept 13
 submodules: { }
