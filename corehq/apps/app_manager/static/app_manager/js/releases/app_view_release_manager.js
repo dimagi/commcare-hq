@@ -10,7 +10,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         recipient_contacts: initial_page_data('sms_contacts'),
         download_modal_id: '#download-zip-modal',
         latestReleasedVersion: initial_page_data('latestReleasedVersion'),
-        masterBriefs: initial_page_data('master_briefs'),
+        upstreamBriefs: initial_page_data('upstream_briefs'),
         upstreamUrl: initial_page_data('upstream_url'),
     };
     var el = $('#releases-table');
