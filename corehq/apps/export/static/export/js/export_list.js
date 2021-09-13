@@ -187,6 +187,26 @@ hqDefine("export/js/export_list", [
             });
         };
 
+        //button hover text
+        self.popoverText = "";
+        if(self.isOData() || self.isFeed()){
+            self.popoverText = "All of the selected feeds will be deleted.";
+        }
+        else{
+            self.popoverText = "All of the selected exports will be deleted.";
+        }
+
+        $('#bulk-delete-text').tooltip({
+            trigger : 'hover',
+            placement: 'top',
+            title: gettext(self.popoverText),
+        });
+
+        $('#bulk-export-text').tooltip({
+            placement: 'top',
+            title: gettext("All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet."),
+        });
+
         return self;
     };
 
