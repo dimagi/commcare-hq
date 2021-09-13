@@ -87,9 +87,12 @@ class EmwfOptionsController(object):
 
     def get_locations_query(self, query):
         show_inactive = self.request.GET.get('show_inactive') == 'true'
-        locations = (SQLLocation.objects
-                     .filter_by_user_input(self.domain, query)
-                     .filter(is_archived=show_inactive))
+        show_all = self.request.GET.get('show_all') == 'true'
+
+        locations = SQLLocation.objects.filter_by_user_input(self.domain, query)
+        if not show_all:
+            locations = locations.filter(is_archived=show_inactive)
+
         if self.case_sharing_only:
             locations = locations.filter(location_type__shares_cases=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
