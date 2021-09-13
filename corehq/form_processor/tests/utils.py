@@ -22,7 +22,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
@@ -353,14 +352,6 @@ def create_form_for_test(
         form = FormAccessorSQL.get_form(form.form_id)
 
     return form
-
-
-@unit_testing_only
-def set_case_property_directly(case, property_name, value):
-    if should_use_sql_backend(case.domain):
-        case.case_json[property_name] = value
-    else:
-        setattr(case, property_name, value)
 
 
 def create_case(case) -> CommCareCaseSQL:

@@ -15,7 +15,6 @@ from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdate
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import sharded
-from corehq.form_processor.utils.general import should_use_sql_backend
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
@@ -88,10 +87,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         case = case_accessors.get_case(case_id)
 
         self.assertFalse(case.is_deleted)
-        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-            self.assertEqual(1, len(case.actions))
-        else:
-            self.assertEqual(2, len(case.actions))
+        self.assertEqual(1, len(case.actions))
         [form_id] = case.xform_ids
         form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(form_id)
 
@@ -135,27 +131,17 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
             self.assertEqual(case.get_case_property('p3'), 'p3-2')  # new in second post
             self.assertEqual(case.get_case_property('p4'), 'p4-3')  # updated in third post
             self.assertEqual(case.get_case_property('p5'), 'p5-3')  # new in third post
-            if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-                # SQL stores one transaction per form
-                self.assertEqual(3, len(primary_actions(case)))  # create + update + close
-            else:
-                self.assertEqual(5, len(primary_actions(case)))  # create + 3 updates + close
+            # SQL stores one transaction per form
+            self.assertEqual(3, len(primary_actions(case)))  # create + update + close
 
         _check_initial_state(case)
 
         # verify xform/action states
         [f1, f2, f3] = case.xform_ids
-        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-            [create, update, close] = case.actions
-            self.assertEqual(f1, create.form_id)
-            self.assertEqual(f2, update.form_id)
-            self.assertEqual(f3, close.form_id)
-        else:
-            [create, u1, u2, u3, close] = case.actions
-            self.assertEqual(f1, create.form_id)
-            self.assertEqual(f1, u1.form_id)
-            self.assertEqual(f2, u2.form_id)
-            self.assertEqual(f3, u3.form_id)
+        [create, update, close] = case.actions
+        self.assertEqual(f1, create.form_id)
+        self.assertEqual(f2, update.form_id)
+        self.assertEqual(f3, close.form_id)
 
         # todo: should this be the behavior for archiving the create form?
         form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
@@ -163,15 +149,11 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         with capture_kafka_changes_context(topics.CASE_SQL) as change_context:
             f1_doc.archive()
 
-        if should_use_sql_backend(case.domain):
-            self.assertEqual([case.case_id], [change.id for change in change_context.changes])
+        self.assertEqual([case.case_id], [change.id for change in change_context.changes])
 
         case = case_accessors.get_case(case_id)
 
-        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-            self.assertEqual(2, len(primary_actions(case)))
-        else:
-            self.assertEqual(3, len(primary_actions(case)))
+        self.assertEqual(2, len(primary_actions(case)))
 
         [u2, u3] = case.xform_ids
         self.assertEqual(f2, u2)
@@ -196,10 +178,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         f2_doc.archive()
         case = case_accessors.get_case(case_id)
 
-        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-            self.assertEqual(2, len(primary_actions(case)))
-        else:
-            self.assertEqual(4, len(primary_actions(case)))
+        self.assertEqual(2, len(primary_actions(case)))
 
         [u1, u3] = case.xform_ids
         self.assertEqual(f1, u1)
@@ -218,10 +197,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         f3_doc.archive()
         case = case_accessors.get_case(case_id)
 
-        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
-            self.assertEqual(2, len(primary_actions(case)))
-        else:
-            self.assertEqual(3, len(primary_actions(case)))
+        self.assertEqual(2, len(primary_actions(case)))
 
         [u1, u2] = case.xform_ids
         self.assertEqual(f1, u1)

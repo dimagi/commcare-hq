@@ -69,15 +69,12 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
 
 @contextmanager
 def create_case(domain, case_type, **kwargs):
+    assert should_use_sql_backend(domain), domain
     case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
-
     try:
         yield case
     finally:
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
 
 def _replace_ids_in_xform_xml(xml_data, case_id_override=None):

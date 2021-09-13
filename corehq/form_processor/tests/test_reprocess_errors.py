@@ -27,7 +27,6 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
 )
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
 from couchforms.models import UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -239,8 +238,7 @@ class ReprocessSubmissionStubTests(TestCase):
         # case still only has 2 transactions
         case = self.casedb.get_case(case_id)
         self.assertEqual(2, len(case.xform_ids))
-        if should_use_sql_backend(self.domain):
-            self.assertTrue(case.actions[1].is_ledger_transaction)
+        self.assertTrue(case.actions[1].is_ledger_transaction)
 
     def test_reprocess_unfinished_submission_ledger_rebuild(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -275,11 +273,7 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(25, ledgers[0].balance)
 
         ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
-        if should_use_sql_backend(self.domain):
-            self.assertEqual(2, len(ledger_transactions))
-        else:
-            # includes extra consumption transaction
-            self.assertEqual(3, len(ledger_transactions))
+        self.assertEqual(2, len(ledger_transactions))
 
         # should rebuild ledger transactions
         result = reprocess_unfinished_stub(stubs[0])
@@ -291,23 +285,15 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(25, ledgers[0].balance)
 
         ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
-        if should_use_sql_backend(self.domain):
-            self.assertEqual(3, len(ledger_transactions))
-            # make sure transactions are in correct order
-            self.assertEqual(form_ids, [trans.form_id for trans in ledger_transactions])
-            self.assertEqual(100, ledger_transactions[0].updated_balance)
-            self.assertEqual(100, ledger_transactions[0].delta)
-            self.assertEqual(50, ledger_transactions[1].updated_balance)
-            self.assertEqual(-50, ledger_transactions[1].delta)
-            self.assertEqual(25, ledger_transactions[2].updated_balance)
-            self.assertEqual(-25, ledger_transactions[2].delta)
-
-        else:
-            self.assertEqual(3, len(ledger_transactions))
-            self.assertEqual(form_ids, [trans.report.form_id for trans in ledger_transactions])
-            self.assertEqual(100, ledger_transactions[0].stock_on_hand)
-            self.assertEqual(50, ledger_transactions[1].stock_on_hand)
-            self.assertEqual(25, ledger_transactions[2].stock_on_hand)
+        self.assertEqual(3, len(ledger_transactions))
+        # make sure transactions are in correct order
+        self.assertEqual(form_ids, [trans.form_id for trans in ledger_transactions])
+        self.assertEqual(100, ledger_transactions[0].updated_balance)
+        self.assertEqual(100, ledger_transactions[0].delta)
+        self.assertEqual(50, ledger_transactions[1].updated_balance)
+        self.assertEqual(-50, ledger_transactions[1].delta)
+        self.assertEqual(25, ledger_transactions[2].updated_balance)
+        self.assertEqual(-25, ledger_transactions[2].delta)
 
     def test_fire_signals(self):
         from corehq.apps.receiverwrapper.tests.test_submit_errors import failing_signal_handler
@@ -330,17 +316,8 @@ class ReprocessSubmissionStubTests(TestCase):
 
         case = self.casedb.get_case(case_id)
 
-        if should_use_sql_backend(self.domain):
-            self.assertEqual(form, form_handler.call_args[1]['xform'])
-            self.assertEqual(case, case_handler.call_args[1]['case'])
-        else:
-            signal_form = form_handler.call_args[1]['xform']
-            self.assertEqual(form.form_id, signal_form.form_id)
-            self.assertEqual(form.get_rev, signal_form.get_rev)
-
-            signal_case = case_handler.call_args[1]['case']
-            self.assertEqual(case.case_id, signal_case.case_id)
-            self.assertEqual(case.get_rev, signal_case.get_rev)
+        self.assertEqual(form, form_handler.call_args[1]['xform'])
+        self.assertEqual(case, case_handler.call_args[1]['case'])
 
     def test_reprocess_normal_form(self):
         case_id = uuid.uuid4().hex
