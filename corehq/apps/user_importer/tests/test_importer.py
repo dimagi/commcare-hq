@@ -695,7 +695,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )  # deprecated
         user_history = UserHistory.objects.get(action=UserModelAction.CREATE.value,
                                                changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
         self.assertEqual(user_history.user_type, "CommCareUser")
         self.assertEqual(user_history.user_id, created_user.get_id)
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -946,7 +947,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # logged under correct domain
         user_history = UserHistory.objects.get(changed_by=self.uploading_user.get_id)
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.other_domain.name)
         self.assertEqual(user_history.user_id, commcare_user.get_id)
         self.assertEqual(user_history.action, UserModelAction.CREATE.value)
 
@@ -1467,7 +1469,8 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         user_history = UserHistory.objects.get(
             user_id=web_user.get_id, changed_by=self.uploading_user.get_id, action=UserModelAction.UPDATE.value
         )
-        self.assertEqual(user_history.domain, self.domain.name)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
         change_messages = UserChangeMessage.invited_to_domain(self.domain.name)
         self.assertDictEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -1752,7 +1755,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_change_message_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            domain=self.domain_name,
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1768,7 +1772,8 @@ class TestUserChangeLogger(SimpleTestCase):
         user_change_logger.add_change_message(UserChangeMessage.password_reset())
 
         user_change_logger = UserChangeLogger(
-            domain=self.domain_name,
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,
@@ -1785,7 +1790,8 @@ class TestUserChangeLogger(SimpleTestCase):
     def test_add_info_duplicate_slug_entry(self):
         user = CommCareUser()
         user_change_logger = UserChangeLogger(
-            domain=self.domain_name,
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
             user=user,
             is_new_user=True,
             changed_by_user=self.uploading_user,
@@ -1800,7 +1806,8 @@ class TestUserChangeLogger(SimpleTestCase):
             user_change_logger.add_info(UserChangeMessage.program_change(None))
 
         user_change_logger = UserChangeLogger(
-            domain=self.domain_name,
+            upload_domain=self.domain_name,
+            user_domain=self.domain_name,
             user=user,
             is_new_user=False,
             changed_by_user=self.uploading_user,
