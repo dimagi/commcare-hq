@@ -359,13 +359,11 @@ class ManagedReportBuilderDataSourceHelper(ReportBuilderDataSourceInterface):
         - indicators
     """
 
-    def __init__(self, domain, app, source_type, source_id):
+    def __init__(self, domain, source_type, source_id):
         assert (source_type in ['case', 'form'])
 
         self.domain = domain
-        self.app = app
         self.source_type = source_type
-
         # case type or form ID
         self.source_id = source_id
 
@@ -549,13 +547,8 @@ class UnmanagedDataSourceHelper(ReportBuilderDataSourceInterface):
 class ApplicationFormDataSourceHelper(ManagedReportBuilderDataSourceHelper):
     def __init__(self, domain, app, source_type, source_id):
         assert source_type == 'form'
-        self.domain = domain
         self.app = app
-        self.source_type = source_type
-
-        # case type or form ID
-        self.source_id = source_id
-        super().__init__(domain, app, source_type, source_id)
+        super().__init__(domain, source_type, source_id)
         self.source_form = self.app.get_form(source_id)
         self.source_xform = XForm(self.source_form.source)
 
@@ -819,13 +812,9 @@ class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
 
 class ApplicationCaseDataSourceHelper(CaseDataSourceHelper):
     def __init__(self, domain, app, source_type, source_id):
-        self.domain = domain
         self.app = app
-        self.source_type = source_type
-
-        # case type or form ID
-        self.source_id = source_id
         assert source_type == 'case'
+        super().__init__(domain, source_type, source_id)
         prop_map = get_case_properties(
             self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
             include_parent_properties=True,
@@ -849,12 +838,8 @@ class ApplicationCaseDataSourceHelper(CaseDataSourceHelper):
 class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
     def __init__(self, domain, registry_slug, source_type, source_id):
         assert source_type == 'case'
-
-        self.domain = domain
         self.registry_slug = registry_slug
-        self.source_type = source_type
-        self.source_id = source_id
-
+        super().__init__(domain, source_type, source_id)
         owning_domain = DataRegistry.objects.get(slug=self.registry_slug).domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
