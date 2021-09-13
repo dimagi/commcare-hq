@@ -13,7 +13,6 @@ from casexml.apps.case.util import get_case_xform_ids, iter_cases
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -240,7 +239,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        return get_case_by_domain_hq_user_id(domain, user_id, case_type)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
