@@ -36,17 +36,17 @@ from .models import (
 )
 from .permissions import user_can_access_location_id
 from .signals import location_edited
+from crispy_forms.utils import flatatt
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None, data_bind=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
         self.query_url = reverse('location_search', args=[self.domain])
-        self.data_bind = data_bind
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -67,8 +67,7 @@ class LocationSelectWidget(forms.Widget):
             'multiselect': self.multiselect,
             'placeholder': self.placeholder,
             'initial_data': initial_data,
-            'data_bind': self.data_bind,
-            'attrs': self.build_attrs(self.attrs, attrs),
+            'attrs': flatatt(self.build_attrs(self.attrs, attrs)),
         })
 
     def value_from_datadict(self, data, files, name):
@@ -591,7 +590,7 @@ class LocationFilterForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
-            data_bind='value: location_id',
+            attrs={'data-bind': 'value: location_id'},
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url

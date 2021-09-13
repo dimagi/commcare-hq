@@ -1363,7 +1363,7 @@ class UserFilterForm(forms.Form):
             self.domain,
             id='id_location_id',
             placeholder=_("All Locations"),
-            data_bind="value: location_id",
+            attrs={'data-bind': 'value: location_id'},
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
