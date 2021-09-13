@@ -202,8 +202,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
             if key == 'user_data':
-                all_changes.update(changes['user_data'])
-
+                for key, value in changes['user_data'].items():
+                    all_changes[f"user data: {key}"] = value
         more_count = len(all_changes) - len(primary_changes)
         return render_to_string("reports/standard/partials/user_history_changes.html", {
             "primary_changes": _html_list(primary_changes),
