@@ -247,19 +247,6 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             self.initial['role'] = current_role
 
 
-class UpdateUserPermissionForm(forms.Form):
-    superuser = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
-
-    def update_user_permission(self, couch_user=None, editable_user=None, is_superuser=None):
-        is_update_successful = False
-        if editable_user and couch_user.is_superuser:
-            editable_user.is_superuser = is_superuser
-            editable_user.save()
-            is_update_successful = True
-
-        return is_update_successful
-
-
 class BaseUserInfoForm(forms.Form):
     first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=30, required=False)
     last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=30, required=False)

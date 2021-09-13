@@ -1,9 +1,11 @@
 import csv
 import io
+from collections import defaultdict
 from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.db import connections
 from django.db.models import Q
 from django.template import Context, Template
@@ -22,9 +24,11 @@ from pillowtop.utils import get_couch_pillow_instances
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
 from corehq.util.celery_utils import periodic_task_when_true
-from corehq.util.metrics import metrics_gauge
+from corehq.util.files import TransientTempfile
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.soft_assert import soft_assert
 
 from .utils import check_for_rewind
@@ -201,3 +205,84 @@ def track_pg_limits():
                 cursor.execute(f'select last_value from "{sequence}"')
                 current_value = cursor.fetchone()[0]
                 metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+def reconcile_es_cases():
+    _reconcile_es_data('case', 'commcare.elasticsearch.stale_cases', 'reconcile_es_cases')
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+def reconcile_es_forms():
+    _reconcile_es_data('form', 'commcare.elasticsearch.stale_forms', 'reconcile_es_forms')
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+def count_es_forms_past_window():
+    today = date.today()
+    two_days_ago = today - timedelta(days=2)
+    four_days_ago = today - timedelta(days=4)
+    start = four_days_ago.isoformat()
+    end = two_days_ago.isoformat()
+    _reconcile_es_data(
+        'form',
+        'commcare.elasticsearch.stale_forms_past_window',
+        'es_forms_past_window',
+        start=start,
+        end=end,
+        republish=False
+    )
+
+
+@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+def count_es_cases_past_window():
+    today = date.today()
+    two_days_ago = today - timedelta(days=2)
+    four_days_ago = today - timedelta(days=4)
+    start = four_days_ago.isoformat()
+    end = two_days_ago.isoformat()
+    _reconcile_es_data(
+        'case',
+        'commcare.elasticsearch.stale_cases_past_window',
+        'es_cases_past_window',
+        start=start,
+        end=end,
+        republish=False
+    )
+
+
+def _reconcile_es_data(data_type, metric, blob_parent_id, start=None, end=None, republish=True):
+    today = date.today()
+    if not start:
+        two_days_ago = today - timedelta(days=2)
+        start = two_days_ago.isoformat()
+    with TransientTempfile() as file_path:
+        with open(file_path, 'w') as output_file:
+            call_command('stale_data_in_es', data_type, start=start, end=end, stdout=output_file)
+        with open(file_path, 'r') as f:
+            reader = csv.reader(f, delimiter='\t')
+            # ignore the headers
+            next(reader)
+            counts_by_domain = defaultdict(int)
+            for line in reader:
+                domain = line[3]
+                counts_by_domain[domain] += 1
+            if counts_by_domain:
+                for domain, count in counts_by_domain.items():
+                    metrics_counter(metric, count, tags={'domain': domain})
+            else:
+                metrics_counter(metric, 0)
+        if republish:
+            call_command('republish_doc_changes', file_path, skip_domains=True)
+        with open(file_path, 'rb') as f:
+            blob_db = get_blob_db()
+            key = f'{blob_parent_id}_{today.isoformat()}'
+            thirty_days = 60 * 24 * 30
+            blob_db.put(
+                f,
+                type_code=CODES.tempfile,
+                domain='<unknown>',
+                parent_id=blob_parent_id,
+                key=key,
+                timeout=thirty_days
+            )

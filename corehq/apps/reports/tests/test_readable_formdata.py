@@ -23,7 +23,7 @@ from corehq.apps.reports.formdetails.readable import (
 )
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
 
@@ -456,6 +456,6 @@ class ReadableFormTest(TestCase):
         self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
 
 
-@use_sql_backend
+@sharded
 class ReadableFormSQLTest(ReadableFormTest):
     pass

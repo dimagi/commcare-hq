@@ -1,11 +1,9 @@
-from django.conf import settings
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
-from fluff.pillow import get_multi_fluff_pillow
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed.topics import CASE, FORM, CASE_SQL, FORM_SQL
+from corehq.apps.change_feed.topics import CASE_SQL
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import (
     COMMANDE_XMLNSES,
@@ -189,7 +187,7 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
 class RecouvrementFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
-    kafka_topic = CASE_SQL if settings.SERVER_ENVIRONMENT == 'pna' else CASE
+    kafka_topic = CASE_SQL
 
     document_filter = ANDFilter([
         CasePropertyFilter(type='payment'),
@@ -209,19 +207,3 @@ class RecouvrementFluff(fluff.IndicatorDocument):
 
 
 RecouvrementFluffPillow = RecouvrementFluff.pillow()
-
-
-def IntraHealthFormFluffPillow(delete_filtered=False):
-    return get_multi_fluff_pillow(
-        indicator_classes=[
-            TauxDeSatisfactionFluff,
-            CouvertureFluff,
-            RecapPassageFluff,
-            IntraHealthFluff,
-            TauxDeRuptureFluff,
-            LivraisonFluff,
-        ],
-        name='IntraHealthFormFluff',
-        kafka_topic=FORM_SQL if settings.SERVER_ENVIRONMENT == 'pna' else FORM,
-        delete_filtered=delete_filtered
-    )

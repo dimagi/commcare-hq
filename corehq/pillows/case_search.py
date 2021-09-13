@@ -1,11 +1,8 @@
-from collections import OrderedDict
 from datetime import datetime
 
-from django.conf import settings
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
     INDEXED_ON,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -22,7 +19,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import (
@@ -90,10 +86,7 @@ def _get_case_properties(doc_dict):
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
         for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
-    if should_use_sql_backend(domain):
-        dynamic_case_properties = OrderedDict(doc_dict['case_json'])
-    else:
-        dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
+    dynamic_case_properties = dict(doc_dict['case_json'])
 
     dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
 
@@ -257,7 +250,6 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         if not domain_needs_search_index(domain):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
-        assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
         iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}".format(
             CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
         )

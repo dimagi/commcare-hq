@@ -48,7 +48,7 @@ class PactDrilldownReportMixin(object):
         return False
 
 
-from pact.reports import patient_list, dot, patient, chw_list, chw
+from pact.reports import patient, chw_list
 
 CUSTOM_REPORTS = (
     ("PACT Reports", (
