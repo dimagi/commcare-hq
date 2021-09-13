@@ -862,6 +862,7 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
     def _get_data_source_build_information(self):
         return DataSourceBuildInformation(
             source_id=self.source_id,
+            registry_slug=self.registry_slug,
         )
 
     @property
@@ -1004,7 +1005,6 @@ class ConfigureNewReportBase(forms.Form):
         self.domain = domain
 
         if self.existing_report:
-            self.registry_slug = registry_slug  # TODO: how to handle registry_slug
             self._bootstrap(self.existing_report)
         else:
             self.registry_slug = registry_slug
@@ -1042,6 +1042,7 @@ class ConfigureNewReportBase(forms.Form):
         if self.source_type in APP_DATA_SOURCE_TYPE_VALUES:
             self.report_source_id = existing_report.config.meta.build.source_id
             app_id = existing_report.config.meta.build.app_id
+            self.registry_slug = existing_report.config.meta.build.registry_slug
             if app_id:
                 self.app = Application.get(app_id)
             else:
@@ -1049,8 +1050,7 @@ class ConfigureNewReportBase(forms.Form):
         else:
             assert self.source_type == DATA_SOURCE_TYPE_RAW
             self.report_source_id = existing_report.config_id
-            self.app = None
-
+            self.app = self.registry_slug = None
 
     @property
     def _configured_columns(self):

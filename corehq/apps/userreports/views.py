@@ -471,22 +471,23 @@ class ConfigureReport(ReportBuilderView):
     @use_nvd3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
-        if self.existing_report:  # TODO: modify for existing registry report
+        if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
             if self.source_type != DATA_SOURCE_TYPE_RAW:
                 self.source_id = self.existing_report.config.meta.build.source_id
                 self.app_id = self.existing_report.config.meta.build.app_id
                 self.app = Application.get(self.app_id) if self.app_id else None
+                self.registry_slug = self.existing_report.config.meta.build.registry_slug
             else:
                 self.source_id = self.existing_report.config_id
-                self.app_id = self.app = None
+                self.app_id = self.app = self.registry_slug = None
         else:
             self.registry_slug = self.request.GET.get('registry_slug', None)
             self.app_id = self.request.GET.get('application', None)
             if self.registry_slug:
                 self.source_type = 'case'
                 self.source_id = self.request.GET['case_type']
-                self.app = None  # TODO: drop the need for this data anyways?
+                self.app = None
             else:
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
