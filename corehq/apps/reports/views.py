@@ -345,12 +345,21 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
         for other_report in others_scheduled_reports:
             other_report.__class__ = OthersScheduledReportWrapper
+
+        others_scheduled_reports = [
+            self.report_details(r, user.get_email(), r.context_secret) for r in others_scheduled_reports
+        ]
+
+        scheduled_reports = [
+            self.report_details(r) for r in self.scheduled_reports
+        ]
+
         return {
             'couch_user': user,
             'user_email': user.get_email(),
             'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
-            'scheduled_reports': self.scheduled_reports,
+            'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
             'extra_reports': num_unlisted_scheduled_reports,
             'report': {
@@ -361,6 +370,69 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
+
+    def get_page(self, page=1, limit=5):
+        scheduled_reports = [
+            self.report_details(r) for r in self.scheduled_reports[limit * (page - 1):limit * page]
+        ]
+
+        return scheduled_reports, len(self.schedulred_reports)
+
+    @staticmethod
+    def report_details(report, user_email=None, context_secret=None):
+        details = {
+            'id': report.get_id,
+            'addedToBulk': report.addedToBulk,
+            'domain': report.domain,
+            'owner_id': report.owner_id,
+            'recipient_emails': report.recipient_emails,
+            'config_ids': report.config_ids,
+            'send_to_owner': report.send_to_owner,
+            'hour': report.hour,
+            'minute': report.minute,
+            'day': report.day,
+            'uuid': report.uuid,
+            'start_date': report.start_date,
+
+            #property methods
+            'configs': report.configs,
+            'owner': report.owner,
+            'is_editable': report.is_editable,
+            'owner_email': report.owner_email,
+            'day_name': report.day_name,
+
+            #urls
+            'editUrl': reverse(ScheduledReportsView.urlname, args=(report.domain, report.get_id)),
+            'viewUrl': reverse(view_scheduled_report, args=(report.domain, report.get_id)),
+            'sendUrl': reverse(send_test_scheduled_report, args=(report.domain, report.get_id)),
+            'deleteUrl': reverse(delete_scheduled_report, args=(report.domain, report.get_id)),
+        }
+
+        #only for others_scheduled_reports
+        if user_email and context_secret:
+            details['unsubscribeUrl'] = reverse(ReportNotificationUnsubscribeView.urlname,
+                                                args=(report.get_id, user_email, context_secret))
+
+        return details
+
+
+@login_and_domain_required
+@require_GET
+@location_safe
+def page_context(request, domain):
+
+    #currently cant instantiate MySavedReportsView - need to pass in domain as an arg(?) how?
+    view = MySavedReportsView()
+
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 5))
+
+    (reports, total) = view.get_page(page, limit)
+
+    return json_response({
+        'reports': reports,
+        'total': total,
+    })
 
 
 def should_update_export(last_accessed):
@@ -466,7 +538,6 @@ class AddSavedReportConfigView(View):
     @property
     def user_id(self):
         return self.request.couch_user._id
-
 
 @login_and_domain_required
 @datespan_default
@@ -699,7 +770,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'report': {
                 'show': user_can_view_reports(self.request.project, self.request.couch_user),
                 'slug': None,
-                'default_url': reverse('reports_home', args=(self.domain,)),
+                'default_url': reverse('reports_home', args=(self.domain,)) + '#scheduled-reports',
                 'is_async': False,
                 'section_name': ProjectReport.section_name,
                 'title': self.page_name,
@@ -757,7 +828,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
-            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
+            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)) + '#scheduled-reports')
 
         return self.get(request, *args, **kwargs)
 
@@ -824,18 +895,43 @@ class ReportNotificationUnsubscribeView(TemplateView):
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
+    delete_count = request.POST.get("bulk_delete_count")
+
     try:
-        scheduled_report = ReportNotification.get(scheduled_report_id)
+        if delete_count:
+            delete_list = json.loads(request.POST.get("deleteList"))
+            scheduled_reports = [ReportNotification.get(report_id) for report_id in delete_list]
+        else:
+            scheduled_report = ReportNotification.get(scheduled_report_id)
     except ResourceNotFound:
         # was probably already deleted by a fast-clicker.
         pass
     else:
-        if not _can_delete_scheduled_report(scheduled_report, user, domain):
-            raise Http404()
+        if delete_count:
+            for report in scheduled_reports:
+                if not _can_delete_scheduled_report(report, user, domain):
+                    raise Http404()
+        else:
+            if not _can_delete_scheduled_report(scheduled_report, user, domain):
+                raise Http404()
 
+    if delete_count:
+        for report in scheduled_reports:
+            report.delete()
+        if int(delete_count) > 1:
+            plural = "s were"
+        else:
+            plural = " was"
+        messages.success(
+            request,
+            format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
+        )
+        #not necessary since I refresh from the js
+        return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+    else:
         scheduled_report.delete()
         messages.success(request, "Scheduled report deleted!")
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
 
 def _can_delete_scheduled_report(report, user, domain):
@@ -849,18 +945,31 @@ def _can_delete_scheduled_report(report, user, domain):
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
+    send_count = request.POST.get("bulk_send_count")
 
     try:
-        send_delayed_report(scheduled_report_id)
+        if send_count:
+            for report_id in json.loads(request.POST.get("sendList")):
+                send_delayed_report(report_id)
+        else:
+            send_delayed_report(scheduled_report_id)
     except Exception as e:
         import logging
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Report sent to this report's recipients"))
+        if send_count and int(send_count) > 1:
+            messages.success(
+                request,
+                format_html(_("{} reports sent to their recipients"), send_count)
+            )
+        else:
+            messages.success(request, _("Report sent to this report's recipients"))
 
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
-
+    if send_count:
+        return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+    else:
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
 def _can_send_test_report(report_id, user, domain):
     try:
