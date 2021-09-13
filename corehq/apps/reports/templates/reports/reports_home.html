@@ -9,6 +9,14 @@
 {% block page_content %}
   {% initial_page_data 'configs' configs %}
   {% registerurl 'add_report_config' domain %}
+  {% registerurl 'reports_home' domain %} <!-- is this actually used anymore -->
+  {% registerurl 'page_context' domain %}
+  {% initial_page_data 'scheduled_reports' scheduled_reports %}
+  {% initial_page_data 'others_scheduled_reports' others_scheduled_reports %}
+  {% initial_page_data 'extra_reports' extra_reports %}
+  {% initial_page_data 'is_admin' is_admin %}
+  {% initial_page_data 'user_email' user_email %}
+  {% initial_page_data 'user_ids' user_ids %} <!-- this doesn't actually define user_ids you can write gibberish-->
 
   <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
@@ -92,24 +100,76 @@
           <i class="fa fa-plus"></i>
           {% trans "Create a New Scheduled Report" %}
         </a></p>
-        {% if scheduled_reports or others_scheduled_reports %}
-          {% if others_scheduled_reports %}
-            <h3>{% trans "My Scheduled Reports" %}</h3>
+        <div>
+          {% if scheduled_reports or others_scheduled_reports %} <!-- convert this to a similar panel system as exports -->
+            {% if others_scheduled_reports %}
+              <h3>{% trans "My Scheduled Reports" %}</h3>
+            {% endif %}
+            <div id="js-scheduled-reports-table"> <!-- separated button actions is fine... but maybe one central button group like exports? -->
+              <div class="alert alert-info" data-bind="visible: !pageLoaded">
+                <i class="fa fa-spin fa-spinner"></i>
+                {% trans "Loading reports..." %}
+              </div>
+              <div style="display: none" data-bind="visible: selectedReportsCount()"> <!-- DISPLAY: NONE IS A TEMPORARY FIX -->
+                <a class="btn btn-primary" style="margin-bottom: 13px; float: left" data-bind="click: bulkSend">
+                  {% trans "Send Selected Reports" %}
+                </a>
+              </div>
+              <div style="display: none" data-bind="visible: selectedReportsCount()">
+                <a class="btn btn-danger" style="margin-bottom: 13px; margin-left: 8px; float: left" data-bind="click: bulkDelete">
+                  {% trans "Delete Selected Reports" %}
+                </a>
+              </div>
+              <div style="display: none" data-bind="visible: pageLoaded">
+                {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True %}
+              </div>
+              <pagination data-bind="visible: scheduledReports().length"
+                      data-apply-bindings="false"
+                      params="goToPage: goToPage,
+                              slug: 'scheduled-reports',
+                              perPage: perPage,
+                              totalItems: totalItems,
+                              onLoad: onPaginationLoad"></pagination>
+            </div>
+            {% if others_scheduled_reports %}
+              <h3>{% trans "Other Scheduled Reports" %}</h3>
+              <div id="js-other-scheduled-reports-table"> <!-- This feels redundant... how to fuse with above? -->
+                <div class="alert alert-info" data-bind="visible: !pageLoaded">
+                  <i class="fa fa-spin fa-spinner"></i>
+                  {% trans "Loading reports..." %}
+                </div>
+                <div style="display: none" data-bind="visible: selectedReportsCount()">
+                  <a class="btn btn-primary" style="margin-bottom: 13px; float: left" data-bind="click: bulkSend">
+                    {% trans "Send Selected Reports" %}
+                  </a>
+                </div> <!-- DISPLAY: NONE IS A TEMPORARY FIX UNTIL PAGE FETCH WORKS PROPERLY -->
+                <div style="display: none" data-bind="visible: selectedReportsCount()">
+                  <a class="btn btn-danger" style="margin-bottom: 13px; margin-left: 8px; float: left" data-bind="click: bulkDelete">
+                    {% trans "Delete Selected Reports" %}
+                  </a>
+                </div>
+                <div style="display: none" data-bind="visible: pageLoaded">
+                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False %}
+                </div>
+                <pagination data-bind="visible: scheduledReports().length"
+                      data-apply-bindings="false"
+                      params="goToPage: goToPage,
+                              slug: 'scheduled-reports',
+                              perPage: perPage,
+                              totalItems: totalItems,
+                              onLoad: onPaginationLoad"></pagination>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="alert alert-info">
+              {% blocktrans %}
+                You don't have any scheduled reports.  You can create a scheduled
+                report based on a saved report to have a report delivered by email
+                on a regular basis.
+              {% endblocktrans %}
+            </div>
           {% endif %}
-          {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
-          {% if others_scheduled_reports %}
-            <h3>{% trans "Other Scheduled Reports" %}</h3>
-            {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
-          {% endif %}
-        {% else %}
-          <div class="alert alert-info">
-            {% blocktrans %}
-              You don't have any scheduled reports.  You can create a scheduled
-              report based on a saved report to have a report delivered by email
-              on a regular basis.
-            {% endblocktrans %}
-          </div>
-        {% endif %}
+        </div>
       </div>
     {% endif %}
   </div>
