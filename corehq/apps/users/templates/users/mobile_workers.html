@@ -299,8 +299,16 @@
               Please contact your project's administrator if this is incorrect.
             {% endblocktrans %}
           {% else %}
+            {% if can_access_all_locations %}
+              {% blocktrans %}
+                  <strong>There are currently no mobile workers in this project.</strong>
+              {% endblocktrans %}
+            {% else %}
+              {% blocktrans %}
+                <strong>No mobile users are assigned to your user's location.</strong>
+              {% endblocktrans %}
+            {% endif %}
             {% blocktrans %}
-              <strong>There are currently no mobile workers in this project.</strong>
               Please create a new mobile worker above to get started.
             {% endblocktrans %}
           {% endif %}
