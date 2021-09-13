@@ -12,11 +12,11 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.case_search.utils import (
-    CaseSearchCriteria,
-    get_case_search_results,
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CaseSearchConfig,
 )
+from corehq.apps.case_search.utils import get_case_search_results
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -149,7 +149,7 @@ class TestCaseSearchRegistry(TestCase):
     def _run_query(self, domain, case_types, criteria, registry_slug):
         results = get_case_search_results(domain, {
             'case_type': case_types,
-            'registry_slug': registry_slug,
+            CASE_SEARCH_REGISTRY_ID_KEY: registry_slug,
             **criteria
         })
         return [(case.name, case.domain) for case in results]
@@ -250,7 +250,7 @@ class TestCaseSearchRegistry(TestCase):
     def test_includes_project_property(self):
         results = get_case_search_results(
             self.domain_1,
-            {"case_type": ["person"], "name": "Jane", "registry_slug": self.registry_slug},
+            {"case_type": ["person"], "name": "Jane", CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug},
         )
         self.assertItemsEqual([
             ("Jane", self.domain_1, self.domain_1),
@@ -268,8 +268,8 @@ class TestCaseSearchRegistry(TestCase):
                 self.domain_1,
                 {
                     "case_type": ["creative_work"],
-                    "name": "Jane Eyre", # from domain 2
-                    "registry_slug": self.registry_slug
+                    "name": "Jane Eyre",  # from domain 2
+                    CASE_SEARCH_REGISTRY_ID_KEY: self.registry_slug
                 },
                 "mock_app_id",
             )

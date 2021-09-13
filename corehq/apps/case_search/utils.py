@@ -21,6 +21,7 @@ from corehq.apps.case_search.filter_dsl import (
 )
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
     SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
@@ -49,7 +50,7 @@ def get_case_search_results(domain, criteria, app_id=None):
     except KeyError:
         raise CaseSearchUserError(_('Search request must specify case type'))
 
-    registry_slug = criteria.pop('registry_slug', None)
+    registry_slug = criteria.pop(CASE_SEARCH_REGISTRY_ID_KEY, None)
     if registry_slug:
         query_domains = _get_registry_visible_domains(domain, case_types, registry_slug)
         helper = _RegistryQueryHelper(domain, query_domains)
