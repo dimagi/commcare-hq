@@ -51,10 +51,13 @@ def get_case_search_results(domain, criteria, app_id=None):
 
     registry_slug = criteria.pop('registry_slug', None)
     if registry_slug:
-        case_search_criteria = CaseSearchCriteria.from_registry(domain, case_types, criteria, registry_slug)
+        query_domains = _get_registry_visible_domains(domain, case_types, registry_slug)
+        helper = _RegistryQueryHelper(domain, query_domains)
     else:
-        case_search_criteria = CaseSearchCriteria(domain, case_types, criteria)
+        query_domains = [domain]
+        helper = _QueryHelper(domain)
 
+    case_search_criteria = CaseSearchCriteria(domain, case_types, criteria, query_domains)
     try:
         search_es = case_search_criteria.search_es
     except TooManyRelatedCasesError:
@@ -74,36 +77,52 @@ def get_case_search_results(domain, criteria, app_id=None):
         ))
         raise
 
-    hits = (flatten_result(hit, include_score=True) for hit in hits)
-
-    if registry_slug:
-        hits = (transform_registry_search_result(hit) for hit in hits)
-
-    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(hit) for hit in hits]
+    cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
         cases.extend(get_related_cases(domain, app_id, case_types, cases))
     return cases
 
 
-def transform_registry_search_result(case_dict):
-    return {**case_dict, **{COMMCARE_PROJECT: case_dict['domain']}}
+def _get_registry_visible_domains(domain, case_types, registry_slug):
+    try:
+        helper = DataRegistryHelper(domain, registry_slug=registry_slug)
+        for case_type in case_types:
+            helper.pre_access_check(case_type)
+    except (RegistryNotFound, RegistryAccessException):
+        return [domain]
+    else:
+        return helper.visible_domains
+
+
+class _QueryHelper:
+    def __init__(self, domain):
+        self.domain = domain
+
+    def get_base_queryset(self):
+        return CaseSearchES().domain(self.domain)
+
+    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
+        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
+        # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+        return CommCareCase.wrap(flat)
+
+
+class _RegistryQueryHelper:
+    def __init__(self, domain, query_domains):
+        self.domain = domain
+        self.query_domains = query_domains
+
+    def get_base_queryset(self):
+        return CaseSearchES().domain(self.query_domains)
+
+    def wrap_case(self, es_hit, include_score=False, is_related_case=False):
+        flat = flatten_result(es_hit, include_score=include_score, is_related_case=is_related_case)
+        flat = {**flat, **{COMMCARE_PROJECT: flat['domain']}}
+        return CommCareCase.wrap(flat)
 
 
 class CaseSearchCriteria:
     """Compiles the case search object for the view"""
-
-    @classmethod
-    def from_registry(cls, domain, case_types, criteria, registry_slug):
-        try:
-            helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-            for case_type in case_types:
-                helper.pre_access_check(case_type)
-        except (RegistryNotFound, RegistryAccessException):
-            query_domains = [domain]
-        else:
-            query_domains = helper.visible_domains
-        return cls(domain, case_types, criteria, query_domains)
 
     def __init__(self, domain, case_types, criteria, query_domains=None):
         self.request_domain = domain

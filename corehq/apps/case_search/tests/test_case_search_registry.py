@@ -118,8 +118,12 @@ class TestCaseSearchRegistry(TestCase):
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria, registry_slug):
-        search = CaseSearchCriteria.from_registry(domain, case_types, criteria, registry_slug)
-        return search.search_es.values_list("name", "domain")
+        results = get_case_search_results(domain, {
+            'case_type': case_types,
+            'registry_slug': registry_slug,
+            **criteria
+        })
+        return [(case.name, case.domain) for case in results]
 
     def test_query_all_domains_in_registry(self):
         # Domain 1 has access to all three domains
@@ -213,8 +217,6 @@ class TestCaseSearchRegistry(TestCase):
         self.assertItemsEqual([
             ("Jane Eyre", self.domain_2),
         ], results)
-
-    # get_case_search_results tests below:
 
     def test_includes_project_property(self):
         results = get_case_search_results(
