@@ -2,8 +2,16 @@ import uuid
 
 from django.test import TestCase
 
+import mock
+
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
+from corehq.apps.app_manager.models import (
+    CaseSearch,
+    CaseSearchProperty,
+    DetailColumn,
+)
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.utils import (
     CaseSearchCriteria,
@@ -47,9 +55,30 @@ def parent_and_child_cases(parent_name, child_name):
             case_type='creative_work',
             case_name=child_name,
             create=True,
-            index={'parent': IndexAttrs('team', parent_id, 'child')},
+            index={'parent': IndexAttrs('creator', parent_id, 'child')},
         )
     ]
+
+
+def get_app_with_case_search(domain):
+    factory = AppFactory(domain=domain)
+    for case_type, fields in [
+            ('person', ['name']),
+            ('creative_work', ['name', 'parent/name']),
+    ]:
+        module, _ = factory.new_basic_module(case_type, case_type)
+        module.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name=field) for field in fields]
+        )
+        module.case_details.short.columns = [
+            DetailColumn(format='plain', field=field, header={'en': field}, model=case_type)
+            for field in fields
+        ]
+    return factory.app
+
+
+patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached',
+                                  lambda domain, _: get_app_with_case_search(domain))
 
 
 @es_test
@@ -234,4 +263,20 @@ class TestCaseSearchRegistry(TestCase):
         ])
 
     def test_related_cases_included(self):
-        pass
+        with patch_get_app_cached:
+            results = get_case_search_results(
+                self.domain_1,
+                {
+                    "case_type": ["creative_work"],
+                    "name": "Jane Eyre", # from domain 2
+                    "registry_slug": self.registry_slug
+                },
+                "mock_app_id",
+            )
+        self.assertItemsEqual([
+            ("Charlotte Brontë", "creator", self.domain_2),
+            ("Jane Eyre", "creative_work", self.domain_2),
+        ], [
+            (case.name, case.type, case.domain)
+            for case in results
+        ])
