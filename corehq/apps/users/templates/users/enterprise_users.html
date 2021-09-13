@@ -23,16 +23,10 @@
         </div>
         <div class="col-sm-6">
             <button type="button" class="btn btn-default pull-right "
-                    data-bind="visible: !showDeactivated(), click: function() { showDeactivated(true); }"
+                    data-bind="text: {% trans 'toggleDeactivatedText' %}, click: function() { showDeactivated(!showDeactivated()); }"
                     >
-              {% trans 'Show Deactivated Mobile Workers' %}
             </button>
-            <button type="button" class="btn btn-default pull-right"
-                    data-bind="visible: showDeactivated(),
-                    click: function() { showDeactivated(false); }"
-                    >
-              {% trans 'Hide Deactivated Mobile Workers' %}
-            </button>
+            <button type="button" value="yargh"></button>
         </div>
       </div>
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
