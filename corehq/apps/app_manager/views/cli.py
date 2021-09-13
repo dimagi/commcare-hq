@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 
@@ -5,7 +6,6 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from corehq.util.metrics import metrics_histogram_timer
 from dimagi.ext.couchdbkit import Document
-from dimagi.utils.web import json_response
 from soil import FileDownload
 
 from corehq import toggles
@@ -36,7 +36,7 @@ def list_apps(request, domain):
                                              params={'app_id': app.get_id})
         }
     applications = Domain.get_by_name(domain).applications()
-    return json_response({
+    return JsonResponse({
         'status': 'success',
         'applications': list(map(app_to_json, applications)),
     })
@@ -55,7 +55,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return json_response({'status': 'error', 'message': msg}, status_code=code)
+        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
 
     def get_app(app_id, version, latest):
         if version:
@@ -115,7 +115,7 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             'langs': langs,
             'visit_scheduler_enabled': visit_scheduler_enabled,
         })
-        return json_response(
+        return JsonResponse(
             {'error_html': error_html},
             status_code=400,
         )
@@ -132,5 +132,5 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             filename='{}.ccz'.format(slugify(app.name)),
         )
     except Exception as e:
-        return json_response({'status': 'error', 'message': str(e)}, status_code=400)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status_code=400)
     return FileDownload.get(download.download_id).toHttpResponse()
