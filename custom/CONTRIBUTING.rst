@@ -2,11 +2,11 @@
 Writing Custom Code
 ===================
 
-CommCare is designed as an end-user-development system which can support the 
-deployment of hundreds or thousands of projects through configuration rather 
+CommCare is designed as an end-user-development system which can support the
+deployment of hundreds or thousands of projects through configuration rather
 than source code. However, the purpose of the code platform is also to support
-social impact in resource constrained settings, so in extreme cirucmstances we
-accept that including code written for an individual project ("custom code") is 
+social impact in resource constrained settings, so in extreme circumstances we
+accept that including code written for an individual project ("custom code") is
 a sometimes-necessary evil to take advantage of unique opportunities to support
 that mission in the real world.
 
@@ -19,7 +19,7 @@ the aim of achieving those goals.
 
 It is important to note upfront that although CommCare's code is an Open Source
 community good, the willingness of the code maintainers to accept custom code
-contributions should be considered a privilege and not a right. Since custom 
+contributions should be considered a privilege and not a right. Since custom
 code creates a permanent drag on the organizations and individuals who maintain
 the software, the project maintainers are free to use their judgement in the
 decision of whether that long term cost is warranted, just as they are in the
@@ -106,17 +106,17 @@ Dependencies
 Custom code should rely on as few dependencies as possible which will increase
 the burden of maintenance long term. This means that the code should rely only
 on the common and public interfaces to the rest of the core code, and strictly
-avoid coupling to implementation details or undocumented behaviors. 
+avoid coupling to implementation details or undocumented behaviors.
 
-In addition custom modules should avoid new external dependencies whenever 
+In addition custom modules should avoid new external dependencies whenever
 possible. When new dependencies are a requirement of custom code, they should
 be compatible with the common dependencies of the core code, and should have
-a clear low-risk path to maintenance. 
+a clear low-risk path to maintenance.
 
 Support
 -------
-When custom code is developed by a contributor who is not a core maintainer, 
-they should generally be connected with a project maintainer for backstopping 
+When custom code is developed by a contributor who is not a core maintainer,
+they should generally be connected with a project maintainer for backstopping
 before beginning development.
 
 This person can answer questions about how to meet the above requirements, and
@@ -124,13 +124,13 @@ how much effort is practical to require. The contributor should check in regular
 during the development process with the maintainer to ensure the approach being
 taken is correct. Submitting large amounts of code for monolithic review is
 likely to result in a long, painful period of code review. Regular check-ins and
-following standardizations can greatly help with this. 
+following standardizations can greatly help with this.
 
-A maintainer working with a contributor will share responsibility for the 
-robustness of the code, and so will likely have extensive input during the review 
+A maintainer working with a contributor will share responsibility for the
+robustness of the code, and so will likely have extensive input during the review
 process, though all PR feedback should be considered, regardless of who provides it.
 Other project maintainers have a responsibility to reject contributions which can
-create risk for the project, whether due to visible defects or due to a lack of 
+create risk for the project, whether due to visible defects or due to a lack of
 confidence in the lack of defects. As such, contributors should expect that clearly
 demonstrating adherence to these standards is important in providing reviewers with
 confidence that new custom code is safe and appropriate.

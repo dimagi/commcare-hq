@@ -27,10 +27,16 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_s
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_extra_setup
+from corehq.util.test_utils import (
+    DocTestMixin,
+    disable_quickcache,
+    get_form_ready_to_save,
+    trap_extra_setup,
+)
 
 
 @es_test
+@disable_quickcache
 @run_with_sql_backend
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -125,6 +131,7 @@ TEST_ES_META = {
 }
 
 
+@disable_quickcache
 @run_with_sql_backend
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
@@ -156,7 +163,7 @@ class CouchformsESAnalyticsTest(TestCase):
         with trap_extra_setup(ConnectionError):
             cls.elasticsearch = get_es_new()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now-cls._60_days)]
+            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now - cls._60_days)]
 
         cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 

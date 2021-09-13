@@ -819,3 +819,18 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+def disable_quickcache(test_case=None):
+    """A patch/decorator that disables quickcache
+
+    :param test_case: Optional test class or function. The patch is
+    applied as a decorator to this object if provided.
+    :returns: A `mock.patch` object that disables the cache when started
+    and re-enables it when stopped OR a decorated test case when
+    `test_case` is provided.
+    """
+    def call(self, *args, **kw):
+        return self.fn(*args, **kw)
+    patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
+    return patch if test_case is None else patch(test_case)

@@ -3,7 +3,7 @@ import time
 
 from testil import assert_raises, eq
 
-from ..test_utils import timelimit
+from ..test_utils import disable_quickcache, timelimit
 
 
 def test_timelimit_pass():
@@ -26,3 +26,29 @@ def test_timelimit_default():
     def double(x):
         return x * 2
     eq(double(2), 4)
+
+
+def test_disable_quickcache():
+    from corehq.util.quickcache import quickcache
+
+    @quickcache(["arg"])
+    def foo(arg):
+        calls.append(arg)
+        return arg
+
+    calls = []
+    try:
+        with disable_quickcache():
+            eq(foo(1), 1)
+            eq(foo(1), 1)
+            eq(foo.get_cached_value(1), Ellipsis)
+            eq(calls, [1, 1])
+
+        # cache should be re-enabled on exit disabled context
+        eq(foo(2), 2)
+        eq(foo(2), 2)
+        eq(calls, [1, 1, 2])
+        eq(foo.get_cached_value(2), 2)
+    finally:
+        foo.clear(1)
+        foo.clear(2)
