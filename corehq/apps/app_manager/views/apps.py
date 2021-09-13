@@ -333,7 +333,7 @@ def _get_upstream_url(app, user, upstream_app_id=None):
     Get the upstream url if the user has access
     :param user: couch_user from a request
     """
-    if app.domain_link:
+    if not app.domain_link:
         return None
 
     is_member_of_local_domain = user.is_member_of(app.domain_link.master_domain) and not app.domain_link.is_remote
