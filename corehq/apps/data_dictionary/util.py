@@ -159,15 +159,23 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     # If caller has supplied non-None value for allowed_values, then
     # synchronize the supplied dict (key=allowed_value, value=description)
     # with the database stored values for this property.
+    err_cnt = 0
+    max_len = CasePropertyAllowedValue._meta.get_field('allowed_value').max_length
     if allowed_values is not None:
         obj_pks = []
         for allowed_value, av_desc in allowed_values.items():
-            av_obj, _ = CasePropertyAllowedValue.objects.update_or_create(
-                case_property=prop, allowed_value=allowed_value, defaults={"description": av_desc})
-            obj_pks.append(av_obj.pk)
+            if len(allowed_value) > max_len:
+                err_cnt += 1
+            else:
+                av_obj, _ = CasePropertyAllowedValue.objects.update_or_create(
+                    case_property=prop, allowed_value=allowed_value, defaults={"description": av_desc})
+                obj_pks.append(av_obj.pk)
         # Delete any database-resident allowed values that were not found in
         # the set supplied by caller.
         prop.allowed_values.exclude(pk__in=obj_pks).delete()
+
+    if err_cnt:
+        return ugettext('Unable to save valid values longer than {} characters.').format(max_len)
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
