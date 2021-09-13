@@ -12,7 +12,7 @@ from corehq import toggles
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.util.view_utils import absolute_reverse, json_error
 
 from ..dbaccessors import (
@@ -122,19 +122,15 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
 
     app.set_media_versions()
     download = FileDownload('application-{}-{}'.format(app.get_id, version))
-    errors = build_application_zip(
-        include_multimedia_files=include_multimedia,
-        include_index_files=True,
-        domain=app.domain,
-        app_id=app.id,
-        download_id=download.download_id,
-        compress_zip=True,
-        filename='{}.ccz'.format(slugify(app.name)),
-    )
-
-    if errors is not None and errors['errors']:
-        return json_response(
-            errors,
-            status_code=400,
+    try:
+        create_files_for_ccz(
+            build=app,
+            build_profile_id=None,
+            include_multimedia_files=include_multimedia,
+            download_id=download.download_id,
+            compress_zip=True,
+            filename='{}.ccz'.format(slugify(app.name)),
         )
+    except Exception as e:
+        return json_response({'status': 'error', 'message': str(e)}, status_code=400)
     return FileDownload.get(download.download_id).toHttpResponse()
