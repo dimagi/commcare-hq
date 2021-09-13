@@ -4370,9 +4370,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def create_build_files(self, build_profile_id=None):
         all_files = self.create_all_files(build_profile_id)
-        for filepath in all_files:
-            self.lazy_put_attachment(all_files[filepath],
-                                     'files/%s' % filepath)
+        self.attach_build_files(all_files)
+
+    def attach_build_files(self, build_files):
+        for filepath in build_files:
+            self.lazy_put_attachment(build_files[filepath], 'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
         self.validate_jar_path()
@@ -4522,7 +4524,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             copy._id = uuid.uuid4().hex
 
         if copy.create_build_files_on_build:
-            copy.create_build_files()
+            # Call `create_all_files` on 'self' to take advantage of the memoized result.
+            # This is safe since 'copy' is a direct copy of 'self'
+            build_files = self.create_all_files()
+            copy.attach_build_files(build_files)
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
