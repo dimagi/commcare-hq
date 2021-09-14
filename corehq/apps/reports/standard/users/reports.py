@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
+from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -54,19 +55,20 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         needing to click "See More".
         """
         if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
-            user_data_label = _("Profile or User Data")
+            user_data_label = _("profile or user data")
         else:
-            user_data_label = _("User Data")
+            user_data_label = _("user data")
         return {
-            "username": _("Username"),
-            "email": _("Email"),
-            "domain": _("Project"),
-            "is_active": _("Is Active"),
-            "language": _("Language"),
-            "phone_numbers": _("Phone Numbers"),
-            "location_id": _("Primary Location (mobile users only)"),
+            "username": _("username"),
+            "role_id": _("role"),
+            "email": _("email"),
+            "domain": _("project"),
+            "is_active": _("is active"),
+            "language": _("language"),
+            "phone_numbers": _("phone numbers"),
+            "location_id": _("location"),
             "user_data": user_data_label,
-            "two_factor_auth_disabled_until": _("Two Factor Authentication Disabled"),
+            "two_factor_auth_disabled_until": _("two factor authentication disabled"),
         }
 
     @property
@@ -147,48 +149,66 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield _user_history_row(record, self.domain, self.timezone)
+            yield self._user_history_row(record, self.domain, self.timezone)
 
+    @memoized
+    def _get_location_name(self, location_id):
+        from corehq.apps.locations.models import SQLLocation
+        if not location_id:
+            return None
+        try:
+            location_object = SQLLocation.objects.get(location_id=location_id)
+        except ObjectDoesNotExist:
+            return None
+        return location_object.display_name
 
-def _user_history_row(record, domain, timezone):
-    return [
-        cached_user_id_to_username(record.user_id),
-        cached_user_id_to_username(record.changed_by),
-        _get_action_display(record.action),
-        record.details['changed_via'],
-        record.message,
-        _user_history_details_cell(record.details['changes'], domain),
-        ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
-    ]
+    def _user_history_row(self, record, domain, timezone):
+        return [
+            cached_user_id_to_username(record.user_id),
+            cached_user_id_to_username(record.changed_by),
+            _get_action_display(record.action),
+            record.details['changed_via'],
+            record.message,
+            self._user_history_details_cell(record.details['changes'], domain),
+            ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
+        ]
 
+    def _user_history_details_cell(self, changes, domain):
+        def _html_list(changes=None, unstyled=True):
+            items = []
+            if changes is None:
+                return None
+            for key, value in changes.items():
+                if isinstance(value, dict):
+                    value = _html_list(value, unstyled=unstyled)
+                elif isinstance(value, list):
+                    value = format_html(", ".join(value))
+                else:
+                    value = format_html(str(value))
+                items.append("<li>{}: {}</li>".format(key, value))
 
-def _user_history_details_cell(changes, domain):
-    def _html_list(changes, unstyled=True):
-        items = []
+            class_attr = "class='list-unstyled'" if unstyled else ""
+            return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
+
+        properties = UserHistoryReport.get_primary_properties(domain)
+        properties.pop("user_data", None)
+        primary_changes = {}
+        all_changes = {}
+
         for key, value in changes.items():
-            if isinstance(value, dict):
-                value = _html_list(value, unstyled=unstyled)
-            elif isinstance(value, list):
-                value = format_html(", ".join(value))
-            else:
-                value = format_html(str(value))
-            items.append("<li>{}: {}</li>".format(key, value))
-
-        class_attr = "class='list-unstyled'" if unstyled else ""
-        return mark_safe(f"<ul {class_attr}>{''.join(items)}</ul>")
-
-    properties = UserHistoryReport.get_primary_properties(domain)
-    properties.pop("user_data", None)
-    primary_changes = {
-        properties.get(key, key): value for key, value in changes.items()
-        if key in properties
-    }
-    more_count = len(changes) - len(primary_changes)
-
-    return render_to_string("reports/standard/partials/user_history_changes.html", {
-        "primary_changes": _html_list(primary_changes) if primary_changes else None,
-        "all_changes": _html_list(changes, unstyled=False),
-        "more_count": more_count,
+            if key in properties:
+                if key == 'location_id':
+                    value = self._get_location_name(value)
+                primary_changes[properties[key]] = value
+                all_changes[properties[key]] = value
+            if key == 'user_data':
+                for key, value in changes['user_data'].items():
+                    all_changes[f"user data: {key}"] = value
+        more_count = len(all_changes) - len(primary_changes)
+        return render_to_string("reports/standard/partials/user_history_changes.html", {
+            "primary_changes": _html_list(primary_changes),
+            "all_changes": _html_list(all_changes),
+            "more_count": more_count,
     })
 
 

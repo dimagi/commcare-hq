@@ -28,7 +28,10 @@ class DataSourceConfigurationCitusDBTest(TestCase):
             distribution_column="owner"
         )
         cls.data_source.sql_settings.primary_key = ['owner', 'doc_id']
-        cls.adapter = get_indicator_adapter(cls.data_source)
+        try:
+            cls.adapter = get_indicator_adapter(cls.data_source)
+        except KeyError as err:
+            raise SkipTest(f"Test only applicable when using CitusDB. KeyError: {err}")
         if not cls.adapter.session_helper.is_citus_db:
             raise SkipTest("Test only applicable when using CitusDB: {}".format(cls.adapter.session_helper.engine))
 

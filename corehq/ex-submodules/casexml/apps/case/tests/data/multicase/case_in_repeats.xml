@@ -28,8 +28,7 @@
 		<outcome>1</outcome>
 		<sex>1</sex>
 		<breastfeeding>2</breastfeeding>
-		<case>
-			<case_id>32337c03-2b73-497f-ab18-2b587f8c21df</case_id>
+		<case case_id="32337c03-2b73-497f-ab18-2b587f8c21df" xmlns="http://commcarehq.org/case/transaction/v2">
 			<date_modified>2011-09-19T22:29:48.096Z</date_modified>
 			<create>
 				<case_type_id>newborn_hiv_child</case_type_id>
@@ -59,8 +58,7 @@
 		<outcome>1</outcome>
 		<sex>2</sex>
 		<breastfeeding>2</breastfeeding>
-		<case>
-			<case_id>581b0506-7c94-4af5-ac67-f934566d5418</case_id>
+		<case case_id="581b0506-7c94-4af5-ac67-f934566d5418" xmlns="http://commcarehq.org/case/transaction/v2">
 			<date_modified>2011-09-19T22:29:48.096Z</date_modified>
 			<create>
 				<case_type_id>newborn_hiv_child</case_type_id>
@@ -84,8 +82,7 @@
 	<intcount>3</intcount>
 	<completed_form>OK</completed_form>
 	<end_form>OK</end_form>
-	<case>
-		<case_id>CMYOSI95QCED3ZWIP9ZK1QNQ6</case_id>
+	<case case_id="CMYOSI95QCED3ZWIP9ZK1QNQ6" xmlns="http://commcarehq.org/case/transaction/v2">
 		<date_modified>2011-09-19T22:31:48.902Z</date_modified>
         <create>
             <case_type_id>mother</case_type_id>

@@ -61,26 +61,23 @@ branches:
     - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
     - sr/cs-multiselect  # Sravan May 31
     - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
-    - cs/SC-691-add-support-for-geolocation  # Charl July 5
     - ce/bulk-case-search # Cal July 6
     - rp/enterprize-sms-report # Rynhard July 12
     - ml/add-bulk-delete-form-export-report # Minha July 20
-    - sr/memoized-toggle # Sravan July 26
+    #- sr/memoized-toggle # Sravan July 26
     - bmb/sso-login-v2  # Biyeun July 26
-    - sk/data-registry-view  # Simon July 29
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/smart-linking-mvp  # Jenny Aug 9
-    - jls/smart-linking-mvp-content-type # Jenny Aug 23
     - caktus:allowed_values_ui # Jenny Aug 13
-    - cs/SC-1697_new-custom-recipient  # Charl Aug 11
-    - dependabot/npm_and_yarn/path-parse-1.0.7 # Graham Aug 17
-    - rc/audit-log-ux # Robert Aug 22
-    - es/blank-case-search  # Ethan Aug 23
-    - erroredQuestionMessagingFix # Shubham Aug 24
-    - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
-    - errorJumpFix # Shubham Aug 25
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
-    - ap/add-support-for-batch-size # Amit Aug 30
-    - sk/prevent-duplicate-role-names  # Simon Aug 30
+    - ml/add-bulk-action-scheduled-reports # Minha Aug 30
+    - mk/user-history/structured-messages-v2 # MK Sep 1
+    - mk/user-history/migrate-change-messages # MK Sep 14
+    - gh/remove-pickles-from-accounting # Graham Sep 3
+    - jls/form-links-modules # Jenny Sept 7
+    - dmr/cbc-tools  # Danny Sept 10
+    - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
+    - gh/erm/remove-master-in-ui # Graham Sept 13
+    - revert-30394-revert-30385-gh/erm/refactor-domain-link-view-model # Graham Sept 13
 submodules: { }

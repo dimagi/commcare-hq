@@ -1,4 +1,7 @@
-## Summary
+## Product Description
+<!-- For non-invisible changes, describe user-facing effects. -->
+
+## Technical Summary
 <!--
     Provide a link to the ticket or document which prompted this change,
     Describe the rationale and design decisions.
@@ -6,9 +9,6 @@
 
 ## Feature Flag
 <!-- If this is specific to a feature flag, which one? -->
-
-## Product Description
-<!-- For non-invisible changes, describe user-facing effects. -->
 
 ## Safety Assurance
 

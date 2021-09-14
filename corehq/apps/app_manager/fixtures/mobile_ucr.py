@@ -106,7 +106,7 @@ class ReportFixturesProvider(FixtureProvider):
 
         if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
             return False
-        
+
         return True
 
     def _get_apps(self, restore_state, restore_user):

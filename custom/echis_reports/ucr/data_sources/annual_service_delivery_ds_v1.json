@@ -9,1835 +9,1080 @@
         "echis"
     ],
     "config": {
-        "configured_indicators": [
+        "configured_indicators":  [
             {
-                "comment": null,
-                "create_index": true,
-                "display_name": "indicator",
-                "datatype": "string",
-                "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "indicator_name"
-                },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "indicator_name"
+              "comment": null,
+              "create_index": true,
+              "display_name": "indicator",
+              "datatype": "string",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "indicator_name"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "indicator_name"
             },
             {
-                "comment": null,
-                "create_index": true,
-                "display_name": "annual_report_date",
-                "datatype": "date",
-                "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "annual_report_date"
-                },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "annual_report_date"
+              "comment": null,
+              "create_index": true,
+              "display_name": "annual_date",
+              "datatype": "date",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "annual_date"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "annual_date"
             },
             {
-                "comment": null,
-                "create_index": true,
-                "display_name": "owner_id",
+              "comment": null,
+              "create_index": true,
+              "display_name": "annual_report_date",
+              "datatype": "string",
+              "expression": {
                 "datatype": "string",
+                "type": "property_name",
+                "property_name": "annual_report_date"
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "annual_report_date"
+            },
+            {
+              "comment": null,
+              "create_index": true,
+              "display_name": "owner_id",
+              "datatype": "string",
+              "expression": {
+                "type": "root_doc",
                 "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "owner_id"
+            },
+            {
+              "comment": "  ",
+              "create_index": false,
+              "display_name": "opened_on",
+              "datatype": "date",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "opened_on"
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "opened_on"
+            },
+         
+            {
+              "type": "expression",
+              "column_id": "health_post_id",
+              "datatype": "string",
+              "display_name": "health_post_id",
+              "expression": {
+                "test": {
+                  "operator": "eq",
+                  "expression": {
                     "type": "root_doc",
                     "expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id",
+                      "datatype": null
+                    }
+                  },
+                  "type": "boolean_expression",
+                  "comment": null,
+                  "property_value": "-"
+                },
+                "type": "conditional",
+                "expression_if_true": {
+                  "value_expression": {
+                    "value_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "_id",
+                        "datatype": null
+                      }
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Location",
+                    "doc_id_expression": {
+                      "test": {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "location_parent_id",
+                          "location_id_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "owner_id",
+                              "datatype": null
+                            }
+                          }
+                        },
+                        "comment": null,
+                        "property_value": ""
+                      },
+                      "expression_if_false": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "owner_id",
+                          "datatype": null
+                        }
+                      },
+                      "type": "conditional",
+                      "expression_if_true": {
+                        "constant": "-",
+                        "type": "constant"
+                      }
+                    }
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "value_expression": {
+                      "type": "root_doc",
+                      "expression": {
                         "datatype": null,
                         "type": "property_name",
-                        "property_name": "owner_id"
+                        "property_name": "referenced_id"
+                      }
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "array_index",
+                      "array_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "indices",
+                          "datatype": null
+                        }
+                      },
+                      "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                      }
                     }
+                  }
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "owner_id"
-            },
-            {
-                "comment": "  ",
-                "create_index": false,
-                "display_name": "opened_on",
-                "datatype": "date",
-                "expression": {
+                "expression_if_false": {
+                  "value_expression": {
                     "type": "root_doc",
                     "expression": {
-                        "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "_id",
+                      "datatype": null
+                    }
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "Location",
+                  "doc_id_expression": {
+                    "test": {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "location_parent_id",
+                        "location_id_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "owner_id",
+                            "datatype": null
+                          }
+                        }
+                      },
+                      "comment": null,
+                      "property_value": ""
+                    },
+                    "expression_if_false": {
+                      "type": "root_doc",
+                      "expression": {
                         "type": "property_name",
-                        "property_name": "opened_on"
-                    }
-                },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "opened_on"
-            },
-            {
-                "type": "expression",
-                "column_id": "region",
-                "datatype": "string",
-                "display_name": "region",
-                "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
+                        "property_name": "owner_id",
+                        "datatype": null
+                      }
                     },
                     "type": "conditional",
                     "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "name",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "type": "location_parent_id",
-                                            "location_id_expression": {
-                                                "test": {
-                                                    "operator": "eq",
-                                                    "type": "boolean_expression",
-                                                    "expression": {
-                                                        "type": "location_parent_id",
-                                                        "location_id_expression": {
-                                                            "type": "root_doc",
-                                                            "expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "owner_id",
-                                                                "datatype": null
-                                                            }
-                                                        }
-                                                    },
-                                                    "comment": null,
-                                                    "property_value": ""
-                                                },
-                                                "expression_if_false": {
-                                                    "type": "root_doc",
-                                                    "expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "owner_id",
-                                                        "datatype": null
-                                                    }
-                                                },
-                                                "type": "conditional",
-                                                "expression_if_true": {
-                                                    "constant": "-",
-                                                    "type": "constant"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "property_name",
-                                    "property_name": "indices",
-                                    "datatype": null
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "name",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "test": {
-                                                "operator": "eq",
-                                                "type": "boolean_expression",
-                                                "expression": {
-                                                    "type": "root_doc",
-                                                    "expression": {
-                                                        "type": "location_parent_id",
-                                                        "location_id_expression": {
-                                                            "type": "root_doc",
-                                                            "expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "owner_id",
-                                                                "datatype": null
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                "comment": null,
-                                                "property_value": ""
-                                            },
-                                            "expression_if_false": {
-                                                "type": "root_doc",
-                                                "expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id",
-                                                    "datatype": null
-                                                }
-                                            },
-                                            "type": "conditional",
-                                            "expression_if_true": {
-                                                "constant": "-",
-                                                "type": "constant"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                      "constant": "-",
+                      "type": "constant"
                     }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
+                  }
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": null
             },
             {
-                "type": "expression",
-                "column_id": "zone",
-                "datatype": "string",
-                "display_name": "zone",
+              "type": "expression",
+              "column_id": "is_closed",
+              "datatype": "string",
+              "display_name": "is_closed",
+              "expression": {
+                "type": "root_doc",
                 "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "name",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "test": {
-                                                "operator": "eq",
-                                                "type": "boolean_expression",
-                                                "expression": {
-                                                    "type": "location_parent_id",
-                                                    "location_id_expression": {
-                                                        "type": "root_doc",
-                                                        "expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "owner_id",
-                                                            "datatype": null
-                                                        }
-                                                    }
-                                                },
-                                                "comment": null,
-                                                "property_value": ""
-                                            },
-                                            "expression_if_false": {
-                                                "type": "root_doc",
-                                                "expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id",
-                                                    "datatype": null
-                                                }
-                                            },
-                                            "type": "conditional",
-                                            "expression_if_true": {
-                                                "constant": "-",
-                                                "type": "constant"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "indices",
-                                        "datatype": null
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "name",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "test": {
-                                            "operator": "eq",
-                                            "type": "boolean_expression",
-                                            "expression": {
-                                                "type": "location_parent_id",
-                                                "location_id_expression": {
-                                                    "type": "root_doc",
-                                                    "expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "owner_id",
-                                                        "datatype": null
-                                                    }
-                                                }
-                                            },
-                                            "comment": null,
-                                            "property_value": ""
-                                        },
-                                        "expression_if_false": {
-                                            "type": "root_doc",
-                                            "expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id",
-                                                "datatype": null
-                                            }
-                                        },
-                                        "type": "conditional",
-                                        "expression_if_true": {
-                                            "constant": "-",
-                                            "type": "constant"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
+                  "type": "property_name",
+                  "property_name": "closed",
+                  "datatype": "string"
+                }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "create_index": false,
+              "transform": {},
+              "comment": null
             },
             {
-                "type": "expression",
-                "column_id": "woreda",
-                "datatype": "string",
-                "display_name": "woreda",
+              "comment": null,
+              "create_index": true,
+              "display_name": "test_or_real",
+              "datatype": "string",
+              "expression": {
+                "type": "root_doc",
                 "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "name",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "test": {
-                                            "operator": "eq",
-                                            "type": "boolean_expression",
-                                            "expression": {
-                                                "type": "location_parent_id",
-                                                "location_id_expression": {
-                                                    "type": "root_doc",
-                                                    "expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "owner_id",
-                                                        "datatype": null
-                                                    }
-                                                }
-                                            },
-                                            "comment": null,
-                                            "property_value": ""
-                                        },
-                                        "expression_if_false": {
-                                            "type": "root_doc",
-                                            "expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id",
-                                                "datatype": null
-                                            }
-                                        },
-                                        "type": "conditional",
-                                        "expression_if_true": {
-                                            "constant": "-",
-                                            "type": "constant"
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "indices",
-                                        "datatype": null
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "name",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "test": {
-                                        "operator": "eq",
-                                        "type": "boolean_expression",
-                                        "expression": {
-                                            "type": "location_parent_id",
-                                            "location_id_expression": {
-                                                "type": "root_doc",
-                                                "expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id",
-                                                    "datatype": null
-                                                }
-                                            }
-                                        },
-                                        "comment": null,
-                                        "property_value": ""
-                                    },
-                                    "expression_if_false": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "owner_id",
-                                            "datatype": null
-                                        }
-                                    },
-                                    "type": "conditional",
-                                    "expression_if_true": {
-                                        "constant": "-",
-                                        "type": "constant"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "test_or_real"
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "test_or_real"
             },
             {
-                "type": "expression",
-                "column_id": "health_center",
-                "datatype": "string",
-                "display_name": "health_center",
-                "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "name",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "type": "location_parent_id",
-                                "location_id_expression": {
-                                    "test": {
-                                        "operator": "eq",
-                                        "type": "boolean_expression",
-                                        "expression": {
-                                            "type": "location_parent_id",
-                                            "location_id_expression": {
-                                                "type": "root_doc",
-                                                "expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id",
-                                                    "datatype": null
-                                                }
-                                            }
-                                        },
-                                        "comment": null,
-                                        "property_value": ""
-                                    },
-                                    "expression_if_false": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "owner_id",
-                                            "datatype": null
-                                        }
-                                    },
-                                    "type": "conditional",
-                                    "expression_if_true": {
-                                        "constant": "-",
-                                        "type": "constant"
-                                    }
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "indices",
-                                        "datatype": null
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "name",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "type": "location_parent_id",
-                            "location_id_expression": {
-                                "test": {
-                                    "operator": "eq",
-                                    "type": "boolean_expression",
-                                    "expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "type": "root_doc",
-                                            "expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id",
-                                                "datatype": null
-                                            }
-                                        }
-                                    },
-                                    "comment": null,
-                                    "property_value": ""
-                                },
-                                "expression_if_false": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "owner_id",
-                                        "datatype": null
-                                    }
-                                },
-                                "type": "conditional",
-                                "expression_if_true": {
-                                    "constant": "-",
-                                    "type": "constant"
-                                }
-                            }
-                        }
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
-            },
-            {
-                "type": "expression",
-                "column_id": "health_post",
-                "datatype": "string",
-                "display_name": "health_post",
-                "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "name",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "test": {
-                                    "operator": "eq",
-                                    "type": "boolean_expression",
-                                    "expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "type": "root_doc",
-                                            "expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id",
-                                                "datatype": null
-                                            }
-                                        }
-                                    },
-                                    "comment": null,
-                                    "property_value": ""
-                                },
-                                "expression_if_false": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "owner_id",
-                                        "datatype": null
-                                    }
-                                },
-                                "type": "conditional",
-                                "expression_if_true": {
-                                    "constant": "-",
-                                    "type": "constant"
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "indices",
-                                        "datatype": null
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "name",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "test": {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "owner_id",
-                                            "datatype": null
-                                        }
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": ""
-                            },
-                            "expression_if_false": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "conditional",
-                            "expression_if_true": {
-                                "constant": "-",
-                                "type": "constant"
-                            }
-                        }
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
-            },
-            {
-                "type": "expression",
-                "column_id": "health_post_id",
-                "datatype": "string",
-                "display_name": "health_post_id",
-                "expression": {
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "-"
-                    },
-                    "type": "conditional",
-                    "expression_if_true": {
-                        "value_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "test": {
-                                    "operator": "eq",
-                                    "type": "boolean_expression",
-                                    "expression": {
-                                        "type": "location_parent_id",
-                                        "location_id_expression": {
-                                            "type": "root_doc",
-                                            "expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id",
-                                                "datatype": null
-                                            }
-                                        }
-                                    },
-                                    "comment": null,
-                                    "property_value": ""
-                                },
-                                "expression_if_false": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "owner_id",
-                                        "datatype": null
-                                    }
-                                },
-                                "type": "conditional",
-                                "expression_if_true": {
-                                    "constant": "-",
-                                    "type": "constant"
-                                }
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "value_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                }
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "indices",
-                                        "datatype": null
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "value_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "_id",
-                                "datatype": null
-                            }
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "Location",
-                        "doc_id_expression": {
-                            "test": {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "location_parent_id",
-                                    "location_id_expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "owner_id",
-                                            "datatype": null
-                                        }
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": ""
-                            },
-                            "expression_if_false": {
-                                "type": "root_doc",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id",
-                                    "datatype": null
-                                }
-                            },
-                            "type": "conditional",
-                            "expression_if_true": {
-                                "constant": "-",
-                                "type": "constant"
-                            }
-                        }
-                    }
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
-            },
-            {
-                "comment": null,
-                "create_index": true,
-                "display_name": "annual_report_date_for_filter_gregorian",
-                "datatype": "date",
-                "type": "expression",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "gregorian_date_to_ethiopian_date"
-                },
-                "is_primary_key": false,
-                "is_nullable": true,
-                "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "annual_report_date"
-                },
-                "column_id": "annual_report_date_for_filter_gregorian"
-            },
-            {
-                "type": "expression",
-                "column_id": "is_closed",
-                "datatype": "string",
-                "display_name": "is_closed",
-                "expression": {
-                    "type": "root_doc",
-                    "expression": {
+              "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
+              "create_index": false,
+              "display_name": "FP_CYP_1",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
                         "type": "property_name",
-                        "property_name": "closed",
-                        "datatype": "string"
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
+                    },
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "condoms"
                     }
+                  ]
                 },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "create_index": false,
-                "transform": {},
-                "comment": null
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_1"
             },
             {
-                "comment": null,
-                "create_index": true,
-                "display_name": "test_or_real",
-                "datatype": "string",
-                "expression": {
-                    "type": "root_doc",
-                    "expression": {
-                        "datatype": null,
+              "comment": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)",
+              "create_index": false,
+              "display_name": "FP_CYP_3",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
                         "type": "property_name",
-                        "property_name": "test_or_real"
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
+                    },
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "oral_contraceptives"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "test_or_real"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_3"
             },
             {
-                "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
-                "create_index": false,
-                "display_name": "FP_CYP_1",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_condoms"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "yes"
-                            }
-                        ]
+              "comment": "FP_CYP.5:Injectable (Depo provera) (number of injections)",
+              "create_index": false,
+              "display_name": "FP_CYP_5",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "injections"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_1"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_5"
             },
             {
-                "comment": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)",
-                "create_index": false,
-                "display_name": "FP_CYP_3",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_method"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "oral_contraceptives"
-                            }
-                        ]
+              "comment": "FP_CYP.8:Implanon (number of Implanon insertions)",
+              "create_index": false,
+              "display_name": "FP_CYP_8",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "implants"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_implant_type"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "implanon"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_3"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_8"
             },
             {
-                "comment": "FP_CYP.5:Injectable (Depo provera) (number of injections)",
-                "create_index": false,
-                "display_name": "FP_CYP_5",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_method"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "injections"
-                            }
-                        ]
+              "comment": "FP_CYP.9:Jadelle (number of Jadelle insertions)",
+              "create_index": false,
+              "display_name": "FP_CYP_9",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "implants"
+                    },
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_implant_type"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "jadelle"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_5"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_9"
             },
             {
-                "comment": "FP_CYP.8:Implanon (number of Implanon insertions)",
-                "create_index": false,
-                "display_name": "FP_CYP_8",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_method"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "implants"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_implant_type"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "implanon"
-                            }
-                        ]
+              "comment": "FP_CYP.10:IUCD (number of IUCDs inserted)",
+              "create_index": false,
+              "display_name": "FP_CYP_10",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "fp_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "client"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "fp_method"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "iucd"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_8"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "FP_CYP_10"
             },
             {
-                "comment": "FP_CYP.9:Jadelle (number of Jadelle insertions)",
-                "create_index": false,
-                "display_name": "FP_CYP_9",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_method"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "implants"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_implant_type"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "jadelle"
-                            }
-                        ]
+              "comment": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month",
+              "create_index": false,
+              "display_name": "Mal_LLITN_1",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "latrine_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "family"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "latrine_available"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "yes"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_9"
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "Mal_LLITN_1"
             },
             {
-                "comment": "FP_CYP.10:IUCD (number of IUCDs inserted)",
-                "create_index": false,
-                "display_name": "FP_CYP_10",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "fp_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "client"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "fp_method"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "iucd"
-                            }
-                        ]
+              "comment": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month",
+              "create_index": false,
+              "display_name": "Mal_ELLITN_1",
+              "datatype": "integer",
+              "expression": {
+                "test": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "indicator_name"
+                      },
+                      "comment": null,
+                      "property_value": "hh_visit_indicator"
                     },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "type"
+                        }
+                      },
+                      "comment": null,
+                      "property_value": "family"
                     },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
+                    {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "coalesce",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "latrine_available"
+                          }
+                        },
+                        "default_expression": {
+                          "constant": "no_type_defined",
+                          "type": "constant"
+                        }
+                      },
+                      "type": "boolean_expression",
+                      "comment": null,
+                      "property_value": "no"
                     }
+                  ]
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "FP_CYP_10"
-            },
-            {
-                "comment": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month",
-                "create_index": false,
-                "display_name": "Mal_LLITN_1",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "latrine_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "family"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "latrine_available"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "yes"
-                            }
-                        ]
-                    },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
-                    },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
-                    }
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 1
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "Mal_LLITN_1"
-            },
-            {
-                "comment": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month",
-                "create_index": false,
-                "display_name": "Mal_ELLITN_1",
-                "datatype": "integer",
-                "expression": {
-                    "test": {
-                        "type": "and",
-                        "filters": [
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": "string",
-                                    "type": "property_name",
-                                    "property_name": "indicator_name"
-                                },
-                                "comment": null,
-                                "property_value": "hh_visit_indicator"
-                            },
-                            {
-                                "operator": "eq",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                        "datatype": "string",
-                                        "type": "property_name",
-                                        "property_name": "type"
-                                    }
-                                },
-                                "comment": null,
-                                "property_value": "family"
-                            },
-                            {
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "coalesce",
-                                    "expression": {
-                                        "type": "root_doc",
-                                        "expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "latrine_available"
-                                        }
-                                    },
-                                    "default_expression": {
-                                        "constant": "no_type_defined",
-                                        "type": "constant"
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "comment": null,
-                                "property_value": "no"
-                            }
-                        ]
-                    },
-                    "expression_if_true": {
-                        "type": "constant",
-                        "constant": 1
-                    },
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": 0
-                    }
-                },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "Mal_ELLITN_1"
+                "type": "conditional",
+                "expression_if_false": {
+                  "type": "constant",
+                  "constant": 0
+                }
+              },
+              "transform": {},
+              "is_primary_key": false,
+              "is_nullable": true,
+              "type": "expression",
+              "column_id": "Mal_ELLITN_1"
             }
-        ],
-        "base_item_expression": {
+          ],
+        "base_item_expression":   {
             "test": {
-                "filter": {
-                    "operator": "in",
-                    "type": "boolean_expression",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "annual_report_date"
-                    },
-                    "comment": null,
-                    "property_value": [
-                        "",
-                        null
-                    ]
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "annual_report_date"
                 },
                 "comment": null,
-                "type": "not"
+                "property_value": [
+                  "",
+                  null
+                ]
+              },
+              "comment": null,
+              "type": "not"
             },
             "expressions": [
-                {
-                    "type": "dict",
-                    "properties": {
-                        "annual_report_date": {
-                            "type": "root_doc",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "fp_method_start_date"
-                            }
-                        },
-                        "indicator_name": "fp_indicator"
+              {
+                "type": "dict",
+                "properties": {
+                  "annual_report_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "fp_method_start_date_report_year"
                     }
-                },
-                {
-                    "type": "dict",
-                    "properties": {
-                        "annual_report_date": {
-                            "type": "root_doc",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "graduation_date"
-                            }
-                        },
-                        "indicator_name": "model_indicator"
+                  },
+                  "annual_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "fp_method_start_date"
                     }
-                },
-                {
-                    "type": "dict",
-                    "properties": {
-                        "annual_report_date": {
-                            "type": "root_doc",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "date_having_latrine"
-                            }
-                        },
-                        "indicator_name": "latrine_indicator"
-                    }
-                },
-                {
-                    "type": "dict",
-                    "properties": {
-                        "annual_report_date": {
-                            "type": "root_doc",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "household_visit_date"
-                            }
-                        },
-                        "indicator_name": "hh_visit_indicator"
-                    }
+                  },
+                  "indicator_name": "fp_indicator"
                 }
+              },
+              {
+                "type": "dict",
+                "properties": {
+                  "annual_report_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "date_having_latrine_report_year"
+                    }
+                  },
+                  "annual_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "date_having_latrine"
+                    }
+                  },
+                  "indicator_name": "latrine_indicator"
+                }
+              },
+              {
+                "type": "dict",
+                "properties": {
+                  "annual_report_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "hh_visit_date_report_year"
+                    }
+                  },
+                  "annual_date": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "household_properties_visit_date"
+                    }
+                  },
+                  "indicator_name": "hh_visit_indicator"
+                }
+              }
             ],
             "type": "iterator"
-        },
-        "configured_filter": {
+          },
+        "configured_filter":  {
             "type": "or",
             "filters": [
-                {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "operator": "eq",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "closed"
-                            },
-                            "type": "boolean_expression",
-                            "comment": null,
-                            "property_value": false
-                        },
-                        {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "type"
-                            },
-                            "comment": null,
-                            "property_value": "family"
-                        }
-                    ]
-                },
-                {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "operator": "eq",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "closed"
-                            },
-                            "type": "boolean_expression",
-                            "comment": null,
-                            "property_value": false
-                        },
-                        {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "type"
-                            },
-                            "comment": null,
-                            "property_value": "client"
-                        }
-                    ]
-                }
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": false
+                  },
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "comment": null,
+                    "property_value": "family"
+                  }
+                ]
+              },
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": false
+                  },
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "comment": null,
+                    "property_value": "client"
+                  }
+                ]
+              },
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": true
+                  },
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "comment": null,
+                    "property_value": "fp_reporting"
+                  }
+                ]
+              }
             ]
-        },
+          },
         "description": "",
         "referenced_doc_type": "CommCareCase",
         "display_name": "Annual Service Delivery DS V1",

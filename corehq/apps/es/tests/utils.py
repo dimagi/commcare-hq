@@ -6,9 +6,12 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.elastic import ES_META, get_es_new, send_to_elasticsearch
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.case_search import transform_case_for_elasticsearch
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 
 
 class ElasticTestMixin(object):
@@ -61,10 +64,35 @@ def es_test(test):
     return attr(es_test=True)(test)
 
 
-def populate_user_index(user_docs):
+def populate_es_index(models, index_name, doc_prep_fn=lambda doc: doc):
+    index_info = ES_META[index_name]
     es = get_es_new()
-    ensure_index_deleted(USER_INDEX)
-    initialize_index_and_mapping(es, USER_INDEX_INFO)
-    for user_doc in user_docs:
-        send_to_elasticsearch('users', user_doc)
-    es.indices.refresh(USER_INDEX)
+    with trap_extra_setup(ConnectionError):
+        initialize_index_and_mapping(es, index_info)
+    for model in models:
+        send_to_elasticsearch(
+            index_name,
+            doc_prep_fn(model.to_json() if hasattr(model, 'to_json') else model)
+        )
+    es.indices.refresh(index_info.index)
+
+
+def populate_user_index(users):
+    populate_es_index(users, 'users')
+
+
+def case_search_es_setup(domain, case_blocks):
+    """Submits caseblocks, creating the cases, then sends them to ES"""
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    xform, cases = submit_case_blocks([cb.as_text() for cb in case_blocks], domain=domain)
+    assert not xform.is_error, xform
+    order = {cb.case_id: index for index, cb in enumerate(case_blocks)}
+    # send cases to ES in the same order they were passed in so `indexed_on`
+    # order is predictable for TestCaseListAPI.test_pagination and others
+    cases = sorted(cases, key=lambda case: order[case.case_id])
+    populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
+
+
+def case_search_es_teardown():
+    FormProcessorTestUtils.delete_all_cases()
+    ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)

@@ -33,6 +33,7 @@ from couchforms.models import UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 
 
+@sharded
 class ReprocessXFormErrorsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -93,14 +94,6 @@ class ReprocessXFormErrorsTest(TestCase):
         self._validate_case(case)
 
     def _validate_case(self, case):
-        self.assertEqual(3, len(case.actions))
-        self.assertTrue(case.actions[0].is_case_create)
-        self.assertTrue(case.actions[2].is_case_index)
-
-
-@sharded
-class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
-    def _validate_case(self, case):
         self.assertEqual(1, len(case.transactions))
         self.assertTrue(case.transactions[0].is_form_transaction)
         self.assertTrue(case.transactions[0].is_case_create)
@@ -108,6 +101,7 @@ class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
         self.assertFalse(case.transactions[0].revoked)
 
 
+@sharded
 class ReprocessSubmissionStubTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -348,9 +342,6 @@ class ReprocessSubmissionStubTests(TestCase):
             self.assertEqual(case.case_id, signal_case.case_id)
             self.assertEqual(case.get_rev, signal_case.get_rev)
 
-
-@sharded
-class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
     def test_reprocess_normal_form(self):
         case_id = uuid.uuid4().hex
         form, cases = submit_case_blocks(
@@ -367,6 +358,7 @@ class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
         self.assertEqual([trans.form_id for trans in transactions], [form.form_id])
 
 
+@sharded
 class TestReprocessDuringSubmission(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -462,11 +454,6 @@ class TestReprocessDuringSubmission(TestCase):
         self.assertTrue(form.is_normal)
         self.assertIsNone(getattr(form, 'problem', None))
         self.assertEqual(duplicate_form.orig_id, form.form_id)
-
-
-@sharded
-class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
-    pass
 
 
 @sharded
