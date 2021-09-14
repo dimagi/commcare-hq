@@ -184,7 +184,7 @@ class CaseHelper:
             if (es_modified_on, es_domain) != (modified_on, domain):
                 yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
                               es_date=es_modified_on, primary_date=modified_on)
-            else:
+            elif domain in domains_needing_search_index():
                 es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
                 if (es_modified_on, es_domain) != (modified_on, domain):
                     yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
