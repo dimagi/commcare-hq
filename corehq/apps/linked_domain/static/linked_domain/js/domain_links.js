@@ -142,7 +142,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.query = ko.observable();
         self.filteredDomainLinks = ko.observableArray([]);
         self.matchesQuery = function (domainLink) {
-            return !self.query() || domainLink.downstreamDomain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+            return !self.query() || domainLink.linked_domain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
         self.filter = function () {
             self.filteredDomainLinks(_.filter(self.domain_links(), self.matchesQuery));
@@ -175,8 +175,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.createRemoteReportLink = function (reportId) {
             _private.RMI("create_remote_report_link", {
-                "master_domain": self.upstreamLink.upstreamDomain,
-                "linked_domain": self.upstreamLink.downstreamDomain(),
+                "master_domain": self.upstreamLink.master_domain,
+                "linked_domain": self.upstreamLink.linked_domain(),
                 "report_id": reportId,
             }).done(function (data) {
                 if (data.success) {
@@ -195,11 +195,11 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
-                "linked_domain": link.downstreamDomain(),
+                "linked_domain": link.linked_domain(),
             }).done(function () {
                 self.domain_links.remove(link);
                 var availableDomains = self.addDownstreamDomainViewModel.availableDomains();
-                availableDomains.push(link.downstreamDomain());
+                availableDomains.push(link.linked_domain());
                 self.addDownstreamDomainViewModel.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
@@ -220,9 +220,9 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLink = function (link) {
         var self = {};
-        self.downstreamDomain = ko.observable(link.downstream_domain);
-        self.isRemote = link.is_remote;
-        self.upstreamDomain = link.upstream_domain;
+        self.linked_domain = ko.observable(link.linked_domain);
+        self.is_remote = link.is_remote;
+        self.master_domain = link.master_domain;
         self.lastUpdate = link.last_update;
         self.upstreamUrl = link.upstream_url;
         self.downstreamUrl = link.downstream_url;
@@ -242,8 +242,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.localDownstreamDomains = ko.computed(function () {
             return self.parent.domain_links().reduce(function (result, link) {
-                if (!link.isRemote) {
-                    return result.concat(link.downstreamDomain());
+                if (!link.is_remote) {
+                    return result.concat(link.linked_domain());
                 }
                 return result;
             }, []);
@@ -326,8 +326,8 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.createLink = function () {
             _private.RMI("create_remote_report_link", {
-                "master_domain": upstreamLink.upstreamDomain,
-                "linked_domain": upstreamLink.downstreamDomain(),
+                "master_domain": upstreamLink.master_domain,
+                "linked_domain": upstreamLink.linked_domain(),
                 "report_id": self.id,
             }).done(function (data) {
                 if (data.success) {
