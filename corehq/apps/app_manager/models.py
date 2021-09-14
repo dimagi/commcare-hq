@@ -4529,6 +4529,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             build_files = self.create_all_files()
             copy.attach_build_files(build_files)
 
+            # form versions get set in `create_all_files` but don't get copied over to the build
+            # see Application.wrap
+            for form in self.get_forms():
+                copy_form = copy.get_form(form.unique_id)
+                copy_form.version = form.version
+
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
         # which makes tests error
