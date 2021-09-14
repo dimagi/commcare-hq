@@ -93,6 +93,7 @@ class FormVersioningTest(TestCase):
         build1.save()
 
         # modify first form
+        app = Application.get(app.get_id)
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.1')
         app.save()
 
@@ -107,6 +108,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make third build
+        app = Application.get(app.get_id)
         build3 = app.make_build()
         build3.save()
 
@@ -119,6 +121,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make reverted build
+        app = Application.get(app.get_id)
         build4 = app.make_build()
         build4.save()
 
@@ -136,6 +139,7 @@ class FormVersioningTest(TestCase):
         xxx_app.save()
 
         # make second build of copy
+        xxx_app = Application.get(xxx_app.get_id)
         xxx_build2 = xxx_app.make_build()
         xxx_build2.save()
 
