@@ -33,12 +33,14 @@
           <span class="hq-help-template"
               data-content="{% blocktrans %}Data Registries allow sharing data between Project Spaces. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/USH/Data+Registry'>Help Site</a>.{% endblocktrans %}"
           ></span>
+        {% if allow_create %}
         <div class="pull-right">
           <button type="button" class="btn btn-primary" data-bind="openModal: 'create-registry-modal'">
             <i class="fa fa-plus"></i>
             {% trans "New Registry" %}
           </button>
         </div>
+        {% endif %}
         </h3>
       </div>
     </div>
@@ -160,7 +162,7 @@
     </div>
   </script>
 
-
+{% if allow_create %}
 <script type="text/html" id="create-registry-modal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -245,4 +247,5 @@
       </div>
     </div>
 </script>
+{% endif %}
 {% endblock %}

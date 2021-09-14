@@ -71,6 +71,7 @@ ALICE_DOMAIN = 'domain1'
 EVE_DOMAIN = 'domain2'
 
 
+@sharded
 class DomainTest(TestCase):
 
     def tearDown(self):
@@ -86,8 +87,3 @@ class DomainTest(TestCase):
 
         result_alice_update = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
         self.assertEqual(result_alice_update.case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
-
-
-@sharded
-class DomainTestSQL(DomainTest):
-    pass

@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.phone.tests.utils import call_fixture_generator, create_restore_user
+from corehq.apps.app_manager.models import CaseSearchProperty
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
@@ -36,7 +37,11 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
         )
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module("patient", "patient")
+        module1.search_config.properties = [CaseSearchProperty()]
         module1.search_config.data_registry = cls.registry.slug
+
+        factory.new_report_module("reports")
+
         cls.app = factory.app
         cls.app.save()
 
@@ -63,7 +68,23 @@ class RegistryFixtureProviderTests(TestCase, TestXmlMixin):
         self.assertEqual([], fixtures)
 
     @flag_enabled("DATA_REGISTRY")
-    def test_fixture_provider(self):
+    @patch("corehq.apps.registry.fixtures._get_permission_checker")
+    def test_fixture_provider_no_permission(self, _get_permission_checker):
+        _get_permission_checker().can_view_registry_data.return_value = False
+        fixtures = call_fixture_generator(
+            registry_fixture_generator, self.restore_user, project=self.domain_obj
+        )
+        self.assertEqual(1, len(fixtures))
+        expected_list_fixture = """
+        <fixture id="registry:list">
+           <registry_list></registry_list>
+        </fixture>"""
+        self.assertXmlEqual(expected_list_fixture, ElementTree.tostring(fixtures[0], encoding='utf-8'))
+
+    @flag_enabled("DATA_REGISTRY")
+    @patch("corehq.apps.registry.fixtures._get_permission_checker")
+    def test_fixture_provider(self, _get_permission_checker):
+        _get_permission_checker().can_view_registry_data.return_value = True
         list_fixture, domains_fixture = call_fixture_generator(
             registry_fixture_generator, self.restore_user, project=self.domain_obj
         )

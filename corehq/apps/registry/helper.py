@@ -1,5 +1,6 @@
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timer import TimingContext
@@ -19,6 +20,10 @@ class DataRegistryHelper:
         else:
             self.registry_slug = registry_slug
             self._registry = None
+
+    def check_access(self, couch_user):
+        checker = RegistryPermissionCheck(self.current_domain, couch_user)
+        return checker.can_view_registry_data(self.registry_slug)
 
     @property
     def registry(self):

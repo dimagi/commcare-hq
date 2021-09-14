@@ -69,16 +69,15 @@ branches:
     - cs/SC-1640-send-unique-identifier-telerivit  # Charl Aug 6
     - jls/smart-linking-mvp  # Jenny Aug 9
     - caktus:allowed_values_ui # Jenny Aug 13
-    - mk/user-history/track-api-updates # MK Aug 24
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
     - mk/user-history/structured-messages-v2 # MK Sep 1
-    - mk/user-history/add-for-domain # MK Sep 1
-    - mk/user-history/track-api-updates+mk/user-history/add-for-domain+mk/user-history/track-ui-number-removal # MK Sep 2
+    - mk/user-history/migrate-change-messages # MK Sep 14
     - gh/remove-pickles-from-accounting # Graham Sep 3
-    - gh/remove-pickles-from-export # Graham Sep 3
     - jls/form-links-modules # Jenny Sept 7
-    - sk/data-registry-permissions  # SK Sept 8
-    - gh/erm/v1-cleanup # Graham Sept 8
+    - dmr/cbc-tools  # Danny Sept 10
+    - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
+    - gh/erm/remove-master-in-ui # Graham Sept 13
+    - revert-30394-revert-30385-gh/erm/refactor-domain-link-view-model # Graham Sept 13
 submodules: { }

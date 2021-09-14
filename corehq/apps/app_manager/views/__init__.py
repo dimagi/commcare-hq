@@ -23,7 +23,7 @@ from corehq.apps.app_manager.views.apps import (
     get_app_ui_translations,
     import_app,
     new_app,
-    pull_master_app,
+    pull_upstream_app,
     rearrange,
     undo_delete_app,
     view_app,

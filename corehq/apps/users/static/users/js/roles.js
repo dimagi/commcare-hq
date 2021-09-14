@@ -4,6 +4,72 @@ hqDefine('users/js/roles',[
     'knockout',
     'hqwebapp/js/alert_user',
 ], function ($, _, ko, alertUser) {
+    let selectPermissionModel = function (id, permissionModel, text) {
+        /*
+        Function to build the view model for permissions that aren't simple booleans. The data is
+        modelled as a boolean and a list. If the boolean is 'true' the user has access to all items.
+        If the boolean is 'false' the user only has access to items selected in the list.
+
+        This view model gives the user the ability to select 'none', 'all' or 'only selected'.
+
+        Parameters:
+          id: unique permission ID
+          permissionModel: object the following keys:
+            all: observable boolean
+            specific: observable array of items which can be selected. Each item is expected
+                to have at least 'name', 'slug' and 'value' fields.
+          text: Text to display to the user. (see text defaults below)
+         */
+        text = _.defaults(text, {
+            permissionText: 'Change me',
+            accessNoneText: gettext("No Access"),
+            accessAllText: gettext("Access All"),
+            accessSelectedText: gettext("Access Selected"),
+            listHeading: gettext("Select which items the role can access:"),
+        });
+        const [none, all, selected] = ["none", "all", "selected"];
+        const selectOptions = [
+            {text: text.accessNoneText, value: none},
+            {text: text.accessAllText, value: all},
+            {text: text.accessSelectedText, value: selected},
+        ];
+        let self = {
+            id: id,
+            text: text.permissionText,
+            listHeading: text.listHeading,
+            options: selectOptions,
+            selection: ko.observable(),
+            all: permissionModel.all,
+            specific: permissionModel.specific,
+        };
+        self.showItems = ko.pureComputed(() =>{
+            return self.selection() === selected;
+        });
+
+        // set value of selection based on initial data
+        if (self.all()) {
+            self.selection(all);
+        } else if (_.find(permissionModel.specific(), item => item.value())) {
+            self.selection(selected)
+        } else {
+            self.selection(none);
+        }
+
+        self.selection.subscribe(() => {
+            // update permission data based on selection
+            if (self.selection() === all) {
+                self.all(true);
+                self.specific().forEach(item => item.value(false));
+                return;
+            }
+            self.all(false);
+            if (self.selection() === none) {
+                self.specific().forEach(item => item.value(false));
+            }
+        });
+        return self;
+    };
+
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -22,6 +88,28 @@ hqDefine('users/js/roles',[
                             slug: report.slug,
                             name: report.name,
                             value: data.permissions.view_report_list.indexOf(report.path) !== -1,
+                        };
+                    }),
+                };
+
+                data.manageRegistryPermission = {
+                    all: data.permissions.manage_data_registry,
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
+                        return {
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.manage_data_registry_list.indexOf(registry.slug) !== -1,
+                        };
+                    }),
+                };
+
+                data.viewRegistryContentsPermission = {
+                    all: data.permissions.view_data_registry_contents,
+                    specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
+                        return {
+                            name: registry.name,
+                            slug: registry.slug,
+                            value: data.permissions.view_data_registry_contents_list.indexOf(registry.slug) !== -1,
                         };
                     }),
                 };
@@ -245,6 +333,25 @@ hqDefine('users/js/roles',[
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
 
+                self.registryPermissions = [
+                    selectPermissionModel(
+                        'manage_registries',
+                        self.manageRegistryPermission,
+                        {
+                            permissionText: gettext("Manage Registries"),
+                            listHeading: gettext("Select which registries the role can manage:"),
+                        }
+                    ),
+                    selectPermissionModel(
+                        'view_registry_contents',
+                        self.viewRegistryContentsPermission,
+                        {
+                            permissionText: gettext("View Registry Data"),
+                            listHeading: gettext("Select which registries the role can view:"),
+                        }
+                    ),
+                ];
+
                 return self;
             },
             unwrap: function (self) {
@@ -254,18 +361,26 @@ hqDefine('users/js/roles',[
                     data.name = data.name.trim();
                 }
 
-                data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
-                    return report.value;
-                }), function (report) {
-                    return report.path;
-                });
+                const unwrapItemList = function (items, item_attr = 'slug') {
+                    return ko.utils.arrayMap(ko.utils.arrayFilter(items, function (item) {
+                        return item.value;
+                    }), function (item) {
+                        return item[item_attr];
+                    });
+                };
+
                 data.permissions.view_reports = data.reportPermissions.all;
+                data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+
+                data.permissions.manage_data_registry = data.manageRegistryPermission.all;
+                data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
+
+                data.permissions.view_data_registry_contents = data.viewRegistryContentsPermission.all;
+                data.permissions.view_data_registry_contents_list = unwrapItemList(
+                    data.viewRegistryContentsPermission.specific);
+
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
-                    return role.value;
-                }), function (role) {
-                    return role.path;
-                });
+                data.assignable_by = unwrapItemList(data.manageRoleAssignments.specific, 'path');
                 return data;
             },
         };
@@ -276,6 +391,7 @@ hqDefine('users/js/roles',[
         self.reportOptions = o.reportOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
+        self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.getReportObject = function (path) {
             var i;

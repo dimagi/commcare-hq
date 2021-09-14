@@ -10,6 +10,7 @@ from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceC
 from phonelog.utils import _get_logs
 
 
+@sharded
 class DeviceLogTest(TestCase, TestFileMixin):
     file_path = ('data', 'devicelogs')
     root = os.path.dirname(__file__)
@@ -109,11 +110,6 @@ class DeviceLogTest(TestCase, TestFileMixin):
     def test_subreports_that_shouldnt_fail(self):
         xml = self.get_xml('subreports_that_shouldnt_fail')
         submit_form_locally(xml, 'test-domain')
-
-
-@sharded
-class DeviceLogTestSQL(DeviceLogTest):
-    pass
 
 
 class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):

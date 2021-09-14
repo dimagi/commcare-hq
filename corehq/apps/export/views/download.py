@@ -311,6 +311,7 @@ def prepare_custom_export(request, domain):
             'error': _("Form did not validate."),
         })
     export_filters = filter_form.get_export_filters(request, filter_form_data)
+    export_es_filters = [f.to_es_filter() for f in export_filters]
 
     export_specs = json.loads(request.POST.get('exports'))
     export_ids = [spec['export_id'] for spec in export_specs]
@@ -335,7 +336,7 @@ def prepare_custom_export(request, domain):
         export_ids,
         view_helper.model,
         request.couch_user.username,
-        filters=export_filters,
+        es_filters=export_es_filters,
         owner_id=request.couch_user.get_id,
         filename=filename,
     )

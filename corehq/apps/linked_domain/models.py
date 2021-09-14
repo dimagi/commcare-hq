@@ -82,13 +82,11 @@ class DomainLink(models.Model):
             get_linked_domains,
             is_active_downstream_domain,
             is_active_upstream_domain,
-            is_master_linked_domain,
         )
         get_upstream_domain_link.clear(self.linked_domain)
         is_active_downstream_domain.clear(self.linked_domain)
 
         get_linked_domains.clear(self.master_domain)
-        is_master_linked_domain.clear(self.master_domain)
         is_active_upstream_domain.clear(self.master_domain)
 
     @classmethod

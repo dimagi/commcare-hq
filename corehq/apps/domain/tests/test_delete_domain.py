@@ -332,10 +332,6 @@ class TestDeleteDomain(TestCase):
     def test_case_deletion_sql(self):
         self._test_case_deletion()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-    def test_case_deletion_couch(self):
-        self._test_case_deletion()
-
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
         form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]

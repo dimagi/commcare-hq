@@ -311,11 +311,6 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_open_case_ids(case_ids):
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
         raise NotImplementedError
 

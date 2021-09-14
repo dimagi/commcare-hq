@@ -54,8 +54,12 @@ class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_select
         return self.datum.function == 'uuid()'
 
     def __repr__(self):
-        return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
-            self.datum.id, self.case_type, self.requires_selection, self.action
+        if isinstance(self.datum, RemoteRequestQuery):
+            datum = f"<RemoteRequestQuery(id={self.datum.url})>"
+        else:
+            datum = f"<SessionDatum(id={self.datum.id})>"
+        return 'FormDataumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
+            datum, self.case_type, self.requires_selection, self.action
         )
 
 
