@@ -391,17 +391,27 @@ def _process_bulk_upload(bulk_file, domain):
 
     worksheets = []
     allowed_value_info = {}
+    prop_row_info = {}
+    seen_props = defaultdict(set)
+    missing_valid_values = set()
     with open_any_workbook(filename) as workbook:
         for worksheet in workbook.worksheets:
             if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):
                 case_type = worksheet.title[:-len(ALLOWED_VALUES_SHEET_SUFFIX)]
                 allowed_value_info[case_type] = defaultdict(dict)
-                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+                prop_row_info[case_type] = defaultdict(list)
+                for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
                     if len(row) < 3:
                         errors.append(_('Expecting 3 columns, found only {}').format(len(row)))
                     else:
                         prop_name, allowed_value, description = [cell.value or '' for cell in row[0:3]]
-                        allowed_value_info[case_type][prop_name][allowed_value] = description
+                        if allowed_value and not prop_name:
+                            msg_format = _('Error in valid values for case type {}, row {}: missing case property')
+                            msg_val = msg_format.format(case_type, i)
+                            errors.append(msg_val)
+                        else:
+                            allowed_value_info[case_type][prop_name][allowed_value] = description
+                            prop_row_info[case_type][prop_name].append(i)
             else:
                 worksheets.append(worksheet)
 
@@ -413,12 +423,13 @@ def _process_bulk_upload(bulk_file, domain):
                     errors.extend(_errors)
                 continue
             case_type = worksheet.title
-            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None)):
+            for (i, row) in enumerate(itertools.islice(worksheet.iter_rows(), 1, None), start=2):
                 if len(row) < expected_columns_in_prop_sheet:
                     error = _('Not enough columns')
                 else:
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
                     name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
+                    seen_props[case_type].add(name)
                     if import_fhir_data:
                         fhir_resource_prop_path, remove_path = row[5:]
                         remove_path = remove_path == 'Y' if remove_path else False
@@ -426,12 +437,29 @@ def _process_bulk_upload(bulk_file, domain):
                         if fhir_resource_prop_path and not fhir_resource_type:
                             error = _('Could not find resource type for {}').format(case_type)
                     if not error:
-                        allowed_values = allowed_value_info[case_type][name]
+                        if case_type in allowed_value_info:
+                            allowed_values = allowed_value_info[case_type][name]
+                        else:
+                            allowed_values = None
+                            missing_valid_values.add(case_type)
                         error = save_case_property(name, case_type, domain, data_type, description, group,
                                                    deprecated, fhir_resource_prop_path, fhir_resource_type,
                                                    remove_path, allowed_values)
                 if error:
                     errors.append(_('Error in case type {}, row {}: {}').format(case_type, i, error))
+
+    for case_type in missing_valid_values:
+        errors.append(_('Missing valid values sheet for case type {}').format(case_type))
+
+    for case_type in allowed_value_info.keys():
+        for prop_name in allowed_value_info[case_type]:
+            if prop_name not in seen_props[case_type]:
+                msg_format = _(
+                    'Error in valid values for case type {}, nonexistent property listed ({}), row(s): {}')
+                msg_val = msg_format.format(
+                    case_type, prop_name, ', '.join(str(v) for v in prop_row_info[case_type][prop_name]))
+                errors.append(msg_val)
+
     return errors
 
 

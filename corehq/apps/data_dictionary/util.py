@@ -175,7 +175,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.allowed_values.exclude(pk__in=obj_pks).delete()
 
     if err_cnt:
-        return ugettext('Unable to save valid values longer than {} characters.').format(max_len)
+        return ugettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
