@@ -842,11 +842,11 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         self.registry_slug = registry_slug
         super().__init__(domain, source_type, source_id)
 
-        registry = DataRegistry.objects.get(slug=self.registry_slug)
-        assert domain in registry.visible_domains()
-        DataRegistryHelper(self.domain, registry=registry).pre_access_check(source_type)
+        registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+        assert domain in registry_helper.visible_domains
+        registry_helper.pre_access_check(source_id)
 
-        owning_domain = registry.domain
+        owning_domain = DataRegistry.objects.get(slug=self.registry_slug).domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
