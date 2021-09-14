@@ -209,7 +209,7 @@ class CaseSearchCriteria:
         match = pattern.match(value)
         if match:
             _, _, startdate, enddate = value.split('__')
-            return case_property_range_query(key, gte=startdate, lte=enddate),
+            return case_property_range_query(key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, key, value):
         if isinstance(value, list) and '' in value:
@@ -235,7 +235,7 @@ class CaseSearchCriteria:
         fuzzy = key in self._fuzzy_properties
         if '/' in key:
             query = f'{key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy),
+            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         else:
             return case_property_query(key, value, fuzzy=fuzzy)
 
