@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='exchangeapplication',
             name='required_privileges',
-            field=models.TextField(help_text='Space-separated list of privilege strings from corehq.privileges', null=True),
+            field=models.TextField(null=True, help_text="Space-separated list of privilege strings from "
+                                                        "corehq.privileges"),
         ),
     ]
