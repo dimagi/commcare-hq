@@ -488,8 +488,8 @@ class ConfigureReport(ReportBuilderView):
             self.registry_slug = self.request.GET.get('registry_slug', None)
             self.app_id = self.request.GET.get('application', None)
             if self.registry_slug:
-                registry = DataRegistry.objects.get(slug=self.registry_slug)
-                DataRegistryHelper(self.domain, registry=registry).check_access(request.couch_user)
+                helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+                helper.check_access(request.couch_user)
                 self.source_type = DATA_SOURCE_TYPE_CASE
                 self.source_id = self.request.GET['case_type']
                 self.app = None

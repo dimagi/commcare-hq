@@ -843,10 +843,8 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         super().__init__(domain, source_type, source_id)
 
         registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
-        assert domain in registry_helper.visible_domains
         registry_helper.pre_access_check(source_id)
-
-        owning_domain = DataRegistry.objects.get(slug=self.registry_slug).domain
+        owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
@@ -1036,7 +1034,7 @@ class ConfigureNewReportBase(forms.Form):
             self.registry_slug = existing_report.config.meta.build.registry_slug
             if app_id:
                 self.app = Application.get(app_id)
-            else:
+            elif not self.registry_slug:
                 raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         else:
             assert self.source_type == DATA_SOURCE_TYPE_RAW
