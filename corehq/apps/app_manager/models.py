@@ -5259,7 +5259,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], date_created=datetime.datetime.utcnow())
+        app = cls(
+            domain=domain, modules=[], name=name, langs=[lang], date_created=datetime.datetime.utcnow(),
+            build_spec=get_default_build_spec()
+        )
         return app
 
     def add_module(self, module):

@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
+from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
 
 
@@ -53,7 +54,8 @@ class TestGlobalAppConfig(TestCase):
             modules=[Module()],
             build_profiles={
                 cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),
-            }
+            },
+            build_spec=get_default_build_spec()
         )  # app is v1
 
         app.save()  # app is now v2
