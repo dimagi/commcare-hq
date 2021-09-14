@@ -120,7 +120,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         )
 
     def _build_query(self, user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id):
-        filters = Q(domain=self.domain)
+        filters = Q(by_domain=self.domain)
 
         if user_ids:
             filters = filters & Q(user_id__in=user_ids)
