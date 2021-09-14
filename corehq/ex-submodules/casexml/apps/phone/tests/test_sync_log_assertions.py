@@ -48,7 +48,10 @@ class SyncLogAssertionTest(TestCase):
         dependent_case_state = CaseState(case_id="d1", indices=[])
         xform_id = uuid.uuid4().hex
         xform = XFormInstance(_id=xform_id)
-        form_actions = [CommCareCaseAction(action_type=CASE_ACTION_UPDATE, updated_known_properties={'owner_id': 'user2'})]
+        form_actions = [CommCareCaseAction(
+            action_type=CASE_ACTION_UPDATE,
+            updated_known_properties={'owner_id': 'user2'},
+        )]
         with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
             parent_case = CommCareCase(_id='d1')
             # before this test was added, the following call raised a ValueError on legacy logs.

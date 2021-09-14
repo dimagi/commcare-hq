@@ -11,7 +11,6 @@ from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdErro
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
 from corehq.form_processor.tests.utils import sharded
-from six.moves import range
 
 
 @sharded
@@ -574,8 +573,15 @@ class GetCaseFootprintInfoTest(TestCase):
     def test_simple_footprint(self):
         """ should only return open cases from user """
         case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'create': True})
-        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'close': True, 'create': True})
-        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.other_owner_id, 'create': True})
+        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={
+            'owner_id': self.owner_id,
+            'close': True,
+            'create': True,
+        })
+        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={
+            'owner_id': self.other_owner_id,
+            'create': True,
+        })
         self.factory.create_or_update_cases([case, other_case, closed_case])
 
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)

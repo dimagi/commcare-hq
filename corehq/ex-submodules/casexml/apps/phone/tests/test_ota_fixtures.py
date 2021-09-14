@@ -1,8 +1,6 @@
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from corehq.blobs import get_blob_db
-from casexml.apps.phone.fixtures import generator
-from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (

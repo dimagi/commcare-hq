@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V1

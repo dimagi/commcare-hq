@@ -94,10 +94,11 @@ class LedgerTests(TestCase):
             ))
             balance = self.interface.ledger_db.get_current_ledger_value(
                 UniqueLedgerReference(
-                case_id=self.case.case_id,
-                section_id='stock',
-                entry_id=prod_id
-            ))
+                    case_id=self.case.case_id,
+                    section_id='stock',
+                    entry_id=prod_id
+                )
+            )
             self.assertEqual(expected_balance, balance)
 
         self._assert_transactions(expected_transactions, ignore_ordering=True)

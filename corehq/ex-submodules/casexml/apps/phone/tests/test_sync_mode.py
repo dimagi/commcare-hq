@@ -2,7 +2,6 @@ import os
 import uuid
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
-from django.test.utils import override_settings
 from django.test import TestCase
 from mock import patch
 
@@ -31,7 +30,6 @@ from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
     LOG_FORMAT_SIMPLIFIED,
-    SimplifiedSyncLog,
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
@@ -43,7 +41,6 @@ from casexml.apps.phone.restore import (
 )
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from six.moves import range
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"

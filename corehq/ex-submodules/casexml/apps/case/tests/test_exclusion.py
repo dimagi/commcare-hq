@@ -1,6 +1,5 @@
 from django.test import TestCase
 import os
-from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -14,7 +13,7 @@ class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing
     """
-    
+
     def setUp(self):
         super(CaseExclusionTest, self).setUp()
         delete_all_cases()
