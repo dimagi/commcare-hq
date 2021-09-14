@@ -590,7 +590,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
-        id_map = get_downstream_app_id_map(domain, use_upstream_app_id=True)
+        id_map = get_downstream_app_id_map(domain)
         if app_id in id_map.keys():
             build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
         if not build:
