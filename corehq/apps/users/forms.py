@@ -1114,7 +1114,7 @@ class CommtrackUserForm(forms.Form):
                 )
             else:
                 user_change_logger.add_info(
-                    UserChangeMessage.primary_location_info(None)
+                    UserChangeMessage.primary_location_removed()
                 )
 
         if program_id is not None:
