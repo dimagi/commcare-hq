@@ -79,4 +79,5 @@ branches:
     - dmr/cbc-tools  # Danny Sept 10
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - gh/erm/remove-master-in-ui # Graham Sept 13
+    - revert-30394-revert-30385-gh/erm/refactor-domain-link-view-model # Graham Sept 13
 submodules: { }
