@@ -10,6 +10,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from django.test import TestCase
 
 
+@sharded
 class TestExtensionCaseIds(TestCase):
 
     def setUp(self):
@@ -153,10 +154,6 @@ class TestExtensionCaseIds(TestCase):
 
 
 @sharded
-class TestExtensionCaseIdsSQL(TestExtensionCaseIds):
-    pass
-
-
 class TestIndexedCaseIds(TestCase):
 
     def setUp(self):
@@ -186,11 +183,6 @@ class TestIndexedCaseIds(TestCase):
         )
         returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
         self.assertItemsEqual(returned_cases, [host_id])
-
-
-@sharded
-class TestIndexedCaseIdsSQL(TestIndexedCaseIds):
-    pass
 
 
 class TestReverseIndexedCases(TestCase):

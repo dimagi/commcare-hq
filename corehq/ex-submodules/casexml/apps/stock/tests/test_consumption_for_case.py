@@ -5,6 +5,7 @@ from casexml.apps.stock.tests.base import StockTestBase
 from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class ConsumptionCaseTest(StockTestBase):
 
     def testNoConsumption(self):
@@ -42,8 +43,3 @@ class ConsumptionCaseTest(StockTestBase):
                 default_monthly_consumption_function=_ten
             )
         ))
-
-
-@sharded
-class ConsumptionCaseTestSQL(ConsumptionCaseTest):
-    pass

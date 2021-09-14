@@ -17,6 +17,7 @@ from couchforms.models import UnfinishedArchiveStub
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
+@sharded
 class TestFormArchiving(TestCase, TestFileMixin):
     file_path = ('data', 'sample_xforms')
     root = os.path.dirname(__file__)
@@ -426,10 +427,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
-
-
-@sharded
-class TestFormArchivingSQL(TestFormArchiving):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def testPublishChanges(self):

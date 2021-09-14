@@ -287,6 +287,7 @@ class InsecureAuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(InsecureAuthCouchOnlyTest, self).tearDown()
 
 
+@sharded
 class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-domain'
@@ -305,6 +306,7 @@ class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(AuthTest, self).tearDown()
 
 
+@sharded
 class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-insecure-domain'
@@ -321,13 +323,3 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
     def tearDown(self):
         self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthTest, self).tearDown()
-
-
-@sharded
-class AuthTestSQL(AuthTest):
-    pass
-
-
-@sharded
-class InsecureAuthTestSQL(InsecureAuthTest):
-    pass
