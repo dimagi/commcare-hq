@@ -62,26 +62,26 @@ class UserChangeLogger(object):
 
     def add_change_message(self, message):
         """
-        Add change message for changes that are not exactly user properties.
+        Add change message for a change in user property that is in form of a UserChangeMessage
         Ignored for new user since the whole user doc is logged for a new user
         :param message: text message for the change like 'Password reset' / 'Added as web user to domain foo'
         """
         if self.is_new_user:
             return
-        self._update_change_message(message)
+        self._update_change_messages(message)
         self._save = True
 
-    def _update_change_message(self, change_messages):
+    def _update_change_messages(self, change_messages):
         for slug in change_messages:
             if slug in self.change_messages:
                 raise UserUploadError(f"Double Entry for {slug}")
         self.change_messages.update(change_messages)
 
-    def add_info(self, info):
+    def add_info(self, change_message):
         """
-        Useful info for display, specifically of associated data models like roles/locations.
+        Add change message for a change to the user that is in form of a UserChangeMessage
         """
-        self._update_change_message(info)
+        self._update_change_messages(change_message)
         self._save = True
 
     def save(self):
@@ -284,7 +284,7 @@ class WebUserImporter(BaseUserImporter):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
         self.role_updated = bool(role_qualified_id)
 
-        self.logger.add_change_message(UserChangeMessage.added_as_web_user(self.user_domain))
+        self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))
         if location_id:
             self._log_primary_location_info()
 
