@@ -143,7 +143,6 @@ class Command(BaseCommand):
 
                 if for_domain:
                     succeeded[user_history.pk] = (getattr(user_history, BY_DOMAIN_ATTR), for_domain)
-                if for_domain:
                     _file.write(
                         f"{user_history.pk}, {user_history.user_type}, {user_history.user_id}, {by_domain}, {for_domain}, {getattr(user_history, MESSAGE_ATTR)}, {user_history.user_upload_record_id}\n"
                     )
