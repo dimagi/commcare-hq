@@ -69,26 +69,12 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                         {
                             "bool": {
                                 "must_not": {
-                                    "term": {
-                                        "owner_id": "id1"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id2"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id3,id4"
+                                    "terms": {
+                                        "owner_id": [
+                                            "id1",
+                                            "id2",
+                                            "id3,id4"
+                                        ]
                                     }
                                 }
                             }
