@@ -72,8 +72,8 @@ branches:
     - dependabot/pip/requirements/python3-saml-1.12.0  # Joel Aug 24
     - cs/SC-1567-bulk-export-filters # Charl Aug 26
     - ml/add-bulk-action-scheduled-reports # Minha Aug 30
-    - mk/user-history/structured-messages-v2 # MK Sep 1
-    - mk/user-history/migrate-change-messages # MK Sep 14
+    #- mk/user-history/structured-messages-v2 # MK Sep 1
+    #- mk/user-history/migrate-change-messages # MK Sep 14
     - gh/remove-pickles-from-accounting # Graham Sep 3
     - jls/form-links-modules # Jenny Sept 7
     - dmr/cbc-tools  # Danny Sept 10
