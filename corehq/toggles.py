@@ -2062,6 +2062,7 @@ USER_HISTORY_REPORT = StaticToggle(
     'View user history report under user management',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
 
