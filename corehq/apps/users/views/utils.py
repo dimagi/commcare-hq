@@ -82,7 +82,7 @@ def log_user_groups_change(domain, request, user, group_ids=None):
     )
 
 
-def log_commcare_user_locations_changes(domain, request, user, old_location_id, old_assigned_location_ids):
+def log_commcare_user_locations_changes(request, user, old_location_id, old_assigned_location_ids):
     change_messages = {}
     fields_changed = {}
     if old_location_id != user.location_id:
@@ -100,7 +100,7 @@ def log_commcare_user_locations_changes(domain, request, user, old_location_id, 
 
     if change_messages:
         log_user_change(
-            by_domain=domain,
+            by_domain=request.domain,
             for_domain=user.domain,
             couch_user=user,
             changed_by_user=request.couch_user,
