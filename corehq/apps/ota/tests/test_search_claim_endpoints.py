@@ -63,32 +63,18 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
                             "bool": {
                                 "must_not": {
-                                    "term": {
-                                        "owner_id": "id1"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id2"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id3,id4"
+                                    "terms": {
+                                        "owner_id": [
+                                            "id1",
+                                            "id2",
+                                            "id3,id4"
+                                        ]
                                     }
                                 }
                             }
@@ -159,7 +145,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
