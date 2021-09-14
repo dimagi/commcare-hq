@@ -313,7 +313,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'upstream_link': build_domain_link_view_model(upstream_link, timezone) if upstream_link else None,
                 'view_models_to_pull': sorted(view_models_to_pull, key=lambda m: m['name']),
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
-                'linked_domains': sorted(linked_domains, key=lambda d: d['linked_domain']),
+                'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
             },
         }
