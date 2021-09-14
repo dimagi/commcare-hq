@@ -8,6 +8,7 @@ import os
 from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class AuthTest(TestCase, TestFileMixin):
     file_path = ('data', 'posts')
     root = os.path.dirname(__file__)
@@ -17,8 +18,3 @@ class AuthTest(TestCase, TestFileMixin):
 
         result = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
         self.assertEqual(result.xform.auth_context, {'doc_type': 'DefaultAuthContext'})
-
-
-@sharded
-class AuthTestSQL(AuthTest):
-    pass

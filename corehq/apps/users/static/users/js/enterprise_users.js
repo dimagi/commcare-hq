@@ -52,8 +52,8 @@ hqDefine("users/js/enterprise_users", [
         self.showDeactivated = ko.observable(false);
 
         self.toggleDeactivatedText = ko.computed(function () {
-            return self.showDeactivated() ? "Hide Deactivated Mobile Workers" : "Show Deactivated Mobile Workers";
-        }, this);
+            return self.showDeactivated() ? gettext("Hide Deactivated Mobile Workers") : gettext("Show Deactivated Mobile Workers");
+        });
 
         self.toggleDeactivated = function () {
             _.each(self.users(), function (user) {

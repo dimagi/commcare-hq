@@ -52,14 +52,15 @@ class UpdateFormTests(TestCase):
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
-class GDPRScrubUserFromFormsCouchTests(TestCase):
+@sharded
+class GDPRScrubUserFromFormsTests(TestCase):
     def setUp(self):
-        super(GDPRScrubUserFromFormsCouchTests, self).setUp()
+        super(GDPRScrubUserFromFormsTests, self).setUp()
         self.db = TemporaryFilesystemBlobDB()
 
     def tearDown(self):
         self.db.close()
-        super(GDPRScrubUserFromFormsCouchTests, self).tearDown()
+        super(GDPRScrubUserFromFormsTests, self).tearDown()
 
     def test_modify_attachment_xml_and_metadata_couch(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
@@ -78,8 +79,3 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         self.assertEqual(len(refetched_form.history), 1)
         self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
         self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
-
-
-@sharded
-class GDPRScrubUserFromFormsSqlTests(GDPRScrubUserFromFormsCouchTests):
-    pass
