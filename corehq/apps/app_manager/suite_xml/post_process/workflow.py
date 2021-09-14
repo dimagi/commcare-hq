@@ -329,9 +329,13 @@ class EndOfFormNavigationWorkflow(object):
 
     def _get_link_frame(self, link, form, module):
         source_form_datums = self.helper.get_form_datums(form)
-        target_form = self.helper.app.get_form(link.form_id)
-        target_module = target_form.get_module()
-        target_frame_children = self.helper.get_frame_children(target_module, target_form)
+        if link.form_id:
+            target_form = self.helper.app.get_form(link.form_id)
+            target_module = target_form.get_module()
+            target_frame_children = self.helper.get_frame_children(target_module, target_form)
+        elif link.module_unique_id:
+            target_module = self.helper.app.get_module_by_unique_id(link.module_unique_id)
+            target_frame_children = self._frame_children_for_module(target_module, include_user_selections=False)
         if link.datums:
             frame_children = _get_datums_matched_to_manual_values(target_frame_children, link.datums, form)
         else:
