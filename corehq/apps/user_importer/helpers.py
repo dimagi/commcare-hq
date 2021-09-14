@@ -88,10 +88,6 @@ class UserChangeLogger(object):
         if self.is_new_user or self._save:
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
-            # ToDo Migration: add for_domain from bulk upload record for old records
-            # for a commcare user, simply use the domain of the commcare user
-            # for a web user, fetch the domain from the corresponding user row in "result" stored
-            # on the bulk upload record where 'flag' is 'updated' for a successful update
             log_user_change(
                 by_domain=self.upload_domain,
                 for_domain=self.user_domain,
