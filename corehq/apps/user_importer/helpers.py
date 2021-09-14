@@ -26,13 +26,16 @@ class UserChangeLogger(object):
         - useful info for changes to associated data models like role/locations
     """
 
-    def __init__(self, domain, user, is_new_user, changed_by_user, changed_via, upload_record_id):
-        self.domain = domain
+    def __init__(self, upload_domain, user_domain, user, is_new_user, changed_by_user, changed_via,
+                 upload_record_id, user_domain_required_for_log=True):
+        self.upload_domain = upload_domain
+        self.user_domain = user_domain
         self.user = user
         self.is_new_user = is_new_user
         self.changed_by_user = changed_by_user
         self.changed_via = changed_via
         self.upload_record_id = upload_record_id
+        self.user_domain_required_for_log = user_domain_required_for_log
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
@@ -85,15 +88,21 @@ class UserChangeLogger(object):
         if self.is_new_user or self._save:
             action = UserModelAction.CREATE if self.is_new_user else UserModelAction.UPDATE
             fields_changed = None if self.is_new_user else self.fields_changed
+            # ToDo Migration: add for_domain from bulk upload record for old records
+            # for a commcare user, simply use the domain of the commcare user
+            # for a web user, fetch the domain from the corresponding user row in "result" stored
+            # on the bulk upload record where 'flag' is 'updated' for a successful update
             log_user_change(
-                self.domain,
-                self.user,
+                by_domain=self.upload_domain,
+                for_domain=self.user_domain,
+                couch_user=self.user,
                 changed_by_user=self.changed_by_user,
                 changed_via=self.changed_via,
                 change_messages=self.change_messages,
                 action=action,
                 fields_changed=fields_changed,
                 bulk_upload_record_id=self.upload_record_id,
+                for_domain_required_for_log=self.user_domain_required_for_log,
             )
 
 
@@ -116,7 +125,8 @@ class BaseUserImporter(object):
         self.user_domain = user_domain
         self.user = user
         self.upload_user = upload_user
-        self.logger = UserChangeLogger(upload_domain, user=user, is_new_user=is_new_user,
+        self.logger = UserChangeLogger(upload_domain=upload_domain, user_domain=user_domain, user=user,
+                                       is_new_user=is_new_user,
                                        changed_by_user=upload_user, changed_via=via,
                                        upload_record_id=upload_record_id)
 
