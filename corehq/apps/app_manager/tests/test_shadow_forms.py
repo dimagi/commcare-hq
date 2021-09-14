@@ -61,7 +61,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         expected = """
             <partial>
               <xform>
-                <resource id="advanced_module_form_0">
+                <resource descriptor="Form: (Module advanced_module module) - advanced_module form 0" id="advanced_module_form_0">
                   <location authority="local">./modules-0/forms-0.xml</location>
                   <location authority="remote">./modules-0/forms-0.xml</location>
                 </resource>
