@@ -12,6 +12,7 @@ from couchforms.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class SyncLogAssertionTest(TestCase):
 
     def test_update_dependent_case(self):
@@ -53,8 +54,3 @@ class SyncLogAssertionTest(TestCase):
             # before this test was added, the following call raised a ValueError on legacy logs.
             sync_log.update_phone_lists(xform, [parent_case])
             self.assertIn(dependent_case_state, sync_log.test_only_get_dependent_cases_on_phone())
-
-
-@sharded
-class SyncLogAssertionTestSQL(SyncLogAssertionTest):
-    pass

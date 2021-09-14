@@ -12,6 +12,7 @@ from pillowtop.processors.sample import TestProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@sharded
 class KafkaPublishingTest(TestCase):
 
     domain = 'kafka-publishing-test'
@@ -84,8 +85,3 @@ class KafkaPublishingTest(TestCase):
         change_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertTrue(change_meta.is_deletion)
-
-
-@sharded
-class KafkaPublishingTestSQL(KafkaPublishingTest):
-    pass

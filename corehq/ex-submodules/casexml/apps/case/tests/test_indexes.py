@@ -55,6 +55,7 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
+@sharded
 class IndexTest(TestCase):
     CASE_ID = 'test-index-case'
     MOTHER_CASE_ID = 'text-index-mother-case'
@@ -183,11 +184,6 @@ class IndexTest(TestCase):
         }
         form, cases = post_case_blocks([create_index.as_xml()], domain=self.project.name)
         self.assertEqual(cases[0].indices[0].relationship, 'child')
-
-
-@sharded
-class IndexTestSQL(IndexTest):
-    pass
 
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):

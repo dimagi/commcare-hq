@@ -21,6 +21,7 @@ SA_PROVINCES = 'sa_provinces'
 FR_PROVINCES = 'fr_provinces'
 
 
+@sharded
 class OtaFixtureTest(TestCase):
 
     @classmethod
@@ -82,11 +83,6 @@ class OtaFixtureTest(TestCase):
         self.assertIn('<fixture ', restore)
         restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
         self.assertNotIn('<fixture ', restore_without_fixture)
-
-
-@sharded
-class OtaFixtureTestSQL(OtaFixtureTest):
-    pass
 
 
 def _get_group_fixture(user_id, groups):

@@ -9,6 +9,7 @@ from corehq.form_processor.tests.utils import sharded
 TEST_DOMAIN = 'test-domain'
 
 
+@sharded
 class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing
@@ -39,8 +40,3 @@ class CaseExclusionTest(TestCase):
         result = submit_form_locally(xml_data, TEST_DOMAIN)
         self.assertEqual(['case_in_form'], CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain())
         self.assertEqual("form case", result.case.name)
-
-
-@sharded
-class CaseExclusionTestSQL(CaseExclusionTest):
-    pass
