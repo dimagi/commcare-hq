@@ -78,7 +78,6 @@ branches:
     - jls/form-links-modules # Jenny Sept 7
     - dmr/cbc-tools  # Danny Sept 10
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
-    - gh/erm/remove-master-in-ui # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
 submodules: { }
