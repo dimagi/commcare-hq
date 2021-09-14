@@ -11,8 +11,6 @@ from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.const import USER_CHANGE_VIA_API
 
 DOMAIN_REMOVE_REGEX = re.compile(r"Removed from domain '(\S+)'")
-BY_DOMAIN_ATTR = 'domain'  # make this by_domain post rename migration
-MESSAGE_ATTR = 'message'  # make this change_messages post migration
 
 
 class Command(BaseCommand):
@@ -66,14 +64,14 @@ class Command(BaseCommand):
         with open("populate_for_domain_for_user_history.txt", 'w') as _file:
             for user_history in UserHistory.objects.all():
                 for_domain = None
-                by_domain = getattr(user_history, BY_DOMAIN_ATTR)
+                by_domain = user_history.by_domain
                 if user_history.user_type == "CommCareUser":
                     for_domain = _get_commcare_users_domain(user_history.user_id)
                     if not for_domain:
                         logging.warning(
                             f"Could not get domain for log {user_history.pk} for user {user_history.user_id}")
                         _file.write(
-                            f"{user_history.pk}, {user_history.user_type}, {user_history.user_id}, {by_domain}, 'N/A', {getattr(user_history, MESSAGE_ATTR)}, {user_history.user_upload_record_id}\n"
+                            f"{user_history.pk}, {user_history.user_type}, {user_history.user_id}, {by_domain}, 'N/A', {user_history.change_messages}, {user_history.user_upload_record_id}\n"
                         )
 
                 elif user_history.user_type == "WebUser":
@@ -142,9 +140,9 @@ class Command(BaseCommand):
                         for_domain = by_domain
 
                 if for_domain:
-                    succeeded[user_history.pk] = (getattr(user_history, BY_DOMAIN_ATTR), for_domain)
+                    succeeded[user_history.pk] = (user_history.by_domain, for_domain)
                     _file.write(
-                        f"{user_history.pk}, {user_history.user_type}, {user_history.user_id}, {by_domain}, {for_domain}, {getattr(user_history, MESSAGE_ATTR)}, {user_history.user_upload_record_id}\n"
+                        f"{user_history.pk}, {user_history.user_type}, {user_history.user_id}, {by_domain}, {for_domain}, {user_history.change_messages}, {user_history.user_upload_record_id}\n"
                     )
                     if update_records:
                         user_history.for_domain = for_domain
