@@ -316,6 +316,7 @@ class TestAppGetters(TestCase):
         self.assertEqual(version, 4)
 
     def test_get_latest_released_app_versions_by_app_id(self):
+        get_latest_released_app_versions_by_app_id.clear(self.domain)
         versions = get_latest_released_app_versions_by_app_id(self.domain)
         self.assertEqual(versions, {
             self.app_id: 4,
