@@ -59,7 +59,7 @@ The version is updated (set to the latest app version) in the following situatio
 Linked apps
 """""""""""
 
-Linked apps, when pulled, copy the multimedia map directly from the master app, so all the attributes of each item will match those in the master app. Because linked apps are always pulled from a released version of a master app, each item should have a version set.
+Linked apps, when pulled, copy the multimedia map directly from the upstream app, so all the attributes of each item will match those in the upstream app. Because linked apps are always pulled from a released version of an upstream app, each item should have a version set.
 
 media_suite.xml
 ###############
