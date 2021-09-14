@@ -198,5 +198,6 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertIsNone(user_history_log.message)
         self.assertEqual(user_history_log.change_messages, UserChangeMessage.phone_numbers_removed([phone_number]))
         self.assertEqual(user_history_log.changed_by, self.web_user.get_id)
-        self.assertEqual(user_history_log.domain, self.domain)
+        self.assertEqual(user_history_log.by_domain, self.domain)
+        self.assertEqual(user_history_log.for_domain, self.domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
