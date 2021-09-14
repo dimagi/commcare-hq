@@ -367,7 +367,7 @@ hqDefine("linked_domain/js/domain_links", [
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
-                        gettext('Unable to link project spaces. <%- error %>\nYou must remove the existing link before creating this new link.')
+                        gettext('Unable to link project spaces. <%- error %>')
                     )({error: response.message});
                     alertUser.alert_user(errorMessage, 'danger');
                 }
