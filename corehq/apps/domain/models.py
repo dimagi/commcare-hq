@@ -990,7 +990,7 @@ class TransferDomainRequest(models.Model):
         self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
         self.from_user.save()
         if by_user:
-            log_user_change(self.domain, couch_user=self.from_user,
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
                             changed_by_user=by_user, changed_via=transfer_via,
                             change_messages=UserChangeMessage.domain_removal(self.domain))
         self.to_user.save()
