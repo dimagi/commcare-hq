@@ -207,9 +207,10 @@ class CaseSearchCriteria:
         #   used by App manager case-search feature
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         match = pattern.match(value)
-        if match:
-            _, _, startdate, enddate = value.split('__')
-            return case_property_range_query(key, gte=startdate, lte=enddate)
+        if not match:
+            raise CaseFilterError(_('Invalid date range format, {}'), key)
+        _, _, startdate, enddate = value.split('__')
+        return case_property_range_query(key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, key, value):
         if isinstance(value, list) and '' in value:
