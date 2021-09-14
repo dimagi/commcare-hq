@@ -74,6 +74,7 @@ from corehq.apps.hqwebapp.decorators import (
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
+from corehq.apps.linked_domain.applications import get_downstream_app_id_map
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -589,7 +590,11 @@ def session_endpoint(request, domain, app_id, endpoint_id):
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
-        return _fail(_("Could not find application."))
+        id_map = get_downstream_app_id_map(domain, use_upstream_app_id=True)
+        if app_id in id_map.keys():
+            build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
+        if not build:
+            return _fail(_("Could not find application."))
     build = wrap_app(build)
 
     valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
