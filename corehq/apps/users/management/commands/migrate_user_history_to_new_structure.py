@@ -167,11 +167,9 @@ def migrate(user_history, save=False, skip_assertions=False):
     2. convert messages into new change messages format
     3. migrate over to log entry to back up old columns before they are deleted
     """
-    # ToDo: remove this if later. Just added to avoid issues during dry runs
-    if hasattr(user_history, 'change_messages'):
-        # a double check to avoid re-runs on records
-        if user_history.message and user_history.change_messages:
-            raise Exception("got a migrated record")
+    # a double check to avoid re-runs on records
+    if user_history.message and user_history.change_messages:
+        raise Exception("got a migrated record")
 
     # simply copy over changed_via to new column
     # changed_via should always be present
