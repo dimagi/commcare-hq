@@ -5,7 +5,6 @@ from xml.etree import cElementTree as ElementTree
 from django.template.loader import render_to_string
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import property_changed_in_action
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es import filters
@@ -96,31 +95,6 @@ def get_case_wrapper(data):
         if wrapper is not None:
             break
     return wrapper
-
-
-def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
-    return CommCareCase.view(
-        'case_by_domain_hq_user_id_type/view',
-        key=[domain, user_id, case_type],
-        reduce=False,
-        include_docs=include_docs
-    ).all()
-
-
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the first case of case_type owned by user_id
-    """
-    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
-    return cases[0] if cases else None
-
-
-def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Return the ID of the first case of case_type owned by user_id
-    """
-    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
-    return rows[0]['id'] if rows else None
 
 
 def get_case_by_identifier(domain, identifier):

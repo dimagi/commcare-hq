@@ -1,4 +1,3 @@
-import datetime
 import doctest
 import json
 from unittest.mock import Mock, call, patch
@@ -490,7 +489,7 @@ class TestRequests(TestCase):
                     'attributes': [
                         {'attribute': 'w75KJ2mc4zz', 'value': 'Johnny'},
                         {'attribute': 'zDhUuAYrxNC', 'value': 'Appleseed'},
-                        {'attribute': 'iESIqZ0R0R0', 'value': datetime.date(2021, 8, 27)},
+                        {'attribute': 'iESIqZ0R0R0', 'value': '2021-08-27'},
                     ]
                 },
                 raise_for_status=True,
