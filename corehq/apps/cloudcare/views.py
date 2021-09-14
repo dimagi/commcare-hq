@@ -590,6 +590,9 @@ def session_endpoint(request, domain, app_id, endpoint_id):
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
+        # These links can be used for cross-domain web apps workflows, where a link jumps to the
+        # same screen but in another domain's corresponding app. This works if both the source and
+        # target apps are downstream apps that share an upstream app - the link references the upstream app.
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map.keys():
             build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
