@@ -80,4 +80,5 @@ branches:
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
     - smh/cross-domain-ucr-report-builder-ui # Steph Sept 14
+    - gh/erm/hide-deleted-content # Graham Sept 14
 submodules: { }
