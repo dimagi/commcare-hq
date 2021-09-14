@@ -5,7 +5,6 @@ from casexml.apps.case.dbaccessors import (
     get_extension_case_ids,
     get_indexed_case_ids,
     get_all_reverse_indices_info,
-    get_open_case_ids_in_domain,
     get_reverse_indexed_cases,
     get_related_indices,
 )
@@ -14,16 +13,6 @@ from casexml.apps.case.util import get_case_xform_ids, iter_cases
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.hqcase.dbaccessors import (
-    get_case_ids_in_domain,
-    get_open_case_ids,
-    get_closed_case_ids,
-    get_case_ids_in_domain_by_owner,
-    get_case_ids_that_exist,
-    get_cases_in_domain_by_external_id,
-    get_deleted_case_ids_by_owner,
-    get_all_case_owner_ids)
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -35,14 +24,6 @@ from corehq.form_processor.exceptions import (
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
-from couchforms.dbaccessors import (
-    get_forms_by_type,
-    get_deleted_form_ids_for_user,
-    get_form_ids_for_user,
-    get_forms_by_id,
-    get_form_ids_by_type,
-    iter_form_ids_by_xmlns,
-)
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -68,15 +49,15 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
-        return get_forms_by_id(form_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        return get_form_ids_by_type(domain, type_)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
-        return get_forms_by_type(domain, type_, recent_first, limit)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -110,11 +91,11 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
-        return get_deleted_form_ids_for_user(user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
-        return get_form_ids_for_user(domain, user_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def set_archived_state(form, archive, user_id):
@@ -149,7 +130,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        return iter_form_ids_by_xmlns(domain, xmlns)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -199,7 +180,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
-        return get_case_ids_that_exist(domain, case_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -207,28 +188,23 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
-        return get_case_ids_in_domain(domain, type=type)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
-        return get_open_case_ids(domain, owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
-        return get_closed_case_ids(domain, owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
-        owner_ids = owner_ids if owner_ids else [None]
-        return [
-            case_id
-            for owner_id in owner_ids
-            for case_id in get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
-        ]
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
@@ -263,14 +239,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        return get_case_by_domain_hq_user_id(domain, user_id, case_type)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        cases = get_cases_in_domain_by_external_id(domain, external_id)
-        if case_type:
-            return [case for case in cases if case.type == case_type]
-        return cases
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
@@ -282,11 +255,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
-        return get_deleted_case_ids_by_owner(owner_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_owner_ids(domain):
-        return get_all_case_owner_ids(domain)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):

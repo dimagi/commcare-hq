@@ -187,6 +187,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         self.assertTrue(invalidate.called)
 
 
+@sharded
 class AsyncRestoreTest(BaseAsyncRestoreTest):
 
     @flag_enabled('ASYNC_RESTORE')
@@ -270,11 +271,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
         self._restore_config(is_async=True, overwrite_cache=True).get_payload()
         self.assertTrue(invalidate.called)
-
-
-@sharded
-class AsyncRestoreTestSQL(AsyncRestoreTest):
-    pass
 
 
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
