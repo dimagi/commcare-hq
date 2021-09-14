@@ -11,7 +11,6 @@ from mock import patch
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -34,7 +33,7 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.util.test_utils import timelimit
+from corehq.util.test_utils import timelimit, flag_enabled
 
 from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
@@ -61,8 +60,6 @@ class TestViews(TestCase):
         cls.build = add_build(version='2.7.0', build_number=20655)
         cls.es = get_es_new()
         initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
-
-        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.project.name), True)
 
     def setUp(self):
         self.app = Application.new_app(self.project.name, "TestApp")
@@ -105,6 +102,7 @@ class TestViews(TestCase):
                                                                             path='modules-0/forms-0.xml')))
         self.assertEqual(response.status_code, 404)
 
+    @flag_enabled('CUSTOM_PROPERTIES')
     def test_edit_commcare_profile(self, mock):
         app2 = Application.new_app(self.project.name, "TestApp2")
         app2.save()
