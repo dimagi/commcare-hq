@@ -416,6 +416,7 @@ class FormAccessorTestsSQL(TestCase):
         FormAccessorSQL.set_archived_state(form, False, user_id)
 
 
+@sharded
 class FormAccessorsTests(TestCase, TestXmlMixin):
 
     def tearDown(self):
@@ -534,11 +535,6 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         updates = {'eight': 'ocho'}
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         self.assertEqual(['eight'], errors)
-
-
-@sharded
-class FormAccessorsTestsSQL(FormAccessorsTests):
-    pass
 
 
 class DeleteAttachmentsFSDBTests(TestCase):

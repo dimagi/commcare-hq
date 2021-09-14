@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
 def _code_to_benchmark(domain, app_id):
     app = get_app(domain, app_id)
-    get_direct_ccz(domain, app, None, None)
+    get_direct_ccz(domain, app, None)
 
 
 @profile_dump('direct_ccz.prof')

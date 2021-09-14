@@ -844,11 +844,9 @@ class RegistryCaseDataSourceHelper(CaseDataSourceHelper):
         self.registry_slug = registry_slug
         super().__init__(domain, source_type, source_id)
 
-        registry = DataRegistry.objects.get(slug=self.registry_slug)
-        assert domain in registry.visible_domains()
-        DataRegistryHelper(self.domain, registry=registry).pre_access_check(source_type)
-
-        owning_domain = registry.domain
+        registry_helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+        registry_helper.pre_access_check(source_id)
+        owning_domain = registry_helper.registry.domain
         prop_map = get_data_dict_props_by_case_type(owning_domain)
         self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
@@ -892,9 +890,8 @@ class DataSourceForm(forms.Form):
             enable_registry=DATA_REGISTRY.enabled(self.domain)
 
         )
-        self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
+
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
             "source_type": _(
@@ -913,15 +910,6 @@ class DataSourceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-        report_source_crispy_fields = []
-        for k in report_source_fields.keys():
-            if k in report_source_help_texts:
-                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
-                    k, help_bubble_text=report_source_help_texts[k]
-                ))
-            else:
-                report_source_crispy_fields.append(k)
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Report'),
@@ -934,7 +922,7 @@ class DataSourceForm(forms.Form):
                 )
             ),
             crispy.Fieldset(
-                _('Data'), *report_source_crispy_fields
+                _('Data'), *self.app_source_helper.get_crispy_fields()
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1040,7 +1028,7 @@ class ConfigureNewReportBase(forms.Form):
             self.registry_slug = existing_report.config.meta.build.registry_slug
             if app_id:
                 self.app = Application.get(app_id)
-            else:
+            elif not self.registry_slug:
                 raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         else:
             assert self.source_type == DATA_SOURCE_TYPE_RAW

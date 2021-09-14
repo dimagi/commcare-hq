@@ -20,6 +20,7 @@ DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
 
+@sharded
 @run_with_sql_backend
 class LedgerTests(TestCase):
 
@@ -93,10 +94,11 @@ class LedgerTests(TestCase):
             ))
             balance = self.interface.ledger_db.get_current_ledger_value(
                 UniqueLedgerReference(
-                case_id=self.case.case_id,
-                section_id='stock',
-                entry_id=prod_id
-            ))
+                    case_id=self.case.case_id,
+                    section_id='stock',
+                    entry_id=prod_id
+                )
+            )
             self.assertEqual(expected_balance, balance)
 
         self._assert_transactions(expected_transactions, ignore_ordering=True)
@@ -204,10 +206,7 @@ class LedgerTests(TestCase):
     def _expected_val(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)
 
-
-@sharded
-@softer_assert()
-class LedgerTestsSQL(LedgerTests):
+    @softer_assert()
     def test_edit_form_that_removes_ledgers(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         form_id = uuid.uuid4().hex
@@ -243,6 +242,7 @@ class LedgerTestsSQL(LedgerTests):
 
         self._assert_transactions([])
 
+    @softer_assert()
     def test_edit_form_with_ledgers(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         form_id = uuid.uuid4().hex

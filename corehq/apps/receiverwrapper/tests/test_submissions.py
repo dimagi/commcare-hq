@@ -53,6 +53,7 @@ class BaseSubmissionTest(TestCase):
             return self.client.post(url, data, **extra)
 
 
+@sharded
 class SubmissionTest(BaseSubmissionTest):
     maxDiff = None
 
@@ -140,6 +141,37 @@ class SubmissionTest(BaseSubmissionTest):
             f'{expected_error.message}'
             f'</message></OpenRosaResponse>'
         )
+
+    @softer_assert()
+    def test_submit_deprecated_form_with_attachments(self):
+        def list_attachments(form):
+            return sorted(
+                (att.name, att.open().read())
+                for att in form.get_attachments()
+                if att.name != "form.xml"
+            )
+
+        # submit a form to try again as duplicate with one attachment modified
+        self._submit('simple_form.xml', attachments={
+            "image": BytesIO(b"fake image"),
+            "file": BytesIO(b"text file"),
+        })
+        response = self._submit(
+            'simple_form_edited.xml',
+            attachments={"image": BytesIO(b"other fake image")},
+            url=reverse("receiver_secure_post", args=[self.domain]),
+        )
+        acc = FormAccessors(self.domain.name)
+        new_form = acc.get_form(response['X-CommCareHQ-FormID'])
+        old_form = acc.get_form(new_form.deprecated_form_id)
+        self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
+        self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
+        self.assertEqual(
+            list_attachments(old_form),
+            [("file", b"text file"), ("image", b"fake image")])
+        self.assertEqual(
+            list_attachments(new_form),
+            [("file", b"text file"), ("image", b"other fake image")])
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -253,41 +285,6 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertFalse('X-CommCareHQ-FormID' in response,
                          'Practice mobile worker form processed in non-demo mode')
         self.assertTrue(notification.called)
-
-
-@sharded
-class SubmissionTestSQL(SubmissionTest):
-
-    @softer_assert()
-    def test_submit_deprecated_form_with_attachments(self):
-        def list_attachments(form):
-            return sorted(
-                (att.name, att.open().read())
-                for att in form.get_attachments()
-                if att.name != "form.xml"
-            )
-
-        # submit a form to try again as duplicate with one attachment modified
-        self._submit('simple_form.xml', attachments={
-            "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
-        })
-        response = self._submit(
-            'simple_form_edited.xml',
-            attachments={"image": BytesIO(b"other fake image")},
-            url=reverse("receiver_secure_post", args=[self.domain]),
-        )
-        acc = FormAccessors(self.domain.name)
-        new_form = acc.get_form(response['X-CommCareHQ-FormID'])
-        old_form = acc.get_form(new_form.deprecated_form_id)
-        self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
-        self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(
-            list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
-        self.assertEqual(
-            list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
 
 
 @run_with_sql_backend

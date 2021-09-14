@@ -16,6 +16,7 @@ from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -62,7 +63,12 @@ class ApplicationDataSourceUIHelper(object):
             $("#FORM").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
-                sourcesMap: {{ sources_map|JSON }}
+                sourcesMap: {{ sources_map|JSON }},
+                labelMap: {
+                    'case': gettext('Case'),
+                    'form': gettext('Form'),
+                    'data_source': gettext('Data Source'),
+                },
             });
         });
 
@@ -72,32 +78,26 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False, enable_registry=False):
+    def __init__(self, enable_raw=False, enable_registry=False):
         self.all_sources = {}
-        self.enable_cases = enable_cases
-        self.enable_forms = enable_forms
         self.enable_raw = enable_raw
-        source_choices = []
-        if enable_cases:
-            source_choices.append((DATA_SOURCE_TYPE_CASE, _("Case")))
-        if enable_forms:
-            source_choices.append((DATA_SOURCE_TYPE_FORM, _("Form")))
+        source_choices = [
+            (DATA_SOURCE_TYPE_CASE, _("Case")),
+            (DATA_SOURCE_TYPE_FORM, _("Form"))
+        ]
         if enable_raw:
             source_choices.append((DATA_SOURCE_TYPE_RAW, _("Data Source")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        if len(source_choices) > 1:
-            self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
-                                                       choices=source_choices,
-                                                       widget=forms.Select(choices=source_choices))
-        else:
-            self.source_type_field = forms.ChoiceField(choices=source_choices,
-                                                       widget=forms.HiddenInput(),
-                                                       initial=source_choices[0][0])
+        self.source_type_field = forms.ChoiceField(label=_('Forms or Cases'),
+                                                   choices=source_choices,
+                                                   widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
+
         self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
                                                      required=False)
+        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         if enable_registry:
             self.registry_slug_field.widget = forms.Select()
 
@@ -113,16 +113,14 @@ class ApplicationDataSourceUIHelper(object):
             # it's weird/annoying that you have to manually sync these
             field.widget.choices.extend(choices)
 
-        if self.enable_cases:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
-            )
-        if self.enable_forms:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
-            )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
+        )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
+        )
         if self.enable_raw:
             available_data_sources = get_datasources_for_domain(domain, include_static=True,
                                                                 include_aggregate=AGGREGATE_UCRS.enabled(domain))
@@ -160,6 +158,20 @@ class ApplicationDataSourceUIHelper(object):
         fields['source'] = self.source_field
         fields['registry_slug'] = self.registry_slug_field
         return fields
+
+    def get_crispy_fields(self):
+        help_texts = {
+            "source_type": _(
+                "<strong>Form</strong>: Display data from form submissions.<br/>"
+                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
+                "option."),
+            "application": _("Which application should the data come from?"),
+            "source": _("Choose the case type or form from which to retrieve data for this report."),
+        }
+        return [
+            hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
+            for name, help_text in help_texts.items()
+        ]
 
     def get_app_source(self, data_dict):
         return DataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
