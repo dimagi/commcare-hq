@@ -41,6 +41,7 @@
   {% initial_page_data "hide_password_feedback" hide_password_feedback %}
   {% initial_page_data "enforce_sso_login" enforce_sso_login|BOOL %}
   {% initial_page_data 'is_session_expiration' is_session_expiration %}
+  {% initial_page_data "login_domain" domain %}
   {% registerurl 'check_sso_login_status' %}
   {% registerurl 'iframe_sso_login_pending' %}
   {% block login-content %}
