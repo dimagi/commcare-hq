@@ -1,5 +1,6 @@
 {% extends "userreports/base_report_builder.html" %}
 {% load i18n %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
@@ -8,7 +9,10 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+  {% compress js %}
+  <script src="{% static 'userreports/js/data_source_select_model.js' %}"></script>
   <script src="{% static 'userreports/js/data_source_select.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_title %}{% trans "Step 1 of 2 - Select Data Source" %}{% endblock page_title %}
