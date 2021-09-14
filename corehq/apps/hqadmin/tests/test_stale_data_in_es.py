@@ -287,8 +287,7 @@ class TestStaleDataInESSQL(TestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_cases()
-        cls.project = Domain.get_or_create_with_name(
-            cls.project_name, is_active=True, use_sql_backend=True)
+        cls.project = Domain.get_or_create_with_name(cls.project_name, is_active=True)
         cls.project.save()
         cls.elasticsearch = get_es_new()
         reset_es_index(XFORM_INDEX_INFO)

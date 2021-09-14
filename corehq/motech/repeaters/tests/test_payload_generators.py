@@ -150,5 +150,4 @@ def create_sql_domain(name):
         name,
         is_active=True,
         secure_submissions=False,
-        use_sql_backend=True,
     )

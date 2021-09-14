@@ -149,11 +149,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    if is_deletion or Domain.get_by_name(domain).use_sql_backend:
-        all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
-    else:
-        # accessor.iter_forms doesn't include deleted forms on the couch backend
-        all_forms = list(map(FormAccessors(domain).get_form, form_ids_to_modify))
+    all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
