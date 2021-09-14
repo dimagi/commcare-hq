@@ -74,7 +74,6 @@ from corehq.apps.hqwebapp.decorators import (
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
-from corehq.apps.linked_domain.applications import get_downstream_app_id_map
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -593,6 +592,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         # These links can be used for cross-domain web apps workflows, where a link jumps to the
         # same screen but in another domain's corresponding app. This works if both the source and
         # target apps are downstream apps that share an upstream app - the link references the upstream app.
+        from corehq.apps.linked_domain.applications import get_downstream_app_id_map
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map.keys():
             build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
