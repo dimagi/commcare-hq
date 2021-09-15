@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import DocumentStore
 
@@ -22,7 +21,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 
 class UnexpectedBackend(Exception):
@@ -112,16 +110,6 @@ class LedgerV2DocumentStore(DocumentStore):
             results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, [section_id], [entry_id])
             for ledger_value in results:
                 yield ledger_value.to_json()
-
-
-class LedgerV1DocumentStore(DjangoDocumentStore):
-
-    def __init__(self, domain):
-        from corehq.apps.commtrack.models import StockState
-        if should_use_sql_backend(domain):
-            raise UnexpectedBackend("Only non-SQL backend supported: {}".format(domain))
-        self.domain = domain
-        super(LedgerV1DocumentStore, self).__init__(StockState, model_manager=StockState.include_archived)
 
 
 class DocStoreLoadTracker(object):
