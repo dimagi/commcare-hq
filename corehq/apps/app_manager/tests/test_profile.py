@@ -158,8 +158,14 @@ class ProfileBuildTests(TestCase):
         profile_xml = copy.lazy_fetch_attachment('files/profile.xml')
         profile = ET.fromstring(profile_xml)
 
-        node = profile.find("./property[@key='ota-restore-url']")
-        self.assertEqual(node.get('value'), copy.ota_restore_url)
+        self.assertEqual(profile.get("uniqueid"), self.app.get_id)
+        self.assertIn(copy.profile_url, profile.get("update"))
 
-        node = profile.find("./property[@key='PostURL']")
-        self.assertEqual(node.get('value'), copy.post_url)
+        property_xpaths = {
+            "./property[@key='ota-restore-url']": copy.ota_restore_url,
+            "./property[@key='PostURL']": copy.post_url,
+            "./property[@key='heartbeat-url']": copy.heartbeat_url(),
+        }
+        for xpath, value in property_xpaths.items():
+            node = profile.find(xpath)
+            self.assertEqual(node.get('value'), value)
