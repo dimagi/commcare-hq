@@ -57,7 +57,7 @@ class UserChangeMessage(object):
     @staticmethod
     def domain_addition(domain):
         return {
-            "domain": {
+            DOMAIN_FIELD: {
                 ADD_TO_DOMAIN: {"domain": domain}
             }
         }
