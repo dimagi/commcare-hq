@@ -594,7 +594,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         # target apps are downstream apps that share an upstream app - the link references the upstream app.
         from corehq.apps.linked_domain.applications import get_downstream_app_id_map
         id_map = get_downstream_app_id_map(domain)
-        if app_id in id_map.keys():
+        if app_id in id_map:
             build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
         if not build:
             return _fail(_("Could not find application."))
