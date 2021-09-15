@@ -75,7 +75,6 @@ branches:
     - mk/user-history/structured-messages-v2 # MK Sep 1
     - mk/user-history/migrate-change-messages # MK Sep 14
     - gh/remove-pickles-from-accounting # Graham Sep 3
-    - jls/form-links-modules # Jenny Sept 7
     - dmr/cbc-tools  # Danny Sept 10
     - gh/erm/allow-text-input-for-new-domain # Graham Sept 13
     - smh/cross-domain-ucr-ui-updates # Steph Sept 14
