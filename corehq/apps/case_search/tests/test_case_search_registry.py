@@ -28,7 +28,6 @@ from corehq.apps.registry.tests.utils import (
     Invitation,
     create_registry_for_test,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 
 def case(name, type_, properties):
@@ -82,7 +81,6 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
 
 
 @es_test
-@run_with_sql_backend
 class TestCaseSearchRegistry(TestCase):
 
     @classmethod

@@ -154,11 +154,8 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-def run_with_sql_backend(obj):
+def run_with_all_backends(obj):
     return obj
-
-
-run_with_all_backends = run_with_sql_backend
 
 
 def _sharded(cls):
@@ -199,7 +196,7 @@ def sharded(cls):
 
     Was previously named @use_sql_backend
     """
-    return _sharded(run_with_sql_backend(cls))
+    return _sharded(cls)
 
 
 def patch_testcase_databases():

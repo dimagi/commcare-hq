@@ -11,7 +11,7 @@ from corehq.apps.registry.schema import RegistrySchemaBuilder
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.tests.utils import run_with_sql_backend, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 class TestDataRegistryHelper(SimpleTestCase):
@@ -64,7 +64,6 @@ class TestDataRegistryHelper(SimpleTestCase):
         self.log_data_access.not_called()
 
 
-@run_with_sql_backend
 class TestGetCaseHierarchy(TestCase):
     domain = 'data-registry-case-hierarchy'
 

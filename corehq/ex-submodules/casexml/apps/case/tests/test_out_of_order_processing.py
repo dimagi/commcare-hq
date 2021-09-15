@@ -3,11 +3,9 @@ from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import softer_assert
 
 
-@run_with_sql_backend
 class OutOfOrderCaseTest(TestCase):
 
     def setUp(self):

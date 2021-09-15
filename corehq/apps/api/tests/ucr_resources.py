@@ -18,12 +18,10 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from .utils import APIResourceTest
 
 
-@run_with_sql_backend
 class TestSimpleReportConfigurationResource(APIResourceTest):
     resource = v0_5.SimpleReportConfigurationResource
     api_name = "v0.5"
@@ -150,7 +148,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
 
 
-@run_with_sql_backend
 class TestConfigurableReportDataResource(APIResourceTest):
     resource = v0_5.ConfigurableReportDataResource
     api_name = "v0.5"

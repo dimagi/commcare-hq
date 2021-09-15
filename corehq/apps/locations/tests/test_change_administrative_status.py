@@ -19,13 +19,11 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 
 from ..models import SQLLocation
 from .util import setup_locations_and_types
 
 
-@run_with_sql_backend
 class TestChangeStatus(TestCase):
     domain = 'test-change-administrative'
     location_type_names = ['state', 'county', 'city']
