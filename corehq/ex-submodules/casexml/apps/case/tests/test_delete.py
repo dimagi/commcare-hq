@@ -8,10 +8,10 @@ from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import sharded
-from corehq.form_processor.utils.general import should_use_sql_backend
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
+@sharded
 class TestHardDelete(TestCase):
 
     def setUp(self):
@@ -32,12 +32,11 @@ class TestHardDelete(TestCase):
         with capture_kafka_changes_context(topics.FORM_SQL, topics.CASE_SQL) as change_context:
             safe_hard_delete(case)
 
-        if should_use_sql_backend(case.domain):
-            self.assertEqual(3, len(change_context.changes))
-            expected_ids = {case.case_id} | set(case.xform_ids)
-            self.assertEqual(expected_ids, {change.id for change in change_context.changes})
-            for change in change_context.changes:
-                self.assertTrue(change.deleted)
+        self.assertEqual(3, len(change_context.changes))
+        expected_ids = {case.case_id} | set(case.xform_ids)
+        self.assertEqual(expected_ids, {change.id for change in change_context.changes})
+        for change in change_context.changes:
+            self.assertTrue(change.deleted)
 
         with self.assertRaises(CaseNotFound):
             self.casedb.get_case(case.case_id)
@@ -78,8 +77,3 @@ class TestHardDelete(TestCase):
 
         self.assertIsNotNone(self.casedb.get_case(c1.case_id))
         self.assertIsNotNone(self.casedb.get_case(c2.case_id))
-
-
-@sharded
-class TestHardDeleteSQL(TestHardDelete):
-    pass

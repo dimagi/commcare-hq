@@ -33,7 +33,7 @@ class BaseFHIRViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain_obj = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         # ToDo: to be removed according to authentication updates by Smart-On-Fhir work
