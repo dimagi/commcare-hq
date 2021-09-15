@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.pillow import ConfigurableReportTableManager
 
 
 class BasePillowTestCase(CallCenterDomainMockTest):

@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain

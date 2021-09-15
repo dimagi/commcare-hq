@@ -81,7 +81,12 @@ class CustomRecipientTest(TestCase):
             self.assertIsNone(instance(case_id='does-not-exist').recipient)
 
     def test_recipient_location_case_owner_parent_location(self):
-        with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.child_location.location_id) as case:
+        with create_test_case(
+            self.domain,
+            'test-case',
+            'test-name',
+            owner_id=self.child_location.location_id
+        ) as case:
             self.assertEqual(case.owner_id, self.child_location.location_id)
 
             def instance(case_id=''):
