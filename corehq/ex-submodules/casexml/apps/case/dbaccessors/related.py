@@ -10,19 +10,6 @@ def get_reverse_indexed_case_ids(domain, case_ids):
     return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_CHILD)]
 
 
-def get_reverse_indexed_cases(domain, case_ids, relationship=None):
-    """
-    Gets all reverse indexed cases of a case (including child cases and extensions).
-    """
-    from casexml.apps.case.models import CommCareCase
-    return CommCareCase.view(
-        'case_indices/related',
-        keys=_get_keys_for_reverse_index_view(domain, case_ids, relationship),
-        reduce=False,
-        include_docs=True,
-    )
-
-
 def get_all_reverse_indices_info(domain, case_ids, relationship=None, exclude_for_case_type=None):
     from casexml.apps.case.models import CommCareCase
 

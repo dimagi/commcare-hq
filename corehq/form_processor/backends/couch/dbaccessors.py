@@ -3,7 +3,6 @@ from datetime import datetime
 
 from casexml.apps.case.dbaccessors import (
     get_all_reverse_indices_info,
-    get_reverse_indexed_cases,
 )
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -169,9 +168,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
-        return [case for case in get_reverse_indexed_cases(domain, case_ids)
-                if (not case_types or case.type in case_types)
-                and (is_closed is None or case.closed == is_closed)]
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
