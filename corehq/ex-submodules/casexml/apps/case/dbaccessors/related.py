@@ -3,19 +3,6 @@ from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
 
 
-def get_indexed_case_ids(domain, case_ids):
-    """
-    Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
-    """
-    from casexml.apps.case.models import CommCareCase
-    keys = [[domain, case_id, 'index'] for case_id in case_ids]
-    return [r['value']['referenced_id'] for r in CommCareCase.get_db().view(
-        'case_indices/related',
-        keys=keys,
-        reduce=False,
-    )]
-
-
 def get_reverse_indexed_case_ids(domain, case_ids):
     """
     Given a base list of case ids, gets all ids of cases that reference them (child cases)

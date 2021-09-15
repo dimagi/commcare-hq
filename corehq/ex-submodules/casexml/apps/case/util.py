@@ -10,16 +10,11 @@ from django.utils.dateparse import parse_datetime
 from iso8601 import iso8601
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
-from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
 from casexml.apps.phone.xml import get_case_element
-from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from couchforms.models import XFormInstance
-
-from dimagi.utils.couch.database import iter_docs
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
@@ -104,16 +99,6 @@ def prune_previous_log(sync_log):
         sync_log.previous_log_id = None
         return True
     return False
-
-
-def get_indexed_cases(domain, case_ids):
-    """
-    Given a base list of cases, gets all wrapped cases that they reference
-    (parent cases).
-    """
-    from casexml.apps.case.models import CommCareCase
-    return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
-                                                        get_indexed_case_ids(domain, case_ids))]
 
 
 def primary_actions(case):
