@@ -189,15 +189,15 @@ hqDefine("export/js/export_list", [
 
         //button hover text
         self.popoverText = "";
-        if(self.isOData() || self.isFeed()){
+        if (self.isOData() || self.isFeed()) {
             self.popoverText = "All of the selected feeds will be deleted.";
         }
-        else{
+        else {
             self.popoverText = "All of the selected exports will be deleted.";
         }
 
         $('#bulk-delete-text').tooltip({
-            trigger : 'hover',
+            trigger: 'hover',
             placement: 'top',
             title: gettext(self.popoverText),
         });
@@ -444,8 +444,8 @@ hqDefine("export/js/export_list", [
         };
 
         // Bulk action handling
-         self.bulkDeleteList = ko.computed(function () {
-            return _.filter(self.exports(), function (e) {return e.addedToBulk();})
+        self.bulkDeleteList = ko.computed(function () {
+            return _.filter(self.exports(), function (e) {return e.addedToBulk();});
         });
         self.bulkExportDownloadCount = ko.computed(function () {
             return self.bulkDeleteList().length;
@@ -463,35 +463,35 @@ hqDefine("export/js/export_list", [
         };
 
         self.multiple = ko.computed(function () {
-            if(self.bulkDeleteList().length > 1) { return "s"}
-            return ""
+            if (self.bulkDeleteList().length > 1) { return "s"; }
+            return "";
         });
         self.plural = ko.computed(function () {
-            if(self.bulkDeleteList().length > 1) { return "these"}
-            return "this"
+            if (self.bulkDeleteList().length > 1) { return "these"; }
+            return "this";
         });
 
         self.BulkExportDelete = function (observable, event) {
-            count = self.bulkExportDownloadCount;
+            var count = self.bulkExportDownloadCount;
             //probably a better fix for this
-            for(let i = 0; i < self.panels().length; i++){
-                panel = self.panels()[i];
+            for (let i = 0; i < self.panels().length; i++) {
+                var panel = self.panels()[i];
                 panel.isLoadingPanel(true);
                 panel.isNotBulkDeleting(false);
             }
-            bulkDelete = function () {
-                selected = _.filter(self.exports(), function (e) {return e.addedToBulk();});
-                deleteArray = [];
+            var bulkDelete = function () {
+                var selected = _.filter(self.exports(), function (e) { return e.addedToBulk() });
+                var deleteArray = [];
                 selected.forEach(function (item, i) {
                     var attr = {};
                     attr["domain"] = item.domain();
                     attr["type"] = item.type();
                     attr["id"] = item.id();
-                    if (attr["id"] != selected[0].id()){
+                    if (attr["id"] !== selected[0].id()) {
                         deleteArray.push(attr);
                     }
                 });
-                deleteList = JSON.stringify(deleteArray);
+                var deleteList = JSON.stringify(deleteArray);
                 $.ajax({
                     method: 'POST',
                     url: selected[0].deleteUrl(),
@@ -501,9 +501,12 @@ hqDefine("export/js/export_list", [
                     },
                     success: function (url) {
                         window.location.href = url;
-                    }
+                    },
+                    error: function () {
+                        location.reload();
+                    },
                 });
-            }
+            };
             if (options.isOData) {
                 kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
                 setTimeout(function () {

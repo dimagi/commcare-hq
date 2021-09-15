@@ -23,13 +23,13 @@
           <div data-bind="if: isOData || isFeed">
             {% blocktrans %}
               Are you sure you want to permanently delete <span data-bind="text: plural()"></span>
-              <strong><span data-bind="text: bulkExportDownloadCount()"></span> feed<span data-bind="text: multiple()"></span> </strong>:
+              <strong><span data-bind="text: bulkExportDownloadCount()"></span> feed<span data-bind="text: multiple()"></span></strong>?
             {% endblocktrans %}
           </div>
           <div data-bind="if: !isOData && !isFeed">
             {% blocktrans %}
               Are you sure you want to permanently delete <span data-bind="text: plural()"></span>
-              <strong><span data-bind="text: bulkExportDownloadCount()"></span> export<span data-bind="text: multiple()"></span> </strong>:
+              <strong><span data-bind="text: bulkExportDownloadCount()"></span> export<span data-bind="text: multiple()"></span></strong>?
             {% endblocktrans %}
           </div>
           <br>
