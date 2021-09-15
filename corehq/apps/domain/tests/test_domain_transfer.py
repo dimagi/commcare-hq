@@ -114,9 +114,17 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertEqual(user_history.by_domain, self.domain.name)
         self.assertEqual(user_history.for_domain, self.domain.name)
         self.assertEqual(user_history.changed_by, self.user.get_id)
-        self.assertEqual(user_history.user_id, self.transfer.from_user.get_id)
         self.assertEqual(user_history.change_messages,
                          UserChangeMessage.domain_removal(self.domain.name))
+        self.assertEqual(user_history.changed_via, 'test')
+        self.assertEqual(user_history.changes, {})
+
+        user_history = UserHistory.objects.get(user_id=self.transfer.to_user.get_id)
+        self.assertEqual(user_history.by_domain, self.domain.name)
+        self.assertEqual(user_history.for_domain, self.domain.name)
+        self.assertEqual(user_history.changed_by, self.user.get_id)
+        self.assertEqual(user_history.change_messages,
+                         UserChangeMessage.domain_addition(self.domain.name))
         self.assertEqual(user_history.changed_via, 'test')
         self.assertEqual(user_history.changes, {})
 

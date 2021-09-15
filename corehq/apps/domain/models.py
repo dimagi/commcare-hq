@@ -993,6 +993,9 @@ class TransferDomainRequest(models.Model):
             log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
                             changed_by_user=by_user, changed_via=transfer_via,
                             change_messages=UserChangeMessage.domain_removal(self.domain))
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.to_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_addition(self.domain))
         self.to_user.save()
         self.active = False
         self.save()

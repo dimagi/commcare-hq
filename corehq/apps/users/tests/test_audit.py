@@ -101,6 +101,19 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
             "Removed from domain 'test-domain'"
         )
 
+    def test_add_to_domain(self):
+        domain = "test-domain"
+        self._test_change_messages(
+            UserChangeMessage.domain_addition,
+            [domain],
+            {
+                "domain": {
+                    "add_to_domain": {"domain": domain}
+                }
+            },
+            "Added to domain 'test-domain'"
+        )
+
     def test_add_as_web_user(self):
         domain = "test-domain"
         self._test_change_messages(
