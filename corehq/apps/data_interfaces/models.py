@@ -983,9 +983,13 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
 
 class CaseDuplicate(models.Model):
+    id = models.BigAutoField(primary_key=True)
     case_id = models.CharField(max_length=126, null=True, db_index=True)
     action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
     potential_duplicates = models.ManyToManyField('self', symmetrical=True)
+
+    class Meta:
+        unique_together = ('case_id', 'action')
 
     def __str__(self):
         return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
