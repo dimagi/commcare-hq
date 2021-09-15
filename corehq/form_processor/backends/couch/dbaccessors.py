@@ -9,8 +9,6 @@ from casexml.apps.case.dbaccessors import (
 )
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
-    get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
 from corehq.form_processor.exceptions import AttachmentNotFound
@@ -129,7 +127,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def case_exists(case_id):
-        return CommCareCase.get_db().doc_exist(case_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_ids_that_exist(domain, case_ids):
@@ -161,7 +159,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        return get_case_ids_modified_with_owner_since(domain, owner_id, reference_date)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
