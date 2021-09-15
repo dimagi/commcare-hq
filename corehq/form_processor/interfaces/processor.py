@@ -4,7 +4,6 @@ from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
 from django.conf import settings
-from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case import const
@@ -85,22 +84,14 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def ledger_processor(self):
-        from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
         from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
-        if self.use_sql_domain:
-            return LedgerProcessorSQL(domain=self.domain)
-        else:
-            return LedgerProcessorCouch(domain=self.domain)
+        return LedgerProcessorSQL(domain=self.domain)
 
     @property
     @memoized
     def ledger_db(self):
-        from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
         from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
-        if self.use_sql_domain:
-            return LedgerDBSQL()
-        else:
-            return LedgerDBCouch()
+        return LedgerDBSQL()
 
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
