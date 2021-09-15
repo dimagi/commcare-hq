@@ -320,12 +320,12 @@ def save_copy(request, domain, app_id):
 
     _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
 
-    copy = copy and SavedAppBuild.wrap(copy.to_json()).releases_list_json(
+    copy_json = copy and SavedAppBuild.wrap(copy.to_json()).releases_list_json(
         get_timezone_for_user(request.couch_user, domain)
     )
 
     return JsonResponse({
-        "saved_app": copy,
+        "saved_app": copy_json,
         "error_html": "",
     })
 
