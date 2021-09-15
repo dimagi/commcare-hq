@@ -589,7 +589,15 @@ def session_endpoint(request, domain, app_id, endpoint_id):
 
     build = _fetch_build(domain, request.couch_user.username, app_id)
     if not build:
-        return _fail(_("Could not find application."))
+        # These links can be used for cross-domain web apps workflows, where a link jumps to the
+        # same screen but in another domain's corresponding app. This works if both the source and
+        # target apps are downstream apps that share an upstream app - the link references the upstream app.
+        from corehq.apps.linked_domain.applications import get_downstream_app_id_map
+        id_map = get_downstream_app_id_map(domain)
+        if app_id in id_map:
+            build = _fetch_build(domain, request.couch_user.username, id_map[app_id])
+        if not build:
+            return _fail(_("Could not find application."))
     build = wrap_app(build)
 
     valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
