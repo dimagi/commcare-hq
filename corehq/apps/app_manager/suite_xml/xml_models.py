@@ -500,6 +500,10 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
 
+    @property
+    def id(self):
+        return None
+
 
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
