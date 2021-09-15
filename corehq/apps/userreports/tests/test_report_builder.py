@@ -4,6 +4,10 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.registry.schema import RegistrySchemaBuilder
+from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
     DATA_SOURCE_TYPE_FORM,
@@ -32,8 +36,9 @@ from corehq.apps.userreports.reports.builder.forms import (
     UnmanagedDataSourceHelper,
     ApplicationFormDataSourceHelper,
     ApplicationCaseDataSourceHelper,
+    RegistryCaseDataSourceHelper,
 )
-from corehq.apps.userreports.tests.utils import get_simple_xform
+from corehq.apps.userreports.tests.utils import get_simple_xform, get_sample_registry_data_source
 from corehq.util.test_utils import flag_enabled
 
 
@@ -164,6 +169,29 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             'Case Owner (Location w/ Descendants and Archived Locations)',
             owner_location_prop_archived_w_descendants.get_text()
         )
+
+    def test_builder_for_registry(self):
+        case_type_for_registry = CaseType(domain=self.domain, name='registry_prop', fully_generated=True)
+        case_type_for_registry.save()
+        CaseProperty(case_type=case_type_for_registry, name='registry_property',
+                     deprecated=False, data_type='plain', group='').save()
+        user = create_user("admin", "123")
+        registry = create_registry_for_test(user, self.domain, invitations=[
+            Invitation('foo', accepted=True), Invitation('user-reports', accepted=True),
+        ], name='registry')
+        registry_data_source = get_sample_registry_data_source(registry_slug=registry.slug)
+        registry_data_source.save()
+        registry.schema = RegistrySchemaBuilder(["registry_prop"]).build()
+        registry.save()
+
+        builder = RegistryCaseDataSourceHelper(self.domain, registry.slug, 'case', case_type_for_registry.name)
+
+        expected_property_names = ['closed', 'closed_on', 'registry_property', 'computed/owner_name',
+                                   'computed/user_name']
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
+        registry_prop = builder.data_source_properties['registry_property']
+        self.assertEqual('registry_property', registry_prop.get_id())
+        self.assertEqual('registry property', registry_prop.get_text())
 
 
 class DataSourceReferenceTest(ReportBuilderDBTest):
