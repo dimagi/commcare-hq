@@ -6,8 +6,6 @@ from casexml.apps.case.dbaccessors import (
 )
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
-    get_last_modified_dates
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent)
@@ -172,7 +170,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
-        return get_last_modified_dates(domain, case_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
