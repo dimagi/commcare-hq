@@ -6,6 +6,10 @@ from corehq.apps.users.models import UserHistory
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
+def noop(*args, **kwargs):
+    pass
+
+
 @skip_on_fresh_install
 def _reset_records(*args, **kwargs):
     UserHistory.objects.all().delete()
@@ -18,5 +22,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_reset_records),
+        migrations.RunPython(_reset_records, reverse_code=noop),
     ]
