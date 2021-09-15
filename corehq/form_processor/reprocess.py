@@ -2,8 +2,6 @@ import logging
 from collections import namedtuple
 from datetime import datetime
 
-from couchdbkit import ResourceNotFound
-
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -204,15 +202,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
 def _get_form(form_id):
     from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
     try:
         return FormAccessorSQL.get_form(form_id)
     except XFormNotFound:
-        pass
-
-    try:
-        return FormAccessorCouch.get_form(form_id)
-    except ResourceNotFound:
-        pass
-
-    return None
+        return None
