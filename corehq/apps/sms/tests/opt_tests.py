@@ -13,10 +13,7 @@ from corehq.apps.sms.tests.util import (
     delete_domain_phone_numbers,
     setup_default_sms_test_backend,
 )
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    run_with_all_backends,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 class OptTestCase(DomainSubscriptionMixin, TestCase):
@@ -65,7 +62,6 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
     def get_last_sms(self, phone_number):
         return SMS.objects.filter(domain=self.domain, phone_number=phone_number).order_by('-date')[0]
 
-    @run_with_all_backends
     def test_opt_out_and_opt_in(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
@@ -97,7 +93,6 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, get_message(MSG_OPTED_IN, context=('STOP',)))
 
-    @run_with_all_backends
     def test_sending_to_opted_out_number(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 

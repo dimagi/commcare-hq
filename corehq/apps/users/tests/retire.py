@@ -25,7 +25,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class RetireUserTestCase(TestCase):
@@ -83,7 +82,6 @@ class RetireUserTestCase(TestCase):
         with self.assertRaisesMessage(ValueError, "Missing unretired_by"):
             self.commcare_user.unretire(self.domain, unretired_by=None)
 
-    @run_with_all_backends
     def test_unretire_user(self):
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
@@ -130,7 +128,6 @@ class RetireUserTestCase(TestCase):
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertFalse(form.is_deleted)
 
-    @run_with_all_backends
     def test_undelete_system_forms(self):
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
@@ -174,7 +171,6 @@ class RetireUserTestCase(TestCase):
         form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
         self.assertFalse(form_2.is_deleted)
 
-    @run_with_all_backends
     def test_deleted_indices_removed(self):
         factory = CaseFactory(
             self.domain,
@@ -210,7 +206,6 @@ class RetireUserTestCase(TestCase):
         self.assertTrue(child.indices[0].is_deleted)
         self.assertEqual(2, len(child.xform_ids))
 
-    @run_with_all_backends
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_rebuild_cases_with_new_owner(self, rebuild_case):
         """
@@ -233,7 +228,6 @@ class RetireUserTestCase(TestCase):
         detail = UserArchivedRebuild(user_id=self.other_user.user_id)
         rebuild_case.assert_called_once_with(self.domain, case_id, detail)
 
-    @run_with_all_backends
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_dont_rebuild(self, rebuild_case):
         """ Don't rebuild cases that are owned by other users """
@@ -252,7 +246,6 @@ class RetireUserTestCase(TestCase):
 
         self.assertEqual(rebuild_case.call_count, 0)
 
-    @run_with_all_backends
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_multiple_case_blocks_all_rebuilt(self, rebuild_case):
         """ Rebuild all cases in forms with multiple case blocks """
@@ -276,7 +269,6 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(rebuild_case.call_count, len(case_ids))
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
 
-    @run_with_all_backends
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_multiple_case_blocks_some_deleted(self, rebuild_case):
         """ Don't rebuild deleted cases """
@@ -306,7 +298,6 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(rebuild_case.call_count, len(case_ids) - 1)
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
 
-    @run_with_all_backends
     def test_all_case_forms_deleted(self):
         from corehq.apps.callcenter.sync_usercase import sync_usercase
         sync_usercase(self.commcare_user)
@@ -336,7 +327,6 @@ class RetireUserTestCase(TestCase):
 
         self.assertTrue(CaseAccessors(self.domain).get_case(usercase_id).is_deleted)
 
-    @run_with_all_backends
     def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex
         caseblock = CaseBlock.deprecated_init(

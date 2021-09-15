@@ -15,7 +15,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -110,7 +109,6 @@ class TestCommCareCaseResource(APIResourceTest):
         api_case = api_cases[0]
         self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
 
-    @run_with_all_backends
     def test_parent_and_child_cases(self):
         # Create cases
         parent_case_id = uuid.uuid4().hex

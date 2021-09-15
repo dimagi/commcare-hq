@@ -13,7 +13,6 @@ class BasePillowTestCase(CallCenterDomainMockTest):
         # Time savings: ~25s per
         #   DataSourceProvider.get_data_sources() et al and/or
         #   ConfigurableReportTableManager.bootstrap()
-        # and @run_with_all_backends is a multiplier
         cls.patches = [
             patch.object(StaticDataSourceConfiguration, "_all", lambda: []),
             patch("corehq.apps.userreports.pillow.rebuild_sql_tables"),

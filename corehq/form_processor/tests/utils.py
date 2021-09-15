@@ -154,10 +154,6 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-def run_with_all_backends(obj):
-    return obj
-
-
 def sharded(cls):
     """Tag tests to run with the sharded SQL backend
 
