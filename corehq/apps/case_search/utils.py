@@ -209,7 +209,7 @@ class CaseSearchCriteria:
         match = pattern.match(value)
         if not match:
             raise CaseFilterError(_('Invalid date range format, {}'), key)
-        _, _, startdate, enddate = value.split('__')
+        startdate, enddate = value.split('__')[2:]
         return case_property_range_query(key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, key, value):
