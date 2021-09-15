@@ -11,7 +11,6 @@ from dimagi.utils.chunked import chunked
 from memoized import memoized
 
 from ..system_action import system_action
-from ..utils import should_use_sql_backend
 
 
 CaseIndexInfo = namedtuple(
@@ -133,12 +132,8 @@ class FormAccessors(object):
     @property
     @memoized
     def db_accessor(self):
-        from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        if should_use_sql_backend(self.domain):
-            return FormAccessorSQL
-        else:
-            return FormAccessorCouch
+        return FormAccessorSQL
 
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
