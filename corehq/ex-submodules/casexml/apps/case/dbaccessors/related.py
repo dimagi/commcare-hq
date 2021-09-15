@@ -16,16 +16,6 @@ def get_indexed_case_ids(domain, case_ids):
     )]
 
 
-def get_extension_case_ids(domain, case_ids, exclude_for_case_type=None):
-    """
-    Given a base list of case ids,  get all ids of all extension cases that reference them
-    """
-    return [
-        r.case_id for r in
-        get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_EXTENSION, exclude_for_case_type)
-    ]
-
-
 def get_reverse_indexed_case_ids(domain, case_ids):
     """
     Given a base list of case ids, gets all ids of cases that reference them (child cases)
