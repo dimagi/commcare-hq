@@ -5915,8 +5915,8 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
-    required_privileges = models.TextField(null=True, help_text=_("Space-separated list of privilege strings "
-                                                                 "from corehq.privileges"))
+    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
+                                                                 " strings from corehq.privileges"))
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
