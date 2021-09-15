@@ -1,9 +1,6 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.dbaccessors import (
-    get_all_reverse_indices_info,
-)
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import AttachmentNotFound
@@ -174,7 +171,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        return get_all_reverse_indices_info(domain, case_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_attachment_content(case_id, attachment_id):
