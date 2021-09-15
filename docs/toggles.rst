@@ -1,7 +1,7 @@
 Plugins
 =======
 
-There are a number of plugins which sit on top of the core CommCare functionality that enable a specific set of functionality. They are not included in multi-tenant subscriptions when the platform is hosted for external signups.
+There are a number of plugins which sit on top of the core CommCare functionality that enable a specific set of functionality. For safety these plugins aren't available to end-users when the platform is hosted for external signups in a multi-tenant configuration, rather these plugins are enabled by system administrators. 
 
 When hosting the CommCareHQ, be aware that plugins aren't fully supported by the core committers and generally have a higher support burden and require directly reading the code to provide support. A smaller percentage of CommCare’s open source developer community typically has knowledge on any given plugin. If you are enabling plugins in your local environment, please make sure you have sufficient engineering expertise to be able to read direct code-level documentation. Plugins can be managed through the this `admin <UI https://hq.server.url/hq/flags/>`_.
 
