@@ -1,7 +1,6 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -175,7 +174,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachment_content(case_id, attachment_id):
-        return _get_attachment_content(CommCareCase, case_id, attachment_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
@@ -187,11 +186,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        return _soft_delete(CommCareCase.get_db(), case_ids, deletion_date, deletion_id)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
-        return _soft_undelete(CommCareCase.get_db(), case_ids)
+        raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
