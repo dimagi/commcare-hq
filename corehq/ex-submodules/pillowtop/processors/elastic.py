@@ -67,7 +67,12 @@ class ElasticProcessor(PillowProcessor):
             return
 
         if change.deleted and change.id:
-            self._delete_doc_if_exists(change.id)
+            doc = change.get_document()
+            if doc and doc.get('doc_type') is not None:
+                if doc['doc_type'].endswith("-Deleted"):
+                    self._delete_doc_if_exists(change.id)
+            else:
+                self._delete_doc_if_exists(change.id)
             return
 
         with self._datadog_timing('extract'):

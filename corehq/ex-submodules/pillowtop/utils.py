@@ -228,12 +228,11 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
     payload = []
 
     def _is_deleted(change):
-        if change.deleted:
-            return bool(change.id)
-
         doc = change.get_document()
         if doc and doc.get('doc_type'):
             return doc['doc_type'].endswith(DELETED_SUFFIX)
+        elif change.deleted:
+            return bool(change.id)
 
     for change in changes:
         action = {
