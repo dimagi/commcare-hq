@@ -141,7 +141,7 @@ class Command(BaseCommand):
             # filter on the new column that is expected to be blank for not migrated records only
             records = records.filter(changed_via='')
 
-        for user_history in records.all():
+        for user_history in records.order_by('pk').iterator():
             try:
                 migrate(user_history, save=save, skip_assertions=skip_assertions)
             except Exception as e:

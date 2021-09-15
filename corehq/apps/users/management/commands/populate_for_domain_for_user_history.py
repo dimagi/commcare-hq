@@ -62,7 +62,7 @@ class Command(BaseCommand):
         succeeded = {}
 
         with open("populate_for_domain_for_user_history.txt", 'w') as _file:
-            for user_history in UserHistory.objects.all():
+            for user_history in UserHistory.objects.order_by('pk').iterator():
                 for_domain = None
                 by_domain = user_history.by_domain
                 if user_history.user_type == "CommCareUser":

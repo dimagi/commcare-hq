@@ -27,7 +27,7 @@ class Command(BaseCommand):
             action=UserHistory.UPDATE,
         )
         with open("add_location_change_message.csv", "w") as _file:
-            for record in records:
+            for record in records.order_by('pk').iterator():
                 updated = False
                 if 'location_id' in record.changes and record.changes['location_id'] is None:
                     if 'location' not in record.change_messages:
