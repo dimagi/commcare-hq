@@ -1,7 +1,8 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from ..forms import HQTwoFactorMethodForm
 
 
+@override_settings(TWO_FACTOR_CALL_GATEWAY=True, TWO_FACTOR_SMS_GATEWAY=True)
 class TestHQTwoFactorMethodForm(SimpleTestCase):
     def test_when_phone_support_is_enabled_all_options_are_shown(self):
         form = HQTwoFactorMethodForm(allow_phone_2fa=True)
