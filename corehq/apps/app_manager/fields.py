@@ -94,10 +94,10 @@ class ApplicationDataSourceUIHelper(object):
                                                    widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
+        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
 
         self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
                                                      required=False)
-        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         if enable_registry:
             self.registry_slug_field.widget = forms.Select()
 
@@ -167,6 +167,7 @@ class ApplicationDataSourceUIHelper(object):
                 "option."),
             "application": _("Which application should the data come from?"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
+            "registry_slug": _("Select the data registry containing the data you wish to access in the report")
         }
         return [
             hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)

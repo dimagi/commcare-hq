@@ -888,21 +888,9 @@ class DataSourceForm(forms.Form):
         self.app_source_helper = ApplicationDataSourceUIHelper(
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
             enable_registry=DATA_REGISTRY.enabled(self.domain)
-
         )
         self.app_source_helper.bootstrap(self.domain)
-
-        report_source_fields = self.app_source_helper.get_fields()
-        report_source_help_texts = {
-            "source_type": _(
-                "<strong>Form</strong>: Display data from form submissions.<br/>"
-                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
-                "option."),
-            "application": _("Which application should the data come from?"),
-            "source": _("Choose the case type or form from which to retrieve data for this report."),
-            "registry_slug": _("Select the data registry containing the data you wish to access in the report")
-        }
-        self.fields.update(report_source_fields)
+        self.fields.update(self.app_source_helper.get_fields())
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"

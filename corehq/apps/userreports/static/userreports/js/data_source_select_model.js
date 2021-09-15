@@ -8,5 +8,6 @@ hqDefine("userreports/js/data_source_select_model", function () {
             'form': gettext('Form'),
             'data_source': gettext('Data Source'),
         },
+        registrySlug: ko.observable(""),
     };
 });
