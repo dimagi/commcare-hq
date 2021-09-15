@@ -296,7 +296,7 @@ def save_copy(request, domain, app_id):
         CouchUser.get(user_id).set_has_built_app()
     except AppValidationError as e:
         lang, langs = get_langs(request, app)
-        return json_response({
+        return JsonResponse({
             "saved_app": None,
             "error_html": render_to_string("app_manager/partials/build_errors.html", {
                 'app': get_app(domain, app_id),
@@ -324,7 +324,7 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
 
-    return json_response({
+    return JsonResponse({
         "saved_app": copy,
         "error_html": "",
     })
