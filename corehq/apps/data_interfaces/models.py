@@ -939,19 +939,43 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         duplicate_cases = find_duplicate_cases(
             domain, case, self.case_properties, self.include_closed, self.match_type
         )
-        # Delete all CaseDuplicates and potential duplicates with this case_id, we'll recreate them later
-        CaseDuplicate.delete_all_references(action=self, case_id=case.case_id)
 
-        case_present = any(
-            duplicate_case.case_id for duplicate_case in duplicate_cases if case.case_id == duplicate_case.case_id
-        )
-        if not case_present:
+        new_duplicate_case_ids = {
+            duplicate_case.case_id for duplicate_case in duplicate_cases
+        }  # The duplicates that should now be tracked in the system
+
+        if case.case_id not in new_duplicate_case_ids:
             # This can happen if the case being searched isn't in the case search index
             # (e.g. if this is a case create, and the pillows are racing each other.)
             duplicate_cases.append(case)
+            new_duplicate_case_ids.add(case.case_id)
 
-        if len(duplicate_cases) == 1:  # There are no duplicates left
-            return CaseRuleActionResult(num_updates=0)
+        try:
+            existing_duplicate_case_ids = set(
+                CaseDuplicate.objects
+                .prefetch_related('potential_duplicates')
+                .get(action=self, case_id=case.case_id)
+                .potential_duplicates
+                .all()
+                .values_list('case_id', flat=True)
+            ) | set([case.case_id])  # The duplicates we currently have for this case tracked in the system
+        except CaseDuplicate.DoesNotExist:
+            # There are no duplicate cases currently in the system, so carry on
+            pass
+        else:
+            if new_duplicate_case_ids == {case.case_id}:
+                # This is no longer a duplicate, so check that there aren't any
+                # other cases that are no longer duplicates
+                CaseDuplicate.remove_unique_cases(action=self, case_id=case.case_id)
+                CaseDuplicate.objects.filter(action=self, case_id=case.case_id).delete()
+                return CaseRuleActionResult(num_updates=0)
+
+            if new_duplicate_case_ids == existing_duplicate_case_ids:
+                # If the list of duplicates hasn't changed, we don't need to do anything here
+                return CaseRuleActionResult(num_updates=0)
+
+        # Delete all CaseDuplicates with this case_id, we'll recreate it
+        CaseDuplicate.objects.filter(action=self, case_id=case.case_id).delete()
 
         num_updates = self._update_cases(domain, rule, duplicate_cases)
 
@@ -995,27 +1019,44 @@ class CaseDuplicate(models.Model):
         return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
 
     @classmethod
-    def delete_all_references(cls, action, case_id):
-        CaseDuplicate.objects.filter(action=action).filter(
-            Q(case_id=case_id) | Q(potential_duplicates__case_id=case_id)).delete()
+    def remove_unique_cases(cls, action, case_id):
+        # Given a case_id that is no longer a duplicate, ensure there are no
+        # other CaseDuplicates that were only pointing to this case
+        return (
+            cls.objects
+            .filter(action=action)
+            .filter(Q(potential_duplicates__case_id=case_id))
+            .annotate(potential_duplicates_count=models.Count("potential_duplicates"))
+            .filter(potential_duplicates_count=1)
+            .delete()
+        )
 
     @classmethod
     def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_cases):
+        case_ids = [case.case_id for case in duplicate_cases]
+        existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=case_ids, action=action)
+        existing_case_duplicate_case_ids = [case.case_id for case in existing_case_duplicates]
         case_duplicates = cls.objects.bulk_create([
-            cls(case_id=duplicate_case.case_id, action=action) for duplicate_case in duplicate_cases
+            cls(case_id=duplicate_case.case_id, action=action)
+            for duplicate_case in duplicate_cases
+            if duplicate_case.case_id not in existing_case_duplicate_case_ids
         ])
+        case_duplicates += existing_case_duplicates
         initial_case_duplicate = next(
             duplicate for duplicate in case_duplicates if duplicate.case_id == initial_case.case_id
         )
         # Create symmetrical many-to-many relationship between each duplicate in bulk
         through_models = [
-            through_model for case_duplicate in case_duplicates if case_duplicate.case_id != initial_case.case_id
+            through_model
+            for case_duplicate in case_duplicates
+            if case_duplicate.case_id != initial_case.case_id
+
             for through_model in (
                 cls.potential_duplicates.through(
                     from_caseduplicate=initial_case_duplicate,
                     to_caseduplicate=case_duplicate,
                 ),
-                CaseDuplicate.potential_duplicates.through(
+                cls.potential_duplicates.through(
                     from_caseduplicate=case_duplicate,
                     to_caseduplicate=initial_case_duplicate,
                 )
