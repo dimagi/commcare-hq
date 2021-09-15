@@ -368,7 +368,6 @@ class DeleteNewCustomExportView(BaseExportView):
         count = request.POST.get("count")
         if count:
             deletelist = json.loads(request.POST.get("deleteList"))
-            print(self.kwargs.get('export_type'))
             self.export_type = self.kwargs.get('export_type')
             export = self.export_instance
             export.delete()

@@ -1,6 +1,6 @@
 {% load i18n %}
 <div data-bind="visible: bulkExportDownloadCount()"
-     style="float:right; margin-left:10px">
+     style="float:right; margin-left:10px; margin-bottom:8px">
   <form class="form form-inline" method="post"
         data-bind="submit: submitBulkExportDownload"
         action="{{ bulk_download_url }}">
