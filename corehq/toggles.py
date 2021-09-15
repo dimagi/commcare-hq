@@ -1210,13 +1210,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
-    'not_tf_sql_backend',
-    'Domains that do not use a SQLite backend for Touchforms',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application. Main use case is '

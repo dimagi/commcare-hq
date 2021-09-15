@@ -55,6 +55,14 @@ class UserChangeMessage(object):
         }
 
     @staticmethod
+    def domain_addition(domain):
+        return {
+            "domain": {
+                ADD_TO_DOMAIN: {"domain": domain}
+            }
+        }
+
+    @staticmethod
     def two_factor_disabled_with_verification(verified_by, verification_mode, disable_for_days):
         change_message = {
             TWO_FACTOR_FIELD: {
@@ -262,6 +270,7 @@ CLEAR_PROGRAM = 'clear_program'
 SET_ROLE = 'set_role'
 CLEAR_ROLE = 'clear_role'
 REMOVE_FROM_DOMAIN = 'remove_from_domain'
+ADD_TO_DOMAIN = 'add_to_domain'
 ADD_AS_WEB_USER = 'add_as_web_user'
 DISABLE_FOR_DAYS = 'disable_for_days'
 DISABLE_WITH_VERIFICATION = 'disable_with_verification'
@@ -287,6 +296,7 @@ MESSAGES = {
     SET_ROLE: UserChangeFormatter.simple_formatter(noop("Role: {name}[{id}]")),
     CLEAR_ROLE: UserChangeFormatter.simple_formatter(noop("Role: None")),
     REMOVE_FROM_DOMAIN: UserChangeFormatter.simple_formatter(noop("Removed from domain '{domain}'")),
+    ADD_TO_DOMAIN: UserChangeFormatter.simple_formatter(noop("Added to domain '{domain}'")),
     ADD_AS_WEB_USER: UserChangeFormatter.simple_formatter(noop("Added as web user to domain '{domain}'")),
     DISABLE_FOR_DAYS: UserChangeFormatter.simple_formatter(noop("Disabled for {days} days")),
     DISABLE_WITH_VERIFICATION: UserChangeFormatter.simple_formatter(

@@ -20,7 +20,7 @@ class BaseViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         cls.user.is_superuser = True
@@ -83,7 +83,7 @@ class TestDataSetMapUpdateView(BaseViewTest):
 
     def test_user_from_other_domain_404(self):
         other_domain = 'other-domain'
-        create_domain(other_domain, use_sql_backend=True)
+        create_domain(other_domain)
         user = WebUser.create(other_domain, 'other@user.com', PASSWORD,
                               created_by=None, created_via=None)
         self.addCleanup(user.delete, other_domain, None)

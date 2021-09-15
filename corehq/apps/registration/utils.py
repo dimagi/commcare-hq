@@ -126,7 +126,6 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True,
             first_domain_for_user=is_new_user
         )
 

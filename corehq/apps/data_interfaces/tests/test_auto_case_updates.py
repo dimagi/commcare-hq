@@ -31,10 +31,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.form_processor.tests.utils import (
-    run_with_sql_backend,
-    set_case_property_directly,
-)
+from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
 from corehq.util.context_managers import drop_connected_signals
@@ -517,6 +514,10 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             _save_case(self.domain, case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
+
+
+def set_case_property_directly(case, property_name, value):
+    case.case_json[property_name] = value
 
 
 class CaseRuleActionsTest(BaseCaseRuleTest):
