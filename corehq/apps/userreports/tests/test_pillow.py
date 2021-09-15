@@ -173,7 +173,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
         self.assertEqual(
             {data_source_1._id, data_source_2._id},
-            set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+            {t.config._id for t in table_manager.table_adapters_by_domain[ds_1_domain]}
         )
 
     @patch("corehq.apps.cachehq.mixins.invalidate_document")
@@ -268,7 +268,7 @@ class ChunkedUCRProcessorTest(TestCase):
     def test_full_fallback(self, process_change_patch, process_changes_patch):
 
         process_changes_patch.side_effect = Exception
-        cases = self._create_and_process_changes()
+        self._create_and_process_changes()
 
         process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
@@ -283,7 +283,7 @@ class ChunkedUCRProcessorTest(TestCase):
             for i in range(10)
         ]
         iter_docs_patch.return_value = docs[0:6]
-        cases = self._create_and_process_changes(docs)
+        self._create_and_process_changes(docs)
 
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
