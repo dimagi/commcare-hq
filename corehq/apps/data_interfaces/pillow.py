@@ -6,6 +6,7 @@ from pillowtop.processors import PillowProcessor
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import CASE_DEDUPE
 
 
 class CaseDeduplicationProcessor(PillowProcessor):
@@ -22,6 +23,9 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
     def process_change(self, change):
         domain = change.metadata.domain
+        if not CASE_DEDUPE.enabled(domain):
+            return
+
         rules = self._get_rules(domain)
         if not rules:
             return
