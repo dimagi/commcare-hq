@@ -1,8 +1,10 @@
 from datetime import datetime
+from itertools import chain
 
 from django.test import TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
+from faker import Faker
 from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
@@ -190,6 +192,7 @@ class FindingDuplicatesTest(TestCase):
         ])
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseDeduplicationActionTest(TestCase):
 
     @classmethod
@@ -236,39 +239,69 @@ class CaseDeduplicationActionTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super().tearDown()
 
-    def _create_cases(self):
-        case_1 = self.factory.create_case(case_name='name', update={"age": 2})
-        case_2 = self.factory.create_case(case_name='name', update={"age": 2})
+    def _create_cases(self, num_cases=5):
+        faker = Faker()
+        duplicate_name = "George Simon Esq."
+        duplicate_age = 12
 
-        return [case_1, case_2]
+        duplicates = [
+            self.factory.create_case(
+                case_name=duplicate_name, case_type=self.case_type, update={"age": duplicate_age}
+            ) for _ in range(num_cases)
+        ]
+        uniques = [
+            self.factory.create_case(
+                case_name=faker.name(), case_type=self.case_type, update={"age": faker.random_int(1, 100)}
+            ) for _ in range(num_cases)
+        ]
+
+        return duplicates, uniques
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_updates_a_duplicate(self, find_duplicates_mock):
-        case_1, case_2 = self._create_cases()
-        find_duplicates_mock.return_value = [case_1, case_2]
+        """Ensure that all duplicates are updated by the rule
+        """
 
-        self.rule.run_actions_when_case_matches(case_1)
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = duplicates
 
-        case_1 = self.accessor.get_case(case_1.case_id)
-        case_2 = self.accessor.get_case(case_2.case_id)
+        self.rule.run_actions_when_case_matches(duplicates[0])
 
-        self.assertEqual(case_1.get_case_property('is_potential_duplicate'), 'yes')
-        self.assertEqual(case_2.get_case_property('is_potential_duplicate'), 'yes')
+        for duplicate_case in duplicates:
+            self.assertEqual(
+                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'),
+                'yes'
+            )
+
+        for unique_case in uniques:
+            self.assertIsNone(
+                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+            )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_stores_all_duplicates(self, find_duplicates_mock):
         """When it finds duplicates, store them in the CaseDuplicate model
         """
-        case_1, case_2 = self._create_cases()
-        find_duplicates_mock.return_value = [case_1, case_2]
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = duplicates
 
-        self.rule.run_actions_when_case_matches(case_1)
+        self.rule.run_actions_when_case_matches(duplicates[0])
 
-        duplicates = list(CaseDuplicate.objects.filter(action=self.action).all())
-        self.assertItemsEqual([duplicate.case_id for duplicate in duplicates], [case_1.case_id, case_2.case_id])
+        # New CaseDuplicate objects should be created for all the duplicate cases
+        self.assertItemsEqual(
+            list(CaseDuplicate.objects.filter(action=self.action).all().values_list('case_id', flat=True)),
+            [duplicate.case_id for duplicate in duplicates]
+        )
 
-        self.assertEqual(duplicates[0].potential_duplicates.count(), 1)
-        self.assertEqual(duplicates[0].potential_duplicates.first().case_id, case_1.case_id)
+        # The potential_duplicates list for the searched case is the set of all duplicate cases
+        self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
+
+    def _assert_potential_duplicates(self, case_id, duplicates):
+        case_duplicate_searched_case = CaseDuplicate.objects.get(case_id=case_id)
+        self.assertCountEqual(
+            list(case_duplicate_searched_case.potential_duplicates.all().values_list('case_id', flat=True)),
+            [duplicate.case_id for duplicate in duplicates if duplicate.case_id != case_id]
+        )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_stores_all_duplicates_pillow_behind(self, find_duplicates_mock):
@@ -276,61 +309,78 @@ class CaseDeduplicationActionTest(TestCase):
         should still be able to store all updates
 
         """
+        duplicates, uniques = self._create_cases()
 
-        case_1, case_2 = self._create_cases()
-        find_duplicates_mock.return_value = [case_2]
+        # The searched case isn't returned by the elasticsearch query
+        find_duplicates_mock.return_value = duplicates[1:]
 
-        self.rule.run_actions_when_case_matches(case_1)
+        self.rule.run_actions_when_case_matches(duplicates[0])
 
-        duplicates = list(CaseDuplicate.objects.filter(action=self.action).all())
-        self.assertItemsEqual([duplicate.case_id for duplicate in duplicates], [case_1.case_id, case_2.case_id])
+        # But there should be a CaseDuplicate object created for the searched case anyway
+        self.assertItemsEqual(
+            list(CaseDuplicate.objects.filter(action=self.action).all().values_list('case_id', flat=True)),
+            [duplicate.case_id for duplicate in duplicates]
+        )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):
         """When the case is no longer a duplicate, it should be removed from the CaseDuplicate model
         """
-        case_1, case_2 = self._create_cases()
+        duplicates, uniques = self._create_cases()
+        find_duplicates_mock.return_value = duplicates
 
-        find_duplicates_mock.return_value = [case_1, case_2]
-        self.rule.run_actions_when_case_matches(case_1)
-        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+        self.rule.run_actions_when_case_matches(duplicates[0])
 
-        find_duplicates_mock.return_value = [case_1]
-        self.rule.run_actions_when_case_matches(case_1)
+        # The first case is no longer a duplicate
+        find_duplicates_mock.return_value = [duplicates[0]]
+        self.rule.run_actions_when_case_matches(duplicates[0])
 
+        # All the other cases are now unique too
         self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 0)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
-    def test_case_already_duplicate(self, find_duplicates_mock):
+    def test_case_already_marked_duplicate(self, find_duplicates_mock):
         """What happens when a case is already in the list
         """
-        case_1, case_2 = self._create_cases()
+        num_duplicates = 5
+        duplicates, uniques = self._create_cases(num_duplicates)
+        find_duplicates_mock.return_value = duplicates
 
-        find_duplicates_mock.return_value = [case_1, case_2]
-        self.rule.run_actions_when_case_matches(case_1)
-        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
+        initial_case_duplicate_id = CaseDuplicate.objects.get(case_id=duplicates[0].case_id).id
 
-        # No extra case duplicates should be created
-        self.rule.run_actions_when_case_matches(case_1)
-        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)
+        # No extra case duplicates should be created, and the id should remain the same
+        self.rule.run_actions_when_case_matches(duplicates[0])
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
+        self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
+        self.assertEqual(initial_case_duplicate_id, CaseDuplicate.objects.get(case_id=duplicates[0].case_id).id)
+
+        # Updating or submitting the second duplicate case we should not
+        # create new `CaseDuplicate`, but this should update the
+        # potential_duplicates for that case
+        self.rule.run_actions_when_case_matches(duplicates[1])
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), num_duplicates)
+        self._assert_potential_duplicates(duplicates[1].case_id, duplicates)
 
     @es_test
     def test_integration_test(self):
         """Don't mock the find_duplicate_ids response to make sure it works
         """
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
 
-    def test_update_case_no_longer_duplicate(self):
-        """What happens if the case update deduplicates the case?
-        """
-        # If "ALL" & update is one of the target properties, we know to remove it
-        # If "ANY", do we need to search again?
-        # Do we allow this? (could block on updating target properties, for example)
+        duplicates, uniques = self._create_cases()
 
-    def test_last_case_changed_not_duplicate(self):
-        """Case A and Case B are duplicates of each other. Case A is changed so it is
-        no longer a duplicate, Case B should be removed from the list of
-        duplicates.
-        """
+        for case in chain(duplicates, uniques):
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+
+        self._assert_potential_duplicates(duplicates[0].case_id, duplicates)
 
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
