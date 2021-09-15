@@ -26,7 +26,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
+from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin, disable_quickcache
 
@@ -241,7 +241,7 @@ class TestAppGetters(TestCase):
 
         factory = AppFactory(cls.domain, name='foo')
         m0, f0 = factory.new_basic_module("bar", "bar")
-        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         app = factory.app
         app.version = 1
 

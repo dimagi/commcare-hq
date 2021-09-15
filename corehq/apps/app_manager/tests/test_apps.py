@@ -23,11 +23,10 @@ from corehq.apps.app_manager.tasks import (
     prune_auto_generated_builds,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     add_build,
-    patch_default_builds,
+    patch_default_builds, get_simple_form,
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
@@ -277,7 +276,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def testGetLatestBuild(self, mock):
         factory = AppFactory(build_version='2.40.0')
         m0, f0 = factory.new_basic_module('register', 'case')
-        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         app = factory.app
         app.save()
 
@@ -362,7 +361,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def testConvertToApplication(self):
         factory = AppFactory(build_version='2.40.0')
         m0, f0 = factory.new_basic_module('register', 'case')
-        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         factory.app.save()
         self.addCleanup(factory.app.delete)
         build = factory.app.make_build()

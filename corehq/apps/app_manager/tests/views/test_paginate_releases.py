@@ -3,7 +3,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
+from corehq.apps.app_manager.tests.util import get_simple_form
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
@@ -34,7 +34,7 @@ class TestPaginateReleases(TestCase):
 
         factory = AppFactory(cls.domain_name, name="cheeto")
         m0, f0 = factory.new_basic_module("register", "cheeto")
-        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         cls.app = factory.app
         cls.app.target_commcare_flavor = 'commcare_lts'
         cls.app.save()

@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
+from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -48,7 +48,7 @@ class TestGlobalAppConfig(TestCase):
         cls.build_profile_id = 'english'
         factory = AppFactory(cls.domain, 'foo')
         m0, f0 = factory.new_basic_module("bar", "bar")
-        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        f0.source = get_simple_form(xmlns=f0.unique_id)
         app = factory.app
         app.build_profiles={
             cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),

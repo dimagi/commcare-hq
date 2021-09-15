@@ -20,7 +20,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     ShadowModule,
 )
-from corehq.apps.app_manager.tests.util import add_build
+from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
     AppFormSummaryView,
@@ -36,7 +36,7 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.test_utils import timelimit
 
-from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
+from .test_form_versioning import INVALID_TEMPLATE
 
 
 User = get_user_model()
@@ -158,7 +158,7 @@ class TestViews(TestCase):
     @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)
     def test_basic_app(self, mock1, mock2):
         module = self.app.add_module(Module.new_module("Module0", "en"))
-        form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
+        form = self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
         self.app.save()
         self._send_to_es(self.app)
 
