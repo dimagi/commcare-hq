@@ -238,25 +238,27 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             source=list(old_phone_numbers)
                         )
 
-                        for number_removed in numbers_removed:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_removed(number_removed)
+                        change_messages = {}
+                        if numbers_removed:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
                             )
-                        for number_added in numbers_added:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(number_added)
+
+                        if numbers_added:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
                             )
+
+                        if change_messages:
+                            user_change_logger.add_change_message({'phone_numbers': change_messages})
                 elif key == 'groups':
                     group_ids = bundle.data.get("groups", [])
                     groups_updated = bundle.obj.set_groups(group_ids)
                     if user_change_logger and groups_updated:
-                        groups_info = []
+                        groups = []
                         if group_ids:
-                            groups_info = ", ".join(
-                                f"{group['name']}[{group['_id']}]"
-                                for group in get_docs(Group.get_db(), group_ids)
-                            )
-                        user_change_logger.add_info(UserChangeMessage.groups_info(groups_info))
+                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
+                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
                     should_save = True
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
@@ -399,14 +401,19 @@ class WebUserResource(v0_1.WebUserResource):
                             source=list(old_phone_numbers)
                         )
 
-                        for number_removed in numbers_removed:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_removed(number_removed)
+                        change_messages = {}
+                        if numbers_removed:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
                             )
-                        for number_added in numbers_added:
-                            user_change_logger.add_change_message(
-                                UserChangeMessage.phone_number_added(number_added)
+
+                        if numbers_added:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
                             )
+
+                        if change_messages:
+                            user_change_logger.add_change_message({'phone_numbers': change_messages})
                 elif key in ['email', 'username']:
                     lowercase_value = value.lower()
                     if user_change_logger and getattr(bundle.obj, key) != lowercase_value:

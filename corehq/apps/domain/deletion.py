@@ -146,9 +146,10 @@ def _delete_web_user_membership(domain_name):
 
 
 def _log_web_user_membership_removed(user, domain, via):
-    log_user_change(None, couch_user=user,
+    # ToDo Migration: domain name to be extracted from the change message
+    log_user_change(by_domain=None, for_domain=domain, couch_user=user,
                     changed_by_user=SYSTEM_USER_ID, changed_via=via,
-                    message=UserChangeMessage.domain_removal(domain))
+                    change_messages=UserChangeMessage.domain_removal(domain))
 
 
 def _terminate_subscriptions(domain_name):
