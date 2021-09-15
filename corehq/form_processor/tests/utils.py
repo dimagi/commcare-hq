@@ -158,10 +158,15 @@ def run_with_all_backends(obj):
     return obj
 
 
-def _sharded(cls):
-    """
-    Marks a test to be run with the partitioned database settings in
-    addition to the non-partitioned database settings.
+def sharded(cls):
+    """Tag tests to run with the sharded SQL backend
+
+    This adds a "sharded" attribute to decorated tests indicating that
+    the tests should be run with a sharded database setup. Note that the
+    presence of that attribute does not prevent tests from  also running
+    in the default not-sharded database setup.
+
+    Was previously named @use_sql_backend
     """
     return patch_shard_db_transactions(attr(sharded=True)(cls))
 
@@ -183,20 +188,7 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(_sharded(cls))
-
-
-def sharded(cls):
-    """Tag tests to run with the sharded SQL backend
-
-    This adds a "sharded" attribute to decorated tests indicating that
-    the tests should be run with a sharded database setup. Note that the
-    presence of that attribute does not prevent tests from  also running
-    in the default not-sharded database setup.
-
-    Was previously named @use_sql_backend
-    """
-    return _sharded(cls)
+    return skip_unless(sharded(cls))
 
 
 def patch_testcase_databases():
