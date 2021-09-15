@@ -6,7 +6,6 @@ from uuid import uuid4
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.test.utils import override_settings
 from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -155,7 +154,10 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_sql_backend = override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+def run_with_sql_backend(obj):
+    return obj
+
+
 run_with_all_backends = run_with_sql_backend
 
 

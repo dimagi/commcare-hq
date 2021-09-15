@@ -6,7 +6,7 @@ from io import BytesIO
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
 from mock import patch
@@ -327,11 +327,9 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
         self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_case_deletion_sql(self):
         self._test_case_deletion()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
         form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
 
@@ -1046,7 +1044,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
         super(TestHardDeleteSQLFormsAndCases, self).tearDown()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_forms(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
@@ -1069,7 +1066,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_forms_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
@@ -1092,7 +1088,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_cases(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
@@ -1114,7 +1109,6 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_cases_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()

@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from defusedxml import ElementTree
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -16,7 +16,6 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, Form
 from corehq.util.test_utils import generate_cases
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class RegistryCaseDetailsTests(TestCase):
     domain = 'registry-case-details'
 

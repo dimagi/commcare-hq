@@ -2,7 +2,6 @@ import os
 import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
@@ -428,7 +427,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
