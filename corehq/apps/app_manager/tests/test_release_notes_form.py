@@ -7,6 +7,7 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
 from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, TestXmlMixin
 
 
@@ -182,8 +183,8 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
     def setUp(self):
         self.set_up_app()
-        self.releases_form.source = self.get_xml('very_simple_form').decode('utf-8')
-        self.basic_form.source = self.get_xml('very_simple_form').decode('utf-8')
+        self.releases_form.source = BLANK_TEMPLATE.format(xmlns=self.releases_form.xmlns)
+        self.basic_form.source = BLANK_TEMPLATE.format(xmlns=self.basic_form.xmlns)
         self.factory.app.save()
 
         super(ReleaseNotesResourceFileTest, self).setUp()

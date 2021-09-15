@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     import_app,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
 
@@ -81,11 +82,13 @@ class FormVersioningTest(TestCase):
         domain = 'form-versioning-test'
 
         # set up inital app
-        app = Application.new_app(domain, 'Foo')
-        app.modules.append(Module(forms=[Form(), Form()]))
+        factory = AppFactory(domain, 'Foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
+        f1 = factory.new_form(m0)
+        f1.source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
+        app = factory.app
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
-        app.get_module(0).get_form(1).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
         app.save()
 
         # make a build

@@ -9,6 +9,8 @@ from corehq.apps.app_manager.models import (
     LatestEnabledBuildProfiles,
     Module,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -41,21 +43,18 @@ class TestGlobalAppConfig(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestGlobalAppConfig, cls).setUpClass()
-        cls.project = Domain(name=cls.domain)
-        cls.project.save()
+        cls.project = Domain.get_or_create_with_name(cls.domain)
 
         cls.build_profile_id = 'english'
-        app = Application(
-            domain=cls.domain,
-            name='foo',
-            langs=["en"],
-            version=1,
-            modules=[Module()],
-            build_profiles={
-                cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),
-            }
-        )  # app is v1
-
+        factory = AppFactory(cls.domain, 'foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        app = factory.app
+        app.build_profiles={
+            cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),
+        }
+        app.langs = ["en"]
+        app.version = 1
         app.save()  # app is now v2
 
         cls.v2_build = app.make_build()

@@ -51,8 +51,7 @@ class TestViews(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestViews, cls).setUpClass()
-        cls.project = Domain(name='app-manager-testviews-domain', is_active=True)
-        cls.project.save()
+        cls.project = Domain.get_or_create_with_name('app-manager-testviews-domain', is_active=True)
         cls.username = 'cornelius'
         cls.password = 'fudge'
         cls.user = WebUser.create(cls.project.name, cls.username, cls.password, None, None, is_active=True)

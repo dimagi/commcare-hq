@@ -2,6 +2,8 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.test_form_versioning import BLANK_TEMPLATE
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
@@ -22,8 +24,7 @@ class TestPaginateReleases(TestCase):
         cls.client = Client()
 
         cls.domain_name = "fandago"
-        cls.domain = Domain(name=cls.domain_name, is_active=True)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
 
         cls.username = 'bananafana'
         cls.password = '*******'
@@ -31,7 +32,10 @@ class TestPaginateReleases(TestCase):
         cls.user.eula.signed = True
         cls.user.save()
 
-        cls.app = Application.new_app(domain=cls.domain_name, name="cheeto")
+        factory = AppFactory(cls.domain_name, name="cheeto")
+        m0, f0 = factory.new_basic_module("register", "cheeto")
+        f0.source = BLANK_TEMPLATE.format(xmlns=f0.unique_id)
+        cls.app = factory.app
         cls.app.target_commcare_flavor = 'commcare_lts'
         cls.app.save()
         cls.app_build = cls.app.make_build()
