@@ -437,7 +437,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             if (repeat) {
                 repeat.trigger('focus');
             }
-        }
+        };
 
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
