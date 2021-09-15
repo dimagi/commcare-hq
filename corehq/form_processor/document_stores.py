@@ -23,7 +23,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.quickcache import quickcache
 
 
 class UnexpectedBackend(Exception):
@@ -76,11 +75,8 @@ class CaseDocumentStore(DocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self):
-        if should_use_sql_backend(self.domain):
-            accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
-            return iter_all_ids(accessor)
-        else:
-            return iter(self.case_accessors.get_case_ids_in_domain(self.case_type))
+        accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
+        return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
@@ -90,8 +86,6 @@ class CaseDocumentStore(DocumentStore):
 class LedgerV2DocumentStore(DocumentStore):
 
     def __init__(self, domain):
-        if not should_use_sql_backend(domain):
-            raise UnexpectedBackend("Only SQL backend supported: {}".format(domain))
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
 
@@ -103,26 +97,9 @@ class LedgerV2DocumentStore(DocumentStore):
         except LedgerValueNotFound as e:
             raise DocumentNotFoundError(e)
 
-    @property
-    @quickcache(['self.domain'], timeout=30 * 60)
-    def product_ids(self):
-        from corehq.apps.products.models import SQLProduct
-        return list(SQLProduct.objects.filter(domain=self.domain).product_ids())
-
     def iter_document_ids(self):
-        if should_use_sql_backend(self.domain):
-            accessor = LedgerReindexAccessor(self.domain)
-            return iter_all_ids(accessor)
-        else:
-            return iter(self._couch_iterator())
-
-    def _couch_iterator(self):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        case_accessors = CaseAccessors(domain=self.domain)
-        # assuming we're only interested in the 'stock' section for now
-        for case_id in case_accessors.get_case_ids_in_domain():
-            for product_id in self.product_ids:
-                yield UniqueLedgerReference(case_id, 'stock', product_id).to_id()
+        accessor = LedgerReindexAccessor(self.domain)
+        return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
