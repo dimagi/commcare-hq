@@ -2,14 +2,15 @@ import uuid
 import xml.etree.cElementTree as ET
 
 from django.conf import settings
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, override_settings, TestCase
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
     get_custom_commcare_settings,
 )
 from corehq.apps.app_manager.models import Application, BuildProfile
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
 
@@ -139,3 +140,26 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             value=settings.SUPPORT_EMAIL,
             setting={'force': True},
         )
+
+
+class ProfileBuildTests(TestCase):
+    def setUp(self):
+        factory = AppFactory("wizard", "Wizard's Handbook")
+        m0, f0 = factory.new_basic_module("spells", "spell")
+        f0.source = get_simple_form()
+        self.app = factory.app
+        self.app.save()
+
+    def tearDown(self):
+        self.app.delete()
+
+    def test_build_urls_in_profile_use_app_id_of_copy(self):
+        copy = self.app.make_build()
+        profile_xml = copy.lazy_fetch_attachment('files/profile.xml')
+        profile = ET.fromstring(profile_xml)
+
+        node = profile.find("./property[@key='ota-restore-url']")
+        self.assertEqual(node.get('value'), copy.ota_restore_url)
+
+        node = profile.find("./property[@key='PostURL']")
+        self.assertEqual(node.get('value'), copy.post_url)
