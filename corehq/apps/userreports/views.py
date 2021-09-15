@@ -487,16 +487,15 @@ class ConfigureReport(ReportBuilderView):
         else:
             self.registry_slug = self.request.GET.get('registry_slug', None)
             self.app_id = self.request.GET.get('application', None)
+            self.source_id = self.request.GET['source']
             if self.registry_slug:
                 helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
                 helper.check_access(request.couch_user)
                 self.source_type = DATA_SOURCE_TYPE_CASE
-                self.source_id = self.request.GET['case_type']
                 self.app = None
             else:
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
-                self.source_id = self.request.GET['source']
 
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
