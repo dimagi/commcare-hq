@@ -68,9 +68,8 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     try:
         return get_document_or_not_found(
             cls, domain, doc_id, additional_doc_types=additional_doc_types)
-    except DocumentNotFound:
-        raise Http404("The specified OData feed was not found. It may have been deleted. If this is a"
-        "mistake please contact dimagi support")
+    except DocumentNotFound as e:
+        raise Http404("{}\n\n{}".format(e, traceback.format_exc()))
 
 
 @memoized
