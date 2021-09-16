@@ -31,19 +31,19 @@ from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import MissingFormXml, UnknownActionType
-from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.models import TruncatingCharField
 
 from .abstract_models import (
+    DEFAULT_PARENT_IDENTIFIER,
     AbstractCommCareCase,
     AbstractXFormInstance,
     IsImageMixin,
 )
-from .exceptions import AttachmentNotFound
+from .exceptions import AttachmentNotFound, MissingFormXml, UnknownActionType
+from .track_related import TrackRelatedChanges
+
 
 STANDARD_CHARFIELD_LENGTH = 255
 
@@ -982,7 +982,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += [t for t in self.get_tracked_models_to_create(CaseTransaction) if (t.type & transaction_type) == transaction_type]
+        transactions += [
+            t for t in self.get_tracked_models_to_create(CaseTransaction)
+            if (t.type & transaction_type) == transaction_type
+        ]
         return transactions
 
     def modified_since_sync(self, sync_log):
@@ -1439,9 +1442,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             return False
 
         return (
-            self.case_id == other.case_id and
-            self.type == other.type and
-            self.form_id == other.form_id
+            self.case_id == other.case_id
+            and self.type == other.type
+            and self.form_id == other.form_id
         )
 
     def __hash__(self):

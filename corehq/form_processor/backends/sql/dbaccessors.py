@@ -943,7 +943,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id).order_by('server_date'))
+        return list(
+            CaseTransaction.objects
+            .partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
