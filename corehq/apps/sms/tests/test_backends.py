@@ -36,7 +36,6 @@ from corehq.apps.sms.tasks import (
 )
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
@@ -395,7 +394,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
         self._test_outbound_backend(self.pinpoint_backend, 'pinpoint test', pinpoint_send)
 
-    @run_with_all_backends
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request(
             '/unicel/in/%s/' % self.unicel_backend.inbound_api_key,
@@ -406,7 +404,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
 
-    @run_with_all_backends
     def test_telerivet_inbound_sms(self):
         additional_params = {
             'event': 'incoming_message',
@@ -419,7 +416,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.telerivet_backend.get_api_id(), 'telerivet test')
 
-    @run_with_all_backends
     @override_settings(SIMPLE_API_KEYS={'grapevine-test': 'grapevine-api-key'})
     def test_grapevine_inbound_sms(self):
         xml = """
@@ -436,7 +432,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
-    @run_with_all_backends
     def test_turn_inbound_sms(self):
         url = '/turn/sms/%s' % self.turn_backend.inbound_api_key
         payload = {"messages": [
@@ -455,7 +450,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request(self.turn_backend.get_api_id(), 'turn test',
             backend_couch_id=self.turn_backend.couch_id)
 
-    @run_with_all_backends
     def test_twilio_inbound_sms(self):
         url = '/twilio/sms/%s' % self.twilio_backend.inbound_api_key
         self._simulate_inbound_request(url, phone_param='From',
@@ -464,7 +458,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request(self.twilio_backend.get_api_id(), 'twilio test',
             backend_couch_id=self.twilio_backend.couch_id)
 
-    @run_with_all_backends
     def test_twilio_401_response(self):
         start_count = SMS.objects.count()
 
@@ -476,7 +469,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self.assertEqual(start_count, end_count)
 
-    @run_with_all_backends
     def test_sislog_inbound_sms(self):
         self._simulate_inbound_request(
             '/sislog/in/%s/' % self.sislog_backend.inbound_api_key,
@@ -487,7 +479,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.sislog_backend.get_api_id(), 'sislog test')
 
-    @run_with_all_backends
     def test_yo_inbound_sms(self):
         self._simulate_inbound_request(
             '/yo/sms/%s/' % self.yo_backend.inbound_api_key,
@@ -498,7 +489,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.yo_backend.get_api_id(), 'yo test')
 
-    @run_with_all_backends
     def test_smsgh_inbound_sms(self):
         self._simulate_inbound_request(
             '/smsgh/sms/{}/'.format(self.smsgh_backend.inbound_api_key),
@@ -509,7 +499,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request('SMSGH', 'smsgh test')
 
-    @run_with_all_backends
     def test_apposit_inbound_sms(self):
         self._simulate_inbound_request_with_payload(
             '/apposit/in/%s/' % self.apposit_backend.inbound_api_key,
@@ -522,7 +511,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request('APPOSIT', 'apposit test',
             backend_couch_id=self.apposit_backend.couch_id)
 
-    @run_with_all_backends
     def test_push_inbound_sms(self):
         xml = """<?xml version="1.0" encoding="UTF-8"?>
         <bspostevent>
@@ -537,7 +525,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
             backend_couch_id=self.push_backend.couch_id)
 
-    @run_with_all_backends
     def test_trumpia_inbound_sms(self):
         text = 'trumpia test'
         xml = urlencode({"xml":
@@ -561,7 +548,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             backend_couch_id=self.trumpia_backend.couch_id,
         )
 
-    @run_with_all_backends
     def test_infobip_inbound_sms(self):
         url = '/infobip/sms/%s' % self.infobip_backend.inbound_api_key
         payload = {
@@ -581,7 +567,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request(self.infobip_backend.get_api_id(), 'infobip test',
             backend_couch_id=self.infobip_backend.couch_id)
 
-    @run_with_all_backends
     def test_pinpoint_inbound_sms(self):
         url = '/pinpoint/sms/%s' % self.pinpoint_backend.inbound_api_key
         payload = {

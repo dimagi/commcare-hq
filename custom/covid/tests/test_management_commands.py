@@ -14,10 +14,9 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
-@run_with_sql_backend
 class CaseCommandsTest(TestCase):
     domain = 'cases-domain'
 

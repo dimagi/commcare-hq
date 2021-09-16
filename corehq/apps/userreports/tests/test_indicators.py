@@ -23,7 +23,6 @@ from corehq.form_processor.parsers.ledgers.helpers import (
     StockReportHelper,
     StockTransactionHelper,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 
@@ -598,7 +597,6 @@ class DueListDateIndicatorTest(SimpleTestCase):
         )
 
 
-@run_with_sql_backend
 class TestGetValuesByProduct(TestCase):
     domain_name = 'test-domain'
     case_id = 'case1'

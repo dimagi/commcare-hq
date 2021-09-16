@@ -13,7 +13,6 @@ from corehq.apps.es.tests.utils import (
     case_search_es_teardown,
     es_test,
 )
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
@@ -24,7 +23,6 @@ BAD_GUYS_ID = str(uuid.uuid4())
 
 
 @es_test
-@run_with_sql_backend
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'testcaselistapi'

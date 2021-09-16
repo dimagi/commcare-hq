@@ -11,7 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_sql_backend, sharded
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 from corehq.util.test_utils import softer_assert
 
@@ -20,7 +20,6 @@ TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delt
 
 
 @sharded
-@run_with_sql_backend
 class LedgerTests(TestCase):
 
     @classmethod

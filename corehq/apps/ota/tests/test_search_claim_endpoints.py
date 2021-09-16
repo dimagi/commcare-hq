@@ -26,7 +26,6 @@ from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_sql_backend
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -49,7 +48,6 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 
 
 @es_test
-@run_with_sql_backend
 class CaseSearchTests(ElasticTestMixin, TestCase):
     def setUp(self):
         super(CaseSearchTests, self).setUp()
@@ -292,7 +290,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
 
 
 @es_test
-@run_with_sql_backend
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
