@@ -4,7 +4,7 @@
 {% load humanize %}
 
 <table class="table table-striped"
-       data-bind="visible: exports().length && isNotBulkDeleting">
+       data-bind="visible: exports().length && !isBulkDeleting()">
   <thead>
     <tr>
       {% if has_edit_permissions or allow_bulk_export %}

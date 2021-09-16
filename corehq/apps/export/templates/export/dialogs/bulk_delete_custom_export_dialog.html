@@ -8,12 +8,12 @@
         <h4 class="modal-title">
           <div data-bind="if: isOData || isFeed">
             {% blocktrans %}
-              Delete <span data-bind="text: bulkDeleteList().length"></span> Selected Feed<span data-bind="text: multiple()"></span>
+              Delete <span data-bind="text: bulkDeleteList().length"></span> Feed<span data-bind="text: multiple()"></span>
             {% endblocktrans %}
           </div>
           <div data-bind="if: !isOData && !isFeed">
             {% blocktrans %}
-              Delete <span data-bind="text: bulkDeleteList().length"></span> Selected Export<span data-bind="text: multiple()"></span>
+              Delete <span data-bind="text: bulkDeleteList().length"></span> Export<span data-bind="text: multiple()"></span>
             {% endblocktrans %}
           </div>
         </h4>
@@ -43,13 +43,13 @@
           <div data-bind="if: isOData || isFeed">
             <i class="fa fa-remove"></i>
             {% blocktrans %}
-              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Feed<span data-bind="text: multiple()"></span>
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Feed<span data-bind="text: multiple()"></span>
             {% endblocktrans %}
           </div>
           <div data-bind="if: !isOData && !isFeed">
             <i class="fa fa-remove"></i>
             {% blocktrans %}
-              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Selected Export<span data-bind="text: multiple()"></span>
+              Delete <span data-bind="text: bulkExportDownloadCount()"></span> Export<span data-bind="text: multiple()"></span>
             {% endblocktrans %}
           </div>
         </button>
