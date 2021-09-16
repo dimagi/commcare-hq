@@ -52,6 +52,7 @@ class DomainPillowTest(TestCase):
         self.test_kafka_domain_pillow()
         domain_obj = Domain.get_by_name('domain-pillowtest-kafka')
         domain_obj.doc_type = 'Domain-DUPLICATE'
+        domain_obj.save()
 
         # send to kafka
         since = get_topic_offset(topics.DOMAIN)

@@ -63,13 +63,16 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, change):
+        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+
         if self.change_filter_fn and self.change_filter_fn(change):
             return
 
         if change.deleted and change.id:
             doc = change.get_document()
-            if doc and doc.get('doc_type') is not None:
-                if doc['doc_type'].endswith("-Deleted"):
+            if doc and doc.get('doc_type'):
+                current_meta = get_doc_meta_object_from_document(doc)
+                if current_meta.is_deletion:
                     self._delete_doc_if_exists(change.id)
             else:
                 self._delete_doc_if_exists(change.id)
