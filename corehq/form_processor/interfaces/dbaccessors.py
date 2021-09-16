@@ -48,11 +48,7 @@ class FormAccessors:
         return XFormInstance.objects.get_form(form_id, self.domain)
 
     def get_forms(self, form_ids, ordered=False):
-        """
-        :param form_ids: list of form_ids to fetch
-        :type ordered:   True if the list of returned forms should have the same order
-                         as the list of form_ids passed in
-        """
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):

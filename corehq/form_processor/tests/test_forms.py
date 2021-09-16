@@ -43,6 +43,19 @@ class XFormInstanceManagerTest(TestCase):
         with self.assertRaises(XFormNotFound):
             XFormInstance.objects.get_form('missing_form')
 
+    def test_get_forms(self):
+        form1 = create_form_for_test(DOMAIN)
+        form2 = create_form_for_test(DOMAIN)
+
+        forms = XFormInstance.objects.get_forms(['missing_form'])
+        self.assertEqual(forms, [])
+
+        forms = XFormInstance.objects.get_forms([form1.form_id])
+        self.assertEqual([f.form_id for f in forms], [form1.form_id])
+
+        forms = XFormInstance.objects.get_forms([form1.form_id, form2.form_id], ordered=True)
+        self.assertEqual([f.form_id for f in forms], [form1.form_id, form2.form_id])
+
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstance)
         self.assertIsNotNone(form)

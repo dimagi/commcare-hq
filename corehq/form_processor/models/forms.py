@@ -19,6 +19,7 @@ from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentMixin
 from .mixin import SaveStateMixin
+from .util import sort_with_id_list
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -37,6 +38,20 @@ class XFormInstanceManager(RequireDBManager):
             return self.partitioned_get(form_id, **kwargs)
         except self.model.DoesNotExist:
             raise XFormNotFound(form_id)
+
+    def get_forms(self, form_ids, ordered=False):
+        """
+        :param form_ids: list of form_ids to fetch
+        :type ordered:   True if the list of returned forms should have the
+                         same order as the list of form_ids passed in
+        """
+        assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
+        forms = list(self.plproxy_raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        if ordered:
+            sort_with_id_list(forms, form_ids, 'form_id')
+        return forms
 
 
 class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
