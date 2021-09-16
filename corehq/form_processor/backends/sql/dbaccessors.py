@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
-from django.db.models.functions import Concat, Greatest
+from django.db.models.functions import Concat
 
 import csiphash
 from ddtrace import tracer
@@ -389,32 +389,6 @@ class FormAccessorSQL:
     def get_attachments(form_id):
         """DEPRECATED"""
         return XFormInstance.objects.get_attachments(form_id)
-
-    @staticmethod
-    def iter_forms_by_last_modified(start_datetime, end_datetime):
-        '''
-        Returns all forms that have been modified within a time range. The start date is
-        exclusive while the end date is inclusive (start_datetime, end_datetime].
-
-        NOTE: This does not include archived forms
-
-        :param start_datetime: The start date of which modified forms must be greater than
-        :param end_datetime: The end date of which modified forms must be less than or equal to
-
-        :returns: An iterator of XFormInstance objects
-        '''
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        annotate = {
-            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
-        }
-
-        return paginate_query_across_partitioned_databases(
-            XFormInstance,
-            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
-            annotate=annotate,
-            load_source='forms_by_last_modified'
-        )
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):

@@ -66,12 +66,6 @@ class FormAccessors:
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
-    def iter_forms_by_last_modified(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_forms_by_last_modified(
-            start_datetime,
-            end_datetime,
-        )
-
     def iter_form_ids_by_xmlns(self, xmlns=None):
         return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
