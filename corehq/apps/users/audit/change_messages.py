@@ -18,13 +18,13 @@ class UserChangeMessage(object):
     def program_change(program):
         if program:
             change_message = {
-                "program": {
+                PROGRAM_FIELD: {
                     SET_PROGRAM: {"id": program.get_id, "name": program.name}
                 }
             }
         else:
             change_message = {
-                "program": {
+                PROGRAM_FIELD: {
                     CLEAR_PROGRAM: {}
                 }
             }
@@ -34,13 +34,13 @@ class UserChangeMessage(object):
     def role_change(user_role):
         if user_role:
             change_message = {
-                "role": {
+                ROLE_FIELD: {
                     SET_ROLE: {"id": user_role.get_qualified_id(), "name": user_role.name}
                 }
             }
         else:
             change_message = {
-                "role": {
+                ROLE_FIELD: {
                     CLEAR_ROLE: {}
                 }
             }
@@ -49,7 +49,7 @@ class UserChangeMessage(object):
     @staticmethod
     def domain_removal(domain):
         return {
-            "domain": {
+            DOMAIN_FIELD: {
                 REMOVE_FROM_DOMAIN: {"domain": domain}
             }
         }
@@ -57,7 +57,7 @@ class UserChangeMessage(object):
     @staticmethod
     def domain_addition(domain):
         return {
-            "domain": {
+            DOMAIN_FIELD: {
                 ADD_TO_DOMAIN: {"domain": domain}
             }
         }
@@ -65,7 +65,7 @@ class UserChangeMessage(object):
     @staticmethod
     def two_factor_disabled_with_verification(verified_by, verification_mode, disable_for_days):
         change_message = {
-            "two_factor": {
+            TWO_FACTOR_FIELD: {
                 DISABLE_WITH_VERIFICATION: {
                     "verified_by": verified_by,
                     "verification_mode": verification_mode,
@@ -73,13 +73,13 @@ class UserChangeMessage(object):
             }
         }
         if disable_for_days:
-            change_message["two_factor"].update({DISABLE_FOR_DAYS: {"days": disable_for_days}})
+            change_message[TWO_FACTOR_FIELD].update({DISABLE_FOR_DAYS: {"days": disable_for_days}})
         return change_message
 
     @staticmethod
     def password_reset():
         return {
-            "password": {
+            PASSWORD_FIELD: {
                 RESET_PASSWORD: {}
             }
         }
@@ -88,7 +88,7 @@ class UserChangeMessage(object):
     def status_update(active, reason):
         slug = ACTIVATE_USER if active else DEACTIVATE_USER
         return {
-            "status": {
+            STATUS_FIELD: {
                 slug: {
                     "reason": reason
                 }
@@ -98,7 +98,7 @@ class UserChangeMessage(object):
     @staticmethod
     def phone_numbers_added(phone_numbers):
         return {
-            "phone_numbers": {
+            PHONE_NUMBERS_FIELD: {
                 ADD_PHONE_NUMBERS: {
                     "phone_numbers": phone_numbers
                 }
@@ -108,7 +108,7 @@ class UserChangeMessage(object):
     @staticmethod
     def phone_numbers_removed(phone_numbers):
         return {
-            "phone_numbers": {
+            PHONE_NUMBERS_FIELD: {
                 REMOVE_PHONE_NUMBERS: {
                     "phone_numbers": phone_numbers
                 }
@@ -119,13 +119,13 @@ class UserChangeMessage(object):
     def profile_info(profile_id, profile_name=None):
         if profile_id:
             change_message = {
-                "profile": {
+                PROFILE_FIELD: {
                     SET_PROFILE: {"id": profile_id, "name": profile_name}
                 }
             }
         else:
             change_message = {
-                "profile": {
+                PROFILE_FIELD: {
                     CLEAR_PROFILE: {}
                 }
             }
@@ -134,7 +134,7 @@ class UserChangeMessage(object):
     @staticmethod
     def primary_location_removed():
         return {
-            "location": {
+            LOCATION_FIELD: {
                 CLEAR_PRIMARY_LOCATION: {}
             }
         }
@@ -143,13 +143,13 @@ class UserChangeMessage(object):
     def primary_location_info(location):
         if location:
             change_message = {
-                "location": {
+                LOCATION_FIELD: {
                     SET_PRIMARY_LOCATION: {"id": location.location_id, "name": location.name}
                 }
             }
         else:
             change_message = {
-                "location": {
+                LOCATION_FIELD: {
                     CLEAR_PRIMARY_LOCATION: {}
                 }
             }
@@ -159,7 +159,7 @@ class UserChangeMessage(object):
     def assigned_locations_info(locations):
         if locations:
             change_message = {
-                "assigned_locations": {
+                ASSIGNED_LOCATIONS_FIELD: {
                     SET_ASSIGNED_LOCATIONS: {
                         "locations": [{'id': loc.location_id, 'name': loc.name} for loc in locations]
                     }
@@ -167,7 +167,7 @@ class UserChangeMessage(object):
             }
         else:
             change_message = {
-                "assigned_locations": {
+                ASSIGNED_LOCATIONS_FIELD: {
                     CLEAR_ASSIGNED_LOCATIONS: {}
                 }
             }
@@ -177,7 +177,7 @@ class UserChangeMessage(object):
     def groups_info(groups):
         if groups:
             change_message = {
-                "groups": {
+                GROUPS_FIELD: {
                     SET_GROUPS: {
                         "groups": [{'id': group.get_id, 'name': group.name} for group in groups]
                     }
@@ -185,7 +185,7 @@ class UserChangeMessage(object):
             }
         else:
             change_message = {
-                "groups": {
+                GROUPS_FIELD: {
                     CLEAR_GROUPS: {}
                 }
             }
@@ -194,7 +194,7 @@ class UserChangeMessage(object):
     @staticmethod
     def added_as_web_user(domain):
         return {
-            "domain": {
+            DOMAIN_FIELD: {
                 ADD_AS_WEB_USER: {"domain": domain}
             }
         }
@@ -202,7 +202,7 @@ class UserChangeMessage(object):
     @staticmethod
     def invited_to_domain(domain):
         return {
-            "domain_invitation": {
+            DOMAIN_INVITATION_FIELD: {
                 ADD_DOMAIN_INVITATION: {"domain": domain}
             }
         }
@@ -210,7 +210,7 @@ class UserChangeMessage(object):
     @staticmethod
     def invitation_revoked_for_domain(domain):
         return {
-            "domain_invitation": {
+            DOMAIN_INVITATION_FIELD: {
                 REMOVE_DOMAIN_INVITATION: {"domain": domain}
             }
         }
@@ -249,6 +249,20 @@ class UserChangeFormatter(object):
             return _(raw_message).format(**_params)
         return _formatter
 
+
+# fields
+PROGRAM_FIELD = "program"
+ROLE_FIELD = "role"
+DOMAIN_FIELD = "domain"
+TWO_FACTOR_FIELD = "two_factor"
+PASSWORD_FIELD = "password"
+STATUS_FIELD = "status"
+PHONE_NUMBERS_FIELD = "phone_numbers"
+PROFILE_FIELD = "profile"
+LOCATION_FIELD = "location"
+ASSIGNED_LOCATIONS_FIELD = "assigned_locations"
+GROUPS_FIELD = "groups"
+DOMAIN_INVITATION_FIELD = "domain_invitation"
 
 # message slugs
 SET_PROGRAM = 'set_program'
