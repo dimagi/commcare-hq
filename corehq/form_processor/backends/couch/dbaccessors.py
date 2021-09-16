@@ -10,20 +10,14 @@ from casexml.apps.case.dbaccessors import (
 )
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids, iter_cases
-from casexml.apps.stock.models import StockTransaction
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.apps.commtrack.models import StockState
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import (
-    AttachmentNotFound,
-    LedgerValueNotFound,
-)
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
-    AbstractLedgerAccessor)
+    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent)
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -260,86 +254,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_owner_ids(domain):
         raise NotImplementedError("should not be used since forms & cases were migrated to SQL")
-
-
-class LedgerAccessorCouch(AbstractLedgerAccessor):
-
-    @staticmethod
-    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
-        from casexml.apps.stock.models import StockTransaction
-        db_transactions = StockTransaction.objects.filter(
-            case_id=case_id, product_id=product_id,
-            report__date__gt=window_start,
-            report__date__lte=window_end,
-            section_id=section_id,
-        ).order_by('report__date', 'pk')
-
-        first = True
-        for db_tx in db_transactions:
-            # for the very first transaction, include the previous one if there as well
-            # to capture the data on the edge of the window
-            if first:
-                previous = db_tx.get_previous_transaction()
-                if previous:
-                    yield previous
-                first = False
-
-            yield db_tx
-
-    @staticmethod
-    def get_ledger_value(case_id, section_id, entry_id):
-        try:
-            return StockState.objects.get(case_id=case_id, section_id=section_id, product_id=entry_id)
-        except StockState.DoesNotExist:
-            raise LedgerValueNotFound
-
-    @staticmethod
-    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
-        query = StockTransaction.objects.filter(case_id=case_id)
-        if entry_id:
-            query = query.filter(product_id=entry_id)
-
-        if section_id:
-            query.filter(section_id=section_id)
-
-        return query.order_by('report__date', 'pk')
-
-    @staticmethod
-    def get_latest_transaction(case_id, section_id, entry_id):
-        return StockTransaction.latest(case_id, section_id, entry_id)
-
-    @staticmethod
-    def get_ledger_values_for_case(case_id):
-        from corehq.apps.commtrack.models import StockState
-
-        return StockState.objects.filter(case_id=case_id)
-
-    @staticmethod
-    def get_current_ledger_state(case_ids, ensure_form_id=False):
-        from casexml.apps.stock.utils import get_current_ledger_state
-        return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
-
-    @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
-        from corehq.apps.commtrack.models import StockState
-
-        assert isinstance(case_ids, list)
-        if not case_ids:
-            return []
-
-        filters = {'case_id__in': case_ids}
-        if section_ids:
-            assert isinstance(section_ids, list)
-            filters['section_id__in'] = section_ids
-        if entry_ids:
-            assert isinstance(entry_ids, list)
-            filters['product_id__in'] = entry_ids
-        if date_start:
-            filters['last_modifed__gte'] = date_start
-        if date_end:
-            filters['last_modified__lte'] = date_end
-
-        return list(StockState.objects.filter(**filters))
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
