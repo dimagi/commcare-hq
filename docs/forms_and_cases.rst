@@ -93,7 +93,7 @@ name in order to know which DB needs to be queried.
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 

@@ -397,14 +397,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_with_attachments(form_id):
-        """
-        It's necessary to store these on the form rather than use a memoized property
-        since the form_id can change (in the case of a deprecated form) which breaks
-        the memoize hash.
-        """
-        form = XFormInstance.objects.get_form(form_id)
-        form.attachments_list = FormAccessorSQL.get_attachments(form_id)
-        return form
+        """DEPRECATED"""
+        return XFormInstance.objects.get_with_attachments(form_id)
 
     @staticmethod
     def get_attachment_by_name(form_id, attachment_name):

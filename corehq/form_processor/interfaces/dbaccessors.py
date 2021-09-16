@@ -71,6 +71,7 @@ class FormAccessors:
         return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
+        """DEPRECATED use XFormInstance.objects"""
         return self.db_accessor.get_with_attachments(form_id)
 
     def save_new_form(self, form):

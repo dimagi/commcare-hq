@@ -11,6 +11,7 @@ from corehq.form_processor.tests.utils import (
     create_form_for_test,
     sharded,
 )
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 DOMAIN = 'test-forms-manager'
 
@@ -58,6 +59,27 @@ class XFormInstanceManagerTest(TestCase):
 
         forms = XFormInstance.objects.get_forms([form1.form_id, form2.form_id], ordered=True)
         self.assertEqual([f.form_id for f in forms], [form1.form_id, form2.form_id])
+
+    def test_get_with_attachments(self):
+        form = create_form_for_test(DOMAIN)
+        form = XFormInstance.objects.get_form(form.form_id)  # refetch to clear cached attachments
+        form_db = get_db_alias_for_partitioned_doc(form.form_id)
+        with self.assertNumQueries(1, using=form_db):
+            form.get_attachment_meta('form.xml')
+
+        with self.assertNumQueries(1, using=form_db):
+            form.get_attachment_meta('form.xml')
+
+        with self.assertNumQueries(2, using=form_db):
+            form = XFormInstance.objects.get_with_attachments(form.form_id)
+
+        self._check_simple_form(form)
+        with self.assertNumQueries(0, using=form_db):
+            attachment_meta = form.get_attachment_meta('form.xml')
+
+        self.assertEqual(form.form_id, attachment_meta.parent_id)
+        self.assertEqual('form.xml', attachment_meta.name)
+        self.assertEqual('text/xml', attachment_meta.content_type)
 
     def test_iter_form_ids_by_xmlns(self):
         OTHER_XMLNS = "http://openrosa.org/other"

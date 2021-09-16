@@ -70,6 +70,16 @@ class XFormInstanceManager(RequireDBManager):
     def get_attachments(form_id):
         return get_blob_db().metadb.get_for_parent(form_id)
 
+    def get_with_attachments(self, form_id, domain=None):
+        """
+        It's necessary to store these on the form rather than use a memoized property
+        since the form_id can change (in the case of a deprecated form) which breaks
+        the memoize hash.
+        """
+        form = self.get_form(form_id, domain)
+        form.attachments_list = self.get_attachments(form_id)
+        return form
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:

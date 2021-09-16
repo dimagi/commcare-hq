@@ -7,9 +7,8 @@ from ddtrace import tracer
 from django.conf import settings
 
 from corehq.form_processor.exceptions import MissingFormXml
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
@@ -171,7 +170,7 @@ def _handle_duplicate(new_doc):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    existing_doc = XFormInstance.objects.get_with_attachments(conflict_id, new_doc.domain)
 
     is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
     try:
