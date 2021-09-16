@@ -19,6 +19,7 @@ from corehq.apps.data_interfaces.models import (
     CaseDeduplicationMatchTypeChoices,
     CaseDuplicate,
 )
+from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -27,7 +28,11 @@ from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_test_case, trap_extra_setup
+from corehq.util.test_utils import (
+    create_test_case,
+    flag_enabled,
+    trap_extra_setup,
+)
 
 
 class CaseRuleCriteriaTest(TestCase):
@@ -386,6 +391,7 @@ class CaseDeduplicationActionTest(TestCase):
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@flag_enabled('CASE_DEDUPE')
 class DeduplicationPillowTest(TestCase):
 
     @classmethod
@@ -412,10 +418,23 @@ class DeduplicationPillowTest(TestCase):
             match_type=CaseDeduplicationMatchTypeChoices.ALL,
             case_properties=["case_name", "age"],
         )
+        cls.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='5',
+            ),
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='case_name',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='Herman Miller',
+            )
+        ])
+        cls.action.save()
         AutomaticUpdateRule.clear_caches(cls.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
-    def test_finds_duplicate(self, find_duplicate_cases_mock):
+    def test_pillow_processes_changes(self, find_duplicate_cases_mock):
         kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
 
         case1 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
@@ -423,11 +442,21 @@ class DeduplicationPillowTest(TestCase):
         find_duplicate_cases_mock.return_value = [case1, case2]
 
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+
+        new_kafka_sec = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
         self.pillow.process_changes(since=kafka_sec, forever=False)
 
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
         self._assert_case_duplicate_pair(case2.case_id, [case1.case_id])
         self.assertEqual(CaseDuplicate.objects.count(), 2)
+        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).get_case_property('age'), '5')
+        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).name, 'Herman Miller')
+
+        # The new changes present should not be processed by the pillow
+        # processor, since they were updates from a duplicate action.
+        with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
+            self.pillow.process_changes(since=new_kafka_sec, forever=False)
+            p.assert_not_called()
 
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
         potential_duplicates = list(

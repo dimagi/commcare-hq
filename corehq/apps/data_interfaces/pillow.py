@@ -3,7 +3,10 @@ from datetime import datetime
 from casexml.apps.case.xform import get_case_updates
 from pillowtop.processors import PillowProcessor
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import (
+    DEDUPE_XMLNS,
+    AutomaticUpdateRule,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import CASE_DEDUPE
@@ -24,6 +27,9 @@ class CaseDeduplicationProcessor(PillowProcessor):
     def process_change(self, change):
         domain = change.metadata.domain
         if not CASE_DEDUPE.enabled(domain):
+            return
+
+        if change.get_document().get('xmlns') == DEDUPE_XMLNS:
             return
 
         rules = self._get_rules(domain)
