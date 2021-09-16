@@ -60,6 +60,13 @@
         {% endif %}
       </p>
       <p>{{ static_toggle.tag.description }}</p>
+      {% if is_feature_release %}
+        <div class="alert alert-warning" role="alert">
+          {% blocktrans trimmed with owner=static_toggle.owner %}
+            Please confirm with {{ owner }} before using it.
+          {% endblocktrans %}
+        </div>
+      {% endif %}
       {% if static_toggle.help_link %}
         <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
       {% endif %}
