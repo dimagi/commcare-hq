@@ -110,6 +110,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
+                    "smart_link": params.smartLink,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                     "isPersistent": params.isPersistent,
                     "useLiveQuery": user.useLiveQuery,

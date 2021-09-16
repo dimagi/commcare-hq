@@ -164,6 +164,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.endpointArgs = options.endpointArgs;
         this.page = options.page;
         this.search = options.search;
+        this.smartLink = options.smartLink;
         this.casesPerPage = options.casesPerPage;
         this.queryData = options.queryData;
         this.singleApp = options.singleApp;
@@ -209,6 +210,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
+        this.setSmartLink = function (smartLink) {
+            this.smartLink = smartLink;
+        }
+
         this.setQueryData = function (queryDict, execute) {
             if (!this.queryData) {
                 this.queryData = {};
@@ -240,6 +245,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.smartLink = null;
             this.forceManualAction = null;
         };
 
@@ -248,6 +254,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.smartLink = null;
             this.forceManualAction = null;
         };
 
@@ -270,6 +277,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.sortIndex = null;
             this.queryData = null;
+            this.smartLink = null;
             this.forceManualAction = null;
         };
     };
@@ -285,6 +293,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             selections: self.selections,
             page: self.page,
             search: self.search,
+            smartLink: self.smartLink,
             queryData: self.queryData || {},    // formplayer can't handle a null
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
@@ -307,6 +316,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'search': data.search,
             'queryData': data.queryData,
             'singleApp': data.singleApp,
+            'smartLink': data.smartLink,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
             'forceManualAction': data.forceManualAction,
