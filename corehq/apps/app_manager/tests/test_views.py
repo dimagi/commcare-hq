@@ -319,6 +319,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     @classmethod
     def setUpClass(cls):
         # Set up a domain and an app.
+        super().setUpClass()
         cls.domain = Domain.get_by_name("test-domain")
         if not cls.domain:
             cls.domain = Domain(name="test-domain", is_active=True)
@@ -353,6 +354,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user_api_key.delete()
         cls.web_user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
+        super().tearDownClass()
 
     def _encode_basic_credentials(self, username, password):
         """Base64-encode a username and password."""
