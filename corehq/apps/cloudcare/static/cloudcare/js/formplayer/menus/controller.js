@@ -120,6 +120,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showDetail = function (model, detailTabIndex, caseId) {
         var detailObjects = model.models;
         // If we have no details, just select the entity
+        // TODO: when does this happen? Should this possibly smart link?
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             FormplayerFrontend.trigger("menu:select", caseId);
             return;
@@ -141,7 +142,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
 
         $('#select-case').off('click').click(function () {
-            FormplayerFrontend.trigger("menu:select", caseId);
+            // TODO: only pass smartLink when case is in a different domain
+            FormplayerFrontend.trigger("menu:select", caseId, "bosco");
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
