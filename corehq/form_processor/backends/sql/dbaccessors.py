@@ -37,7 +37,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
-    AbstractFormAccessor,
     AbstractLedgerAccessor,
     AttachmentContent,
     CaseIndexInfo,
@@ -374,7 +373,7 @@ class FormReindexAccessor(ReindexAccessor):
         return filters
 
 
-class FormAccessorSQL(AbstractFormAccessor):
+class FormAccessorSQL:
 
     @staticmethod
     def get_form(form_id):
