@@ -188,24 +188,29 @@ hqDefine("export/js/export_list", [
         };
 
         //button hover text
-        self.popoverText = "";
+        function tooltipStyle(color, margin) {
+            $('.tooltip-inner').css({'background-color': color, 'color': 'black', 'margin-right': margin})
+            $('.tooltip.top .tooltip-arrow').css({'border-top-color': color});
+        }
+
+        var popoverText = "";
         if (self.isOData() || self.isFeed()) {
-            self.popoverText = "All of the selected feeds will be deleted.";
+            popoverText = "All of the selected feeds will be deleted.";
         }
         else {
-            self.popoverText = "All of the selected exports will be deleted.";
+            popoverText = "All of the selected exports will be deleted.";
         }
 
         $('#bulk-delete-text').tooltip({
             trigger: 'hover',
             placement: 'top',
-            title: gettext(self.popoverText),
-        });
+            title: gettext(popoverText),
+        }).mouseover(function() {tooltipStyle('#f2dede', '0px')});
 
         $('#bulk-export-text').tooltip({
             placement: 'top',
             title: gettext("All of the selected exports will be collected for download to a single Excel file, with each export as a separate sheet."),
-        });
+        }).mouseover(function() {tooltipStyle('#d9edf7', '10px')});
 
         return self;
     };
@@ -318,7 +323,7 @@ hqDefine("export/js/export_list", [
 
         // Loading/error handling UI
         self.loadingErrorMessage = ko.observable('');
-        self.isNotBulkDeleting = ko.observable(true);
+        self.isBulkDeleting = ko.observable(false);
         self.isLoadingPanel = ko.observable(true);
         self.isLoadingPage = ko.observable(false);
         self.hasError = ko.observable(false);
@@ -473,14 +478,9 @@ hqDefine("export/js/export_list", [
 
         self.BulkExportDelete = function (observable, event) {
             var count = self.bulkExportDownloadCount;
-            //probably a better fix for this
-            for (let i = 0; i < self.panels().length; i++) {
-                var panel = self.panels()[i];
-                panel.isLoadingPanel(true);
-                panel.isNotBulkDeleting(false);
-            }
+            self.panels().forEach(panel => panel.isBulkDeleting(true));
             var bulkDelete = function () {
-                var selected = _.filter(self.exports(), function (e) { return e.addedToBulk() });
+                var selected = _.filter(self.exports(), function (e) { return e.addedToBulk(); });
                 var deleteArray = [];
                 selected.forEach(function (item, i) {
                     var attr = {};
