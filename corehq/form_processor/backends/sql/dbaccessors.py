@@ -392,15 +392,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import paginate_query_across_partitioned_databases
-
-        q_expr = Q(domain=domain) & Q(state=XFormInstance.NORMAL)
-        if xmlns:
-            q_expr &= Q(xmlns=xmlns)
-
-        for form_id in paginate_query_across_partitioned_databases(
-                XFormInstance, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
-            yield form_id[0]
+        """DEPRECATED"""
+        return XFormInstance.objects.iter_form_ids_by_xmlns(domain, xmlns)
 
     @staticmethod
     def get_with_attachments(form_id):

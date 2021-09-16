@@ -1,6 +1,7 @@
 import logging
 
 from django.db import InternalError, models, transaction
+from django.db.models import Q
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -16,6 +17,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
 from ..exceptions import (
     AttachmentNotFound,
@@ -67,6 +69,14 @@ class XFormInstanceManager(RequireDBManager):
     @staticmethod
     def get_attachments(form_id):
         return get_blob_db().metadb.get_for_parent(form_id)
+
+    def iter_form_ids_by_xmlns(self, domain, xmlns=None):
+        q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
+        if xmlns:
+            q_expr &= Q(xmlns=xmlns)
+        for form_id in paginate_query_across_partitioned_databases(
+                self.model, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
+            yield form_id[0]
 
     @staticmethod
     def save_new_form(form):

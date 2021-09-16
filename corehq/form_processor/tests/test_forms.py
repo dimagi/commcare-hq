@@ -59,6 +59,23 @@ class XFormInstanceManagerTest(TestCase):
         forms = XFormInstance.objects.get_forms([form1.form_id, form2.form_id], ordered=True)
         self.assertEqual([f.form_id for f in forms], [form1.form_id, form2.form_id])
 
+    def test_iter_form_ids_by_xmlns(self):
+        OTHER_XMLNS = "http://openrosa.org/other"
+        form1 = create_form_for_test(DOMAIN)
+        form2 = create_form_for_test(DOMAIN, xmlns=OTHER_XMLNS)
+
+        ids = XFormInstance.objects.iter_form_ids_by_xmlns("nonexistent")
+        self.assertFalse(list(ids))
+
+        ids = XFormInstance.objects.iter_form_ids_by_xmlns(DOMAIN, "unknown-xmlns")
+        self.assertFalse(list(ids))
+
+        ids = XFormInstance.objects.iter_form_ids_by_xmlns(DOMAIN, OTHER_XMLNS)
+        self.assertEqual(list(ids), [form2.form_id])
+
+        ids = XFormInstance.objects.iter_form_ids_by_xmlns(DOMAIN)
+        self.assertEqual(list(ids), [form1.form_id, form2.form_id])
+
     def test_save_new_form_and_get_attachments(self):
         unsaved_form = create_form_for_test(DOMAIN, save=False)
         XFormInstance.objects.save_new_form(unsaved_form)
