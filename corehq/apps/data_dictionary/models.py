@@ -104,6 +104,9 @@ class CaseProperty(models.Model):
                 datetime.strptime(value, ISO_DATE_FORMAT)
             except ValueError:
                 raise exceptions.InvalidDate()
+        elif value and self.data_type == 'select':
+            if not self.allowed_values.filter(allowed_value=value).exists():
+                raise exceptions.InvalidSelectValue()
 
 
 class CasePropertyAllowedValue(models.Model):
