@@ -6,6 +6,7 @@ import lxml
 import mock
 from lxml import etree
 from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
+from nose.tools import nottest
 
 import commcare_translations
 from corehq.apps.app_manager.models import Application
@@ -151,12 +152,18 @@ def add_build(version, build_number):
     return CommCareBuild.create_from_zip(jad_path, version, build_number)
 
 
-def _get_default(self):
+@nottest
+def get_build_spec_for_tests(version=None):
     return BuildSpec({
-        "version": "2.7.0",
+        "version": version or "2.7.0",
         "build_number": None,
         "latest": True
     })
+
+
+def _get_default(self):
+    return get_build_spec_for_tests()
+
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)
