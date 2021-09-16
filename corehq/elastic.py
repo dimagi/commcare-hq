@@ -255,7 +255,13 @@ def iter_es_docs_from_query(query):
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
-    return es_interface.scan(es_meta.alias, q, es_meta.type)
+    try:
+        for results in es_interface.iter_scroll(es_meta.alias, es_meta.type, body=q):
+            report_and_fail_on_shard_failures(results)
+            for hit in results["hits"]["hits"]:
+                yield hit
+    except ElasticsearchException as e:
+        raise ESError(e)
 
 
 def count_query(index_name, q):
@@ -276,7 +282,6 @@ class ScanResult(object):
 
 
 SIZE_LIMIT = 1000000
-SCROLL_PAGE_SIZE_LIMIT = 1000
 
 
 def report_and_fail_on_shard_failures(search_result):

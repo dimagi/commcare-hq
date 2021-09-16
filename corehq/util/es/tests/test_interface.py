@@ -2,10 +2,10 @@ import uuid
 
 from contextlib import contextmanager
 from django.test import SimpleTestCase
-from mock import ANY, patch
+from mock import patch
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import SerializationError, get_es_new
+from corehq.elastic import get_es_new
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.es.tests.util import (
     TEST_ES_ALIAS,
@@ -36,45 +36,40 @@ class TestESInterface(SimpleTestCase):
         cls.es.indices.delete(cls.index)
         deregister_test_meta()
 
-    def _validate_es_scan_search_params(self, scan_query, search_query):
-        """Call ElasticsearchInterface.scan() and test that the resulting API
-        search parameters match what we expect.
+    def _validate_es_scroll_search_params(self, scroll_query, search_query):
+        """Call ElasticsearchInterface.iter_scroll() and test that the resulting
+        API search parameters match what we expect.
 
         Notably:
         - Search call does not include the `search_type='scan'`.
-        - Calling `scan(..., query=scan_query, ...)` results in an API call
+        - Calling `iter_scroll(..., body=scroll_query)` results in an API call
           where `body == search_query`.
         """
         interface = ElasticsearchInterface(self.es)
-        skw = {
-            "index": "et",
-            "doc_type": "al",
-            "request_timeout": ANY,
-            "scroll": ANY,
-            "size": ANY,
+        scroll_kw = {
+            "doc_type": self.doc_type,
+            "params": {},
+            "scroll": "1m",
+            "size": 10,
         }
-        with patch.object(self.es, "search") as search:
-            try:
-                list(interface.scan(skw["index"], scan_query, skw["doc_type"]))
-            except SerializationError:
-                # fails to serialize the Mock object.
-                pass
-            search.assert_called_once_with(body=search_query, **skw)
+        with patch.object(self.es, "search", return_value={}) as search:
+            list(interface.iter_scroll(self.index, body=scroll_query, **scroll_kw))
+            search.assert_called_once_with(index=self.index, body=search_query, **scroll_kw)
 
-    def test_scan_no_searchtype_scan(self):
+    def test_scroll_no_searchtype_scan(self):
         """Tests that search_type='scan' is not added to the search parameters"""
-        self._validate_es_scan_search_params({}, {"sort": "_doc"})
+        self._validate_es_scroll_search_params({}, {"sort": "_doc"})
 
-    def test_scan_query_extended(self):
+    def test_scroll_query_extended(self):
         """Tests that sort=_doc is added to an non-empty query"""
-        self._validate_es_scan_search_params({"_id": "abc"},
+        self._validate_es_scroll_search_params({"_id": "abc"},
                                              {"_id": "abc", "sort": "_doc"})
 
-    def test_scan_query_sort_safe(self):
+    def test_scroll_query_sort_safe(self):
         """Tests that a provided a `sort` query will not be overwritten"""
-        self._validate_es_scan_search_params({"sort": "_id"}, {"sort": "_id"})
+        self._validate_es_scroll_search_params({"sort": "_id"}, {"sort": "_id"})
 
-    def test_search_and_scan_yield_same_docs(self):
+    def test_search_and_scroll_yield_same_docs(self):
         # some documents for querying
         docs = [
             {"prop": "centerline", "prop_count": 1},
@@ -86,12 +81,14 @@ class TestESInterface(SimpleTestCase):
                 """Perform a search query"""
                 return interface.search(self.index, self.doc_type)["hits"]["hits"]
 
-            def scan_query():
-                """Perform a scan query"""
-                return interface.scan(self.index, {}, self.doc_type)
+            def scroll_query():
+                """Perform a scroll query"""
+                for results in interface.iter_scroll(self.index, self.doc_type):
+                    for hit in results["hits"]["hits"]:
+                        yield hit
 
             interface = ElasticsearchInterface(self.es)
-            for results_getter in [search_query, scan_query]:
+            for results_getter in [search_query, scroll_query]:
                 results = {}
                 for hit in results_getter():
                     results[hit["_id"]] = hit

@@ -45,8 +45,6 @@ class TestElastic(SimpleTestCase):
             for result in scroll_query(self.index, {}):
                 results.append(result)
                 self.assertIn(result["_id"], indexed)
-                # pop _id because scan() doesn't inject that (yet)
-                indexed[result["_id"]].pop("_id")
                 self.assertEqual(result["_source"], indexed[result["_id"]])
             self.assertEqual(len(results), len(indexed))
 
