@@ -23,7 +23,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch2.helpers import bulk, scan
+    from elasticsearch2.helpers import BulkIndexError, bulk, scan
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 2, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))
@@ -31,6 +31,7 @@ else:
 
 __all__ = [
     'AuthorizationException',
+    'BulkIndexError',
     'ConflictError',
     'ConnectionError',
     'ConnectionTimeout',
