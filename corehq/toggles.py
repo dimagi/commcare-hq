@@ -58,6 +58,11 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description='',
 )
+TAG_RELEASE = Tag(
+    name='Release',
+    css_class='release',
+    description='This is a feature that is in the process of being released.',
+)
 TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
     css_class='primary',
@@ -103,7 +108,7 @@ TAG_INTERNAL = Tag(
     description="These are tools for our engineering team to use to manage the product",
 )
 # Order roughly corresponds to how much we want you to use it
-ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
+ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_RELEASE, TAG_DEPRECATED]
 ALL_TAGS = [
                TAG_SOLUTIONS_OPEN,
                TAG_SOLUTIONS_CONDITIONAL,
@@ -387,6 +392,28 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             return dynamic_randomness
         except ValueError:
             return self.default_randomness
+
+
+class FeatureRelease(DynamicallyPredictablyRandomToggle):
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        owner,
+        default_randomness=0.0,
+        help_link=None,
+        description=None,
+        relevant_environments=None
+    ):
+        super().__init__(
+            slug, label, tag, [NAMESPACE_DOMAIN],
+            default_randomness=default_randomness,
+            help_link=help_link,
+            description=description,
+            relevant_environments=relevant_environments
+        )
+        self.owner = owner
 
 
 # if no namespaces are specified the user namespace is assumed
