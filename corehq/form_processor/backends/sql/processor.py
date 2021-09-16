@@ -119,7 +119,7 @@ class FormProcessorSQL(object):
                 if processed_forms.deprecated:
                     FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
 
-                FormAccessorSQL.save_new_form(processed_forms.submitted)
+                XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)

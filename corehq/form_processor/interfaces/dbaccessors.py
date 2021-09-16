@@ -79,6 +79,7 @@ class FormAccessors:
         return self.db_accessor.get_with_attachments(form_id)
 
     def save_new_form(self, form):
+        """DEPRECATED use XFormInstance.objects"""
         self.db_accessor.save_new_form(form)
 
     def update_form_problem_and_state(self, form):

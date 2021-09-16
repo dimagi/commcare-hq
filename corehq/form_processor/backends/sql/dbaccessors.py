@@ -33,7 +33,6 @@ from corehq.form_processor.exceptions import (
     LedgerValueNotFound,
     MissingFormXml,
     XFormNotFound,
-    XFormSaveError,
 )
 from corehq.form_processor.models.util import sort_with_id_list as _sort_with_id_list
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -388,7 +387,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def get_attachments(form_id):
-        return get_blob_db().metadb.get_for_parent(form_id)
+        """DEPRECATED"""
+        return XFormInstance.objects.get_attachments(form_id)
 
     @staticmethod
     def iter_forms_by_last_modified(start_datetime, end_datetime):
@@ -592,33 +592,8 @@ class FormAccessorSQL:
 
     @staticmethod
     def save_new_form(form):
-        """
-        Save a previously unsaved form
-        """
-        if form.is_saved():
-            raise XFormSaveError('form already saved')
-        logging.debug('Saving new form: %s', form)
-
-        operations = form.get_tracked_models_to_create(XFormOperation)
-        for operation in operations:
-            if operation.is_saved():
-                raise XFormSaveError(
-                    'XFormOperation {} has already been saved'.format(operation.id)
-                )
-            operation.form_id = form.form_id
-
-        try:
-            with form.attachment_writer() as attachment_writer, \
-                    transaction.atomic(using=form.db, savepoint=False):
-                transaction.on_commit(attachment_writer.commit, using=form.db)
-                form.save()
-                attachment_writer.write()
-                for operation in operations:
-                    operation.save()
-        except InternalError as e:
-            raise XFormSaveError(e)
-
-        form.clear_tracked_models()
+        """DEPRECATED"""
+        XFormInstance.objects.save_new_form(form)
 
     @staticmethod
     def update_form(form, publish_changes=True):

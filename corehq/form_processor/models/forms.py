@@ -1,4 +1,6 @@
-from django.db import models
+import logging
+
+from django.db import InternalError, models, transaction
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -11,15 +13,23 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 
-from ..exceptions import AttachmentNotFound, MissingFormXml, XFormNotFound
+from ..exceptions import (
+    AttachmentNotFound,
+    MissingFormXml,
+    XFormNotFound,
+    XFormSaveError,
+)
 from ..track_related import TrackRelatedChanges
 from .abstract import AbstractXFormInstance
 from .attachment import AttachmentMixin
 from .mixin import SaveStateMixin
 from .util import sort_with_id_list
+
+log = logging.getLogger(__name__)
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -53,6 +63,36 @@ class XFormInstanceManager(RequireDBManager):
         if ordered:
             sort_with_id_list(forms, form_ids, 'form_id')
         return forms
+
+    @staticmethod
+    def get_attachments(form_id):
+        return get_blob_db().metadb.get_for_parent(form_id)
+
+    @staticmethod
+    def save_new_form(form):
+        """Save a previously unsaved form"""
+        if form.is_saved():
+            raise XFormSaveError('form already saved')
+        log.debug('Saving new form: %s', form)
+
+        operations = form.get_tracked_models_to_create(XFormOperation)
+        for operation in operations:
+            if operation.is_saved():
+                raise XFormSaveError(f'XFormOperation {operation.id} has already been saved')
+            operation.form_id = form.form_id
+
+        try:
+            with form.attachment_writer() as attachment_writer, \
+                    transaction.atomic(using=form.db, savepoint=False):
+                transaction.on_commit(attachment_writer.commit, using=form.db)
+                form.save()
+                attachment_writer.write()
+                for operation in operations:
+                    operation.save()
+        except InternalError as e:
+            raise XFormSaveError(e)
+
+        form.clear_tracked_models()
 
 
 class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
@@ -281,8 +321,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn, Attachme
         return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
 
     def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachments(self.form_id)
+        return type(self).objects.get_attachments(self.form_id)
 
     def get_xml_element(self):
         xml = self.get_xml()

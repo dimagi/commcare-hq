@@ -1,4 +1,7 @@
+import uuid
+
 from django.conf import settings
+from django.db import transaction
 from django.test import TestCase
 
 from corehq.form_processor.exceptions import XFormNotFound
@@ -55,6 +58,30 @@ class XFormInstanceManagerTest(TestCase):
 
         forms = XFormInstance.objects.get_forms([form1.form_id, form2.form_id], ordered=True)
         self.assertEqual([f.form_id for f in forms], [form1.form_id, form2.form_id])
+
+    def test_save_new_form_and_get_attachments(self):
+        unsaved_form = create_form_for_test(DOMAIN, save=False)
+        XFormInstance.objects.save_new_form(unsaved_form)
+        self.assertTrue(unsaved_form.is_saved())
+        self.assert_form_xml_attachment(unsaved_form)
+
+    def test_save_new_form_db_error(self):
+        form = create_form_for_test(DOMAIN)
+        dup_form = create_form_for_test(DOMAIN, save=False)
+        dup_form.form_id = form.form_id
+
+        # use transaction to prevent rolling back the test's transaction
+        with self.assertRaises(Exception), transaction.atomic(dup_form.db):
+            XFormInstance.objects.save_new_form(dup_form)
+
+        # save should succeed with unique form id
+        dup_form.form_id = uuid.uuid4().hex
+        XFormInstance.objects.save_new_form(dup_form)
+        self.assert_form_xml_attachment(dup_form)
+
+    def assert_form_xml_attachment(self, form):
+        attachments = XFormInstance.objects.get_attachments(form.form_id)
+        self.assertEqual([a.name for a in attachments], ["form.xml"])
 
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstance)
