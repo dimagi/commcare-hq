@@ -389,7 +389,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         return self.repeater.connection_settings.username
 
     def submission_user_id(self):
-        return CouchUser.get_by_username(self.submission_username).user_id
+        return CouchUser.get_by_username(self.submission_username()).user_id
 
 
 class AppStructureGenerator(BasePayloadGenerator):
