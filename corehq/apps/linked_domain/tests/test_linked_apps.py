@@ -71,25 +71,10 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
 
         cls.linked_domain_obj = create_domain('domain-2')
         cls.linked_domain = cls.linked_domain_obj.name
-        cls.factory1 = AppFactory(cls.domain, "First Upstream Application", include_xmlns=True)
-        cls.master1 = cls.factory1.app
-        cls.master1.save()
-
-        cls.factory2 = AppFactory(cls.domain, "Second Upstream Application", include_xmlns=True)
-        cls.master2 = cls.factory2.app
-        cls.master2.save()
-
-        cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
-        cls.linked_app.family_id = cls.master1._id
-        cls.linked_app.save()
-
         cls.domain_link = DomainLink.link_domains(cls.linked_domain, cls.domain)
 
     @classmethod
     def tearDownClass(cls):
-        cls.linked_app.delete()
-        cls.master1.delete()
-        cls.master2.delete()
         cls.domain_link.delete()
         cls.domain_obj.delete()
         cls.linked_domain_obj.delete()
@@ -97,19 +82,26 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
 
     def setUp(self):
         # re-fetch app
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
-
-        m0_1, f0_1 = self.factory1.new_basic_module("M1", None)
+        factory1 = AppFactory(self.domain, "First Upstream Application", include_xmlns=True)
+        m0_1, f0_1 = factory1.new_basic_module("M1", None)
         f0_1.source = get_simple_form(f0_1.xmlns)
+        self.master1 = factory1.app
         self.master1.save()
 
-        m0_2, f0_2 = self.factory2.new_basic_module("M2", None)
+        factory2 = AppFactory(self.domain, "Second Upstream Application", include_xmlns=True)
+        m0_2, f0_2 = factory2.new_basic_module("M2", None)
         f0_2.source = get_simple_form(f0_2.xmlns)
+        self.master2 = factory2.app
         self.master2.save()
 
+        self.linked_app = LinkedApplication.new_app(self.linked_domain, "Linked Application")
+        self.linked_app.family_id = self.master1._id
+        self.linked_app.save()
+
     def tearDown(self):
-        for app in (self.master1, self.master2, self.linked_app):
-            self.delete_modules(app)
+        self.linked_app.delete()
+        self.master1.delete()
+        self.master2.delete()
 
     def delete_modules(self, app):
         for module in app.get_modules():
@@ -560,18 +552,16 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestRemoteLinkedApps, cls).setUpClass()
+    def setUp(self):
+        super().setUp()
         image_data = _get_image_data()
-        cls.image = CommCareImage.get_by_data(image_data)
-        cls.image.attach_data(image_data, original_filename='logo.png')
-        cls.image.add_domain(cls.master1.domain)
+        self.image = CommCareImage.get_by_data(image_data)
+        self.image.attach_data(image_data, original_filename='logo.png')
+        self.image.add_domain(self.master1.domain)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.image.delete()
-        super(TestRemoteLinkedApps, cls).tearDownClass()
+    def tearDown(self):
+        self.image.delete()
+        super().tearDown()
 
     def test_remote_app(self):
         module = self.master_app_with_report_modules.add_module(Module.new_module('M1', None))
