@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import get_simple_form
+from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -41,6 +41,7 @@ class TestGlobalAppConfig(TestCase):
     domain = 'test-latest-app'
 
     @classmethod
+    @patch_validate_xform()
     def setUpClass(cls):
         super(TestGlobalAppConfig, cls).setUpClass()
         cls.project = Domain.get_or_create_with_name(cls.domain)

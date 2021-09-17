@@ -3,7 +3,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import get_simple_form
+from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
@@ -19,6 +19,7 @@ from corehq.util.test_utils import flag_enabled
 @es_test
 class TestPaginateReleases(TestCase):
     @classmethod
+    @patch_validate_xform()
     def setUpClass(cls):
         super(TestPaginateReleases, cls).setUpClass()
         cls.client = Client()

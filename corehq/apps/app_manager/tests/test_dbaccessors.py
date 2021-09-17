@@ -26,7 +26,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import get_simple_form
+from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin, disable_quickcache
 
@@ -235,6 +235,7 @@ class TestAppGetters(TestCase):
     domain = 'test-app-getters'
 
     @classmethod
+    @patch_validate_xform()
     def setUpClass(cls):
         super(TestAppGetters, cls).setUpClass()
         cls.project = Domain.get_or_create_with_name(cls.domain)

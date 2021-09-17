@@ -10,7 +10,7 @@ from corehq.apps.app_manager.commcare_settings import (
 )
 from corehq.apps.app_manager.models import Application, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form
+from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
 
@@ -142,6 +142,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         )
 
 
+@patch_validate_xform()
 class ProfileBuildTests(TestCase):
     def setUp(self):
         factory = AppFactory("wizard", "Wizard's Handbook")
