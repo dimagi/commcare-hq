@@ -53,21 +53,14 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.util.test_utils import flag_enabled, softer_assert
 
 
-@flag_enabled('CAUTIOUS_MULTIMEDIA')
-@patch_validate_xform()
-class BaseLinkedAppsTest(TestCase, TestXmlMixin):
+class BaseLinkedDomainTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 
     @classmethod
     def setUpClass(cls):
-        super(BaseLinkedAppsTest, cls).setUpClass()
+        super().setUpClass()
         cls.domain_obj = create_domain('domain')
         cls.domain = cls.domain_obj.name
-        cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
-        module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
-        module.report_configs = [
-            ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
-        ]
 
         cls.linked_domain_obj = create_domain('domain-2')
         cls.linked_domain = cls.linked_domain_obj.name
@@ -78,7 +71,22 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.domain_link.delete()
         cls.domain_obj.delete()
         cls.linked_domain_obj.delete()
-        super(BaseLinkedAppsTest, cls).tearDownClass()
+        super().tearDownClass()
+
+
+@flag_enabled('CAUTIOUS_MULTIMEDIA')
+@patch_validate_xform()
+class BaseLinkedAppsTest(BaseLinkedDomainTest):
+    file_path = ('data',)
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseLinkedAppsTest, cls).setUpClass()
+        cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
+        module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
+        module.report_configs = [
+            ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
+        ]
 
     def setUp(self):
         # re-fetch app
