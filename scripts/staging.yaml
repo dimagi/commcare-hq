@@ -83,4 +83,5 @@ branches:
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - mjr/remove_phone_2fa # Matt Sept 15
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
+    - fr/dedupe  # Farid Sept 17
 submodules: { }
