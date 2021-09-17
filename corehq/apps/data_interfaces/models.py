@@ -974,8 +974,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 .values_list('case_id', flat=True)
             ) | set([case_id])  # The duplicates we currently have for this case tracked in the system
         except CaseDuplicate.DoesNotExist:
-            # There are no duplicate cases currently in the system, so carry on
-            return False
+            # There are no duplicate cases currently in the system.
+            # We continue on to create duplicates only if there are duplicates to create.
+            return new_duplicate_case_ids == {case_id}
 
         if new_duplicate_case_ids == {case_id}:
             # This is no longer a duplicate, so check that there aren't any

@@ -284,6 +284,26 @@ class CaseDeduplicationActionTest(TestCase):
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
+    def test_unique_not_updated(self, find_duplicates_mock):
+        """Ensure that new unique cases are not updated
+        """
+
+        duplicates, uniques = self._create_cases(1)
+        find_duplicates_mock.return_value = duplicates
+
+        self.rule.run_actions_when_case_matches(duplicates[0])
+
+        for duplicate_case in duplicates:
+            self.assertIsNone(
+                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'),
+            )
+
+        for unique_case in uniques:
+            self.assertIsNone(
+                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+            )
+
+    @patch("corehq.apps.data_interfaces.models.find_duplicate_cases")
     def test_stores_all_duplicates(self, find_duplicates_mock):
         """When it finds duplicates, store them in the CaseDuplicate model
         """
