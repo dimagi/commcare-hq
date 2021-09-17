@@ -22,6 +22,7 @@ from .views import (
     location_lineage,
     unarchive_location,
     unassign_users,
+    count_locations,
 )
 
 settings_urls = [
@@ -39,6 +40,7 @@ settings_urls = [
         DownloadLocationStatusView.as_view(), name=DownloadLocationStatusView.urlname),
     url(r'^export_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         location_download_job_poll, name='org_download_job_poll'),
+    url(r'^count_locations/$', count_locations, name='locations_count'),
     url(r'^filter_and_download/$', FilteredLocationDownload.as_view(),
         name=FilteredLocationDownload.urlname),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),

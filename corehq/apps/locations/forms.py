@@ -6,7 +6,6 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
-
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -23,7 +22,7 @@ from corehq.apps.custom_data_fields.edit_entity import (
 )
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
@@ -37,6 +36,7 @@ from .models import (
 )
 from .permissions import user_can_access_location_id
 from .signals import location_edited
+from crispy_forms.utils import flatatt
 
 
 class LocationSelectWidget(forms.Widget):
@@ -53,6 +53,7 @@ class LocationSelectWidget(forms.Widget):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
+
         initial_data = [{
             'id': loc.location_id,
             'text': loc.get_path_display(),
@@ -66,7 +67,7 @@ class LocationSelectWidget(forms.Widget):
             'multiselect': self.multiselect,
             'placeholder': self.placeholder,
             'initial_data': initial_data,
-            'attrs': self.build_attrs(self.attrs, attrs),
+            'attrs': flatatt(self.build_attrs(self.attrs, attrs)),
         })
 
     def value_from_datadict(self, data, files, name):
@@ -555,33 +556,107 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class LocationFilterForm(forms.Form):
-    root_location_id = forms.CharField(
-        label=ugettext_noop("Root Location"),
+    ACTIVE = 'active'
+    ARCHIVED = 'archived'
+    SHOW_ALL = 'show_all'
+
+    LOCATION_ACTIVE_STATUS = (
+        (SHOW_ALL, _('Show All')),
+        (ACTIVE, _('Only Active')),
+        (ARCHIVED, _('Only Archived'))
+    )
+
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
         required=False,
+    )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include selected location'),
+        initial=False,
+    )
+    location_status_active = forms.ChoiceField(
+        label=_('Active / Archived'),
+        choices=LOCATION_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
+        self.user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
-        self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+            attrs={'data-bind': 'value: location_id'},
+        )
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'GET'
+        self.helper.form_id = 'locations-filters'
         self.helper.form_action = reverse('location_export', args=[self.domain])
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Locations"),
-                crispy.Field('root_location_id'),
+                crispy.Field('location_id',),
+                crispy.Div(
+                    crispy.Field('selected_location_only', data_bind='checked: selected_location_only'),
+                    data_bind="slideVisible: location_id",
+                ),
+                crispy.Field('location_status_active',),
             ),
             hqcrispy.FormActions(
                 StrictButton(
                     _("Download Locations"),
                     type="submit",
                     css_class="btn btn-primary",
-                )
+                    data_bind="html: buttonHTML",
+                ),
             ),
         )
+
+    def clean_location_id(self):
+        if self.cleaned_data['location_id'] == '':
+            return None
+        return self.cleaned_data['location_id']
+
+    def clean_location_status_active(self):
+        location_active_status = self.cleaned_data['location_status_active']
+
+        if location_active_status == self.ACTIVE:
+            return True
+        if location_active_status == self.ARCHIVED:
+            return False
+        return None
+
+    def get_filters(self):
+        """
+        This function translates some form inputs to their relevant SQLLocation attributes
+        """
+        location_id = self.cleaned_data.get('location_id', None)
+        # Handle user location restriction
+        if location_id is None:
+            domain_membership = self.user.get_domain_membership(self.domain)
+            # Superusers may no have domain_membership
+            if domain_membership and domain_membership.location_id:
+                location_id = domain_membership.location_id
+
+        filters = {
+            'location_id': location_id,
+            'selected_location_only': self.cleaned_data.get('selected_location_only', False)
+        }
+        location_status_active = self.cleaned_data.get('location_status_active', None)
+
+        if location_status_active is not None:
+            filters['is_archived'] = (not location_status_active)
+
+        return filters
 
 
 def to_list(value):
