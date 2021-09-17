@@ -950,38 +950,47 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             duplicate_cases.append(case)
             new_duplicate_case_ids.add(case.case_id)
 
-        try:
-            existing_duplicate_case_ids = set(
-                CaseDuplicate.objects
-                .prefetch_related('potential_duplicates')
-                .get(action=self, case_id=case.case_id)
-                .potential_duplicates
-                .all()
-                .values_list('case_id', flat=True)
-            ) | set([case.case_id])  # The duplicates we currently have for this case tracked in the system
-        except CaseDuplicate.DoesNotExist:
-            # There are no duplicate cases currently in the system, so carry on
-            pass
-        else:
-            if new_duplicate_case_ids == {case.case_id}:
-                # This is no longer a duplicate, so check that there aren't any
-                # other cases that are no longer duplicates
-                CaseDuplicate.remove_unique_cases(action=self, case_id=case.case_id)
-                CaseDuplicate.objects.filter(action=self, case_id=case.case_id).delete()
-                return CaseRuleActionResult(num_updates=0)
-
-            if new_duplicate_case_ids == existing_duplicate_case_ids:
-                # If the list of duplicates hasn't changed, we don't need to do anything here
-                return CaseRuleActionResult(num_updates=0)
-
-        # Delete all CaseDuplicates with this case_id, we'll recreate it
-        CaseDuplicate.objects.filter(action=self, case_id=case.case_id).delete()
+        if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
+            return CaseRuleActionResult(num_updates=0)
 
         num_updates = self._update_cases(domain, rule, duplicate_cases)
 
         CaseDuplicate.bulk_create_duplicate_relationships(self, case, duplicate_cases)
 
         return CaseRuleActionResult(num_updates=num_updates)
+
+    def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
+        """Handles existing duplicate objects.
+
+        Returns True if there is nothing else to be done
+        """
+        try:
+            existing_duplicate_case_ids = set(
+                CaseDuplicate.objects
+                .prefetch_related('potential_duplicates')
+                .get(action=self, case_id=case_id)
+                .potential_duplicates
+                .all()
+                .values_list('case_id', flat=True)
+            ) | set([case_id])  # The duplicates we currently have for this case tracked in the system
+        except CaseDuplicate.DoesNotExist:
+            # There are no duplicate cases currently in the system, so carry on
+            return False
+
+        if new_duplicate_case_ids == {case_id}:
+            # This is no longer a duplicate, so check that there aren't any
+            # other cases that are no longer duplicates
+            CaseDuplicate.remove_unique_cases(action=self, case_id=case_id)
+            CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+            return True
+
+        if new_duplicate_case_ids == existing_duplicate_case_ids:
+            # If the list of duplicates hasn't changed, we don't need to do anything more
+            return True
+
+        # Delete all CaseDuplicates with this case_id, we'll recreate them later
+        CaseDuplicate.objects.filter(action=self, case_id=case_id).delete()
+        return False
 
     def _update_cases(self, domain, rule, duplicate_cases):
         """Updates all the duplicate cases according to the rule
