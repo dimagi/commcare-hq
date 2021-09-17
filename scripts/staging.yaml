@@ -82,6 +82,5 @@ branches:
     - gh/erm/hide-deleted-content # Graham Sept 14
     - rp/improve-deleted-odata-feed-error-message # Rynhard Sept 15
     - mjr/remove_phone_2fa # Matt Sept 15
-    - rc/repeat-button-focus # Robert Sept 15
     - gh/erm/link-reports-and-keywords-on-push # Graham Sept 15
 submodules: { }
